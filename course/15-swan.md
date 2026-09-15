@@ -1,4 +1,4 @@
-# 11 — SWAN: the other one you should know
+# 15 — SWAN: the other one you should know
 
 If you only ever learn WW3 you will eventually reach a coastal problem where WW3 is the
 wrong tool and you won't recognise it. SWAN is that tool. It's free, it's a few hours to

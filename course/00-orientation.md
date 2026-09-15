@@ -27,6 +27,17 @@ The left side is clean conservative transport in a 4D phase space (x, y, k, θ).
 numerics, and it's solvable. The right side is where the model earns its keep and where
 all the uncertainty lives.
 
+The first half of this course (00–08) teaches you to *run* the thing that solves this
+equation. The second half (09–13) teaches you to make it run *faster without changing the
+answer*, and it follows the ladder of the UFRJ/DEL project proposal that this repository
+serves: compile options → run configuration → modern Fortran → C++/Kokkos kernels for the
+GPU, each rung gated by parity against the reference run before the next one is allowed
+to start. The proposal itself is in [`../pubs/proposal/pt/`](../pubs/proposal/pt/)
+(Portuguese, eight short sections) and its mind maps in
+[`../pubs/proposal/mapas-mentais.pt.md`](../pubs/proposal/mapas-mentais.pt.md); the
+lessons are the English, hands-on version of the same ladder, with the code in
+[`../kokkos/`](../kokkos/).
+
 ## The source terms
 
 $$S = S_{in} + S_{nl} + S_{ds} + S_{bot} + S_{db} + S_{ice} + \dots$$
@@ -65,8 +76,8 @@ systems.
 Every field WW3 carries lives on **latitude × longitude × frequency × direction × time**.
 A modest regional run — 81 × 81 points, 32 frequencies, 36 directions — is 7.5 million
 numbers *per timestep*, before any output. This is why WW3 is expensive, and it is directly
-relevant to the GPU question in lesson 09: you cannot casually shuttle that array across
-PCIe every step.
+relevant to the GPU question in lessons 11–13: you cannot casually shuttle that array
+across PCIe every step, so a port has to decide where the spectrum *lives*.
 
 ## The program pipeline
 
@@ -106,7 +117,8 @@ v7. Everything in this repo uses `.nml`, because:
 
 - the annotated templates in `$WW3/model/nml/` document every single parameter inline;
 - you can omit anything you want defaulted;
-- `pyww3` and every other Python wrapper targets namelists.
+- the small Fortran generators in `examples/` write them, and so does every third-party
+  wrapper you might meet (lesson 08) — nobody targets `.inp` any more.
 
 If you follow an older tutorial and get `error reading input file`, check whether it's
 handing an `.inp` to a program expecting `.nml` or vice versa. That's a real and common

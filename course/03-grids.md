@@ -40,6 +40,30 @@ permanently excluded and will never be wet even if water level rises. `DMIN` (e.
 a floor applied to the depth used in the physics, so a nearly-dry cell doesn't produce
 division-by-zero. They do different things and both matter.
 
+## Generating the files
+
+`ww3_grid` does not read netCDF bathymetry. It reads plain ASCII arrays — one row per
+line, in the order `IDLA` declares — and you are expected to produce them. The two examples
+each ship a small Fortran program for that, and the point of generating the files rather
+than committing them is that you can change `NX`, `NY` or the depth and rerun, which is
+exactly what the exercises ask you to do.
+
+| Example | Program | Writes | How |
+|---|---|---|---|
+| `01-fetch-limited-growth` | [`make_inputs.F90`](../examples/01-fetch-limited-growth/make_inputs.F90) — no arguments | `depth.inp`, `mask.inp` | A 61 × 5 box of flat 250 m water (positive numbers; `ww3_grid.nml` sets `DEPTH%SF = -1.` to flip the sign). Mask row: one `0` (the coastline at `i = 1`) followed by sixty `1`s. `IDLA = 1`. |
+| `02-regional-real-forcing` | [`make_bathy.F90`](../examples/02-regional-real-forcing/make_bathy.F90) — `make_bathy gebco.nc` | `bathy.inp`, `mask.inp` | Reads a GEBCO netCDF subset with netcdf-fortran and samples it onto the 81 × 81, 0.1° grid of `&RECT_NML` by **nearest neighbour**. GEBCO's `elevation` is negative below sea level, so `DEPTH%SF = 1.` Points deeper than `ZLIM` become `1`; the southern and eastern edges, one cell in, become `2` where wet, matching the `INBND_POINT` blocks in `ww3_grid.nml`. |
+
+Each example's `run.sh` compiles its generator with `gfortran` if the binary is missing,
+runs it, and then runs the WW3 programs. Read the sources: they are short, and the mask
+legend and the `IDLA` convention are spelled out in the comments.
+
+Nearest-neighbour sampling is a deliberate downgrade from interpolation. Point-sampling a
+15-arc-second dataset onto a 0.1° grid throws away most of the information and can miss a
+whole shoal; for production work you want area-weighted (conservative) regridding, which
+is a job for a proper regridding tool, not a forty-line program. For a course grid it is
+fine, and it has one virtue interpolation lacks: every depth in `bathy.inp` is a number
+GEBCO actually reported.
+
 ## Masks
 
 ```
@@ -91,9 +115,13 @@ grid (0.1°) feeding a coastal grid (0.01°). Either as separate runs chained th
 
 ## Exercise
 
-Build the same domain three ways — 0.2°, 0.1°, 0.05° — with correctly recomputed timesteps,
-and run example 02's forcing through all three. Plot `Hs` at the shelf-break point. Where
-does it converge? Where doesn't it? That answer is specific to your coastline and it's the
-only honest way to pick a resolution.
+Build the same domain three ways — 0.2°, 0.1°, 0.05° — with correctly recomputed timesteps
+(edit `NX`, `NY`, `SX`, `SY` in `make_bathy.F90` and `ww3_grid.nml` together), and run
+example 02's forcing through all three. Pull `Hs` at the shelf-break point out of each
+`ww3.nc` with `ncks -v hs -d longitude,<i> -d latitude,<j>` (or `ncdump -v hs` and your
+eyes) and tabulate the three time series side by side. Where does it converge? Where
+doesn't it? That answer is specific to your coastline and it's the only honest way to pick
+a resolution. Lesson 06 shows the tools, and `nccmp-tol` is the wrong tool for this one —
+the grids differ, so the fields aren't comparable point by point.
 
 → [`04-forcing.md`](04-forcing.md)

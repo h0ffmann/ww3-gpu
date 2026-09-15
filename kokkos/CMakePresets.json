@@ -1,0 +1,64 @@
+{
+  "version": 10,
+  "$comment": "Which Kokkos backend you get is decided by the pratico devShell, not by this file: `nix develop nix-config/labs/pratico#ww3` puts a Serial+OpenMP Kokkos on the CMake search path, `#cuda` puts a CUDA/ADA89 one there. These presets only choose build type, instrumentation, and -- for CUDA -- the compiler nvcc insists on. Presets schema 10 needs CMake >= 4.1; the lab shell pins 4.4.2.",
+  "configurePresets": [
+    {
+      "name": "serial-debug",
+      "displayName": "Debug, sanitizers, deterministic reductions",
+      "$comment": "Kokkos_ENABLE_DEBUG_BOUNDS_CHECK is deliberately not set here: it is an option of the Kokkos *build*, not of a consumer, so it is fixed by the pinned Kokkos derivation in nix-config/labs/pratico and cannot be switched on from this file. The safety net is AddressSanitizer + UndefinedBehaviorSanitizer plus WW_DETERMINISTIC. The name describes the build type, not the backend: OpenMP is the default execution space in #ww3, so code that must run on Serial names Kokkos::Serial explicitly.",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/serial-debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_FLAGS": "-fsanitize=address,undefined -fno-omit-frame-pointer",
+        "CMAKE_EXE_LINKER_FLAGS": "-fsanitize=address,undefined",
+        "WW_DETERMINISTIC": "ON"
+      }
+    },
+    {
+      "name": "openmp-release",
+      "displayName": "Release on the OpenMP backend",
+      "$comment": "x86-64-v3 is AVX2 + FMA: every machine this lab targets, and no runtime dispatch.",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/openmp-release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_CXX_FLAGS": "-O3 -march=x86-64-v3"
+      }
+    },
+    {
+      "name": "cuda-release",
+      "displayName": "Release on the CUDA backend (needs `just cuda` / the #cuda shell)",
+      "$comment": "Kokkos rejects a plain g++ once CUDA is on, so the compiler must be nvcc_wrapper (on PATH in #cuda). The pinned CUDA Kokkos is built for one architecture only, ADA89 (RTX 4090); an H100 needs a Kokkos rebuild with HOPPER90, not a change here.",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/cuda-release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_CXX_COMPILER": "nvcc_wrapper",
+        "CMAKE_CUDA_ARCHITECTURES": "89"
+      }
+    }
+  ],
+  "buildPresets": [
+    { "name": "serial-debug", "configurePreset": "serial-debug" },
+    { "name": "openmp-release", "configurePreset": "openmp-release" },
+    { "name": "cuda-release", "configurePreset": "cuda-release" }
+  ],
+  "testPresets": [
+    {
+      "name": "serial-debug",
+      "configurePreset": "serial-debug",
+      "output": { "outputOnFailure": true }
+    },
+    {
+      "name": "openmp-release",
+      "configurePreset": "openmp-release",
+      "output": { "outputOnFailure": true }
+    },
+    {
+      "name": "cuda-release",
+      "configurePreset": "cuda-release",
+      "output": { "outputOnFailure": true }
+    }
+  ]
+}

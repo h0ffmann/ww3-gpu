@@ -115,4 +115,31 @@ The temptation, once you've validated against a buoy and found a bias, is to rea
 Tuning a source term to compensate for a bad wind field produces a model that's right for
 the wrong reason and will fail on the next storm.
 
-→ [`08-python.md`](08-python.md)
+## Why `W3SNL1` is the first kernel to port
+
+Everything above is about choosing physics. The second half of the course is about making
+the chosen physics run faster, and the first routine it rewrites is the one this lesson
+called the most important and the most approximate: `W3SNL1`, the DIA, with its setup
+routine `INSNL1` (both in `model/src/w3snl1md.F90`). Five properties make it the right
+first target, and they are worth naming because they are the checklist for every routine
+after it:
+
+| Property | What it means for a port |
+|---|---|
+| **Per point** | One spectrum in, `S` and `D` out, no neighbours. Every sea point is independent work, which is exactly the parallelism a GPU wants and the "shuffle" decomposition already exposes. |
+| **Table-driven** | `INSNL1` precomputes the quadruplet address tables (`IP11 … IM42`) and weights once per grid from `NK`, `NTH`, `XFR` and `LAMBDA`. They are identical for every point and every timestep — computed once on the host, shared by every kernel launch. |
+| **No I/O, no globals mutated** | It reads a handful of grid constants and writes its two outputs. Nothing to serialise, nothing to lock. |
+| **Dominant share** | Usually the single most expensive kernel in a `ST4`+`NL1` run — four mirror-image quadruplets, each an `NK × NTH` interpolation, per point per timestep. `docs/AGENTS_KOKKOS_202609.md` ranks it first for that reason; lesson 09's profile is where you confirm it on your case. |
+| **Deterministic gather** | Each output bin is a weighted *gather* from the extended spectrum, so no two threads write the same element and no reduction exists. No atomics, and bit-for-bit reproducibility across launches and backends comes for free. |
+
+The trade-off is instructive too: the DIA is a physics approximation everybody wants to
+replace, so why port it? Because the port is a *translation*, not an improvement — the
+Kokkos kernel must reproduce the Fortran to round-off before anyone is allowed to touch the
+physics — and a routine with an exact, cheap, per-point reference is the easiest one to
+prove that claim on. `NL2` and `NL3` would inherit the same kernel structure later.
+[`12-porting-a-kernel-w3snl1.md`](12-porting-a-kernel-w3snl1.md) walks through the port
+line by line; the code is in `kokkos/src/ww_kokkos/snl1_*` with the verbatim Fortran
+reference beside it in `kokkos/tests/fixtures/snl1_ref.F90`.
+
+→ [`08-python.md`](08-python.md) — the Python ecosystem, and why this repo does not depend
+on it.

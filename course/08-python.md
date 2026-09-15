@@ -1,4 +1,9 @@
-# 08 — Driving WW3 from Python
+# 08 — The Python ecosystem, and why this repo does not depend on it
+
+There is a real Python ecosystem around WW3, and you should know what is in it. This
+repo's rule: the lab code in `kokkos/`, `examples/`, `exercises/` and `bench/` is C++,
+Fortran and shell; Python is used only by the two publishing scripts in `scripts/`. What
+the tools do, what one taught us, what we use instead:
 
 ## The landscape
 
@@ -11,100 +16,45 @@
 | [`bmi-wavewatch3`](https://pypi.org/project/bmi-wavewatch3/) | Download NOAA's *published* WW3 hindcasts as xarray. Not for running the model. |
 | [`rompy`](https://github.com/rom-py/rompy) | General pydantic-validated ocean-model configuration. Strong SWAN/SCHISM plugins; ⚠ no WW3 plugin found. |
 
-## pyww3
+## What pyww3 gets right
 
-The design is simple enough to hold in your head:
+Its design is worth holding in your head even if you never install it. Every WW3 program
+gets a dataclass (`WW3Grid`, `WW3Prnc`, `WW3Shel`, `WW3Ounf`, `WW3Ounp`, `WW3Bounc`); every
+namelist parameter becomes a constructor keyword with the `%` flattened to `_`, so
+`SPECTRUM%FREQ1` is `spectrum_freq1`; validation of required files and compatible values
+happens at construction; and a common base class renders the namelist text, writes it into
+the run directory, runs the program there capturing its output, and can add or remove a
+whole namelist block — needed because `ww3_grid` objects to blocks it does not want. Its
+two gotchas are the two lessons: the generated file contains *every* block until you
+remove the irrelevant ones, and after you mutate an attribute you must regenerate the text
+or the file on disk keeps the old value. The author's own words: *work in progress, API not
+stable*. Being made to name every parameter is what teaches you the namelist, and once you
+understand it, writing your own generator for what you actually need is a two-hour job.
+That is the job the Fortran generators in `examples/` do.
 
-- Every WW3 program gets a dataclass — `WW3Grid`, `WW3Prnc`, `WW3Shel`, `WW3Ounf`,
-  `WW3Ounp`, `WW3Bounc`.
-- Every namelist parameter becomes a constructor keyword, with the `%` flattened to `_`.
-  `SPECTRUM%FREQ1` → `spectrum_freq1`, `TIMESTEPS%DTMAX` → `timesteps_dtmax`.
-- Validation happens in `__post_init__`: it checks required files exist and that values
-  are compatible with the namelist definitions.
-- All classes inherit `WW3Base`, which provides:
-  - `populate_namelist()` — build the namelist text
-  - `to_file()` — write it into `runpath`
-  - `run()` — execute the program there, capturing `stdout`/`stderr`
-  - `update_text(block, action=…)` — surgically add or remove a namelist block
+## Why this repo does not depend on any of it
 
-That last one exists because the generated namelist contains every block, and `ww3_grid`
-objects to blocks it doesn't need. Hence the idiom from the docs:
+The second half of the course is a benchmarking and porting project, and its rule is
+that every number must be reproducible by the lab on its own machines from one pinned
+toolchain (lesson 01). A Python *dependency* is a second toolchain, with its own resolver
+and its own drift; the day it breaks is the day you cannot rerun last month's benchmark.
+(Availability is another matter: the pinned `#ww3` shell ships `python3` with numpy and
+xarray `(v)`; nothing in the lab code imports them.) WW4 did the same: it merged "Remove
+python dependence from compile system" on 2026-08-19 `(v)` (lesson 14). And the lab code
+has to be *inside* the parity gate — a generator, analyser or comparator outside the
+compiled, tested tree is where a silent change hides. None of that is a criticism of the
+tools above: `WW3-tools` remains the right way to validate against buoys and altimeters,
+and `wavespectra` the best way to re-partition a spectrum offline.
 
-```python
-W.update_text("&SED_NML",   action="remove")
-W.update_text("&SLOPE_NML", action="remove")
-W.update_text("&CURV_NML",  action="remove")
-W.update_text("&UNST_NML",  action="remove")
-```
+## What we use instead
 
-And the gotcha that follows from it: **after you mutate an attribute, you must regenerate
-the text.**
+| Need | Python route | What this repo uses |
+|---|---|---|
+| Namelists | `pyww3` dataclasses, Jinja2 templates | By hand from the annotated templates in `$WW3/model/nml/`, or written by the Fortran generators (`examples/01-fetch-limited-growth/make_inputs.F90`, `examples/02-regional-real-forcing/make_bathy.F90`) — lesson 03 |
+| Parameter sweeps and benchmark cases | scripted loops over `pyww3` objects | `ww_bench_case --size small\|medium\|large … -o DIR` (`kokkos/tools/bench_case/`), which writes a complete case directory; a shell loop over its arguments is the sweep — lesson 09 |
+| Forcing download | `cdsapi` for ERA5 | `get_gfs.sh` + ecCodes `grib_to_netcdf` — lesson 04 |
+| Reading output | `xarray`, `wavespectra` | `ncdump` (netcdf-c) and NCO's `ncks`; `ww_fetch_analyse` for the example-01 growth table — lesson 06 |
+| "Did the answer change?" | ad-hoc `numpy.allclose` | `nccmp-tol REF TEST [TOLERANCES]` with a versioned tolerances file and an exit code — lesson 06, and every lesson after 09 |
+| Per-routine tests | none | GoogleTest against captured-Fortran fixtures in `kokkos/tests/` — lesson 12 |
 
-```python
-W.timesteps_dtmax = 1440.
-W.text = W.populate_namelist()   # <- without this, to_file() writes the OLD value
-W.to_file()
-```
-
-### Minimal end-to-end
-
-```python
-import datetime
-from pyww3.shel import WW3Shel
-
-W = WW3Shel(
-    nproc=8,
-    runpath="runs/experiment_01/",
-    mod_def="runs/experiment_01/mod_def.ww3",
-    domain_start=datetime.datetime(2024, 7, 1, 0),
-    domain_stop=datetime.datetime(2024, 7, 8, 0),
-    input_forcing_winds=True,
-    date_field_stride=3600,
-    date_point_stride=3600,
-    date_restart_stride=3600,
-    type_point_file="runs/experiment_01/points.list",
-)
-W.to_file()   # writes ww3_shel.nml
-W.run()
-print(W.stdout)
-```
-
-### The honest assessment
-
-The author's own words: *work in progress, API not stable, use at your own risk.* It's a
-small project with a handful of stars. **Use it anyway, for learning**, because:
-
-- It's a thin layer. You can always print the namelist it generated and read it.
-- Being forced to name every parameter in Python teaches you the namelist faster than
-  copying `.nml` files does.
-- Once you understand it, writing your own generator for whatever you actually need is a
-  two-hour job.
-
-What it doesn't do: ASCII-input programs (`ww3_outf`, `ww3_strt`, `ww3_multi`). For those,
-write the file yourself.
-
-### If pyww3 doesn't fit
-
-The namelist format is trivially templatable. Jinja2 plus a YAML config gets you 80% of a
-wrapper in an afternoon, with the advantage that you control it:
-
-```python
-from jinja2 import Template
-import yaml, subprocess, pathlib
-
-cfg = yaml.safe_load(open("config.yml"))
-for prog in ("ww3_grid", "ww3_shel", "ww3_ounf"):
-    tpl = Template(pathlib.Path(f"templates/{prog}.nml.j2").read_text())
-    pathlib.Path(f"{run}/{prog}.nml").write_text(tpl.render(**cfg))
-    subprocess.run([prog], cwd=run, check=True)
-```
-
-This is, roughly, what `rompy` does properly, with pydantic validation instead of hope.
-
-## Work through the exercises
-
-[`../exercises/`](../exercises/) has six graded exercises using `pyww3`, with solutions.
-They rebuild `examples/01` from Python and then go beyond it into parameter sweeps and
-spectral analysis.
-
-→ [`09-gpu-and-performance.md`](09-gpu-and-performance.md)
+→ [`09-benchmark-profile-compile-run.md`](09-benchmark-profile-compile-run.md) — measure first.

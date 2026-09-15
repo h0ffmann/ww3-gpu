@@ -57,48 +57,105 @@ WW3 partitions the 2D spectrum into a wind sea and up to `NOSWLL` swell systems 
 watershed algorithm on the spectral surface, and reports `PHS(n)`, `PTP(n)`, `PDIR(n)` for
 each. `FIELD%PARTITION = '0 1 2 3'` in `ww3_ounf.nml` selects which to write (0 = wind sea).
 
-`wavespectra` implements the same family of algorithms (`ptm1` … `ptm5`, plus watershed and
-wave-age variants) so you can re-partition offline with different parameters without
-rerunning the model.
+Re-partitioning offline with different parameters, without rerunning the model, is
+something the third-party spectral libraries do well (lesson 08). In this repo the model's
+own partition is the one you get, and `ww3_ounp` gives you the full 2D spectrum if you want
+to do better by hand.
 
 ## Reading the output
 
-```python
-import xarray as xr
-ds = xr.open_dataset("ww3.nc")
-ds.hs.isel(time=-1).plot()
+Everything `ww3_ounf` and `ww3_ounp` write is plain netCDF-4, and the tools that ship with
+netCDF itself are enough to read it. No library, no interpreter:
+
+```bash
+ncdump -h ww3.nc                          # header: dimensions, variables, attributes, units
+ncdump -v time ww3.nc | tail -5           # the time axis, decoded by hand from its units
+ncdump -v hs ww3.nc | less                # the whole field, row-major, last time last
+ncdump -h ww3.20240701_spec.nc            # the spectral file: (time, station, frequency, direction)
 ```
 
-For spectra, use [`wavespectra`](https://github.com/wavespectra/wavespectra) — it has a
-native WW3 reader and an xarray `.spec` accessor:
+`ncdump` ships with netcdf-c and is in the pinned toolchain `(v)`. For slicing, NCO's `ncks`
+is the tool — `ncks -v hs -d time,-1 ww3.nc` prints the last time step only, and
+`-d longitude,40 -d latitude,40` picks one point — ⚠ NCO is not in the `just toolchain`
+listing; install it on the host or fall back to `ncdump` and patience.
 
-```python
-from wavespectra import read_ww3
+Two habits worth forming:
 
-dset = read_ww3("ww3.20240701_spec.nc")
+- Read `:units` and `:scale_factor` before you read a number. `FIELD%TYPE` in
+  `ww3_ounf.nml` is `[2 = SHORT, 3 = it depends, 4 = REAL]`, template default `3` `(v)`.
+  With `2` the fields are packed short integers with a scale factor, and `ncdump` prints
+  the raw packed values — it never unpacks (`ncks --unpack` does). Both course examples set
+  `FIELD%TYPE = 4` `(v)`: plain floats, and the problem goes away.
+- The 2D spectrum is `efth(time, station, frequency, direction)`, in m²/Hz/rad. `Hs` from
+  it is `4 sqrt(ΣΣ efth Δf Δθ)`. Computing that once from `ncdump` output — by hand or in
+  twenty lines of Fortran — and checking it against the `HS` field is the consistency check
+  that catches a wrong frequency range or a wrong `Δθ`. If they disagree, one of them is
+  being integrated over a different range than you think.
 
-dset.spec.hs()        # significant wave height from the spectrum
-dset.spec.tp()        # peak period
-dset.spec.dpm()       # peak direction
-dset.spec.dspr()      # directional spread
-dset.spec.stats(["hs", "tp", "dpm", "dspr"])
+### `ww_fetch_analyse`: the example-01 payoff
 
-dset.spec.oned()                        # collapse to 1D frequency spectrum
-dset.spec.split(fmin=0.04, fmax=0.10)   # just the swell band
-dset.spec.partition.ptm1()              # re-partition offline
+Example 01 is the one case with an analytic answer, and its analysis is a C++ program
+against netcdf-c rather than a notebook: [`kokkos/tools/fetch_analyse/`](../kokkos/tools/fetch_analyse/),
+built by `just kokkos-build openmp-release` and run by the example's `run.sh`.
 
-dset.isel(time=0, site=0).spec.plot(kind="contourf")   # polar plot
+```bash
+ww_fetch_analyse ww3.nc [u10]        # u10 defaults to 10 m/s and must match HOMOG_INPUT(1)%VALUE1
 ```
 
-A useful consistency check: `dset.spec.hs()` computed from the spectrum should match the
-`HS` field `ww3_ounf` wrote. If they disagree, one of them is being computed over a
-different frequency range than you think.
+It reads `hs(time, y, x)` (detecting `x` or `longitude` as the fetch axis), takes the last
+time step on the centre row, and prints one line per ~12 fetch bins:
+
+| Column | Meaning |
+|---|---|
+| `fetch [km]` | distance from the coastline at `i = 1` |
+| `WW3 Hs [m]` | what the model produced at steady state |
+| `K&C92 Hs [m]` | Kahma & Calkoen (1992) fetch law, `ê = 5.2e-7 x̂^0.9`, converted to `Hs` |
+| `ratio` | model / empirical — should sit near 1 while the sea is still growing |
+
+The header line prints the Pierson–Moskowitz fully developed limit, `Hs = 0.0246 U10²`
+(2.46 m at 10 m/s); nothing should meaningfully exceed it at steady state, and a ratio that
+drifts *down* with fetch is the sea approaching full development, not an error. An `Hs`
+that *decreases* with fetch means your wind direction convention is flipped.
+
+### Compare two runs with `nccmp-tol`
+
+The second half of the course is built on one question: *did this change alter the
+answer?* Compile flags, an OpenMP layout, a refactored routine, a Kokkos kernel — every rung
+of the ladder is gated by that question, and "eyeball two `ncdump`s" is not an answer.
+[`kokkos/tools/nccmp-tol/`](../kokkos/tools/nccmp-tol/) is the comparator the proposal
+calls "comparador por campo":
+
+```bash
+nccmp-tol REF.nc TEST.nc [TOLERANCES]       # default: kokkos/tools/nccmp-tol/tolerances.txt
+```
+
+Its contract:
+
+- Every numeric variable present in **both** files is compared over the values that are
+  neither NaN nor `_FillValue`; per variable it prints `n`, `max_abs`, `rms` and `max_rel`.
+- A variable is **judged** only if it is listed in the tolerances file, one line each:
+  `name abs rel`, `#` comments allowed. A value passes if `|d| ≤ abs` **or**
+  `|d| / max(|ref|, eps) ≤ rel`. Unlisted variables are reported, not judged.
+- Exit **0** only if every judged variable passes; **1** if any fails; **2** on an I/O error.
+  So it goes straight into a shell `if`, a CI step, or `L2_replay.sh` (lesson 12).
+
+The default file judges `hs`, `fp`, `dir`, `dp` and `t0m1`: `1e-4` relative everywhere,
+`1e-4` absolute on the scalar fields and `1e-2` absolute on the two directions (they are in
+degrees). Those numbers are a starting point for a bit-reproducible change, not a
+scientific statement; the proposal's rule is that the tolerances live in a versioned file,
+are proposed by the student and approved by the co-advisor, and a change that fails them is
+not merged. Tightening or loosening them is a commit with a reason, not a command-line
+flag.
+
+Two things it is *not*: it is not `nccmp` (the C tool of that name compares bit for bit
+and knows nothing about tolerances), and it is not a validator — it compares a run against
+another run, never against the sea.
 
 ## Validation
 
 [`NOAA-EMC/WW3-tools`](https://github.com/NOAA-EMC/WW3-tools) is the official toolkit:
 altimeter collocation, NDBC buoy matching, scatter plots, QQ plots, Taylor diagrams, and
-the standard metric set.
+the standard metric set. It is Python, and it is the right tool for that job (lesson 08).
 
 Rough expectations for a regional run with default tuning and decent winds: `Hs` bias
 within ±10%, scatter index 15–25%. Periods are worse — `Tp` in particular is a noisy

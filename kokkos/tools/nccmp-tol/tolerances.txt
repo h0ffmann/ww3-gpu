@@ -1,0 +1,6 @@
+# variable  abs      rel     (a value passes if |d| <= abs OR |d|/max(|ref|,eps) <= rel)
+hs          1e-4     1e-4
+fp          1e-4     1e-4
+dir         1e-2     1e-4
+dp          1e-2     1e-4
+t0m1        1e-4     1e-4

@@ -59,6 +59,53 @@ jobs:
           gfortran -O1 -std=f2018 -c gpu/02_do_concurrent.f90 -o /dev/null || \
             echo "note: 02_do_concurrent needs a compiler with F2018 LOCAL() support"
 
+  kokkos:
+    name: kokkos (serial-debug + openmp-release)
+    runs-on: ubuntu-latest
+    steps:
+      # .gitmodules uses ssh URLs, which a runner cannot clone, so the submodule
+      # is fetched below over https instead of by the checkout action. It also
+      # overrides the `shallow = true` in .gitmodules with --no-recommend-shallow:
+      # `nix develop ./nix-config/...` treats the directory as a flake input and
+      # asks it for revCount, which a shallow clone cannot answer. The fallback
+      # covers the other failure mode -- the pinned nix-config commit may live on
+      # a topic branch rather than on the `branch = main` that .gitmodules names,
+      # so `submodule update` can come back without it -- by asking the remote for
+      # that exact SHA, which GitHub serves for any reachable commit in a public
+      # repository.
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Fetch the pratico toolchain submodule
+        run: |
+          git -c url.https://github.com/.insteadOf=git@github.com: \
+            submodule update --init --no-recommend-shallow nix-config || {
+            sha=$(git ls-tree HEAD nix-config | awk '{print $3}')
+            git -C nix-config -c url.https://github.com/.insteadOf=git@github.com: \
+              fetch origin "$sha"
+            git -C nix-config checkout -q "$sha"
+          }
+
+      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: serial-debug (sanitizers)
+        run: |
+          nix develop ./nix-config/labs/pratico#ww3 --command bash -c '
+            cd kokkos &&
+            cmake --preset serial-debug &&
+            cmake --build --preset serial-debug &&
+            ctest --preset serial-debug'
+
+      - name: openmp-release
+        run: |
+          nix develop ./nix-config/labs/pratico#ww3 --command bash -c '
+            cd kokkos &&
+            cmake --preset openmp-release &&
+            cmake --build --preset openmp-release &&
+            ctest --preset openmp-release'
+
   links:
     name: markdown links
     runs-on: ubuntu-latest
