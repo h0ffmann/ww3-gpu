@@ -136,6 +136,11 @@ just proposal-review      # parecer do revisor-proposta sobre pubs/proposal (ABN
 just pubs                 # all three
 ```
 
+`/eli5 <topic>` explains any of this — the action balance equation, a switch file, a Kokkos
+backend, bit-for-bit parity — to someone who has never seen it, grounded in `docs/GLOSSARY.md` and
+the lessons, in the language you ask in ([`.claude/skills/eli5`](.claude/skills/eli5/SKILL.md);
+adapted from the community skill by Thariq Shihipar, MIT).
+
 Every change to `pubs/proposal/` is reviewed by the `revisor-proposta` subagent before the pull
 request — Escola Politécnica's Resolução 05 de 28/11/2012 and the DEL section structure, ABNT
 citation practice, impersonal scientific register in pt-BR, and the wave-modelling and HPC
