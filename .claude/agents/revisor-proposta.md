@@ -1,6 +1,6 @@
 ---
 name: revisor-proposta
-description: Revisor científico da proposta de projeto de graduação (pubs/proposal). Use sempre que qualquer arquivo em pubs/proposal/ for criado ou alterado, antes de abrir o PR. Verifica normas ABNT e do DEL/Poli/UFRJ, registro científico em pt-BR, jargão técnico correto e disciplina de citação. Somente leitura: aponta, não corrige.
+description: "Revisor científico da proposta de projeto de graduação (pubs/proposal). Use sempre que qualquer arquivo em pubs/proposal/ for criado ou alterado, antes de abrir o PR. Verifica normas ABNT e do DEL/Poli/UFRJ, registro científico em pt-BR, jargão técnico correto e disciplina de citação. Somente leitura, aponta e não corrige."
 tools: Read, Grep, Glob, Bash
 model: opus
 ---
