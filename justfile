@@ -188,6 +188,19 @@ book-docx:
 proposal lang="pt" style="abnt":
     nix develop "{{justfile_directory()}}" --command scripts/build_pdf.sh proposal {{lang}} {{style}}
 
+# Parecer do revisor-proposta sobre pubs/proposal (norma ABNT/DEL, registro científico, jargão).
+# Sem argumentos revisa pt/ e en/; passe caminhos para revisar só parte.
+proposal-review *files:
+    claude -p "Use o subagente revisor-proposta para revisar {{files}} e escreva o parecer." --permission-mode plan
+
+# Registrar o parecer do revisor para o texto atual (libera o portão de CI e o Stop hook).
+proposal-review-record parecer:
+    python3 scripts/proposal_review_gate.py --record {{parecer}}
+
+# O texto atual está coberto por um parecer? (o mesmo que a CI verifica)
+proposal-review-check:
+    python3 scripts/proposal_review_gate.py --check
+
 # Translate pubs/proposal/en -> pt (changed files only; --force, --dry-run).
 translate *args:
     nix develop "{{justfile_directory()}}" --command python3 scripts/translate_md.py "$@"

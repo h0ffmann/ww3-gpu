@@ -16,6 +16,22 @@ following, in order of usefulness:
    2026-09-11 and a timeline from NCEP Office Note 525. That will go stale faster than
    anything else here. Updates very welcome, with the date you checked.
 
+## The proposal (`pubs/proposal/`)
+
+Every change to `pubs/proposal/` goes through the `revisor-proposta` subagent before the pull
+request: it reviews against the Escola Politécnica norm (Resolução 05 de 28/11/2012) and the DEL
+proposal structure, ABNT citation practice (NBR 10520 and NBR 6023), impersonal scientific register
+in pt-BR, and the wave-modelling and HPC vocabulary. It reports, it does not rewrite.
+
+- `.claude/agents/revisor-proposta.md` is the reviewer; `just proposal-review` runs it, and
+  `.claude/hooks/proposal-review.sh` reminds any agent that edits a file under `pubs/proposal/`
+  to run it before finishing (`--self-test` checks the hook without Claude Code).
+- `pubs/proposal/pt/` is the reference text and `en/` its mirror: a change in one is made by hand
+  in the other, and `pubs/proposal/.translation-cache.json` is re-stamped so `just translate`
+  does not overwrite the reviewed Portuguese.
+- Placeholders such as `(REFERÊNCIA)` or `(CITAR ...)` are defects, not notes: fill them with a
+  fetched source before the PR.
+
 ## Ground rules
 
 - Keep the `⚠` / `(v)` convention. Marking uncertainty honestly is the point.
