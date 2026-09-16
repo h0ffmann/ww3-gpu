@@ -28,12 +28,12 @@
           inherit (publisher.lib.${system}) mkPdf mkDocx;
           pkgs = nixpkgs.legacyPackages.${system};
           book = mkPdf { name = "ww3-lab-course"; inherit src; command = "bash scripts/build_pdf.sh book"; };
-          # Optional docx of the same course, for readers who want to comment or edit it in Word.
-          # Kept out of `all` so the publisher Action keeps committing PDFs and nothing else.
+          # The same course as a Word document, for readers who comment or edit rather than read.
+          # Part of `all`, so it is built, uploaded and committed next to the PDFs.
           bookDocx = mkDocx { name = "ww3-lab-course-docx"; inherit src; command = "bash scripts/build_docx.sh"; };
           proposalPt = mkPdf { name = "proposal-pt"; inherit src; command = "bash scripts/build_pdf.sh proposal pt"; };
           proposalEn = mkPdf { name = "proposal-en"; inherit src; command = "bash scripts/build_pdf.sh proposal en"; };
-          all = pkgs.symlinkJoin { name = "ww3-lab-pubs"; paths = [ book proposalPt proposalEn ]; };
+          all = pkgs.symlinkJoin { name = "ww3-lab-pubs"; paths = [ book bookDocx proposalPt proposalEn ]; };
         in
         { inherit book all; book-docx = bookDocx; proposal-pt = proposalPt; proposal-en = proposalEn; default = all; });
 
