@@ -2,8 +2,8 @@
   description = "ww3-lab publications: course book and UFRJ/DEL proposal, built with nix-config's labs/publisher toolchain";
 
   inputs = {
-    # The markdown -> LaTeX -> PDF toolchain and the mkPdf helper live in nix-config so other
-    # repositories can reuse them. Point at `main` once h0ffmann/nix-config#34 is merged.
+    # The markdown -> document toolchain and the mkPdf / mkDocx helpers live in nix-config so other
+    # repositories can reuse them.
     publisher.url = "github:h0ffmann/nix-config?dir=labs/publisher";
     nixpkgs.follows = "publisher/nixpkgs"; # only for symlinkJoin; same pin as the toolchain
   };
@@ -25,15 +25,22 @@
 
       packages = forAll (system:
         let
-          inherit (publisher.lib.${system}) mkPdf;
+          inherit (publisher.lib.${system}) mkPdf mkDocx;
           pkgs = nixpkgs.legacyPackages.${system};
           book = mkPdf { name = "ww3-lab-course"; inherit src; command = "bash scripts/build_pdf.sh book"; };
+          # Optional docx of the same course, for readers who want to comment or edit it in Word.
+          # Kept out of `all` so the publisher Action keeps committing PDFs and nothing else.
+          bookDocx = mkDocx { name = "ww3-lab-course-docx"; inherit src; command = "bash scripts/build_docx.sh"; };
           proposalPt = mkPdf { name = "proposal-pt"; inherit src; command = "bash scripts/build_pdf.sh proposal pt"; };
           proposalEn = mkPdf { name = "proposal-en"; inherit src; command = "bash scripts/build_pdf.sh proposal en"; };
           all = pkgs.symlinkJoin { name = "ww3-lab-pubs"; paths = [ book proposalPt proposalEn ]; };
         in
-        { inherit book all; proposal-pt = proposalPt; proposal-en = proposalEn; default = all; });
+        { inherit book all; book-docx = bookDocx; proposal-pt = proposalPt; proposal-en = proposalEn; default = all; });
 
-      checks = forAll (system: { pubs = self.packages.${system}.default; });
+      checks = forAll (system: {
+        pubs = self.packages.${system}.default;
+        # The docx path is optional for readers, not untested in CI.
+        docx = self.packages.${system}.book-docx;
+      });
     };
 }
