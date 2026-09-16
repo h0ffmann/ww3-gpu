@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
 # PostToolUse hook on Write/Edit: when a file under pubs/proposal/ changes, tell the agent to run
 # the revisor-proposta subagent before it finishes. A reminder in additionalContext, not a block:
-# a half-written paragraph should not fail a tool call, but no proposal edit should reach a PR
-# without the review either.
+# a half-written paragraph should not fail a tool call. The binding gates are the Stop hook
+# (.claude/hooks/proposal-review-stop.sh) and the CI workflow.
 #
 #   .claude/hooks/proposal-review.sh --self-test   # no Claude Code needed
 set -euo pipefail
 
 REMINDER='Arquivo de pubs/proposal/ alterado. Antes de concluir (e antes de abrir o PR), execute o
 subagente revisor-proposta (Task/Agent, subagent_type: "revisor-proposta") sobre os arquivos
-alterados e trate os bloqueadores do parecer. Se o parecer apontar apenas ajustes recomendados,
-relate-os ao usuário em vez de aplicá-los silenciosamente.'
+alterados e trate os bloqueadores do parecer. Registre o parecer com
+`python3 scripts/proposal_review_gate.py --record <parecer.md>`; sem isso o Stop hook e a CI barram.'
 
 matches() { case "$1" in *pubs/proposal/*) return 0 ;; *) return 1 ;; esac; }
 
@@ -32,6 +32,9 @@ if [[ "${1:-}" == "--self-test" ]]; then
   out="$(emit)"
   python3 -c 'import json,sys; d=json.loads(sys.argv[1]); assert d["hookSpecificOutput"]["hookEventName"]=="PostToolUse"; assert "revisor-proposta" in d["hookSpecificOutput"]["additionalContext"]' "$out" \
     || { echo "emit: malformed JSON payload"; fail=1; }
+  # The agent definitions must parse: an unquoted description containing ": " reads as a nested
+  # mapping and Claude Code then ignores the agent (2026-09-16).
+  python3 "$(dirname "${BASH_SOURCE[0]}")/check_agent_frontmatter.py" || fail=1
   [[ $fail -eq 0 ]] && echo "proposal-review self-test ok"
   exit $fail
 fi
