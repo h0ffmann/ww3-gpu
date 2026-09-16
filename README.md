@@ -130,12 +130,20 @@ just book-docx            # the same course as build/ww3-lab-course.docx (Word, 
 just proposal en          # pubs/proposal/en/*.md -> build/proposal_en.pdf (DEL proposal layout)
 just proposal pt ieee     # Portuguese copy; second arg picks the citation style: abnt (default) | ieee
 just translate            # pubs/proposal/en -> pt via any OpenAI-compatible endpoint (changed files only)
+just proposal-review      # parecer do revisor-proposta sobre pubs/proposal (ABNT, DEL, registro científico)
 just pubs                 # all three
 ```
 
+Every change to `pubs/proposal/` is reviewed by the `revisor-proposta` subagent before the pull
+request — Escola Politécnica's Resolução 05 de 28/11/2012 and the DEL section structure, ABNT
+citation practice, impersonal scientific register in pt-BR, and the wave-modelling and HPC
+vocabulary. It reports and does not rewrite. `just proposal-review` runs it;
+`.claude/hooks/proposal-review.sh` reminds any agent that edits a file there to run it before
+finishing. See [`CONTRIBUTING.md`](CONTRIBUTING.md).
+
 The proposal is written in English under `pubs/proposal/en/`; `pubs/proposal/pt/` started as a
-machine translation and was then revised by hand (2026-09-15), so it is the reference Portuguese
-text. `just translate` only rewrites a `pt/` file when its English source changes (or with
+machine translation and was then revised by hand (2026-09-15, again 2026-09-16), so it is the
+reference Portuguese text. `just translate` only rewrites a `pt/` file when its English source changes (or with
 `--force`), which would discard that revision: after editing the English, port the change to the
 Portuguese by hand instead. The DEL
 section names are a fixed glossary in `scripts/translate_md.py`. Header fields (student, advisors,

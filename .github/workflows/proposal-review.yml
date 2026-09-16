@@ -1,0 +1,38 @@
+# proposal-review — the proposal may not reach main without a review that saw this exact text.
+# Deterministic: it compares the content hash recorded in pubs/proposal/.review.json with the hash
+# of the sources in the PR. No model runs here, no secrets are needed; the review itself is done by
+# the revisor-proposta subagent (.claude/agents/revisor-proposta.md) before the push.
+name: proposal review
+
+on:
+  pull_request:
+    paths: ['pubs/proposal/**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: python3 scripts/proposal_review_gate.py --self-test
+      - name: a recorded review must cover the proposal as it stands
+        run: python3 scripts/proposal_review_gate.py --check
+      - name: show the recorded review in the job log
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json, pathlib
+          p = pathlib.Path("pubs/proposal/.review.json")
+          if not p.is_file():
+              print("no review recorded")
+              raise SystemExit(0)
+          d = json.loads(p.read_text())
+          print(f"reviewed_at: {d.get('reviewed_at')}  reviewer: {d.get('reviewer')}")
+          print(d.get("parecer", "")[:4000])
+          PY
