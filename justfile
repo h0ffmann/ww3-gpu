@@ -180,6 +180,10 @@ pubs-shell:
 book style="abnt":
     nix develop "{{justfile_directory()}}" --command scripts/build_pdf.sh book {{style}}
 
+# Course book as a Word document -> build/ww3-lab-course.docx (pandoc's docx writer, no TeX).
+book-docx:
+    nix develop "{{justfile_directory()}}" --command scripts/build_docx.sh
+
 # Proposal PDF -> build/proposal_<lang>.pdf; lang pt|en, style abnt (default) or ieee.
 proposal lang="pt" style="abnt":
     nix develop "{{justfile_directory()}}" --command scripts/build_pdf.sh proposal {{lang}} {{style}}

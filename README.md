@@ -118,11 +118,15 @@ The `WW3/` submodule is your fork, kept in step with upstream by `just src-sync`
 
 The toolchain (pandoc, TeX Live, Python) comes from
 [`nix-config/labs/publisher`](https://github.com/h0ffmann/nix-config/tree/main/labs/publisher), which
-the root `flake.nix` consumes through its `mkPdf` helper; `nix build .` produces every PDF in a
-sandbox and CI commits them to `pdf/` on `main`.
+the root `flake.nix` consumes through its `mkPdf` and `mkDocx` helpers; `nix build .` produces every
+PDF in a sandbox and CI commits them to `pdf/` on `main`. The docx is optional and built on demand
+(`nix build .#book-docx`): pandoc writes it directly, so the LaTeX template and the citation styles
+do not apply and Word's own defaults do the styling. It stays out of `nix build .` so CI keeps
+committing PDFs and nothing else.
 
 ```bash
 just book                 # course/*.md -> build/ww3-lab-course.pdf (one chapter per lesson)
+just book-docx            # the same course as build/ww3-lab-course.docx (Word, no TeX in the path)
 just proposal en          # pubs/proposal/en/*.md -> build/proposal_en.pdf (DEL proposal layout)
 just proposal pt ieee     # Portuguese copy; second arg picks the citation style: abnt (default) | ieee
 just translate            # pubs/proposal/en -> pt via any OpenAI-compatible endpoint (changed files only)
