@@ -30,12 +30,26 @@
           book = mkPdf { name = "ww3-lab-course"; inherit src; command = "bash scripts/build_pdf.sh book"; };
           # The same course as a Word document, for readers who comment or edit rather than read.
           # Part of `all`, so it is built, uploaded and committed next to the PDFs.
-          bookDocx = mkDocx { name = "ww3-lab-course-docx"; inherit src; command = "bash scripts/build_docx.sh"; };
+          bookDocx = mkDocx { name = "ww3-lab-course-docx"; inherit src; command = "bash scripts/build_docx.sh book"; };
+          # The proposal in Word is what the advisors comment on; it has no DEL cover page.
+          proposalPtDocx = mkDocx { name = "proposal-pt-docx"; inherit src; command = "bash scripts/build_docx.sh proposal pt"; };
+          proposalEnDocx = mkDocx { name = "proposal-en-docx"; inherit src; command = "bash scripts/build_docx.sh proposal en"; };
           proposalPt = mkPdf { name = "proposal-pt"; inherit src; command = "bash scripts/build_pdf.sh proposal pt"; };
           proposalEn = mkPdf { name = "proposal-en"; inherit src; command = "bash scripts/build_pdf.sh proposal en"; };
-          all = pkgs.symlinkJoin { name = "ww3-lab-pubs"; paths = [ book bookDocx proposalPt proposalEn ]; };
+          all = pkgs.symlinkJoin {
+            name = "ww3-lab-pubs";
+            paths = [ book bookDocx proposalPt proposalEn proposalPtDocx proposalEnDocx ];
+          };
         in
-        { inherit book all; book-docx = bookDocx; proposal-pt = proposalPt; proposal-en = proposalEn; default = all; });
+        {
+          inherit book all;
+          book-docx = bookDocx;
+          proposal-pt = proposalPt;
+          proposal-en = proposalEn;
+          proposal-pt-docx = proposalPtDocx;
+          proposal-en-docx = proposalEnDocx;
+          default = all;
+        });
 
       checks = forAll (system: {
         pubs = self.packages.${system}.default;
