@@ -182,7 +182,11 @@ book style="abnt":
 
 # Course book as a Word document -> build/ww3-lab-course.docx (pandoc's docx writer, no TeX).
 book-docx:
-    nix develop "{{justfile_directory()}}" --command scripts/build_docx.sh
+    nix develop "{{justfile_directory()}}" --command scripts/build_docx.sh book
+
+# Proposal as a Word document for review -> build/proposal_<lang>.docx (no DEL cover page).
+proposal-docx lang="pt":
+    nix develop "{{justfile_directory()}}" --command scripts/build_docx.sh proposal {{lang}}
 
 # Proposal PDF -> build/proposal_<lang>.pdf; lang pt|en, style abnt (default) or ieee.
 proposal lang="pt" style="abnt":

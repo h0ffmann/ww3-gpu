@@ -120,15 +120,18 @@ The toolchain (pandoc, TeX Live, Python) comes from
 [`nix-config/labs/publisher`](https://github.com/h0ffmann/nix-config/tree/main/labs/publisher), which
 the root `flake.nix` consumes through its `mkPdf` and `mkDocx` helpers; `nix build .` produces the
 three PDFs **and the course as a Word document** in a sandbox, and CI commits all four to `pdf/` on
-`main`. pandoc writes the docx directly, so the LaTeX template and the citation styles do not apply
-and Word's own defaults do the styling; the build is byte-reproducible (pandoc dates every zip entry
+`main`. pandoc writes the docx directly, so the LaTeX templates do not apply and Word's own defaults do
+the styling — the proposal docx has no DEL cover page or signature block, and is the text for the
+advisors to comment on, not the document that gets signed. Citations are still rendered by citeproc
+with the same CSL as the PDF, so author-date calls and the reference list match the paper version; the build is byte-reproducible (pandoc dates every zip entry
 1980-01-01), so a rebuild that changes nothing commits nothing. The directory is still called `pdf/`
 for the sake of existing links, though it now holds a `.docx` as well.
 
 ```bash
 just book                 # course/*.md -> build/ww3-lab-course.pdf (one chapter per lesson)
 just book-docx            # the same course as build/ww3-lab-course.docx (Word, no TeX in the path)
-                          # published too: pdf/ww3-lab-course.docx, committed by CI on main
+just proposal-docx pt     # the proposal for review in Word -> build/proposal_pt.docx (pt|en)
+                          # both are published: pdf/*.docx, committed by CI on main
 just proposal en          # pubs/proposal/en/*.md -> build/proposal_en.pdf (DEL proposal layout)
 just proposal pt ieee     # Portuguese copy; second arg picks the citation style: abnt (default) | ieee
 just translate            # pubs/proposal/en -> pt via any OpenAI-compatible endpoint (changed files only)
