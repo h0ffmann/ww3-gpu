@@ -167,7 +167,9 @@ Bend cannot follow, and that alone removes it from consideration for those routi
 kernel the risk is elsewhere.
 
 **Design for F32 permanently.** F64 has been implemented once, by an outsider, and closed
-without comment (§3.1); there is no public plan, and the Metal backend cannot have it. The
+without comment (§3.1); there is no public plan, and the Metal backend cannot have it. That
+patch is preserved on our fork's `f64` branch (§7.4), which changes nothing here: it is an
+optional second arm, not a dependency, and every gate below is a float32 gate. The
 experiment therefore does not wait for a wider type: every gate below is a tolerance against
 the float32 Fortran reference, and a precision-driven failure is a reportable result, not a
 "try again when F64 lands". Even if F64 existed, the workstation's GeForce part runs fp64 at a
@@ -277,10 +279,16 @@ plan and its outcome stay in one place. Nothing under `kokkos/` changes except o
 | `bend/snl1/LAWS.bend`, `PROOF.bend` | step 4 |
 | `kokkos/tools/fixture_dump/` | the fixture → text dumper and the bits comparator, C++ over `fixture_io`, built with the tree so `just kokkos-test` keeps them compiling |
 | `justfile` | `bend-dispersion`, `bend-snl1`, `bend-snl1-bench` recipes; each fails with a message if `bend` is not on `PATH` |
+| `bend-lang/` | the compiler itself: a submodule of `h0ffmann/bend`, tracking `main` (§7.4). Not ours to edit |
 
-Toolchain rule: install Bend **on the host, from a pinned release asset, by hand**, and record
-`bend --version` in `bend/README.md`. No script in this repo pipes the installer to a shell;
-the installer was failing on the day of writing anyway (issue #822). CI does not run Bend.
+Toolchain rule: build Bend **from the `bend-lang/` submodule** (§7.4), or install it on the
+host from a pinned release asset by hand, and record `bend --version` in `bend/README.md`. No
+script in this repo pipes the installer to a shell; the installer was failing on the day of
+writing anyway (issue #822). CI does not run Bend.
+
+Note the two directories are different things and neither is the other: `bend-lang/` is the
+compiler, a submodule of a fork we do not write; `bend/` is our own Bend source, the only part
+of this experiment that is ours.
 
 ### 7.2 Steps
 
@@ -316,6 +324,50 @@ timing without the `--gpu off` control (issue #826 documents exactly that mistak
 **What does not change.** `kokkos/PORT_STATUS.md` keeps its rule that a row claims only what a
 command in this repo reproduces `(v)`; a Bend row would need Bend in the toolchain, which it
 is not, so the numbers live here, not there.
+
+### 7.4 The compiler: a submodule of our own fork
+
+`bend-lang/` is `h0ffmann/bend`, a fork of `bendlang/bend`, wired in the way `WW3/` and
+`nix-config/` already are: `branch = main`, `shallow = true` `(v, .gitmodules)`. Initialise it
+with `git submodule update --init --depth 1 bend-lang`; it is about 76 MB, mostly the README's
+animated media `(v, measured)`.
+
+**Why a fork and not the upstream URL.** Two reasons, and only the second is specific to Bend.
+A fork pins a mirror we control, so a force-push or a yanked release upstream cannot take the
+toolchain out from under a half-finished experiment — upstream force-pushes `main`, which is
+visible in this project's own PR history `(v, a base_ref_force_pushed event on #795)`. And the
+fork is where a patch upstream will not take can live.
+
+**What the fork carries.** Branch `f64`, at `ee3832e`, is the head of upstream PR #795 —
+64-bit floats, closed unmerged by the project lead 1h42m after it was opened, with no review
+and no comment `(v, API, 2026-09-18)`. The implementation is real and is preserved on that
+branch: commit `492ea6b` is +413/-3 across `bend2/base.bend`, `bend2/bend.ts` and
+`bend2/comp.ts`, and `base.bend` at the branch tip has 136 occurrences of `F64` against 0 on
+`main` `(v, checked at both refs)`. The PR's own file list on GitHub shows only the five test
+specimens and a gates cap bump, which is an artifact of the base force-push, not the state of
+the branch ⚠ (the cause was not traced further; the branch content is what was checked).
+
+**Why the submodule tracks `main`, not `f64`.** The default build must be stock Bend, so that
+every number this experiment reports is a number about the language as it actually ships. F64
+is one `git -C bend-lang checkout f64` away, and any result produced that way is labelled as
+coming from a patched compiler or it is not a result.
+
+**What F64 is and is not for, here.** It is *not* a prerequisite: §4 establishes that WW3's
+DIA is float32 throughout, so stock Bend is already width-matched to the kernel this plan
+ports. Carrying the patch buys two things — a double-precision reference arm computed inside
+Bend, which turns "is this drift ours or the language's?" into a measurement rather than an
+argument; and an answer to the F64 question for any *other* WW3 routine that does use
+`REAL(8)`. Neither is on the critical path. If the rebase cost ever exceeds that value, the
+branch stays where it is as a record and the submodule keeps tracking `main`.
+
+**The rebase burden, measured.** Upstream `main` is 49 commits ahead of the PR's base
+(`46df6be`), touching 38 files `(v, compare API, 2026-09-18)`, and the patch edits three of
+the hottest files in the compiler. Upstream also shipped v2.0.8 and v2.0.9 eight minutes apart
+on that same day, and spent it tightening F32 semantics across lanes (issues #797, #801). A
+rebase is therefore expected to conflict, and the branch is not expected to stay green without
+work ⚠ — no rebase was attempted here.
+
+---
 
 ---
 
