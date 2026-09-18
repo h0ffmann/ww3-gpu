@@ -369,6 +369,70 @@ work ⚠ — no rebase was attempted here.
 
 ---
 
+### 7.5 Porting Bend to F64: what it would actually take
+
+Written down because the fork makes it a live option, not because this experiment needs it
+(§4: the DIA is float32). Everything here is from `WONTFIX.txt`, `AGENTS.md` and
+`gates/repo.ts` at upstream `main`, read 2026-09-18 `(v)`.
+
+**F64 is not refused.** `WONTFIX.txt` is an explicit list of what the project will not do,
+sorted into DESIGN, CAPACITY, OPEN, RUNTIME and SOON. F64 appears nowhere in it `(v, grep)`.
+Neither the type nor 64-bit arithmetic is a declared non-goal, which is worth knowing before
+reading the close of #795 as a verdict on the idea.
+
+**The likely reason a finished patch was closed anyway** is the OPEN section's own heading:
+"no solution we trust yet; *patches would cost us control of the codebase*" `(v, verbatim)`.
+That is a statement about who writes the compiler, not about what it should contain. A 413-line
+outside patch across the three central files is the exact shape that sentence rejects. Any
+attempt to land F64 upstream should assume the constraint is authorship and review bandwidth,
+and propose accordingly — smallest possible diff, one file at a time, with the theory
+unchanged.
+
+**The hard constraint: `bend2/bend.ts` is off limits.** `AGENTS.md` says it "is the language
+(parser, theory, checker) and is human-written: do not edit it" `(v, verbatim)`. PR #795 edited
+it — about 45 lines, by its author's own account, purely to add the `d` literal suffix to the
+`NUMBER` rule and the two bit-conversion helpers. So the single cheapest change to make an F64
+patch acceptable is **to ship no literal syntax at all**: no `2d`, no `1.5e3d`. Values would be
+built with `F32.to_f64` and `U32.to_f64`-style conversions, or read from text with `F64.read`,
+and the parser would not move. That is uglier for a human writing constants and almost
+irrelevant for a generated numeric kernel, which is the use case that wants F64 in the first
+place.
+
+**The size gates are real and already conflict.** `gates/repo.ts` caps every file by ttok:
+`bend2/base.bend` 24000, `bend2/comp.ts` 61500, `bend2/bend.ts` 41000 `(v)`. PR #795 bumped
+base to 25000 and comp.ts from 61000 to 63000; upstream has since moved comp.ts's own cap to
+61500 on `main` `(v)`. A rebase therefore conflicts on the gate file itself, in addition to the
+three source files — the mechanical part of the 49-commit gap in §7.4.
+
+**Four lanes, and one of them cannot have it.** `comp.ts` carries the C, Metal, CUDA and JS
+runtimes from one source `(v, AGENTS.md)`. Metal Shading Language has no fp64, which is why
+#795's helpers are `#ifndef __METAL_VERSION__`-guarded, and `WONTFIX.txt` fixes the backend set
+at "Metal and CUDA only" `(v)` — so the gap cannot be closed by adding a lane. F64 is therefore
+permanently a type that exists on three of four backends, and a program using it is not
+portable across the language's own targets. That is a genuine design cost to the maintainer,
+not an implementation detail, and it is the strongest technical argument against the feature.
+
+**The JS lane inverts.** A JS number *is* an IEEE binary64, so F64 would be exact there for
+free, while F32 needs `Math.fround` and, per `WONTFIX.txt`, still loses NaN payload bits
+because a bit-exact F32 measured 7-8x slower `(v)`. F64 is the type that lane represents
+natively. Worth stating in any upstream proposal: it removes a documented infidelity rather
+than adding one.
+
+**What was not established** ⚠: whether a new primitive type obliges a change to
+`bend2/bend.lean`, the Lean mechanization of the core (#795 did not touch it, which is either
+correct or an omission — not checked); whether NVRTC compiles the `double` helpers at the
+optimization settings Bend uses; and what fp64 costs on the target card beyond the ~1/64 figure
+`03_precision.f90` quotes for the RTX 4090.
+
+**If we carry it anyway.** Keep `f64` as a record, not a maintained branch: rebase it only when
+an experiment actually needs the arm, accept that `gates/repo.ts` and the three source files
+will conflict each time, and never let a number measured on the patched compiler into a table
+without saying so. The alternative that costs nothing upstream — compensated summation in F32
+(Kahan or two-sum) where a reduction is what drifts — is the first thing to try if the DIA's
+error turns out to be accumulation rather than contraction ⚠ (not evaluated here).
+
+---
+
 ---
 
 ## 8. `LAWS.bend` for a numeric kernel: what is realistic
