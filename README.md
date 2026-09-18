@@ -21,9 +21,10 @@ measure it, then port a kernel to C++/Kokkos and prove it still gives the same a
 | `scripts/` | Get, build, and run WW3 (and SWAN); stage upstream regression tests |
 | `switches/` | Annotated switch files (WW3's compile-time feature selection) |
 | `env/` | conda environment + Dockerfile |
-| `docs/` | [`AWESOME-WW3_202609.md`](docs/AWESOME-WW3_202609.md), a curated link list; [`AGENTS_KOKKOS_202609.md`](docs/AGENTS_KOKKOS_202609.md), agent rules for a phased WW3 → Kokkos port; [`KOKKOS_H100_PLAN_202609.md`](docs/KOKKOS_H100_PLAN_202609.md), the single-H100 port plan |
+| `docs/` | [`AWESOME-WW3_202609.md`](docs/AWESOME-WW3_202609.md), a curated link list; [`AGENTS_KOKKOS_202609.md`](docs/AGENTS_KOKKOS_202609.md), agent rules for a phased WW3 → Kokkos port; [`KOKKOS_H100_PLAN_202609.md`](docs/KOKKOS_H100_PLAN_202609.md), the single-H100 port plan; [`BEND_TRYOUT_202609.md`](docs/BEND_TRYOUT_202609.md), a one-week plan to port `W3SNL1` to Bend 2 as a third arm of the parity harness (proposal, not run) |
 | `nix-config/` | Git submodule (sparse: only `labs/pratico`) — the pinned Nix toolchain WW3 is built with |
 | `WW3/` | Git submodule — the [h0ffmann/WW3](https://github.com/h0ffmann/WW3) fork of NOAA-EMC/WW3, with upstream as a second remote |
+| `bend-lang/` | Git submodule — the [h0ffmann/bend](https://github.com/h0ffmann/bend) fork of bendlang/bend, tracking `main`. Not fetched by CI and used by nothing yet; it pins the compiler for the tryout in [docs/BEND_TRYOUT_202609.md](docs/BEND_TRYOUT_202609.md), and its `f64` branch keeps upstream's closed 64-bit-float PR. `git submodule update --init --depth 1 bend-lang` |
 | `pubs/` | Publications: the course book and the UFRJ/DEL project proposal (EN source, PT generated); PDFs land in `pdf/` on `main` |
 | `justfile` | Every task in this repo: `just` lists them |
 
