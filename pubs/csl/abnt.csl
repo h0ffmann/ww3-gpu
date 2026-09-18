@@ -402,6 +402,8 @@ em caixa alta. Utiliza-se antes do nome da conferencia a expressao "In". Segundo
         <text suffix=", " macro="author-short"/>
         <!--Seperando os autores das datas usando virgula-->
         <text macro="issued-year"/>
+        <text variable="year-suffix"/>
+        <!--Sufixo a, b quando autor e ano coincidem (NBR 10520)-->
         <text prefix=", " macro="citation-locator"/>
       </group>
     </layout>
@@ -659,13 +661,17 @@ em caixa alta. Utiliza-se antes do nome da conferencia a expressao "In". Segundo
             <text macro="event"/>
             <!--Nome do evento, conferencia-->
           </group>
-          <text variable="publisher-place"/>
-          <!--Local-->
-          <text variable="publisher" suffix=", "/>
-          <!--Editor-->
-          <text macro="issued" prefix=", " suffix=". "/>
-          <!--Data-->
-          <text macro="access"/>
+          <group delimiter=", " suffix=". ">
+            <group delimiter=": ">
+              <text variable="publisher-place"/>
+              <!--Local-->
+              <text variable="publisher"/>
+              <!--Editor-->
+            </group>
+            <text macro="issued"/>
+            <!--Data-->
+          </group>
+          <text macro="access" suffix="."/>
           <!--URL, data do acesso-->
         </else>
       </choose>
