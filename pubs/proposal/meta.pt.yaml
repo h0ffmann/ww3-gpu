@@ -6,8 +6,13 @@ doc_kind: PROPOSTA DE PROJETO DE GRADUAÇÃO
 student: Matheus Hoffmann Fernandes Santos
 email: hoffmann@poli.ufrj.br
 advisor: "A definir, Dr."            # orientador DEL/UFRJ — preencher
-coadvisor: "Pedro Veras Guimarães, Dr."
-coadvisor_affiliation: "LabECO, Departamento de Engenharia Mecânica, UFSC"
+# Papéis ainda a confirmar com a coordenação: se o DEL aceitar um orientador de fora do
+# departamento, Nelson Violante de Carvalho passa de coorientador a orientador.
+coadvisors:
+  - name: "Pedro Veras Guimarães, Dr."
+    affiliation: "LabECO, Departamento de Engenharia Mecânica, UFSC"
+  - name: "Nelson Violante de Carvalho, D.Sc."
+    affiliation: "Programa de Engenharia Oceânica, COPPE/UFRJ"
 city: Rio de Janeiro
 date: 16 de setembro de 2026
 label_student: Aluno
