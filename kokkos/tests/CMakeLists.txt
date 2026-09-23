@@ -1,6 +1,6 @@
 # kokkos/tests/CMakeLists.txt
 # GoogleTest suites. Naming convention: L1_* are unit tests against analytic or
-# captured-Fortran fixtures; L2_* (Task 5) replay a whole WW3 regtest.
+# captured-Fortran fixtures; L2_* replay a whole WW3 regtest.
 #
 # SPDX-License-Identifier: MIT
 
@@ -37,12 +37,9 @@ if(WW_ENABLE_FORTRAN)
   add_subdirectory(fixtures)
 endif()
 
-# Task 5: comparator
 ww_add_test(L1_test_nccmp_tol)
 target_link_libraries(L1_test_nccmp_tol PRIVATE nccmp_tol_lib)
-# Task 6: bench case generator
 ww_add_test(L1_test_bench_case)
 target_link_libraries(L1_test_bench_case PRIVATE bench_case_lib)
-# Task 6: fetch-growth analyser (examples/01), on a synthetic ww3_ounf-shaped file
 ww_add_test(L1_test_fetch_analyse)
 target_link_libraries(L1_test_fetch_analyse PRIVATE fetch_analyse_lib)

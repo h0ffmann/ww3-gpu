@@ -45,8 +45,6 @@ set(WW_TEST_ENVIRONMENT "OMP_PROC_BIND=false;OMP_NUM_THREADS=2")
 # WAVEWATCH III reaches them through. It hands its include path, Kokkos and the
 # WW_DETERMINISTIC contract to everything that links it.
 add_library(ww_kokkos STATIC)
-# With only headers in target_sources(), CMake cannot infer a link language yet.
-set_target_properties(ww_kokkos PROPERTIES LINKER_LANGUAGE CXX)
 target_include_directories(ww_kokkos PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_link_libraries(ww_kokkos PUBLIC Kokkos::kokkos)
 ww_apply_warnings(ww_kokkos)
