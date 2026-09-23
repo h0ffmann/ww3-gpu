@@ -13,7 +13,6 @@
 # body paragraph, ~2 sentences), Tested and Cost rows (the commits' `Tested:`/`Cost:` trailers), and one
 # "What changed" bullet per commit. Its first line is a marker that lets pr-body.yml regenerate
 # the body on every push; delete that line to hand-edit the description and keep it.
-# Ported from h0ffmann/marola (MIP, Cost and stack handling dropped).
 set -euo pipefail
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=scripts/lib/uprd_title.sh
@@ -23,7 +22,7 @@ dry_run=0; body_file=""; pr_arg=""
 for arg in "$@"; do
   case "$arg" in
     --dry-run) dry_run=1 ;;
-    -h|--help) sed -n '2,16p' "$0"; exit 0 ;;
+    -h|--help) sed -n '2,15p' "$0"; exit 0 ;;
     [0-9]*|\#[0-9]*) pr_arg="${arg#\#}" ;;
     *) body_file="$arg" ;;
   esac
@@ -116,7 +115,7 @@ generate_tested() {
 
 generate_cost() {
   # One entry per commit, oldest first, joined with `<br>` (a table cell can't hold a newline):
-  # the commit's own `Cost:` trailer, else "not recorded". No estimator here, unlike marola.
+  # the commit's own `Cost:` trailer, else "not recorded".
   local sha short line text out="" sep=""
   while IFS= read -r sha; do
     [ -n "$sha" ] || continue

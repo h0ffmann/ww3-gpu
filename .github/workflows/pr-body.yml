@@ -1,6 +1,6 @@
 # pr-body — fill a pull request's description from its commits the moment it exists, so a PR
 # opened from the GitHub UI (or `gh pr create` without `just uprd`) never sits on the raw template
-# with its `<!-- fill -->` placeholders. Ported from h0ffmann/marola.
+# with its `<!-- fill -->` placeholders.
 name: PR body
 
 on:
