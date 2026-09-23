@@ -2,7 +2,7 @@
 
 Five exercises, one per lesson of the second half of the course, 30–90 minutes each.
 Each sheet says what to produce and how to check it; `solutions/` has a working version
-of every one. Shell, Fortran and C++ only — the same languages as the lab code.
+of every one. Shell, Fortran and C++ only, the same languages as the lab code.
 
 | | Sheet | Lesson | You produce |
 |---|---|---|---|
@@ -57,4 +57,4 @@ table allows 1e-4" is.
 When a solution script stops, read the log it points at (`exercises/solutions/out/exNN/`)
 before re-running. `ww3_grid` and `ww3_shel` are unusually clear about which namelist
 block or which file they did not like; a build failure is almost always a missing switch
-keyword (`OMPG` for threads, say — not `NC4`, which is inert in 7.14: netCDF output only needs CMake to find netCDF).
+keyword (`OMPG` for threads, say, not `NC4`, which is inert in 7.14: netCDF output only needs CMake to find netCDF).

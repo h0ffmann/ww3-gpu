@@ -26,7 +26,7 @@ source terms, `w3pro*`/`w3uqck*` propagation, `w3gath`/`w3scat`/`mpi_*` communic
 
 1. **Build with `-pg`.** Both compile and link need it: `FFLAGS=-pg LDFLAGS=-pg` before
    `scripts/02_build_ww3.sh` (which configures from scratch, so CMake reads them). Keep
-   the `Release` build type — a profile of `-O0` code tells you about `-O0`.
+   the `Release` build type: a profile of `-O0` code tells you about `-O0`.
 
 2. **Run the case, then run `ww3_shel` alone.** Every `-pg` program writes `gmon.out` in
    its working directory, so the pipeline's last program (`ww3_ounf`) overwrites

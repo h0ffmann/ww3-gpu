@@ -46,8 +46,8 @@ language cost for the same answer to the same tolerance*, can be answered with n
    `WORDS` stores an `F32` as a 32-bit word `(v, comp.ts:161)`. The real constraint is that
    `Array<T>` is `Type`, so it can never be `+`: two parallel branches cannot read one array,
    and the way to share is `Array.clone`, an O(n) block copy `(v, comp.ts:4066-4076)`. The
-   experiment's central unknown is therefore **fork granularity against clone cost** — clone
-   once per fork leaf, then gather sequentially inside it — not a per-read penalty. §3, §6.
+   experiment's central unknown is therefore **fork granularity against clone cost**: clone
+   once per fork leaf, then gather sequentially inside it (not a per-read penalty). §3, §6.
 4. **The CPU build is `clang -std=c11 -O3 … -lm` with no `-ffp-contract` flag** `(v)`. The
    Kokkos port measured 1.1e-5 relative drift from exactly one fused multiply-add and turned
    contraction off to reach bit-parity; Bend exposes no such knob, so bit-identity should not
@@ -91,7 +91,7 @@ All rows `(v)` on 2026-09-18 from `guide/GUIDE.md` (607 lines), `bend2/base.bend
 
 | Item | Finding |
 |---|---|
-| Number types | `Nat`, `U32`, `F32`. `F32` is `F32{data: Word(32n)}`. `grep -c F64 base.bend` = 0; `grep -c I32` = 0. No signed integer, no double. **F64 history:** exactly one artifact in the repository's history, PR #795 "F64: 64-bit floats — type, laws, literals, host + CUDA lanes", opened 2026-09-18 00:58 UTC by an outside contributor (`author_association: NONE`; the PR's file list shows 6 files, +155/−2, but that is the tests-and-gate commit alone — the implementation commit is +413/−3 across three files, see §7.4) and closed unmerged by the project lead at 02:40 UTC the same day with zero comments and zero reviews `(v, GitHub API)`. Its body claims a full mirror of the F32 surface, a `1.5d` literal, C and CUDA lanes, 161 cases against a binary64 oracle and an RTX 3090 run ⚠ (the author's claims, unreviewed). It had to guard its helpers with `#ifndef __METAL_VERSION__` because Metal Shading Language has no fp64 `(v, PR body)`: a 64-bit float breaks the "same C file runs on every chip" uniformity the language is built on. No roadmap statement exists either way; the same day's issues (#797, #801) and a commit tightening `F32.read` show the maintainers hardening 32-bit semantics across lanes, not adding a 64-bit one `(v)`. |
+| Number types | `Nat`, `U32`, `F32`. `F32` is `F32{data: Word(32n)}`. `grep -c F64 base.bend` = 0; `grep -c I32` = 0. No signed integer, no double. **F64 history:** exactly one artifact in the repository's history, PR #795 "F64: 64-bit floats — type, laws, literals, host + CUDA lanes", opened 2026-09-18 00:58 UTC by an outside contributor (`author_association: NONE`; the PR's file list shows 6 files, +155/−2, but that is the tests-and-gate commit alone: the implementation commit is +413/−3 across three files, see §7.4) and closed unmerged by the project lead at 02:40 UTC the same day with zero comments and zero reviews `(v, GitHub API)`. Its body claims a full mirror of the F32 surface, a `1.5d` literal, C and CUDA lanes, 161 cases against a binary64 oracle and an RTX 3090 run ⚠ (the author's claims, unreviewed). It had to guard its helpers with `#ifndef __METAL_VERSION__` because Metal Shading Language has no fp64 `(v, PR body)`: a 64-bit float breaks the "same C file runs on every chip" uniformity the language is built on. No roadmap statement exists either way; the same day's issues (#797, #801) and a commit tightening `F32.read` show the maintainers hardening 32-bit semantics across lanes, not adding a 64-bit one `(v)`. |
 | F32 arithmetic | `add sub mul div mod pow neg abs sqrt`; `exp log log2 log10`; `sin cos tan asin acos atan atan2 sinh cosh tanh`; `floor ceil trunc round`; `min max clamp lerp square hypot`; `is_eq … is_ge`. All the primitives are `law` declarations without a `def` (bendlang/bend#827 explains the convention), lowered by `comp.ts` to `(f32)expf(x)`-style C. |
 | Comparison | `cmp` (returning `Cmp`) is not defined on `F32`; the `is_lt` family is. Bit operations are `U32` only. |
 | Conversions | `U32.to_f32` is numeric, `(f32)(u32)x`. `F32.to_u32` truncates and returns 0 outside `[0, 2^32)` (`comp.ts:430-432`). `F32.bits` reinterprets an `F32` as its `U32` pattern. **There is no `F32.from_bits`.** |
@@ -108,9 +108,9 @@ by `L1_test_snl1_tables` `(v)`.
 
 | Item | Finding |
 |---|---|
-| `Array<T>` | `ALeaf{value}` / `ANode{xs, ys}`, a balanced binary tree of 2^d slots (`base.bend:67-69`); `[v : T*8n]` or `[v : T^3n]`. It is a `Type`: exactly one owner, a read hands the array back beside the element, `a[i] <- v` rewrites in place. Those `base.bend` definitions (`:2222-2235`) are the type-level model and what the lazy `bend file.bend` interpreter walks; on every compiled lane `array_get` is a `call: true` intrinsic (`comp.ts:290-313`) lowering to `blk_at` + `blk_read` — a mask-and-shift and one indexed load (`comp.ts:1874-1906, 4036-4053`) — so an index is O(1) pointer arithmetic, not a tree walk `(v)`. A `match` on `ANode` is the expensive operation: it copies halves, O(n log n) words to the leaves (`comp.ts:4017-4024`), so hot code uses `Array.get`/`set`/`map` and never pattern-matches the tree `(v)`. Indexes wrap. The `a[i]` sugar assumes `Array<U32>`; other element types call `Array.get`/`Array.set`. The guide says this "will be generalized soon". |
-| Sharing | Reusable values are `+` and carry a reference count; only `Data`-kinded values can be `+`. `Array<T>` is `Type`, so it can never be `+`: two parallel branches cannot read the same array. The escape is `Array.clone`, which emits `blk_copy` — an O(n) block copy per clone (`comp.ts:4066-4076`) `(v)`, so sharing is paid once per fork leaf rather than per read. The numeric benches in the tree do not use `Array` at all: `nbody` keeps a system's state in 21 scalar parameters, `tree-matmul` represents a matrix as a `Data` quad-tree shared through `+` binders. |
-| Flat buffers | At the surface, none: no slice, no view, and `File.read_bytes` returns `List<&2, U32>`, one element per byte. Underneath, `Array<F32>` *is* contiguous — `lay_arr` gives it `arr: false`, i.e. a BUF of 2^c u32 packed into 2^`buf_wcls(c)` words (`comp.ts:1011-1014, 4015-4016`) `(v)`. So the storage a numeric kernel wants exists; what is missing is a *shareable* one, since the type is single-owner. |
+| `Array<T>` | `ALeaf{value}` / `ANode{xs, ys}`, a balanced binary tree of 2^d slots (`base.bend:67-69`); `[v : T*8n]` or `[v : T^3n]`. It is a `Type`: exactly one owner, a read hands the array back beside the element, `a[i] <- v` rewrites in place. Those `base.bend` definitions (`:2222-2235`) are the type-level model and what the lazy `bend file.bend` interpreter walks; on every compiled lane `array_get` is a `call: true` intrinsic (`comp.ts:290-313`) lowering to `blk_at` + `blk_read` (a mask-and-shift and one indexed load, `comp.ts:1874-1906, 4036-4053`), so an index is O(1) pointer arithmetic, not a tree walk `(v)`. A `match` on `ANode` is the expensive operation: it copies halves, O(n log n) words to the leaves (`comp.ts:4017-4024`), so hot code uses `Array.get`/`set`/`map` and never pattern-matches the tree `(v)`. Indexes wrap. The `a[i]` sugar assumes `Array<U32>`; other element types call `Array.get`/`Array.set`. The guide says this "will be generalized soon". |
+| Sharing | Reusable values are `+` and carry a reference count; only `Data`-kinded values can be `+`. `Array<T>` is `Type`, so it can never be `+`: two parallel branches cannot read the same array. The escape is `Array.clone`, which emits `blk_copy` (an O(n) block copy per clone, `comp.ts:4066-4076`) `(v)`, so sharing is paid once per fork leaf rather than per read. The numeric benches in the tree do not use `Array` at all: `nbody` keeps a system's state in 21 scalar parameters, `tree-matmul` represents a matrix as a `Data` quad-tree shared through `+` binders. |
+| Flat buffers | At the surface, none: no slice, no view, and `File.read_bytes` returns `List<&2, U32>`, one element per byte. Underneath, `Array<F32>` *is* contiguous: `lay_arr` gives it `arr: false`, i.e. a BUF of 2^c u32 packed into 2^`buf_wcls(c)` words (`comp.ts:1011-1014, 4015-4016`) `(v)`. So the storage a numeric kernel wants exists; what is missing is a *shareable* one, since the type is single-owner. |
 | Sizes | Arrays are powers of two. The fixture's working set is `UE` of 792 and eight arrays of 720 floats (`nspecy + nth`, `nspecx + nth`, read from the fixture header `(v)`), so a Bend version pads to 1024 slots each. |
 
 ### 3.3 Parallelism and the GPU
@@ -196,8 +196,8 @@ not measured here), so the GPU row would be the wrong place to want it.
 2. **libm.** Settled `(v)`: the C template is `f32_rewrap((f32)$o(f32_unbox($0)))` over
    `sqrt exp log log2 log10 sin cos tan asin acos atan sinh cosh tanh floor ceil trunc`, with
    `$o` the bare libm name and `<math.h>`, not `<tgmath.h>`, included (`comp.ts:226-228, 643-651,
-   3171`). So Bend computes `(f32)exp((double)x)` — the double entry point, argument promoted,
-   result narrowed. gfortran's `EXP` on a default `REAL` calls `expf` ⚠. This cuts the opposite
+   3171`). So Bend computes `(f32)exp((double)x)` (the double entry point, argument promoted,
+   result narrowed). gfortran's `EXP` on a default `REAL` calls `expf` ⚠. This cuts the opposite
    way from the earlier guess: double-then-round is very nearly correctly rounded, so Bend's
    transcendentals are the *more* accurate of the two and the drift they contribute is small.
    Same host libm, but not necessarily the same
@@ -267,7 +267,7 @@ fixture (.bin) ──dump──► text (decimal, ≤9 sig. digits)
 
 | # | Kernel | Divide-and-conquer fit | Harness in the repo | Verdict |
 |---|---|---|---|---|
-| 1 | `W3SNL1` body (sections 1–4) | **Medium.** Parallel over `nspecx` bins in section 3 and `nspec` bins in section 4 is a balanced tree; parallel over points is another. Each bin performs sixteen indexed reads of `UE` through the `ip`/`im` tables in section 3 and thirty-two reads of `SA*`/`DA*` through `ic` in section 4 `(v, snl1_dia.cpp)`, all from arrays every branch must read. Each read is O(1) `(v, §3.2)`; what costs is that the branches cannot share the array, so each fork leaf pays an `Array.clone` block copy. Modelling the tables as `+` `Data` trees instead would trade those O(1) loads for a real pointer chase — the slower option, not the fix. Section 2's high-frequency tail reads the row below and stays a sequential fold `(v)`. No reduction anywhere `(v)`. | Fortran reference, fixture, L1 test with justified tolerance, `ww_bench_snl1`, ledger row: all present `(v)`. | **The target.** Agrees with the premise of this proposal, with clone cost against fork granularity as the thing to measure. |
+| 1 | `W3SNL1` body (sections 1–4) | **Medium.** Parallel over `nspecx` bins in section 3 and `nspec` bins in section 4 is a balanced tree; parallel over points is another. Each bin performs sixteen indexed reads of `UE` through the `ip`/`im` tables in section 3 and thirty-two reads of `SA*`/`DA*` through `ic` in section 4 `(v, snl1_dia.cpp)`, all from arrays every branch must read. Each read is O(1) `(v, §3.2)`; what costs is that the branches cannot share the array, so each fork leaf pays an `Array.clone` block copy. Modelling the tables as `+` `Data` trees instead would trade those O(1) loads for a real pointer chase (the slower option, not the fix). Section 2's high-frequency tail reads the row below and stays a sequential fold `(v)`. No reduction anywhere `(v)`. | Fortran reference, fixture, L1 test with justified tolerance, `ww_bench_snl1`, ledger row: all present `(v)`. | **The target.** Agrees with the premise of this proposal, with clone cost against fork granularity as the thing to measure. |
 | 2 | Dispersion Newton, `gpu/01_dispersion.f90` | **Best.** Independent over (point, frequency), a handful of scalars per leaf, `tanh`, `sqrt`, division, fixed eight iterations `(v)`. Exactly the "uniform numeric work" the guide says the GPU is for. | None: the program prints a residual and two values; `bench/README.md` says nothing in `gpu/` or `bench/` was run ⚠. A twenty-line gfortran driver printing `TRANSFER(k, 0)` bit patterns would make one. | **Warm-up, day 1.** Cheapest possible answer to "does Bend's `F32.tanh` agree with gfortran's, and does `!` dispatch on the 4090 under nix". It is WW3-shaped (`WAVNU1` in `w3dispmd.F90` ⚠ not opened; the `WW3/` submodule is empty in a fresh clone) but not WW3 code. |
 | 3 | `kernel_bench.f90` proxy (`Sin − Sds` sub-stepping) | Good: uniform trip count, `sqrt` only, per-bin independent `(v)`. | A checksum, no reference. | A proxy of a proxy; skip unless 1 and 2 leave time. |
 | 4 | `W3SIN4` / `W3SDS4` | Reductions for the integral parameters (`team_reduce` in the Kokkos plan `(v, course/13)`): a fold is natural in Bend but changes summation order. | Not ported, no fixture `(v, PORT_STATUS)`. | Not first. |
@@ -293,10 +293,10 @@ plan and its outcome stay in one place. Nothing under `kokkos/` changes except o
 | `justfile` | `bend-dispersion`, `bend-snl1`, `bend-snl1-bench` recipes; each fails with a message if `bend` is not on `PATH` |
 | `bend-lang/` | the compiler itself: a submodule of `h0ffmann/bend`, tracking `main` (§7.4). Not ours to edit |
 
-Toolchain rule: build Bend **from the `bend-lang/` submodule** (§7.4) — it is TypeScript, run
+Toolchain rule: build Bend **from the `bend-lang/` submodule** (§7.4). It is TypeScript, run
 under bun (`bun bend2/main.ts …`; `bend2/pack/` carries `bun.lock`, and `main.ts` is "the .bend
 loader for bun and node" `(v, upstream AGENTS.md)`), so a JS runtime has to be on the host;
-`flake.nix` pins gfortran and clang, not bun ⚠ — or install it on the host from a pinned release
+`flake.nix` pins gfortran and clang, not bun ⚠. Or install it on the host from a pinned release
 asset by hand, and record `bend --version` in `bend/README.md`. No
 script in this repo pipes the installer to a shell; the installer was failing on the day of
 writing anyway (issue #822). CI does not run Bend.
@@ -346,18 +346,18 @@ is not, so the numbers live here, not there.
 `bend-lang/` is `h0ffmann/bend`, a fork of `bendlang/bend`, wired in the way `nix-config/`
 already is: `branch = main`, `shallow = true`. (`WW3/` is `branch = develop` with no `shallow`
 `(v, .gitmodules)`.) Initialise it
-with `git submodule update --init --depth 1 bend-lang`; the working tree is 76 MB — `media/` 34 MB and the generated
-checker corpora under `bench/checker/` 34 MB, not mostly media — plus about 32 MB of objects in
+with `git submodule update --init --depth 1 bend-lang`; the working tree is 76 MB (`media/` 34 MB and the generated
+checker corpora under `bench/checker/` 34 MB, not mostly media), plus about 32 MB of objects in
 `.git/modules/bend-lang`, so roughly 108 MB on disk `(v, measured)`. CI does not fetch it:
 `ci.yml` checks out with `submodules: false` and initialises only `nix-config` `(v)`.
 
 **Why a fork and not the upstream URL.** Two reasons, and only the second is specific to Bend.
 A fork pins a mirror we control, so a force-push or a yanked release upstream cannot take the
-toolchain out from under a half-finished experiment — upstream force-pushes `main`, which is
+toolchain out from under a half-finished experiment: upstream force-pushes `main`, which is
 visible in this project's own PR history `(v, a base_ref_force_pushed event on #795)`. And the
 fork is where a patch upstream will not take can live.
 
-**What the fork carries.** Branch `f64`, at `ee3832e`, is the head of upstream PR #795 —
+**What the fork carries.** Branch `f64`, at `ee3832e`, is the head of upstream PR #795,
 64-bit floats, closed unmerged by the project lead 1h42m after it was opened, with no review
 and no comment `(v, API, 2026-09-18)`. The implementation is real and is preserved on that
 branch: commit `492ea6b` is +413/-3 across `bend2/base.bend`, `bend2/bend.ts` and
@@ -372,7 +372,7 @@ coming from a patched compiler or it is not a result.
 
 **What F64 is and is not for, here.** It is *not* a prerequisite: §4 establishes that WW3's
 DIA is float32 throughout, so stock Bend is already width-matched to the kernel this plan
-ports. Carrying the patch buys two things — a double-precision reference arm computed inside
+ports. Carrying the patch buys two things: a double-precision reference arm computed inside
 Bend, which turns "is this drift ours or the language's?" into a measurement rather than an
 argument; and an answer to the F64 question for any *other* WW3 routine that does use
 `REAL(8)`. Neither is on the critical path. If the rebase cost ever exceeds that value, the
@@ -383,7 +383,7 @@ branch stays where it is as a record and the submodule keeps tracking `main`.
 the hottest files in the compiler. Upstream also shipped v2.0.8 and v2.0.9 eight minutes apart
 on that same day, and spent it tightening F32 semantics across lanes (issues #797, #801). A
 rebase is therefore expected to conflict, and the branch is not expected to stay green without
-work ⚠ — no rebase was attempted here.
+work ⚠ (no rebase was attempted here).
 
 ---
 
@@ -400,8 +400,8 @@ reading the close of #795 as a verdict on the idea.
 
 **Why a finished patch was closed anyway is not stated anywhere** ⚠. Two headings in
 `WONTFIX.txt` are candidates, and neither covers F64: the OPEN section's parenthetical, "no
-solution we trust yet; *patches would cost us control of the codebase*" `(v, verbatim)` — which
-lists one item, #797 — and the CAPACITY heading, "a small team keeps the language at a size it
+solution we trust yet; *patches would cost us control of the codebase*" `(v, verbatim)` (which
+lists one item, #797), and the CAPACITY heading, "a small team keeps the language at a size it
 can maintain" `(v)`. The file's own preamble says "Read this file before you open an issue", so
 it governs issues rather than pull requests. The hypothesis worth carrying is that the binding
 constraint is authorship and review bandwidth, not the feature; it is a hypothesis, not a
@@ -409,10 +409,10 @@ finding.
 
 **The hard constraint: `bend2/bend.ts` is off limits.** `AGENTS.md` says it "is the language
 (parser, theory, checker) and is human-written: do not edit it" `(v, verbatim)`. PR #795 edited
-it — `bend2/bend.ts +27/-2` in commit `492ea6b` `(v, API; its author called it "about 45
-lines")` — purely to add the `d` literal suffix to the `NUMBER` rule and the two bit-conversion
-helpers. The obvious remedy — ship no literal syntax at
-all, no `2d`, no `1.5e3d` — **was already offered and did not save the PR**: its author wrote
+it (`bend2/bend.ts +27/-2` in commit `492ea6b` `(v, API; its author called it "about 45
+lines")`), purely to add the `d` literal suffix to the `NUMBER` rule and the two bit-conversion
+helpers. The obvious remedy (ship no literal syntax at
+all, no `2d`, no `1.5e3d`) **was already offered and did not save the PR**: its author wrote
 "Say the word and I'll split the PR — the `comp.ts` + `base.bend` half stands alone; only the
 literal syntax would wait for your hand", and the PR was closed with no reply `(v, #795 body)`.
 So no diff shape is *known* to be acceptable, and the constraint should be read as authorship
@@ -427,12 +427,12 @@ place.
 `bend2/base.bend` 24000, `bend2/comp.ts` 61500, `bend2/bend.ts` 41000 `(v)`. PR #795 bumped
 base to 25000 and comp.ts from 61000 to 63000; upstream has since moved comp.ts's own cap to
 61500 on `main` `(v)`. A rebase therefore conflicts on the gate file itself, in addition to the
-three source files — the mechanical part of the 49-commit gap in §7.4.
+three source files (the mechanical part of the 49-commit gap in §7.4).
 
 **Four lanes, and one of them cannot have it.** `comp.ts` carries the C, Metal, CUDA and JS
 runtimes from one source `(v, AGENTS.md)`. Metal Shading Language has no fp64, which is why
 #795's helpers are `#ifndef __METAL_VERSION__`-guarded, and `WONTFIX.txt` fixes the backend set
-at "Metal and CUDA only" `(v)` — so the gap cannot be closed by adding a lane. F64 is therefore
+at "Metal and CUDA only" `(v)`, so the gap cannot be closed by adding a lane. F64 is therefore
 permanently a type that exists on three of four backends, and a program using it is not
 portable across the language's own targets. That is a genuine design cost to the maintainer,
 not an implementation detail.
@@ -449,15 +449,15 @@ natively.
 
 **What was not established** ⚠: whether a new primitive type obliges a change to
 `bend2/bend.lean`, the Lean mechanization of the core (#795 did not touch it, which is either
-correct or an omission — not checked); whether NVRTC compiles the `double` helpers at the
+correct or an omission, not checked); whether NVRTC compiles the `double` helpers at the
 optimization settings Bend uses; and what fp64 costs on the target card beyond the ~1/64 figure
 `03_precision.f90` quotes for the RTX 4090.
 
 **If we carry it anyway.** Keep `f64` as a record, not a maintained branch: rebase it only when
 an experiment actually needs the arm, accept that `gates/repo.ts` and the three source files
 will conflict each time, and never let a number measured on the patched compiler into a table
-without saying so. The alternative that costs nothing upstream — compensated summation in F32
-(Kahan or two-sum) where a reduction is what drifts — is the first thing to try if the DIA's
+without saying so. The alternative that costs nothing upstream (compensated summation in F32,
+Kahan or two-sum, where a reduction is what drifts) is the first thing to try if the DIA's
 error turns out to be accumulation rather than contraction ⚠ (not evaluated here).
 
 ---
@@ -513,10 +513,10 @@ single owner, and a toolchain that changes daily. Any one of those keeps Bend of
 route list; together they make the question "could Bend be an arm of the port" already
 answered, and the remaining question "what does it cost to say the same thing" worth one week.
 
-**Revisit when** all three hold: a native library target exists (#813 — today a declared
+**Revisit when** all three hold: a native library target exists (#813, today a declared
 non-goal in `WONTFIX.txt`, not merely unbuilt `(v)`), a `Data`-shareable numeric buffer exists so
-parallel branches can read one array without cloning it, and `F64` exists — the last has been
-submitted once and closed without a stated reason (PR #795 `(v)`), so do not plan around it. Any
+parallel branches can read one array without cloning it, and `F64` exists (the last has been
+submitted once and closed without a stated reason, PR #795 `(v)`, so do not plan around it). Any
 two are not enough.
 
 ---
@@ -525,7 +525,7 @@ two are not enough.
 
 - ⚠ Whether `CC=<wrapper adding -ffp-contract=off>` is respected end to end, and what NVRTC's
   contraction default is in Bend's GPU build. Step 3 tests the first.
-- ~~Whether Bend's `F32.exp` lowers to `expf` or to `exp` on a promoted double~~ — resolved
+- ~~Whether Bend's `F32.exp` lowers to `expf` or to `exp` on a promoted double~~, resolved
   `(v)`, see §4: it is the double entry point, promoted and narrowed (`comp.ts:226-228, 3171`).
 - ⚠ `strtof` correctness for 9-digit decimals on the workstation's libc, and the
   double-rounding of source literals. Step 2 makes the first moot for this fixture.

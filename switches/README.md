@@ -24,7 +24,7 @@ diff <(tr ' ' '\n' < $WW3/model/bin/switch_default | sort) \
 ```
 
 If a key is misspelled or a mandatory group is missing, `ww3_grid` will usually fail loudly
-at configure/preprocess time rather than silently — which is the good case. If in doubt,
+at configure/preprocess time rather than silently, which is the good case. If in doubt,
 start from `$WW3/model/bin/switch_default` or `switch_Ifremer2` and edit one group at a time.
 
 ## The files
@@ -32,7 +32,7 @@ start from `$WW3/model/bin/switch_default` or `switch_Ifremer2` and edit one gro
 | File | For |
 |---|---|
 | `switch_lab_shrd` | Serial. Start here. Easiest to debug, fine for the course examples. |
-| `switch_lab_mpi`  | `DIST MPI` — distributed memory. Use once examples work; run with `mpirun -np N ./ww3_shel`. |
+| `switch_lab_mpi`  | `DIST MPI`: distributed memory. Use once examples work; run with `mpirun -np N ./ww3_shel`. |
 | `switch_lab_st6`  | Same as MPI but swaps the source-term package to `ST6` (observation-based) so you can A/B it against `ST4`. |
 
 ## Reading a switch line
@@ -42,7 +42,7 @@ Keys come in mutually-exclusive *groups*. You pick exactly one from most groups.
 | Key(s) | Group | Meaning |
 |---|---|---|
 | `F90` | language | Use Fortran 90 style / system calls |
-| `NOGRB` | GRIB | No GRIB output. Alternatives write GRIB via NCEP libs — don't bother. |
+| `NOGRB` | GRIB | No GRIB output. Alternatives write GRIB via NCEP libs, and it isn't worth it. |
 | `NOPA` | coupling | No coupling to an external driver |
 | `LRB4` | I/O | 4-byte record length for binary files. Affects `mod_def.ww3`/`restart.ww3` portability. |
 | `NC4` | output | Legacy "netCDF-4 output" key. **Inert in 7.14** `(v)`: not in `model/src/cmake/switches.json` or `model/bin/all_switches`, and no `W3_NC4` guard in `model/src`, so no build honours it. `ww3_ounf`/`ww3_ounp` are built whenever CMake finds netCDF; netCDF-3 vs -4 is `FILE%NETCDF` in `ww3_ounf.nml`. Kept here because it is harmless and appears in older switch files. |
@@ -66,7 +66,7 @@ Keys come in mutually-exclusive *groups*. You pick exactly one from most groups.
 
 ## Exercise
 
-Build twice — once with `switch_lab_shrd` (ST4) and once with `switch_lab_st6` (ST6) — into
+Build twice (once with `switch_lab_shrd`, ST4, and once with `switch_lab_st6`, ST6) into
 two separate build directories, run `examples/01-fetch-limited-growth` against both, and plot
 Hs(fetch) for each. That difference *is* the current state of the art disagreeing with itself,
 and it's much bigger than most people assume.

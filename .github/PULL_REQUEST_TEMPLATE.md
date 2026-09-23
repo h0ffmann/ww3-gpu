@@ -1,6 +1,6 @@
-<!-- Generated from the branch's commits by `just uprd` — write the commit right and there is nothing to fill here. -->
+<!-- Generated from the branch's commits by `just uprd`: write the commit right and there is nothing to fill here. -->
 
-**Summary** — <!-- fill: one or two sentences — what changed and why -->
+**Summary** <!-- fill: one or two sentences, what changed and why -->
 
 | | |
 |---|---|

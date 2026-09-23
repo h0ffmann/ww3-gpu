@@ -6,7 +6,7 @@ build, and knowing when to reach for it is a real skill.
 
 ## What it is
 
-**SWAN** — Simulating WAves Nearshore — is a third-generation spectral wave model from
+**SWAN** (Simulating WAves Nearshore) is a third-generation spectral wave model from
 **Delft University of Technology** (Booij, Ris & Holthuijsen). Same governing equation as
 WW3, same family of source terms, deliberately different numerics.
 
@@ -20,7 +20,7 @@ Three places, and the third is new enough that most tutorials don't mention it:
 |---|---|
 | Official site + downloads | https://swanmodel.sourceforge.io/download/download.htm `(v)` |
 | SourceForge file releases | https://sourceforge.net/projects/swanmodel/files/swan/ `(v)` |
-| **Git — TU Delft GitLab** | **https://gitlab.tudelft.nl/citg/wavemodels/swan** `(v)` |
+| **Git, TU Delft GitLab** | **https://gitlab.tudelft.nl/citg/wavemodels/swan** `(v)` |
 | Release notes / modifications | https://swanmodel.sourceforge.io/modifications/modifications.htm `(v)` |
 | Implementation manual (build guide) | https://swanmodel.sourceforge.io/download/zip/swanimp.pdf `(v)` |
 
@@ -52,14 +52,14 @@ and is what most older tutorials assume. Either works; CMake is where it's going
 
 ### Switches, SWAN-style
 
-SWAN has the same *idea* as WW3's switch file — compile-time feature selection — but a
+SWAN has the same *idea* as WW3's switch file (compile-time feature selection) but a
 different mechanism. Options live as **specially-formatted comments inside the `.ftn`
 sources**, stripped or activated by a preprocessing step. For example `!/impi` marks MPI
 code in `swmod1.ftn`, and `!ADC` marks the ADCIRC-coupling hooks scattered across several
 files `(v)`.
 
 Practical consequence, identical to WW3: if you change what's enabled, you rebuild. And
-the same class of confusion applies — "I turned on MPI and nothing happened" is a stale
+the same class of confusion applies: "I turned on MPI and nothing happened" is a stale
 build directory.
 
 ## SWAN versus WW3: the actual difference
@@ -73,11 +73,11 @@ everything else.
 | Propagation scheme | **Explicit** (`PR3 UQ`, third-order ULTIMATE QUICKEST) | **Implicit** sweeps; unconditionally stable |
 | Timestep | **CFL-limited.** Halve Δx, halve Δt. | No CFL constraint. Stationary mode has no timestep at all. |
 | Sweet spot | Global and basin scale, deep water, long integrations | Coastal, high resolution, small domains |
-| Stationary mode | no | **yes** — solve directly for the steady state |
+| Stationary mode | no | **yes**: solve directly for the steady state |
 | Triads (3-wave) | `TR0`/`TR1`, limited | Mature; matters in the surf zone |
 | Diffraction | no | approximate (phase-decoupled refraction-diffraction) |
 | Obstacles | subgrid obstruction grids | explicit obstacle lines with transmission/reflection coefficients |
-| Ice physics | `IC1`–`IC5`, `IS1`/`IS2` — far ahead | minimal |
+| Ice physics | `IC1`–`IC5`, `IS1`/`IS2`, far ahead | minimal |
 | Multi-grid mosaic | `ww3_multi`, two-way | no |
 | Parallelism | MPI "shuffle" decomposition, OpenMP | OpenMP and MPI; block-Jacobi or block-wavefront strategies for the implicit sweeps `(v)` |
 
@@ -89,8 +89,8 @@ scheme doesn't care. That is why the standard architecture in coastal work is
 Note the trade: SWAN buys unconditional stability at the cost of numerical diffusion and,
 in non-stationary mode, accuracy that depends on how many sweeps you let it do. The
 implementation manual's advice on block-Jacobi versus block-wavefront is precisely about
-where that trade lands on a parallel machine. WW3's convergence property — the thing
-Office Note 525 insists WW4 must preserve — is not free, and SWAN made the other choice.
+where that trade lands on a parallel machine. WW3's convergence property (the thing
+Office Note 525 insists WW4 must preserve) is not free, and SWAN made the other choice.
 
 ## When to use which
 
@@ -111,13 +111,13 @@ Office Note 525 insists WW4 must preserve — is not free, and SWAN made the oth
 - **Delft3D-WAVE** wraps SWAN and couples it to Delft3D-FLOW. Open source.
 - **ADCIRC+SWAN** is the US storm-surge standard; the coupling hooks are in SWAN's source
   behind the `!ADC` switch.
-- **[rompy-swan](https://rom-py.github.io/rompy-swan/)** `(v)` — pydantic-validated,
+- **[rompy-swan](https://rom-py.github.io/rompy-swan/)** `(v)`: pydantic-validated,
   type-safe SWAN configuration from Python or YAML, with data interfaces for NetCDF and
   THREDDS inputs. This is the most polished Python front-end for *any* spectral wave
   model, and noticeably more mature than anything equivalent for WW3.
 - **[wavespectra](https://github.com/wavespectra/wavespectra)** `(v)` reads SWAN spectra
   natively (`read_swan`), so your post-processing is shared between the two models.
-- **swantools** (PyPI) — older, lighter; reads TABLE, SPECOUT and BLOCK output into pandas.
+- **swantools** (PyPI): older, lighter; reads TABLE, SPECOUT and BLOCK output into pandas.
 - **OMUSE** packages SWAN for the Oceanographic Multi-purpose Software Environment.
 
 ## Exercise

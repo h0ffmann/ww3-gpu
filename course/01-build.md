@@ -15,7 +15,7 @@ export WW3=$PWD
 
 `just get` does the clone for you (into `~/src/WW3`; `WW3_DATA=1 just get` also fetches the
 bundle). The repo also carries a fork of WW3 as the `WW3/` submodule, pinned to one
-revision — that is the tree the Kokkos port in lessons 12–13 is written against.
+revision. That is the tree the Kokkos port in lessons 12–13 is written against.
 
 **Don't use the GitHub release tarball.** The newest tagged release is 6.07.1, from April
 2019. Real work happens on `develop` and `main`, and the wider community is running v7.14.x.
@@ -23,7 +23,7 @@ Clone a branch.
 
 ## Dependencies
 
-- Fortran 90 compiler — gfortran, ifort/ifx, nvfortran, or Cray
+- Fortran 90 compiler: gfortran, ifort/ifx, nvfortran, or Cray
 - **CMake ≥ 3.19**
 - **NetCDF ≥ 4.1.1 with Fortran bindings.** The C library alone won't do; `ww3_ounf` and
   friends need `netcdf.mod`. On Debian/Ubuntu: `libnetcdff-dev`.
@@ -46,8 +46,8 @@ just toolchain         # print the exact pinned versions
 just build [switch]    # full rebuild of $WW3 with a switch file (default: switches/switch_lab_shrd)
 ```
 
-What the shell pins `(v)` — this is `just toolchain` on the lab machine, see the root
-`README.md`:
+What the shell pins `(v)` (this is `just toolchain` on the lab machine; see the root
+`README.md`):
 
 | Component | Pinned |
 |---|---|
@@ -61,7 +61,7 @@ What the shell pins `(v)` — this is `just toolchain` on the lab machine, see t
 
 `just build` is `scripts/02_build_ww3.sh` run inside that shell: it deletes `build/`,
 configures with `-DSWITCH=<file> -DCMAKE_BUILD_TYPE=Release`, and runs `make -j`. It always
-starts from scratch, on purpose — see the next section for why. A third argument selects
+starts from scratch, on purpose (see the next section for why). A third argument selects
 `Debug`. `just rt` builds with a regtest's *own* switch file and runs the test (~30 s for
 `ww3_tp1.1`), which is the fastest "is the toolchain sane" check there is.
 
@@ -86,11 +86,11 @@ one key at a time:
 | `NC4` | netCDF | Legacy "enable netCDF-4 output" key. **Inert in 7.14** `(v)`: absent from `model/src/cmake/switches.json` and `model/bin/all_switches`, and no `W3_NC4` guard exists anywhere in `model/src`, so neither the CMake nor the classic build does anything with it. `ww3_ounf`/`ww3_ounp` are built whenever CMake finds netCDF; netCDF-3 vs -4 is the `FILE%NETCDF` key (3 or 4) of `ww3_ounf.nml` (`NCTYPE` inside the program). Kept in the lab switch files because it is harmless and turns up in older switch files. |
 | `SHRD` | parallelism | Shared memory, i.e. a serial binary. The alternative is `DIST MPI`; `OMPG OMPH` add OpenMP on top. |
 | `PR3 UQ` | propagation | Third-order ULTIMATE QUICKEST with the Garden Sprinkler correction. The standard choice. |
-| `FLX0` | air–sea flux | No separate flux routine: `ST4` computes its own stress in `W3SPR4`, so **upstream pairs `ST4` with `FLX0`** — `switch_NCEP_st4`, `switch_Ifremer2`, `switch_NCEP_glwu` and all 83 regtest switch files containing `ST4` `(v)`. The lab switch files used to carry `FLX2` (Tolman & Chalikov 1996, `w3flx2md.F90`, the companion of `ST2`); that pairing was replaced because `w3srcemd.F90` calls `W3FLX2` under `W3_FLX2` right after `W3SPR4`, overwriting the stress `ST4` had just computed `(v)`. `FLX4` goes with `ST6`. |
+| `FLX0` | air–sea flux | No separate flux routine: `ST4` computes its own stress in `W3SPR4`, so **upstream pairs `ST4` with `FLX0`**: `switch_NCEP_st4`, `switch_Ifremer2`, `switch_NCEP_glwu` and all 83 regtest switch files containing `ST4` `(v)`. The lab switch files used to carry `FLX2` (Tolman & Chalikov 1996, `w3flx2md.F90`, the companion of `ST2`); that pairing was replaced because `w3srcemd.F90` calls `W3FLX2` under `W3_FLX2` right after `W3SPR4`, overwriting the stress `ST4` had just computed `(v)`. `FLX4` goes with `ST6`. |
 | `LN1` | linear input | Cavaleri & Malanotte-Rizzoli seeding, so a spectrum can grow from calm. |
 | `ST4` | **source terms** | Ardhuin et al. 2010 input and dissipation. Lesson 07. |
 | `STAB0` | stability | No air–sea stability correction on the wind input. |
-| `NL1` | nonlinear | The Discrete Interaction Approximation — `W3SNL1`, the first kernel this course ports (lesson 12). |
+| `NL1` | nonlinear | The Discrete Interaction Approximation: `W3SNL1`, the first kernel this course ports (lesson 12). |
 | `BT1` | bottom friction | JONSWAP empirical. |
 | `DB1` | depth breaking | Battjes–Janssen. |
 | `MLIM` | limiter | Miche-style shallow-water `Hs` limiter. |
@@ -106,12 +106,12 @@ one key at a time:
 Two things to internalise:
 
 1. **Every key is a compile-time decision.** The build system preprocesses the `.F90`
-   sources against these keys, so **changing the switch file requires a full rebuild** —
+   sources against these keys, so **changing the switch file requires a full rebuild**:
    not `make`, a full `rm -rf build` (which is what `just build` does). "I turned on ST4
    and nothing changed" is nearly always a stale build directory.
 2. **That makes the switch file the first rung of the optimisation ladder.** Together with
-   the compiler flags it is a *matrix* — `SHRD` vs `DIST MPI` vs `OMPG OMPH`, `-O2` vs
-   `-O3 -march=native` — and each cell of that matrix either reproduces
+   the compiler flags it is a *matrix* (`SHRD` vs `DIST MPI` vs `OMPG OMPH`, `-O2` vs
+   `-O3 -march=native`), and each cell of that matrix either reproduces
    the reference run bit for bit or it doesn't. Lesson 09 builds that matrix and shows how
    WW3's own regression suite is used as the gate.
 
@@ -146,7 +146,7 @@ just regtest ww3_tp2.2                 # or: bash scripts/03_run_regtest.sh $WW3
 
 That script runs each program in turn and tees its stdout, rather than hiding everything
 behind the `run_test` harness. Watch what each one prints. `ww3_grid` in particular emits a
-long, genuinely useful summary of the grid it built and every namelist it read — always
+long, genuinely useful summary of the grid it built and every namelist it read. Always
 keep it: `ww3_grid | tee ww3_grid.out`.
 
 ## Things that go wrong
@@ -156,7 +156,7 @@ keep it: `ww3_grid | tee ww3_grid.out`.
 | `Cannot open include file 'netcdf.inc'` / undefined netCDF symbols | NetCDF Fortran bindings missing, or built with a *different* compiler. `.mod` files are compiler-specific and not interchangeable. |
 | `ww3_ounf`/`ww3_ounp` are not built at all | CMake did not find netCDF: the five netCDF programs are only added when `NetCDF_Fortran_FOUND` is true (`model/src/CMakeLists.txt`). Adding `NC4` to the switch file changes nothing `(v)`. |
 | `ww3_grid` demands an obstruction file you don't have | `FLAGTR` in `namelists.nml` isn't 0. |
-| Model runs, output is all zeros | Forcing never arrived. Check `log.ww3` — it prints a per-timestep table showing which inputs updated. |
+| Model runs, output is all zeros | Forcing never arrived. Check `log.ww3`: it prints a per-timestep table showing which inputs updated. |
 | Changed physics, nothing changed | Stale `build/`. `rm -rf build`, or `just build`. |
 | Changed the grid, downstream programs behave oddly | Stale `mod_def.ww3`. Rerun `ww3_grid`. |
 | `error reading input file` | `.inp` vs `.nml` mismatch. |
@@ -165,11 +165,11 @@ keep it: `ww3_grid | tee ww3_grid.out`.
 ## Building with nvfortran
 
 Possible and worth doing as a CPU build, but you must rebuild HDF5 and NetCDF with
-`nvfortran` first — distro packages are gfortran-built and their `.mod` files are unusable.
+`nvfortran` first: distro packages are gfortran-built and their `.mod` files are unusable.
 [`../gpu/build_netcdf_nvfortran.sh`](../gpu/build_netcdf_nvfortran.sh) sketches it and
 [`../gpu/README.md`](../gpu/README.md) explains the sandbox around it. Lesson 10 uses the
 `gpu/` directive examples as the contrast that motivates Kokkos; the GPU port itself
-(lessons 11–13) does not need `nvfortran` at all — it is C++ compiled with `nvcc` inside
+(lessons 11–13) does not need `nvfortran` at all: it is C++ compiled with `nvcc` inside
 the pinned `#cuda` shell.
 
 → [`02-anatomy-of-a-run.md`](02-anatomy-of-a-run.md)

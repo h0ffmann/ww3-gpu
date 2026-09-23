@@ -4,7 +4,7 @@
 > checkout and stays that way; this file is the recipe for the fork branch
 > (`just src-pr` / a `WW3` fork), written so that it can be applied and reviewed
 > hunk by hunk. Everything below was read off the tree at
-> `WW3/model/src` (WAVEWATCH III 7.14, `develop`) — the line numbers are real and
+> `WW3/model/src` (WAVEWATCH III 7.14, `develop`). The line numbers are real and
 > were produced with the `grep` commands quoted next to each hunk.
 >
 > The Fortran shown in the hunks is a derivative of WW3's own source and carries
@@ -22,7 +22,7 @@ bisectable against the model it is replacing.
 
 The shim holds exactly one set of tables and one set of device buffers in a
 file-static context, and nothing in it is locked. Three limits follow, and the
-patch below has to respect all three — each one is a wrong answer or an
+patch below has to respect all three: each one is a wrong answer or an
 out-of-bounds read, not a slowdown:
 
 | limit | why | where the patch handles it |
@@ -65,7 +65,7 @@ Three facts about this call decide the shape of the patch:
   takes it as an array of `NPTS`. The patch needs a one-element local.
 * `SPEC`, `VSNL` and `VDNL` are `REAL(NSPEC)` and `CG1` is `REAL(NK)`
   (declarations at lines 684–685 and 716), contiguous, column-major and **based
-  at 1** — exactly the `NPTS = 1` case of the shim's batch layout, so they can be
+  at 1**: exactly the `NPTS = 1` case of the shim's batch layout, so they can be
   passed straight through with no copy and no reshape.
 
   `CG1` is worth a second look, because `W3ADATMD` allocates the group velocity
@@ -94,7 +94,7 @@ Three facts about this call decide the shape of the patch:
 ```
 
 **Both of those `USE`s are needed, and it is easy to believe otherwise.**
-`W3SRCE` does import `NDSE` — but at line 652, *inside* `#ifdef W3_NNT`:
+`W3SRCE` does import `NDSE`, but at line 652, *inside* `#ifdef W3_NNT`:
 
 ```console
 $ sed -n '650,653p' WW3/model/src/w3srcemd.F90
@@ -109,7 +109,7 @@ same `W3_NNT` block, so on a default switch set the name is simply not declared
 and `WRITE (NDSE, ...)` would not compile. `EXTCDE` is never imported here at
 all: `W3SRCE` takes only `STRACE` (line 648, under `W3_S`) and `EXTOPN`/`EXTIOF`
 (line 651, under `W3_NNT`) from `W3SERVMD`. Hence both lines, inside the
-`W3_KOKKOS` guard so that neither is a duplicate when `W3_NNT` is on — `ONLY`
+`W3_KOKKOS` guard so that neither is a duplicate when `W3_NNT` is on: `ONLY`
 imports of the same entity from the same module are allowed to repeat.
 
 ### Hunk 1b — a one-element `KDMEAN` (near the locals at line 712)
@@ -182,7 +182,7 @@ and under `W3_OMP0` from an `!$OMP PARALLEL DO` at `w3wavemd.F90:1551-1552`,
 reaching `W3SRCE` at line 1618. The shim has **one** file-static context and no
 lock: `grow()` may be reallocating the device buffers on one thread while
 another `deep_copy`s into them. That is a data race, and on a GPU it is a race
-over a device allocation — a segfault or silent corruption, not a rounding
+over a device allocation: a segfault or silent corruption, not a rounding
 difference.
 
 The hunk therefore serialises the call with a named `!$OMP CRITICAL`. Two
@@ -263,7 +263,7 @@ section *2.a Model definition* (line 733):
 
 with `USE W3KOKKOSMD` and `INTEGER :: IERR_K` added to the declarations of
 `W3INIT`, and `XFR, DTH, LAM, SNLC1, KDCON, KDMN, SNLS1, SNLS2, SNLS3, FACHFE`
-added to the existing `USE W3GDATMD, ONLY: ...` list — `NK`, `NTH` and `SIG` are
+added to the existing `USE W3GDATMD, ONLY: ...` list. `NK`, `NTH` and `SIG` are
 already on it (`w3initmd.F90:391-393`), and unlike in `W3SRCE`, `NDSO`, `NDSE`
 and `EXTCDE` are all unconditionally in scope here (`w3initmd.F90:384`, `:398`). `WW_KOKKOS_FINALIZE`
 belongs at the end of `W3WAVE`'s teardown; leaving it out leaks the device
@@ -283,7 +283,7 @@ and `W3SETG` points the module-level `SIG` at it (`w3gdatmd.F90:2529`), lower
 bound and all. The C interface declares `REAL(C_FLOAT), INTENT(IN) :: SIG(*)`,
 an assumed-size dummy, which carries **no** lower bound: what crosses the
 boundary is the address of the first element of the actual argument. Pass the
-bare name `SIG` and the shim reads `SIG(0:NK-1)` — every quadruplet built one
+bare name `SIG` and the shim reads `SIG(0:NK-1)`: every quadruplet built one
 frequency bin low, every `AF11` scaled by the wrong `f**11`, and a source term
 that is smooth, plausible and wrong. `SIG(1)` is WW3's own sequence-association
 idiom for exactly this and costs nothing.
@@ -298,7 +298,7 @@ The lab's reference cannot catch this: `snl1_ref.F90:86` allocates `SIG(NK)`, so
 clean abort with a message rather than corruption, which is the honest phase-1
 behaviour: the shim keeps one `Config`, one `Tables` and one set of device
 buffers, and a second `WW_SNL1_INIT` releases the first grid's. Supporting
-several grids means giving the shim a handle per grid — a real API change, and
+several grids means giving the shim a handle per grid: a real API change, and
 deliberately out of scope here.
 
 ---
@@ -334,7 +334,7 @@ break every build without the Kokkos library. Listing it once, in
 `switches.json`, is both the smaller patch and the correct one.
 
 `w3kokkosmd.F90` is copied from
-`kokkos/src/fortran_iface/w3kokkosmd.F90` into `model/src/` unchanged — it has
+`kokkos/src/fortran_iface/w3kokkosmd.F90` into `model/src/` unchanged. It has
 no dependency on anything else in this lab, which is why it is built as its own
 target here (`ww_kokkos_f`) rather than folded into the C++ library.
 
@@ -364,8 +364,8 @@ also needs the C++ runtime. CMake handles this by itself when the imported
 target carries `IMPORTED_LINK_INTERFACE_LANGUAGES CXX`; if the Kokkos tree is
 pulled in with `add_subdirectory()` instead of `find_package()`, CMake gets it
 from the target's own linker language and nothing extra is needed. This is the
-same mechanism that lets `kokkos/tests/fixtures/shim_driver` — a Fortran
-program linking `ww_kokkos_f` — link here today.
+same mechanism that lets `kokkos/tests/fixtures/shim_driver` (a Fortran
+program linking `ww_kokkos_f`) link here today.
 
 `ww_kokkos` does **not** export a CMake package config yet; that is the one
 piece of this section that is speculative, and the fork branch will either add

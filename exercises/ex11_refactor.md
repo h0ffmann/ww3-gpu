@@ -7,7 +7,7 @@
 ## Goal
 
 Take a routine written the way most of WW3 is written and rewrite it the way lesson 10
-asks, without changing its answer. Then write the test that says so — the smallest
+asks, without changing its answer. Then write the test that says so: the smallest
 instance of the parity discipline the whole port runs on.
 
 The legacy routine (`w3sds_old` in the solution file, forty lines) is a Komen-type
@@ -15,7 +15,7 @@ whitecapping term in the shape of WW3's `W3SDS1`: from the action spectrum it fo
 mean energy and mean frequency, a steepness-like parameter, and a dissipation rate that
 multiplies the spectrum. It has every habit the lesson names:
 
-- an **external subroutine** — no module, so callers get an *implicit interface* and the
+- an **external subroutine**: no module, so callers get an *implicit interface* and the
   compiler checks neither argument count nor type;
 - a **flattened 1-D spectrum** indexed by hand, `isp = ith + (ik-1)*nth`;
 - dummy arguments with **no `intent`**;
@@ -28,14 +28,14 @@ multiplies the spectrum. It has every habit the lesson names:
 
 2. Write `w3sds_new` in a **module**: `pure`, `intent` on every argument, the spectrum
    as an assumed-shape `(theta, k)` array declared `contiguous`, and **no automatic
-   array** — the band sum is a scalar. Keep every expression and every summation order
+   array**: the band sum is a scalar. Keep every expression and every summation order
    identical; the point is the interface and the memory, not the arithmetic.
 
 3. Write the test: a WW3 default spectral grid (32 bands from 0.04118 Hz, ratio 1.1,
    24 directions), random action densities from `random_number` after
    `random_init(repeatable=.true., image_distinct=.false.)`, both routines, and the
    maximum relative difference of `S` and `D`. Pass if ≤ 1e-6. The test must declare an
-   `interface` block for the legacy routine — that is the only way `-Wall` can check the
+   `interface` block for the legacy routine: that is the only way `-Wall` can check the
    call, and noticing that is half the lesson.
 
 4. Build with the strict flags and run:
@@ -50,7 +50,7 @@ multiplies the spectrum. It has every habit the lesson names:
 ## What to hand in
 
 The two files, the test's output, and the answer to: your test passed with a difference
-of exactly zero — what would you have to change for it to be 1e-7 instead, and would
+of exactly zero. What would you have to change for it to be 1e-7 instead, and would
 that still be "the same routine"?
 
 ## Going further

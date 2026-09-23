@@ -15,13 +15,13 @@ Prepared 9 September 2026. Supersedes the Rust plan of the same date. Figures ma
 
 1. **DOE is already doing this.** The E3SM/Omega team (LANL, whose Steven Brus co-authored the 2023 WW3-GPU paper) states it is "working to completely rebuild the wave component of E3SM (WAVEWATCH III) as a part of OMEGA," porting the costly source terms to C++/Kokkos or replacing them with AI surrogates. No public repository was found as of today. **The first action of this project is to contact that team.** If their WW3 source-term kernels in Kokkos become available, months of work disappear and the lab becomes an early adopter rather than a lone fork.
 
-2. **WW3 `develop` is now CPP-preprocessed.** Since v7.14 all code is `*.F90` with switches mapped to `#ifdef W3_xxx`. This means the frozen operational configuration can be *mechanically* collapsed with the C preprocessor before translation — the "pin the configuration" benefit FESOM2 got from its C stage is available on day one, and it removes the agent's single most common failure (following an inactive branch).
+2. **WW3 `develop` is now CPP-preprocessed.** Since v7.14 all code is `*.F90` with switches mapped to `#ifdef W3_xxx`. This means the frozen operational configuration can be *mechanically* collapsed with the C preprocessor before translation. The "pin the configuration" benefit FESOM2 got from its C stage is available on day one, and it removes the agent's single most common failure (following an inactive branch).
 
-**What the port covers** (§4): the single-grid `ww3_shel` time loop — propagation, source-term integration, the enabled physics packages, output-field integration — for one frozen configuration, with the Fortran pre/post-processors kept as-is. What it does not cover: `ww3_multi`, coupling caps, data assimilation, unstructured/PDLIB (deferred unless the operational grid requires it).
+**What the port covers** (§4): the single-grid `ww3_shel` time loop (propagation, source-term integration, the enabled physics packages, output-field integration) for one frozen configuration, with the Fortran pre/post-processors kept as-is. What it does not cover: `ww3_multi`, coupling caps, data assimilation, unstructured/PDLIB (deferred unless the operational grid requires it).
 
 **Effort (solo Staff engineer, part-time, Claude Code, est.).** Stage 1 (C reference, validated) 3–5 months; Stage 2 (Kokkos, device-resident, faster than current CPU) a further 4–7 months. 3-month gated pilot as before. Stall risk ~40%, dominated by silent physics divergence and scope creep. If the DOE kernels arrive, subtract 2–4 months from Stage 2.
 
-**Recommendation.** (1) Weeks 1–3: profile and tune the current CPU run on the H100 host — this may already meet the "several runs per day" target. (2) Email the Omega/WW3 team. (3) Run the 3-month pilot to a validated C reference of the frozen configuration. (4) Gate to Stage 2 on the criteria in §8.
+**Recommendation.** (1) Weeks 1–3: profile and tune the current CPU run on the H100 host; this may already meet the "several runs per day" target. (2) Email the Omega/WW3 team. (3) Run the 3-month pilot to a validated C reference of the frozen configuration. (4) Gate to Stage 2 on the criteria in §8.
 
 ---
 
@@ -38,7 +38,7 @@ Prepared 9 September 2026. Supersedes the Rust plan of the same date. Figures ma
 | Lock-in | Linux Foundation project, vendor-neutral, HIP/SYCL/OpenMP-target backends | Khronos standard; implementations vary |
 | Verdict | **Choose** | Keep as a documented escape hatch; a Kokkos build can target SYCL later if the lab ever buys Intel GPUs |
 
-Kokkos notes that matter for the plan: 5.x requires C++20; only one device backend can be enabled per build; CUDA-aware MPI is assumed but irrelevant for a single GPU; `MDRangePolicy` is convenient but Omega reported 10–20% gains from hand-mapped `TeamPolicy` kernels — expect the same for WW3's per-point source terms.
+Kokkos notes that matter for the plan: 5.x requires C++20; only one device backend can be enabled per build; CUDA-aware MPI is assumed but irrelevant for a single GPU; `MDRangePolicy` is convenient, but Omega reported 10–20% gains from hand-mapped `TeamPolicy` kernels, so expect the same for WW3's per-point source terms.
 
 ---
 
@@ -142,7 +142,7 @@ Legend for the **Port** column: **CORE** = translate to C then Kokkos; **CPU-C**
 | `ww3_multi` (`ww3_multi_esmf` not in the pinned tree `(v)`) | Multi-grid driver | DROP |
 | `ww3_outf, ww3_outp, ww3_ounf, ww3_ounp, ww3_trck, ww3_trnc, ww3_grib, ww3_gspl, ww3_gint, ww3_systrk, ww3_uprstr, ww3_prtide` | Post-processors and tools | KEEP |
 
-**Size estimate.** Full `model/src` is roughly 250–300k lines including PDLIB, SCRIP, multi-grid, coupling and all physics variants. The code *exercised* by a typical regular-grid ST4/NL1/PR3/BT1/DB1 forecast is on the order of 25–35k lines (est.) — the same order as FESOM2's 74k-line core after configuration collapse, which yielded a 20k-line C port.
+**Size estimate.** Full `model/src` is roughly 250–300k lines including PDLIB, SCRIP, multi-grid, coupling and all physics variants. The code *exercised* by a typical regular-grid ST4/NL1/PR3/BT1/DB1 forecast is on the order of 25–35k lines (est.), the same order as FESOM2's 74k-line core after configuration collapse, which yielded a 20k-line C port.
 
 ---
 
