@@ -27,9 +27,9 @@ Do lesson 02 with `examples/01-fetch-limited-growth` open beside it. When an abb
 switch or routine name is unfamiliar, [`docs/GLOSSARY.md`](../docs/GLOSSARY.md) expands it and
 says where it comes from.
 
-Lessons 09 to 13 are the proposal's ladder (`pubs/proposal/pt/04-scope.md`) in order —
-compile options, run configuration, modern Fortran, C++/Kokkos kernels, bulk porting —
-and each is gated by parity with the one before. Do them with `kokkos/` open beside you:
+Lessons 09 to 13 are the proposal's ladder (`pubs/proposal/pt/04-scope.md`), in order:
+compile options, run configuration, modern Fortran, C++/Kokkos kernels, bulk porting.
+Each is gated by parity with the one before. Do them with `kokkos/` open beside you:
 the intro programs, the `W3SNL1` port, its fixtures and tests are the material, and
 `exercises/` has one sheet per lesson.
 

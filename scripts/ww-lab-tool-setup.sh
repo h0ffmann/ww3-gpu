@@ -25,14 +25,15 @@ commit=0
 target=""
 
 usage() { sed -n '2,17p' "$0"; }
+need() { [ $# -ge 2 ] || { echo "ww-lab-tool-setup: $1 needs a value" >&2; exit 2; }; }
 
 while [ $# -gt 0 ]; do
     case "$1" in
         --bump)     bump=1 ;;
         --commit)   commit=1 ;;
-        --branch)   [ $# -ge 2 ] || { echo "ww-lab-tool-setup: --branch needs a value" >&2; exit 2; }; branch="$2"; shift ;;
-        --url)      [ $# -ge 2 ] || { echo "ww-lab-tool-setup: --url needs a value" >&2; exit 2; }; url="$2"; shift ;;
-        --path)     [ $# -ge 2 ] || { echo "ww-lab-tool-setup: --path needs a value" >&2; exit 2; }; path="$2"; shift ;;
+        --branch)   need "$@"; branch="$2"; shift ;;
+        --url)      need "$@"; url="$2"; shift ;;
+        --path)     need "$@"; path="$2"; shift ;;
         --help|-h)  usage; exit 0 ;;
         -*)         echo "ww-lab-tool-setup: unknown option '$1'" >&2; exit 2 ;;
         *)          [ -z "$target" ] || { echo "ww-lab-tool-setup: one target directory only" >&2; exit 2; }; target="$1" ;;

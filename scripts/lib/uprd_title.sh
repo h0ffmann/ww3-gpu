@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# uprd_title — shared title-capping helper for scripts/uprd.sh and the title step of
-# .github/workflows/pr-body.yml. Ported from h0ffmann/marola (MIP prefix handling dropped).
+# uprd_title — shared title-capping helper for scripts/uprd.sh and .github/workflows/pr-body.yml.
 cap_title() {
   python3 - "$1" <<'PY'
 import sys

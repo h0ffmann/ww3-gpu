@@ -13,10 +13,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # No Python step: the lab code under bench/, examples/ and exercises/ is
-      # C++, Fortran and shell. The two publishing scripts in scripts/ are
-      # exercised by the pubs workflow.
-
       - name: Shell syntax
         run: |
           for f in $(git ls-files '*.sh'); do
@@ -59,31 +55,17 @@ jobs:
           gfortran -O2 -std=f2018 -Wall -Wextra -Werror -fimplicit-none \
             -o /tmp/ex11_test exercises/solutions/ex11_refactor.F90 exercises/solutions/ex11_refactor_test.F90
           /tmp/ex11_test
-          # examples/02-regional-real-forcing/make_bathy.F90 is not compiled
-          # here: it needs netcdf-fortran, and installing it from apt would make
-          # this syntax job depend on the runner's package state. It is built by
-          # that example's run.sh inside the pinned nix shell (netcdf-fortran
-          # 4.4.6), where it was compiled with -std=f2018 -Wall -Wextra and run
-          # on a synthetic GEBCO tile.
-
-      # The benchmark-case generator (kokkos/tools/bench_case) is C++ now and is
-      # covered by ctest in the `kokkos` job below (L1_test_bench_case pins its
-      # output byte for byte to the captured fixture), so it has no step here.
+          # examples/02's make_bathy.F90 needs netcdf-fortran; its run.sh builds it
+          # in the pinned nix shell rather than against the runner's apt state.
 
   kokkos:
     name: kokkos (serial-debug + openmp-release)
     runs-on: ubuntu-latest
     steps:
-      # .gitmodules uses ssh URLs, which a runner cannot clone, so the submodule
-      # is fetched below over https instead of by the checkout action. It also
-      # overrides the `shallow = true` in .gitmodules with --no-recommend-shallow:
-      # `nix develop ./nix-config/...` treats the directory as a flake input and
-      # asks it for revCount, which a shallow clone cannot answer. The fallback
-      # covers the other failure mode -- the pinned nix-config commit may live on
-      # a topic branch rather than on the `branch = main` that .gitmodules names,
-      # so `submodule update` can come back without it -- by asking the remote for
-      # that exact SHA, which GitHub serves for any reachable commit in a public
-      # repository.
+      # .gitmodules uses ssh URLs a runner cannot clone, hence https below.
+      # --no-recommend-shallow: nix asks the flake input for revCount, which a
+      # shallow clone cannot answer. The fallback fetches the pinned SHA directly
+      # when it lives on a topic branch rather than the `branch = main` it tracks.
       - uses: actions/checkout@v4
         with:
           submodules: false

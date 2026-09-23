@@ -14,7 +14,7 @@ rebuild. See [`../switches/README.md`](../switches/README.md).
 | **`ST4`** | **Ardhuin et al. (2010)** | Saturation-based dissipation plus an explicit swell-dissipation term. The most widely used choice for regional and global work today. Has a large, well-explored tuning parameter space. |
 | **`ST6`** | **Rogers, Babanin, Zieger** | Built from direct field observations of wind input and whitecapping rather than from closure arguments. Pairs with `FLX4`. Increasingly popular, particularly for extreme conditions. |
 
-Pick one. They are **matched sets** — the input and dissipation terms in a package are
+Pick one. They are **matched sets**: the input and dissipation terms in a package are
 tuned against each other, and mixing them produces nonsense.
 
 ## Why this matters more than you'd like
@@ -31,13 +31,13 @@ can do, and `examples/01` is set up for exactly that.
 
 ## The nonlinear term
 
-`NL1` — the Discrete Interaction Approximation (Hasselmann et al. 1985) — is what almost
+`NL1`, the Discrete Interaction Approximation (Hasselmann et al. 1985), is what almost
 everyone runs. It approximates the four-wave resonant interaction integral with a single
 representative quadruplet configuration.
 
 - `NL2` computes it (nearly) exactly, at roughly 1000× the cost. Research only.
 - `NL3` is the Generalized Multiple DIA: several quadruplets with optimised coefficients.
-  Better, more expensive, and the coefficients need fitting —
+  Better, more expensive, and the coefficients need fitting:
   [`genes_gmd`](https://github.com/NOAA-EMC/genes_gmd) exists for that.
 
 `NL1` is simultaneously the most important and the most approximate term in the model. Some
@@ -46,7 +46,7 @@ knowing when you're tempted to interpret a tuning constant physically.
 
 ## Propagation
 
-`PR3 UQ` — third-order ULTIMATE QUICKEST with the Garden Sprinkler Effect correction — is
+`PR3 UQ`, third-order ULTIMATE QUICKEST with the Garden Sprinkler Effect correction, is
 the default and the right answer for almost everything. Alternatives: `PR1` first-order
 upwind (very diffusive, but rock stable), `PR2` second-order, `PR0` no propagation.
 
@@ -64,7 +64,7 @@ striping in a swell field far from the storm, this is why.
 | `BT4` | SHOWEX movable-bed friction. Needs a `D50` sediment map (`&SED_NML`, `&SBT4 SEDMAPD50 = T`). |
 | `DB1` | Battjes-Janssen depth-induced breaking. |
 | `MLIM` | Miche-style limiter on `Hs` in shallow water. |
-| `TR0`/`TR1` | Triad (three-wave) interactions — surf-zone energy transfer to harmonics. |
+| `TR0`/`TR1` | Triad (three-wave) interactions: surf-zone energy transfer to harmonics. |
 | `REF1` | Shoreline reflection. Needs a slope map (`&SLOPE_NML`, `&REF1 REFMAP = 2`). |
 
 If your domain is entirely in deep water, none of this fires and you can leave the defaults.
@@ -96,7 +96,7 @@ Physics constants live in the file pointed at by `GRID%NML` (conventionally
 ```
 
 `ww3_grid` writes the namelists it actually used into `param.scratch` and echoes them to
-stdout. Check that file — it tells you what the model is really running, as opposed to what
+stdout. Check that file: it tells you what the model is really running, as opposed to what
 you thought you configured. Blocks irrelevant to your switch settings are silently skipped,
 which means a typo'd namelist name fails quietly.
 
@@ -108,7 +108,7 @@ The temptation, once you've validated against a buoy and found a bias, is to rea
 1. Your winds (the dominant error source, usually by a wide margin)
 2. Your bathymetry and obstruction grids
 3. Your boundary conditions / missing swell
-4. Your spectral range — is `FREQ1` low enough for the swell that's actually there?
+4. Your spectral range: is `FREQ1` low enough for the swell that's actually there?
 5. Your resolution
 6. *Then* the physics constants
 
@@ -127,19 +127,19 @@ after it:
 | Property | What it means for a port |
 |---|---|
 | **Per point** | One spectrum in, `S` and `D` out, no neighbours. Every sea point is independent work, which is exactly the parallelism a GPU wants and the "shuffle" decomposition already exposes. |
-| **Table-driven** | `INSNL1` precomputes the quadruplet address tables (`IP11 … IM42`) and weights once per grid from `NK`, `NTH`, `XFR` and `LAMBDA`. They are identical for every point and every timestep — computed once on the host, shared by every kernel launch. |
+| **Table-driven** | `INSNL1` precomputes the quadruplet address tables (`IP11 … IM42`) and weights once per grid from `NK`, `NTH`, `XFR` and `LAMBDA`. They are identical for every point and every timestep: computed once on the host, shared by every kernel launch. |
 | **No I/O, no globals mutated** | It reads a handful of grid constants and writes its two outputs. Nothing to serialise, nothing to lock. |
-| **Dominant share** | Usually the single most expensive kernel in a `ST4`+`NL1` run — four mirror-image quadruplets, each an `NK × NTH` interpolation, per point per timestep. `docs/AGENTS_KOKKOS_202609.md` ranks it first for that reason; lesson 09's profile is where you confirm it on your case. |
+| **Dominant share** | Usually the single most expensive kernel in a `ST4`+`NL1` run: four mirror-image quadruplets, each an `NK × NTH` interpolation, per point per timestep. `docs/AGENTS_KOKKOS_202609.md` ranks it first for that reason; lesson 09's profile is where you confirm it on your case. |
 | **Deterministic gather** | Each output bin is a weighted *gather* from the extended spectrum, so no two threads write the same element and no reduction exists. No atomics, and bit-for-bit reproducibility across launches and backends comes for free. |
 
 The trade-off is instructive too: the DIA is a physics approximation everybody wants to
-replace, so why port it? Because the port is a *translation*, not an improvement — the
+replace, so why port it? Because the port is a *translation*, not an improvement. The
 Kokkos kernel must reproduce the Fortran to round-off before anyone is allowed to touch the
-physics — and a routine with an exact, cheap, per-point reference is the easiest one to
+physics, and a routine with an exact, cheap, per-point reference is the easiest one to
 prove that claim on. `NL2` and `NL3` would inherit the same kernel structure later.
 [`12-porting-a-kernel-w3snl1.md`](12-porting-a-kernel-w3snl1.md) walks through the port
 line by line; the code is in `kokkos/src/ww_kokkos/snl1_*` with the verbatim Fortran
 reference beside it in `kokkos/tests/fixtures/snl1_ref.F90`.
 
-→ [`08-python.md`](08-python.md) — the Python ecosystem, and why this repo does not depend
+→ [`08-python.md`](08-python.md): the Python ecosystem, and why this repo does not depend
 on it.

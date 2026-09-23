@@ -24,8 +24,8 @@
 
 **The key architectural decision.** A 1000-member ensemble is a *throughput* problem, not a *latency* problem. Two levers exist:
 
-1. **Per-member speed** — port hot loops to Kokkos, run on GPU. Gains: 2–10× on the ported part, bounded by Amdahl and by host↔device traffic (the E3SM OpenACC port of `W3SRCEMD` got only ~1.3–1.4× per Summit node precisely because too much data crossed PCIe each step).
-2. **Ensemble batching** — make the member index an explicit Kokkos dimension so one GPU processes N members per kernel launch, sharing grid/propagation metadata and amortising launch and I/O overhead. This is the lever WW3 cannot pull at all, and it is the one that makes small per-member grids (typical for ensembles) fill a GPU.
+1. **Per-member speed:** port hot loops to Kokkos, run on GPU. Gains: 2–10× on the ported part, bounded by Amdahl and by host↔device traffic (the E3SM OpenACC port of `W3SRCEMD` got only ~1.3–1.4× per Summit node precisely because too much data crossed PCIe each step).
+2. **Ensemble batching:** make the member index an explicit Kokkos dimension so one GPU processes N members per kernel launch, sharing grid/propagation metadata and amortising launch and I/O overhead. WW3 cannot pull this lever at all, and it is the one that lets small per-member grids (typical for ensembles) fill a GPU.
 
 Design every ported kernel from day one with a leading/trailing member dimension (see §1.4), even if phase 1 runs with `nMember = 1`.
 
@@ -61,7 +61,7 @@ Override (these conflict with Kokkos or with GPU execution):
 2. **Layout follows the data owner.** Arrays that cross the Fortran boundary are `Kokkos::LayoutLeft` (column-major = Fortran order). Device-native arrays default to the backend's preferred layout. Never `deep_copy` between different layouts without a mirror in between (it is a silent transpose).
 3. **No host memory in kernels.** Only `View`s captured by value, scalars, and `KOKKOS_INLINE_FUNCTION` helpers. No `std::` containers, no `this` from a non-trivially-copyable class, no `std::function`.
 4. **No allocation inside kernels.** Per-thread scratch goes through `TeamPolicy` scratch memory (`team.team_scratch(0)`) or pre-allocated `View`s. This is the single most common bug when translating WW3, whose routines declare large local arrays (`W3SRCE` alone has dozens).
-5. **Fence discipline.** `Kokkos::fence()` before reading device results on host, before MPI on device buffers, and before timers. Do not sprinkle fences "to be safe" — it destroys overlap.
+5. **Fence discipline.** `Kokkos::fence()` before reading device results on host, before MPI on device buffers, and before timers. Do not sprinkle fences "to be safe": it destroys overlap.
 6. **Reductions use `parallel_reduce`, not atomics**, unless the access pattern is genuinely scatter (e.g. DIA quadruplet contributions can be done atomic-free by restructuring as gather).
 7. **Precision is a template parameter** (`using Real = float;` default). WW3 spectra are REAL(4). Keep `float` for state, use `double` only where WW3 does (`REAL(8)` variables, integral parameters) and document each choice.
 8. **Bounds checks in Debug**: configure with `-DKokkos_ENABLE_DEBUG_BOUNDS_CHECK=ON`; CI must run the full test suite once on Serial+bounds-check.
@@ -90,7 +90,7 @@ Rules:
 - Mixed-language: `project(... LANGUAGES C CXX Fortran)`; Fortran calls C++ through `bind(C)` shims only (see §3.2). No C++ symbol name mangling assumptions, no `-fno-underscoring`.
 - Each preset must build and pass `ctest` before a PR is opened. Minimum CI matrix: `serial-debug-boundscheck`, `openmp-release`, plus `cuda-release` or `hip-release` when a GPU runner exists.
 - Sanitizers (`-fsanitize=address,undefined`) on Serial/OpenMP builds; `compute-sanitizer` (CUDA) or `rocgdb`/`omniperf` (HIP) on device builds.
-- Profiling: build with `-DKokkos_ENABLE_LIBDL=ON` and use Kokkos Tools (`kp_kernel_timer`, `kp_nvtx_connector`/`kp_roctx_connector`). Every kernel gets a human-readable label — `parallel_for("srce.snl1.dia", ...)` — so the profile maps to the WW3 routine it replaces.
+- Profiling: build with `-DKokkos_ENABLE_LIBDL=ON` and use Kokkos Tools (`kp_kernel_timer`, `kp_nvtx_connector`/`kp_roctx_connector`). Every kernel gets a human-readable label (`parallel_for("srce.snl1.dia", ...)`) so the profile maps to the WW3 routine it replaces.
 
 ### 1.4 Data layout convention for ensemble-ready kernels
 
@@ -103,7 +103,7 @@ using SpecView  = Kokkos::View<Real****, Kokkos::LayoutLeft, DeviceMem>;
 ```
 
 - With `LayoutLeft` and index order `(ith, ik, isea, imember)`, a single member's spectrum at one point is contiguous (matches WW3 `VA(NSPEC, NSEA)`), and the member index is outermost, so a phase-1 `nMember = 1` view is bit-identical in memory to the WW3 array. Zero-copy interop.
-- For GPU-optimal *device-native* buffers (phase 4), the agent may introduce a second layout with `imember` innermost and use `Kokkos::Experimental::` remap or explicit pack/unpack kernels — but only after measurement, and only behind a type alias.
+- For GPU-optimal *device-native* buffers (phase 4), the agent may introduce a second layout with `imember` innermost and use `Kokkos::Experimental::` remap or explicit pack/unpack kernels, but only after measurement, and only behind a type alias.
 - Grid-only data (`DW`, `CG`, `WN`, mask, neighbour tables, propagation coefficients) is shared across members: one `View` for all members, never replicated.
 
 ### 1.5 Validation contract (what "done" means for one ported routine)
@@ -152,7 +152,7 @@ Anti-patterns to forbid explicitly:
 - "Optimise while translating" (changes numerics silently).
 - Replacing WW3 preprocessor switches with runtime `if` inside kernels (kills performance and diverges from WW3 behaviour).
 - Claiming GPU speed-ups without an attached timing table.
-- Editing WW3 Fortran physics to "make interop easier" — the Fortran side is frozen except for shims.
+- Editing WW3 Fortran physics to "make interop easier": the Fortran side is frozen except for shims.
 - Introducing Unified Memory to avoid thinking about transfers.
 
 ---
@@ -197,7 +197,7 @@ Score = (runtime share) × (Kokkos suitability) × (ensemble-batching payoff) ÷
 2. **Share everything that is member-invariant**: grid metadata, propagation coefficients, DIA tables, ST4 tabulations (`TAUHFT` tables), output masks. Load once per process.
 3. **Per-member forcing** (wind perturbations) is the main member-specific input; pipeline its H2D copy with compute (Kokkos execution-space instances / CUDA streams).
 4. **Output reduction on device**: compute Hs/Tp/Dir/partitions on device, DMA only the 2-D fields. Full spectral output stays optional and staged.
-5. **Placement**: N members × M ranks per member is a scheduling problem — provide a `ww_ensemble` launcher config (members per GPU, ranks per member, output file grouping) rather than baking it into the model.
+5. **Placement**: N members × M ranks per member is a scheduling problem. Provide a `ww_ensemble` launcher config (members per GPU, ranks per member, output file grouping) rather than baking it into the model.
 
 ### 2.4 Profiling recipe (phase 0, mandatory before any port PR)
 

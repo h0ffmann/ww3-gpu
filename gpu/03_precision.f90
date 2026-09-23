@@ -29,8 +29,6 @@ program precision_test
   ! NOTE: cpu_time is host CPU time. For real timing comparisons use
   ! SYSTEM_CLOCK -- see ../bench/kernel_bench.f90. cpu_time SUMS across
   ! OpenMP threads and will make a threaded run look slower than serial.
-  ! NOTE: cpu_time is host CPU time and sums across OpenMP threads.
-  ! For comparisons that matter use SYSTEM_CLOCK -- see ../bench/.
   real :: t0, t1, tsingle, tdouble
 
   allocate(as(n), bs(n), ad(n), bd(n))

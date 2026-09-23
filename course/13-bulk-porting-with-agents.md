@@ -8,7 +8,7 @@ from the proposal, and the diagrams from its mind maps (`pubs/proposal/mapas-men
 
 ## The FESOM2 recipe
 
-Koldunov et al. (2026) took FESOM2 — about 74 thousand lines of Fortran — to C and then to
+Koldunov et al. (2026) took FESOM2 (about 74 thousand lines of Fortran) to C and then to
 C++/Kokkos in **weeks, not years**, with an LLM coding assistant directed by the model's own
 experts (`pubs/proposal/pt/05-justification.md` (v); details beyond that summary ⚠). The recipe:
 
@@ -52,7 +52,7 @@ payoff ÷ (effort + validation risk), with the shares as priors until §2.4's pr
 
 | # | Routine(s) | Kokkos shape | Phase |
 |---|---|---|---|
-| 1 | `W3SNL1` + `INSNL1` | team per point, tables shared — done, lesson 12 | 1 |
+| 1 | `W3SNL1` + `INSNL1` | team per point, tables shared; done, lesson 12 | 1 |
 | 2 | `W3SRCE` driver | one team per point calling inline device functions; the routine that makes or breaks device residency | 1 skeleton → 2 |
 | 3 | `W3SIN4`, `W3SDS4`, `W3SPR4` (or ST6) | inline device functions inside the `W3SRCE` kernel; `team_reduce` for integrals | 1 |
 | 4–5 | `W3XYP2` + `W3QCK*`; `W3KTP2/3` | `MDRangePolicy<Rank<3>>` per member with halos via MPI on device buffers; team per point with 1-D sweeps over θ then k | 2 |
@@ -101,8 +101,8 @@ Step 2 is where the OpenACC port of Ikuyajolu et al. (2023) stalled, because the
 lived in Fortran modules; WAM6-GPU (Yuan et al. 2024) went the other way, refactoring the
 whole model so the fields stay on the device, and reported an order-of-magnitude gain on
 a multi-GPU node (`pubs/proposal/pt/05-justification.md` (v)). The plan does step 2 in C++
-ownership — a state object created by `ww_kokkos_init`, seeded by the `Ctx` in
-`snl1_shim.cpp` with its persistent buffers — rather than mirroring the modules (v).
+ownership (a state object created by `ww_kokkos_init`, seeded by the `Ctx` in
+`snl1_shim.cpp` with its persistent buffers) rather than mirroring the modules (v).
 
 ## The ladder and its gates
 
@@ -178,14 +178,14 @@ rounds twice. Neither is wrong C++; both fail a 1e-5 parity test. Build the fixt
 
 ## WW4: do not compete, build in its shape
 
-WAVEWATCH IV is NOAA's rewrite (plan: Office Note 525, 2025; Phase II — languages,
-governance, architecture — closed March 2026, Office Note 528). As of 2026-09-15 it has a
+WAVEWATCH IV is NOAA's rewrite (plan: Office Note 525, 2025; Phase II, languages,
+governance, architecture, closed March 2026, Office Note 528). As of 2026-09-15 it has a
 C++ core with no physics, L1 and L2 tests in GoogleTest of four planned levels, and an open
 CPU–GPU architecture question with Kokkos proposed as the abstraction layer
 (`pubs/proposal/pt/05-justification.md` (v); [lesson 14](14-ww4-and-the-future.md)). ON 525
 retires WW3 only once WW4 matures, so WW3 stays operational for years. The project's
-artefacts are shaped to be reusable there — L1 per-kernel tests on synthetic spectra, L2
-replays, GoogleTest, heritage headers — without contributing to WW4 or depending on it
+artefacts are shaped to be reusable there (L1 per-kernel tests on synthetic spectra, L2
+replays, GoogleTest, heritage headers) without contributing to WW4 or depending on it
 (`pubs/proposal/pt/04-scope.md` (v)). Licence (`AGENTS_KOKKOS` §4): the translated kernels
 derive from WW3, so `snl1_dia.cpp`, `snl1_tables.cpp` and the Fortran module that patches
 into the model, `w3kokkosmd.F90`, carry `LGPL-3.0-or-later`; the C++ tooling around them,
@@ -193,9 +193,9 @@ into the model, `w3kokkosmd.F90`, carry `LGPL-3.0-or-later`; the C++ tooling aro
 
 ## Sources
 
-- Koldunov et al. (2026), FESOM2 Fortran → C → C++/Kokkos — https://doi.org/10.48550/arXiv.2606.11356
-- Ikuyajolu et al. (2023), *GMD* 16, 1445–1458 — https://doi.org/10.5194/gmd-16-1445-2023
-- Yuan et al. (2024), WAM6-GPU v1.0, *GMD* 17, 6123–6136 — https://doi.org/10.5194/gmd-17-6123-2024
-- NCEP Office Note 525 (2025) — https://doi.org/10.25923/h7j3-1h25; Office Note 528, Tolman (2026) — https://doi.org/10.25923/0wyp-9f39; keys in `pubs/proposal/refs.bib`
+- Koldunov et al. (2026), FESOM2 Fortran → C → C++/Kokkos: https://doi.org/10.48550/arXiv.2606.11356
+- Ikuyajolu et al. (2023), *GMD* 16, 1445–1458: https://doi.org/10.5194/gmd-16-1445-2023
+- Yuan et al. (2024), WAM6-GPU v1.0, *GMD* 17, 6123–6136: https://doi.org/10.5194/gmd-17-6123-2024
+- NCEP Office Note 525 (2025): https://doi.org/10.25923/h7j3-1h25; Office Note 528, Tolman (2026): https://doi.org/10.25923/0wyp-9f39; keys in `pubs/proposal/refs.bib`
 
 → [`14-ww4-and-the-future.md`](14-ww4-and-the-future.md), or [`15-swan.md`](15-swan.md).

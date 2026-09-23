@@ -21,7 +21,7 @@ just rt ww3_tp1.1 PR3_UQ      # build with the test's own switch_PR3_UQ, then ru
 `scripts/03_run_regtest.sh`, which copies `regtests/<test>/input/` into
 `regtests/<test>/work_lab/` and runs `ww3_grid`, `ww3_strt`, `ww3_prnc`, `ww3_bounc`,
 `ww3_shel`, `ww3_ounf`, `ww3_ounp` in order, each only if its `.nml`/`.inp` is present (v).
-It deliberately does not use `matrix.comp` — the point is to watch the pipeline. The
+It deliberately does not use `matrix.comp`: the point is to watch the pipeline. The
 operational case at LabECO gets the same treatment once the lab captures it.
 
 ## The metric
@@ -53,7 +53,7 @@ Read `bench_ww3_cpu.sh`'s closing note before believing the curve (v): on an i9,
 and E-cores differ so much that an MPI job runs at the pace of its slowest rank. Rerun
 pinned (`mpirun -np 8 --bind-to core --cpu-set 0-15`) and compare; eight P-cores beating
 24 mixed cores is normal for a memory-bound spectral model. If efficiency is flat from
-rank 1, the case is too small — use a larger `--size`.
+rank 1, the case is too small: use a larger `--size`.
 
 ## Profile
 
@@ -78,14 +78,14 @@ What to expect, as priors only (`docs/AGENTS_KOKKOS_202609.md` §2.1, ⚠ not me
 | Gather/scatter transposes, MPI | `W3GATH`/`W3SCAT` | 5–25 %, grows with rank count |
 | Output and restart I/O | `w3iogomd`, `w3iorsmd`, `w3iopomd` | 5–20 % |
 
-Profile at 1, 4 and 16 ranks (the proposal's methodology) — the communication share is
+Profile at 1, 4 and 16 ranks (the proposal's methodology). The communication share is
 the number that changes, and it is the argument for or against more ranks.
 
 ## WW3's own matrix: the bit-for-bit gate
 
 WW3 ships 62 regression cases under `regtests/` (v, counted in the clone at `~/src/WW3`).
 `regtests/bin/matrix.base` generates the run script from a list of options that includes
-`rstrt_b4b`, `nth_b4b` and `npl_b4b` (v) — restart, thread-count and MPI-task-count
+`rstrt_b4b`, `nth_b4b` and `npl_b4b` (v): restart, thread-count and MPI-task-count
 reproducibility variants, each of which runs a case twice and demands identical output.
 `regtests/bin/matrix.comp` compares two matrix runs file by file with `cmp` for binaries
 and `diff` for text, and sorts every case into "identical" or "non-identical" (v). There is
@@ -107,7 +107,7 @@ Vary one axis at a time. Everything here is baked in at build time
 | Compiler | gfortran 15.3 (pinned in pratico (v)); `nvfortran` on the CPU as a stepping stone (lesson 01) | different compilers: rounding-level differences, use `nccmp-tol` |
 | Flags | `-DCMAKE_BUILD_TYPE=Release` vs `Debug`; `-O2` vs `-O3 -march=native` | `-O3` may vectorise reductions → check b4b first |
 | Parallel switch | `SHRD` (serial), `DIST MPI`, plus `OMPG`/`OMPH` for OpenMP on top (v `switches/README.md`) | `npl_b4b`/`nth_b4b` |
-| Output | `FILE%NETCDF` 3 vs 4 in `ww3_ounf.nml` and the output stride; `NC4` in the switch file is inert in 7.14 — not in `switches.json`, no `W3_NC4` guard (v) | none; it is I/O |
+| Output | `FILE%NETCDF` 3 vs 4 in `ww3_ounf.nml` and the output stride; `NC4` in the switch file is inert in 7.14 (not in `switches.json`, no `W3_NC4` guard) (v) | none; it is I/O |
 
 `exercises/solutions/ex09_matrix.sh` runs three of these axes on `ww3_tp1.1` and
 tabulates wall-clock and the comparator's verdict; `exercises/ex09_bench.md` is the sheet.
@@ -149,7 +149,7 @@ nccmp-tol REF.nc TEST.nc my_tolerances.txt    # just nccmp does the same
 For every variable listed in the tolerances file (rows `hs`, `fp`, `dir`, `dp`, `t0m1` by
 default; format `name abs rel`) it prints max-abs, RMS and max-relative differences over
 non-fill values and exits 0 only if every judged variable passes. Unlisted variables are
-reported, not judged. The tolerances file is versioned and approved by the co-advisor —
+reported, not judged. The tolerances file is versioned and approved by the co-advisor:
 that is the proposal's *comparador por campo*, and it is what lessons 10–13 use once the
 matrix's yes/no answer is no longer the right question.
 
@@ -157,8 +157,8 @@ matrix's yes/no answer is no longer the right question.
 > `nvfortran` in the free HPC SDK, with OpenACC (`-acc -gpu=cc89`), OpenMP target
 > (`-mp=gpu`), CUDA Fortran (`-cuda`) and `do concurrent` offload (`-stdpar=gpu`). An
 > RTX 4090 is compute capability 8.9, so `cc89`, and a consumer card is fine. But
-> upstream WW3 has no GPU code path at all, and the one serious attempt — Ikuyajolu et
-> al. (2023), *GMD* 16, `W3SRCEMD` under OpenACC on V100 nodes — reached about **1.3×
+> upstream WW3 has no GPU code path at all, and the one serious attempt, Ikuyajolu et
+> al. (2023), *GMD* 16, `W3SRCEMD` under OpenACC on V100 nodes, reached about **1.3×
 > against 42 CPU cores**, limited by host↔device transfer and by register pressure from
 > the routine's many locals; it is not merged upstream ⚠ check. Your PCIe 4.0 link is
 > slower than the NVLink they had, and a 4090 runs FP64 at 1/64 of FP32. So: measure the
@@ -169,7 +169,7 @@ matrix's yes/no answer is no longer the right question.
 
 ## Sources
 
-- Ikuyajolu et al. (2023), *GMD* 16, 1445–1458 — https://doi.org/10.5194/gmd-16-1445-2023
+- Ikuyajolu et al. (2023), *GMD* 16, 1445–1458: https://doi.org/10.5194/gmd-16-1445-2023
 - `pubs/proposal/pt/05-justification.md`, "Estado dos testes do WW3" (survey of 2026-09-15)
 - `docs/AGENTS_KOKKOS_202609.md` §2.1, §2.4 (the profiling recipe)
 

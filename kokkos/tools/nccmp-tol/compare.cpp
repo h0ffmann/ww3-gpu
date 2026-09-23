@@ -42,8 +42,6 @@ class NcFile {
   }
   NcFile(const NcFile&) = delete;
   NcFile& operator=(const NcFile&) = delete;
-  NcFile(NcFile&&) = delete;
-  NcFile& operator=(NcFile&&) = delete;
 
   int id() const { return id_; }
   const std::string& path() const { return path_; }

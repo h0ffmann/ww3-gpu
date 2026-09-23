@@ -22,9 +22,9 @@ measure it, then port a kernel to C++/Kokkos and prove it still gives the same a
 | `switches/` | Annotated switch files (WW3's compile-time feature selection) |
 | `env/` | conda environment + Dockerfile |
 | `docs/` | [`AWESOME-WW3_202609.md`](docs/AWESOME-WW3_202609.md), a curated link list; [`AGENTS_KOKKOS_202609.md`](docs/AGENTS_KOKKOS_202609.md), agent rules for a phased WW3 → Kokkos port; [`KOKKOS_H100_PLAN_202609.md`](docs/KOKKOS_H100_PLAN_202609.md), the single-H100 port plan; [`BEND_TRYOUT_202609.md`](docs/BEND_TRYOUT_202609.md), a one-week plan to port `W3SNL1` to Bend 2 as a third arm of the parity harness (proposal, not run) |
-| `nix-config/` | Git submodule (sparse: only `labs/pratico`) — the pinned Nix toolchain WW3 is built with |
-| `WW3/` | Git submodule — the [h0ffmann/WW3](https://github.com/h0ffmann/WW3) fork of NOAA-EMC/WW3, with upstream as a second remote |
-| `bend-lang/` | Git submodule — the [h0ffmann/bend](https://github.com/h0ffmann/bend) fork of bendlang/bend, tracking `main`. Not fetched by CI and used by nothing yet; it pins the compiler for the tryout in [docs/BEND_TRYOUT_202609.md](docs/BEND_TRYOUT_202609.md), and its `f64` branch keeps upstream's closed 64-bit-float PR. `git submodule update --init --depth 1 bend-lang` |
+| `nix-config/` | Git submodule (sparse: only `labs/pratico`): the pinned Nix toolchain WW3 is built with |
+| `WW3/` | Git submodule: the [h0ffmann/WW3](https://github.com/h0ffmann/WW3) fork of NOAA-EMC/WW3, with upstream as a second remote |
+| `bend-lang/` | Git submodule: the [h0ffmann/bend](https://github.com/h0ffmann/bend) fork of bendlang/bend, tracking `main`. Not fetched by CI and used by nothing yet; it pins the compiler for the tryout in [docs/BEND_TRYOUT_202609.md](docs/BEND_TRYOUT_202609.md), and its `f64` branch keeps upstream's closed 64-bit-float PR. `git submodule update --init --depth 1 bend-lang` |
 | `pubs/` | Publications: the course book and the UFRJ/DEL project proposal (EN source, PT generated); PDFs land in `pdf/` on `main` |
 | `justfile` | Every task in this repo: `just` lists them |
 
@@ -46,7 +46,7 @@ Then start at [`course/00-orientation.md`](course/00-orientation.md). Every reci
 wrapper over a script in `scripts/`; run those directly if you prefer a host toolchain
 (`just prereqs` installs it on Debian/Ubuntu).
 
-Optionally, get SWAN too — it's the right tool for the coastal cases WW3 is wrong for:
+Optionally, get SWAN too: it's the right tool for the coastal cases WW3 is wrong for.
 
 ```bash
 just swan             # clone and build into ~/src/swan
@@ -90,7 +90,7 @@ just bench-case --size small -o bench/case_small   # a self-contained WW3 benchm
 just bench                           # kernel proxies + real WW3 MPI scaling (bench/run_all.sh)
 ```
 
-What `just toolchain` prints today (`(v)` — this is the exact output on the lab machine):
+What `just toolchain` prints today (`(v)`: this is the exact output on the lab machine):
 
 ```
 $ just toolchain
@@ -122,7 +122,7 @@ The toolchain (pandoc, TeX Live, Python) comes from
 the root `flake.nix` consumes through its `mkPdf` and `mkDocx` helpers; `nix build .` produces the
 three PDFs **and the course as a Word document** in a sandbox, and CI commits all four to `pdf/` on
 `main`. pandoc writes the docx directly, so the LaTeX templates do not apply and Word's own defaults do
-the styling — the proposal docx has no DEL cover page or signature block, and is the text for the
+the styling. The proposal docx has no DEL cover page or signature block, and is the text for the
 advisors to comment on, not the document that gets signed. Citations are still rendered by citeproc
 with the same CSL as the PDF, so author-date calls and the reference list match the paper version; the build is byte-reproducible (pandoc dates every zip entry
 1980-01-01), so a rebuild that changes nothing commits nothing. The directory is still called `pdf/`
@@ -140,13 +140,13 @@ just proposal-review      # parecer do revisor-proposta sobre pubs/proposal (ABN
 just pubs                 # all three
 ```
 
-`/eli5 <topic>` explains any of this — the action balance equation, a switch file, a Kokkos
-backend, bit-for-bit parity — to someone who has never seen it, grounded in `docs/GLOSSARY.md` and
+`/eli5 <topic>` explains any of this (the action balance equation, a switch file, a Kokkos
+backend, bit-for-bit parity) to someone who has never seen it, grounded in `docs/GLOSSARY.md` and
 the lessons, in the language you ask in ([`.claude/skills/eli5`](.claude/skills/eli5/SKILL.md);
 adapted from the community skill by Thariq Shihipar, MIT).
 
 Every change to `pubs/proposal/` is reviewed by the `revisor-proposta` subagent before the pull
-request — Escola Politécnica's Resolução 05 de 28/11/2012 and the DEL section structure, ABNT
+request, against Escola Politécnica's Resolução 05 de 28/11/2012 and the DEL section structure, ABNT
 citation practice, impersonal scientific register in pt-BR, and the wave-modelling and HPC
 vocabulary. It reports and does not rewrite. `just proposal-review` runs it;
 `.claude/hooks/proposal-review.sh` reminds any agent that edits a file there to run it before
@@ -168,12 +168,12 @@ names as repository secrets, otherwise the step is skipped and the committed `pt
 ## Two things worth knowing before you invest
 
 **WAVEWATCH IV™ (WW4) exists, and WW3 is scheduled for sunset.** [NOAA-EMC/WW4](https://github.com/NOAA-EMC/WW4)
-is a ground-up rewrite — new repository, no backward compatibility, C++ core with Rust
+is a ground-up rewrite: new repository, no backward compatibility, C++ core with Rust
 alongside, Fortran demoted to a solver-only language. As of 2026-09-11 it had 36 commits
 and no releases: pre-alpha. **First public release: expected January 2027** per the proposal's advisor ⚠ (no NOAA source; ON 525 said summer 2027). The plan,
 including the commitment to sunset WW3 support once WW4 matures, is in
-[NCEP Office Note 525](https://doi.org/10.25923/h7j3-1h25). Learn WW3 anyway — the physics
-is identical and the concepts transfer completely; only the interfaces won't. Details in
+[NCEP Office Note 525](https://doi.org/10.25923/h7j3-1h25). Learn WW3 anyway: the physics
+is identical and the concepts transfer completely, only the interfaces won't. Details in
 [`course/14-ww4-and-the-future.md`](course/14-ww4-and-the-future.md).
 
 **SWAN is not a competitor, it's the other half of the toolkit.** Implicit,
@@ -189,23 +189,23 @@ haven't caught up with. See [`course/15-swan.md`](course/15-swan.md).
 OpenMP target offload, and `do concurrent` offload (`-stdpar=gpu`). Your 4090 is Ada,
 compute capability 8.9, so `-gpu=cc89`.
 
-**But WW3 itself has no GPU support upstream**, and it never will — the only published port
+**But WW3 itself has no GPU support upstream**, and it never will. The only published port
 ([Ikuyajolu et al., GMD 2023](https://gmd.copernicus.org/articles/16/1445/2023/))
 OpenACC-ified one module (`W3SRCEMD`, the source-term integration) and got roughly
-**1.3× against 42 CPU cores** on Summit's V100s — data-transfer bound, and not merged
+**1.3× against 42 CPU cores** on Summit's V100s, data-transfer bound, and it was not merged
 into `NOAA-EMC/WW3`. On a PCIe consumer card with no NVLink it will not be better. And WW4 is explicitly being
 architected for GPUs from the ground up, which gives any heroic OpenACC work on WW3 a very
 short shelf life.
 
 So: compile WW3 with `nvfortran` on the **CPU** (that part works and is useful), use
 `gpu/` to learn GPU Fortran on kernels that actually suit a 4090, and use `bench/` to
-measure your own hardware rather than trusting anyone's table — including mine. Full reasoning and a
+measure your own hardware rather than trusting anyone's table, including mine. Full reasoning and a
 realistic experiment plan in [`course/09-benchmark-profile-compile-run.md`](course/09-benchmark-profile-compile-run.md).
 
 ## Conventions used in this repo
 
-- `⚠` — I could not verify this; check it before trusting it.
-- `(v)` — verified against a source I actually fetched while building this repo.
+- `⚠`: I could not verify this; check it before trusting it.
+- `(v)`: verified against a source I actually fetched while building this repo.
 - Input files use the **namelist** (`.nml`) interface, not the legacy `.inp` fixed-format
   files. Both work in WW3 v7; `.nml` is far easier to read, and it is what the annotated
   templates in `$WW3/model/nml/` and the generators in `examples/` produce.
@@ -221,14 +221,14 @@ realistic experiment plan in [`course/09-benchmark-profile-compile-run.md`](cour
   name used here (`ST4`, `W3SNL1`, `PDLIB`, `b4b`, `nccmp-tol`, …) and ends with an alphabetical index.
 - CI (`.github/workflows/ci.yml`) checks shell syntax, compiles the Fortran sandbox and
   the example/exercise Fortran with gfortran, builds and tests `kokkos/` on both CPU
-  presets, and link-checks the markdown. It does not build WW3 — that needs the NOAA FTP
+  presets, and link-checks the markdown. It does not build WW3, since that needs the NOAA FTP
   data bundle and takes too long for a free runner.
 
 ## Licensing
 
 MIT for everything in this repo. See [`LICENSE`](LICENSE).
 
-WW3 itself is distributed by NOAA/EMC under its own terms. No WW3 source is vendored here —
+WW3 itself is distributed by NOAA/EMC under its own terms. No WW3 source is vendored here:
 `scripts/01_get_ww3.sh` clones it, and upstream regression-test inputs are fetched rather
 than redistributed. Third-party tools listed in `docs/AWESOME-WW3_202609.md` carry their own licences
 (`pyww3` is GPL-3.0, `wavespectra` is MIT).

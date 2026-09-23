@@ -10,7 +10,7 @@ to be wrong about coordinate conventions. This one has all three.
 | File | Where from |
 |---|---|
 | `gebco.nc` | [GEBCO 2024 subsetted download](https://download.gebco.net/) for the box above (52°W–44°W, 32°S–24°S; netCDF; keep the default variable names `lat`, `lon`, `elevation`) |
-| `gfs_winds.nc` | `./get_gfs.sh YYYYMMDD HH` — GFS 0.25° 10 m winds from NOMADS, no account needed |
+| `gfs_winds.nc` | `./get_gfs.sh YYYYMMDD HH`: GFS 0.25° 10 m winds from NOMADS, no account needed |
 
 `get_gfs.sh` asks NOMADS' `filter_gfs_0p25.pl` for `UGRD`/`VGRD` at 10 m above ground,
 subset to the box, forecast hours 0–192 every 3 h of one cycle (65 small GRIB2 files under
@@ -19,7 +19,7 @@ subset to the box, forecast hours 0–192 every 3 h of one cycle (65 small GRIB2
 pick a recent cycle; the namelists in this directory are dated 2024-07-01 00Z + 8 days, and
 the script prints the one-line `sed` that retimes them to the cycle you fetched.
 
-**Verify the file before running `ww3_prnc`** — it has not been possible to download in
+**Verify the file before running `ww3_prnc`**: it has not been possible to download in
 the environment this example was written in, so the names in `ww3_prnc_wind.nml` follow
 ecCodes' documented output and need a look:
 
@@ -66,7 +66,7 @@ unstable or needlessly slow.
 
 **Lower `FREQ1`.** The default 0.04118 Hz corresponds to a 24 s period. South Atlantic
 swell from the Southern Ocean is routinely longer than that. Energy below your lowest bin
-doesn't get truncated with a warning — it just never exists. Choosing `FREQ1` is a physical
+doesn't get truncated with a warning. It just never exists. Choosing `FREQ1` is a physical
 decision about what you're modelling.
 
 **Open boundaries.** Swell generated thousands of kilometres away has to enter the domain
@@ -77,7 +77,7 @@ spectra from a coarser parent run. Two rules that bite everyone:
   which is how you specify an edge with two entries instead of eighty.
 
 For a first run you can skip boundaries entirely (delete the `INBND_*` blocks). You'll get
-locally generated wind sea only — which is actually a useful comparison, because the
+locally generated wind sea only. That's actually a useful comparison, because the
 difference between that and the boundary-fed run *is* the remote swell contribution.
 
 **`ww3_prnc`.** Converts netCDF forcing onto the model grid and into WW3's binary format.
@@ -102,7 +102,7 @@ reads natively with `read_ww3()`.
    was generated. Then check a surface-pressure chart for that date. This is the single most
    satisfying thing you can do with a wave model.
 
-2. **Resolution matters where?** Rerun at 0.05°. Where does the answer change — offshore or
+2. **Resolution matters where?** Rerun at 0.05°. Where does the answer change: offshore or
    over the shelf? What does that tell you about where the resolution budget should go?
 
 3. **Boundaries on vs off.** Run with and without `nest.ww3`. Map the difference in `Hs`.
@@ -120,6 +120,6 @@ reads natively with `read_ww3()`.
 ## ⚠ Caveats
 
 Written from documentation, not executed. The `ww3_prnc` and `ww3_ounp` namelists in
-particular have more optional blocks than shown here — check them against
+particular have more optional blocks than shown here. Check them against
 `$WW3/model/nml/ww3_prnc.nml` and `$WW3/model/nml/ww3_ounp.nml` in your clone, which are
 the authoritative annotated templates.

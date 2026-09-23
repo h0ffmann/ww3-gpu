@@ -4,7 +4,6 @@
 #   2. push the branch
 #   3. scripts/uprd.sh — create the PR (or rewrite its body) from the commits
 #   just pr --dry-run   prints what would happen.
-# Ported from h0ffmann/marola (Cost/Tested trailer filling and MIP stacks dropped).
 set -euo pipefail
 dry_run=0
 for a in "$@"; do [ "$a" = "--dry-run" ] && dry_run=1; done

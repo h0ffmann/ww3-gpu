@@ -38,19 +38,11 @@ ww::snl1::Config config_of(const ww::fixture::Snl1Fixture& f) {
                           f.kdcon, f.kdmn, f.snls1, f.snls2, f.snls3, f.fachfe};
 }
 
-/// Copy a device index table to the host so the test can read it element-wise.
-std::vector<int> to_host(const ww::snl1::IntView1D& v) {
+/// Copy a device table to the host so the test can read it element-wise.
+template <class View>
+std::vector<typename View::non_const_value_type> to_host(const View& v) {
   auto h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), v);
-  std::vector<int> out(h.extent(0));
-  for (std::size_t i = 0; i < h.extent(0); ++i) out[i] = h(i);
-  return out;
-}
-
-std::vector<ww::Real> to_host(const ww::snl1::RealView1D& v) {
-  auto h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), v);
-  std::vector<ww::Real> out(h.extent(0));
-  for (std::size_t i = 0; i < h.extent(0); ++i) out[i] = h(i);
-  return out;
+  return {h.data(), h.data() + h.extent(0)};
 }
 
 void expect_index_table(const std::vector<int>& got, const std::vector<int>& want,

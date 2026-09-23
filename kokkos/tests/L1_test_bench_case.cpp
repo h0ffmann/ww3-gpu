@@ -14,6 +14,7 @@
 #include <gtest/gtest.h>
 
 #include <cstdlib>
+#include <iterator>
 #include <filesystem>
 #include <fstream>
 #include <sstream>
@@ -65,12 +66,8 @@ TEST_F(BenchCaseSmall, EveryFileIsByteIdenticalToThePythonFixture) {
 }
 
 TEST_F(BenchCaseSmall, WritesNothingElse) {
-  std::size_t n = 0;
-  for (const auto& e : fs::directory_iterator(out_)) {
-    (void)e;
-    ++n;
-  }
-  EXPECT_EQ(n, kFiles.size());
+  const auto n = std::distance(fs::directory_iterator(out_), fs::directory_iterator{});
+  EXPECT_EQ(static_cast<std::size_t>(n), kFiles.size());
 }
 
 TEST_F(BenchCaseSmall, SummaryMatchesThePythonPrintout) {

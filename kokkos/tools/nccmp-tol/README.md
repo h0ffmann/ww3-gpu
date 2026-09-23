@@ -27,7 +27,7 @@ tree (the path is baked in at configure time, like the tests' fixture directory)
   so float32 fields from `ww3_ounf`, doubles and integer masks share one code path.
 - A cell is excluded when it is NaN on either side, or equal to that file's fill
   value on either side. The fill comes from `nc_inq_var_fill`, which also yields
-  the type's *default* fill when a variable has no `_FillValue` attribute --
+  the type's *default* fill when a variable has no `_FillValue` attribute:
   netCDF's own meaning of "never written". A cell the *reference* lacks (land,
   mask) is simply skipped; a cell the reference has and the *test* lacks is
   counted as `dropped` and reported, because a kernel that writes NaN where
@@ -54,9 +54,9 @@ cell passes if it is within `abs` **or** within `rel` (relative to `|ref|`, with
 
 Nothing to compare is not agreement: a test field that is all NaN or all fill
 where the reference is valid is `FAIL (n=0)`. Dropped cells (see above) do not
-fail a variable on their own -- the verdict stays about the cells that could be
-compared -- but the count is in the table and the CLI notes it on stderr.
-`abs` is the field's noise floor -- directions get `1e-2` degrees because
+fail a variable on their own (the verdict stays about the cells that could be
+compared), but the count is in the table and the CLI notes it on stderr.
+`abs` is the field's noise floor: directions get `1e-2` degrees because
 `dir`/`dp` are quantised by the directional bin width.
 
 A variable that is in both files but not in the tolerance file is reported as

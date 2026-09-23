@@ -28,7 +28,7 @@ void check(int status, const std::string& what) {
 /// RAII around an open NetCDF file.
 class File {
  public:
-  explicit File(const std::string& path) : path_(path) {
+  explicit File(const std::string& path) {
     if (nc_open(path.c_str(), NC_NOWRITE, &id_) != NC_NOERR)
       throw std::runtime_error("could not open '" + path + "' -- run ./run.sh first");
   }
@@ -36,11 +36,9 @@ class File {
   File(const File&) = delete;
   File& operator=(const File&) = delete;
   int id() const { return id_; }
-  const std::string& path() const { return path_; }
 
  private:
   int id_ = -1;
-  std::string path_;
 };
 
 /// The dimension id for the first of `names` that exists, or -1.
@@ -55,15 +53,7 @@ int find_dim(int ncid, std::initializer_list<const char*> names, std::string& fo
   return -1;
 }
 
-/// A variable's _FillValue as a double, or NaN when it has none.
-double fill_value(int ncid, int varid) {
-  double v = std::numeric_limits<double>::quiet_NaN();
-  if (nc_get_att_double(ncid, varid, "_FillValue", &v) != NC_NOERR)
-    return std::numeric_limits<double>::quiet_NaN();
-  return v;
-}
-
-/// An optional numeric attribute (scale_factor, add_offset), or `dflt`.
+/// An optional numeric attribute (_FillValue, scale_factor, add_offset), or `dflt`.
 double att_or(int ncid, int varid, const char* name, double dflt) {
   double v = dflt;
   if (nc_get_att_double(ncid, varid, name, &v) != NC_NOERR) return dflt;
@@ -155,7 +145,7 @@ Profile read_profile(const std::string& path) {
   p.hs.assign(nx, 0.0);
   check(nc_get_vara_double(ncid, hsid, start.data(), count.data(), p.hs.data()),
         "nc_get_vara_double(hs)");
-  const double fill = fill_value(ncid, hsid);
+  const double fill = att_or(ncid, hsid, "_FillValue", std::numeric_limits<double>::quiet_NaN());
   const double scale = att_or(ncid, hsid, "scale_factor", 1.0);
   const double offset = att_or(ncid, hsid, "add_offset", 0.0);
   for (double& v : p.hs) {
