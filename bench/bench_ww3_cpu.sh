@@ -16,7 +16,7 @@ MAXR="${3:-$(nproc)}"
 OUT="results_ww3_cpu.csv"
 
 [ -d "$BIN/bin" ] && BIN="$BIN/bin"
-command -v "$BIN/ww3_shel" >/dev/null 2>&1 || [ -x "$BIN/ww3_shel" ] || {
+[ -x "$BIN/ww3_shel" ] || {
   echo "!! no ww3_shel in $BIN"; exit 1; }
 
 [ -d "$CASE" ] || { echo "!! no case dir $CASE -- run: just bench-case --size medium -o bench/$CASE"; exit 1; }
@@ -24,8 +24,8 @@ command -v "$BIN/ww3_shel" >/dev/null 2>&1 || [ -x "$BIN/ww3_shel" ] || {
 echo "ranks,wall_s,speedup,efficiency,notes" > "$OUT"
 
 run_one () {
-  local n="$1" launcher="$2" note="$3"
-  local work="run_np${n}${note:+_$note}"
+  local n="$1" launcher="$2"
+  local work="run_np${n}"
   rm -rf "$work"; mkdir -p "$work"
   cp "$CASE"/* "$work"/
   cp "$BIN"/ww3_grid "$BIN"/ww3_shel "$work"/ 2>/dev/null || true
@@ -35,11 +35,7 @@ run_one () {
     # time ONLY ww3_shel -- ww3_grid is serial setup and would dilute the scaling
     local t0 t1
     t0=$(date +%s.%N)
-    if [ -n "$launcher" ]; then
-      $launcher ./ww3_shel > ww3_shel.out 2>&1
-    else
-      ./ww3_shel > ww3_shel.out 2>&1
-    fi
+    $launcher ./ww3_shel > ww3_shel.out 2>&1
     t1=$(date +%s.%N)
     echo "$t1 - $t0" | bc
   )
@@ -52,11 +48,8 @@ echo
 BASE=""
 N=1
 while [ "$N" -le "$MAXR" ]; do
-  if [ "$N" -eq 1 ]; then
-    T=$(run_one 1 "" "")
-  else
-    T=$(run_one "$N" "mpirun --oversubscribe -np $N" "")
-  fi
+  L=""; [ "$N" -gt 1 ] && L="mpirun --oversubscribe -np $N"
+  T=$(run_one "$N" "$L")
   [ -z "$BASE" ] && BASE="$T"
   SPD=$(echo "scale=3; $BASE / $T" | bc)
   EFF=$(echo "scale=3; $SPD / $N" | bc)
