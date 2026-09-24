@@ -9,4 +9,4 @@ The specific objectives are:
 3. To quantify the gain of the build, configuration and Fortran refactoring rungs, each with its parity evidence against the reference, and to deliver the best configuration to the laboratory as a documented build.
 4. To build the validation infrastructure WW3 lacks: a per-field comparator with versioned tolerances and per-routine unit tests on captured inputs, integrated with the model's regression matrix.
 5. To rewrite in C++/Kokkos, in profile order, the kernels that remain dominant, validate them against the original Fortran on CPU, measure their gain on GPU (H100) and decide, on gain and parity, whether they enter the operational configuration.
-6. To publish tooling, results and recommendation in the open repository, in a form the laboratory can rerun.
+6. To publish tooling, results and recommendation in the project repository, in a form the laboratory can rerun, subject to the disclosure policy described in the methodology.
