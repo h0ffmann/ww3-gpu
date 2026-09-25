@@ -1,21 +1,19 @@
 # A Bend 2 tryout on one WW3 kernel
 ## Plan for porting `W3SNL1` (the DIA) to Bend as a third arm of the existing Fortran / Kokkos parity harness
 
-Prepared 18 September 2026. A proposal, not a build record: nothing below has been run.
+Prepared 18 September 2026 as a proposal. Nothing below has been run.
 `(v)` marks a claim checked on 2026-09-18 against a source named in §11; `⚠` marks one that
 was not checked. Bend released 2.0.8 and 2.0.9 on the day this was written `(v)`, so every
 version-specific claim here is dated and will go stale; re-check the marked lines before acting.
 
-> **Scope.** One kernel, one week, one written result either way. This is a learning
-> exercise about what a proof-checked, GPU-targeting language costs on real wave-model
-> arithmetic. It is not a route on the ladder (`course/13`), it does not touch `kokkos/`,
-> and it does not propose Bend for the port.
-
----
+> Scope: one kernel, one week, and one written result whether it works or not. The
+> exercise measures what a proof-checked language that targets the GPU costs on real
+> wave-model arithmetic. It is off the ladder (`course/13`), leaves `kokkos/` alone, and
+> does not propose Bend for the port.
 
 ## 1. Summary and recommendation
 
-**Do it, small.** Port the per-call body of `W3SNL1` (sections 1–4 of `w3snl1md.F90`) to a
+Recommendation: do it, at small scale. Port the per-call body of `W3SNL1` (sections 1–4 of `w3snl1md.F90`) to a
 standalone Bend program driven by the committed fixture `kokkos/tests/fixtures/snl1_nk25_nth24.bin`,
 compare `S` and `D` against the Fortran answers in that file with the L1 gate the Kokkos port
 already uses (1e-5 relative, 1e-30 absolute floor), and time it against the
@@ -23,40 +21,38 @@ already uses (1e-5 relative, 1e-30 absolute floor), and time it against the
 person. Warm up on the dispersion Newton solver of `gpu/01_dispersion.f90` first, because it
 exercises the toolchain and the F32 transcendentals with no tables and no shared arrays.
 
-**Why W3SNL1.** The repo already has a verbatim Fortran reference, a captured fixture, a
-tolerance-justified L1 test, a benchmark protocol and a ledger row for it `(v)`. A Bend version
-becomes a third arm in a harness that exists, so the interesting question, *what does the
-language cost for the same answer to the same tolerance*, can be answered with numbers.
+W3SNL1 is the kernel because the repo already has a verbatim Fortran reference, a captured
+fixture, a tolerance-justified L1 test, a benchmark protocol and a ledger row for it `(v)`. A
+Bend version becomes a third arm of an existing harness, so what the language costs for the
+same answer at the same tolerance can be answered with numbers.
 
-**Four findings from the Bend sources that shape the plan** (evidence in §3):
+Four findings from the Bend sources shape the plan (evidence in §3):
 
-1. **Bend 2 has one float type, `F32`, and no `F64`** `(v)`. WW3's spectral state is default
+1. Bend 2 has one float type, `F32`, and no `F64` `(v)`. WW3's spectral state is default
    `REAL`, four bytes `(v)`, so the width matches the kernel as ported; the precision risk is
    operation-level (contraction, libm), not width. §4.
-2. **There is no C ABI for calling a pure Bend definition** `(v)`. A native build emits a whole
-   program with a `main` and no exported symbols; a library target is a **declared
-   non-goal**, listed in upstream's `WONTFIX.txt` under CAPACITY (#813): "The C output is a
+2. There is no C ABI for calling a pure Bend definition `(v)`. A native build emits a whole
+   program with a `main` and no exported symbols; a library target is a declared
+   non-goal, listed in upstream's `WONTFIX.txt` under CAPACITY (#813): "The C output is a
    whole program with one `main`. Call Bend from JS for a library shape." `(v)`. So there is no `snl1_shim.cpp` equivalent: the experiment is a
    standalone reimplementation, and items 2 (shim) and 4 (L2 replay) of the repo's definition
    of done do not apply. §5.
-3. **`Array<T>` is single-owner; indexing is cheap, sharing is not** `(v)`. The `ALeaf`/`ANode`
+3. `Array<T>` is single-owner; indexing is cheap, sharing is not `(v)`. The `ALeaf`/`ANode`
    tree in `base.bend` is the type-level model the checker reasons with; every compiled lane
    replaces it with one flat block and an O(1) indexed load (`array_get` is a `call: true`
    intrinsic lowering to `blk_at` + `blk_read`, `comp.ts:290-313, 1874-1906, 4036-4053`), and
-   `WORDS` stores an `F32` as a 32-bit word `(v, comp.ts:161)`. The real constraint is that
+   `WORDS` stores an `F32` as a 32-bit word `(v, comp.ts:161)`. The constraint is that
    `Array<T>` is `Type`, so it can never be `+`: two parallel branches cannot read one array,
    and the way to share is `Array.clone`, an O(n) block copy `(v, comp.ts:4066-4076)`. The
-   experiment's central unknown is therefore **fork granularity against clone cost**: clone
+   experiment's central unknown is therefore fork granularity against clone cost: clone
    once per fork leaf, then gather sequentially inside it (not a per-read penalty). §3, §6.
-4. **The CPU build is `clang -std=c11 -O3 … -lm` with no `-ffp-contract` flag** `(v)`. The
+4. The CPU build is `clang -std=c11 -O3 … -lm` with no `-ffp-contract` flag `(v)`. The
    Kokkos port measured 1.1e-5 relative drift from exactly one fused multiply-add and turned
    contraction off to reach bit-parity; Bend exposes no such knob, so bit-identity should not
    be expected and the L1 tolerance, not `b4b`, is the gate. §4.
 
-A well-measured negative result is a legitimate outcome: "the DIA costs N× the Kokkos serial
+A well-measured negative result also counts: "the DIA costs N× the Kokkos serial
 time in Bend, and here is where the time goes" is a finding this learning repo can use.
-
----
 
 ## 2. What Bend 2 is, and what it is not
 
@@ -80,8 +76,6 @@ Purity, affinity and mandatory termination are the design: a `def` must recurse 
 structurally smaller argument or be marked `@unsafe`, there is no `if` (match on `Bool`),
 no mutual recursion, and a `match` can only inspect a parameter or a pattern-bound variable `(v)`.
 
----
-
 ## 3. What the sources say
 
 All rows `(v)` on 2026-09-18 from `guide/GUIDE.md` (607 lines), `bend2/base.bend` (2831 lines),
@@ -98,7 +92,7 @@ All rows `(v)` on 2026-09-18 from `guide/GUIDE.md` (607 lines), `bend2/base.bend
 | Text | `F32.show` prints the shortest decimal that `strtof` reads back to the same value (`comp.ts:461-470`), so output is exact. `F32.read` is `strtof` and rejects strings containing `x`, `X` or `(`, so hex-float input is out (`comp.ts:499-500`). A float literal in source is `Math.fround(Number(text))` (`bend.ts:2253`): decimal → double → float, which can double-round ⚠ in rare cases. |
 | Constants | `F32.pi()` is the literal `3.14159265`; WW3's `PI` is the double `3.141592653589793` rounded to `REAL` once (`real.hpp`). The two may differ in the last bit ⚠; the fixture carries `xfr`, `dth`, `lam` and the tables, so the kernel need not compute `PI`. |
 
-**Consequence.** Every function the `W3SNL1` body needs exists: the per-call kernel is
+So every function the `W3SNL1` body needs exists: the per-call kernel is
 `MAX`, `EXP` and arithmetic `(v, snl1_dia.cpp section 1)`. The transcendentals `INSNL1` needs
 (`ACOS`, `ASIN`, `SIN`, `LOG`, `**`) also exist, but `INSNL1` need not be ported at all: its
 output is integer tables plus `AF11`, all stored in the fixture and already verified exactly
@@ -155,11 +149,9 @@ in the tree states or proves a property of a floating-point computation `(v)`.
 | 824 | Metal: U32 remainder wrong for one input | a correctness bug in an arithmetic primitive, on the other GPU backend |
 | 822 | Install script fails: no release from bend-lang.com | the documented installer was broken on the day of writing |
 
----
+## 4. Precision
 
-## 4. Precision: the headline risk, stated correctly
-
-**Correct the premise first.** WW3 is not double-precision Fortran. The spectral state and
+WW3 is not double-precision Fortran. The spectral state and
 the physics run in default `REAL`, four bytes: `constants.F90` uses plain default `REAL`
 `(v, KOKKOS_H100_PLAN §3.2)`, `real.hpp` sets `using Real = float` "matching WW3's default
 REAL" `(v)`, `03_precision.f90` says "WW3 computes mostly in default 4-byte real" `(v)`, the
@@ -167,51 +159,48 @@ fixture is `float32` throughout `(v, fixtures/README.md)`, and `snl1_ref.F90` co
 `REAL(8)`, `DBLE` or `D0` literal `(v, grep)`. A build with `-r8` is the exception, and the
 shim refuses it by design `(v, ww_kokkos_c.hpp rule 2)`.
 
-So Bend's `F32`-only surface is **width-matched** to the DIA as this repo ports it. Where WW3
+So Bend's `F32`-only surface is width-matched to the DIA as this repo ports it. Where WW3
 does use `REAL(8)` (some integral parameters, per `AGENTS_KOKKOS` §1.2 rule 7 ⚠ which routines),
-Bend cannot follow, and that alone removes it from consideration for those routines. For this
+Bend cannot follow, which alone rules it out for those routines. For this
 kernel the risk is elsewhere.
 
-**Design for F32 permanently.** F64 has been implemented once, by an outsider, and closed
+Design for F32 permanently. F64 has been implemented once, by an outsider, and closed
 without comment (§3.1); there is no public plan, and the Metal backend cannot have it. That
-patch is preserved on our fork's `f64` branch (§7.4), which changes nothing here: it is an
-optional second arm, not a dependency, and every gate below is a float32 gate. The
-experiment therefore does not wait for a wider type: every gate below is a tolerance against
-the float32 Fortran reference, and a precision-driven failure is a reportable result, not a
-"try again when F64 lands". Even if F64 existed, the workstation's GeForce part runs fp64 at a
+patch is preserved on our fork's `f64` branch (§7.4) as an optional second arm, not a
+dependency. Every gate below is a tolerance against the float32 Fortran reference, and a
+failure caused by precision is reported as a result instead of waiting for F64. Even if F64 existed, the workstation's GeForce part runs fp64 at a
 small fraction of its fp32 rate (`gpu/03_precision.f90` says about 1/64 for the RTX 4090 ⚠
 not measured here), so the GPU row would be the wrong place to want it.
 
-**Three sources of last-bit drift, in order of certainty:**
+Three sources of last-bit drift, in order of certainty:
 
-1. **Contraction.** Bend compiles with clang at `-O3` and passes no `-ffp-contract` `(v,
+1. Contraction. Bend compiles with clang at `-O3` and passes no `-ffp-contract` `(v,
    main.ts:344)`. clang's default for C is to fuse `a*b + c` within an expression ⚠ (clang
    documentation, not re-read today). The Kokkos port measured exactly this: GCC's default
    contraction fused `AWG1*UE(..) + AWG2*UE(..)` into an FMA, the `openmp-release` build drifted
-   **1.1e-5 relative** from the fixture, and `-ffp-contract=off` restored bit-identity on all three
+   1.1e-5 relative from the fixture, and `-ffp-contract=off` restored bit-identity on all three
    presets `(v, PORT_STATUS.md, course/12)`. Bend has no documented flag for this. One lever
    exists but is untested ⚠: `CC` is honoured, so a wrapper script that appends
    `-ffp-contract=off` may work for the CPU build; the GPU program goes through NVRTC, whose
    default is `--fmad=true` ⚠.
-2. **libm.** Settled `(v)`: the C template is `f32_rewrap((f32)$o(f32_unbox($0)))` over
+2. libm. Settled `(v)`: the C template is `f32_rewrap((f32)$o(f32_unbox($0)))` over
    `sqrt exp log log2 log10 sin cos tan asin acos atan sinh cosh tanh floor ceil trunc`, with
    `$o` the bare libm name and `<math.h>`, not `<tgmath.h>`, included (`comp.ts:226-228, 643-651,
    3171`). So Bend computes `(f32)exp((double)x)` (the double entry point, argument promoted,
-   result narrowed). gfortran's `EXP` on a default `REAL` calls `expf` ⚠. This cuts the opposite
-   way from the earlier guess: double-then-round is very nearly correctly rounded, so Bend's
-   transcendentals are the *more* accurate of the two and the drift they contribute is small.
-   Same host libm, but not necessarily the same
+   result narrowed). gfortran's `EXP` on a default `REAL` calls `expf` ⚠. Double-then-round is very nearly
+   correctly rounded, so Bend's transcendentals are the *more* accurate of the two and the
+   drift they contribute is small. Both use the host libm, though not necessarily the same
    entry point. On the GPU, CUDA's `expf` is a different implementation with its own ULP
    bound ⚠.
-3. **Evaluation order.** Section 4 of the kernel is a sum of eighteen products `(v,
+3. Evaluation order. Section 4 of the kernel is a sum of eighteen products `(v,
    snl1_dia.cpp)`. The port keeps the Fortran's order; a Bend version must too, and the affine
    discipline makes a "helpful" regrouping easy to introduce while satisfying the type checker.
 
-**What this does to the repo's vocabulary.** `b4b` / "bit-identical" is the criterion of
+The repo's vocabulary has to follow. `b4b` / "bit-identical" is the criterion of
 ladder steps 1–2 and what the `PORT_STATUS.md` L1 column reports `(v, GLOSSARY)`; it was
 *achieved* by the Kokkos port but the *gate* is `L1_test_snl1_dia`'s 1e-5 relative with a 1e-30
 floor `(v)`. A Bend row reports the measured maximum relative error of `S` and `D`, never
-"bit-identical", and passes or fails the same 1e-5 gate. Two honest sub-outcomes:
+"bit-identical", and passes or fails the same 1e-5 gate. Two sub-outcomes are expected:
 
 - CPU (`--gpu off`) within 1e-5: the language reproduces WW3 arithmetic to the gate the port
   set. If the maximum error lands near 1.1e-5, the FMA explanation is testable with the `CC`
@@ -219,12 +208,10 @@ floor `(v)`. A Bend row reports the measured maximum relative error of `S` and `
 - CPU fails 1e-5 by a small margin with an identified cause (contraction with no knob): a
   clean negative about *control*, not about correctness; report it as such.
 
-**What this does to the experiment's value.** Passing the gate says nothing WW3 does not
-already know. The value is the *cost* of reaching it: lines of Bend per line of Fortran, the
-clone-per-fork-leaf cost, the fork-depth sweep, and whether a proof-checked language can express the
-kernel without `@unsafe`. Those are the numbers to write down.
-
----
+Passing the gate tells WW3 nothing it does not already know. What the experiment measures
+is the *cost* of reaching it: lines of Bend per line of Fortran, the clone-per-fork-leaf cost,
+the fork-depth sweep, and whether a proof-checked language can express the kernel without
+`@unsafe`.
 
 ## 5. Interop: there is no shim
 
@@ -245,35 +232,31 @@ fixture (.bin) ──dump──► text (decimal, ≤9 sig. digits)
                   compare (C++, reuses fixture_io) ──► max |Δ|/max(|ref|, 1e-30) per point
 ```
 
-- **In.** A small C++ tool over `ww::fixture::load()` writes the header, `sig`, the 32 index
+- Input: a small C++ tool over `ww::fixture::load()` writes the header, `sig`, the 32 index
   tables, `af11`, `awg`, `swg` and the per-point `kdmean`, `cg`, `a`, `s`, `d` as text. The
   index tables go out 0-based and pre-shifted by `nth` (the port's scratch-slot convention `(v,
   course/12)`), so the Bend side never sees a negative index; `U32` has no sign `(v)`. The
   Bend program reads them with `File.read` and `F32.read` / `U32.read`.
-- **Round-trip calibration, first thing.** The Bend program prints `F32.bits` of every input
+- Round-trip calibration comes first: the Bend program prints `F32.bits` of every input
   it read; the comparator checks them against the fixture bytes. Required: zero mismatches.
-  This is what makes `strtof`'s decimal parsing ⚠ a verified fact for this fixture rather than
-  an assumption, and it costs an hour.
-- **Out.** `S` and `D` printed as `U32.show(F32.bits(x))`, exact `(v)`. The comparator
+  That turns `strtof`'s decimal parsing ⚠ into a verified fact for this fixture, for about an
+  hour of work.
+- Output: `S` and `D` printed as `U32.show(F32.bits(x))`, exact `(v)`. The comparator
   reinterprets and applies the L1 formula.
-- **Alternative rejected.** Generating a `.bend` module with the data as literals avoids file
+- Rejected alternative: generating a `.bend` module with the data as literals avoids file
   IO but pays the double-rounding ⚠ of literal parsing and a slower check on a large file
   (a `main` returning a value is "normalized by the checker (slow for big work)" `(v)`); a
   `main` returning `IO` is compiled.
-
----
 
 ## 6. Candidate kernels, ranked
 
 | # | Kernel | Divide-and-conquer fit | Harness in the repo | Verdict |
 |---|---|---|---|---|
-| 1 | `W3SNL1` body (sections 1–4) | **Medium.** Parallel over `nspecx` bins in section 3 and `nspec` bins in section 4 is a balanced tree; parallel over points is another. Each bin performs sixteen indexed reads of `UE` through the `ip`/`im` tables in section 3 and thirty-two reads of `SA*`/`DA*` through `ic` in section 4 `(v, snl1_dia.cpp)`, all from arrays every branch must read. Each read is O(1) `(v, §3.2)`; what costs is that the branches cannot share the array, so each fork leaf pays an `Array.clone` block copy. Modelling the tables as `+` `Data` trees instead would trade those O(1) loads for a real pointer chase (the slower option, not the fix). Section 2's high-frequency tail reads the row below and stays a sequential fold `(v)`. No reduction anywhere `(v)`. | Fortran reference, fixture, L1 test with justified tolerance, `ww_bench_snl1`, ledger row: all present `(v)`. | **The target.** Agrees with the premise of this proposal, with clone cost against fork granularity as the thing to measure. |
+| 1 | `W3SNL1` body (sections 1–4) | **Medium.** Parallel over `nspecx` bins in section 3 and `nspec` bins in section 4 is a balanced tree; parallel over points is another. Each bin performs sixteen indexed reads of `UE` through the `ip`/`im` tables in section 3 and thirty-two reads of `SA*`/`DA*` through `ic` in section 4 `(v, snl1_dia.cpp)`, all from arrays every branch must read. Each read is O(1) `(v, §3.2)`; what costs is that the branches cannot share the array, so each fork leaf pays an `Array.clone` block copy. Modelling the tables as `+` `Data` trees instead would trade those O(1) loads for a real pointer chase, which is slower. Section 2's high-frequency tail reads the row below and stays a sequential fold `(v)`. No reduction anywhere `(v)`. | Fortran reference, fixture, L1 test with justified tolerance, `ww_bench_snl1`, ledger row: all present `(v)`. | **The target.** Agrees with the premise of this proposal, with clone cost against fork granularity as the thing to measure. |
 | 2 | Dispersion Newton, `gpu/01_dispersion.f90` | **Best.** Independent over (point, frequency), a handful of scalars per leaf, `tanh`, `sqrt`, division, fixed eight iterations `(v)`. Exactly the "uniform numeric work" the guide says the GPU is for. | None: the program prints a residual and two values; `bench/README.md` says nothing in `gpu/` or `bench/` was run ⚠. A twenty-line gfortran driver printing `TRANSFER(k, 0)` bit patterns would make one. | **Warm-up, day 1.** Cheapest possible answer to "does Bend's `F32.tanh` agree with gfortran's, and does `!` dispatch on the 4090 under nix". It is WW3-shaped (`WAVNU1` in `w3dispmd.F90` ⚠ not opened; the `WW3/` submodule is empty in a fresh clone) but not WW3 code. |
 | 3 | `kernel_bench.f90` proxy (`Sin − Sds` sub-stepping) | Good: uniform trip count, `sqrt` only, per-bin independent `(v)`. | A checksum, no reference. | A proxy of a proxy; skip unless 1 and 2 leave time. |
 | 4 | `W3SIN4` / `W3SDS4` | Reductions for the integral parameters (`team_reduce` in the Kokkos plan `(v, course/13)`): a fold is natural in Bend but changes summation order. | Not ported, no fixture `(v, PORT_STATUS)`. | Not first. |
 | 5 | `W3QCK3` / `W3XYP3` propagation | Poor: 1-D sweeps with sequential dependence, halo stencils, memory-bound `(v, AGENTS_KOKKOS §2.2)`. | None. | No. |
-
----
 
 ## 7. The experiment
 
@@ -293,7 +276,7 @@ plan and its outcome stay in one place. Nothing under `kokkos/` changes except o
 | `justfile` | `bend-dispersion`, `bend-snl1`, `bend-snl1-bench` recipes; each fails with a message if `bend` is not on `PATH` |
 | `bend-lang/` | the compiler itself: a submodule of `h0ffmann/bend`, tracking `main` (§7.4). Not ours to edit |
 
-Toolchain rule: build Bend **from the `bend-lang/` submodule** (§7.4). It is TypeScript, run
+Toolchain rule: build Bend from the `bend-lang/` submodule (§7.4). It is TypeScript, run
 under bun (`bun bend2/main.ts …`; `bend2/pack/` carries `bun.lock`, and `main.ts` is "the .bend
 loader for bun and node" `(v, upstream AGENTS.md)`), so a JS runtime has to be on the host;
 `flake.nix` pins gfortran and clang, not bun ⚠. Or install it on the host from a pinned release
@@ -301,9 +284,9 @@ asset by hand, and record `bend --version` in `bend/README.md`. No
 script in this repo pipes the installer to a shell; the installer was failing on the day of
 writing anyway (issue #822). CI does not run Bend.
 
-Note the two directories are different things and neither is the other: `bend-lang/` is the
-compiler, a submodule of a fork we do not write; `bend/` is our own Bend source, the only part
-of this experiment that is ours.
+The two directories are unrelated: `bend-lang/` is the compiler, a submodule of a fork we do
+not write, and `bend/` holds our own Bend source, the only part of this experiment that is
+ours.
 
 ### 7.2 Steps
 
@@ -337,9 +320,8 @@ The GPU row is reported whatever it is.
 **Not a result:** "it did not build" without the compiler's message and the Bend version, or a
 timing without the `--gpu off` control (issue #826 documents exactly that mistake).
 
-**What does not change.** `kokkos/PORT_STATUS.md` keeps its rule that a row claims only what a
-command in this repo reproduces `(v)`; a Bend row would need Bend in the toolchain, which it
-is not, so the numbers live here, not there.
+`kokkos/PORT_STATUS.md` does not change: a row there claims only what a command in this repo
+reproduces `(v)`, and Bend is not in the toolchain, so the Bend numbers stay in this document.
 
 ### 7.4 The compiler: a submodule of our own fork
 
@@ -351,118 +333,109 @@ checker corpora under `bench/checker/` 34 MB, not mostly media), plus about 32 M
 `.git/modules/bend-lang`, so roughly 108 MB on disk `(v, measured)`. CI does not fetch it:
 `ci.yml` checks out with `submodules: false` and initialises only `nix-config` `(v)`.
 
-**Why a fork and not the upstream URL.** Two reasons, and only the second is specific to Bend.
-A fork pins a mirror we control, so a force-push or a yanked release upstream cannot take the
-toolchain out from under a half-finished experiment: upstream force-pushes `main`, which is
-visible in this project's own PR history `(v, a base_ref_force_pushed event on #795)`. And the
-fork is where a patch upstream will not take can live.
+A fork instead of the upstream URL, for two reasons. A fork pins a mirror we control, so a
+force-push or a yanked release upstream cannot take the toolchain out from under a
+half-finished experiment: upstream force-pushes `main`, which is visible in this project's own
+PR history `(v, a base_ref_force_pushed event on #795)`. And the fork can hold a patch upstream
+will not take, which is the reason specific to Bend.
 
-**What the fork carries.** Branch `f64`, at `ee3832e`, is the head of upstream PR #795,
+The fork carries branch `f64`, at `ee3832e`, the head of upstream PR #795,
 64-bit floats, closed unmerged by the project lead 1h42m after it was opened, with no review
-and no comment `(v, API, 2026-09-18)`. The implementation is real and is preserved on that
+and no comment `(v, API, 2026-09-18)`. The implementation is preserved on that
 branch: commit `492ea6b` is +413/-3 across `bend2/base.bend`, `bend2/bend.ts` and
 `bend2/comp.ts`, and `base.bend` at the branch tip has 136 lines matching `F64` against 0 on `main` `(v, checked at both refs)`. The PR's own file list on GitHub shows only the five test
 specimens and a gates cap bump, which is an artifact of the base force-push, not the state of
 the branch ⚠ (the cause was not traced further; the branch content is what was checked).
 
-**Why the submodule tracks `main`, not `f64`.** The default build must be stock Bend, so that
-every number this experiment reports is a number about the language as it actually ships. F64
+The submodule tracks `main`, not `f64`, because the default build must be stock Bend: every
+number this experiment reports is then a number about the language as it ships. F64
 is one `git -C bend-lang checkout f64` away, and any result produced that way is labelled as
 coming from a patched compiler or it is not a result.
 
-**What F64 is and is not for, here.** It is *not* a prerequisite: §4 establishes that WW3's
+F64 is not a prerequisite here: §4 establishes that WW3's
 DIA is float32 throughout, so stock Bend is already width-matched to the kernel this plan
 ports. Carrying the patch buys two things: a double-precision reference arm computed inside
-Bend, which turns "is this drift ours or the language's?" into a measurement rather than an
-argument; and an answer to the F64 question for any *other* WW3 routine that does use
+Bend, which measures whether a drift comes from our code or from the language; and an answer to the F64 question for any *other* WW3 routine that does use
 `REAL(8)`. Neither is on the critical path. If the rebase cost ever exceeds that value, the
 branch stays where it is as a record and the submodule keeps tracking `main`.
 
-**The rebase burden, measured.** Upstream `main` is 49 commits ahead of the PR's base
+The rebase burden: upstream `main` is 49 commits ahead of the PR's base
 (`46df6be`), touching 38 files `(v, compare API, 2026-09-18)`, and the patch edits three of
 the hottest files in the compiler. Upstream also shipped v2.0.8 and v2.0.9 eight minutes apart
 on that same day, and spent it tightening F32 semantics across lanes (issues #797, #801). A
 rebase is therefore expected to conflict, and the branch is not expected to stay green without
 work ⚠ (no rebase was attempted here).
 
----
-
 ### 7.5 Porting Bend to F64: what it would actually take
 
-Written down because the fork makes it a live option, not because this experiment needs it
-(§4: the DIA is float32). Everything here is from `WONTFIX.txt`, `AGENTS.md` and
+This section exists because the fork makes F64 a live option; the experiment itself does not
+need it (§4: the DIA is float32). Everything here is from `WONTFIX.txt`, `AGENTS.md` and
 `gates/repo.ts` at upstream `main`, read 2026-09-18 `(v)`.
 
-**F64 is not refused.** `WONTFIX.txt` is an explicit list of what the project will not do,
+F64 is not refused. `WONTFIX.txt` is an explicit list of what the project will not do,
 sorted into DESIGN, CAPACITY, OPEN, RUNTIME and SOON. F64 appears nowhere in it `(v, grep)`.
-Neither the type nor 64-bit arithmetic is a declared non-goal, which is worth knowing before
-reading the close of #795 as a verdict on the idea.
+Neither the type nor 64-bit arithmetic is a declared non-goal, so the close of #795 should not
+be read as a verdict on the idea.
 
-**Why a finished patch was closed anyway is not stated anywhere** ⚠. Two headings in
+No source states why a finished patch was closed ⚠. Two headings in
 `WONTFIX.txt` are candidates, and neither covers F64: the OPEN section's parenthetical, "no
 solution we trust yet; *patches would cost us control of the codebase*" `(v, verbatim)` (which
 lists one item, #797), and the CAPACITY heading, "a small team keeps the language at a size it
 can maintain" `(v)`. The file's own preamble says "Read this file before you open an issue", so
-it governs issues rather than pull requests. The hypothesis worth carrying is that the binding
-constraint is authorship and review bandwidth, not the feature; it is a hypothesis, not a
-finding.
+it governs issues rather than pull requests. Our working hypothesis, unconfirmed, is that the binding
+constraint is authorship and review bandwidth rather than the feature.
 
-**The hard constraint: `bend2/bend.ts` is off limits.** `AGENTS.md` says it "is the language
+The hard constraint is that `bend2/bend.ts` is off limits. `AGENTS.md` says it "is the language
 (parser, theory, checker) and is human-written: do not edit it" `(v, verbatim)`. PR #795 edited
 it (`bend2/bend.ts +27/-2` in commit `492ea6b` `(v, API; its author called it "about 45
 lines")`), purely to add the `d` literal suffix to the `NUMBER` rule and the two bit-conversion
 helpers. The obvious remedy (ship no literal syntax at
-all, no `2d`, no `1.5e3d`) **was already offered and did not save the PR**: its author wrote
+all, no `2d`, no `1.5e3d`) was already offered and did not save the PR: its author wrote
 "Say the word and I'll split the PR — the `comp.ts` + `base.bend` half stands alone; only the
 literal syntax would wait for your hand", and the PR was closed with no reply `(v, #795 body)`.
 So no diff shape is *known* to be acceptable, and the constraint should be read as authorship
 and review bandwidth rather than as a line count. If a future attempt is made anyway, the split
-is still the shape to make: Values would be
+is still the shape to make: values would be
 built with `F32.to_f64` and `U32.to_f64`-style conversions, or read from text with `F64.read`,
 and the parser would not move. That is uglier for a human writing constants and almost
 irrelevant for a generated numeric kernel, which is the use case that wants F64 in the first
 place.
 
-**The size gates are real and already conflict.** `gates/repo.ts` caps every file by ttok:
+The size gates already conflict. `gates/repo.ts` caps every file by ttok:
 `bend2/base.bend` 24000, `bend2/comp.ts` 61500, `bend2/bend.ts` 41000 `(v)`. PR #795 bumped
 base to 25000 and comp.ts from 61000 to 63000; upstream has since moved comp.ts's own cap to
 61500 on `main` `(v)`. A rebase therefore conflicts on the gate file itself, in addition to the
 three source files (the mechanical part of the 49-commit gap in §7.4).
 
-**Four lanes, and one of them cannot have it.** `comp.ts` carries the C, Metal, CUDA and JS
+Of the four lanes, one cannot have F64. `comp.ts` carries the C, Metal, CUDA and JS
 runtimes from one source `(v, AGENTS.md)`. Metal Shading Language has no fp64, which is why
 #795's helpers are `#ifndef __METAL_VERSION__`-guarded, and `WONTFIX.txt` fixes the backend set
 at "Metal and CUDA only" `(v)`, so the gap cannot be closed by adding a lane. F64 is therefore
 permanently a type that exists on three of four backends, and a program using it is not
-portable across the language's own targets. That is a genuine design cost to the maintainer,
-not an implementation detail.
+portable across the language's own targets. That is a design cost the maintainers would carry
+beyond the implementation work.
 
-**No common-subexpression elimination.** `WONTFIX.txt`, DESIGN: "Two calls of `f(p)` run
+Bend also does no common-subexpression elimination. `WONTFIX.txt`, DESIGN: "Two calls of `f(p)` run
 twice. Bind the value once." (#812) `(v)`. Unrelated to F64, but it shapes how any numeric
 kernel must be written here: every repeated table read or subexpression is bound once by hand,
 and a missed one is a silent constant-factor loss.
 
-**The JS lane inverts.** A JS number *is* an IEEE binary64, so F64 would be exact there for
+The JS lane is the reverse case. A JS number *is* an IEEE binary64, so F64 would be exact there for
 free, while F32 needs `Math.fround` and, per `WONTFIX.txt`, still loses NaN payload bits
-because a bit-exact F32 measured 7-8x slower `(v)`. F64 is the type that lane represents
-natively.
+because a bit-exact F32 measured 7-8x slower `(v)`.
 
-**What was not established** ⚠: whether a new primitive type obliges a change to
+Not established ⚠: whether a new primitive type obliges a change to
 `bend2/bend.lean`, the Lean mechanization of the core (#795 did not touch it, which is either
 correct or an omission, not checked); whether NVRTC compiles the `double` helpers at the
 optimization settings Bend uses; and what fp64 costs on the target card beyond the ~1/64 figure
 `03_precision.f90` quotes for the RTX 4090.
 
-**If we carry it anyway.** Keep `f64` as a record, not a maintained branch: rebase it only when
+If we carry the branch anyway, keep `f64` as a record, not a maintained branch: rebase it only when
 an experiment actually needs the arm, accept that `gates/repo.ts` and the three source files
 will conflict each time, and never let a number measured on the patched compiler into a table
 without saying so. The alternative that costs nothing upstream (compensated summation in F32,
 Kahan or two-sum, where a reduction is what drifts) is the first thing to try if the DIA's
 error turns out to be accumulation rather than contraction ⚠ (not evaluated here).
-
----
-
----
 
 ## 8. `LAWS.bend` for a numeric kernel: what is realistic
 
@@ -478,7 +451,7 @@ the arithmetic differs.
 **Statable and provable, but about integers.** "Every pre-shifted table entry of *this*
 fixture lies in `[0, 1024)`" is a closed claim over `U32` values that `{==}` decides by
 evaluation; "the output has `nspec` entries" likewise. These mirror what `L1_test_snl1_tables`
-checks exactly `(v)`. They are cheap, and they are the honest scope of step 5.
+checks exactly `(v)`. They are cheap, and they are all step 5 can realistically cover.
 
 **Statable, not provable, and mostly false.** Every property a wave modeller would want:
 - *Zero spectrum gives zero source.* True in exact arithmetic; in IEEE, `0 × inf` is NaN, and
@@ -490,36 +463,31 @@ checks exactly `(v)`. They are cheap, and they are the honest scope of step 5.
 - *Non-negativity of the spectrum.* Not a property of `Snl` at all: `S` is signed by design,
   and positivity of `A` is enforced by the limiter in `W3SRCE`, not here `(v, AGENTS_KOKKOS §2.2)`.
 
-**Verdict.** Do not oversell this. For floating-point physics the proof layer adds
-termination and race-freedom, both real, and nothing about the numbers. A law about energy
-conservation would be false before it was unprovable. The place proofs could earn their keep
-is the integer machinery of `INSNL1` (index windows, direction wrap-around), which is also the
-part this tryout deliberately does not port.
-
----
+For floating-point physics the proof layer adds termination and race-freedom, both real, and
+nothing about the numbers. A law stating energy conservation would be false in float
+arithmetic, so its provability never comes up. Proofs could pay off in the integer machinery of
+`INSNL1` (index windows, direction wrap-around), which is the part this tryout deliberately
+does not port.
 
 ## 9. Effort and recommendation
 
-**Effort.** Five to seven working days, one person, steps 0–6 above, on the workstation the
+Effort: five to seven working days, one person, steps 0–6 above, on the workstation the
 ledger was measured on. Add a day if CUDA under nix does not land at a path Bend's build
 accepts (`CUDA_HOME` is honoured `(v)`). Add unknown time for version churn: two releases in
 eight minutes on the day of writing `(v)`, and the guide's own "will be generalized soon" on
 arrays.
 
-**Recommendation: do it, time-boxed, as written.** Reasons for: the harness exists, so the
-answer is numbers rather than impressions; the negative outcomes are informative; it is one
-week. Reasons it is *only* a tryout, each `(v)`: no C ABI (#813), `F32` only, tree arrays with a
-single owner, and a toolchain that changes daily. Any one of those keeps Bend off the port's
-route list; together they make the question "could Bend be an arm of the port" already
-answered, and the remaining question "what does it cost to say the same thing" worth one week.
+Recommendation: do it as written, time-boxed to the week. The harness exists, so the answer
+is numbers rather than impressions, and the negative outcomes are informative. It stays a
+tryout because of four facts, each `(v)`: no C ABI (#813), `F32` only, tree arrays with a
+single owner, and a toolchain that changes daily. Any one of them keeps Bend off the port's
+route list, which already answers whether Bend could be an arm of the port. What remains is
+what it costs to say the same thing in Bend, and that is worth one week.
 
-**Revisit when** all three hold: a native library target exists (#813, today a declared
+Revisit when all three hold: a native library target exists (#813, today a declared
 non-goal in `WONTFIX.txt`, not merely unbuilt `(v)`), a `Data`-shareable numeric buffer exists so
 parallel branches can read one array without cloning it, and `F64` exists (the last has been
-submitted once and closed without a stated reason, PR #795 `(v)`, so do not plan around it). Any
-two are not enough.
-
----
+submitted once and closed without a stated reason, PR #795 `(v)`, so do not plan around it).
 
 ## 10. Open questions and what was not verified
 
@@ -530,7 +498,7 @@ two are not enough.
 - ⚠ `strtof` correctness for 9-digit decimals on the workstation's libc, and the
   double-rounding of source literals. Step 2 makes the first moot for this fixture.
 - ⚠ The cost of `Array.clone`'s block copy at the fork granularity the DIA wants; nothing in
-  the tree benchmarks a gather over a cloned array. This is the experiment.
+  the tree benchmarks a gather over a cloned array, so measuring it is the experiment's main job.
 - ⚠ Host↔device movement on a discrete GPU with Bend's "unified heap": documented for Apple
   unified memory only. The Kokkos row's 94 % transfer share `(v)` is the number to compare
   against, and Bend gives no shim/kernel split to measure it with.
@@ -543,10 +511,7 @@ two are not enough.
 - ⚠ The README's speed charts ("as fast as C on the CPU, as fast as CUDA on the GPU") are the
   project's own; no third-party measurement was found and none was attempted.
 - The Bend bench headers refer to "Bend3" and "Bend4" while releases are 2.0.x `(v)`; which
-  generation the guide describes was not resolved and does not matter for this plan, but it is
-  a sign of how fast the ground moves.
-
----
+  generation the guide describes was not resolved and does not matter for this plan.
 
 ## 11. Sources
 
