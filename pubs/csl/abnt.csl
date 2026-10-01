@@ -572,6 +572,11 @@ em caixa alta. Utiliza-se antes do nome da conferencia a expressao "In". Segundo
             <!--Nome do evento, conferencia-->
             <text macro="publisher" prefix=". " suffix=". "/>
             <!--Local, data, etc-->
+            <group prefix="(" suffix="). " delimiter=", ">
+              <text variable="genre"/>
+              <text variable="number"/>
+            </group>
+            <!--Serie e numero: (Office Note, 528)-->
             <text macro="access" suffix="."/>
             <!--URL, data do acesso-->
           </group>
