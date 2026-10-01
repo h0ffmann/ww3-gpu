@@ -31,6 +31,12 @@ in pt-BR, and the wave-modelling and HPC vocabulary. It reports, it does not rew
   does not overwrite the reviewed Portuguese.
 - Placeholders such as `(REFERÊNCIA)` or `(CITAR ...)` are defects, not notes: fill them with a
   fetched source before the PR.
+- `just proposal-lint` (CI runs it too) checks what a model reviewer misses: pt and en cite the same
+  sources and carry the same numbers, no placeholder or decimal point in the Portuguese, and each
+  acronym is expanded at first use. The reviewer gets its output, and `--record` refuses a review
+  that quotes text the proposal no longer contains.
+- The proposal is read by a DEL committee with no oceanography background: gloss a wave term in a
+  few words the first time it appears; `humanizar` (pt-BR) and `humanizer` (en) catch AI tells.
 
 ## Ground rules
 

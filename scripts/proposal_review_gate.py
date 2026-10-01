@@ -9,13 +9,16 @@
 The sources are pubs/proposal/{pt,en}/*.md, refs.bib and meta.*.yaml. Their combined sha256 is
 recorded in pubs/proposal/.review.json together with the review text. Any later edit changes the
 hash, the recorded review no longer matches, and --check fails: a review cannot be inherited by a
-text it never saw. Standard library only.
+text it never saw. --record also refuses a review that quotes, next to a file name, text that file
+does not contain: a parecer written against an earlier draft (idea from the verbatim-anchor rule of
+Imbad0202/academic-research-skills). Standard library only.
 """
 import argparse
 import datetime as dt
 import hashlib
 import json
 import pathlib
+import re
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -54,11 +57,43 @@ def check(base: pathlib.Path = PROPOSAL, record: pathlib.Path = None) -> tuple:
     return 0, f"review of {data.get('reviewed_at', '?')} matches the current proposal ({now[:12]})"
 
 
+FILE_REF = re.compile(r"\b((?:pt|en)/\d\d-[\w-]+\.md)")
+QUOTE = re.compile(r"[“\"]([^”\"]{15,})[”\"]")
+
+
+def flat(s: str) -> str:
+    return " ".join(re.sub(r"[*`_]", "", s).split()).casefold()
+
+
+def stale_quotes(text: str, base: pathlib.Path = PROPOSAL) -> list:
+    """Quotes (15+ characters, split at ellipses) on a line that names a proposal file, which none of
+    the files named on that line contains."""
+    missing = []
+    for line in text.splitlines():
+        files = [base / f for f in FILE_REF.findall(line) if (base / f).exists()]
+        if not files:
+            continue
+        bodies = [flat(f.read_text(encoding="utf-8")) for f in files]
+        for quote in QUOTE.findall(line):
+            for piece in re.split(r"…|\.\.\.|\[\.\.\.\]", quote):
+                piece = flat(piece).strip(" .,;:")
+                if len(piece) >= 15 and not any(piece in b for b in bodies):
+                    missing.append(f"{files[0].relative_to(base)}: “{piece[:60]}”")
+    return missing
+
+
 def record_review(parecer: pathlib.Path, base: pathlib.Path = PROPOSAL, record: pathlib.Path = None) -> int:
     record = record or base / ".review.json"
     text = parecer.read_text(encoding="utf-8").strip()
     if len(text) < 200:
         print(f"{parecer}: a review of {len(text)} characters is not a review", file=sys.stderr)
+        return 2
+    missing = stale_quotes(text, base)
+    if missing:
+        print(f"{parecer}: quotes text the proposal no longer contains, so it reviewed another draft:",
+              file=sys.stderr)
+        for m in missing:
+            print(f"  {m}", file=sys.stderr)
         return 2
     record.write_text(json.dumps({
         "content_hash": content_hash(base),
@@ -91,6 +126,11 @@ def self_test() -> None:
     short = base / "short.md"
     short.write_text("ok")
     assert record_review(short, base, rec) == 2, "a stub must be refused"
+    quoted = base / "quoted.md"
+    quoted.write_text("PARECER GERAL\n" + "detalhe. " * 40 + "\n- `pt/03-theme.md`: “texto *editado*”, ok.\n")
+    assert record_review(quoted, base, rec) == 0, "a quote the file contains is fine"
+    quoted.write_text("PARECER GERAL\n" + "detalhe. " * 40 + "\n- pt/03-theme.md: \"o texto que já saiu\"\n")
+    assert record_review(quoted, base, rec) == 2, "a quote from an earlier draft must be refused"
     print("proposal_review_gate self-test ok")
 
 
