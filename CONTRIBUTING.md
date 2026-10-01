@@ -47,6 +47,12 @@ in pt-BR, and the wave-modelling and HPC vocabulary. It reports, it does not rew
   `lint` jobs in `.github/workflows/ci.yml`).
 - Prose style: plain, direct, no filler. If a sentence doesn't teach something,
   cut it.
+- Length is not a measure of a research doc (the proposal, the course, `docs/`). A Portuguese
+  and an English version, or a revision and the text it replaces, may differ in length, and
+  that is not a defect: do not pad or trim a text to match another one. What must match across
+  languages is content, the same claims, citations and numbers (`just proposal-lint` checks
+  this for the proposal). Cut a sentence because it repeats or teaches nothing, never to hit a
+  word count.
 
 ## Opening a pull request
 

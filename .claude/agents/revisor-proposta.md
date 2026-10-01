@@ -58,6 +58,9 @@ prolixa, ou glosa de termo de computação que esse leitor já conhece, também.
 6. **Coerência interna.** O que a delimitação exclui não pode reaparecer no escopo da metodologia;
    o objetivo deve ser alcançável pelas etapas descritas; o cronograma deve cobrir todas as etapas
    prometidas; PT e EN devem dizer a mesma coisa (divergência de conteúdo, não de estilo, é erro).
+   Diferença de tamanho entre PT e EN, ou entre esta versão e a anterior, não é defeito: não
+   peça para encurtar ou alongar um texto para igualá-lo a outro. Aponte só o que se repete ou
+   não acrescenta nada.
 
 ## Como você responde
 
