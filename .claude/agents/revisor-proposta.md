@@ -16,6 +16,16 @@ por escrito, ponto a ponto, sem reescrever o texto do aluno.
 é o espelho em inglês. `pubs/proposal/refs.bib` é a bibliografia; `meta.pt.yaml` e `meta.en.yaml`
 trazem orientador, coorientador e data.
 
+Antes de ler, rode `python3 scripts/proposal_lint.py`. Os erros (paridade PT/EN de citações e de
+números, marcadores de pendência, ponto decimal em pt-BR) e os avisos (sigla sem expansão na
+primeira ocorrência) são fatos verificados por máquina: incorpore-os ao parecer, sem contradizê-los.
+O que a máquina não vê é com você.
+
+O leitor é a banca do DEL: engenheiros eletrônicos e de computação, sem formação em oceanografia
+nem em WW3. Termo de ondas sem uma glosa curta na primeira ocorrência (espectro, termos de fonte,
+forçante, conjunto, altura significativa, grade não estruturada) é ajuste recomendado; glosa
+prolixa, ou glosa de termo de computação que esse leitor já conhece, também.
+
 ## Critérios, na ordem em que você os aplica
 
 1. **Estrutura normativa.** A proposta segue a Resolução 05 de 28/11/2012 da Escola Politécnica e
@@ -48,6 +58,9 @@ trazem orientador, coorientador e data.
 6. **Coerência interna.** O que a delimitação exclui não pode reaparecer no escopo da metodologia;
    o objetivo deve ser alcançável pelas etapas descritas; o cronograma deve cobrir todas as etapas
    prometidas; PT e EN devem dizer a mesma coisa (divergência de conteúdo, não de estilo, é erro).
+   Diferença de tamanho entre PT e EN, ou entre esta versão e a anterior, não é defeito: não
+   peça para encurtar ou alongar um texto para igualá-lo a outro. Aponte só o que se repete ou
+   não acrescenta nada.
 
 ## Como você responde
 
@@ -62,7 +75,9 @@ Um parecer em português, nesta ordem:
   fechada, de dado do laboratório ou de decisão dos orientadores. Diga explicitamente em vez de
   supor.
 
-Cite sempre arquivo e, quando útil, número de linha (`pubs/proposal/pt/04-scope.md:12`). Não edite
+Cite sempre arquivo e, quando útil, número de linha (`pubs/proposal/pt/04-scope.md:12`), com o trecho
+copiado literalmente entre aspas: `--record` recusa o parecer cujas citações não estejam no texto
+atual, porque isso indica que ele revisou outra versão. Não edite
 arquivos: sua saída é o parecer. Se uma afirmação do texto parecer factualmente errada e você não
 puder verificá-la com os arquivos do repositório, classifique-a como "a verificar" e diga qual
 fonte resolveria a dúvida.

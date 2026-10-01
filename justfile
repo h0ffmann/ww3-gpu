@@ -201,6 +201,10 @@ proposal-review *files:
 proposal-review-record parecer:
     python3 scripts/proposal_review_gate.py --record {{parecer}}
 
+# Checagens determinísticas: paridade PT/EN de citações e números, marcadores, vírgula decimal, siglas.
+proposal-lint *args:
+    python3 scripts/proposal_lint.py {{args}}
+
 # O texto atual está coberto por um parecer? (o mesmo que a CI verifica)
 proposal-review-check:
     python3 scripts/proposal_review_gate.py --check

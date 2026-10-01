@@ -31,6 +31,12 @@ in pt-BR, and the wave-modelling and HPC vocabulary. It reports, it does not rew
   does not overwrite the reviewed Portuguese.
 - Placeholders such as `(REFERÊNCIA)` or `(CITAR ...)` are defects, not notes: fill them with a
   fetched source before the PR.
+- `just proposal-lint` (CI runs it too) checks what a model reviewer misses: pt and en cite the same
+  sources and carry the same numbers, no placeholder or decimal point in the Portuguese, and each
+  acronym is expanded at first use. The reviewer gets its output, and `--record` refuses a review
+  that quotes text the proposal no longer contains.
+- The proposal is read by a DEL committee with no oceanography background: gloss a wave term in a
+  few words the first time it appears; `humanizar` (pt-BR) and `humanizer` (en) catch AI tells.
 
 ## Ground rules
 
@@ -41,6 +47,12 @@ in pt-BR, and the wave-modelling and HPC vocabulary. It reports, it does not rew
   `lint` jobs in `.github/workflows/ci.yml`).
 - Prose style: plain, direct, no filler. If a sentence doesn't teach something,
   cut it.
+- Length is not a measure of a research doc (the proposal, the course, `docs/`). A Portuguese
+  and an English version, or a revision and the text it replaces, may differ in length, and
+  that is not a defect: do not pad or trim a text to match another one. What must match across
+  languages is content, the same claims, citations and numbers (`just proposal-lint` checks
+  this for the proposal). Cut a sentence because it repeats or teaches nothing, never to hit a
+  word count.
 
 ## Opening a pull request
 

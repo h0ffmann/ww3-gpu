@@ -7,9 +7,9 @@ O GitHub renderiza os blocos abaixo diretamente; localmente, qualquer visualizad
 
 ```mermaid
 mindmap
-  root((Otimização operacional do WW3 no ciclo do ReNOMO))
+  root((Otimização operacional do WW3 para GPU))
     Contexto
-      LabECO/UFSC roda o WW3 para o ReNOMO
+      LabECO/UFSC roda o WW3 para a ReNOMO
       Custo de uma previsão é o tempo de execução
       WW3 em Fortran, MPI e OpenMP, fixado por switches
     Problema de engenharia
@@ -31,11 +31,11 @@ mindmap
       Tabelas de benchmark e perfil
       Melhor build documentado
       Comparador por campo e testes por rotina
-      Kernels Kokkos com paridade e tempo
+      Kernels Kokkos com concordância e tempo
       Recomendação de operação
 ```
 
-## 2. A escada de otimização e os critérios de paridade
+## 2. A escada de otimização e os critérios de concordância
 
 ```mermaid
 flowchart TD
@@ -45,14 +45,14 @@ flowchart TD
 
     subgraph E1[Etapa 1 · Opções de compilação]
         direction LR
-        E1a[compilador, flags, switches,<br/>MPI x OpenMP] --> E1g{bit a bit<br/>ou arredondamento?}
+        E1a[compilador, flags, switches,<br/>forçante, MPI x OpenMP] --> E1g{bit a bit ou<br/>dentro da tolerância?}
     end
     E1g -- sim --> E2
     E1g -- não --> X1[descartada]
 
     subgraph E2[Etapa 2 · Configuração da execução]
         direction LR
-        E2a[decomposição, passos de tempo,<br/>saídas, restart, forçante] --> E2g{matriz do WW3<br/>bit a bit?}
+        E2a[passos de tempo,<br/>saídas, restart] --> E2g{dentro da tolerância<br/>por campo?}
     end
     E2g -- sim --> E3
     E2g -- não --> X2[descartada]
@@ -66,7 +66,7 @@ flowchart TD
 
     subgraph E4[Etapa 4 · Kernels C++/Kokkos]
         direction LR
-        E4a[só rotinas ainda dominantes<br/>após a etapa 3] --> E4g{ganho medido e<br/>paridade?}
+        E4a[só rotinas ainda dominantes<br/>após a etapa 3] --> E4g{ganho medido e<br/>concordância?}
     end
     E4g -- sim --> OP[Entra na configuração operacional]
     E4g -- não --> LIM[Medida do limite,<br/>recomendação de não operar em GPU]
@@ -81,11 +81,11 @@ flowchart TD
 flowchart LR
     K[Kernel reescrito<br/>em C++/Kokkos] --> S1{Serial Kokkos<br/>idêntico bit a bit ao C?}
     S1 -- não --> F1[corrigir tradução]
-    S1 -- sim --> S2{Paridade com o Fortran<br/>no caso operacional?}
+    S1 -- sim --> S2{Concordância com o Fortran<br/>no caso operacional?}
     S2 -- não --> F2[não incorporado]
     S2 -- sim --> S3{Tempo do caso operacional<br/>menor com o kernel no H100?}
     S3 -- não --> F3[Relatório do limite:<br/>tráfego CPU-GPU por passo]
-    S3 -- sim --> D[Decisão com o LabECO:<br/>tabela de tempo + relatório de paridade]
+    S3 -- sim --> D[Decisão com o LabECO:<br/>tabela de tempo + relatório de concordância]
     D --> OP[Configuração operacional]
 ```
 
@@ -110,10 +110,6 @@ mindmap
         build GNU e Intel
         um único caso de regressão com MPI
         matriz completa só nas máquinas do NCEP
-      Atividade recente
-        limpeza de avisos de compilação
-        correções da CI e do Spack
-        falhas intermitentes da matriz em aberto
     WW4 develop
       Criado em novembro de 2025
       36 commits, nenhuma release
@@ -124,8 +120,7 @@ mindmap
         L2 integração, GoogleTest
         L3 funcional, ainda não existe
         L4 regressão, ainda não existe
-      L1 e L2 reescritos em julho de 2026
-      Build migrando para CMake puro
+      L1 e L2 cobrem o código existente
       Arquitetura CPU-GPU em aberto, Kokkos proposto
     O que o projeto constrói
       Comparador por campo com tolerâncias versionadas
@@ -178,18 +173,18 @@ gantt
     axisFormat %m/%Y
     section Preparação
     Revisão bibliográfica e registro da configuração      :a1, 2026-10-01, 2026-10-31
-    Benchmark reprodutível e perfil da referência          :a2, 2026-11-01, 2026-11-30
+    Benchmark, grades simplificadas, comparador e perfil   :a2, 2026-11-01, 2026-11-30
     section Otimização sem alterar código
     Etapa 1 · opções de compilação                         :b1, 2026-12-01, 2026-12-31
-    Etapa 2 · configuração, comparador e testes por rotina :b2, 2027-01-01, 2027-01-31
+    Etapa 2 · configuração e testes por rotina             :b2, 2027-01-01, 2027-01-31
     section Reescrita
     Etapa 3 · refatoração em Fortran moderno               :c1, 2027-02-01, 2027-02-28
-    Etapa 4 · kernels C++/Kokkos, paridade e H100          :c2, 2027-03-01, 2027-03-31
+    Etapa 4 · kernels C++/Kokkos, concordância e H100      :c2, 2027-03-01, 2027-03-31
     section Fechamento
     Decisão de operação, relatório final                   :d1, 2027-04-01, 2027-04-30
     Defesa                                                 :milestone, d2, 2027-05-01, 0d
     section Marco externo
-    Primeiro lançamento previsto do WW4                    :milestone, w4, 2027-01-15, 0d
+    Primeiro lançamento do WW4 (ON 525, meados de 2027)    :milestone, w4, 2027-07-01, 0d
 ```
 
 ## 8. Riscos e mitigações
@@ -197,19 +192,17 @@ gantt
 ```mermaid
 mindmap
   root((Riscos))
-    Divergência silenciosa após reescrita
-      Critérios de paridade
+    Divergência de resultados que passe despercebida
+      Critérios de concordância
       Testes por rotina com entradas capturadas
     Etapa 4 consumir o tempo das anteriores
       Ordem fixa das etapas
       Só reescrever rotina com custo residual medido
-    Ganho em GPU limitado pelo tráfego de dados
+    Ganho em GPU limitado pela transferência de dados
       Estado permanece no Fortran
       Resultado vira a medida do limite
-      Recomendação de não operar em GPU
-    Grade operacional não estruturada
-      Etapas 3 e 4 restritas aos termos de fonte
-    Arquitetura do WW4 mudar
-      Kokkos é a camada proposta no próprio WW4
-      Artefatos no padrão L1 e L2 do WW4
+      Próximo passo: dados residentes na GPU
+    Atraso nos casos do LabECO ou no acesso ao H100
+      Regtest oficial como substituto provisório
+      Medições na GPU disponível, com ressalva
 ```

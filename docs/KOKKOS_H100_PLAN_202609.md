@@ -17,7 +17,7 @@ Prepared 9 September 2026. Supersedes the Rust plan of the same date. Figures ma
 
 2. **WW3 `develop` is now CPP-preprocessed.** Since v7.14 all code is `*.F90` with switches mapped to `#ifdef W3_xxx`. This means the frozen operational configuration can be *mechanically* collapsed with the C preprocessor before translation. The "pin the configuration" benefit FESOM2 got from its C stage is available on day one, and it removes the agent's single most common failure (following an inactive branch).
 
-**What the port covers** (§4): the single-grid `ww3_shel` time loop (propagation, source-term integration, the enabled physics packages, output-field integration) for one frozen configuration, with the Fortran pre/post-processors kept as-is. What it does not cover: `ww3_multi`, coupling caps, data assimilation, unstructured/PDLIB (deferred unless the operational grid requires it).
+**What the port covers** (§4): the single-grid `ww3_shel` time loop (propagation, source-term integration, the enabled physics packages, output-field integration) for one frozen configuration, with the Fortran pre/post-processors kept as-is. What it does not cover: `ww3_multi`, coupling caps, data assimilation, unstructured/PDLIB propagation (the proposal tests regular and unstructured grids since 2026-10-01, but keeps PDLIB propagation as it is; source terms are shared by both).
 
 **Effort (solo Staff engineer, part-time, Claude Code, est.).** Stage 1 (C reference, validated) 3–5 months; Stage 2 (Kokkos, device-resident, faster than current CPU) a further 4–7 months. 3-month gated pilot as before. Stall risk ~40%, dominated by silent physics divergence and scope creep. If the DOE kernels arrive, subtract 2–4 months from Stage 2.
 
