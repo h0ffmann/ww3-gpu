@@ -209,6 +209,10 @@ proposal-review-check:
 translate *args:
     nix develop "{{justfile_directory()}}" --command python3 scripts/translate_md.py "$@"
 
+# The repo's prose as NotebookLM sources -> build/notebooklm/ (upload by hand; docs/LLM_TOOLING_202610.md).
+notebooklm *args:
+    python3 scripts/notebooklm_bundle.py {{args}}
+
 # Everything: book + proposal pt + proposal en (same as `nix build .`).
 pubs: book (proposal "pt") (proposal "en")
 
