@@ -6,6 +6,10 @@ development of this repository, or the port of WW3 kernels to Kokkos on GPUs?
 **Verification:** facts marked `(v)` were read from the NOOA repository on 2026-09-16 (README, `AGENTS.md`,
 `docs/architecture.md`, `docs/tour.md`, `examples/README.md`, `skills/README.md`, `pyproject.toml`,
 `packages/*/README.md`, `CHANGELOG.md`, releases) or from this repository. `⚠` marks inference.
+**Refreshed 2026-10-01:** repository activity, releases, licences and model presets re-read from a clone of
+NOOA `main` at `7919847` (2026-09-29) and from PyPI; §8 (costs) is new. Facts updated by the refresh carry
+the date 2026-10-01. Most nvidia.com hosts were unreachable from the sandbox, so several price claims in §8
+rest on search excerpts and are marked `⚠` (list in Sources).
 
 ## TL;DR
 
@@ -19,10 +23,16 @@ development of this repository, or the port of WW3 kernels to Kokkos on GPUs?
   and **composition** (one orchestrator per routine, one subagent per phase). Their paper calls these the
   six harness capabilities; the repository's own definition of "done" for a ported routine maps onto them
   one to one (§3).
-- The costs are real: NOOA is alpha (`v0.0.10`, 2026-09-04) `(v)`, Python ≥ 3.12 with `litellm` and
+- The costs are real: NOOA is alpha (`v0.0.10`, 2026-09-04, still the latest release on 2026-10-01 with
+  336 commits on `main` since) `(v)`, Python ≥ 3.12 with `litellm` and
   `pydantic` `(v)`, and its default CodeAct strategy **executes LLM-generated Python**, so NVIDIA says to
   run it only inside OS-level isolation `(v)`. This repository's rule is "no Python in lab code", and its
   sandbox story already exists in `nix-config` (`labs/agentic`, `ai-jail`).
+- Money (§8, checked 2026-10-01): NOOA, the NeMo Agent Toolkit and OpenShell are Apache-2.0 and free
+  `(v)`. NVIDIA's hosted model catalogue (build.nvidia.com) costs nothing for development but is rate-limited
+  (40 requests/minute in NVIDIA's own example) `(v)`; a paid NVIDIA AI Enterprise licence applies only to
+  production use of NIM, which nothing here is `⚠`. NVIDIA's own blueprint self-hosts NOOA's default
+  NVIDIA model on three H100-class GPUs `(v)`, which this lab does not have.
 - **Recommendation:** run a two-week pilot in a separate lab (`nix-config/labs/agentic` or a new
   `labs/nooa`), never inside `kokkos/`: one `PortAgent` orchestrator that re-does the `W3SNL1` port
   end to end against the existing fixtures (a known answer), then attempts the next routine on the ranked
@@ -34,17 +44,17 @@ development of this repository, or the port of WW3 kernels to Kokkos on GPUs?
 
 | Aspect | Fact |
 |---|---|
-| Repository | `NVIDIA-NeMo/labs-OO-Agents`, created 2026-07-20, 2 125 stars / 290 forks on 2026-09-16, last push the same day |
-| Licence | Apache-2.0 (`LICENSE`, `pyproject.toml`); GitHub's API reports `NOASSERTION` because of the header layout |
-| Package | `nooa` on PyPI, plus `nooa-cli` (trace viewer, eval runner), `nooa-acp` (Agent Client Protocol server for Zed), `nooa-memory`, `nooa-bench` (SWE-bench / Terminal-Bench runner); `requires-python >=3.12,<3.14`; core deps `pydantic`, `litellm`, `httpx`, `msgpack`, `openinference-instrumentation-litellm` |
-| Maturity | "Development Status :: 3 - Alpha"; releases `v0.0.7` (2026-07-30) … `v0.0.10` (2026-09-04); README: "research software … expect rough edges" |
+| Repository | `NVIDIA-NeMo/labs-OO-Agents`, created 2026-07-20, 2 125 stars / 290 forks on 2026-09-16, last push the same day. On 2026-10-01: about 2.3k stars / 303 forks, 682 commits on `main`, last commit 2026-09-29; 126 non-merge commits since 2026-09-16, 118 of them by one author |
+| Licence | Apache-2.0 (`LICENSE`, `pyproject.toml`); GitHub's API reports `NOASSERTION` because of the header layout. Unchanged on 2026-10-01, PyPI metadata also says Apache-2.0 |
+| Package | `nooa` on PyPI, plus `nooa-cli` (trace viewer, eval runner), `nooa-acp` (Agent Client Protocol server for Zed), `nooa-memory`, `nooa-bench` (SWE-bench / Terminal-Bench runner); `requires-python >=3.12,<3.14`; core deps `pydantic`, `litellm` (`>=1.97.0` on 2026-10-01, pinned past CVE-2026-49468 and the yanked 1.82.7/1.82.8 releases per the comment in `pyproject.toml`), `httpx`, `msgpack`, `openinference-instrumentation-litellm` |
+| Maturity | "Development Status :: 3 - Alpha"; releases `v0.0.7` (2026-07-30) … `v0.0.10` (2026-09-04); README: "research software … expect rough edges". No release between 2026-09-04 and 2026-10-01; `main` is 336 commits past the `v0.0.10` tag, and its unreleased changelog removes public names (`CodeActLiteStrategy`, `RespondResult`, `RespondReason`) |
 | Core idea | An agent is a Python class. Fields are state, methods are capabilities, docstrings are prompts, type annotations are contracts. An `async` method whose body is `...` is implemented at run time by an LLM strategy; a method with a real body is ordinary Python |
 | Strategies | `PredictStrategy` (one structured attempt, validated against the return type, no tools) and `CodeActStrategy` (default: the model acts by writing Python cells in a per-call REPL with `self`, imports and visible methods; return type validated; validation errors fed back) |
 | Harness | Event history per instance with summarisation; context blocks; tracing of every LLM call, code cell and nested method call as spans (JSONL, OTLP, Langfuse, Phoenix exporters; `nooa start-dev` viewer); middleware `intercept()` and observers `on()`; visibility rules (`@hidden`, `Annotated[T, hidden]`) |
-| Models | Anything LiteLLM routes: Anthropic, OpenAI, NVIDIA NIM, **Ollama** and **vLLM** local endpoints (`get_llm_client("ollama_chat/qwen3:1.7b", api_base=…)`) |
+| Models | Anything LiteLLM routes: Anthropic, OpenAI, NVIDIA NIM, **Ollama** and **vLLM** local endpoints (`get_llm_client("ollama_chat/qwen3:1.7b", api_base=…)`). On 2026-10-01 the bundled quickstart picks `nvidia_nim/nvidia/nemotron-3-super-120b-a12b` on build.nvidia.com when `NVIDIA_API_KEY` is set, else OpenAI; `nooa connect` offers build.nvidia.com and, since 2026-09-29, an "NVIDIA Inference Hub" (`inference-api.nvidia.com`), which `src/nooa/util/quickstart.py` describes as NVIDIA's internal gateway for NVIDIA employees |
 | Tools | Methods on the object; `ShellTools`, `TodoManager`; MCP servers as tools (`--extra mcp`); `TextSkill`/`SkillRegistry` (`SKILL.md` bundles, the same format Claude Code reads) |
 | Safety | AST checks and module deny-lists are "defense-in-depth guardrails, not a containment boundary"; the boundary is OS isolation (container, VM, NVIDIA OpenShell) |
-| Coding-agent skills | `skills/` ships twelve `SKILL.md` bundles *about* NOOA for Claude Code / Cursor / Codex |
+| Coding-agent skills | `skills/` ships twelve `SKILL.md` bundles *about* NOOA for Claude Code / Cursor / Codex (fourteen on 2026-10-01) |
 | Paper | arXiv:2607.20709, "NVIDIA-labs OO Agents: Native Python Object-Oriented Agents"; six model-facing capabilities: typed input/output, pass-by-reference over live objects, code as action, programmable loop engineering, explicit object state, model-callable harness APIs for context and events; evaluated on SWE-bench Verified, Terminal-Bench 2.0 and ARC-AGI-3 (numbers not in the abstract page fetched) |
 
 What it is **not**: there is no GPU, CUDA, Kokkos, Fortran or HPC content anywhere in the repository
@@ -138,7 +148,7 @@ convenience on top.
   into a queue. Delegation (`nooa-bench`'s awaited workers, depth ≤ 4 `(v)`) allows one subagent per phase.
 - Local models. LiteLLM routes to Ollama and vLLM `(v)`, so the pratico lab's `qwen2.5-coder` (or a
   larger model on the 4090) can drive the deterministic-heavy steps offline; hosted models only where
-  judgment is hard (translation). This matters for a university lab's budget and for data that must stay local.
+  judgment is hard (translation). This matters for a university lab's budget (§8) and for data that must stay local.
 - Editor integration. `nooa-acp` runs the same coding agent inside Zed `(v)`; the `skills/` bundles
   install into `~/.claude/skills` and are the format this repository could use for its own "port a
   kernel" skill regardless of NOOA adoption.
@@ -180,12 +190,18 @@ Pilot acceptance criteria (decide B → C or B → A):
    interventions (messages to the agent, manual edits) recorded from the trace and compared with the
    `W3SNL1` history (two implementer rounds, one fix round, ~30 review findings across tasks).
 3. All runs inside `ai-jail`; no write outside the worktree; no network except the model endpoint.
-4. Cost: tokens and wall-clock per routine, hosted vs local model, in the report.
+4. Cost: tokens and wall-clock per routine, hosted vs local model, in the report, priced with the
+   list prices of §8 as they stand on the day of the run.
 
 ## 7. Risks and open questions
 
-- **Alpha software.** Ten releases in seven weeks; the changelog records renamed APIs and moved
-  subpackages `(v)`. Pin a tag (`uv add "nooa @ git+…@v0.0.10"`) and expect to re-pin.
+- **Alpha software.** Version numbers reached 0.0.10 in seven weeks (corrected 2026-10-01: the
+  releases page and PyPI list four releases, `v0.0.7`–`v0.0.10`, and the repository has five version tags,
+  `v0.0.6`–`v0.0.10`); the changelog records renamed APIs and moved subpackages `(v)`. Pin a tag
+  (`uv add "nooa @ git+…@v0.0.10"`) and expect to re-pin. Update 2026-10-01: releases stopped at
+  `v0.0.10` while `main` moved 336 commits, including removals of public names (§1) `(v)`. Pinning
+  `v0.0.10` now means pinning a month-old snapshot; pinning a `main` commit means pinning unreleased API.
+  Either way, read the changelog before re-pinning.
 - **Security posture.** NVIDIA's README is explicit that the framework's own checks are not a boundary
   `(v)`. The pilot must run in `ai-jail`; a leaked `NVIDIA_API_KEY`/`ANTHROPIC_API_KEY` inside a REPL the
   model controls is the obvious failure (NOOA hides `Annotated[str, hidden]` fields from the prompt, not
@@ -201,6 +217,58 @@ Pilot acceptance criteria (decide B → C or B → A):
   the ranked list (nine routines, several with `#ifdef` mazes) is actually going to be ported. If the
   proposal stops at `W3SNL1` plus `PATCH.md`, option A is enough.
 
+## 8. Costs (checked 2026-10-01)
+
+Question: does using NVIDIA's agent tooling for this repository's workflow cost money? Short answer:
+the frameworks are free, NVIDIA's hosted models are free at development scale with a rate limit, and the
+only priced items are a production licence this repository would not need and datacentre GPUs it does not
+have. Every figure below was checked on 2026-10-01 against the source in its row; `⚠` means it comes from
+a search-engine excerpt of a page the sandbox could not open.
+
+### 8.1 Software
+
+| Item | Cost | Source, checked 2026-10-01 |
+|---|---|---|
+| NOOA (`nooa`, `nooa-cli`, `nooa-acp`, `nooa-memory`, `nooa-bench`) | Free. Apache-2.0; no paid tier and no hosted service from the project; you bring the model `(v)` | [`LICENSE`](https://github.com/NVIDIA-NeMo/labs-OO-Agents/blob/main/LICENSE), `pyproject.toml`, `README.md` § License, [PyPI](https://pypi.org/project/nooa/) |
+| NVIDIA NeMo Agent Toolkit (`nvidia-nat`) | Free. Apache-2.0; `1.9.0` on PyPI 2026-09-10, `requires-python >=3.11,<3.14` `(v)`. It adds observability, profiling and optimisation to agents built in other frameworks (LangChain, LlamaIndex, CrewAI and others) and ships its own ReAct agent `(v)`. Its hello-world needs an `NVIDIA_API_KEY` from build.nvidia.com for the default model `(v)` | [`LICENSE.md`](https://github.com/NVIDIA/NeMo-Agent-Toolkit/blob/main/LICENSE.md), [`README.md`](https://github.com/NVIDIA/NeMo-Agent-Toolkit/blob/main/README.md), [PyPI](https://pypi.org/project/nvidia-nat/) |
+| NVIDIA OpenShell (the sandbox NOOA's README recommends) | Free. Apache-2.0 `(v)` | [`LICENSE`](https://github.com/NVIDIA/OpenShell/blob/main/LICENSE) |
+
+### 8.2 Models these agents call
+
+| Route | Cost and limits | Source |
+|---|---|---|
+| build.nvidia.com hosted endpoints (`integrate.api.nvidia.com`, `NVIDIA_API_KEY`; NOOA's and the toolkit's default) | No charge for development. NVIDIA's own example notebook says "Don't worry about any credits to use this model, although there is a rate limit of 40 requests per minute" `(v)`, text added 2025-06-05. Older NVIDIA READMEs still describe "up to 5,000 free credits" per account `(v)`; search excerpts of NVIDIA's forum say credits were replaced by rate limits that vary by model and are not published, and users ask for 40 → 200 RPM increases `⚠`. Access needs an NVIDIA Developer Program account, free to join `⚠` | [GenerativeAIExamples notebook](https://github.com/NVIDIA/GenerativeAIExamples/blob/main/nemotron/VLM/llama_3.1_nemotron_nano_VL_8B/Llama_Nemotron_VL_nano_8B.ipynb) (v); [metropolis-nim-workflows README](https://github.com/NVIDIA/metropolis-nim-workflows/blob/main/README.md) (v); [forum: API credits](https://forums.developer.nvidia.com/t/api-credits-for-build-nvidia-com/306633) ⚠ |
+| Terms of the hosted tier | Developer Program access is "for prototyping, research, development and testing purposes only"; production means serving real end users or business transactions `⚠` | [NVIDIA NIM FAQ (forum)](https://forums.developer.nvidia.com/t/nvidia-nim-faq/300317) ⚠ |
+| NVIDIA Inference Hub (`inference-api.nvidia.com`) | Not open to us: NOOA's own source calls it the "NVIDIA internal inference gateway … NVIDIA employees" `(v)` | NOOA `src/nooa/util/quickstart.py` at `7919847` |
+| Self-hosted NIM, development | Free for Developer Program members on up to two nodes or 16 GPUs, for research, development and testing `⚠`. NVIDIA's blueprint READMEs state "NVIDIA AI Enterprise developer licence required to local host NVIDIA NIM Microservices" `(v)`; the RAG blueprint, which runs NIM containers, is governed by the NVIDIA Software License Agreement and the Product-Specific Terms for AI Products `(v)` | [NVIDIA blog, NIM free to Developer Program members](https://developer.nvidia.com/blog/access-to-nvidia-nim-now-available-free-to-developer-program-members) ⚠; [ambient-patient README](https://github.com/NVIDIA-AI-Blueprints/ambient-patient/blob/main/README.md) (v); [RAG blueprint README § License](https://github.com/NVIDIA-AI-Blueprints/rag/blob/main/README.md) (v) |
+| Self-hosted NIM, production | NVIDIA AI Enterprise list price: $4,500 per GPU for a one-year self-managed subscription ($9,000 two years, $13,500 three, $18,000 four or five; $22,500 perpetual); education and research institutions $1,125 per GPU for one year; about $1 per GPU-hour on AWS/Azure/Google Cloud marketplaces plus the instance; a free 90-day evaluation licence `⚠` | [AI Enterprise pricing](https://docs.nvidia.com/ai-enterprise/planning-resource/licensing-guide/latest/pricing.html) ⚠; [Get started with AI Enterprise](https://www.nvidia.com/en-gb/data-center/products/ai-enterprise/get-started/) ⚠ |
+| Hardware for self-hosting NOOA's default NVIDIA model | NVIDIA's RAG blueprint, which uses `nemotron-3-super-120b-a12b` as its LLM, lists 3 × H100, 3 × B200 or 3 × RTX PRO 6000 for a self-hosted local NIM deployment (9 of each for its Helm deployment) `(v)`. No smaller figure for the model alone was found on a page the sandbox could open. The lab's RTX 4090 is not on that list. None of NOOA's own dependencies (`pydantic`, `litellm`, `httpx`, `msgpack`, `openinference-instrumentation-litellm`) is a GPU library, so the framework needs no GPU `(v)` | [RAG blueprint, Nemotron 3 Super deployment](https://github.com/NVIDIA-AI-Blueprints/rag/blob/main/docs/nemotron3-super-deployment.md) (v) |
+
+### 8.3 Compared with the Claude-based workflow used today
+
+| Item | Cost | Source |
+|---|---|---|
+| Claude Code subscription | Included in all paid Claude plans. Pro $20 per month billed monthly, or $17 per month billed annually ($200 up front); Max from $100 per month for 5× or 20× Pro's usage `(v)` | [claude.com/pricing](https://claude.com/pricing), 2026-10-01 |
+| Claude API (what NOOA would call with `ANTHROPIC_API_KEY`) | Per token. Across the four models on the price list: input $1–$10, output $5–$50, cache reads $0.10–$0.25 per million tokens; batch processing halves the price `(v)`. An API key is billed per token, apart from the usage a Pro/Max plan includes `⚠` | [claude.com/pricing](https://claude.com/pricing), 2026-10-01 |
+| What this repository has measured | One figure: ~$1.40 for a 2.4M-token documentation pass, 97 % cache reads (commit `4169b6c`, 2026-09-24) `(v)`. The 2026-09-22 commits write "$n/a (no … list price available)"; a list price is published on 2026-10-01, so those can now be priced. The `W3SNL1` port itself has no recorded dollar cost | `git log` of this repository |
+
+### 8.4 What this means for the pilot
+
+- Option B (§6) costs nothing in licences: NOOA, the toolkit and OpenShell are Apache-2.0 and a
+  build.nvidia.com key is free. Porting kernels in a university lab is development and research, the use
+  the free terms describe `⚠` (our reading of the terms; nothing in the pilot serves end users).
+- The binding limit on the free hosted tier is rate, not money. One sequential `PortAgent` should stay
+  under 40 requests per minute; parallel delegated subagents or an eval sweep over several routines will
+  not `⚠` (inference, no call counts measured). The pilot report should record calls per routine.
+- The free catalogue serves open-weight models `⚠`. If the translation step needs the frontier models used
+  for `W3SNL1`, NOOA reaches them through their own APIs at the per-token prices above, and NOOA adds no
+  charge of its own. The cost question for adoption therefore stays where §7 put it: model quality.
+- Self-hosting NVIDIA's default agent model is out of reach (three H100-class GPUs in NVIDIA's own
+  blueprint). The local route that fits the 4090 is Ollama or vLLM with a smaller model (§4), at no
+  licence cost, with the quality caveat in §7.
+- An NVIDIA AI Enterprise licence becomes relevant only if a NIM container serves something in production.
+  Nothing in options A–C does.
+
 ## Sources
 
 - NOOA repository, read 2026-09-16: `README.md`, `AGENTS.md`, `docs/architecture.md`, `docs/tour.md`,
@@ -211,3 +279,21 @@ Pilot acceptance criteria (decide B → C or B → A):
   `course/13-bulk-porting-with-agents.md`, `pubs/proposal/pt/07-methodology.md`,
   `docs/superpowers/specs/2026-09-15-cpp-kokkos-course-design.md`.
 - Koldunov et al. (2026), arXiv:2606.11356 (FESOM2 Fortran → C → C++/Kokkos with an LLM assistant).
+
+Added for the 2026-10-01 refresh:
+
+- NOOA, blobless clone of `main` at `7919847` (2026-09-29): `git log` since 2026-09-16 and since `v0.0.10`,
+  `git ls-remote --tags`, `CHANGELOG.md`, `pyproject.toml`, `LICENSE`, `README.md`, `skills/`,
+  `src/nooa/util/quickstart.py`, `src/nooa/unifiedllm/connect/__init__.py`; PyPI JSON for `nooa`;
+  the github.com repository and releases pages (star and fork counts).
+- NeMo Agent Toolkit: `git ls-remote --tags` (latest `v1.9.0`), `LICENSE.md` and `README.md` from
+  raw.githubusercontent.com, PyPI JSON for `nvidia-nat`; github.com page for star counts (2.7k stars,
+  773 forks).
+- NVIDIA OpenShell `LICENSE`; NVIDIA GenerativeAIExamples (notebook text and its `git log -S` date);
+  NVIDIA metropolis-nim-workflows `README.md`; NVIDIA-AI-Blueprints `ambient-patient` and `rag` READMEs and
+  `rag/docs/nemotron3-super-deployment.md`.
+- claude.com/pricing (plan and API prices); this repository's `git log` `Cost:` trailers.
+- Not reachable from the sandbox (egress proxy refused): build.nvidia.com, docs.api.nvidia.com,
+  developer.nvidia.com, docs.nvidia.com, www.nvidia.com, forums.developer.nvidia.com, huggingface.co,
+  arxiv.org, web.archive.org, pi3g.com, and the GitHub REST API. Every claim in §8 that depends on one of
+  those is marked `⚠` and rests on a search-engine excerpt of the URL cited.
