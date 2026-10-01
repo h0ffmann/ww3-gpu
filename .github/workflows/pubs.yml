@@ -27,7 +27,7 @@ jobs:
           TRANSLATE_API_KEY: ${{ secrets.TRANSLATE_API_KEY }}
           TRANSLATE_MODEL: ${{ secrets.TRANSLATE_MODEL }}
         with:
-          # `all` now contains the course docx as well; the default glob would drop it.
+          # `all` holds docx files too; the default glob would drop them.
           file-glob: "*"
           pre-build: |
             set -euo pipefail

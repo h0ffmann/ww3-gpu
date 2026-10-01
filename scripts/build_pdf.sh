@@ -26,7 +26,7 @@ if [ "$target" = book ]; then
   # otherwise leave its old copy behind and pandoc would see both (duplicate labels).
   rm -rf "$prep"
   python3 "$root/scripts/book_prep.py" "$root/course" "$prep"
-  mapfile -t inputs < <(ls "$prep"/[0-9][0-9]-*.md | sort)
+  inputs=("$prep"/[0-9][0-9]-*.md)
   pandoc "${inputs[@]}" \
     --defaults "$root/pubs/book/defaults.yaml" \
     --template "$root/pubs/book/template.tex" \
@@ -37,8 +37,8 @@ if [ "$target" = book ]; then
   echo "build_pdf: $out_dir/ww3-lab-course.pdf"
 else
   src="$root/pubs/proposal/$lang"
-  mapfile -t inputs < <(ls "$src"/[0-9][0-9]-*.md 2>/dev/null | sort)
-  [ "${#inputs[@]}" -gt 0 ] || { echo "build_pdf: no $src/NN-*.md" >&2; exit 1; }
+  inputs=("$src"/[0-9][0-9]-*.md)
+  [ -e "${inputs[0]}" ] || { echo "build_pdf: no $src/NN-*.md" >&2; exit 1; }
   case "$lang" in pt) plang=pt-BR ;; en) plang=en-US ;; esac
   export TEXINPUTS="$root/pubs/proposal/shared:${TEXINPUTS:-}"   # pagina.sty, portland.sty
   pandoc "${inputs[@]}" \

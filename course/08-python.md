@@ -24,7 +24,7 @@ namelist parameter becomes a constructor keyword with the `%` flattened to `_`, 
 `SPECTRUM%FREQ1` is `spectrum_freq1`; validation of required files and compatible values
 happens at construction; and a common base class renders the namelist text, writes it into
 the run directory, runs the program there capturing its output, and can add or remove a
-whole namelist block — needed because `ww3_grid` objects to blocks it does not want. Its
+whole namelist block, needed because `ww3_grid` objects to blocks it does not want. Its
 two gotchas are the two lessons: the generated file contains *every* block until you
 remove the irrelevant ones, and after you mutate an attribute you must regenerate the text
 or the file on disk keeps the old value. The author's own words: *work in progress, API not
@@ -41,7 +41,7 @@ and its own drift; the day it breaks is the day you cannot rerun last month's be
 (Availability is another matter: the pinned `#ww3` shell ships `python3` with numpy and
 xarray `(v)`; nothing in the lab code imports them.) WW4 did the same: it merged "Remove
 python dependence from compile system" on 2026-08-19 `(v)` (lesson 14). And the lab code
-has to be *inside* the parity gate — a generator, analyser or comparator outside the
+has to be *inside* the parity gate: a generator, analyser or comparator outside the
 compiled, tested tree is where a silent change hides. None of that is a criticism of the
 tools above: `WW3-tools` remains the right way to validate against buoys and altimeters,
 and `wavespectra` the best way to re-partition a spectrum offline.
@@ -50,11 +50,11 @@ and `wavespectra` the best way to re-partition a spectrum offline.
 
 | Need | Python route | What this repo uses |
 |---|---|---|
-| Namelists | `pyww3` dataclasses, Jinja2 templates | By hand from the annotated templates in `$WW3/model/nml/`, or written by the Fortran generators (`examples/01-fetch-limited-growth/make_inputs.F90`, `examples/02-regional-real-forcing/make_bathy.F90`) — lesson 03 |
-| Parameter sweeps and benchmark cases | scripted loops over `pyww3` objects | `ww_bench_case --size small\|medium\|large … -o DIR` (`kokkos/tools/bench_case/`), which writes a complete case directory; a shell loop over its arguments is the sweep — lesson 09 |
-| Forcing download | `cdsapi` for ERA5 | `get_gfs.sh` + ecCodes `grib_to_netcdf` — lesson 04 |
-| Reading output | `xarray`, `wavespectra` | `ncdump` (netcdf-c) and NCO's `ncks`; `ww_fetch_analyse` for the example-01 growth table — lesson 06 |
-| "Did the answer change?" | ad-hoc `numpy.allclose` | `nccmp-tol REF TEST [TOLERANCES]` with a versioned tolerances file and an exit code — lesson 06, and every lesson after 09 |
-| Per-routine tests | none | GoogleTest against captured-Fortran fixtures in `kokkos/tests/` — lesson 12 |
+| Namelists | `pyww3` dataclasses, Jinja2 templates | By hand from the annotated templates in `$WW3/model/nml/`, or written by the Fortran generators (`examples/01-fetch-limited-growth/make_inputs.F90`, `examples/02-regional-real-forcing/make_bathy.F90`); lesson 03 |
+| Parameter sweeps and benchmark cases | scripted loops over `pyww3` objects | `ww_bench_case --size small\|medium\|large … -o DIR` (`kokkos/tools/bench_case/`), which writes a complete case directory; a shell loop over its arguments is the sweep; lesson 09 |
+| Forcing download | `cdsapi` for ERA5 | `get_gfs.sh` + ecCodes `grib_to_netcdf`; lesson 04 |
+| Reading output | `xarray`, `wavespectra` | `ncdump` (netcdf-c) and NCO's `ncks`; `ww_fetch_analyse` for the example-01 growth table; lesson 06 |
+| "Did the answer change?" | ad-hoc `numpy.allclose` | `nccmp-tol REF TEST [TOLERANCES]` with a versioned tolerances file and an exit code; lesson 06, and every lesson after 09 |
+| Per-routine tests | none | GoogleTest against captured-Fortran fixtures in `kokkos/tests/`; lesson 12 |
 
-→ [`09-benchmark-profile-compile-run.md`](09-benchmark-profile-compile-run.md) — measure first.
+→ [`09-benchmark-profile-compile-run.md`](09-benchmark-profile-compile-run.md): measure first.

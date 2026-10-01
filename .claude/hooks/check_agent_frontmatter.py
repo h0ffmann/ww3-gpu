@@ -26,6 +26,8 @@ def check(path: pathlib.Path) -> list:
     for line in body.strip().splitlines():
         if not line.strip() or line.lstrip().startswith("#"):
             continue
+        if line[0].isspace():  # continuation of a block scalar (| or >) or a nested mapping
+            continue
         key, sep, value = line.partition(":")
         if not sep:
             errors.append(f"{label(path)}: front-matter line without a key: {line.strip()[:40]!r}")
@@ -33,7 +35,8 @@ def check(path: pathlib.Path) -> list:
         seen.add(key.strip())
         v = value.strip()
         quoted = len(v) >= 2 and v[0] in "\"'" and v[-1] == v[0]
-        if ": " in v and not quoted:
+        block = v[:1] in ("|", ">")
+        if ": " in v and not quoted and not block:
             errors.append(f"{label(path)}: {key.strip()}: value contains ': ' and is not quoted — "
                           "YAML reads it as a nested mapping")
     errors += [f"{label(path)}: missing '{k}' in front matter" for k in REQUIRED if k not in seen]

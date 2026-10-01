@@ -5,18 +5,18 @@
 Configured in `&OUTPUT_TYPE_NML` (what) and `&OUTPUT_DATE_NML` (when) in `ww3_shel.nml`.
 A stride of `'0'` disables a type.
 
-1. **Gridded fields** — `Hs`, periods, direction, etc. on the model grid. → `out_grd.ww3`
+1. **Gridded fields**: `Hs`, periods, direction, etc. on the model grid. → `out_grd.ww3`
    → `ww3_ounf` → netCDF. The one you'll use 90% of the time.
-2. **Point spectra** — full 2D frequency-direction spectra at named locations.
+2. **Point spectra**: full 2D frequency-direction spectra at named locations.
    → `out_pnt.ww3` → `ww3_ounp` → netCDF. This is the model's actual state, not a summary.
-3. **Track output** — fields along a moving track. For satellite collocation.
+3. **Track output**: fields along a moving track. For satellite collocation.
    → `ww3_trnc`.
-4. **Restart files** — the complete model state, for continuing a run.
-5. **Boundary data** — spectra along declared output boundaries, for feeding a child grid.
+4. **Restart files**: the complete model state, for continuing a run.
+5. **Boundary data**: spectra along declared output boundaries, for feeding a child grid.
    Mostly superseded by using point output + `ww3_bounc` instead.
-6. **Separated wave fields** — spatially and temporally coherent wave *systems* tracked
+6. **Separated wave fields**: spatially and temporally coherent wave *systems* tracked
    across the domain. See the `ww3_systrk` program and IFREMER's `TUTORIAL_WAVETRACK`.
-7. **Coupling fields** — for NUOPC/ESMF/OASIS coupled runs.
+7. **Coupling fields**: for NUOPC/ESMF/OASIS coupled runs.
 
 ## Fields worth knowing
 
@@ -36,15 +36,15 @@ Ones you'll actually reach for:
 
 | Field | What |
 |---|---|
-| `HS` | significant wave height — 4√(total energy) |
+| `HS` | significant wave height, 4√(total energy) |
 | `T01`, `T02`, `T0M1` | mean periods from different spectral moments. **They are not interchangeable**; buoy products and models frequently compare the wrong pair. `T0M1` (energy period) is what most engineering work wants. |
 | `FP`, `DP` | peak frequency and peak direction |
 | `DIR`, `SPR` | mean direction and directional spread |
 | `EF` | the 1D frequency spectrum on the model grid |
 | `PHS PTP PDIR PSPR PWS` | **partitioned**: wind sea + N swell systems, separately |
-| `USS`, `TUS` | Stokes drift — what you hand to an ocean model |
-| `SXY` | radiation stresses — what drives nearshore circulation |
-| `UST`, `CHA` | friction velocity, Charnock — what you hand back to an atmosphere model |
+| `USS`, `TUS` | Stokes drift: what you hand to an ocean model |
+| `SXY` | radiation stresses: what drives nearshore circulation |
+| `UST`, `CHA` | friction velocity, Charnock: what you hand back to an atmosphere model |
 | `WND`, `DPT` | echo the inputs back. Free, and catches errors instantly. |
 
 ## Partitioning: the thing to actually understand
@@ -75,8 +75,8 @@ ncdump -h ww3.20240701_spec.nc            # the spectral file: (time, station, f
 ```
 
 `ncdump` ships with netcdf-c and is in the pinned toolchain `(v)`. For slicing, NCO's `ncks`
-is the tool — `ncks -v hs -d time,-1 ww3.nc` prints the last time step only, and
-`-d longitude,40 -d latitude,40` picks one point — nco 5.3.2 is in the pinned toolchain
+is the tool: `ncks -v hs -d time,-1 ww3.nc` prints the last time step only, and
+`-d longitude,40 -d latitude,40` picks one point. nco 5.3.2 is in the pinned toolchain
 alongside cdo 2.5.1 `(v)`, even though `just toolchain` does not print either of them.
 
 Two habits worth forming:
@@ -84,11 +84,11 @@ Two habits worth forming:
 - Read `:units` and `:scale_factor` before you read a number. `FIELD%TYPE` in
   `ww3_ounf.nml` is `[2 = SHORT, 3 = it depends, 4 = REAL]`, template default `3` `(v)`.
   With `2` the fields are packed short integers with a scale factor, and `ncdump` prints
-  the raw packed values — it never unpacks (`ncks --unpack` does). Both course examples set
+  the raw packed values, and it never unpacks (`ncks --unpack` does). Both course examples set
   `FIELD%TYPE = 4` `(v)`: plain floats, and the problem goes away.
 - The 2D spectrum is `efth(time, station, frequency, direction)`, in m²/Hz/rad. `Hs` from
-  it is `4 sqrt(ΣΣ efth Δf Δθ)`. Computing that once from `ncdump` output — by hand or in
-  twenty lines of Fortran — and checking it against the `HS` field is the consistency check
+  it is `4 sqrt(ΣΣ efth Δf Δθ)`. Computing that once from `ncdump` output (by hand or in
+  twenty lines of Fortran) and checking it against the `HS` field is the consistency check
   that catches a wrong frequency range or a wrong `Δθ`. If they disagree, one of them is
   being integrated over a different range than you think.
 
@@ -110,7 +110,7 @@ time step on the centre row, and prints one line per ~12 fetch bins:
 | `fetch [km]` | distance from the coastline at `i = 1` |
 | `WW3 Hs [m]` | what the model produced at steady state |
 | `K&C92 Hs [m]` | Kahma & Calkoen (1992) fetch law, `ê = 5.2e-7 x̂^0.9`, converted to `Hs` |
-| `ratio` | model / empirical — should sit near 1 while the sea is still growing |
+| `ratio` | model / empirical: should sit near 1 while the sea is still growing |
 
 The header line prints the Pierson–Moskowitz fully developed limit, `Hs = 0.0246 U10²`
 (2.46 m at 10 m/s); nothing should meaningfully exceed it at steady state, and a ratio that
@@ -120,7 +120,7 @@ that *decreases* with fetch means your wind direction convention is flipped.
 ### Compare two runs with `nccmp-tol`
 
 The second half of the course is built on one question: *did this change alter the
-answer?* Compile flags, an OpenMP layout, a refactored routine, a Kokkos kernel — every rung
+answer?* Compile flags, an OpenMP layout, a refactored routine, a Kokkos kernel: every rung
 of the ladder is gated by that question, and "eyeball two `ncdump`s" is not an answer.
 [`kokkos/tools/nccmp-tol/`](../kokkos/tools/nccmp-tol/) is the comparator the proposal
 calls "comparador por campo":
@@ -148,7 +148,7 @@ not merged. Tightening or loosening them is a commit with a reason, not a comman
 flag.
 
 Two things it is *not*: it is not `nccmp` (the C tool of that name compares bit for bit
-and knows nothing about tolerances), and it is not a validator — it compares a run against
+and knows nothing about tolerances), and it is not a validator: it compares a run against
 another run, never against the sea.
 
 ## Validation
@@ -158,7 +158,7 @@ altimeter collocation, NDBC buoy matching, scatter plots, QQ plots, Taylor diagr
 the standard metric set. It is Python, and it is the right tool for that job (lesson 08).
 
 Rough expectations for a regional run with default tuning and decent winds: `Hs` bias
-within ±10%, scatter index 15–25%. Periods are worse — `Tp` in particular is a noisy
+within ±10%, scatter index 15–25%. Periods are worse: `Tp` in particular is a noisy
 statistic and comparing it point-to-point against a buoy is a good way to feel bad about
 yourself. Compare `T0M1` instead, and compare *distributions* as well as time series.
 

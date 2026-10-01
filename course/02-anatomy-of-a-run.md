@@ -8,7 +8,7 @@ this open. Every claim here is visible in those files.
 It reads `ww3_grid.nml` plus your ASCII bathymetry/mask, and writes `mod_def.ww3`.
 Its namelist blocks, in dependency order:
 
-**`&SPECTRUM_NML`** — the spectral discretisation.
+**`&SPECTRUM_NML`**: the spectral discretisation.
 ```
 SPECTRUM%FREQ1 = 0.04118   ! lowest frequency, Hz
 SPECTRUM%XFR   = 1.1       ! geometric ratio between bins
@@ -24,15 +24,15 @@ about 26-second Southern Ocean swell, lower `FREQ1`. Nothing warns you.
 into discrete beams, because each direction bin travels as an independent ray. The `PR3`
 propagation scheme includes a correction; more directions helps more.
 
-**`&RUN_NML`** — switch individual terms of the balance equation on and off. Turning
+**`&RUN_NML`**: switch individual terms of the balance equation on and off. Turning
 `FLSOU = F` gives pure propagation, which is how the `ww3_tp*` regression tests isolate
 numerics from physics. Extremely useful for debugging.
 
-**`&TIMESTEPS_NML`** — four numbers, and they are not tuning knobs.
+**`&TIMESTEPS_NML`**: four numbers, and they are not tuning knobs.
 
 ```
-DTMAX   global timestep — everything else divides into it
-DTXY    spatial propagation — CFL-limited
+DTMAX   global timestep: everything else divides into it
+DTXY    spatial propagation, CFL-limited
 DTKTH   refraction / wavenumber shift
 DTMIN   minimum source-term integration step
 ```
@@ -51,28 +51,28 @@ DTMIN ≈ 10 s
 
 Keep them integer multiples of each other. Round down, never up.
 
-**`&GRID_NML`** — `TYPE` is `RECT` / `CURV` / `UNST`; `COORD` is `SPHE` / `CART`; `CLOS` is
+**`&GRID_NML`**: `TYPE` is `RECT` / `CURV` / `UNST`; `COORD` is `SPHE` / `CART`; `CLOS` is
 `NONE` / `SMPL` (periodic in i) / `TRPL` (tripole, for global grids that need to handle the
 North Pole). `ZLIM` is the depth above which a point is permanently land; `DMIN` is the
 floor applied to depth in the physics so shallow points don't blow up.
 
-**`&DEPTH_NML` / `&MASK_NML` / `&OBST_NML`** — ASCII input arrays. Three fields to get right:
+**`&DEPTH_NML` / `&MASK_NML` / `&OBST_NML`**: ASCII input arrays. Three fields to get right:
 
-- `SF` — scale factor, **multiplied** into the values you supply. **Depths must be negative
+- `SF`: scale factor, **multiplied** into the values you supply. **Depths must be negative
   below mean sea level.** If your file has positive depths, set `SF = -1.`
-- `IDLA` — layout. `1` = line by line from the *bottom* row; `3` = line by line from the
+- `IDLA`: layout. `1` = line by line from the *bottom* row; `3` = line by line from the
   *top*. Getting this wrong flips your continent upside down and is not always obvious.
-- `IDFM` / `FORMAT` — free vs fixed format.
+- `IDFM` / `FORMAT`: free vs fixed format.
 
 Mask legend: `0` land, `1` sea, `2` **active open boundary**, `3` excluded, `7` ice,
 `-1`/`-2` ice-excluded.
 
-**`&INBND_COUNT_NML` / `&INBND_POINT_NML`** — where boundary spectra enter. Two rules:
+**`&INBND_COUNT_NML` / `&INBND_POINT_NML`**: where boundary spectra enter. Two rules:
 boundary points must be strictly *inside* the grid (never the first or last row/column,
 the propagation stencil needs a cell outside them), and `CONNECT = T` auto-fills every
 point on the straight line from the previous entry.
 
-**`GRID%NML = 'namelists.nml'`** — points at a second file holding the physics tuning
+**`GRID%NML = 'namelists.nml'`**: points at a second file holding the physics tuning
 namelists (`&MISC`, `&SIN4`, `&SDS4`, `&PRO3`, `&UNST`, …). Blocks not needed by your switch
 settings are skipped automatically. If you have no obstruction grid, `&MISC FLAGTR = 0`.
 
@@ -84,14 +84,14 @@ It prints the whole grid summary, every namelist value it read, and the count of
 boundary points. That count is your first sanity check.
 
 Outputs: `mod_def.ww3` (binary, the model definition), `mapsta.ww3` (status map),
-`mask.ww3` (ASCII land/sea — open it and look at it).
+`mask.ww3` (ASCII land/sea; open it and look at it).
 
 ## ww3_strt — initial conditions
 
 Writes `restart.ww3`. If it's absent, `ww3_shel` cold-starts from a calm sea and says so in
 the log, which is usually what you want for a spin-up run. For a specific initial spectrum
 (the propagation tests seed a Gaussian packet and watch it travel), copy an `ww3_strt` input
-from a regtest — `$WW3/regtests/ww3_tp1.1/input/` is the canonical one.
+from a regtest: `$WW3/regtests/ww3_tp1.1/input/` is the canonical one.
 
 ## ww3_prnc — forcing
 
@@ -104,19 +104,19 @@ units. `ncdump -h` before you start.
 
 Reads `ww3_shel.nml` and `mod_def.ww3`.
 
-- **`&DOMAIN_NML`** — start and stop, `'YYYYMMDD HHMMSS'`.
-- **`&INPUT_NML`** — per forcing: `'T'` read from file, `'H'` homogeneous (given below),
-  `'C'` from a coupler. Boundary spectra are *not* flagged here — `nest.ww3` is picked up
+- **`&DOMAIN_NML`**: start and stop, `'YYYYMMDD HHMMSS'`.
+- **`&INPUT_NML`**: per forcing: `'T'` read from file, `'H'` homogeneous (given below),
+  `'C'` from a coupler. Boundary spectra are *not* flagged here: `nest.ww3` is picked up
   automatically if present.
-- **`&OUTPUT_TYPE_NML`** — what to output. Seven output types exist: gridded fields, point
+- **`&OUTPUT_TYPE_NML`**: what to output. Seven output types exist: gridded fields, point
   spectra, track output, restarts, boundary data, separated wave fields, coupling fields.
-- **`&OUTPUT_DATE_NML`** — when. Each entry is `START  STRIDE_SECONDS  STOP`. A stride of
+- **`&OUTPUT_DATE_NML`**: when. Each entry is `START  STRIDE_SECONDS  STOP`. A stride of
   `'0'` disables that output type.
-- **`&HOMOG_COUNT_NML` / `&HOMOG_INPUT_NML`** — constant forcing without any data files.
+- **`&HOMOG_COUNT_NML` / `&HOMOG_INPUT_NML`**: constant forcing without any data files.
   For `'WND'`: speed, direction, air-sea ΔT.
 
 Watch `log.ww3` while it runs. It prints a timestep table with a column per input showing
-which forcings updated when — `X` for an update, `F` for a file read. If a column never
+which forcings updated when: `X` for an update, `F` for a file read. If a column never
 moves, your forcing isn't arriving.
 
 For MPI builds: `mpirun -np N ww3_shel`.
@@ -127,7 +127,7 @@ For MPI builds: `mpirun -np N ww3_shel`.
 spectral netCDF.
 
 `FIELD%TIMESPLIT` controls file chunking: `0` one file, `4` yearly, `6` monthly, `8` daily,
-`10` hourly. `FIELD%TYPE` is `2` (packed SHORT), `3` (mixed), `4` (REAL) — use 4 while
+`10` hourly. `FIELD%TYPE` is `2` (packed SHORT), `3` (mixed), `4` (REAL). Use 4 while
 learning so you never wonder whether an odd value is a packing artefact.
 
 The field name list is long and documented at the top of `$WW3/model/nml/ww3_ounf.nml`. The

@@ -1,5 +1,5 @@
 // kokkos/src/ww_kokkos/real.hpp
-// The lab's working precision and the two arithmetic helpers every kernel needs.
+// The lab's working precision and the arithmetic helper every kernel needs.
 //
 // WAVEWATCH III stores the action spectrum in default REAL, and the port keeps
 // that width on purpose: float32 halves the bytes moved per quadruplet, and phase
@@ -25,8 +25,5 @@ inline constexpr Real kPi = static_cast<Real>(3.141592653589793);
 
 /// x squared. Spelled out so kernels never call std::pow for an integer power.
 KOKKOS_INLINE_FUNCTION constexpr Real sqr(Real x) { return x * x; }
-
-/// x cubed.
-KOKKOS_INLINE_FUNCTION constexpr Real cube(Real x) { return x * x * x; }
 
 }  // namespace ww

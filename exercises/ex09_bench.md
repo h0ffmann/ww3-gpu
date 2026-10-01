@@ -6,7 +6,7 @@
 ## Goal
 
 Measure, on your own machine, what two compiler flag sets and three OpenMP thread counts
-do to one WW3 run — and whether any of them changes the answer. You produce one table:
+do to one WW3 run, and whether any of them changes the answer. You produce one table:
 
 ```
 | flags              | threads | wall s (ww3_shel) | nccmp-tol vs reference |
@@ -24,7 +24,7 @@ reference inside tolerance is a different model, not an optimisation.
 
 1. **The reference.** `just rt ww3_tp1.1` builds with the test's own switch and runs it;
    its `ww3*.nc` in `$WW3/regtests/ww3_tp1.1/work_lab/` is what everything else is
-   compared to. Copy it somewhere safe — every later run overwrites `work_lab/`.
+   compared to. Copy it somewhere safe: every later run overwrites `work_lab/`.
 
 2. **A switch with threads in it.** `switches/switch_lab_shrd` has `SHRD` but no `OMPG`,
    so OpenMP directives are not even compiled. Make a copy with `OMPG` added. (Why do
@@ -56,5 +56,5 @@ whether the difference is explainable (FMA contraction, reduction order) or a bu
   `ww3_ts1` (source terms) or on `just bench-case --size small`, where `OMPG` has loops
   to thread.
 - Add a `DIST` (MPI) build to the matrix with `switches/switch_lab_mpi` and
-  `mpirun -np 1/2/4`. Now the layout question of lesson 09 — ranks × threads on one
-  node — is yours to answer with numbers.
+  `mpirun -np 1/2/4`. Now the layout question of lesson 09 (ranks × threads on one
+  node) is yours to answer with numbers.

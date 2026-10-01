@@ -59,9 +59,7 @@ gpu/03_precision
 *.mod
 *.o
 
-# data you have to fetch yourself
-gebco.nc
-gfs_winds.nc
+# data you have to fetch yourself (*.nc is ignored above)
 examples/02-regional-real-forcing/gfs.*/
 
 # example helpers compiled by run.sh

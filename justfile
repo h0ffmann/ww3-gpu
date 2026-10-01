@@ -105,7 +105,7 @@ clean-runs:
     find examples -name '*.inp' -delete
 
 # ---------------------------------------------------------------------
-# Pull requests (ported from h0ffmann/marola)
+# Pull requests
 # ---------------------------------------------------------------------
 
 # Push the branch and create (or refresh) its PR with a body generated from the commits.

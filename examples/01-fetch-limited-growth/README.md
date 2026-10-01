@@ -7,7 +7,7 @@
 Wind blows off a straight coastline over deep water at a constant 10 m/s. Waves start at
 zero and grow with distance downwind. Two things limit how big they get: *duration* (how
 long the wind has blown) and *fetch* (how far from the coast you are). Run long enough and
-duration stops mattering, and you're left with pure fetch-limited growth — a one-dimensional
+duration stops mattering, and you're left with pure fetch-limited growth: a one-dimensional
 problem with a well-known empirical answer.
 
 This is the cleanest possible test that your WW3 build is doing physics rather than
@@ -47,7 +47,7 @@ netcdf-c: last time step (steady state), centre row (away from the edges), `x` o
 `cdo outputtab,value -selname,hs ww3.nc` if you want to look at the field.
 
 `mod_def.ww3` is the thing to understand. It's an opaque binary blob containing the whole
-model definition — grid, spectral discretisation, timesteps, physics configuration. Every
+model definition: grid, spectral discretisation, timesteps, physics configuration. Every
 other program reads it. Change `ww3_grid.nml` and you must regenerate it, and everything
 downstream is stale until you do. Half of all confusing WW3 behaviour is a stale `mod_def`.
 
@@ -57,7 +57,7 @@ downstream is stale until you do. Half of all confusing WW3 behaviour is a stale
    Look at `ww3.nc`: does Hs increase with x, or decrease? Flip to `90.` and rerun. Which
    one means "blowing east"? Write the answer in a comment so you never have to think about
    it again. Cross-check against the `DIR` output field and against the manual's section on
-   direction conventions — WW3 is not consistent between input and output here, and it
+   direction conventions: WW3 is not consistent between input and output here, and it
    catches everyone.
 
 2. **Duration vs fetch.** Shorten `DOMAIN%STOP` to 6 hours. Where along the fetch does the
@@ -65,7 +65,7 @@ downstream is stale until you do. Half of all confusing WW3 behaviour is a stale
    boundary, and you can predict it from the group velocity.
 
 3. **Break the CFL condition.** Set `TIMESTEPS%DTXY = 3000.` (well above the ~1055 s limit
-   computed in the namelist comments) and rerun. What does WW3 do — crash, warn, or quietly
+   computed in the namelist comments) and rerun. What does WW3 do: crash, warn, or quietly
    produce garbage? Now set `DTXY = 200.` How much slower, and is the answer any different?
    This teaches you what those four numbers actually buy.
 
@@ -83,7 +83,7 @@ downstream is stale until you do. Half of all confusing WW3 behaviour is a stale
 ## ⚠ Caveats on this example
 
 - It is written from the documented namelist reference and the upstream regression-test
-  templates, but has **not been executed**. If `ww3_grid` complains, read its stdout — it
+  templates, but has **not been executed**. If `ww3_grid` complains, read its stdout. It
   is unusually good at saying which namelist block it disliked.
 - The wind-direction convention issue above is real and unresolved in this file on purpose.
 - If `ww3_ounf` produces no `.nc`, your switch file is missing `NC4`.

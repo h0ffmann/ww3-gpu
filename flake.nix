@@ -53,8 +53,6 @@
 
       checks = forAll (system: {
         pubs = self.packages.${system}.default;
-        # The docx path is optional for readers, not untested in CI.
-        docx = self.packages.${system}.book-docx;
       });
     };
 }
