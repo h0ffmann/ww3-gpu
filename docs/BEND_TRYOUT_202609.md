@@ -6,6 +6,8 @@ Prepared 18 September 2026 as a proposal. Nothing below has been run.
 was not checked. Bend released 2.0.8 and 2.0.9 on the day this was written `(v)`, so every
 version-specific claim here is dated and will go stale; re-check the marked lines before acting.
 
+Follow-up, 1 October 2026: [`BITWISE_PROOF_202610.md`](BITWISE_PROOF_202610.md) §5 rechecks Bend as a proof tool and records that upstream's `WONTFIX.txt` now lists F64 (#1120) and the library target (#813) as planned, which dates §3.1, §7.4 and §9 below.
+
 > Scope: one kernel, one week, and one written result whether it works or not. The
 > exercise measures what a proof-checked language that targets the GPU costs on real
 > wave-model arithmetic. It is off the ladder (`course/13`), leaves `kokkos/` alone, and
