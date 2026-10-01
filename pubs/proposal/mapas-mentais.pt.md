@@ -192,19 +192,17 @@ gantt
 ```mermaid
 mindmap
   root((Riscos))
-    Divergência silenciosa após reescrita
+    Divergência de resultados que passe despercebida
       Critérios de concordância
       Testes por rotina com entradas capturadas
     Etapa 4 consumir o tempo das anteriores
       Ordem fixa das etapas
       Só reescrever rotina com custo residual medido
-    Ganho em GPU limitado pelo tráfego de dados
+    Ganho em GPU limitado pela transferência de dados
       Estado permanece no Fortran
       Resultado vira a medida do limite
-      Recomendação de não operar em GPU
-    Propagação própria da grade não estruturada
-      Etapas 3 e 4 priorizam os termos de fonte
-    Arquitetura do WW4 mudar
-      Kokkos é a camada proposta no próprio WW4
-      Artefatos no padrão L1 e L2 do WW4
+      Próximo passo: dados residentes na GPU
+    Atraso nos casos do LabECO ou no acesso ao H100
+      Regtest oficial como substituto provisório
+      Medições na GPU disponível, com ressalva
 ```
