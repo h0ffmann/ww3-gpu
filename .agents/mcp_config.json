@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "consensus": {
+      "serverUrl": "https://mcp.consensus.app/mcp"
+    }
+  }
+}
