@@ -7,9 +7,9 @@ O GitHub renderiza os blocos abaixo diretamente; localmente, qualquer visualizad
 
 ```mermaid
 mindmap
-  root((Otimização operacional do WW3 no ciclo do ReNOMO))
+  root((Otimização operacional do WW3 para GPU))
     Contexto
-      LabECO/UFSC roda o WW3 para o ReNOMO
+      LabECO/UFSC roda o WW3 para a ReNOMO
       Custo de uma previsão é o tempo de execução
       WW3 em Fortran, MPI e OpenMP, fixado por switches
     Problema de engenharia
@@ -207,8 +207,8 @@ mindmap
       Estado permanece no Fortran
       Resultado vira a medida do limite
       Recomendação de não operar em GPU
-    Grade operacional não estruturada
-      Etapas 3 e 4 restritas aos termos de fonte
+    Propagação própria da grade não estruturada
+      Etapas 3 e 4 priorizam os termos de fonte
     Arquitetura do WW4 mudar
       Kokkos é a camada proposta no próprio WW4
       Artefatos no padrão L1 e L2 do WW4
