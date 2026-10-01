@@ -31,7 +31,8 @@ PROPOSAL = ROOT / "pubs" / "proposal"
 # are the Brazilian funding agencies every Poli reader has met.
 KNOWN = {"GPU", "GPUs", "CPU", "MPI", "API", "UTC", "AMD", "NVIDIA", "CUDA", "HIP", "SYCL", "UFRJ",
          "DEL", "ABNT", "IEEE", "II", "III", "IV", "L1", "L2", "L3", "L4", "H100", "CI", "GNU",
-         "WAVEWATCH", "OpenMP", "OpenACC", "GoogleTest", "CTest", "CMake", "NetCDF", "CNPq", "MCTI"}
+         "WAVEWATCH", "OpenMP", "OpenACC", "GoogleTest", "CTest", "CMake", "NetCDF", "CNPq", "MCTI",
+         "PCIe", "NVLink"}
 
 CITE = re.compile(r"-?@([\w:.-]*\w)")
 NUMBER = re.compile(r"(?<![\w.,])\d+(?:[.,]\d+)?(?![\w])")

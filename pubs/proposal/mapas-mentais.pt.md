@@ -184,7 +184,7 @@ gantt
     Decisão de operação, relatório final                   :d1, 2027-04-01, 2027-04-30
     Defesa                                                 :milestone, d2, 2027-05-01, 0d
     section Marco externo
-    Primeiro lançamento previsto do WW4                    :milestone, w4, 2027-01-15, 0d
+    Primeiro lançamento do WW4 (ON 525, meados de 2027)    :milestone, w4, 2027-07-01, 0d
 ```
 
 ## 8. Riscos e mitigações
