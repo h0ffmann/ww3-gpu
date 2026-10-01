@@ -45,14 +45,14 @@ flowchart TD
 
     subgraph E1[Etapa 1 · Opções de compilação]
         direction LR
-        E1a[compilador, flags, switches,<br/>MPI x OpenMP] --> E1g{bit a bit<br/>ou arredondamento?}
+        E1a[compilador, flags, switches,<br/>forçante, MPI x OpenMP] --> E1g{bit a bit ou<br/>dentro da tolerância?}
     end
     E1g -- sim --> E2
     E1g -- não --> X1[descartada]
 
     subgraph E2[Etapa 2 · Configuração da execução]
         direction LR
-        E2a[decomposição, passos de tempo,<br/>saídas, restart, forçante] --> E2g{matriz do WW3<br/>bit a bit?}
+        E2a[passos de tempo,<br/>saídas, restart] --> E2g{dentro da tolerância<br/>por campo?}
     end
     E2g -- sim --> E3
     E2g -- não --> X2[descartada]
