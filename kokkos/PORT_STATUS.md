@@ -38,12 +38,12 @@ nix develop ./nix-config/labs/pratico#cuda --command \
 
 `kokkos/tests/bench_snl1.cpp`: 1 000 sea points (the three fixture points tiled),
 20 timed calls after 3 warm-up calls, on the committed `nk=25, nth=24` grid
-(`nspec = 600`). It is not a CTest case — it asserts nothing and its timings are
+(`nspec = 600`). It is not a CTest case: it asserts nothing and its timings are
 not reproducible enough to gate a build on.
 
 **Machine** (all nine runs, 15 Sep 2026): Intel Core i9-14900 (32 hardware
 threads) + NVIDIA GeForce RTX 4090 (Ada, `CMAKE_CUDA_ARCHITECTURES=89`), driver
-595.84, the owner's workstation — *not* the CI runner, whose numbers would be
+595.84, the owner's workstation, *not* the CI runner, whose numbers would be
 several times worse and are not recorded here. Kokkos 5.2.0, GCC 15.3.0.
 Median of three runs; the spread was under 2 % on the CPU rows and under 4 % on
 the GPU row.
@@ -59,8 +59,8 @@ the GPU row.
 **They are not the fastest this kernel can go.** `ww_kokkos` is compiled with
 `-ffp-contract=off` (and `--fmad=false` on CUDA) because the port's contract is
 *the Fortran's arithmetic*: with GCC's default `-ffp-contract=fast`,
-`-O3 -march=x86-64-v3` fuses `AWG1*UE(..) + AWG2*UE(..)` into an FMA — one
-rounding where WW3 does two — and the `openmp-release` build drifted 1.1e-5
+`-O3 -march=x86-64-v3` fuses `AWG1*UE(..) + AWG2*UE(..)` into an FMA (one
+rounding where WW3 does two), and the `openmp-release` build drifted 1.1e-5
 relative from the committed fixture while `serial-debug` stayed bit-identical.
 With contraction off, all three presets reproduce the Fortran bit for bit, which
 is what the "bit-identical" in the L1 column means. Every row in the timing table

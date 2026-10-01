@@ -2,8 +2,8 @@
   description = "ww3-lab publications: course book and UFRJ/DEL proposal, built with nix-config's labs/publisher toolchain";
 
   inputs = {
-    # The markdown -> LaTeX -> PDF toolchain and the mkPdf helper live in nix-config so other
-    # repositories can reuse them. Point at `main` once h0ffmann/nix-config#34 is merged.
+    # The markdown -> document toolchain and the mkPdf / mkDocx helpers live in nix-config so other
+    # repositories can reuse them.
     publisher.url = "github:h0ffmann/nix-config?dir=labs/publisher";
     nixpkgs.follows = "publisher/nixpkgs"; # only for symlinkJoin; same pin as the toolchain
   };
@@ -25,15 +25,34 @@
 
       packages = forAll (system:
         let
-          inherit (publisher.lib.${system}) mkPdf;
+          inherit (publisher.lib.${system}) mkPdf mkDocx;
           pkgs = nixpkgs.legacyPackages.${system};
           book = mkPdf { name = "ww3-lab-course"; inherit src; command = "bash scripts/build_pdf.sh book"; };
+          # The same course as a Word document, for readers who comment or edit rather than read.
+          # Part of `all`, so it is built, uploaded and committed next to the PDFs.
+          bookDocx = mkDocx { name = "ww3-lab-course-docx"; inherit src; command = "bash scripts/build_docx.sh book"; };
+          # The proposal in Word is what the advisors comment on; it has no DEL cover page.
+          proposalPtDocx = mkDocx { name = "proposal-pt-docx"; inherit src; command = "bash scripts/build_docx.sh proposal pt"; };
+          proposalEnDocx = mkDocx { name = "proposal-en-docx"; inherit src; command = "bash scripts/build_docx.sh proposal en"; };
           proposalPt = mkPdf { name = "proposal-pt"; inherit src; command = "bash scripts/build_pdf.sh proposal pt"; };
           proposalEn = mkPdf { name = "proposal-en"; inherit src; command = "bash scripts/build_pdf.sh proposal en"; };
-          all = pkgs.symlinkJoin { name = "ww3-lab-pubs"; paths = [ book proposalPt proposalEn ]; };
+          all = pkgs.symlinkJoin {
+            name = "ww3-lab-pubs";
+            paths = [ book bookDocx proposalPt proposalEn proposalPtDocx proposalEnDocx ];
+          };
         in
-        { inherit book all; proposal-pt = proposalPt; proposal-en = proposalEn; default = all; });
+        {
+          inherit book all;
+          book-docx = bookDocx;
+          proposal-pt = proposalPt;
+          proposal-en = proposalEn;
+          proposal-pt-docx = proposalPtDocx;
+          proposal-en-docx = proposalEnDocx;
+          default = all;
+        });
 
-      checks = forAll (system: { pubs = self.packages.${system}.default; });
+      checks = forAll (system: {
+        pubs = self.packages.${system}.default;
+      });
     };
 }

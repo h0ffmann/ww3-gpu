@@ -3,7 +3,7 @@
 A curated, annotated list for people who actually want to *run* WW3, not just cite it.
 
 **Verification status.** Entries marked `(v)` were fetched and read while building this list
-on **2026-09-11**. Unmarked entries are from background knowledge — the project is real, but
+on **2026-09-11**. Unmarked entries are from background knowledge: the project is real, but
 the URL and current status may have drifted. Check before relying on them.
 
 ---
@@ -62,7 +62,7 @@ late 2026 it is pre-alpha.** Full treatment in
   `src/ tests/ tools/ templates/ externals/` plus `CMakeLists.txt`, `Doxyfile`,
   `ARCHITECTURE.md`, `AGENTS.md`, and the IP set
   (`INTENT.md`, `LICENSE.md`, `TRADEMARK.md`, `CONTRIBUTORS.md`).
-  ⚠ Those numbers were true on one day — re-check before quoting them.
+  ⚠ Those numbers were true on one day. Re-check before quoting them.
 - **[NCEP Office Note 525](https://doi.org/10.25923/h7j3-1h25)** `(v)` — Tolman, *The
   WAVEWATCH III® Software Modernization Project: Phase I report*, November 2025.
   **The single most useful document in this entire list right now.** Unusually candid: it
@@ -82,8 +82,8 @@ late 2026 it is pre-alpha.** Full treatment in
     data and product generation but explicitly **not** core or solver; **Julia considered
     and declined** as a core language (small community, workforce risk), still allowed for
     non-operational solvers. The report states plainly there is no community consensus.
-  - **Chosen path**: the "dual approach" — C++ core to operations-ready in ~2 years, Rust
-    built alongside, ~5 years for a Rust core.
+  - **Chosen path**: the "dual approach" (C++ core to operations-ready in ~2 years, Rust
+    built alongside, ~5 years for a Rust core).
   - **Format changes coming**: consensus to drop big-endian unformatted binary for NetCDF,
     with interest in Zarr; the compile-time switch file is under review; the
     separate-executables workflow (`ww3_grid` / `ww3_prep` / `ww3_shel` / `ww3_ounf`) is
@@ -92,7 +92,7 @@ late 2026 it is pre-alpha.** Full treatment in
     (Tolman 2002b), without which you can't separate numerical from physical error.
   - **Timeline**: Phase II began 1 Oct 2025; Phase IV with active community engagement
     expected summer/autumn 2026; **first public release hoped for summer 2027** on the C++
-    path. ⚠ We are past the Phase IV date — check the repo.
+    path. ⚠ We are past the Phase IV date. Check the repo.
   - **WW3 will be sunset.** The report commits to "formally sunsetting most support for
     WW3 once WW4 is mature, with a clearly communicated transition period." Code with no
     owner willing to port it stays in WW3 and is obsolete for WW4.
@@ -113,12 +113,12 @@ late 2026 it is pre-alpha.** Full treatment in
     doi:10.25923/jzks-6g74
   - Shipman & Randles (2023), *An evaluation of risks associated with relying on Fortran
     for mission critical codes for the next 15 years*, LA-UR-23-23992, doi:10.2172/1970284
-    — the Fortran-risk paper the whole discussion leans on.
+    (the Fortran-risk paper the whole discussion leans on).
 
 **What to do about it:** learn WW3. The physics is identical and the concepts transfer
-completely — action balance, source-term packages, spectral discretisation, CFL limits,
+completely: action balance, source-term packages, spectral discretisation, CFL limits,
 grids, nesting, partitioning. The *interfaces* won't transfer, and that's fine; they're
-the cheap part. And if you were planning to GPU-port WW3 yourself, don't — WW4 Phase IV
+the cheap part. And if you were planning to GPU-port WW3 yourself, don't: WW4 Phase IV
 targets CPU and GPU efficiency in a code architected for it from the start.
 
 ## SWAN — the other one
@@ -146,7 +146,7 @@ the GitHub mirrors; they're stale snapshots.
 - Builds with **CMake 3.12+**, and the implementation manual recommends **Ninja** over GNU
   make `(v)`. The older `make config && make ser|omp|mpi` route still works.
 - Compile-time options are **specially-formatted comments inside the `.ftn` sources**
-  rather than a separate switch file — `!/impi` for MPI in `swmod1.ftn`, `!ADC` for the
+  rather than a separate switch file: `!/impi` for MPI in `swmod1.ftn`, `!ADC` for the
   ADCIRC coupling hooks `(v)`. Same rebuild-from-clean discipline as WW3.
 - Parallelism: OpenMP and MPI, with **block-Jacobi** or **block-wavefront** strategies for
   the implicit sweeps. The manual's guidance: block Jacobi for non- or quasi-stationary
@@ -181,7 +181,7 @@ the GitHub mirrors; they're stale snapshots.
 - **WW3 doxygen** — a browsable rendering of the source. Linked from the repo README. Useful
   for tracing what `W3SRCEMD` actually calls. `(v)` that it exists; ⚠ URL not captured.
 - **Annotated namelist templates** in the repo: `model/nml/ww3_*.nml`. `(v)` These are the
-  *real* reference for the `.nml` interface — every parameter with its default and an inline
+  *real* reference for the `.nml` interface: every parameter with its default and an inline
   explanation. `ww3_grid.nml` alone is ~790 lines of commented template. Copy from here, not
   from blog posts.
 - **[ww3-docs.readthedocs.io](https://ww3-docs.readthedocs.io/en/latest/)** `(v)` — a
@@ -219,7 +219,7 @@ the GitHub mirrors; they're stale snapshots.
 - **GEBCO / SRTM15+ / ETOPO** — the usual bathymetry sources. GEBCO 2024+ at 15 arc-seconds
   is the default choice for regional grids.
 - **OceanMesh2D / SMS / GMSH** — for unstructured (triangular) WW3 grids. WW3 reads GMSH
-  `.msh` files directly via `UNST%FILENAME`. `(v)` — confirmed in the `ww3_grid.nml` template.
+  `.msh` files directly via `UNST%FILENAME` `(v)`, confirmed in the `ww3_grid.nml` template.
 - **[NOAA-EMC/genes_gmd](https://github.com/NOAA-EMC/genes_gmd)** `(v)` — genetic optimisation
   of the Generalized Multiple DIA free parameters (the `NL3`/GMD nonlinear interaction
   approximation). Niche, but the only tool for it. Designed for v5.16.
@@ -233,8 +233,8 @@ the GitHub mirrors; they're stale snapshots.
   `populate_namelist()`. Validation happens in `__post_init__`. Python 3.7+; only hard
   dependency is xarray + netCDF4.
   - Author's own framing: *work in progress, API not stable, use at your own risk.* `(v)`
-    It's a thin, honest layer — and that's exactly what makes it good for learning, because
-    you can always print the namelist it generated and read it.
+    It's a thin, honest layer. That's exactly what makes it good for learning: you can
+    always print the namelist it generated and read it.
   - [PyPI](https://pypi.org/project/pyww3/) `(v)` · [docs](https://pyww3.readthedocs.io/) `(v)`
     · [announcement thread](https://github.com/NOAA-EMC/WW3/discussions/470) `(v)` (includes a
     Colab notebook with a fuller example)
@@ -251,7 +251,7 @@ the GitHub mirrors; they're stale snapshots.
   plots. If you only install one Python wave package, install this one.
 - **[rompy](https://github.com/rom-py/rompy)** `(v)` — "Relocatable Ocean Modelling in
   PYthon". Pydantic-validated, templated model configuration with a plugin system;
-  `rompy-swan`, `rompy-schism`, `rompy-xbeach` exist. ⚠ I did not find a `rompy-ww3` plugin —
+  `rompy-swan`, `rompy-schism`, `rompy-xbeach` exist. ⚠ I did not find a `rompy-ww3` plugin:
   the WW3 integration is on the *data* side (reading BoM WW3 catalogs). Still worth knowing
   as the most serious attempt at a general "configure ocean models from Python" framework.
 - **[bmi-wavewatch3](https://pypi.org/project/bmi-wavewatch3/)** `(v)` — CSDMS package for
@@ -262,7 +262,7 @@ the GitHub mirrors; they're stale snapshots.
   generates the full namelist set for v6.07.1 and v7.14, writes run scripts, does SSH upload
   + Slurm submission + job monitoring to an HPC, and post-processes (Hs maps, directional
   spectra, Jason-3 altimeter validation, NDBC matching). Optional Qt GUI. ⚠ Young project,
-  small user base — read the generated namelists before trusting them.
+  small user base. Read the generated namelists before trusting them.
 - **xarray + cfgrib + netCDF4** — the actual foundation. WW3's `ww3_ounf` writes CF-ish
   netCDF; `ww3_ounp` writes spectral netCDF that `wavespectra` reads natively.
 
@@ -305,7 +305,7 @@ the GitHub mirrors; they're stale snapshots.
     they offloaded, with OpenACC directives, keeping MPI.
   - Tested on Kodiak and Summit (V100), meshes of 59K and 228K nodes, 1–32 MPI ranks.
   - **Speedup was ~1.3× against 42 CPU cores**, roughly unchanged whether they packed 3 or 4
-    MPI ranks per GPU. That's a 35–40% cut in wall time and resource-hours — real, but modest.
+    MPI ranks per GPU. That's a 35–40% cut in wall time and resource-hours (real, but modest).
   - The limiter is **host↔device data-transfer bandwidth**, plus the fact that `W3SRCEMD` has
     so many local scalars and arrays that register pressure kills occupancy. Using `!$acc
     routine` properly would help but needs significant refactoring.
@@ -358,14 +358,14 @@ Foundational reading, roughly in the order a newcomer should hit them:
 
 ## Other wave models and simulators
 
-You asked for a list. Wave modelling splits into families that do genuinely different things
-— a spectral model and a phase-resolving model are not substitutes.
+You asked for a list. Wave modelling splits into families that do genuinely different things:
+a spectral model and a phase-resolving model are not substitutes.
 
 ### Third-generation spectral (phase-averaged) — WW3's direct peers
 
 | Model | Origin | Notes |
 |---|---|---|
-| **SWAN** | TU Delft | The other one everybody uses. Implicit, unconditionally stable, no CFL limit, plus a stationary mode — so it eats the high-resolution coastal domains that WW3's explicit propagation makes ruinous. Free. **See the dedicated section above** and `course/15-swan.md`. |
+| **SWAN** | TU Delft | The other one everybody uses. Implicit, unconditionally stable, no CFL limit, plus a stationary mode, so it eats the high-resolution coastal domains that WW3's explicit propagation makes ruinous. Free. **See the dedicated section above** and `course/15-swan.md`. |
 | **WAM (Cycle 4.x)** | ECMWF / WAMDI | The original third-gen model. WW3 and ECWAM both descend from it. |
 | **ECWAM** | ECMWF | WAM's operational descendant; produces the wave fields in ERA5 and IFS. Now open source as part of the ECMWF open IFS ecosystem. ⚠ check current licensing. |
 | **WWM-III** | Roland et al. | Wind Wave Model III, designed to be coupled tightly to **SCHISM** on unstructured grids. Strong choice for estuary/shelf work. |
@@ -399,13 +399,13 @@ standard for moorings/risers).
 
 **COAWST** (ROMS+SWAN+WRF+WW3), **UFS** (WW3 via NUOPC), **CROCO** (with WW3 or WWM),
 **SCHISM+WWM**, **ADCIRC+SWAN** (the US storm-surge standard), **Thetis** (Firedrake-based,
-adjoint-capable — interesting if you care about optimisation and differentiability).
+adjoint-capable, interesting if you care about optimisation and differentiability).
 
 ### Machine-learned wave emulators
 
 An active area: learned surrogates for spectral wave models, and wave components inside
 data-driven weather models. ⚠ I deliberately haven't named specific systems here because
-this field moved fast and I can't verify current state — search "data-driven wave forecasting"
+this field moved fast and I can't verify current state: search "data-driven wave forecasting"
 and "ML emulator WAVEWATCH III" for the current picture. The interesting angle for you: a
 learned emulator is a *dense tensor* workload, which is precisely what a 4090 is good at,
 unlike WW3 itself.
@@ -415,7 +415,7 @@ unlike WW3 itself.
 - **Tessendorf / FFT ocean surfaces** — the Jerry Tessendorf "Simulating Ocean Water" notes
   are the origin of essentially every real-time ocean in games and film. Pick a directional
   spectrum (JONSWAP, Pierson-Moskowitz), inverse-FFT it into a heightfield. Physically it is
-  the *same spectrum* WW3 computes — WW3 gives you the spectrum's evolution in space and
+  the *same spectrum* WW3 computes: WW3 gives you the spectrum's evolution in space and
   time, Tessendorf gives you one realisation of the surface from it. Wiring `ww3_ounp`
   spectral output into an FFT ocean renderer is a genuinely fun weekend project and would
   hammer your GPU properly.

@@ -11,7 +11,7 @@ So this directory measures three separate, honest things:
 | What | Program | Measures |
 |---|---|---|
 | **The real WW3, CPU only** | `bench_ww3_cpu.sh` | Actual WW3 wall time versus MPI rank count on your i9. This is the number that should decide how you run the model. |
-| **A WW3-shaped kernel, CPU vs GPU** | `kernel_bench.f90` | The closest honest proxy: same data layout, same loop structure, same near-cancelling source terms as `W3SRCEMD`. Two modes — data resident on the device, and copied every step. |
+| **A WW3-shaped kernel, CPU vs GPU** | `kernel_bench.f90` | The closest honest proxy: same data layout, same loop structure, same near-cancelling source terms as `W3SRCEMD`. Two modes: data resident on the device, and copied every step. |
 | **CPU and GPU at the same time** | `hetero_split.f90` | Sweeps the work split from all-GPU to all-CPU and finds your optimum. This is the direct answer to "can I use both together?" |
 
 ```bash
@@ -41,7 +41,7 @@ ww_bench_case [--size small|medium|large] [--nx N] [--ny N] [--nk N] [--nth N]
 
 The timesteps are derived from `--dx-km` through the CFL condition (`DTXY` rounded
 *down* to tens of seconds, `DTMAX = 3 DTXY`, `DTKTH = DTMAX/2`), so a resized case stays
-stable — and an unstable run does a different amount of work, which would make the
+stable. An unstable run does a different amount of work, which would make the
 benchmark lie. `case.json` records every derived number for the write-up.
 
 Field output is off (`DATE%FIELD` stride `'0'` in `ww3_shel.nml`) because the case
@@ -86,7 +86,7 @@ And that's the *ceiling*, before you pay for anything. What you actually pay:
 1. **PCIe.** Keeping both devices' copies coherent means shipping the CPU's slice to the
    device and pulling the GPU's slice back, every step. `hetero_split.f90` charges you for
    this honestly with `update device` / `update self`. At ~25 GB/s effective and a
-   230 MB spectrum array, that's ~18 ms per direction — often more than the compute.
+   230 MB spectrum array, that's ~18 ms per direction, often more than the compute.
 2. **Synchronisation.** The join costs you whatever the slower half overruns by, and the
    split is static so it can't adapt to jitter.
 3. **Complexity.** Two code paths, two sets of bugs, results that depend on the split.
@@ -99,7 +99,7 @@ box falls on. If the best split comes back at 0.00 or 1.00, you have your answer
 ### Three other senses of "use both together" that work better
 
 **MPI ranks sharing one GPU.** This is what the [GMD 2023 WW3 port](https://gmd.copernicus.org/articles/16/1445/2023/)
-actually did — several CPU MPI ranks each offloading to the same GPU. They found packing
+actually did: several CPU MPI ranks each offloading to the same GPU. They found packing
 3 or 4 ranks per GPU barely changed the ~1.3× result, because the bottleneck was transfer
 bandwidth, not GPU occupancy. Still, this is the standard pattern in production HPC and
 the one WW4 will likely use.
@@ -111,7 +111,7 @@ source terms while the CPU does subdomain N−1's propagation. Real, standard, a
 significant refactor.
 
 **Different jobs entirely.** The best use of your hardware today: run WW3 on the i9 with
-MPI across all cores, and use the 4090 for something it's actually good at — a parameter
+MPI across all cores, and use the 4090 for something it's actually good at: a parameter
 sweep's post-processing, training an ML emulator on the output, a Celeris or DualSPHysics
 run, or an FFT ocean surface renderer fed by `ww3_ounp` spectra. Zero contention, both
 devices saturated, no code to write.
@@ -121,10 +121,10 @@ devices saturated, no code to write.
 ## What to expect
 
 Rough priors so you can tell a broken measurement from a real one. These are predictions,
-not measurements — ⚠ nothing here was run on your hardware, or any hardware.
+not measurements. ⚠ Nothing here was run on your hardware, or any hardware.
 
 **The kernel, data resident on device:** the 4090 should beat a fully loaded i9
-substantially — this kernel is friendlier to a GPU than real WW3 code, being
+substantially. This kernel is friendlier to a GPU than real WW3 code, being
 single-precision, low register pressure, uniform trip count. Treat it as an optimistic
 upper bound.
 
@@ -137,7 +137,7 @@ roughly 1/64 of FP32. See `../gpu/03_precision.f90`.
 
 **WW3 MPI scaling on the i9:** near-linear early, with efficiency falling off as
 communication in the "shuffle" decomposition starts to dominate. Where the knee sits
-depends on case size — if the curve is flat from rank 1, your case is too small.
+depends on case size: if the curve is flat from rank 1, your case is too small.
 
 ---
 
@@ -154,7 +154,7 @@ mpirun -np 8 --bind-to core --cpu-set 0-15 ./ww3_shel     # P-cores only
 
 It is common for **8 pinned P-cores to beat 24 unpinned mixed cores** on a memory-bound
 spectral model. Measure both. Also test 1 rank per *physical* core against 1 per *logical*
-core — hyperthreading rarely helps a bandwidth-limited workload.
+core. Hyperthreading rarely helps a bandwidth-limited workload.
 
 This affects the `hetero_split` result too: if the CPU half is running on E-cores, you're
 measuring the wrong CPU.

@@ -1,8 +1,8 @@
 # 10 — Modern Fortran refactoring: the step before any port
 
 Step 3 of the ladder. The profile from [lesson 09](09-benchmark-profile-compile-run.md)
-names the routines; this lesson rewrites them in place — same algorithm, same arithmetic,
-standard Fortran 2008/2018 — and proves per routine that nothing changed. It is worth
+names the routines; this lesson rewrites them in place (same algorithm, same arithmetic,
+standard Fortran 2008/2018) and proves per routine that nothing changed. It is worth
 doing on its own (the gain is measured on the model the lab runs), and it is what makes a
 routine portable at all: a routine with an explicit interface and contiguous data can be
 replaced by a kernel; one that reads module state through five `USE` lines cannot.
@@ -46,7 +46,7 @@ Everything in this lesson is about making those properties *visible in the inter
 | Module procedure (explicit interface) | the compiler checks every call; a kernel can replace the body | already: `MODULE W3SNL1MD` (v) |
 | `INTENT(IN/OUT/INOUT)` on every argument | the data-flow contract a shim needs | already (v) |
 | `CONTIGUOUS` on assumed-shape dummies | no copy-in on the call, a pointer that C can take | not used; WW3 passes explicit-shape `A(NSPEC)` (v), which is contiguous anyway |
-| `PURE` | no hidden I/O or global writes — required for `DO CONCURRENT` bodies | blocked by the `#ifdef W3_T` `WRITE` (v) |
+| `PURE` | no hidden I/O or global writes; required for `DO CONCURRENT` bodies | blocked by the `#ifdef W3_T` `WRITE` (v) |
 | Workspace by argument or per-grid allocation | no automatic arrays, no per-call stack traffic | the ten arrays above |
 | Tables passed in, not `USE`d | the routine can be called from a test with captured inputs | `snl1_ref.F90` does this for the reference copy (v) |
 
@@ -62,13 +62,13 @@ every (point, frequency), in standard Fortran with no directives (v):
   do concurrent (ip = 1:npt, ik = 1:nk) local(x, kd, f, fp, t, it)
 ```
 
-One source, three targets — `nvfortran -stdpar=gpu -gpu=cc89`, `nvfortran
+One source, three targets: `nvfortran -stdpar=gpu -gpu=cc89`, `nvfortran
 -stdpar=multicore`, plain `gfortran -O3` (v, header of that file). The file's own
 caveats (v): `LOCAL()` is Fortran 2018 locality, and if a compiler rejects it you may drop
-the clause — but then every scalar assigned inside the loop is one the compiler has to
+the clause, but then every scalar assigned inside the loop is one the compiler has to
 prove private on its own, and `-Minfo=stdpar` must be read to see whether it did or
 whether the loop went serial. Also `-stdpar=gpu` moves allocatables to CUDA managed
-memory, so data movement becomes implicit — convenient, and exactly how a naive port
+memory, so data movement becomes implicit: convenient, and exactly how a naive port
 ends up thrashing PCIe without noticing ⚠ (the file says so; not measured here).
 
 The construct is honest about one thing the directives are not: the loop body must be
@@ -131,7 +131,7 @@ The full-size version is the fixture generator the port uses (v,
 `kokkos/tests/fixtures/gen_snl1_fixture.F90`): call the verbatim reference on a
 deterministic sea state, stream inputs, tables and outputs into a little-endian file with
 `ACCESS='STREAM'`, refuse to write if the default `REAL` is not 32-bit, commit the file.
-Any rewrite — Fortran or C++ — is then tested against the same bytes. Same arithmetic
+Any rewrite, Fortran or C++, is then tested against the same bytes. Same arithmetic
 should give the same bits; 1e-6 relative is the room you leave for a compiler that
 reassociates a sum. If you need more room than that, you changed the algorithm, and that
 is a separate change with its own evidence.

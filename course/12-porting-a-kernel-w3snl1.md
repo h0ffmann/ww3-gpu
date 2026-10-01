@@ -12,17 +12,17 @@ Source of truth: `WW3/model/src/w3snl1md.F90` at 7.14 `develop`; line numbers (v
 
 | Fortran | Lines | Sections | Port |
 |---|---|---|---|
-| `INSNL1` | 483–786; body 602–774 | 1 quadruplet angles · 2 lambda weights · 3 directional indices · 4 frequency indices · 5 ranges · 6 allocate (`W3DMNL`) · 7 spectral addresses · 8 `f**11` scaling · 9 interpolation weights | `snl1_tables.cpp`, `make_tables()` — host, once per grid |
-| `W3SNL1` | 115–473; locals 306–328; body 338–440 | 1 propagation constant · 2 auxiliary spectrum and arrays · 3 interactions on the extended spectrum · 4 source and diagonal | `snl1_dia.cpp`, `snl1()` — device, per call |
+| `INSNL1` | 483–786; body 602–774 | 1 quadruplet angles · 2 lambda weights · 3 directional indices · 4 frequency indices · 5 ranges · 6 allocate (`W3DMNL`) · 7 spectral addresses · 8 `f**11` scaling · 9 interpolation weights | `snl1_tables.cpp`, `make_tables()`: host, once per grid |
+| `W3SNL1` | 115–473; locals 306–328; body 338–440 | 1 propagation constant · 2 auxiliary spectrum and arrays · 3 interactions on the extended spectrum · 4 source and diagonal | `snl1_dia.cpp`, `snl1()`: device, per call |
 
 ## `Config` and `Tables`
 
 `ww::snl1::Config` (v, `snl1_config.hpp`) is exactly the `W3GDATMD` inputs, under WW3's
 names: `nk, nth, xfr, dth, lam, snlc1, kdcon, kdmn, snls1, snls2, snls3, fachfe`, plus
 `nspec()`; `SIG` travels separately (host for `INSNL1`, device for `W3SNL1`). `PI`, `TPI`,
-`TPIINV` are built as `constants.F90` builds them — `PI` rounded to `REAL` first (v).
+`TPIINV` are built as `constants.F90` builds them, `PI` rounded to `REAL` first (v).
 `ww::snl1::Tables` (v, `snl1_tables.hpp`) is `INSNL1`'s output: `nfr, nfrhgh, nfrchg,
-nspecx, nspecy, nspec`, `dal1..3`, `awg[8]`, `swg[8]`, and 33 device Views — `ip[2][4]`
+nspecx, nspecy, nspec`, `dal1..3`, `awg[8]`, `swg[8]`, and 33 device Views: `ip[2][4]`
 and `im[2][4]` of length `NSPECX`, `ic[8][2]` of length `NSPEC`, `af11` of length `NSPECX`.
 Arrays of Views because that is how `W3SNL1` reads them, and because a View is a copyable
 handle, so the whole struct is captured by value into the kernel (v).
@@ -38,17 +38,17 @@ handle, so the whole struct is captured by value into the kernel (v).
 
 ## Kernel structure
 
-One **team per sea point** (`TeamPolicy(npts, Kokkos::AUTO)`), because the working set —
-an extended spectrum plus nine helper arrays — is per point and belongs in team scratch.
+One **team per sea point** (`TeamPolicy(npts, Kokkos::AUTO)`), because the working set,
+an extended spectrum plus nine helper arrays, is per point and belongs in team scratch.
 The budget `(NSPECY + NTH) + 8·(NSPECX + NTH) + NSPEC` floats is checked against
 `policy.scratch_size_max(0)` before the launch; too big throws `std::runtime_error` (v). Inside the team (v):
 
-1. **Section 1** — `CONS` from `KDMEAN`: three flops, recomputed per thread; cheaper than a barrier.
-2. **Section 2** — `TeamThreadRange` over `nfr` fills `ue` and `con`; a second range
+1. **Section 1**: `CONS` from `KDMEAN`: three flops, recomputed per thread; cheaper than a barrier.
+2. **Section 2**: `TeamThreadRange` over `nfr` fills `ue` and `con`; a second range
    zeroes slots `[0, NTH)` (the Fortran `DO ISP=1-NTH,0`); `team_barrier()`. The tail
    `DO IFR=NFR+1,NFRHGH` stays **sequential** in `ifr`, a barrier per row: row `IFR` reads row `IFR-1`.
-3. **Section 3** — `TeamThreadRange` over `nspecx`: `EP1, EM1, EP2, EM2`, then `SA1, SA2, DA1C..DA2M`; `team_barrier()`.
-4. **Section 4** — `TeamThreadRange` over `nspec` writes `s(isp, ipt)` and `d(isp, ipt)`.
+3. **Section 3**: `TeamThreadRange` over `nspecx`: `EP1, EM1, EP2, EM2`, then `SA1, SA2, DA1C..DA2M`; `team_barrier()`.
+4. **Section 4**: `TeamThreadRange` over `nspec` writes `s(isp, ipt)` and `d(isp, ipt)`.
 
 No reduction anywhere: every output element is written by one thread from inputs no thread
 modifies, so `WW_DETERMINISTIC` changes nothing and the result is bit-identical across
@@ -57,7 +57,7 @@ backends and thread counts; the launch is labelled `"srce.snl1.dia"` (v).
 Two build facts decide whether "bit-identical" is true (v, `kokkos/src/ww_kokkos/CMakeLists.txt`,
 `kokkos/README.md`). **Floating-point contraction is off** for `ww_kokkos`:
 `-ffp-contract=off`, and `--fmad=false` for the device half under nvcc. GCC's default fuses
-`AWG1*UE(..) + AWG2*UE(..)` into an FMA — one rounding where the Fortran does two — and
+`AWG1*UE(..) + AWG2*UE(..)` into an FMA (one rounding where the Fortran does two), and
 `openmp-release` drifted 1.1e-5 relative from the fixture while `serial-debug` was
 bit-identical; with contraction off all three presets reproduce the Fortran bit for bit, and
 removing that line is a physics change, not an optimisation. And **`x**n` is not `std::pow`**:
@@ -80,7 +80,7 @@ removing that line is a physics change, not an optimisation. And **`x**n` is not
 Three things a naive `extern "C"` wrapper gets wrong and this one does not (v,
 `snl1_shim.cpp`): ownership of the runtime (a test may own it); lifetime (a
 `push_finalize_hook` drops the Views inside `finalize`, never at process exit); errors
-(nothing throws across the boundary — every entry is a `try`/`catch` that records a
+(nothing throws across the boundary: every entry is a `try`/`catch` that records a
 code). `W3KOKKOS_SETUP` turns `ww_snl1_enabled()` into `LOGICAL :: KOKKOS_SNL1` once, so
 the inner loop reads a logical; every `REAL` is `REAL(C_FLOAT)` (v). `L1_test_snl1_shim.cpp`
 drives the raw C API on the fixture with poisoned output buffers, so a forgotten copy-out
@@ -104,7 +104,7 @@ diff then needs a reason in the commit message (v). `fixture_io.{hpp,cpp}` is th
 
 | Suite | Checks | Tolerance and why |
 |---|---|---|
-| `L1_test_snl1_tables` | all 32 address tables | exact — an address is an integer (v) |
+| `L1_test_snl1_tables` | all 32 address tables | exact: an address is an integer (v) |
 | | `dal1..3`, `awg`, `swg`, `af11` | 1e-6 relative: they come out of `acosf`/`asinf`/`powf`, a ULP apart (v) |
 | `L1_test_snl1_dia` | `S` and `D` on three points | 1e-5 relative with a 1e-30 absolute floor for denormal bins (v) |
 | | zero spectrum → zero source; `A×2` → `S×8`, `D×4` | properties of the DIA, not of the fixture (v) |
@@ -127,24 +127,24 @@ run**: the owner's WW3 build used `NL0`; it needs an `NL1` build such as `just b
 The caller side is `kokkos/src/fortran_iface/PATCH.md`: a hunk-by-hunk recipe for a fork
 branch, with real line numbers, not applied in this repo (v). Four hunks (v):
 
-1. **`w3srcemd.F90`** — inside the `W3_KOKKOS` guard, `USE W3KOKKOSMD`, `USE W3SERVMD,
+1. **`w3srcemd.F90`**: inside the `W3_KOKKOS` guard, `USE W3KOKKOSMD`, `USE W3SERVMD,
    ONLY: EXTCDE` and `USE W3ODATMD, ONLY: NDSE` (neither is otherwise in scope in `W3SRCE`);
    a one-element `KDM_K(1)` local, because `KDMEAN` there is the expression `WNMEAN*DEPTH`;
    and at the single call site (lines 1258–1264) `IF (KOKKOS_SNL1) THEN CALL WW_SNL1(1,
    SPEC, CG1, KDM_K, VSNL, VDNL) … ELSE CALL W3SNL1(…) END IF`. The call sits in a named
    `!$OMP CRITICAL`: `W3SRCE` runs inside an `!$OMP PARALLEL` region and the shim has one
-   unlocked context, so phase 1 serialises it — slower than the Fortran when threaded; the
+   unlocked context, so phase 1 serialises it, slower than the Fortran when threaded; the
    correctness step, not the fast one. The `WW_SNL1_LAST_ERROR() /= 0` check followed by
    `EXTCDE` is **not optional**: a `void` C call has no other channel, and a silent failure
    is a plausible-looking wrong forecast. `CG1` is already `CG(1:NK,ISEA)`, sliced by
    `W3WAVE`, so it passes straight through.
-2. **`w3initmd.F90`**, after `W3IOGR('READ')` — `WW_KOKKOS_INIT(-1)`, `W3KOKKOS_SETUP`,
+2. **`w3initmd.F90`**, after `W3IOGR('READ')`: `WW_KOKKOS_INIT(-1)`, `W3KOKKOS_SETUP`,
    `EXTCDE` when `IMOD > 1` (one spectral grid per process: `ww_snl1_init` *replaces* the
    tables), then `WW_SNL1_INIT(…, SIG(1))`. `SIG(1)`, not `SIG`: `W3GDATMD` allocates
-   `SIG(0:MK+1)` and the assumed-size C dummy would start at bin 0 — every quadruplet one
+   `SIG(0:MK+1)` and the assumed-size C dummy would start at bin 0: every quadruplet one
    bin low, smooth, plausible and wrong; the lab's `SIG(NK)` reference cannot catch it.
 3. **`switches.json`** gains a `KOKKOS` category with `"build_files": ["w3kokkosmd.F90"]`
-   and `"requires": ["NL1"]`. `src_list.cmake` needs **no** change — listing the file
+   and `"requires": ["NL1"]`. `src_list.cmake` needs **no** change: listing the file
    there would compile it unconditionally and break every non-Kokkos build.
 4. **`model/src/CMakeLists.txt`** links `ww_kokkos` under `-DWW_KOKKOS=ON` and refuses
    the option without the switch.
@@ -169,11 +169,11 @@ ledger's L2 column reads "pending fork branch" (v).
 
 ## The timing line
 
-`kokkos/PORT_STATUS.md` is the ledger — one row per routine: WW3 file and lines, phase,
+`kokkos/PORT_STATUS.md` is the ledger, one row per routine: WW3 file and lines, phase,
 shim, L1 parity, L2 replay, Serial / OpenMP / CUDA ms per call, notes (v). The `W3SNL1`
 row comes from `ww_bench_snl1` (`kokkos/tests/bench_snl1.cpp`, not a test: 1 000 sea
 points, 20 timed calls after 3 warm-ups, median of three runs), on an Intel i9-14900 +
-RTX 4090, Kokkos 5.2.0, GCC 15.3 — the owner's workstation, not the CI runner (v):
+RTX 4090, Kokkos 5.2.0, GCC 15.3 (the owner's workstation, not the CI runner) (v):
 
 | backend | through the shim, ms/call | kernel only, ms/call | vs Serial |
 |---|---|---|---|
@@ -184,7 +184,7 @@ RTX 4090, Kokkos 5.2.0, GCC 15.3 — the owner's workstation, not the CI runner 
 Two things these numbers are not (v). Not the fastest the kernel can go: every row is the
 `-ffp-contract=off` parity build, and turning contraction on would invalidate the L1
 column. And not what WW3 would see today: the phase-1 call site passes `NPTS = 1`, and on
-CUDA 94 % of the 0.75 ms call is host↔device copy — the entire argument for phase 2, and
+CUDA 94 % of the 0.75 ms call is host↔device copy: the entire argument for phase 2, and
 why "34x" is not the model's speed-up.
 
 ## What "done" means
@@ -193,7 +193,7 @@ why "34x" is not the model's speed-up.
 heritage header naming the WW3 routine, (2) the `bind(C)` shim and Fortran interface with
 the argument table, (3) an L1 test with tolerances stated and justified, (4) an L2 replay
 of the smallest regtest that exercises it, (5) a timing line in `PORT_STATUS.md`, (6) a
-property test where physics allows — for `Snl`, cubic scaling and zero-in/zero-out stand in
+property test where physics allows: for `Snl`, cubic scaling and zero-in/zero-out stand in
 until an action-conservation test exists ⚠. Items 1–3 and 5 are in the tree (v); 4 waits on
 the fork branch. Sheet: `exercises/ex13_port.md`, solution `exercises/solutions/ex13_compare.sh`.
 

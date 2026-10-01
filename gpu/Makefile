@@ -25,13 +25,7 @@ DC_TARGET   = 02_do_concurrent
 
 all: $(GPU_TARGETS) $(DC_TARGET)
 
-00_hello_acc: 00_hello_acc.f90
-	$(FC) $(ACCFLAGS) -o $@ $<
-
-01_dispersion: 01_dispersion.f90
-	$(FC) $(ACCFLAGS) -o $@ $<
-
-03_precision: 03_precision.f90
+$(GPU_TARGETS): %: %.f90
 	$(FC) $(ACCFLAGS) -o $@ $<
 
 02_do_concurrent: 02_do_concurrent.f90

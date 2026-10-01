@@ -105,7 +105,7 @@ clean-runs:
     find examples -name '*.inp' -delete
 
 # ---------------------------------------------------------------------
-# Pull requests (ported from h0ffmann/marola)
+# Pull requests
 # ---------------------------------------------------------------------
 
 # Push the branch and create (or refresh) its PR with a body generated from the commits.
@@ -180,9 +180,30 @@ pubs-shell:
 book style="abnt":
     nix develop "{{justfile_directory()}}" --command scripts/build_pdf.sh book {{style}}
 
+# Course book as a Word document -> build/ww3-lab-course.docx (pandoc's docx writer, no TeX).
+book-docx:
+    nix develop "{{justfile_directory()}}" --command scripts/build_docx.sh book
+
+# Proposal as a Word document for review -> build/proposal_<lang>.docx (no DEL cover page).
+proposal-docx lang="pt":
+    nix develop "{{justfile_directory()}}" --command scripts/build_docx.sh proposal {{lang}}
+
 # Proposal PDF -> build/proposal_<lang>.pdf; lang pt|en, style abnt (default) or ieee.
 proposal lang="pt" style="abnt":
     nix develop "{{justfile_directory()}}" --command scripts/build_pdf.sh proposal {{lang}} {{style}}
+
+# Parecer do revisor-proposta sobre pubs/proposal (norma ABNT/DEL, registro científico, jargão).
+# Sem argumentos revisa pt/ e en/; passe caminhos para revisar só parte.
+proposal-review *files:
+    claude -p "Use o subagente revisor-proposta para revisar {{files}} e escreva o parecer." --permission-mode plan
+
+# Registrar o parecer do revisor para o texto atual (libera o portão de CI e o Stop hook).
+proposal-review-record parecer:
+    python3 scripts/proposal_review_gate.py --record {{parecer}}
+
+# O texto atual está coberto por um parecer? (o mesmo que a CI verifica)
+proposal-review-check:
+    python3 scripts/proposal_review_gate.py --check
 
 # Translate pubs/proposal/en -> pt (changed files only; --force, --dry-run).
 translate *args:

@@ -31,7 +31,7 @@ Practical consequences:
   winds smear out exactly the events you care about; the 3-hourly GFS output used below is
   a compromise.
 - **Height.** WW3 wants 10 m winds. If your source gives a different level, convert with a
-  log profile — or better, use `&SIN4 ZWND` / the equivalent for your source-term package
+  log profile, or better, use `&SIN4 ZWND` / the equivalent for your source-term package
   to tell WW3 what height it's being given.
 - **Stability.** `HOMOG_INPUT(i)%VALUE3` and the `STAB` switch handle air-sea temperature
   difference. A cold-air outbreak over warm water generates markedly more wave energy than
@@ -40,7 +40,7 @@ Practical consequences:
 ## Getting the winds: GFS via `get_gfs.sh` and ecCodes
 
 Example 02 takes its winds from NOAA's operational **GFS** at 0.25°, because it is free,
-needs no account, and the whole pipeline is shell plus ecCodes — both of which are in the
+needs no account, and the whole pipeline is shell plus ecCodes, both of which are in the
 pinned toolchain (`eccodes 2.48.0` `(v)`, lesson 01). One sentence on the alternative: ERA5
 is the better *hindcast* product, but the only supported way to fetch it is the Copernicus
 CDS Python client with a registered API key, and this repo's lab code does not depend on
@@ -52,7 +52,7 @@ cd examples/02-regional-real-forcing
 ncdump -h gfs_winds.nc | head -40
 ```
 
-What the script does, step by step — read it, it is short:
+What the script does, step by step (read it, it is short):
 
 1. Asks NOMADS' `filter_gfs_0p25.pl` for the subset `leftlon=-52 rightlon=-44 toplat=-24
    bottomlat=-32` with `var_UGRD=on var_VGRD=on lev_10_m_above_ground=on`, so you download
@@ -66,7 +66,7 @@ analysis: 192 h issued from one cycle. That is fine for learning the pipeline an
 "what did the model think would happen"; for a hindcast you stitch the `f000` analyses of
 successive cycles instead, which is a five-line change to the script. Second, the variable
 names changed on the way through: GRIB calls them `10u`/`10v`, and `grib_to_netcdf` writes
-them as `u10`/`v10` ⚠ — verify with `ncdump -h` before trusting the namelist below, and
+them as `u10`/`v10` ⚠: verify with `ncdump -h` before trusting the namelist below, and
 `grib_ls gfs_*.grb2` shows you the GRIB side of the same fields.
 
 ## ww3_prnc
@@ -105,7 +105,7 @@ It interpolates a netCDF field onto your model grid and writes WW3's binary form
    may come back as 308°–316° even though you asked for −52°…−44°; if your grid is at −52°
    and your forcing is at 308°, you may get a silent field of zeros rather than an error.
    Check with `ncdump -v longitude gfs_winds.nc`. If it needs shifting, NCO does it in
-   place — `get_gfs.sh` ends with `ncap2 -O -s 'where(longitude > 180.0) longitude = longitude - 360.0;' gfs_winds.nc gfs_winds.nc`
+   place: `get_gfs.sh` ends with `ncap2 -O -s 'where(longitude > 180.0) longitude = longitude - 360.0;' gfs_winds.nc gfs_winds.nc`
    (nco 5.3.2 is in the pinned toolchain next to `ncdump` `(v)`; the script refuses to run without `ncap2`).
 4. **Coverage.** The forcing must cover the model domain *and* the model time window with a
    margin. WW3 will not extrapolate off the end of your winds; it will stop, or hold the
@@ -136,7 +136,7 @@ ls ../configs/GLOBAL_30MIN/SPEC/ww3.*spec.nc > spec.list
 ww3_bounc
 ```
 
-There is no flag in `ww3_shel.nml` to enable boundaries — if `nest.ww3` exists in the run
+There is no flag in `ww3_shel.nml` to enable boundaries: if `nest.ww3` exists in the run
 directory it is used. Check `log.ww3`: the input timeline shows boundary updates.
 
 The alternative for global-scale sources: use NOAA's operational GFS-Wave output, or an
@@ -144,7 +144,7 @@ IFREMER hindcast, as your parent. You don't have to run the global grid yourself
 
 ## Exercise
 
-Take example 02, run it twice — once with boundary spectra, once without — and map the
+Take example 02, run it twice (once with boundary spectra, once without) and map the
 difference in `Hs`. The result is a map of "how much of the wave climate here comes from
 somewhere else". For the southern Brazil shelf in winter, it is most of it. `nccmp-tol`
 (lesson 06) gives you the max and RMS of that difference per field in one line; it will

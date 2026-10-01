@@ -1,3 +1,3 @@
 # TITLE
 
-Reducing simulation and forecast time of the WAVEWATCH III® wave model in the operational cycle of ReNOMO at LabECO/UFSC: compile options, modern Fortran and GPU feasibility.
+Operational optimisation of the WAVEWATCH III® wave model in the ReNOMO forecast cycle (LabECO/UFSC): build options, run configuration, modern Fortran and rewriting kernels in C++/Kokkos for GPU.

@@ -19,7 +19,7 @@ Hs = 4 sqrt(m0),   m0 = sum_k sum_theta A(theta, k) * sigma_k * dtheta * dsigma_
 ```
 
 The `sigma_k` inside the sum turns action back into energy. Leave it out and every `Hs`
-is wrong by a smooth, plausible-looking factor — which is why the exercise is
+is wrong by a smooth, plausible-looking factor. That is why the exercise is
 self-checking against something computed independently.
 
 ## Steps
@@ -29,8 +29,8 @@ self-checking against something computed independently.
    (`ww_kokkos/real.hpp`, `ww_kokkos/spectrum_fixtures.hpp`) are header-only, so no link
    against the lab's library. `solutions/CMakeLists.txt` is the minimum.
 
-2. **The state.** `Kokkos::View<ww::Real***, Kokkos::LayoutLeft, DeviceSpace> a("A", nth, nk, nsea)`
-   — `LayoutLeft` *is* Fortran order. Fill it with `ww::jonswap(..., gamma = 1) *
+2. **The state.** `Kokkos::View<ww::Real***, Kokkos::LayoutLeft, DeviceSpace> a("A", nth, nk, nsea)`.
+   `LayoutLeft` *is* Fortran order. Fill it with `ww::jonswap(..., gamma = 1) *
    ww::cos2_spread(...) / sigma` at a different fetch per point, with a
    `MDRangePolicy<Rank<3>>`.
 
@@ -42,7 +42,7 @@ self-checking against something computed independently.
 
 4. **The check.** `ww::jonswap_m0(u10, fetch)` is the exact `m0` of the gamma = 1 form.
    Copy `hs` back with `create_mirror_view_and_copy`, compare each point, exit non-zero
-   if any is more than 2 % off (the residual is the geometric grid's tail truncation —
+   if any is more than 2 % off (the residual is the geometric grid's tail truncation;
    `L1_test_intro` uses the same bound).
 
 5. Build and run inside `just ww3`, then again with `OMP_NUM_THREADS=1` and `=8`. Same
@@ -59,5 +59,5 @@ The program, its printed table, and two sentences on why `Kokkos::single` is nee
   `ThreadVectorRange` over `theta`. Which is faster on your CPU? On the 4090
   (`just kokkos-cuda-test` shows how to build for it)?
 - Put the spectrum of the current point into team scratch first
-  (`kokkos/intro/05_team_scratch.cpp`) — that is the DIA kernel's structure, and the
+  (`kokkos/intro/05_team_scratch.cpp`): that is the DIA kernel's structure, and the
   subject of lesson 12.

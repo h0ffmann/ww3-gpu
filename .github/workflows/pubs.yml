@@ -27,6 +27,8 @@ jobs:
           TRANSLATE_API_KEY: ${{ secrets.TRANSLATE_API_KEY }}
           TRANSLATE_MODEL: ${{ secrets.TRANSLATE_MODEL }}
         with:
+          # `all` holds docx files too; the default glob would drop them.
+          file-glob: "*"
           pre-build: |
             set -euo pipefail
             nix develop . --command python3 -m unittest discover -s tests -v

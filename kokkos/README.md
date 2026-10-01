@@ -7,7 +7,7 @@ interactions), lives in `src/ww_kokkos/snl1_*`.
 
 ## Toolchain
 
-Everything is built inside the pinned `nix-config/labs/pratico` shells — they are
+Everything is built inside the pinned `nix-config/labs/pratico` shells. They are
 what put Kokkos, GoogleTest, CMake, Ninja and NetCDF on the search path:
 
 | shell | Kokkos backends | used by |
@@ -69,7 +69,7 @@ Two things the names do *not* promise:
 
 - **The backend comes from the shell, not from the preset.** OpenMP is the default
   execution space in `#ww3`, so `serial-debug` is a *build type*, not a Serial-only
-  build. Code that must run on Serial says `Kokkos::Serial` explicitly — see
+  build. Code that must run on Serial says `Kokkos::Serial` explicitly: see
   `intro/03_reduce_and_scan.cpp` and the last case in `tests/L1_test_intro.cpp`.
 - **`Kokkos_ENABLE_DEBUG_BOUNDS_CHECK` cannot be set here.** It is an option of the
   Kokkos *build*, so it is fixed by the pinned Kokkos derivation in nix-config; a
@@ -131,8 +131,8 @@ Two consequences worth knowing before touching them:
 
 - **Floating-point contraction is off** for `ww_kokkos` (`-ffp-contract=off`, and
   `--fmad=false` on the CUDA backend). With GCC's default `-ffp-contract=fast`,
-  `-O3 -march=x86-64-v3` fuses `AWG1*UE(..) + AWG2*UE(..)` into an FMA -- one
-  rounding where the Fortran does two -- and `openmp-release` drifted 1.1e-5
+  `-O3 -march=x86-64-v3` fuses `AWG1*UE(..) + AWG2*UE(..)` into an FMA (one
+  rounding where the Fortran does two), and `openmp-release` drifted 1.1e-5
   relative from the fixture while `serial-debug` was bit-identical. With
   contraction off all three presets reproduce the Fortran **bit for bit**.
 - **`x**n` is not `std::pow`.** gfortran lowers a real raised to an integer to a
@@ -169,7 +169,7 @@ rule each:
 The C++ half is compiled into `ww_kokkos` unconditionally, so the shim is testable
 with no Fortran compiler in the loop; only `w3kokkosmd.F90` needs
 `WW_ENABLE_FORTRAN`, and it is built as its own target (`ww_kokkos_f`) because it
-is meant to be *copied into* `WW3/model/src` — which is what
+is meant to be *copied into* `WW3/model/src`. That is what
 `src/fortran_iface/PATCH.md` describes, hunk by hunk, with real line numbers.
 Nothing in this repository modifies `WW3/`.
 
