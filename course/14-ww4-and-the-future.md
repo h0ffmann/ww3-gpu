@@ -1,4 +1,4 @@
-# 14 — WW4: what's coming, and how mature it is
+# 14. WW4: what's coming, and how mature it is
 
 **Short version: WW4 is real, it is a full ground-up rewrite in C++ (with Rust in
 parallel) rather than a new WW3 version, and as of September 2026 it is a driver skeleton
@@ -83,7 +83,7 @@ on how NOAA handled MOM6 (developed separately from MOM4 rather than as an incre
 A new repo removes the obligation of backward compatibility and allows "house cleaning" of
 options that no longer have an owner.
 
-## Languages — the contentious part
+## Languages: the contentious part
 
 The report says outright that language choice was the most contentious question, and that
 **there is no community consensus**. NOAA/NWS made the call as primary funder:
@@ -158,7 +158,7 @@ and if it never does, they are still the evidence the lab needs to put the kerne
 operation. Either way the work is not wasted, which is the whole point of choosing the
 shape before choosing the kernel.
 
-## What this means for WW3 — and for you
+## What this means for WW3: and for you
 
 **WW3 is not going away soon, but its end is now scheduled.** The report is explicit: the
 cost of maintaining two models long-term will be mitigated by "formally sunsetting most

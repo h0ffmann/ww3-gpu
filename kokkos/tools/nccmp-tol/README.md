@@ -1,4 +1,4 @@
-# `nccmp-tol` — per-field NetCDF comparator
+# `nccmp-tol`: per-field NetCDF comparator
 
 Compares two NetCDF files variable by variable and judges the ones a tolerance
 file names. It exists so an L2 replay (`tests/L2_replay.sh`) can say "the Kokkos

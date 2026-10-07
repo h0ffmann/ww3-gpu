@@ -1,4 +1,4 @@
-# 07 — Physics choices: which source terms, and why it matters
+# 07. Physics choices: which source terms, and why it matters
 
 Everything here is a **compile-time** choice in the switch file. Changing it means a full
 rebuild. See [`../switches/README.md`](../switches/README.md).

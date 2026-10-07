@@ -1,6 +1,6 @@
-# Exercise 09 — the compile-option matrix
+# Exercise 09: the compile-option matrix
 
-**Lesson:** [09 — benchmark, profile, compile, run](../course/09-benchmark-profile-compile-run.md).
+**Lesson:** [09. benchmark, profile, compile, run](../course/09-benchmark-profile-compile-run.md).
 **Time:** ~45 min, most of it waiting for builds. **Solution:** [`solutions/ex09_matrix.sh`](solutions/ex09_matrix.sh).
 
 ## Goal

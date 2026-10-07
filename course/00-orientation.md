@@ -1,4 +1,4 @@
-# 00 — Orientation: what WW3 actually computes
+# 00. Orientation: what WW3 actually computes
 
 ## The one equation
 
@@ -55,7 +55,7 @@ $$S = S_{in} + S_{nl} + S_{ds} + S_{bot} + S_{db} + S_{ice} + \dots$$
 - $S_{bot}$, $S_{db}$: bottom friction, depth-induced breaking. Shallow water only.
 - $S_{ice}$: ice attenuation and scattering (`IC1`–`IC5`, `IS1`/`IS2`).
 
-**The crucial thing to internalise:** $S_{in}$ and $S_{ds}$ are individually large and
+**The thing to internalise:** $S_{in}$ and $S_{ds}$ are individually large and
 individually uncertain, and they nearly cancel. The net is a small difference of big
 numbers. That's why source-term packages come as matched sets: you cannot mix the `ST4`
 input with the `ST6` dissipation and expect anything sensible.

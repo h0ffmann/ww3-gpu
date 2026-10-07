@@ -1,4 +1,4 @@
-# 01 — Getting it built
+# 01. Getting it built
 
 ## Two halves
 

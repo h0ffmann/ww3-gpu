@@ -29,10 +29,10 @@ Prepared 9 September 2026. Supersedes the Rust plan of the same date. Figures ma
 
 | Criterion | Kokkos 5.x | SYCL 2020 (oneAPI DPC++ / AdaptiveCpp) |
 |---|---|---|
-| Precedent in Earth-system models | E3SM EAMxx/SCREAM (Gordon Bell 2023), HOMMEXX, Omega (2026), LICOM3-Kokkos (2024), FESOM2-Kokkos (2026) — all Fortran-lineage ocean/atmosphere codes | Few production geophysical models; used in some CFD and lattice-Boltzmann codes; performance comparable to Kokkos when tuned per platform (IEEE 2024 LBM study) |
+| Precedent in Earth-system models | E3SM EAMxx/SCREAM (Gordon Bell 2023), HOMMEXX, Omega (2026), LICOM3-Kokkos (2024), FESOM2-Kokkos (2026), all Fortran-lineage ocean/atmosphere codes | Few production geophysical models; used in some CFD and lattice-Boltzmann codes; performance comparable to Kokkos when tuned per platform (IEEE 2024 LBM study) |
 | NVIDIA H100 support | Native CUDA backend via nvcc or clang; mature | Via DPC++ CUDA plugin or AdaptiveCpp; works, second-tier |
-| Deterministic CPU reference in the same source | Serial backend gives bit-identical CPU execution of the same kernels — the basis of the FESOM2 validation ladder | Host device / CPU backend exists but bit-identity with a C reference is less commonly exercised |
-| Multidimensional arrays with switchable layout | `Kokkos::View` with LayoutLeft/LayoutRight — directly expresses the Fortran column-major → GPU layout question | `sycl::buffer`/USM are flat; layout is by hand |
+| Deterministic CPU reference in the same source | Serial backend gives bit-identical CPU execution of the same kernels, the basis of the FESOM2 validation ladder | Host device / CPU backend exists but bit-identity with a C reference is less commonly exercised |
+| Multidimensional arrays with switchable layout | `Kokkos::View` with LayoutLeft/LayoutRight, which directly expresses the Fortran column-major → GPU layout question | `sycl::buffer`/USM are flat; layout is by hand |
 | Agent (LLM) familiarity | High: large public corpus (Trilinos, LAMMPS, E3SM, ArborX) | Medium |
 | Build complexity | CMake, one device backend at a time; C++20 required in 5.x | Compiler-driven (icpx/acpp); simpler in one sense, but toolchain is the vendor's |
 | Lock-in | Linux Foundation project, vendor-neutral, HIP/SYCL/OpenMP-target backends | Khronos standard; implementations vary |
@@ -42,7 +42,7 @@ Kokkos notes that matter for the plan: 5.x requires C++20; only one device backe
 
 ---
 
-## 3. Full Repository Map — `NOAA-EMC/WW3` (`develop`, v7.x)
+## 3. Full Repository Map: `NOAA-EMC/WW3` (`develop`, v7.x)
 
 Legend for the **Port** column: **CORE** = translate to C then Kokkos; **CPU-C** = translate to C, stays on host; **KEEP** = keep the Fortran executable unchanged, interface by file; **DROP** = out of scope for the frozen single-grid, single-process configuration; **COND** = only if the frozen switch file enables it.
 
@@ -60,7 +60,7 @@ Legend for the **Port** column: **CORE** = translate to C then Kokkos; **CPU-C**
 | `docs/` | Doxygen config | — |
 | `.github/workflows/` | Spack-based CI for Intel/GNU | Template for the port's CI |
 
-### 3.2 `model/src` — data modules (state that becomes C structs)
+### 3.2 `model/src`: data modules (state that becomes C structs)
 
 | File | Role | Key contents | Port | Translation notes |
 |---|---|---|---|---|
@@ -71,7 +71,7 @@ Legend for the **Port** column: **CORE** = translate to C then Kokkos; **CPU-C**
 | `w3odatmd.F90` | Output data | Output flags, field arrays (`HS,WLM,T02,DIR,SPR,...`), point-output locations, unit numbers | CORE (field arrays) / CPU-C (file bookkeeping) | |
 | `w3idatmd.F90` | Input fields | Wind/current/level/ice time slices for interpolation | CPU-C | |
 | `w3timemd.F90` | Date/time arithmetic | `DSEC21, TICK21, STME21` | CPU-C | Pure; easy |
-| `w3servmd.F90` | Service routines | `STRACE`, `EXTCDE`, `NEXTLN`, `WWDATE` (`DIAGNL` does not exist `(v)`) | CPU-C | `STRACE` behind `W3_S` — compile out |
+| `w3servmd.F90` | Service routines | `STRACE`, `EXTCDE`, `NEXTLN`, `WWDATE` (`DIAGNL` does not exist `(v)`) | CPU-C | `STRACE` behind `W3_S`; compile out |
 | `w3arrymd.F90` | Array printing helpers | `PRTBLK`, `OUTA2I` | DROP | Debug only |
 | `w3dispmd.F90` | Dispersion relation | `WAVNU1`, `WAVNU2`, `WAVNU3`, `DISTAB` lookup tables | CORE | First leaf routines to translate |
 | `w3cspcmd.F90` | Spectral conversion | `W3CSPC` (interpolate between spectral grids) | CPU-C | Used for boundary/initial data |
@@ -82,17 +82,17 @@ Legend for the **Port** column: **CORE** = translate to C then Kokkos; **CPU-C**
 | `w3nml*md.F90` (shel, grid, ounf, ounp, bounc, trnc, prnc, multi) | Namelist readers | | DROP | Replace with TOML/JSON config for the port |
 | `w3macros.h` | CPP macros | `CHECK_ALLOC_STATUS`, etc. | — | |
 
-### 3.3 `model/src` — the time loop and drivers
+### 3.3 `model/src`: the time loop and drivers
 
 | File | Role | Port | Notes |
 |---|---|---|---|
 | `w3initmd.F90` | `W3INIT` (model initialisation), `W3MPII/O/P` (MPI setup), `WWVER` | CORE (non-MPI) | Allocation order and derived quantities (`CG`, `WN` tables) live here |
-| `w3wavemd.F90` | `W3WAVE` — the main loop: forcing update → propagation (spatial, then intra-spectral) → source terms → output triggers; `W3GATH/W3SCAT` (MPI gathers of spectra for propagation) | CORE | The sequencing is the spec. `W3GATH/W3SCAT` become no-ops in one process |
-| `w3updtmd.F90` | `W3UCUR, W3UWND, W3ULEV, W3UICE, W3UINI, W3UTRN` — forcing interpolation, initial spectra, transparency | CPU-C then Kokkos for interpolation onto device | |
-| `w3srcemd.F90` | `W3SRCE` — per-point source-term integration with dynamic sub-stepping and limiter; calls every enabled `w3s*md` | **CORE, the hotspot** | 78% of runtime in the ORNL profile (unstructured, ST4). Loop is sequential *within* a point, independent *across* points |
+| `w3wavemd.F90` | `W3WAVE`: the main loop: forcing update → propagation (spatial, then intra-spectral) → source terms → output triggers; `W3GATH/W3SCAT` (MPI gathers of spectra for propagation) | CORE | The sequencing is the spec. `W3GATH/W3SCAT` become no-ops in one process |
+| `w3updtmd.F90` | `W3UCUR, W3UWND, W3ULEV, W3UICE, W3UINI, W3UTRN`: forcing interpolation, initial spectra, transparency | CPU-C then Kokkos for interpolation onto device | |
+| `w3srcemd.F90` | `W3SRCE`: per-point source-term integration with dynamic sub-stepping and limiter; calls every enabled `w3s*md` | **CORE, the hotspot** | 78% of runtime in the ORNL profile (unstructured, ST4). Loop is sequential *within* a point, independent *across* points |
 | `w3fldsmd.F90` | Field I/O for forcing (`W3FLDO/G/P`) | CPU-C | Reads `wind.ww3` etc. |
-| `w3iogrmd.F90` | `W3IOGR` — read/write `mod_def.ww3` | CPU-C | Versioned record layout; port as a reader only |
-| `w3iorsmd.F90` | `W3IORS` — restart read/write | CPU-C | Same layout as `VA` |
+| `w3iogrmd.F90` | `W3IOGR`: read/write `mod_def.ww3` | CPU-C | Versioned record layout; port as a reader only |
+| `w3iorsmd.F90` | `W3IORS`: restart read/write | CPU-C | Same layout as `VA` |
 | `w3iogomd.F90` | `W3OUTG` (integral parameters from spectra) + `W3IOGO` (write `out_grd.ww3`) | **CORE for `W3OUTG`**, CPU-C for writer | `W3OUTG` must go to the device (WAM6-GPU lesson) |
 | `w3iopomd.F90` | Point output (`W3IOPO`, `W3IOPE`) | CPU-C | Small |
 | `w3iobcmd.F90` | Boundary condition I/O (`W3IOBC`) | COND | Needed for nested regional domains |
@@ -108,14 +108,14 @@ Legend for the **Port** column: **CORE** = translate to C then Kokkos; **CPU-C**
 | `w3strkmd.F90` | Storm tracking | DROP | |
 | `w3bullmd.F90` | Bulletin output | DROP | |
 
-### 3.4 `model/src` — physics packages (`COND` unless listed in the frozen switch file)
+### 3.4 `model/src`: physics packages (`COND` unless listed in the frozen switch file)
 
 | Switch | File(s) | What it is | Typical operational choice |
 |---|---|---|---|
 | `LN0/LN1` | `w3sln1md.F90` | Linear wind input (Cavaleri-Malanotte-Rizzoli) | LN1 |
 | `ST0/1/2/3/4/6` | `w3src0md`, `w3src1md`, `w3src2md`, `w3src3md`, **`w3src4md`** (Ardhuin et al. 2010: `W3SPR4`, `W3SIN4`, `W3SDS4`, TABU tables), `w3src6md` (BYDRZ: `W3SPR6`, `W3SIN6`, `W3SDS6`) | Wind input + dissipation | ST4 (NOAA, Ifremer, most Brazilian setups) or ST6 |
 | `STAB0/2/3` | in `w3src*md` | Stability correction | STAB0 |
-| `NL0/1/2/3/4/5` | **`w3snl1md`** (DIA: `W3SNL1`, `INSNL1`), `w3snl2md` (WRT exact — very slow), `w3snl3md` (GMD), `w3snl4md` (TSA), `w3snl5md` (GKE) | Nonlinear 4-wave interactions | NL1 |
+| `NL0/1/2/3/4/5` | **`w3snl1md`** (DIA: `W3SNL1`, `INSNL1`), `w3snl2md` (WRT exact, very slow), `w3snl3md` (GMD), `w3snl4md` (TSA), `w3snl5md` (GKE) | Nonlinear 4-wave interactions | NL1 |
 | `NLS0/1` | `w3snlsmd.F90` | Nonlinear smoothing | NLS0 |
 | `BT0/1/4/8/9` | `w3sbt1md` (JONSWAP), `w3sbt4md` (SHOWEX), `w3sbt8md`, `w3sbt9md` | Bottom friction | BT1 or BT4 |
 | `DB0/1` | `w3sdb1md.F90` | Depth-induced breaking (Battjes-Janssen) | DB1 |
@@ -130,7 +130,7 @@ Legend for the **Port** column: **CORE** = translate to C then Kokkos; **CPU-C**
 | `FLX0/1/2/3/4/5` | `w3flx1md` … `w3flx5md` | Air–sea flux / drag | FLX0 (ST4 computes its own) |
 | `SEED`, `MLIM`, `WNT*`, `WNX*`, `CRT*`, `CRX*`, `RWND`, `WCOR`, `TIDE` | flags inside `w3srcemd`/`w3updtmd` | Seeding, limiter, interpolation options, wind corrections, tides | Read from the switch file |
 
-### 3.5 `model/src` — multi-grid, coupling, programs
+### 3.5 `model/src`: multi-grid, coupling, programs
 
 | File(s) | Role | Port |
 |---|---|---|
@@ -152,18 +152,18 @@ Legend for the **Port** column: **CORE** = translate to C then Kokkos; **CPU-C**
 
 | Feature | Where in WW3 | Mapping | Risk |
 |---|---|---|---|
-| CPP `#ifdef W3_xxx` switches (v7.14+) | Everywhere | Run `cpp -DW3_ST4 -DW3_NL1 …` from the switch file *before* translation; translate the resolved source | Low — this is the big win |
-| Module-level `POINTER` state with `W3SETG/W3SETW/W3SETA/W3SETO(IMOD)` re-targeting | All `w3*datmd` | One `Model` struct with `Grid`, `WaveData`, `AuxData`, `OutData` members passed explicitly; `IMOD` is always 1 | Medium — every routine's implicit inputs must be enumerated |
+| CPP `#ifdef W3_xxx` switches (v7.14+) | Everywhere | Run `cpp -DW3_ST4 -DW3_NL1 …` from the switch file *before* translation; translate the resolved source | Low; this is the big win |
+| Module-level `POINTER` state with `W3SETG/W3SETW/W3SETA/W3SETO(IMOD)` re-targeting | All `w3*datmd` | One `Model` struct with `Grid`, `WaveData`, `AuxData`, `OutData` members passed explicitly; `IMOD` is always 1 | Medium: every routine's implicit inputs must be enumerated |
 | `ALLOCATABLE`/`POINTER` arrays allocated in `W3DIMx` routines | data modules | `Kokkos::View` allocated once in init; C reference uses malloc'd flat arrays with index macros | Low |
-| Column-major, 1-based, multi-dimensional arrays | everywhere | Index macros `A(I,J)` → `a[(J-1)*NX + (I-1)]` in C; `View<double**, LayoutLeft>` in Kokkos preserves Fortran order where wanted | Medium — the #1 source of silent bugs; per-routine tests catch it |
+| Column-major, 1-based, multi-dimensional arrays | everywhere | Index macros `A(I,J)` → `a[(J-1)*NX + (I-1)]` in C; `View<double**, LayoutLeft>` in Kokkos preserves Fortran order where wanted | Medium: the #1 source of silent bugs; per-routine tests catch it |
 | Assumed-shape / assumed-size dummy arguments | physics routines | Explicit sizes | Low |
 | `OPTIONAL` arguments and `PRESENT()` | `W3SRCE`, output routines | Explicit flags | Low |
-| `SAVE` locals and first-call initialisation (`FIRST = .TRUE.`) | ST4 tables, DIA setup, dispersion tables | Move to init; make explicit state | Medium — hidden state |
+| `SAVE` locals and first-call initialisation (`FIRST = .TRUE.`) | ST4 tables, DIA setup, dispersion tables | Move to init; make explicit state | Medium: hidden state |
 | `GOTO`, computed branches, `CYCLE`/`EXIT` | `W3SRCE` dynamic loop, propagation boundary handling | Structured equivalents, verified by sub-step counts | Medium |
-| `REAL` default kind (`RTYPE`) — WW3 is single precision by default | everywhere | Decide FP32 vs FP64 to match the lab's build; C reference uses `float` if the Fortran does | High if mismatched — the reference comparison becomes meaningless |
+| `REAL` default kind (`RTYPE`): WW3 is single precision by default | everywhere | Decide FP32 vs FP64 to match the lab's build; C reference uses `float` if the Fortran does | High if mismatched; the reference comparison becomes meaningless |
 | Fortran intrinsics with edge semantics: `MOD` vs `MODULO`, `NINT`, `SIGN`, `MAX/MIN` NaN behaviour, `**` with real exponents, `EXP/LOG` accuracy | physics | `fmod`/floor-mod, `lrint`, `copysign`; document each | Medium |
-| `WRITE/READ` unformatted sequential and direct-access files | all `w3io*md` | Byte-exact readers/writers with record markers | Medium — versioned layouts |
-| Namelists | `w3nml*md`, `ww3_shel` | TOML; defaults copied with `file:line` citation | Medium — wrong default = wrong physics |
+| `WRITE/READ` unformatted sequential and direct-access files | all `w3io*md` | Byte-exact readers/writers with record markers | Medium: versioned layouts |
+| Namelists | `w3nml*md`, `ww3_shel` | TOML; defaults copied with `file:line` citation | Medium: wrong default = wrong physics |
 | MPI (`W3GATH/W3SCAT`, `IAPPRO`, `MPI_BARRIER`) | `w3wavemd`, `w3parall`, `w3adatmd` | Delete; identity mappings | Low |
 | OpenMP `!$OMP` directives | `w3wavemd`, `w3srcemd`, `w3pro3md` | Ignore in C; they mark the loops that become Kokkos `parallel_for` | Informative |
 | `STRACE`, `W3_T` test output, `W3_S` | everywhere | Compile out | Low |
@@ -178,8 +178,8 @@ Legend for the **Port** column: **CORE** = translate to C then Kokkos; **CPU-C**
 5. **Propagation splitting.** Spatial propagation (`W3XYP3`) over `(IK, ITH)` bins with per-bin CFL sub-steps; then intra-spectral (`W3KTP3`) refraction/shifting per point. Order and sub-step counts matter.
 6. **GSE alleviation** in PR3 adds a diffusion operator with its own stability limit.
 7. **Boundary points** (`MAPSTA = 2`) are set from `nest.ww3` each step; they must not be propagated into.
-8. **Output timing.** Output-field integration (`W3OUTG`) happens at output times only, from the current spectrum — on the GPU, this is the only per-output device→host transfer.
-9. **The ST4 lookup tables** (`TAUHF`/`TAUHFT` in `w3src4md` `(v)`; there is no `SWELLFT` table, swell dissipation is parametric via the `SSWELLF` coefficients) are built at init from constants — build them in C identically and compare table-to-table.
+8. **Output timing.** Output-field integration (`W3OUTG`) happens at output times only, from the current spectrum; on the GPU, this is the only per-output device→host transfer.
+9. **The ST4 lookup tables** (`TAUHF`/`TAUHFT` in `w3src4md` `(v)`; there is no `SWELLFT` table, swell dissipation is parametric via the `SSWELLF` coefficients) are built at init from constants; build them in C identically and compare table-to-table.
 10. **`FCUT`/tail parametric extension**: the spectral tail beyond `FCUT` is prescribed (`f^-5`); translate the tail-handling exactly.
 
 ### 4.3 Verification artefacts required
@@ -234,8 +234,8 @@ Both C and Kokkos trees live in one repository; the C code survives inside the K
 
 | Kernel | Policy | Data | Notes |
 |---|---|---|---|
-| `W3SRCE` (all source terms + dynamic integration) | `TeamPolicy(NSEA, AUTO)`: one team per sea point, `TeamThreadRange` over `NSPEC` for the spectral loops, `parallel_reduce` for integrals | `VA` view `[NSEA][NSPEC]` LayoutRight (spectrum contiguous) | The dynamic sub-step loop runs at team level; divergence across points is acceptable (ORNL measured occupancy/register trade-offs — start with `launch_bounds` 128–256) |
-| `W3SPR4/W3SIN4/W3SDS4`, `W3SNL1`, `W3SBT1`, `W3SDB1` | device functions called inside the `W3SRCE` team kernel | scratch in team shared memory | Do not launch separately — that recreates the ORNL transfer problem in miniature |
+| `W3SRCE` (all source terms + dynamic integration) | `TeamPolicy(NSEA, AUTO)`: one team per sea point, `TeamThreadRange` over `NSPEC` for the spectral loops, `parallel_reduce` for integrals | `VA` view `[NSEA][NSPEC]` LayoutRight (spectrum contiguous) | The dynamic sub-step loop runs at team level; divergence across points is acceptable (ORNL measured occupancy/register trade-offs; start with `launch_bounds` 128–256) |
+| `W3SPR4/W3SIN4/W3SDS4`, `W3SNL1`, `W3SBT1`, `W3SDB1` | device functions called inside the `W3SRCE` team kernel | scratch in team shared memory | Do not launch separately; that recreates the ORNL transfer problem in miniature |
 | `W3XYP3` spatial propagation | `RangePolicy(NSPEC)` per bin, or `MDRangePolicy({bin, row})`; per-bin gather into `[NY][NX]` scratch, `W3QCK3` sweeps in x then y, scatter back | second view `[NSPEC][NSEA]` or transposed scratch | Memory-bound; FP32 candidate later |
 | `W3KTP3` intra-spectral | `TeamPolicy(NSEA)` | `VA` | Same shape as source terms |
 | `W3OUTG` output parameters | `TeamPolicy(NSEA)` reductions per point | 2-D field views | Only these fields cross to host |
@@ -256,7 +256,7 @@ Both C and Kokkos trees live in one repository; the C code survives inside the K
 
 ---
 
-## 8. Three-Month Pilot (solo, part-time) — changes from the Rust plan
+## 8. Three-Month Pilot (solo, part-time): changes from the Rust plan
 
 The task structure is the same as before; the differences are the target language and the CPP collapse step.
 
@@ -336,7 +336,7 @@ End by updating HANDOFF.md and LESSONS.md; commit with the routine name.
 |---|---|---|
 | Silent physics divergence the developer cannot diagnose | High | FESOM2 tool set (substep dumps, operator diff, range probes, disable switches); scientist review at every gate |
 | FP32/FP64 mismatch between Fortran build and C reference | Medium | Decide in Task 1; encode in CLAUDE.md rule 4 |
-| Operational grid is unstructured (PDLIB) | Unknown — ask now | Port regular-grid first regardless; PDLIB is a Stage 3 |
+| Operational grid is unstructured (PDLIB) | Unknown, ask now | Port regular-grid first regardless; PDLIB is a Stage 3 |
 | Kokkos/CUDA toolchain on the lab host (C++20, nvcc, CMake) | Low | Task 12 de-risk; Spack |
 | Scope creep into `ww3_multi`, coupling, extra physics | High | Frozen config document is the contract |
 | DOE releases a WW3 Kokkos port mid-project | Medium (good problem) | Task 0 contact; design the C reference so their kernels can be dropped in as twins |
@@ -346,7 +346,7 @@ End by updating HANDOFF.md and LESSONS.md; commit with the routine name.
 
 ## 11. Sources
 
-- Koldunov et al., "An Ocean Model Ported by a Large Language Model: Experience and Lessons from FESOM2 (Fortran to C to C++/Kokkos)", arXiv:2606.11356, June 2026. https://arxiv.org/abs/2606.11356 — code: https://github.com/koldunovn/fesom_kokkos
+- Koldunov et al., "An Ocean Model Ported by a Large Language Model: Experience and Lessons from FESOM2 (Fortran to C to C++/Kokkos)", arXiv:2606.11356, June 2026. https://arxiv.org/abs/2606.11356; code: https://github.com/koldunovn/fesom_kokkos
 - Ikuyajolu et al., "Porting the WAVEWATCH III (v6.07) wave action source terms to GPU", GMD 16:1445, 2023. https://gmd.copernicus.org/articles/16/1445/2023/
 - Yuan et al., "WAM6-GPU v1.0", GMD 17:6123, 2024. https://gmd.copernicus.org/articles/17/6123/2024/
 - Petersen et al., "The ocean model for E3SM global applications: Omega version 0.1.0", GMD 19:3569, 2026. https://gmd.copernicus.org/articles/19/3569/2026/

@@ -1,4 +1,4 @@
-# `kokkos/tests/fixtures/` — captured Fortran answers
+# `kokkos/tests/fixtures/`: captured Fortran answers
 
 The L1 tests do not compare the C++ port against numbers a human typed. They
 compare it against what WAVEWATCH III's own Fortran produced, captured once into
@@ -68,7 +68,7 @@ kernel then reads them at scratch slot `index + nth`.
 Reader: `kokkos/src/ww_kokkos/fixture_io.{hpp,cpp}`, the one place that knows
 this layout.
 
-## `bench_small/` — the benchmark-case generator's byte-equality fixture
+## `bench_small/`: the benchmark-case generator's byte-equality fixture
 
 `kokkos/tools/bench_case/` replaced `bench/make_bench_case.py`. Before the Python
 was deleted it was run once, `python3 bench/make_bench_case.py --size small -o

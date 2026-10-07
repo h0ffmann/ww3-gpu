@@ -1,7 +1,7 @@
-# Exercise 13 — replay `ww3_ts1` through the ported kernel and read the table
+# Exercise 13: replay `ww3_ts1` through the ported kernel and read the table
 
-**Lessons:** [12 — porting a kernel: W3SNL1](../course/12-porting-a-kernel-w3snl1.md),
-[13 — bulk porting with agents](../course/13-bulk-porting-with-agents.md).
+**Lessons:** [12. porting a kernel: W3SNL1](../course/12-porting-a-kernel-w3snl1.md),
+[13. bulk porting with agents](../course/13-bulk-porting-with-agents.md).
 **Time:** ~45 min. **Solution:** [`solutions/ex13_compare.sh`](solutions/ex13_compare.sh).
 
 ## Goal

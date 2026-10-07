@@ -1,4 +1,4 @@
-# `tools/profile` — where does `ww3_shel` spend its time?
+# `tools/profile`: where does `ww3_shel` spend its time?
 
 Two scripts that answer the same question with different samplers and print
 the same table: the top routines of one regtest run, each with its self share,

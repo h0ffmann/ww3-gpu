@@ -1,4 +1,4 @@
-# Example 01 — fetch-limited growth
+# Example 01: fetch-limited growth
 
 **Runtime:** about a minute on any laptop. **Needs:** a WW3 build with `NC4` in the switch.
 

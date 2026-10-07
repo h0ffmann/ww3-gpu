@@ -1,4 +1,4 @@
-# 04 — Forcing: winds, currents, ice, water levels
+# 04. Forcing: winds, currents, ice, water levels
 
 ## What WW3 will accept
 

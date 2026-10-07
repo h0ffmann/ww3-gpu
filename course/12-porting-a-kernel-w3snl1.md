@@ -1,4 +1,4 @@
-# 12 — Porting a kernel: `W3SNL1`
+# 12. Porting a kernel: `W3SNL1`
 
 Step 4 of the ladder, done once, end to end, on the routine lesson 07 nominated: the DIA
 nonlinear interactions. Everything here is in `kokkos/`; keep it open. The phase-1 rule is
