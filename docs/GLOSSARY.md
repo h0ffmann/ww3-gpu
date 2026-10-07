@@ -51,6 +51,8 @@ The manual chapter behind most switch rows is `WW3/manual/impl/switch.tex`.
 | IFREMER / SHOM | ⚠ Institut Français de Recherche pour l'Exploitation de la Mer / Service Hydrographique et Océanographique de la Marine | The French institutions behind the "SHOM/Ifremer" `ST4` package (`WW3/model/src/w3src4md.F90` header `(v)`) and the `switch_Ifremer2` reference switch file. | [course/04-forcing.md](../course/04-forcing.md), [switches/README.md](../switches/README.md) |
 | DOE / E3SM / ORNL / LANL | ⚠ US Department of Energy, Energy Exascale Earth System Model, Oak Ridge and Los Alamos National Laboratories | The institutions behind the 2023 OpenACC port of `W3SRCEMD` (Ikuyajolu et al.) and the Omega project. | [docs/KOKKOS_H100_PLAN_202609.md](KOKKOS_H100_PLAN_202609.md), [docs/AGENTS_KOKKOS_202609.md](AGENTS_KOKKOS_202609.md) |
 | GMD (journal) | ⚠ *Geoscientific Model Development* | Journal of Ikuyajolu et al. (2023) and Yuan et al. (2024); not the `NL3` GMD of the physics section. | [course/09-benchmark-profile-compile-run.md](../course/09-benchmark-profile-compile-run.md) |
+| WeatherNext 3 | Google DeepMind's ML weather forecast model, announced 2026-09-03 `(v)` [issue #45](https://github.com/h0ffmann/ww3-gpu/issues/45) | Predicts wind, temperature, pressure and SST in 64 ensemble members, with no wave variable; planned here as an alternative 10 m wind input to `ww3_prnc`. | [README.md](../README.md) |
+| AIFS Single Wave | ECMWF's ML wave forecast, operational since 2026-05-12 `(v)` [issue #45](https://github.com/h0ffmann/ww3-gpu/issues/45) | 0.25°, 15-day Hs, period, direction and swell partitions; the ML wave reference in the Triton benchmark. | [README.md](../README.md) |
 
 ## Wave physics and the spectrum
 
@@ -305,7 +307,7 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | FP32 / FP64 / float32 | single / double precision; WW3's default `REAL` is 4 bytes, `ww::Real` is `float` `(v)` [kokkos/src/ww_kokkos/real.hpp](../kokkos/src/ww_kokkos/real.hpp) | The port keeps `float` state and accumulates in `double`. | [course/11-kokkos-and-modern-cpp.md](../course/11-kokkos-and-modern-cpp.md) |
 | FMA / `-ffp-contract` / `--fmad` | fused multiply-add and the GCC / nvcc flags that control contraction `(v)` [kokkos/README.md](../kokkos/README.md) | One rounding where the Fortran does two; `ww_kokkos` builds with `-ffp-contract=off` and `--fmad=false` for bit parity. | [course/12-porting-a-kernel-w3snl1.md](../course/12-porting-a-kernel-w3snl1.md), [kokkos/PORT_STATUS.md](../kokkos/PORT_STATUS.md) |
 | ULP | ⚠ unit in the last place (not expanded in the repo) | The granularity of float rounding; the budget of a bit-parity test. | [kokkos/src/ww_kokkos/snl1_config.hpp](../kokkos/src/ww_kokkos/snl1_config.hpp) |
-| `powi()` / `pow11()` | integer-power helpers that reproduce gfortran's multiplication chain for `x**n` `(v)` [kokkos/README.md](../kokkos/README.md) | Why the port is bit-exact rather than "close": `x**n` is not `std::pow`. | [course/12-porting-a-kernel-w3snl1.md](../course/12-porting-a-kernel-w3snl1.md) |
+| `powi()` / `pow11()` | integer-power helpers that reproduce gfortran's multiplication chain for `x**n` `(v)` [kokkos/README.md](../kokkos/README.md) | Why the port is bit-for-bit rather than "close": `x**n` is not `std::pow`. | [course/12-porting-a-kernel-w3snl1.md](../course/12-porting-a-kernel-w3snl1.md) |
 | Kokkos | ⚠ the Sandia-led C++ performance-portability library (not expanded; 5.2.0 pinned `(v)` [kokkos/README.md](../kokkos/README.md)) | One kernel source runs on Serial, OpenMP or CUDA backends chosen at build time; the abstraction WW4 proposes too. | [course/11-kokkos-and-modern-cpp.md](../course/11-kokkos-and-modern-cpp.md) |
 | View | `Kokkos::View<T*, Layout, MemorySpace>`, a reference-counted multidimensional array handle with a label `(v)` [course/11-kokkos-and-modern-cpp.md](../course/11-kokkos-and-modern-cpp.md) | The Kokkos equivalent of `REAL, ALLOCATABLE :: A(:,:)`; an *unmanaged* View wraps caller-owned memory. | [kokkos/intro/01_views.cpp](../kokkos/intro/01_views.cpp) |
 | LayoutLeft / LayoutRight | column-major (Fortran) / row-major (C) index order as part of the View type `(v)` [course/11-kokkos-and-modern-cpp.md](../course/11-kokkos-and-modern-cpp.md) | `LayoutLeft` at the Fortran boundary; `deep_copy` between layouts is a silent transpose. | [kokkos/intro/04_layouts_and_mirrors.cpp](../kokkos/intro/04_layouts_and_mirrors.cpp) |
@@ -332,9 +334,9 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | CTest | CMake's test runner (`ctest --test-dir …`) `(v)` [justfile](../justfile) | Registers every intro program and test suite. | [kokkos/README.md](../kokkos/README.md) |
 | CMake presets | `CMakePresets.json` configure/build/test presets `serial-debug`, `openmp-release`, `cuda-release` (schema 10, CMake ≥ 4.1) `(v)` [kokkos/CMakePresets.json](../kokkos/CMakePresets.json) | Choose build type and instrumentation; the backend comes from the shell. | [course/11-kokkos-and-modern-cpp.md](../course/11-kokkos-and-modern-cpp.md) |
 | Ninja | the build generator the presets use `(v)` [kokkos/CMakePresets.json](../kokkos/CMakePresets.json) | Also recommended by SWAN's implementation manual. | [course/15-swan.md](../course/15-swan.md) |
-| Nix / flake / devShell / `nix develop` | the reproducible toolchain: a locked nixpkgs revision exposed as development shells `(v)` [README.md](../README.md), [flake.nix](../flake.nix) | `nix develop ./nix-config/labs/pratico#ww3` (Serial+OpenMP Kokkos) and `#cuda` (CUDA); the root `flake.nix` builds the PDFs. | [course/01-build.md](../course/01-build.md), [kokkos/README.md](../kokkos/README.md) |
-| pratico | `nix-config/labs/pratico`, the pinned WW3 toolchain flake (gfortran 15.3, Open MPI 5.0.10, netCDF, Kokkos, GoogleTest, CMake 4.4.2) `(v)` [README.md](../README.md) | A sparse git submodule; `just ww3` enters its `#ww3` shell. | [justfile](../justfile), [course/01-build.md](../course/01-build.md) |
-| publisher | `nix-config/labs/publisher`, the pandoc/xelatex toolchain flake for the course book and proposal PDFs `(v)` [flake.nix](../flake.nix) | What `just book`, `just proposal` and `just pubs` run inside. | [README.md](../README.md) |
+| Nix / flake / devShell / `nix develop` | the reproducible toolchain: a locked nixpkgs revision exposed as development shells `(v)` [docs/TOOLCHAIN.md](TOOLCHAIN.md), [flake.nix](../flake.nix) | `nix develop ./nix-config/labs/pratico#ww3` (Serial+OpenMP Kokkos) and `#cuda` (CUDA); the root `flake.nix` builds the PDFs. | [course/01-build.md](../course/01-build.md), [kokkos/README.md](../kokkos/README.md) |
+| pratico | `nix-config/labs/pratico`, the pinned WW3 toolchain flake (gfortran 15.3, Open MPI 5.0.10, netCDF, Kokkos, GoogleTest, CMake 4.4.2) `(v)` [docs/TOOLCHAIN.md](TOOLCHAIN.md) | A sparse git submodule; `just ww3` enters its `#ww3` shell. | [justfile](../justfile), [course/01-build.md](../course/01-build.md) |
+| publisher | `nix-config/labs/publisher`, the pandoc/xelatex toolchain flake for the course book and proposal PDFs `(v)` [flake.nix](../flake.nix) | What `just book`, `just proposal` and `just pubs` run inside. | [pubs/README.md](../pubs/README.md) |
 | just / justfile | the task runner and its recipe file; `just` lists every task `(v)` [README.md](../README.md) | Thin wrappers over `scripts/`; `just rt`, `just build`, `just kokkos-test`, `just l2`, `just profile`, `just nccmp`. | [justfile](../justfile) |
 | CI | `.github/workflows/ci.yml` `(v)` [README.md](../README.md) | Syntax checks, the Fortran sandbox, markdown link check, the Kokkos serial/OpenMP presets; does not build WW3. | [README.md](../README.md) |
 | NetCDF / netCDF-4 / HDF5 | ⚠ Network Common Data Form (not expanded in the repo); netcdf-c 4.10.1, netcdf-fortran 4.4.6, HDF5 1.14.6 pinned `(v)` [course/01-build.md](../course/01-build.md) | The output format of `ww3_ounf`/`ww3_ounp` and the input of `ww3_prnc`; the Fortran bindings (`netcdf.mod`) are compiler-specific. | [course/06-output.md](../course/06-output.md) |
@@ -352,8 +354,8 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | GEBCO | ⚠ General Bathymetric Chart of the Oceans (not expanded in the repo) | 15-arc-second global bathymetry, `elevation` negative below sea level, sampled by example 02. | [course/03-grids.md](../course/03-grids.md) |
 | gridgen / genes_gmd / OceanMesh2D / GMSH / SMS | NOAA-EMC's MATLAB grid and obstruction generator / GMD coefficient fitter / unstructured mesh generators `(v)` [docs/AWESOME-WW3_202609.md](AWESOME-WW3_202609.md) | Grid-preparation tools outside this repo. | [course/03-grids.md](../course/03-grids.md), [course/07-physics-choices.md](../course/07-physics-choices.md) |
 | pyww3 / WW3-tools / wavespectra / ww3tool / bmi-wavewatch3 / rompy | the Python ecosystem: namelist dataclasses + runner / NOAA's validation toolkit / xarray spectral library / … `(v)` [course/08-python.md](../course/08-python.md) | Known and deliberately not depended on; `WW3-tools` remains the right validation tool. | [course/08-python.md](../course/08-python.md) |
-| Ollama / llm / `TRANSLATE_*` | the local model shell (`just ask`, `just pull`) and the translation backend variables `(v)` [justfile](../justfile), [README.md](../README.md) | Used only by `scripts/translate_md.py`, never by lab code. | [README.md](../README.md) |
-| pandoc / xelatex / ABNT / IEEE | the PDF pipeline and its two citation styles (`just book abnt`) `(v)` [justfile](../justfile) | Builds `pubs/` into `pdf/`. | [README.md](../README.md) |
+| Ollama / llm / `TRANSLATE_*` | the local model shell (`just ask`, `just pull`) and the translation backend variables `(v)` [justfile](../justfile), [pubs/README.md](../pubs/README.md) | Used only by `scripts/translate_md.py`, never by lab code. | [pubs/README.md](../pubs/README.md) |
+| pandoc / xelatex / ABNT / IEEE | the PDF pipeline and its two citation styles (`just book abnt`) `(v)` [justfile](../justfile) | Builds `pubs/` into `pdf/`. | [pubs/README.md](../pubs/README.md) |
 | Mermaid | the diagram syntax GitHub renders in Markdown `(v)` [pubs/proposal/mapas-mentais.pt.md](../pubs/proposal/mapas-mentais.pt.md) | The proposal's mind maps and the lesson-13 flowcharts. | [course/13-bulk-porting-with-agents.md](../course/13-bulk-porting-with-agents.md) |
 | SPDX | ⚠ Software Package Data Exchange licence identifiers | `SPDX-License-Identifier: MIT` on the tooling and `LGPL-3.0-or-later` on the translated kernels `(v)` [kokkos/README.md](../kokkos/README.md). | [kokkos/README.md](../kokkos/README.md) |
 | LLM / coding agent / Jules / Copilot | large-language-model assistants; WW4's `AGENTS.md` names Jules and Copilot `(v)` [course/14-ww4-and-the-future.md](../course/14-ww4-and-the-future.md) | The typist of lesson 12 and the subject of lesson 13; the FESOM2 port used one under expert direction. | [course/13-bulk-porting-with-agents.md](../course/13-bulk-porting-with-agents.md) |
@@ -361,6 +363,9 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | `SYSTEM_CLOCK` / `CPU_TIME` | Fortran intrinsics for wall time / summed CPU time `(v)` [bench/README.md](../bench/README.md) | Use the first; the second sums across threads and makes threading look like a slowdown. | [course/09-benchmark-profile-compile-run.md](../course/09-benchmark-profile-compile-run.md) |
 | Amdahl | ⚠ Amdahl's law (not expanded in the repo) | The serial-fraction ceiling that bounds per-member GPU gains and why `ww3_grid` is excluded from timings. | [bench/README.md](../bench/README.md), [docs/AGENTS_KOKKOS_202609.md](AGENTS_KOKKOS_202609.md) |
 | Unified / Managed Memory | CUDA memory that migrates between host and device implicitly `(v)` [course/10-modern-fortran-refactoring.md](../course/10-modern-fortran-refactoring.md) | What `-stdpar=gpu` uses and what the agent rules forbid as a way of avoiding transfer design. | [docs/AGENTS_KOKKOS_202609.md](AGENTS_KOKKOS_202609.md) |
+| Triton / Triton C / Triton G | OpenAI's Python GPU-kernel language, on its CPU backend (`triton-cpu`) and its NVIDIA GPU backend ⚠ [issue #45](https://github.com/h0ffmann/ww3-gpu/issues/45) | Planned as a second route to the GPU for `W3SDS4`, measured against Fortran and Kokkos. | [README.md](../README.md) |
+| NOOA | NVIDIA-labs Object Oriented Agents (`NVIDIA-NeMo/labs-OO-Agents`) `(v)` [PR #25](https://github.com/h0ffmann/ww3-gpu/pull/25) | A Python agent framework evaluated for typed contracts and evidence gates in the port workflow. | [README.md](../README.md) |
+| Antigravity / Consensus / NotebookLM | Google's agent IDE, a peer-reviewed literature search with an MCP server, and Google's notebook over uploaded sources ⚠ [PR #41](https://github.com/h0ffmann/ww3-gpu/pull/41) | Research and agent tooling evaluated next to Claude Code. | [README.md](../README.md) |
 
 ## This repository's own names
 
@@ -423,11 +428,23 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | `exercises/` | one sheet per lesson with solutions `(v)` [course/README.md](../course/README.md) | Lessons 09–13 name `ex09_bench.md` … `ex13_port.md` and `solutions/ex09_matrix.sh` … `ex13_compare.sh` ⚠ (not all present on every branch). | [exercises/README.md](../exercises/README.md) |
 | `scripts/` | `01_get_ww3.sh`, `02_build_ww3.sh`, `03_run_regtest.sh`, `04_get_swan.sh`, `book_prep.py`, `build_pdf.sh`, `translate_md.py`, submodule helpers `(v)` [justfile](../justfile) | Where every `just` recipe's logic lives; the two `.py` files are the only Python. | [README.md](../README.md), [course/08-python.md](../course/08-python.md) |
 | `just rt` / `just build` / `just regtest` | build with a regtest's own switch and run it / full rebuild with a switch file / rerun a regtest step by step into `work_lab/` `(v)` [justfile](../justfile) | `just rt ww3_tp1.1 PR3_UQ` is the smallest reference run. | [course/09-benchmark-profile-compile-run.md](../course/09-benchmark-profile-compile-run.md) |
-| `work_lab` / `work_a` / `work_b` / `work_pg` / `work_perf` | run directories under `WW3/regtests/<test>/`: the lab's prepared run, the two L2 replays, the gprof and perf runs `(v)` [kokkos/tests/L2_replay.sh](../kokkos/tests/L2_replay.sh), [kokkos/tools/profile/README.md](../kokkos/tools/profile/README.md) | Never the upstream `work/`. | [README.md](../README.md) |
-| `WW3/` submodule / `just src-*` | the `h0ffmann/WW3` fork of NOAA-EMC/WW3 pinned at one revision, with `src-init`, `src-up`, `src-sync`, `src-pr` recipes `(v)` [README.md](../README.md), [justfile](../justfile) | Where the `PATCH.md` fork branch would live; nothing in this repo modifies it. | [course/01-build.md](../course/01-build.md) |
-| `nix-config/` submodule / `just submodule-*` | the sparse checkout of `h0ffmann/nix-config` (only `labs/pratico`) and its pin-management recipes `(v)` [README.md](../README.md) | `just submodule-init` after a fresh clone. | [course/01-build.md](../course/01-build.md) |
-| `pubs/` | the course book and the UFRJ/DEL proposal (`proposal/en/` source, `proposal/pt/` hand-revised reference, `mapas-mentais.pt.md`, `refs.bib`, `template.tex`) `(v)` [README.md](../README.md) | PDFs land in `pdf/` on `main`. | [README.md](../README.md) |
+| `work_lab` / `work_a` / `work_b` / `work_pg` / `work_perf` | run directories under `WW3/regtests/<test>/`: the lab's prepared run, the two L2 replays, the gprof and perf runs `(v)` [kokkos/tests/L2_replay.sh](../kokkos/tests/L2_replay.sh), [kokkos/tools/profile/README.md](../kokkos/tools/profile/README.md) | Never the upstream `work/`. | [docs/TOOLCHAIN.md](TOOLCHAIN.md) |
+| `WW3/` submodule / `just src-*` | the `h0ffmann/WW3` fork of NOAA-EMC/WW3 pinned at one revision, with `src-init`, `src-up`, `src-sync`, `src-pr` recipes `(v)` [docs/TOOLCHAIN.md](TOOLCHAIN.md), [justfile](../justfile) | Where the `PATCH.md` fork branch would live; nothing in this repo modifies it. | [course/01-build.md](../course/01-build.md) |
+| `nix-config/` submodule / `just submodule-*` | the sparse checkout of `h0ffmann/nix-config` (only `labs/pratico`) and its pin-management recipes `(v)` [docs/TOOLCHAIN.md](TOOLCHAIN.md) | `just submodule-init` after a fresh clone. | [course/01-build.md](../course/01-build.md) |
+| `pubs/` | the course book and the UFRJ/DEL proposal (`proposal/en/` source, `proposal/pt/` hand-revised reference, `mapas-mentais.pt.md`, `refs.bib`, `template.tex`) `(v)` [pubs/README.md](../pubs/README.md) | PDFs land in `pdf/` on `main`. | [pubs/README.md](../pubs/README.md) |
 | course book | `course/*.md` assembled by `scripts/book_prep.py` into one PDF `(v)` [justfile](../justfile) | `just book [abnt|ieee]`. | [README.md](../README.md) |
+
+## Citation and licensing
+
+| Term | Expansion | What it is | Where it appears |
+|---|---|---|---|
+| DOI / concept DOI | Digital Object Identifier; the concept DOI names every version of a record at once `(v)` [README.md](../README.md#how-to-cite) | `10.5281/zenodo.23221351` resolves to the latest release; each release also gets its own (v0.1.0: `10.5281/zenodo.23221352`). | [README.md](../README.md), [CITATION.cff](../CITATION.cff) |
+| Zenodo | CERN's open research repository `(v)` [`.zenodo.json`](../.zenodo.json) | Archives every GitHub release of this repo through its webhook and mints the DOIs. | [README.md](../README.md), [`.claude/skills/release`](../.claude/skills/release/SKILL.md) |
+| DataCite | the registration agency for Zenodo's DOIs `(v)` [`.claude/skills/release`](../.claude/skills/release/SKILL.md) | Its API shows a new version DOI when zenodo.org is unreachable. | [`.claude/skills/release`](../.claude/skills/release/SKILL.md) |
+| ORCID | Open Researcher and Contributor ID `(v)` [CITATION.cff](../CITATION.cff) | The author's persistent researcher identifier, `0009-0009-1056-7661`, carried into every DOI record. | [CITATION.cff](../CITATION.cff), [`.zenodo.json`](../.zenodo.json) |
+| CFF / `CITATION.cff` | Citation File Format 1.2.0 `(v)` [CITATION.cff](../CITATION.cff) | Drives GitHub's "Cite this repository" button; validated in CI by `cffconvert`. | [README.md](../README.md), [.github/workflows/citation.yml](../.github/workflows/citation.yml) |
+| LGPL-3.0-or-later | GNU Lesser General Public License, version 3 or later `(v)` [README.md](../README.md#licensing) | WW3's licence, so the kernels translated from it carry it too; the rest of the repo is MIT. | [README.md](../README.md), [kokkos/README.md](../kokkos/README.md) |
+| `just release` | `scripts/release.sh`: tag an up-to-date `main` as `vX.Y.Z` and push `(v)` [justfile](../justfile) | `release.yml` publishes the GitHub release and Zenodo mints its DOI. | [README.md](../README.md) |
 
 ## Remissive index
 
@@ -439,7 +456,9 @@ Every term above, alphabetically, with the section it lives in.
 - ADA89: [HPC and software](#hpc-and-software)
 - ADA89 / HOPPER90: [HPC and software](#hpc-and-software)
 - AGENTS_KOKKOS: [This repository's own names](#this-repositorys-own-names)
+- AIFS Single Wave: [Models, projects and institutions](#models-projects-and-institutions)
 - Amdahl: [HPC and software](#hpc-and-software)
+- Antigravity / Consensus / NotebookLM: [HPC and software](#hpc-and-software)
 - ASan: [HPC and software](#hpc-and-software)
 - ASan / UBSan: [HPC and software](#hpc-and-software)
 - ASCII: [WW3 switches](#ww3-switches)
@@ -470,6 +489,7 @@ Every term above, alphabetically, with the section it lives in.
 - cc89 / sm_89 / compute capability 8.9: [HPC and software](#hpc-and-software)
 - cdo: [HPC and software](#hpc-and-software)
 - CDS: [HPC and software](#hpc-and-software)
+- CFF / `CITATION.cff`: [Citation and licensing](#citation-and-licensing)
 - CFL: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - CG: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - CG1: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -513,6 +533,7 @@ Every term above, alphabetically, with the section it lives in.
 - CURV: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - D (VS: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - data-residency ladder: [This repository's own names](#this-repositorys-own-names)
+- DataCite: [Citation and licensing](#citation-and-licensing)
 - DB0: [WW3 switches](#ww3-switches)
 - DB0 / DB1: [WW3 switches](#ww3-switches)
 - DB1: [WW3 switches](#ww3-switches)
@@ -533,6 +554,7 @@ Every term above, alphabetically, with the section it lives in.
 - do not improve": [This repository's own names](#this-repositorys-own-names)
 - DOE: [Models, projects and institutions](#models-projects-and-institutions)
 - DOE / E3SM / ORNL / LANL: [Models, projects and institutions](#models-projects-and-institutions)
+- DOI / concept DOI: [Citation and licensing](#citation-and-licensing)
 - dp (DIR: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - DP): [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - DPT: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
@@ -681,6 +703,7 @@ Every term above, alphabetically, with the section it lives in.
 - ISO_C_BINDING: [HPC and software](#hpc-and-software)
 - JONSWAP: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - Jules: [HPC and software](#hpc-and-software)
+- `just release`: [Citation and licensing](#citation-and-licensing)
 - just: [HPC and software](#hpc-and-software)
 - just / justfile: [HPC and software](#hpc-and-software)
 - `just build`: [This repository's own names](#this-repositorys-own-names)
@@ -726,6 +749,7 @@ Every term above, alphabetically, with the section it lives in.
 - LayoutLeft / LayoutRight: [HPC and software](#hpc-and-software)
 - LayoutRight: [HPC and software](#hpc-and-software)
 - level.ww3: [WW3 programs and files](#ww3-programs-and-files)
+- LGPL-3.0-or-later: [Citation and licensing](#citation-and-licensing)
 - llm: [HPC and software](#hpc-and-software)
 - LLM: [HPC and software](#hpc-and-software)
 - LLM / coding agent / Jules / Copilot: [HPC and software](#hpc-and-software)
@@ -812,6 +836,7 @@ Every term above, alphabetically, with the section it lives in.
 - NOGRB: [WW3 switches](#ww3-switches)
 - NOMADS: [HPC and software](#hpc-and-software)
 - NONE: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
+- NOOA: [HPC and software](#hpc-and-software)
 - NOPA: [WW3 switches](#ww3-switches)
 - NOSWLL): [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - npl_b4b: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -864,6 +889,7 @@ Every term above, alphabetically, with the section it lives in.
 - OpenACC: [HPC and software](#hpc-and-software)
 - OpenMP: [HPC and software](#hpc-and-software)
 - `openmp-release`: [This repository's own names](#this-repositorys-own-names)
+- ORCID: [Citation and licensing](#citation-and-licensing)
 - ORNL: [Models, projects and institutions](#models-projects-and-institutions)
 - out_grd.ww3: [WW3 programs and files](#ww3-programs-and-files)
 - out_grd.ww3 / out_pnt.ww3: [WW3 programs and files](#ww3-programs-and-files)
@@ -969,6 +995,9 @@ Every term above, alphabetically, with the section it lives in.
 - shuffle: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - shuffle / card deck: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - Sice: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
+- Triton / Triton C / Triton G: [HPC and software](#hpc-and-software)
+- WeatherNext 3: [Models, projects and institutions](#models-projects-and-institutions)
+- Zenodo: [Citation and licensing](#citation-and-licensing)
 - σ (SIG): [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - Sin: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - Sin, Snl, Sds, Sbot/Sbt, Sdb, Sice, Str, Sln: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
