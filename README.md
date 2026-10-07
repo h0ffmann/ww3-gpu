@@ -15,7 +15,10 @@ OpenMP and CUDA backends, and on an RTX 4090 it runs 1,000 sea points in 0.047 m
 serial ([`kokkos/PORT_STATUS.md`](kokkos/PORT_STATUS.md)). The same repository is the groundwork
 for an undergraduate project at Escola Politécnica, UFRJ, co-advised at LabECO, UFSC.
 
-If you use it, please [cite it](#how-to-cite).
+It is written first for scientists: PhD researchers, postdocs and independent researchers in
+wave modelling, numerical methods and HPC. Claims carry their evidence (`(v)` checked, `⚠` not),
+and every number comes with the command that reproduces it. If you use the repository, please
+[cite it](#how-to-cite).
 
 ## Study areas
 

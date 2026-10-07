@@ -35,7 +35,9 @@
     "Fortran",
     "C++",
     "performance portability",
-    "high-performance computing"
+    "high-performance computing",
+    "research software",
+    "reproducibility"
   ],
   "related_identifiers": [
     {

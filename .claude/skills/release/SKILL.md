@@ -3,6 +3,11 @@ name: release
 description: "Cut a citable ww3-gpu release and keep its Zenodo/citation metadata right. Use when the user asks to release, tag a version, mint or update a DOI, or change CITATION.cff, .zenodo.json or the README citation badge."
 ---
 
+**Audience.** Releases are cited by scientists: PhD and independent researchers (see
+`CONTRIBUTING.md`, "Who this repository is for"). Write release metadata for academic discovery:
+the title, description and keywords a wave modeller or HPC researcher would search for, the
+author's ORCID, and references by DOI.
+
 # release
 
 Every published GitHub release of this repo is archived by Zenodo, which mints a version DOI

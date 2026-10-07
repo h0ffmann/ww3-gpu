@@ -19,6 +19,13 @@ metadata:
   category: code-quality-and-review
 ---
 
+**Público neste repositório.** Os primeiros leitores do ww3-gpu são cientistas: doutores,
+pós-doutorandos e pesquisadores independentes (ver `CONTRIBUTING.md`, "Who this repository is
+for"). Use o perfil 🎓 Acadêmico por padrão, preserve a terminologia de domínio, as equações, os
+números com unidade e as marcas `(v)`/`⚠`, e não simplifique o raciocínio para um leitor leigo. A
+exceção é a proposta em `pubs/proposal/`, lida por uma banca do DEL sem formação em oceanografia,
+que segue as regras do `revisor-proposta`.
+
 <!-- Vendored from fabricioctelles/skills@4fcc2bf (skills/humanizar, Apache-2.0, see LICENSE).
      Changed here: the optional TypeSafe Jev evaluation section and its files
      (references/jev-integration.md, scripts/jev_questions.json) were removed, and the English

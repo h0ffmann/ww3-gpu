@@ -15,8 +15,11 @@ backends Serial, OpenMP e CUDA. Numa RTX 4090, ele processa 1.000 pontos de mar 
 24,96 ms no serial ([`kokkos/PORT_STATUS.md`](kokkos/PORT_STATUS.md)). O mesmo repositório é a base
 de um projeto de graduação na Escola Politécnica da UFRJ, com coorientação no LabECO da UFSC.
 
-O material técnico (lições, documentação, código) está em inglês. Esta página resume o projeto em
-português. Se o repositório for útil no seu trabalho, [cite-o](#como-citar).
+O público principal são cientistas: doutores, pós-doutorandos e pesquisadores independentes em
+modelagem de ondas, métodos numéricos e HPC. Cada afirmação traz a evidência (`(v)` conferido, `⚠`
+não conferido), e cada número vem com o comando que o reproduz. O material técnico (lições,
+documentação, código) está em inglês; esta página resume o projeto em português. Se o repositório
+for útil no seu trabalho, [cite-o](#como-citar).
 
 ## Frentes de estudo
 

@@ -1,7 +1,25 @@
 # Contributing
 
-This is a personal learning repo. Corrections are very welcome, especially the
-following, in order of usefulness:
+## Who this repository is for
+
+The first readers of this repository are scientists: PhD researchers, postdocs and independent
+researchers working on ocean wave modelling, numerical methods or HPC. Every document, skill, agent
+and piece of metadata here is written for them, unless a section below names a different reader.
+
+- Write for a specialist. Do not gloss the action balance equation or what a source term is; give
+  the equation, the routine and `file:line`, the source, and the measured number with its unit,
+  hardware and the command that reproduces it.
+- Claims carry evidence: `(v)` with what was checked, `⚠` when it was not. A researcher will try to
+  reproduce the number, so the command must be in the repo.
+- Citation and discovery target academic search: a DOI on every release, the author's ORCID,
+  keywords a wave modeller or HPC researcher would type, and references by DOI where one exists.
+- Two readers are explicit exceptions. The proposal (`pubs/proposal/`) is read by a DEL committee
+  with no oceanography background, and `/eli5` serves newcomers from other fields. Both still have
+  to be correct enough that a specialist reading over the shoulder finds nothing wrong.
+
+## What helps most
+
+Corrections are very welcome, especially the following, in order of usefulness:
 
 1. **Anything marked `⚠`.** Those are places I could not verify a claim. If you
    have run it and know the answer, that's the highest-value fix in the repo.

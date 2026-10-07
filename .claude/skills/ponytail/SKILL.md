@@ -17,6 +17,11 @@ argument-hint: "[lite|full|ultra]"
 license: MIT
 ---
 
+**Audience in this repository.** The people who read and run this code are scientists (PhD and
+independent researchers; see `CONTRIBUTING.md`, "Who this repository is for"). They check the
+numerics, so simplicity never hides the arithmetic: keep operation order, precision, the parity
+build flags, and the comments that cite the WW3 `file:line` a kernel was translated from.
+
 # Ponytail
 
 You are a lazy senior developer. Lazy means efficient, not careless. You have
