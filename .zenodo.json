@@ -1,11 +1,12 @@
 {
   "title": "WW3 GPU Lab: hands-on WAVEWATCH III modelling and a C++/Kokkos GPU port",
   "upload_type": "software",
-  "description": "A self-paced course and toolkit for the WAVEWATCH III spectral wind-wave model: build and run the Fortran model on real cases, benchmark it, and port its kernels (starting with the W3SNL1 nonlinear interaction source term) to C++/Kokkos with a numerical parity harness against the Fortran reference.",
+  "description": "<p>A self-paced course and toolkit for the WAVEWATCH III (WW3) third-generation spectral wind-wave model, aimed at running and accelerating it on GPUs.</p><ul><li>Build and run the Fortran model on real cases, with a pinned Nix toolchain and annotated switch files.</li><li>Benchmark it on CPU (OpenMP, MPI) and GPU (OpenACC, CUDA Fortran).</li><li>Port its kernels to C++/Kokkos for performance portability, starting with W3SNL1, the Discrete Interaction Approximation (DIA) of nonlinear four-wave interactions, and check numerical parity against the Fortran reference with a field-by-field tolerance harness.</li></ul><p>Includes 16 lessons, runnable examples, exercises with solutions, and an undergraduate project proposal (Escola Politécnica, UFRJ).</p>",
   "creators": [
     {
       "name": "Santos, Matheus Hoffmann Fernandes",
-      "affiliation": "Escola Politécnica, Universidade Federal do Rio de Janeiro"
+      "affiliation": "Escola Politécnica, Universidade Federal do Rio de Janeiro",
+      "orcid": "0009-0009-1056-7661"
     }
   ],
   "contributors": [
@@ -15,15 +16,25 @@
       "type": "Supervisor"
     }
   ],
-  "license": "MIT",
+  "license": "mit",
   "access_right": "open",
+  "language": "eng",
   "keywords": [
     "WAVEWATCH III",
+    "WW3",
     "ocean waves",
+    "wind waves",
     "spectral wave model",
+    "wave forecasting",
+    "nonlinear wave interactions",
+    "Discrete Interaction Approximation",
     "GPU",
     "Kokkos",
+    "OpenACC",
+    "CUDA Fortran",
     "Fortran",
+    "C++",
+    "performance portability",
     "high-performance computing"
   ],
   "related_identifiers": [

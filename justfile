@@ -116,6 +116,14 @@ pr *args:
 uprd *args:
     scripts/uprd.sh "$@"
 
+# Tag main as v<version> and push it; CI publishes the GitHub release and Zenodo mints its DOI. `just release 0.2.0 --dry-run`.
+release *args:
+    scripts/release.sh "$@"
+
+# List release tags, newest first.
+releases:
+    git fetch -q --tags origin && git tag -l 'v*' --sort=-v:refname --format='%(refname:short)  %(creatordate:short)  %(subject)'
+
 # ---------------------------------------------------------------------
 # Submodules: nix-config (sparse, labs/pratico) and WW3 (fork of NOAA-EMC/WW3)
 # ---------------------------------------------------------------------
