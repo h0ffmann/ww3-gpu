@@ -1,0 +1,20 @@
+# release — pushing a `v*` tag publishes a GitHub release with generated notes. Zenodo's GitHub
+# integration (enabled once at zenodo.org/account/settings/github) listens for published
+# releases through its own webhook, archives the tagged source and mints a new version DOI.
+# No secret is needed: the webhook belongs to Zenodo, and GITHUB_TOKEN creates the release.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --verify-tag --generate-notes --title "$GITHUB_REF_NAME"
