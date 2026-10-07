@@ -46,9 +46,9 @@
       "scheme": "url"
     },
     {
-      "identifier": "https://github.com/marola-dev/marola",
+      "identifier": "10.5281/zenodo.23224155",
       "relation": "isReferencedBy",
-      "scheme": "url"
+      "scheme": "doi"
     }
   ],
   "notes": "MIT, except the kernels translated from WAVEWATCH III, which are derived works of it and are LGPL-3.0-or-later (kokkos/src/ww_kokkos/snl1_*, kokkos/src/fortran_iface/w3kokkosmd.F90 and PATCH.md, kokkos/tests/fixtures/snl1_ref.F90). Each file states its licence in an SPDX-License-Identifier line. WAVEWATCH III is a registered trademark of NOAA's National Weather Service; this project is independent and not endorsed by NOAA."

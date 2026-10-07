@@ -196,8 +196,8 @@ weather forecasts and the official bathing-water bulletins. Its wave data alread
 WAVEWATCH III through NCEP's GFS-Wave. Running a detailed spectral wave model for its own bays is
 the planned next step ([MIP-0052](https://github.com/marola-dev/marola/blob/main/docs/MIPs/MIP-0052-wave-model-compute.md)),
 and this repository is its groundwork: marola's Zenodo record lists the WW3 GPU Lab as related work
-`(v)`. Until marola's first release mints a DOI, cite it through GitHub's **Cite this repository**
-button on its page ([#51](https://github.com/h0ffmann/ww3-gpu/issues/51)).
+`(v)`. Cite marola by its concept DOI, [10.5281/zenodo.23224155](https://doi.org/10.5281/zenodo.23224155), which always resolves to the
+latest version (v0.2.0 is [10.5281/zenodo.23224156](https://doi.org/10.5281/zenodo.23224156)).
 
 ## Licensing
 

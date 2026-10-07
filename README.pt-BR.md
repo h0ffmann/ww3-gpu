@@ -117,8 +117,8 @@ dados de onda dele já vêm do WAVEWATCH III, pelo GFS-Wave do NCEP. O próximo 
 um modelo espectral de ondas detalhado para as próprias baías
 ([MIP-0052](https://github.com/marola-dev/marola/blob/main/docs/MIPs/MIP-0052-wave-model-compute.md)),
 e este repositório é a base disso: o registro do marola no Zenodo cita o WW3 GPU Lab como trabalho
-relacionado `(v)`. Até a primeira versão do marola ganhar DOI, cite-o pelo botão **Cite this
-repository** da página dele ([#51](https://github.com/h0ffmann/ww3-gpu/issues/51)).
+relacionado `(v)`. Cite o marola pelo DOI conceitual, [10.5281/zenodo.23224155](https://doi.org/10.5281/zenodo.23224155), que sempre aponta
+para a versão mais recente (a v0.2.0 é [10.5281/zenodo.23224156](https://doi.org/10.5281/zenodo.23224156)).
 
 ## Licença e marcas
 
