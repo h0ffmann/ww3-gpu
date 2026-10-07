@@ -1,4 +1,4 @@
-# 13 — Bulk porting with agents
+# 13. Bulk porting with agents
 
 Lesson 12 ported one routine by hand, with a coding agent as the typist. This lesson is
 about doing it forty more times without losing what made the first one trustworthy: every

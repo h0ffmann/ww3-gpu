@@ -1,4 +1,4 @@
-# 03 — Grids, bathymetry, masks
+# 03. Grids, bathymetry, masks
 
 ## Four grid types
 
@@ -80,7 +80,7 @@ Note `2`: boundary points are declared in the *mask*, and/or via `&INBND_POINT_N
 `ww3_grid.nml`. `ww3_grid` will promote active points on the declared boundary segments to
 status 2 and report how many.
 
-## Obstruction grids — the underrated one
+## Obstruction grids: the underrated one
 
 At 0.1° you cannot resolve a 3 km island. But that island blocks waves. WW3's answer is
 **subgrid obstruction**: a per-cell transparency in x and y, between 0 (fully blocking) and

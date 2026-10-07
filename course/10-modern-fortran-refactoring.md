@@ -1,4 +1,4 @@
-# 10 — Modern Fortran refactoring: the step before any port
+# 10. Modern Fortran refactoring: the step before any port
 
 Step 3 of the ladder. The profile from [lesson 09](09-benchmark-profile-compile-run.md)
 names the routines; this lesson rewrites them in place (same algorithm, same arithmetic,

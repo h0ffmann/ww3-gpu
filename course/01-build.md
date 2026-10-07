@@ -1,4 +1,4 @@
-# 01 — Getting it built
+# 01. Getting it built
 
 ## Two halves
 
@@ -122,7 +122,7 @@ If you would rather not use `just`:
 ```bash
 cd $WW3
 rm -rf build && mkdir build && cd build
-cmake .. -DSWITCH=/abs/path/to/ww3-lab/switches/switch_lab_shrd
+cmake .. -DSWITCH=/abs/path/to/ww3-gpu/switches/switch_lab_shrd
 make -j$(nproc)
 ls bin/
 ```

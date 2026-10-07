@@ -6,7 +6,7 @@ Copy this file, fill it in, commit it. Numbers without this metadata are not res
 
 | | |
 |---|---|
-| CPU | e.g. Intel Core i9-14900K — 8 P-cores (16 threads) + 16 E-cores |
+| CPU | e.g. Intel Core i9-14900K, 8 P-cores (16 threads) + 16 E-cores |
 | RAM | e.g. 64 GB DDR5-6000, dual channel |
 | GPU | e.g. NVIDIA RTX 4090, 24 GB, compute capability 8.9 |
 | Driver | `nvidia-smi --query-gpu=driver_version --format=csv` |

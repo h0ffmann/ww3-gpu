@@ -1,6 +1,6 @@
-# Exercise 10 — where does the time go?
+# Exercise 10: where does the time go?
 
-**Lesson:** [10 — modern Fortran refactoring](../course/10-modern-fortran-refactoring.md)
+**Lesson:** [10. modern Fortran refactoring](../course/10-modern-fortran-refactoring.md)
 (and the profiling half of 09). **Time:** ~40 min. **Solution:**
 [`solutions/ex10_profile.sh`](solutions/ex10_profile.sh).
 

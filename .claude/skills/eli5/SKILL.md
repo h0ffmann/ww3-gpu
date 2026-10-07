@@ -3,6 +3,12 @@ name: eli5
 description: "Explain a wave-modelling, Fortran or HPC topic to someone who knows nothing about it. Use when the user types /eli5 <topic>, asks to explain something simply, or asks for a picture explainer of how part of WW3, Kokkos or the forecast chain works."
 ---
 
+**Audience in this repository.** The repo's first readers are scientists (PhD and independent
+researchers; see `CONTRIBUTING.md`, "Who this repository is for"). This skill is the exception that
+serves newcomers: students, committee members and researchers from another field. Simplify the
+words, never the physics, so a wave modeller reading the explainer finds nothing wrong, and end
+with the lesson, `file:line` or paper a researcher would go to next.
+
 # eli5
 
 Explain like the reader knows nothing about this topic: short sentences, one idea at a time, a

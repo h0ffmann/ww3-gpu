@@ -10,6 +10,11 @@ description: >
   hunts complexity.
 ---
 
+**Audience in this repository.** The code is read by scientists who verify its numerics (see
+`CONTRIBUTING.md`, "Who this repository is for"). Do not flag as bloat a comment that cites WW3
+`file:line`, a parity flag, an explicit operation order or a reference implementation kept for
+bit-for-bit comparison.
+
 Review diffs for unnecessary complexity. One line per finding: location, what
 to cut, what replaces it. The diff's best outcome is getting shorter.
 

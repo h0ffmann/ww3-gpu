@@ -13,7 +13,17 @@ authors:
     orcid: "https://orcid.org/0009-0009-1056-7661"
     affiliation: "Escola Politécnica, Universidade Federal do Rio de Janeiro"
 repository-code: "https://github.com/h0ffmann/ww3-gpu"
-license: MIT
+doi: 10.5281/zenodo.23221351
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.23221351
+    description: Concept DOI, resolves to the latest release
+  - type: doi
+    value: 10.5281/zenodo.23221352
+    description: Version v0.1.0
+license:
+  - MIT
+  - LGPL-3.0-or-later
 keywords:
   - WAVEWATCH III
   - WW3
@@ -31,3 +41,5 @@ keywords:
   - C++
   - performance portability
   - high-performance computing
+  - research software
+  - reproducibility

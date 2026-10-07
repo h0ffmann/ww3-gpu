@@ -1,4 +1,4 @@
-# Example 02 — regional run, real bathymetry, real winds
+# Example 02: regional run, real bathymetry, real winds
 
 Southern Brazil shelf: 52°W–44°W, 32°S–24°S at 0.1°. Florianópolis sits in the middle of it.
 
@@ -45,7 +45,7 @@ just ww3                        # the toolchain shell: gfortran, netcdf-fortran,
 `run.sh` compiles `make_bathy.F90` against the shell's netcdf-fortran (`nf-config`) the
 first time, and again whenever the source is newer than the binary.
 
-### Bathymetry sampling — nearest neighbour, and why that is a downgrade
+### Bathymetry sampling: nearest neighbour, and why that is a downgrade
 
 `make_bathy` takes, for each of the 81 × 81 model points, the GEBCO cell whose centre is
 closest. The Python it replaced interpolated bilinearly between the four surrounding

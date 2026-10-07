@@ -3,6 +3,11 @@ name: release
 description: "Cut a citable ww3-gpu release and keep its Zenodo/citation metadata right. Use when the user asks to release, tag a version, mint or update a DOI, or change CITATION.cff, .zenodo.json or the README citation badge."
 ---
 
+**Audience.** Releases are cited by scientists: PhD and independent researchers (see
+`CONTRIBUTING.md`, "Who this repository is for"). Write release metadata for academic discovery:
+the title, description and keywords a wave modeller or HPC researcher would search for, the
+author's ORCID, and references by DOI.
+
 # release
 
 Every published GitHub release of this repo is archived by Zenodo, which mints a version DOI
@@ -28,6 +33,11 @@ under one concept DOI. The chain has no secrets in it:
 ## Metadata rules
 
 - `.zenodo.json` wins over `CITATION.cff` on Zenodo; keep both saying the same thing.
+- Licences: MIT, plus `LGPL-3.0-or-later` for kernels translated from WW3. `CITATION.cff` lists
+  both; Zenodo takes one licence id (`mit`), so `.zenodo.json` names the LGPL files in `notes`.
+  A newly ported kernel adds its files there.
+- Concept DOI: 10.5281/zenodo.23221351 (v0.1.0 is 10.5281/zenodo.23221352). DataCite's API
+  (`api.datacite.org/dois?query=ww3-gpu`) shows a new version DOI when zenodo.org is unreachable.
 - The author is Santos, Matheus Hoffmann Fernandes (Poli/UFRJ). Supervisors go under
   `contributors` with `"type": "Supervisor"` in `.zenodo.json`, never as creators.
 - An ORCID goes in `.zenodo.json` as `"orcid": "0000-0000-0000-0000"` (bare iD) and in

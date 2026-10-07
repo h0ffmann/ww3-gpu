@@ -1,37 +1,53 @@
 # WW3 GPU Lab
 
-Ocean wave modelling, hands on: WW3 today, WW4 tomorrow.
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23221351.svg)](https://doi.org/10.5281/zenodo.23221351)
+[![CI](https://github.com/h0ffmann/ww3-gpu/actions/workflows/ci.yml/badge.svg)](https://github.com/h0ffmann/ww3-gpu/actions/workflows/ci.yml)
+[![License: MIT + LGPL-3.0 kernels](https://img.shields.io/badge/license-MIT%20%2B%20LGPL--3.0%20kernels-blue)](#licensing)
+[![Leia em português](https://img.shields.io/badge/leia%20em-portugu%C3%AAs-green)](README.pt-BR.md)
 
-A bootstrap repo for playing with **WAVEWATCH III®** (WW3), NOAA/NCEP's third-generation
-spectral wind-wave model. Built as a self-paced course: build the Fortran, run real cases,
-measure it, then port a kernel to C++/Kokkos and prove it still gives the same answer.
+An open lab for running WAVEWATCH III® (WW3), NOAA's third-generation spectral wind-wave model,
+and for moving its expensive kernels to GPUs without changing the answer.
 
----
+The repository holds a 16-lesson course, a Nix-pinned Fortran/MPI/NetCDF toolchain that builds
+WW3 and runs a regression test in one command, and a C++/Kokkos port of the DIA nonlinear
+interaction term (`W3SNL1`). That kernel reproduces the Fortran output bit for bit on the Serial,
+OpenMP and CUDA backends, and on an RTX 4090 it runs 1,000 sea points in 0.047 ms against 24.96 ms
+serial ([`kokkos/PORT_STATUS.md`](kokkos/PORT_STATUS.md)). The same repository is the groundwork
+for an undergraduate project at Escola Politécnica, UFRJ, co-advised at LabECO, UFSC.
 
-## What's in here
+It is written first for scientists: PhD researchers, postdocs and independent researchers in
+wave modelling, numerical methods and HPC. Claims carry their evidence (`(v)` checked, `⚠` not),
+and every number comes with the command that reproduces it. If you use the repository, please
+[cite it](#how-to-cite).
 
-| Path | What it is |
-|---|---|
-| `course/` | 16 lessons, 00–15, from "what is a wave spectrum" through the optimisation ladder (benchmark, modern Fortran, Kokkos, the W3SNL1 port, bulk porting), WW4 and SWAN |
-| `examples/` | Self-contained runnable cases with real `.nml` input files |
-| `exercises/` | Exercises for lessons 09–13 (with solutions), in shell, Fortran and C++: compile-option matrix, profile, refactor + parity test, Kokkos team reduce, L2 replay |
-| `kokkos/` | The C++/Kokkos half: the `ww_kokkos` kernel library (`W3SNL1` ported), intro programs, GoogleTest suites, and the tools `nccmp-tol`, `ww_bench_case`, `ww_fetch_analyse` |
-| `gpu/` | nvfortran / OpenACC / CUDA Fortran sandbox aimed at your RTX 4090 |
-| `bench/` | i9 vs 4090: a WW3-shaped kernel, a concurrent CPU+GPU split sweep, and real WW3 MPI scaling on cases from `ww_bench_case` |
-| `scripts/` | Get, build, and run WW3 (and SWAN); stage upstream regression tests |
-| `switches/` | Annotated switch files (WW3's compile-time feature selection) |
-| `env/` | conda environment + Dockerfile |
-| `docs/` | [`AWESOME-WW3_202609.md`](docs/AWESOME-WW3_202609.md), a curated link list; [`AGENTS_KOKKOS_202609.md`](docs/AGENTS_KOKKOS_202609.md), agent rules for a phased WW3 → Kokkos port; [`KOKKOS_H100_PLAN_202609.md`](docs/KOKKOS_H100_PLAN_202609.md), the single-H100 port plan; [`BEND_TRYOUT_202609.md`](docs/BEND_TRYOUT_202609.md), a one-week plan to port `W3SNL1` to Bend 2 as a third arm of the parity harness (proposal, not run) |
-| `nix-config/` | Git submodule (sparse: only `labs/pratico`): the pinned Nix toolchain WW3 is built with |
-| `WW3/` | Git submodule: the [h0ffmann/WW3](https://github.com/h0ffmann/WW3) fork of NOAA-EMC/WW3, with upstream as a second remote |
-| `bend-lang/` | Git submodule: the [h0ffmann/bend](https://github.com/h0ffmann/bend) fork of bendlang/bend, tracking `main`. Not fetched by CI and used by nothing yet; it pins the compiler for the tryout in [docs/BEND_TRYOUT_202609.md](docs/BEND_TRYOUT_202609.md), and its `f64` branch keeps upstream's closed 64-bit-float PR. `git submodule update --init --depth 1 bend-lang` |
-| `pubs/` | Publications: the course book and the UFRJ/DEL project proposal (EN source, PT generated); PDFs land in `pdf/` on `main` |
-| `justfile` | Every task in this repo: `just` lists them |
+## Study areas
+
+Each line is a separate piece of work. Merged ones live on `main`; the rest are open pull
+requests or issues, linked so you can follow them.
+
+| Area | Question it answers | Where | State |
+|---|---|---|---|
+| The course | How do you build, run and measure WW3, then port a kernel? | [`course/`](course/README.md), [`examples/`](examples/README.md), [`exercises/`](exercises/README.md) | 16 lessons, merged |
+| Kokkos port of `W3SNL1` | Can a WW3 kernel run on a GPU with bit-identical results? | [`kokkos/`](kokkos/README.md), [lesson 12](course/12-porting-a-kernel-w3snl1.md) | Bit-identical on 3 backends; WW3 replay pending |
+| Benchmarks | What do an i9 and an RTX 4090 actually give WW3? | [`bench/`](bench/README.md), [`gpu/`](gpu/README.md), [lesson 09](course/09-benchmark-profile-compile-run.md) | Tooling merged |
+| Port priority | Which routine should be ported next? | [#46](https://github.com/h0ffmann/ww3-gpu/pull/46), [`PORT_STATUS.md`](kokkos/PORT_STATUS.md) | Rule in review: port by measured wall time. A first profile puts `W3SDS4` at 67 % of source-term time ([#45](https://github.com/h0ffmann/ww3-gpu/issues/45)) |
+| Porting with agents | How can coding agents port forty routines without a human redoing the checks? | [`AGENTS_KOKKOS`](docs/AGENTS_KOKKOS_202609.md), [lesson 13](course/13-bulk-porting-with-agents.md), [#42](https://github.com/h0ffmann/ww3-gpu/issues/42) | Rules merged; task queue and parity ladder in #42 |
+| Agent tooling | Which agent frameworks and research tools fit that workflow? | [#25](https://github.com/h0ffmann/ww3-gpu/pull/25) (NVIDIA NOOA), [#41](https://github.com/h0ffmann/ww3-gpu/pull/41) (Consensus, Antigravity, NotebookLM), [#38](https://github.com/h0ffmann/ww3-gpu/issues/38) | Evaluations in review |
+| Bit-for-bit proof | What can be proved, and not only tested, about the Fortran → C++ translation? | [#43](https://github.com/h0ffmann/ww3-gpu/pull/43) | Plan, one page per proof tool, and an exhaustive sweep of `W3SNL1` section 1 |
+| Bend | Could a massively parallel functional language be a third arm of the parity harness? | [`BEND_TRYOUT`](docs/BEND_TRYOUT_202609.md), [#35](https://github.com/h0ffmann/ww3-gpu/issues/35) | One-week plan, not run |
+| Triton and ML weather forcing | Is Triton a cheaper route to the GPU for `W3SDS4`, and does Google's WeatherNext 3 wind improve the wave forecast? | [#45](https://github.com/h0ffmann/ww3-gpu/issues/45) | Planned, with ECMWF AIFS Single Wave as the ML wave reference |
+| Single-H100 port | What would a full port to one H100 take? | [`KOKKOS_H100_PLAN`](docs/KOKKOS_H100_PLAN_202609.md) | Plan |
+| WW4 and SWAN | What replaces WW3, and what covers the coast? | [lesson 14](course/14-ww4-and-the-future.md), [lesson 15](course/15-swan.md) | Merged |
+| Publications | The course as a book, and the project proposal | [`pubs/`](pubs/README.md), PDFs and Word files in [`pdf/`](pdf/) | Built by CI on every merge |
+
+[`docs/AWESOME-WW3_202609.md`](docs/AWESOME-WW3_202609.md) is a curated, annotated link list, and
+[`docs/GLOSSARY.md`](docs/GLOSSARY.md) expands every abbreviation, switch, routine and tool name
+used here.
 
 ## Quickstart
 
-Needs [Nix](https://nixos.org) and [just](https://github.com/casey/just); the compilers come
-from the pinned flake (next section), nothing else to install.
+You need [Nix](https://nixos.org) and [just](https://github.com/casey/just). The compilers come from
+the pinned flake, so there is nothing else to install.
 
 ```bash
 git clone --recurse-submodules git@github.com:h0ffmann/ww3-gpu.git && cd ww3-gpu
@@ -40,223 +56,157 @@ just get              # clone upstream NOAA-EMC/WW3 develop into ~/src/WW3
 just rt               # build with ww3_tp1.1's own switch and run that regtest (~30 s)
 just build            # rebuild with the lab switch (switches/switch_lab_shrd, ST4 physics)
 just example01        # first course example: fetch-limited growth (~1 min)
+just kokkos-test serial-debug   # build and test the C++/Kokkos kernels
 ```
 
-Then start at [`course/00-orientation.md`](course/00-orientation.md). Every recipe is a thin
-wrapper over a script in `scripts/`; run those directly if you prefer a host toolchain
-(`just prereqs` installs it on Debian/Ubuntu).
+Then start at [`course/00-orientation.md`](course/00-orientation.md). `just` lists every task. Each
+recipe is a thin wrapper over a script in `scripts/`, which you can run directly with a host
+toolchain instead (`just prereqs` installs one on Debian/Ubuntu). The toolchain, the WW3 fork and
+the Kokkos presets are described in [`docs/TOOLCHAIN.md`](docs/TOOLCHAIN.md).
 
-Optionally, get SWAN too: it's the right tool for the coastal cases WW3 is wrong for.
-
-```bash
-just swan             # clone and build into ~/src/swan
-```
-
-## Nix toolchain (reproducible gfortran / OpenMPI / NetCDF)
-
-Instead of `scripts/00_prereqs.sh`, the compilers and libraries can come from one locked
-nixpkgs revision via the [`nix-config/labs/pratico`](https://github.com/h0ffmann/nix-config/tree/main/labs/pratico) flake, which
-lives in `nix-config`, a sparse git submodule. A `justfile` at the repo root wraps it:
-
-```bash
-just up          # bump the submodule pin to origin/main and stage it  (just st = status)
-just ww3         # enter the toolchain-only shell  (== nix develop ./nix-config/labs/pratico#ww3)
-just ww3-run …   # run one command inside that shell, e.g. just ww3-run gfortran --version
-just toolchain   # exact pinned versions
-just smoke       # Fortran 2008 + MPI + NetCDF-4 build-and-run in the Nix sandbox
-```
-
-Build and run WW3 itself in that shell. The source tree is `$WW3`, else `~/src/WW3`, the
-plain upstream NOAA-EMC clone; pass `WW3` as the last argument to use the fork submodule:
-
-```bash
-just get                 # clone upstream develop into ~/src/WW3 (WW3_DATA=1 to also fetch the FTP bundle)
-just rt                  # the simple regtest: build with ww3_tp1.1's own switch, run it (~30 s on 32 cores)
-just rt ww3_tp2.2 PR3_UQ # another test / switch_<sw> from its input/ dir;  ... PR3_UQ WW3 = on the fork
-just build [switch]      # full rebuild with a switch file (default switches/switch_lab_shrd)
-just regtest [test]      # rerun a test step by step against the current build (no rebuild)
-```
-
-`ww3_tp1.x` and `ww3_tp2.2` need no FTP data. Output lands in `<ww3>/regtests/<test>/work_lab/`;
-for `ww3_tp1.1` the gridded `ww3.196806.nc` should show `hs` starting at 2.5 m on the equator row.
-
-The C++/Kokkos tree and the benchmark tooling, in the same shell:
-
-```bash
-just kokkos-test serial-debug        # configure + build + ctest (sanitizers, deterministic reductions)
-just kokkos-test openmp-release      # the same on the OpenMP backend, -O3
-just kokkos-cuda-test                # cuda-release in the #cuda shell (RTX 4090)
-just bench-case --size small -o bench/case_small   # a self-contained WW3 benchmark case
-just bench                           # kernel proxies + real WW3 MPI scaling (bench/run_all.sh)
-```
-
-What `just toolchain` prints today (`(v)`: this is the exact output on the lab machine):
-
-```
-$ just toolchain
-ww3 toolchain: GNU Fortran (GCC) 15.3.0 | mpirun (Open MPI) 5.0.10 | netcdf-c 4.10.1 / netcdf-fortran 4.4.6-development
-nixpkgs      eaad089433ca2bb662274377d33df3d0e51ef28b
-gfortran     GNU Fortran (GCC) 15.3.0
-openmpi      mpirun (Open MPI) 5.0.10
-netcdf-c     netCDF 4.10.1
-netcdf-f     netCDF-Fortran 4.4.6-development
-hdf5         h5dump: Version 1.14.6
-metis        /nix/store/kakzikafyrpx9pp49kxxgmjvvnymm6vr-metis-5.2.1
-parmetis     /nix/store/rdkv3jg7b52dw0qlkwx9f1aihjsm7xwb-parmetis-4.0.3-unstable-2023-03-26
-eccodes      2.48.0
-cmake        cmake version 4.4.2
-python       Python 3.14.7 numpy 2.5.1 xarray 2026.7.0
-```
-
-The `warning: Git tree '…/nix-config' has uncommitted changes` line Nix prints is the
-sparse checkout, not real edits; `git -C nix-config status` is clean.
-
-The `WW3/` submodule is your fork, kept in step with upstream by `just src-sync`
-(`just src-st` shows pinned vs. fork vs. upstream). Pass `WW3` as the last argument of
-`build`, `regtest` or `rt` to build the fork instead of `~/src/WW3`.
-
-## Publications (markdown → PDF)
-
-The toolchain (pandoc, TeX Live, Python) comes from
-[`nix-config/labs/publisher`](https://github.com/h0ffmann/nix-config/tree/main/labs/publisher), which
-the root `flake.nix` consumes through its `mkPdf` and `mkDocx` helpers; `nix build .` produces the
-three PDFs **and the course as a Word document** in a sandbox, and CI commits all four to `pdf/` on
-`main`. pandoc writes the docx directly, so the LaTeX templates do not apply and Word's own defaults do
-the styling. The proposal docx has no DEL cover page or signature block, and is the text for the
-advisors to comment on, not the document that gets signed. Citations are still rendered by citeproc
-with the same CSL as the PDF, so author-date calls and the reference list match the paper version; the build is byte-reproducible (pandoc dates every zip entry
-1980-01-01), so a rebuild that changes nothing commits nothing. The directory is still called `pdf/`
-for the sake of existing links, though it now holds a `.docx` as well.
-
-```bash
-just book                 # course/*.md -> build/ww3-lab-course.pdf (one chapter per lesson)
-just book-docx            # the same course as build/ww3-lab-course.docx (Word, no TeX in the path)
-just proposal-docx pt     # the proposal for review in Word -> build/proposal_pt.docx (pt|en)
-                          # both are published: pdf/*.docx, committed by CI on main
-just proposal en          # pubs/proposal/en/*.md -> build/proposal_en.pdf (DEL proposal layout)
-just proposal pt ieee     # Portuguese copy; second arg picks the citation style: abnt (default) | ieee
-just translate            # pubs/proposal/en -> pt via any OpenAI-compatible endpoint (changed files only)
-just proposal-review      # parecer do revisor-proposta sobre pubs/proposal (ABNT, DEL, registro científico)
-just pubs                 # all three
-```
-
-`/eli5 <topic>` explains any of this (the action balance equation, a switch file, a Kokkos
-backend, bit-for-bit parity) to someone who has never seen it, grounded in `docs/GLOSSARY.md` and
-the lessons, in the language you ask in ([`.claude/skills/eli5`](.claude/skills/eli5/SKILL.md);
-adapted from the community skill by Thariq Shihipar, MIT).
-
-Every change to `pubs/proposal/` is reviewed by the `revisor-proposta` subagent before the pull
-request, against Escola Politécnica's Resolução 05 de 28/11/2012 and the DEL section structure, ABNT
-citation practice, impersonal scientific register in pt-BR, and the wave-modelling and HPC
-vocabulary. It reports and does not rewrite. `just proposal-review` runs it;
-`.claude/hooks/proposal-review.sh` reminds any agent that edits a file there to run it before
-finishing. See [`CONTRIBUTING.md`](CONTRIBUTING.md).
-
-The proposal is written in English under `pubs/proposal/en/`; `pubs/proposal/pt/` started as a
-machine translation and was then revised by hand (2026-09-15, again 2026-09-16), so it is the
-reference Portuguese text. `just translate` only rewrites a `pt/` file when its English source changes (or with
-`--force`), which would discard that revision: after editing the English, port the change to the
-Portuguese by hand instead. The DEL
-section names are a fixed glossary in `scripts/translate_md.py`. Header fields (student, advisors,
-date) live in `pubs/proposal/meta.{pt,en}.yaml`. The LaTeX layout is the department's own
-proposal template (`pubs/proposal/template.tex`, styles under `pubs/proposal/shared/`).
-
-Translation backend: set `TRANSLATE_BASE_URL`, `TRANSLATE_API_KEY` and `TRANSLATE_MODEL`
-(locally, `http://127.0.0.1:11434/v1` / `ollama` / an Ollama model works; in CI the same three
-names as repository secrets, otherwise the step is skipped and the committed `pt/` is used).
+For coastal cases, add SWAN with `just swan`.
 
 ## Two things worth knowing before you invest
 
-**WAVEWATCH IV™ (WW4) exists, and WW3 is scheduled for sunset.** [NOAA-EMC/WW4](https://github.com/NOAA-EMC/WW4)
-is a ground-up rewrite: new repository, no backward compatibility, C++ core with Rust
-alongside, Fortran demoted to a solver-only language. As of 2026-09-11 it had 36 commits
-and no releases: pre-alpha. **First public release: expected January 2027** per the proposal's advisor ⚠ (no NOAA source; ON 525 said summer 2027). The plan,
-including the commitment to sunset WW3 support once WW4 matures, is in
-[NCEP Office Note 525](https://doi.org/10.25923/h7j3-1h25). Learn WW3 anyway: the physics
-is identical and the concepts transfer completely, only the interfaces won't. Details in
+WAVEWATCH IV™ (WW4) exists, and WW3 is scheduled for sunset. [NOAA-EMC/WW4](https://github.com/NOAA-EMC/WW4)
+is a rewrite from scratch: a new repository with no backward compatibility, a C++ core with Rust
+alongside, and Fortran kept only for solvers. On 2026-09-11 it had 36 commits and no release.
+The first public release is expected in January 2027 according to the proposal's advisor ⚠ (no NOAA
+source; ON 525 said summer 2027). The plan, including the commitment to stop supporting WW3 once WW4
+matures, is in [NCEP Office Note 525](https://doi.org/10.25923/h7j3-1h25). WW3 is still worth
+learning: the physics is the same and the concepts carry over, only the interfaces change. See
 [`course/14-ww4-and-the-future.md`](course/14-ww4-and-the-future.md).
 
-**SWAN is not a competitor, it's the other half of the toolkit.** Implicit,
-unconditionally stable, no CFL limit, stationary mode. WW3 offshore, SWAN nearshore is the
-standard coastal architecture. Source is now on
-[TU Delft GitLab](https://gitlab.tudelft.nl/citg/wavemodels/swan), which most tutorials
-haven't caught up with. See [`course/15-swan.md`](course/15-swan.md).
+SWAN is the other half of the toolkit. It is implicit and unconditionally stable, has no CFL limit
+and runs in stationary mode, so the standard coastal set-up is WW3 offshore and SWAN nearshore. Its
+source now lives on [TU Delft GitLab](https://gitlab.tudelft.nl/citg/wavemodels/swan), which most
+tutorials have not caught up with. See [`course/15-swan.md`](course/15-swan.md).
 
-## The short answer on your RTX 4090
+## Can WW3 use my GPU?
 
-**Yes, NVIDIA ships a Fortran compiler.** It's `nvfortran`, part of the free
-[NVIDIA HPC SDK](https://developer.nvidia.com/hpc-sdk). It does CUDA Fortran, OpenACC,
-OpenMP target offload, and `do concurrent` offload (`-stdpar=gpu`). Your 4090 is Ada,
-compute capability 8.9, so `-gpu=cc89`.
+NVIDIA ships a Fortran compiler: `nvfortran`, part of the free
+[NVIDIA HPC SDK](https://developer.nvidia.com/hpc-sdk). It handles CUDA Fortran, OpenACC, OpenMP
+target offload and `do concurrent` offload (`-stdpar=gpu`). An RTX 4090 is Ada, compute capability
+8.9, so the flag is `-gpu=cc89`.
 
-**But WW3 itself has no GPU support upstream**, and it never will. The only published port
-([Ikuyajolu et al., GMD 2023](https://gmd.copernicus.org/articles/16/1445/2023/))
-OpenACC-ified one module (`W3SRCEMD`, the source-term integration) and got roughly
-**1.3× against 42 CPU cores** on Summit's V100s, data-transfer bound, and it was not merged
-into `NOAA-EMC/WW3`. On a PCIe consumer card with no NVLink it will not be better. And WW4 is explicitly being
-architected for GPUs from the ground up, which gives any heroic OpenACC work on WW3 a very
-short shelf life.
+WW3 itself has no GPU support upstream. The only published port
+([Ikuyajolu et al., GMD 2023](https://gmd.copernicus.org/articles/16/1445/2023/)) put OpenACC on one
+module, `W3SRCEMD` (the source-term integration), and got about 1.3× against 42 CPU cores on
+Summit's V100s. Data transfer bound the result, and the code was not merged into `NOAA-EMC/WW3`. A
+consumer PCIe card without NVLink will not do better with that approach.
 
-So: compile WW3 with `nvfortran` on the **CPU** (that part works and is useful), use
-`gpu/` to learn GPU Fortran on kernels that actually suit a 4090, and use `bench/` to
-measure your own hardware rather than trusting anyone's table, including mine. Full reasoning and a
-realistic experiment plan in [`course/09-benchmark-profile-compile-run.md`](course/09-benchmark-profile-compile-run.md).
+So compile WW3 with `nvfortran` for the CPU, which works and is useful. Use `gpu/` to learn GPU
+Fortran on kernels that suit a 4090, and `bench/` to measure your own hardware instead of trusting
+anyone's table, including the ones here. The Kokkos port takes the other route: kernels that keep
+their data on the device and match the Fortran bit for bit. The reasoning and an experiment plan
+are in [`course/09-benchmark-profile-compile-run.md`](course/09-benchmark-profile-compile-run.md).
 
-## Conventions used in this repo
+## Repository layout
 
-- `⚠`: I could not verify this; check it before trusting it.
-- `(v)`: verified against a source I actually fetched while building this repo.
-- Input files use the **namelist** (`.nml`) interface, not the legacy `.inp` fixed-format
-  files. Both work in WW3 v7; `.nml` is far easier to read, and it is what the annotated
-  templates in `$WW3/model/nml/` and the generators in `examples/` produce.
+| Path | Contents |
+|---|---|
+| `course/` | 16 lessons, 00 to 15, from the wave spectrum through benchmarking, modern Fortran, Kokkos, the `W3SNL1` port and bulk porting, then WW4 and SWAN |
+| `examples/` | Self-contained runnable cases with real `.nml` input files |
+| `exercises/` | Exercises for lessons 09 to 13, with solutions, in shell, Fortran and C++ |
+| `kokkos/` | The `ww_kokkos` kernel library (`W3SNL1` ported), GoogleTest suites, and the tools `nccmp-tol`, `ww_bench_case` and `ww_fetch_analyse` |
+| `gpu/` | nvfortran, OpenACC and CUDA Fortran sandbox for an RTX 4090 |
+| `bench/` | i9 against 4090: a WW3-shaped kernel, a concurrent CPU+GPU split sweep, and WW3 MPI scaling |
+| `scripts/` | Get, build and run WW3 and SWAN; stage upstream regression tests; release |
+| `switches/` | Annotated switch files (WW3's compile-time feature selection) |
+| `env/` | conda environment and Dockerfile |
+| `docs/` | Plans, evaluations, the link list and the glossary |
+| `pubs/` | The course book and the UFRJ/DEL project proposal; built files land in `pdf/` |
+| `nix-config/` | Submodule (sparse, `labs/pratico` only): the pinned toolchain |
+| `WW3/` | Submodule: the [h0ffmann/WW3](https://github.com/h0ffmann/WW3) fork of NOAA-EMC/WW3 |
+| `bend-lang/` | Submodule: the [h0ffmann/bend](https://github.com/h0ffmann/bend) fork, pinned for the Bend tryout and not fetched by CI |
 
-## Repo layout notes
+Lab code is C++, Fortran and shell. Python appears only in the publishing pipeline, which is the
+stance the [project proposal](pubs/proposal/pt/) takes: the model's own languages, plus the one the
+port is written in. CI (`.github/workflows/ci.yml`) checks shell syntax, compiles the Fortran
+sandbox and the example and exercise Fortran, builds and tests `kokkos/` on both CPU presets, and
+link-checks the markdown. It does not build WW3, which needs the NOAA FTP data bundle and takes
+too long on a free runner.
 
-- Lab code is C++, Fortran and shell; Python only in the publishing pipeline
-  (`scripts/book_prep.py`, `scripts/translate_md.py`). That is the stance the
-  [project proposal](pubs/proposal/pt/) sets out: the model's own languages, plus the one
-  the port is written in.
-- `just` lists every task; `justfile` is the entry point, `scripts/` holds the logic.
-- [`docs/GLOSSARY.md`](docs/GLOSSARY.md) expands every abbreviation, switch, routine and tool
-  name used here (`ST4`, `W3SNL1`, `PDLIB`, `b4b`, `nccmp-tol`, …) and ends with an alphabetical index.
-- CI (`.github/workflows/ci.yml`) checks shell syntax, compiles the Fortran sandbox and
-  the example/exercise Fortran with gfortran, builds and tests `kokkos/` on both CPU
-  presets, and link-checks the markdown. It does not build WW3, since that needs the NOAA FTP
-  data bundle and takes too long for a free runner.
+## Conventions
+
+- `⚠` marks a claim I could not verify. Check it before relying on it.
+- `(v)` marks a claim verified against a source fetched while building this repo.
+- Input files use the namelist (`.nml`) interface instead of the legacy fixed-format `.inp` files.
+  WW3 v7 accepts both, and `.nml` is much easier to read. It is also what the annotated templates
+  in `$WW3/model/nml/` and the generators in `examples/` produce.
 
 ## How to cite
 
-<!-- After the first Zenodo release, replace this comment with the concept-DOI badge:
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.XXXXXXX.svg)](https://doi.org/10.5281/zenodo.XXXXXXX) -->
+Cite the concept DOI [10.5281/zenodo.23221351](https://doi.org/10.5281/zenodo.23221351) for the
+project as a whole. It always resolves to the latest release. To pin the exact code you ran, cite
+that release's own DOI instead; v0.1.0 is
+[10.5281/zenodo.23221352](https://doi.org/10.5281/zenodo.23221352). GitHub's **Cite this repository**
+button (right sidebar) exports APA and BibTeX from [`CITATION.cff`](CITATION.cff).
 
-If this repo helps your work, please cite it. GitHub's **Cite this repository** button (right
-sidebar) gives APA and BibTeX from [`CITATION.cff`](CITATION.cff). Each release is
-archived on [Zenodo](https://zenodo.org) with its own DOI, using the metadata in
-[`.zenodo.json`](.zenodo.json); cite the version you used, or the concept DOI for the project
-as a whole. Cutting one is `just release 0.2.0` on an up-to-date `main`:
-it pushes the tag, [`release.yml`](.github/workflows/release.yml) publishes the GitHub release
-and Zenodo picks it up from there.
+BibTeX:
 
-WW3 itself should be cited separately, as the WAVEWATCH III Development Group's user manual for
-the version you ran.
+```bibtex
+@software{santos_ww3gpu,
+  author    = {Santos, Matheus Hoffmann Fernandes},
+  title     = {{WW3 GPU Lab: hands-on WAVEWATCH III modelling and a C++/Kokkos GPU port}},
+  year      = {2026},
+  publisher = {Zenodo},
+  version   = {v0.1.0},
+  doi       = {10.5281/zenodo.23221351},
+  url       = {https://github.com/h0ffmann/ww3-gpu}
+}
+```
+
+APA:
+
+> Santos, M. H. F. (2026). *WW3 GPU Lab: hands-on WAVEWATCH III modelling and a C++/Kokkos GPU port*
+> (Version v0.1.0) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.23221351
+
+ABNT (NBR 6023):
+
+> SANTOS, Matheus Hoffmann Fernandes. **WW3 GPU Lab**: hands-on WAVEWATCH III modelling and a
+> C++/Kokkos GPU port. Versão v0.1.0. [S. l.]: Zenodo, 2026. DOI 10.5281/zenodo.23221351.
+> Disponível em: https://doi.org/10.5281/zenodo.23221351.
+
+A downstream project can also declare the dependency in its own `CITATION.cff`, which is how
+marola will cite this repository:
+
+```yaml
+references:
+  - type: software
+    title: "WW3 GPU Lab: hands-on WAVEWATCH III modelling and a C++/Kokkos GPU port"
+    authors:
+      - family-names: Santos
+        given-names: Matheus Hoffmann Fernandes
+        orcid: "https://orcid.org/0009-0009-1056-7661"
+    doi: 10.5281/zenodo.23221351
+    repository-code: "https://github.com/h0ffmann/ww3-gpu"
+```
+
+Cite WW3 itself separately, as the WAVEWATCH III Development Group's user manual for the version
+you ran. Releases are cut with `just release X.Y.Z`; see
+[`.claude/skills/release`](.claude/skills/release/SKILL.md) for the chain from tag to DOI.
 
 ## Licensing
 
-MIT for everything in this repo. See [`LICENSE`](LICENSE).
+The repository is MIT, except the kernels translated from WW3, which are derived works of WW3 and
+carry `LGPL-3.0-or-later`: `kokkos/src/ww_kokkos/snl1_*`, `kokkos/src/fortran_iface/w3kokkosmd.F90`,
+the WW3 patch in `kokkos/src/fortran_iface/PATCH.md` and the fixture reference
+`kokkos/tests/fixtures/snl1_ref.F90`. Each file states its licence in an
+`SPDX-License-Identifier` line. See [`LICENSE`](LICENSE).
 
-WW3 itself is distributed by NOAA/EMC under its own terms. No WW3 source is vendored here:
-`scripts/01_get_ww3.sh` clones it, and upstream regression-test inputs are fetched rather
-than redistributed. Third-party tools listed in `docs/AWESOME-WW3_202609.md` carry their own licences
-(`pyww3` is GPL-3.0, `wavespectra` is MIT).
+No WW3 source is vendored here. `scripts/01_get_ww3.sh` clones it, and upstream regression-test
+inputs are fetched, not redistributed. Third-party tools listed in
+`docs/AWESOME-WW3_202609.md` keep their own licences (`pyww3` is GPL-3.0, `wavespectra` is MIT).
 
 ## Trademarks
 
-WAVEWATCH III® is a registered trademark and WAVEWATCH IV™ a trademark of NOAA's National
-Weather Service. They are used here only to refer to that software. This repository is an
-independent learning project and is not affiliated with, sponsored by, or endorsed by NOAA. In
-prose we say WW3 and WW4.
+WAVEWATCH III® is a registered trademark and WAVEWATCH IV™ a trademark of NOAA's National Weather
+Service. They are used here only to refer to that software. This repository is an independent
+learning project and is not affiliated with, sponsored by or endorsed by NOAA. In prose we say WW3
+and WW4.
 
 ## Contributing
 
-See [`CONTRIBUTING.md`](CONTRIBUTING.md). The most useful contribution is confirming or
-correcting anything marked `⚠`.
+See [`CONTRIBUTING.md`](CONTRIBUTING.md). The most useful contribution is confirming or correcting
+anything marked `⚠`.

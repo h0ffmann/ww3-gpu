@@ -1,4 +1,4 @@
-# 09 — Measure first: benchmark, profile, compile options, run configuration
+# 09. Measure first: benchmark, profile, compile options, run configuration
 
 This lesson is steps 1 and 2 of the proposal's ladder (`pubs/proposal/pt/04-scope.md`):
 everything you can do to a WW3 installation **without touching a line of Fortran**. It is
