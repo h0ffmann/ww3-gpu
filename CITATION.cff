@@ -8,8 +8,8 @@ abstract: >-
   (starting with the W3SNL1 nonlinear interaction source term) to C++/Kokkos with a
   numerical parity harness against the Fortran reference.
 authors:
-  - given-names: "Matheus Hoffmann Fernandes"
-    family-names: "Santos"
+  - given-names: "Matheus"
+    family-names: "Hoffmann"
     orcid: "https://orcid.org/0009-0009-1056-7661"
     affiliation: "Escola Politécnica, Universidade Federal do Rio de Janeiro"
 repository-code: "https://github.com/h0ffmann/ww3-gpu"

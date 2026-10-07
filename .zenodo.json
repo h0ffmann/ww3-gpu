@@ -4,7 +4,7 @@
   "description": "<p>A self-paced course and toolkit for the WAVEWATCH III (WW3) third-generation spectral wind-wave model, aimed at running and accelerating it on GPUs.</p><ul><li>Build and run the Fortran model on real cases, with a pinned Nix toolchain and annotated switch files.</li><li>Benchmark it on CPU (OpenMP, MPI) and GPU (OpenACC, CUDA Fortran).</li><li>Port its kernels to C++/Kokkos for performance portability, starting with W3SNL1, the Discrete Interaction Approximation (DIA) of nonlinear four-wave interactions, and check numerical parity against the Fortran reference with a field-by-field tolerance harness.</li></ul><p>Includes 16 lessons, runnable examples, exercises with solutions, and an undergraduate project proposal (Escola Politécnica, UFRJ).</p>",
   "creators": [
     {
-      "name": "Santos, Matheus Hoffmann Fernandes",
+      "name": "Hoffmann, Matheus",
       "affiliation": "Escola Politécnica, Universidade Federal do Rio de Janeiro",
       "orcid": "0009-0009-1056-7661"
     }
