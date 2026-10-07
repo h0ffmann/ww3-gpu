@@ -28,6 +28,11 @@ under one concept DOI. The chain has no secrets in it:
 ## Metadata rules
 
 - `.zenodo.json` wins over `CITATION.cff` on Zenodo; keep both saying the same thing.
+- Licences: MIT, plus `LGPL-3.0-or-later` for kernels translated from WW3. `CITATION.cff` lists
+  both; Zenodo takes one licence id (`mit`), so `.zenodo.json` names the LGPL files in `notes`.
+  A newly ported kernel adds its files there.
+- Concept DOI: 10.5281/zenodo.23221351 (v0.1.0 is 10.5281/zenodo.23221352). DataCite's API
+  (`api.datacite.org/dois?query=ww3-gpu`) shows a new version DOI when zenodo.org is unreachable.
 - The author is Santos, Matheus Hoffmann Fernandes (Poli/UFRJ). Supervisors go under
   `contributors` with `"type": "Supervisor"` in `.zenodo.json`, never as creators.
 - An ORCID goes in `.zenodo.json` as `"orcid": "0000-0000-0000-0000"` (bare iD) and in
