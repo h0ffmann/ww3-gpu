@@ -32,7 +32,8 @@ Corrections are very welcome, especially the following, in order of usefulness:
    exercise, but a confirmed answer with the WW3 version you used is welcome.
 5. **WW4 status.** `course/14-ww4-and-the-future.md` quotes a repository snapshot from
    2026-10-07 (issue #49) and a timeline from NCEP Office Note 525. That will go stale faster than
-   anything else here. Updates very welcome, with the date you checked.
+   anything else here. Updates very welcome, with the date you checked; `just ww4-status`
+   shows what changed since the last snapshot.
 
 ## The proposal (`pubs/proposal/`)
 

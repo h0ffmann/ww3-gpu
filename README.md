@@ -76,7 +76,9 @@ The first public release is expected in January 2027 according to the proposal's
 source; ON 525 said summer 2027). The plan, including the commitment to stop supporting WW3 once WW4
 matures, is in [NCEP Office Note 525](https://doi.org/10.25923/h7j3-1h25). WW3 is still worth
 learning: the physics is the same and the concepts carry over, only the interfaces change. See
-[`course/14-ww4-and-the-future.md`](course/14-ww4-and-the-future.md).
+[`course/14-ww4-and-the-future.md`](course/14-ww4-and-the-future.md). `just ww4-status` diffs WW4 against the last
+recorded snapshot (`docs/ww4-status.json`), and the [`ww4-status`](.claude/skills/ww4-status/SKILL.md) skill
+turns that into an issue and a PR.
 
 SWAN is the other half of the toolkit. It is implicit and unconditionally stable, has no CFL limit
 and runs in stationary mode, so the standard coastal set-up is WW3 offshore and SWAN nearshore. Its
