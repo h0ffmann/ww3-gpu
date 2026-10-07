@@ -224,6 +224,20 @@ realistic experiment plan in [`course/09-benchmark-profile-compile-run.md`](cour
   presets, and link-checks the markdown. It does not build WW3, since that needs the NOAA FTP
   data bundle and takes too long for a free runner.
 
+## How to cite
+
+<!-- After the first Zenodo release, replace this comment with the concept-DOI badge:
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.XXXXXXX.svg)](https://doi.org/10.5281/zenodo.XXXXXXX) -->
+
+If this repo helps your work, please cite it. GitHub's **Cite this repository** button (right
+sidebar) gives APA and BibTeX from [`CITATION.cff`](CITATION.cff). Each tagged release is
+archived on [Zenodo](https://zenodo.org) with its own DOI, using the metadata in
+[`.zenodo.json`](.zenodo.json); cite the version you used, or the concept DOI for the project
+as a whole.
+
+WW3 itself should be cited separately, as the WAVEWATCH III Development Group's user manual for
+the version you ran.
+
 ## Licensing
 
 MIT for everything in this repo. See [`LICENSE`](LICENSE).
