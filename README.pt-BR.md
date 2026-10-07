@@ -106,6 +106,20 @@ O botão **Cite this repository**, na lateral do GitHub, exporta APA e BibTeX a 
 `CITATION.cff`; o exemplo está na seção [How to cite](README.md#how-to-cite) do README em inglês. O
 WW3 deve ser citado à parte, pelo manual do WAVEWATCH III Development Group da versão usada.
 
+## Trabalhos relacionados
+
+O [marola](https://github.com/marola-dev/marola) ([marola.dev](https://marola.dev/)) é uma
+plataforma aberta e sem fins lucrativos sobre mar e balneabilidade nas praias brasileiras, feita
+com dados públicos, do mesmo autor com Bruno Valério. O mapa dele
+ordena, hora a hora, as praias de Florianópolis, do Rio de Janeiro e de Salvador a
+partir das previsões de mar e tempo do Open-Meteo e dos boletins oficiais de balneabilidade. Os
+dados de onda dele já vêm do WAVEWATCH III, pelo GFS-Wave do NCEP. O próximo passo planejado é rodar
+um modelo espectral de ondas detalhado para as próprias baías
+([MIP-0052](https://github.com/marola-dev/marola/blob/main/docs/MIPs/MIP-0052-wave-model-compute.md)),
+e este repositório é a base disso: o registro do marola no Zenodo cita o WW3 GPU Lab como trabalho
+relacionado `(v)`. Cite o marola pelo DOI conceitual, [10.5281/zenodo.23224155](https://doi.org/10.5281/zenodo.23224155), que sempre aponta
+para a versão mais recente (a v0.2.0 é [10.5281/zenodo.23224156](https://doi.org/10.5281/zenodo.23224156)).
+
 ## Licença e marcas
 
 O repositório é MIT, exceto os kernels traduzidos do WW3, que são obras derivadas dele e usam

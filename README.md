@@ -169,7 +169,7 @@ ABNT (NBR 6023):
 > Disponível em: https://doi.org/10.5281/zenodo.23221351.
 
 A downstream project can also declare the dependency in its own `CITATION.cff`, which is how
-marola will cite this repository:
+[marola](#related-work) will cite this repository:
 
 ```yaml
 references:
@@ -186,6 +186,18 @@ references:
 Cite WW3 itself separately, as the WAVEWATCH III Development Group's user manual for the version
 you ran. Releases are cut with `just release X.Y.Z`; see
 [`.claude/skills/release`](.claude/skills/release/SKILL.md) for the chain from tag to DOI.
+
+## Related work
+
+[marola](https://github.com/marola-dev/marola) ([marola.dev](https://marola.dev/)) is an open,
+non-profit platform for sea conditions and bathing-water quality at Brazilian beaches, built on
+public data, by the same author and Bruno Valério. Its map ranks beaches around Florianópolis, Rio de Janeiro and Salvador by the hour, using Open-Meteo sea and
+weather forecasts and the official bathing-water bulletins. Its wave data already comes from
+WAVEWATCH III through NCEP's GFS-Wave. Running a detailed spectral wave model for its own bays is
+the planned next step ([MIP-0052](https://github.com/marola-dev/marola/blob/main/docs/MIPs/MIP-0052-wave-model-compute.md)),
+and this repository is its groundwork: marola's Zenodo record lists the WW3 GPU Lab as related work
+`(v)`. Cite marola by its concept DOI, [10.5281/zenodo.23224155](https://doi.org/10.5281/zenodo.23224155), which always resolves to the
+latest version (v0.2.0 is [10.5281/zenodo.23224156](https://doi.org/10.5281/zenodo.23224156)).
 
 ## Licensing
 
