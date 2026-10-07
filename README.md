@@ -190,8 +190,8 @@ you ran. Releases are cut with `just release X.Y.Z`; see
 ## Related work
 
 [marola](https://github.com/marola-dev/marola) ([marola.dev](https://marola.dev/)) is an open,
-local-first citizen-science platform for coastal ocean data, beach forecasts and bathing-water
-quality, by the same author and Bruno Valério. Its map ranks beaches around Florianópolis, Rio de Janeiro and Salvador by the hour, using Open-Meteo sea and
+non-profit platform for sea conditions and bathing-water quality at Brazilian beaches, built on
+public data, by the same author and Bruno Valério. Its map ranks beaches around Florianópolis, Rio de Janeiro and Salvador by the hour, using Open-Meteo sea and
 weather forecasts and the official bathing-water bulletins. Its wave data already comes from
 WAVEWATCH III through NCEP's GFS-Wave. Running a detailed spectral wave model for its own bays is
 the planned next step ([MIP-0052](https://github.com/marola-dev/marola/blob/main/docs/MIPs/MIP-0052-wave-model-compute.md)),

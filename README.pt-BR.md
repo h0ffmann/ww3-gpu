@@ -109,8 +109,8 @@ WW3 deve ser citado à parte, pelo manual do WAVEWATCH III Development Group da 
 ## Trabalhos relacionados
 
 O [marola](https://github.com/marola-dev/marola) ([marola.dev](https://marola.dev/)) é uma
-plataforma aberta de ciência cidadã para dados do oceano costeiro, previsão para praias e
-balneabilidade, do mesmo autor com Bruno Valério, que roda no computador de quem usa. O mapa dele
+plataforma aberta e sem fins lucrativos sobre mar e balneabilidade nas praias brasileiras, feita
+com dados públicos, do mesmo autor com Bruno Valério. O mapa dele
 ordena, hora a hora, as praias de Florianópolis, do Rio de Janeiro e de Salvador a
 partir das previsões de mar e tempo do Open-Meteo e dos boletins oficiais de balneabilidade. Os
 dados de onda dele já vêm do WAVEWATCH III, pelo GFS-Wave do NCEP. O próximo passo planejado é rodar
