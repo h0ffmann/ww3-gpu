@@ -1,0 +1,36 @@
+{
+  "title": "WW3 GPU Lab: hands-on WAVEWATCH III modelling and a C++/Kokkos GPU port",
+  "upload_type": "software",
+  "description": "A self-paced course and toolkit for the WAVEWATCH III spectral wind-wave model: build and run the Fortran model on real cases, benchmark it, and port its kernels (starting with the W3SNL1 nonlinear interaction source term) to C++/Kokkos with a numerical parity harness against the Fortran reference.",
+  "creators": [
+    {
+      "name": "Santos, Matheus Hoffmann Fernandes",
+      "affiliation": "Escola Politécnica, Universidade Federal do Rio de Janeiro"
+    }
+  ],
+  "contributors": [
+    {
+      "name": "Guimarães, Pedro Veras",
+      "affiliation": "LabECO, Departamento de Engenharia Mecânica, Universidade Federal de Santa Catarina",
+      "type": "Supervisor"
+    }
+  ],
+  "license": "MIT",
+  "access_right": "open",
+  "keywords": [
+    "WAVEWATCH III",
+    "ocean waves",
+    "spectral wave model",
+    "GPU",
+    "Kokkos",
+    "Fortran",
+    "high-performance computing"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/h0ffmann/ww3-gpu",
+      "relation": "isSupplementTo",
+      "scheme": "url"
+    }
+  ]
+}
