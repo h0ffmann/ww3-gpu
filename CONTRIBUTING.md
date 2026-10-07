@@ -38,6 +38,23 @@ in pt-BR, and the wave-modelling and HPC vocabulary. It reports, it does not rew
 - The proposal is read by a DEL committee with no oceanography background: gloss a wave term in a
   few words the first time it appears; `humanizar` (pt-BR) and `humanizer` (en) catch AI tells.
 
+## Port order is wall time
+
+Routines are ported in descending order of the **measured wall-clock time** they take in the
+operational case, most expensive first. Nothing else sets the order: not how easy a routine
+is to validate, not whether it already has a fixture, not how well it maps to a GPU.
+
+- The measurement is the phase-0 profile (`docs/AGENTS_KOKKOS_202609.md` §2.4, task P0.1 in
+  issue #42): inclusive and exclusive wall time per routine on 1, 4 and 16 ranks, committed to
+  `kokkos/PORT_STATUS.md` with the command that produced it.
+- Until that profile exists, the order follows the published shares in `AGENTS_KOKKOS` §2.1,
+  and those shares are priors (`⚠`), not measurements. The profile replaces them, and the queue
+  is re-sorted the day it lands.
+- A routine that cannot start yet because of a dependency (`W3SRCE` needs its source terms
+  first) keeps its place, and the next routine down starts in the meantime.
+- Experiment arms (Bend #34, Triton #45) follow the same rule: they target the routine at the
+  top of the wall-time ranking, not the one that is cheapest to try.
+
 ## Ground rules
 
 - Keep the `⚠` / `(v)` convention. Marking uncertainty honestly is the point.

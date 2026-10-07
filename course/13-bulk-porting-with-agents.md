@@ -46,9 +46,10 @@ physics allows. Any algorithmic change is a separate PR with its own L2 evidence
 
 ## The ranked list and the phases
 
-`AGENTS_KOKKOS` §2.2 scores each routine by runtime share × Kokkos suitability × ensemble
-payoff ÷ (effort + validation risk), with the shares as priors until §2.4's profiling
-(lesson 09) re-sorts it (v). Summarised:
+The port order is the wall-clock time each routine takes in the operational case, most
+expensive first. `AGENTS_KOKKOS` §2.2 lists effort, Kokkos suitability and ensemble payoff to
+plan each task, but they do not change the order. The shares are priors until §2.4's
+profiling (lesson 09) measures them and re-sorts the list (v). Summarised:
 
 | # | Routine(s) | Kokkos shape | Phase |
 |---|---|---|---|

@@ -4,6 +4,10 @@ One row per WW3 routine that is being ported, with where it came from, how far i
 has got, and what it costs. A row is only allowed to claim a number that a command
 in this repository reproduces.
 
+Routines are ported in descending order of measured wall time in the operational case
+(`CONTRIBUTING.md`, "Port order is wall time"). That profile is not in this file yet, so
+the current order rests on published priors (⚠).
+
 SPDX-License-Identifier: MIT
 
 ## The ledger

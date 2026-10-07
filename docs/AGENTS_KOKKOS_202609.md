@@ -174,7 +174,9 @@ Published profiling of WW3 6.07 on Summit (Ikuyajolu et al., GMD 2023) shows the
 
 ### 2.2 Ranked port list
 
-Score = (runtime share) × (Kokkos suitability) × (ensemble-batching payoff) ÷ (engineering effort + validation risk).
+**Port order is wall time.** Routines are ported in descending order of the wall-clock time they take in the operational case, as measured by the §2.4 profile. Effort, Kokkos suitability and ensemble payoff are recorded in the table to plan each task; they do not change the order. Until §2.4's profile is committed, the order below follows the §2.1 priors (⚠) and is re-sorted when the measurement lands (`CONTRIBUTING.md`, "Port order is wall time").
+
+The columns describe each routine; `#` is the order by expected wall-time share.
 
 | # | WW3 routine(s) | What it is | Kokkos mapping | Ensemble payoff | Effort | Phase |
 |---|---|---|---|---|---|---|
