@@ -217,6 +217,10 @@ proposal-lint *args:
 proposal-review-check:
     python3 scripts/proposal_review_gate.py --check
 
+# What changed in NOAA-EMC/WW4 since docs/ww4-status.json (--write records the new state). See the /ww4-status skill.
+ww4-status *args:
+    python3 scripts/ww4_status.py {{args}}
+
 # Translate pubs/proposal/en -> pt (changed files only; --force, --dry-run).
 translate *args:
     nix develop "{{justfile_directory()}}" --command python3 scripts/translate_md.py "$@"

@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 | Routine | WW3 file:lines | Phase | Shim | L1 parity | L2 replay | Serial ms | OpenMP ms | CUDA ms | Notes |
 |---|---|---|---|---|---|---|---|---|---|
-| `W3SNL1` + `INSNL1` | `model/src/w3snl1md.F90:115-473`, `:483-786` | 1 (copy-in / kernel / copy-out) | `ww_snl1_init`, `ww_snl1` | **bit-identical** on all three presets (`L1_test_snl1_dia`, `L1_test_snl1_shim`, `shim_roundtrip`) | pending fork branch (`src/fortran_iface/PATCH.md`) | 25.88 | 5.95 | 0.75 | 1 000 points/call, end-to-end through the shim. Kernel alone: 24.96 / 5.02 / **0.047** ms. Timed with `-ffp-contract=off`; see below. Level-0 team scratch per point = (NSPECY+NTH) + 8(NSPECX+NTH) + NSPEC floats (`snl1_dia.cpp`): 28 608 B = 27.9 KiB at NK=25/NTH=24 (XFR 1.1, λ 0.25); 52 992 B ≈ 52 KiB at NK=32/NTH=36. The kernel throws (→ `WW_KOKKOS_ERR_KERNEL`) only when the request exceeds `TeamPolicy::scratch_size_max(0)`, which for the Kokkos 5.2 CUDA backend is the device's opt-in shared-memory limit minus ~24.6 KB (≈75 KB on the RTX 4090), not the classic 48 KB; larger spectral grids than that need level-1 scratch (phase 2). |
+| `W3SNL1` + `INSNL1` | `model/src/w3snl1md.F90:115-473`, `:483-786` | 1 (copy-in / kernel / copy-out) | `ww_snl1_init`, `ww_snl1` | **bit-identical** on all three presets (`L1_test_snl1_dia`, `L1_test_snl1_shim`, `shim_roundtrip`) | pending fork branch (`src/fortran_iface/PATCH.md`) | 25.88 | 5.95 | 0.75 | 1 000 points/call, end-to-end through the shim. Kernel alone: 24.96 / 5.02 / **0.047** ms. Timed with `-ffp-contract=off`; see below. Level-0 team scratch per point = (NSPECY+NTH) + 8(NSPECX+NTH) + NSPEC floats (`snl1_dia.cpp`): 28 608 B = 27.9 KiB at NK=25/NTH=24 (XFR 1.1, λ 0.25); 52 992 B ≈ 52 KiB at NK=32/NTH=36. The kernel throws (→ `WW_KOKKOS_ERR_KERNEL`) only when the request exceeds `TeamPolicy::scratch_size_max(0)`, which for the Kokkos 5.2 CUDA backend is the device's opt-in shared-memory limit minus ~24.6 KB (≈75 KB on the RTX 4090), not the classic 48 KB; larger spectral grids than that need level-1 scratch (phase 2). WW4's default grid (NK=50/NTH=36, XFR 1.07) is one of them on the 4090: see [Level-0 scratch at WW4's default grid](#level-0-scratch-at-ww4s-default-grid). |
 | `W3SNL2`…`W3SNL5` | `model/src/w3snl{2,3,4,5}md.F90` | not started | — | — | — | — | — | — | Out of scope; the `IQTPE <= 0` branch (`W3SNLGQM`) is not replaced either. |
 | `W3SIN4` / `W3SDS4` | `model/src/w3src4md.F90` | not started | — | — | — | — | — | — | The next candidate: same per-point shape as the DIA, so the same shim generalises. |
 
@@ -73,6 +73,46 @@ CUDA row is measured at `NPTS = 1000`. The gap between the shim column (0.75 ms)
 and the kernel column (0.047 ms) on CUDA is the phase-1 host↔device transfer:
 94 % of the call. That gap is the entire argument for phase 2, and it is why the
 CUDA row must not be read as "the model will be 34x faster".
+
+## Level-0 scratch at WW4's default grid
+
+WW4 PR #67 (merged 2026-09-25) set WW4's default spectral space to 36 directions and 50
+frequencies, XFR 1.07, first frequency 0.035 Hz `(v)` (`templates/ww4_run_config.yaml`
+in NOAA-EMC/WW4; ww3-gpu issue #49). The DIA's per-point level-0 scratch grows with the
+extended spectrum, and that grid crosses the RTX 4090's limit:
+
+| grid | NSPEC | scratch floats × 4 B | fits ≈75 KB (RTX 4090)? |
+|---|---|---|---|
+| NK=25, NTH=24, XFR 1.1 (committed fixture) | 600 | 28 608 B | yes `(v)`, measured above |
+| NK=32, NTH=36, XFR 1.1 | 1 152 | 52 992 B | yes ⚠ not run |
+| NK=50, NTH=36, XFR 1.07 (WW4 default) | 1 800 | **80 352 B** | **no** ⚠ not run |
+
+The byte counts are the float count of the formula in `snl1_dia.cpp:22` times
+`sizeof(Real) = 4`, with NSPECX and NSPECY from `snl1_tables.cpp:126-129` and λ = 0.25;
+`ScratchReal::shmem_size` adds per-view alignment padding on top, so they are lower
+bounds. They reproduce the two figures in the table above:
+
+```bash
+python3 -c "
+import math
+def s(nk,nth,xfr,lam=0.25):
+  l=math.log(xfr); ifrp=int(math.log(1+lam)/l); ifrm=int(math.log(1-lam)/l)
+  nh=nk+ifrp+1-(ifrm-1); nc=nk-(ifrm-1); return 4*((nh*nth+nth)+8*(nc*nth+nth)+nk*nth)
+print(s(25,24,1.1), s(32,36,1.1), s(50,36,1.07))"   # 28608 52992 80352
+```
+
+What happens on such a grid today: `ww::snl1::snl1` checks the request against
+`TeamPolicy::scratch_size_max(0)` before launching and throws; the shim turns that into
+`WW_KOKKOS_ERR_KERNEL`, and the `PATCH.md` call site stops the run with
+`KOKKOS W3SNL1 FAILED, CODE ...` and `EXTCDE(1)` on the first source-term call. So the
+failure is loud and immediate, never a silent wrong answer. ⚠ On the H100 (Hopper allows
+up to 227 KB of shared memory per block) the WW4 grid should fit with room to spare; that
+is inferred from the hardware limit, not run.
+
+The fix for the 4090, not done: move the eight `SA*`/`DA*` work arrays, 16 128 of the
+20 088 floats (80 %) at the WW4 grid, to level-1 scratch (global memory). That changes
+the kernel's memory traffic, so it needs the L1 parity tests rerun and new timings before
+this table can say "yes".
 
 ## L1 / L2
 
