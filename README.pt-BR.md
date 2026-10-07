@@ -83,15 +83,15 @@ mais recente. Para fixar exatamente o código usado, cite o DOI da versão; o da
 
 ABNT (NBR 6023):
 
-> SANTOS, Matheus Hoffmann Fernandes. **WW3 GPU Lab**: hands-on WAVEWATCH III modelling and a
+> HOFFMANN, Matheus. **WW3 GPU Lab**: hands-on WAVEWATCH III modelling and a
 > C++/Kokkos GPU port. Versão v0.1.0. [S. l.]: Zenodo, 2026. DOI 10.5281/zenodo.23221351.
 > Disponível em: https://doi.org/10.5281/zenodo.23221351.
 
 BibTeX:
 
 ```bibtex
-@software{santos_ww3gpu,
-  author    = {Santos, Matheus Hoffmann Fernandes},
+@software{hoffmann_ww3gpu,
+  author    = {Hoffmann, Matheus},
   title     = {{WW3 GPU Lab: hands-on WAVEWATCH III modelling and a C++/Kokkos GPU port}},
   year      = {2026},
   publisher = {Zenodo},

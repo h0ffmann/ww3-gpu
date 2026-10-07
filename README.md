@@ -146,8 +146,8 @@ button (right sidebar) exports APA and BibTeX from [`CITATION.cff`](CITATION.cff
 BibTeX:
 
 ```bibtex
-@software{santos_ww3gpu,
-  author    = {Santos, Matheus Hoffmann Fernandes},
+@software{hoffmann_ww3gpu,
+  author    = {Hoffmann, Matheus},
   title     = {{WW3 GPU Lab: hands-on WAVEWATCH III modelling and a C++/Kokkos GPU port}},
   year      = {2026},
   publisher = {Zenodo},
@@ -159,12 +159,12 @@ BibTeX:
 
 APA:
 
-> Santos, M. H. F. (2026). *WW3 GPU Lab: hands-on WAVEWATCH III modelling and a C++/Kokkos GPU port*
+> Hoffmann, M. (2026). *WW3 GPU Lab: hands-on WAVEWATCH III modelling and a C++/Kokkos GPU port*
 > (Version v0.1.0) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.23221351
 
 ABNT (NBR 6023):
 
-> SANTOS, Matheus Hoffmann Fernandes. **WW3 GPU Lab**: hands-on WAVEWATCH III modelling and a
+> HOFFMANN, Matheus. **WW3 GPU Lab**: hands-on WAVEWATCH III modelling and a
 > C++/Kokkos GPU port. Versão v0.1.0. [S. l.]: Zenodo, 2026. DOI 10.5281/zenodo.23221351.
 > Disponível em: https://doi.org/10.5281/zenodo.23221351.
 
@@ -176,8 +176,8 @@ references:
   - type: software
     title: "WW3 GPU Lab: hands-on WAVEWATCH III modelling and a C++/Kokkos GPU port"
     authors:
-      - family-names: Santos
-        given-names: Matheus Hoffmann Fernandes
+      - family-names: Hoffmann
+        given-names: Matheus
         orcid: "https://orcid.org/0009-0009-1056-7661"
     doi: 10.5281/zenodo.23221351
     repository-code: "https://github.com/h0ffmann/ww3-gpu"
