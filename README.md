@@ -70,7 +70,8 @@ For coastal cases, add SWAN with `just swan`.
 
 WAVEWATCH IV™ (WW4) exists, and WW3 is scheduled for sunset. [NOAA-EMC/WW4](https://github.com/NOAA-EMC/WW4)
 is a rewrite from scratch: a new repository with no backward compatibility, a C++ core with Rust
-alongside, and Fortran kept only for solvers. On 2026-09-11 it had 36 commits and no release.
+alongside, and Fortran kept only for solvers. On 2026-10-07 it had 39 commits, placeholders for solvers and source terms,
+no physics and no release.
 The first public release is expected in January 2027 according to the proposal's advisor ⚠ (no NOAA
 source; ON 525 said summer 2027). The plan, including the commitment to stop supporting WW3 once WW4
 matures, is in [NCEP Office Note 525](https://doi.org/10.25923/h7j3-1h25). WW3 is still worth

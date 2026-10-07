@@ -31,7 +31,7 @@ Corrections are very welcome, especially the following, in order of usefulness:
 4. **The wind direction convention in `examples/01`.** Deliberately left as an
    exercise, but a confirmed answer with the WW3 version you used is welcome.
 5. **WW4 status.** `course/14-ww4-and-the-future.md` quotes a repository snapshot from
-   2026-09-11 and a timeline from NCEP Office Note 525. That will go stale faster than
+   2026-10-07 (issue #49) and a timeline from NCEP Office Note 525. That will go stale faster than
    anything else here. Updates very welcome, with the date you checked.
 
 ## The proposal (`pubs/proposal/`)
