@@ -53,7 +53,7 @@ The manual chapter behind most switch rows is `WW3/manual/impl/switch.tex`.
 | GMD (journal) | ⚠ *Geoscientific Model Development* | Journal of Ikuyajolu et al. (2023) and Yuan et al. (2024); not the `NL3` GMD of the physics section. | [course/09-benchmark-profile-compile-run.md](../course/09-benchmark-profile-compile-run.md) |
 | WeatherNext 3 | Google DeepMind's ML weather forecast model, announced 2026-09-03 `(v)` [issue #45](https://github.com/h0ffmann/ww3-gpu/issues/45) | Predicts wind, temperature, pressure and SST in 64 ensemble members, with no wave variable; planned here as an alternative 10 m wind input to `ww3_prnc`. | [README.md](../README.md) |
 | AIFS Single Wave | ECMWF's ML wave forecast, operational since 2026-05-12 `(v)` [issue #45](https://github.com/h0ffmann/ww3-gpu/issues/45) | 0.25°, 15-day Hs, period, direction and swell partitions; the ML wave reference in the Triton benchmark. | [README.md](../README.md) |
-| marola | an open, local-first guide to the sea for Brazilian beaches (`marola-dev/marola`) `(v)` [README.md](../README.md#related-work) | Related work by the same author; its MIP-0052 plans to run a spectral wave model for its own bays on this repo's groundwork. | [README.md](../README.md#related-work) |
+| marola | an open, local-first citizen-science platform for coastal ocean data, beach forecasts and bathing-water quality (`marola-dev/marola`) `(v)` [README.md](../README.md#related-work) | Related work by the same author; its MIP-0052 plans to run a spectral wave model for its own bays on this repo's groundwork. | [README.md](../README.md#related-work) |
 
 ## Wave physics and the spectrum
 
