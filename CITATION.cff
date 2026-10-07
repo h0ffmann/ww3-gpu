@@ -16,9 +16,18 @@ repository-code: "https://github.com/h0ffmann/ww3-gpu"
 license: MIT
 keywords:
   - WAVEWATCH III
+  - WW3
   - ocean waves
+  - wind waves
   - spectral wave model
+  - wave forecasting
+  - nonlinear wave interactions
+  - Discrete Interaction Approximation
   - GPU
   - Kokkos
+  - OpenACC
+  - CUDA Fortran
   - Fortran
+  - C++
+  - performance portability
   - high-performance computing
