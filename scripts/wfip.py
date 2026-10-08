@@ -97,8 +97,8 @@ def render_index(wfips):
     for n in sorted(wfips):
         w = wfips[n]
         r = w.rows
-        effort = re.split(r"\s+—\s+|\s+-\s+", r.get("effort", ""), maxsplit=1)[0]
-        verdict = re.split(r"\s+—\s+|\s+-\s+", r.get("effort vs gain", ""), maxsplit=1)[0]
+        effort = re.split(r":\s+|\s+—\s+|\s+-\s+", r.get("effort", ""), maxsplit=1)[0]
+        verdict = re.split(r":\s+|\s+—\s+|\s+-\s+", r.get("effort vs gain", ""), maxsplit=1)[0]
         deliv = ", ".join(w.deliverables) or "none"
         rows.append(f"| {w.link()} | {w.title} | {w.status} | {r.get('created', '')} | {deliv} | "
                     f"{effort} | {verdict} | {w.dod[0]}/{w.dod[1]} | {r.get('cost so far', '—')} |")
@@ -155,7 +155,7 @@ def problems(wfips, readme_text):
             if d not in ids:
                 errs.append(f"{rel}: deliverable {d} is not in README.md's table ({', '.join(sorted(ids))})")
         if not w.deliverables and not w.rows.get("deliverable", "").lower().startswith("none"):
-            errs.append(f"{rel}: the **Deliverable** row is missing (ids, or `none — <why>`)")
+            errs.append(f"{rel}: the **Deliverable** row is missing (ids, or `none: <why>`)")
         for s in w.missing:
             errs.append(f"{rel}: missing section `{s}`")
         for b in w.blocked_by:
@@ -249,7 +249,7 @@ def main(argv=None):
     n = sub.add_parser("new")
     n.add_argument("slug")
     n.add_argument("--title", required=True)
-    n.add_argument("--deliverable", default="none — <why>")
+    n.add_argument("--deliverable", default="none: <why>")
     sub.add_parser("index")
     sub.add_parser("check")
     s = sub.add_parser("status")

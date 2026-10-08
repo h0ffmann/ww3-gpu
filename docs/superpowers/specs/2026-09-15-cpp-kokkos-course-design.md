@@ -1,4 +1,4 @@
-# ww3-gpu: C++/Kokkos course and code — design
+# ww3-gpu: C++/Kokkos course and code: design
 
 **Date:** 2026-09-15
 **Status:** approved decisions from the owner; spec for the implementation plan

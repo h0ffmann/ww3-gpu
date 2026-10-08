@@ -96,3 +96,7 @@ result-*
 .specify/memory/*
 !.specify/memory/constitution.md
 .claude/skills/speckit-*/
+
+# Vale packages, fetched by `vale sync` (scripts/vale.sh)
+.vale/styles/*
+!.vale/styles/ww3gpu/

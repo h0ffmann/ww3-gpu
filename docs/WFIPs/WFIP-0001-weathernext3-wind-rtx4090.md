@@ -7,9 +7,9 @@
 | **Created** | 2026-10-08 |
 | **Deliverable** | D1, D6 |
 | **Related** | [#45](https://github.com/h0ffmann/ww3-gpu/issues/45) §3 (verification table) and the plan's §5–§6 ([`W3SDS4_TRITON_PLANO_202610.pt.md`](../W3SDS4_TRITON_PLANO_202610.pt.md)); [`examples/02-regional-real-forcing`](../../examples/02-regional-real-forcing/README.md), whose grid and namelists this reuses |
-| **Effort** | M — no kernel and no new program; one data path (Zarr → NetCDF → `ww3_prnc`), one new namelist, one verification script in shell, and the box set-up |
+| **Effort** | M: no kernel and no new program; one data path (Zarr → NetCDF → `ww3_prnc`), one new namelist, one verification script in shell, and the box set-up |
 | **Gain** | `science` (the first measured answer to "does the WeatherNext 3 wind change Hs?"); `proposal` (D1: the first configuration frozen in the repo's format, with the box named; D6: a repeatable example); `lab/dev-loop` (the RTX 4090 becomes the CUDA test machine for `just kokkos-cuda-test`) |
-| **Effort vs Gain** | do next — it needs nothing from the LabECO cases, which are the schedule's main risk (`07-methodology.md`, "Riscos"), and it exercises the whole chain from forcing to output on hardware the author owns |
+| **Effort vs Gain** | do next: it needs nothing from the LabECO cases, which are the schedule's main risk (`07-methodology.md`, "Riscos"), and it exercises the whole chain from forcing to output on hardware the author owns |
 | **Depends on** | access to WeatherNext 3 data (form, 5–7 working days `(v)` plan §5); GEBCO and GFS downloads of example 02; a working CUDA driver on the box; nothing from other WFIPs |
 | **Blocked by** | none |
 | **Risk** | the access form is refused or the Zarr v3 store cannot be read without Python, which the lab rule forbids in `examples/`; then the conversion runs outside the repo and only the NetCDF enters, as a documented step |
@@ -22,9 +22,9 @@
 | **Manually reviewed** | no |
 | **Written by** | M. Hoffmann, with an agent |
 | **Tasks** | [`WFIP-0001.tasks.md`](WFIP-0001.tasks.md) |
-| **Tests** | none — no Python or C++ changes; the checks are the commands in §7 |
+| **Tests** | none: no Python or C++ changes; the checks are the commands in §7 |
 | **Spec-kit** | [`specs/001-weathernext3-wind/spec.md`](../../specs/001-weathernext3-wind/spec.md) |
-| **Issues** | not filed — Draft |
+| **Issues** | not filed: Draft |
 
 ## 1. Summary
 
@@ -112,7 +112,7 @@ Everything is deterministic; no LLM in the loop.
 
 ## 6. Parity and physics impact
 
-None — no kernel changes. The two runs differ only in the wind file, so the `Hs` difference is the
+None: no kernel changes. The two runs differ only in the wind file, so the `Hs` difference is the
 forcing's. The CUDA timing enters `PORT_STATUS.md` only with a passed L1 on the same build
 (`AGENTS.md`, "No timing without parity").
 

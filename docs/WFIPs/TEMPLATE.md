@@ -33,11 +33,11 @@ the appendix. Every external fact carries `(v)` with the URL and date, or `⚠`.
 | **Status** | Draft / Accepted / Implemented / Rejected / Superseded by WFIP-NNNN |
 | **Author** | <the person who asked for it and owns it> |
 | **Created** | YYYY-MM-DD |
-| **Deliverable** | `D1`..`D6` from `README.md`, comma-separated, or `none — <why>` (read by `wfip.py`) |
+| **Deliverable** | `D1`..`D6` from `README.md`, comma-separated, or `none: <why>` (read by `wfip.py`) |
 | **Related** | the issue it came from, the plan section, other WFIPs |
-| **Effort** | S / M / L / XL — one clause why |
+| **Effort** | S / M / L / XL: one clause why |
 | **Gain** | `proposal` (moves a deliverable), `science` (answers a question), `lab/dev-loop`, `outreach`; one clause each |
-| **Effort vs Gain** | `do next` / `do when X lands` / `cheap win` / `expensive, defer` / `park` — one sentence why |
+| **Effort vs Gain** | `do next` / `do when X lands` / `cheap win` / `expensive, defer` / `park`: one sentence why |
 | **Depends on** | prose: other WFIPs, data access, a machine, a person's decision |
 | **Blocked by** | WFIP numbers that must merge first, comma-separated, or `none` (read by `wfip.py`) |
 | **Risk** | the one thing most likely to make this not worth it |
@@ -47,12 +47,12 @@ the appendix. Every external fact carries `(v)` with the URL and date, or `⚠`.
 
 | | |
 |---|---|
-| **Manually reviewed** | `yes — <person>, YYYY-MM-DD`, once a person has read the whole WFIP; `no` until then |
+| **Manually reviewed** | `yes: <person>, YYYY-MM-DD`, once a person has read the whole WFIP; `no` until then |
 | **Written by** | `<person>, with an agent` or `<person>, by hand` (no model names in the repo) |
-| **Tasks** | `WFIP-NNNN.tasks.md`, or `none needed — <why>` |
-| **Tests** | the named tests §7 adds, or `none — <why>` |
+| **Tasks** | `WFIP-NNNN.tasks.md`, or `none needed: <why>` |
+| **Tests** | the named tests §7 adds, or `none: <why>` |
 | **Spec-kit** | `specs/<NNN-slug>/spec.md`, or `none` |
-| **Issues** | `h0ffmann/ww3-gpu#N` per task, filed by a person once Accepted; `not filed — Draft` before that |
+| **Issues** | `h0ffmann/ww3-gpu#N` per task, filed by a person once Accepted; `not filed: Draft` before that |
 
 ## 1. Summary
 Two to four sentences: what changes, for whom, and why now.
@@ -74,7 +74,7 @@ with its reading card (the `figure` skill).
 
 ## 6. Parity and physics impact
 Does the result change the model's answer? Which L1/L2 tolerance applies, which fixture point is
-added, or "None — it does not touch a kernel".
+added, or "None: it does not touch a kernel".
 
 ## 7. Verification plan and definition of done
 The checks, each with the command that runs it. The definition of done is the checklist below;
