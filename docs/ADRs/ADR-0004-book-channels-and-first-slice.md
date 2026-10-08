@@ -43,7 +43,7 @@ GitHub proxy answers `403 Repository settings writes are not permitted through t
 
 ## Decision
 
-**The book has three channels, each produced by CI from `course/` on `main`, and the repository is
+**The book has four channels, each produced by CI from `course/` on `main`, and the repository is
 described as the book on GitHub.**
 
 1. **GitHub is the source and the first page.** The README leads with the book; the repository's
@@ -66,6 +66,12 @@ described as the book on GitHub.**
    no position on a suggested price.
 5. **A chapter is fixed in `course/`, never in a generated edition.** The `leanpub` branch and
    `pdf/` are outputs; a `⚠` is as visible on Leanpub as on GitHub, by design.
+6. **The website is the reading edition on the open web** (added 2026-10-08, issue #76).
+   `scripts/build_html.sh` builds `course/` into one page per chapter with pandoc's `chunkedhtml`
+   writer, the same reader and figure filter as the PDF, and MathML for the math, so the site
+   loads nothing from a CDN; `.github/workflows/pages.yml` builds it on every pull request that
+   touches a lesson and deploys it to <https://h0ffmann.github.io/ww3-gpu/> on every merge and
+   release. Like the `leanpub` branch, it is an output and is never edited.
 
 ## Alternatives considered
 
@@ -76,7 +82,7 @@ described as the book on GitHub.**
 | API only, from CI | Needs a Pro membership for every preview; the branch push plus webhook gives the same automation at no plan. The API path stays as an option behind a secret. |
 | Pandoc to Markua instead of a small exporter | Pandoc has a Markua writer `(v)` `pandoc --list-output-formats`, pandoc 3.1.3, 2026-10-08, but it converts one file's syntax, not the book: parts from `parts.json`, lesson links to chapter links, repository links to GitHub URLs, reading cards to asides, `Book.txt` and `Sample.txt` still need a script, and that script's five syntax conversions are smaller than a pandoc dependency in the CI job. Not rejected for later, if Markua's grammar outgrows the script. |
 | A paid Leanpub book, or a reader price above 0 | The owner asked for free; the proposal's audience includes students; the PDF is free already, so a price would only move readers. |
-| GitHub Pages or mdBook as the reading edition | Not rejected; a later WFIP task may add it. Leanpub was asked for and gives EPUB, a sample and reader notifications that Pages does not. |
+| mdBook, MkDocs or Jekyll for the website | Each adds a second Markdown dialect or a plugin set to keep green, and none applies `mermaid.lua` or `book_prep.py`; pandoc already builds the PDF and Word files from the same inputs. Jekyll, GitHub's default, renders neither the math nor the figures. Compared in issue #76. |
 
 ## Consequences
 
@@ -124,6 +130,6 @@ since each box names a state on `main` or on Leanpub that the PR cannot reach by
 - The first Leanpub preview is read: if the parts render as chapters, the exporter switches to
   `# Part #`; if Markua rejects a construct the lessons use, the fix goes in `course/`.
 - Leanpub changes its pricing, API plan or Git mode (the three `(v)` facts above carry the date).
-- A second reading edition is wanted (GitHub Pages, EPUB on the release): a WFIP-0002 task, and
-  this record is superseded if the channel set changes.
+- Another edition is wanted (EPUB on the release): a WFIP-0002 task, and this record is
+  superseded if the channel set changes again.
 - The book is sold, translated or taken by a publisher (ADR-0003, "Revisit when").
