@@ -86,12 +86,12 @@ $label_student$: $student$
 
 $email$
 
-$label_advisor$: $advisor$
-$if(coadvisor)$
+$label_advisor$: $advisor$$if(advisor_affiliation)$ ($advisor_affiliation$)$endif$
+$for(coadvisors)$
 \vspace{-0.2cm}
 
-$label_coadvisor$: $coadvisor$$if(coadvisor_affiliation)$ ($coadvisor_affiliation$)$endif$
-$endif$
+$label_coadvisor$: $coadvisors.name$$if(coadvisors.affiliation)$ ($coadvisors.affiliation$)$endif$
+$endfor$
 \end{center}
 
 $body$
@@ -114,14 +114,14 @@ $city$, $date$.
             \vspace{-.375cm}
             \centering{$advisor$ - $label_advisor$}
 
-$if(coadvisor)$
+$for(coadvisors)$
             \vspace{0.9cm}
             \hrulefill
 
             \vspace{-.375cm}
-            \centering{$coadvisor$ - $label_coadvisor$}
+            \centering{$coadvisors.name$ - $label_coadvisor$}
 
-$endif$
+$endfor$
          }
       \end{flushright}
       \vfill
