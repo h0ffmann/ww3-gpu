@@ -61,6 +61,13 @@ in pt-BR, and the wave-modelling and HPC vocabulary. It reports, it does not rew
 
 - Keep the `⚠` / `(v)` convention. Marking uncertainty honestly is the point.
 - Don't vendor WW3 source. Scripts fetch it.
+- The third-party skills under `.claude/skills/` (`humanizer`, `humanizar`, `ponytail*`) are pinned
+  in `.claude/skills/skills.lock`, and the audience paragraph each one carries is the
+  `.claude/skills/<name>.patch` the lock names, re-applied on every update. Edit the patch, not the
+  copy. `skills-vendor check` (marola-devkit's `scripts/skills_vendor.py`, run as
+  `python3 skills_vendor.py check --lock .claude/skills/skills.lock`) verifies the copies;
+  `.github/workflows/skills.yml` opens a weekly update PR, and `skills-vendor update <name>` does
+  the same by hand.
 - Run `just kokkos-test serial-debug` after touching `kokkos/`, and `bash -n` plus
   shellcheck on any shell script you touch. CI does all of these (the `kokkos` and
   `lint` jobs in `.github/workflows/ci.yml`).
