@@ -84,6 +84,11 @@
       "title": "Which implementations of W3SDS4 are timed, and when does a timing count?",
       "sha256": "07156b88b10db8cf84a838acdf6fc97e0cd04d912892aefd92d3c90b17c5f25d"
     },
+    "triton-g-doze-semanas": {
+      "file": "docs/W3SDS4_TRITON_PLANO_202610.pt.md",
+      "title": "Em que ordem o braço Triton G acontece em três meses, e onde ficam os portões?",
+      "sha256": "495db7973da6df3b008cf5c0d66027cf518e23618b8af7f8a46bf551bb3e55b1"
+    },
     "triton-port-plan": {
       "file": "docs/W3SDS4_TRITON_202610.md",
       "title": "In what order is W3SDS4 ported to Triton, and what gate does each step pass?",
