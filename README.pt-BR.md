@@ -133,4 +133,5 @@ aprendizado, sem vínculo, patrocínio ou endosso da NOAA.
 ## Como contribuir
 
 Veja [`CONTRIBUTING.md`](CONTRIBUTING.md). A contribuição mais útil é confirmar ou corrigir qualquer
-afirmação marcada com `⚠`.
+afirmação marcada com `⚠`. Agentes de código leem antes o [`AGENTS.md`](AGENTS.md): as invariantes do
+repositório, onde cada mudança entra e as checagens que a CI roda.

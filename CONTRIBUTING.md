@@ -1,5 +1,8 @@
 # Contributing
 
+`AGENTS.md` is the operative summary of this guide for coding agents (and a short one for people):
+the invariants, where a change belongs, and the gates. This file is the longer form.
+
 ## Who this repository is for
 
 The first readers of this repository are scientists: PhD researchers, postdocs and independent

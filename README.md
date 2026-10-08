@@ -224,4 +224,5 @@ and WW4.
 ## Contributing
 
 See [`CONTRIBUTING.md`](CONTRIBUTING.md). The most useful contribution is confirming or correcting
-anything marked `⚠`.
+anything marked `⚠`. Coding agents read [`AGENTS.md`](AGENTS.md) first: the repo invariants, where a
+change belongs and the gates CI runs.
