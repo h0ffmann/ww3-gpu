@@ -14,6 +14,12 @@
       "name": "Guimarães, Pedro Veras",
       "affiliation": "LabECO, Departamento de Engenharia Mecânica, Universidade Federal de Santa Catarina",
       "type": "Supervisor"
+    },
+    {
+      "name": "Violante-Carvalho, Nelson",
+      "affiliation": "Programa de Engenharia Oceânica, COPPE, Universidade Federal do Rio de Janeiro",
+      "orcid": "0000-0002-9980-971X",
+      "type": "Supervisor"
     }
   ],
   "license": "mit",
