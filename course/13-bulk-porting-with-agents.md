@@ -21,26 +21,26 @@ experts (`pubs/proposal/pt/05-justification.md` (v); details beyond that summary
 %% figure: porting-validation-ladder
 %% title: How is each translated version of a kernel checked against the one before it?
 flowchart LR
-    A[Original Fortran] -- literal translation,<br/>LLM assistant directed<br/>by the experts --> B[Reference C]
-    B -- checked against the Fortran<br/>on captured inputs --> B
-    B -- expressed in Kokkos --> C[Kokkos, serial backend]
-    C -- must be bit-identical<br/>to the C --> C
-    C -- same code --> D[Kokkos, CUDA backend]
-    D -- statistical comparison<br/>and timing on the H100 --> D
-    subgraph T[Tests per kernel]
+    A[1 · Original Fortran] -- literal translation,<br/>LLM assistant directed<br/>by the experts --> B[2 · Reference C]
+    B -- rewritten<br/>with Kokkos --> C[3 · Kokkos,<br/>serial backend]
+    C -- same source,<br/>compiled for GPU --> D[4 · Kokkos,<br/>CUDA backend]
+    B -. checked against,<br/>captured inputs .-> A
+    C -. bit-identical to .-> B
+    D -. statistical comparison,<br/>timing on the H100 .-> C
+    subgraph T[Tests every kernel must pass]
         L1[L1 · synthetic JONSWAP spectrum<br/>declared tolerances]
         L2[L2 · nearest regression case<br/>and the operational case]
     end
-    C --> T
-    D --> T
+    C -- must pass --> T
+    D -- must pass --> T
 ```
 
-<details>
+<details open>
 <summary>How to read this figure</summary>
 
 **Takeaway.** Fortran is translated into GPU-ready C++ in small steps, and each version is checked against the one before it: Kokkos serial must be bit-identical to the C, and the GPU version is compared statistically with the CPU one.
 
-**How to read.** Left to right. Each box is one version of the same routine; the label on an arrow between boxes says how the next version is made, and an arrow that loops back to its own box says how that version is checked. Both Kokkos versions also feed the L1 and L2 tests in the *Tests per kernel* group, which follows WW4's test levels.
+**How to read.** The numbered boxes are four versions of the same routine, made in that order. A solid arrow says how the next version is written; a dashed arrow points back to the version it is checked against, and its label says how strict the check is. Both Kokkos versions must also pass the L1 and L2 tests in the group on the right, which follows WW4's test levels.
 
 **Not shown.** The tolerances, declared and justified per kernel (lesson 12), and the shortcut taken for `W3SNL1`, where the C stage was skipped and Kokkos serial was compared with the Fortran fixture directly (text below).
 
@@ -94,19 +94,19 @@ flowchart TB
         C[bind C interface<br/>ISO_C_BINDING]
         K[Kokkos kernel<br/>Views in the layout of<br/>the WW3 spectral arrays]
         SW -- original path --> F
-        SW -- new path --> C --> K
+        SW -- new path --> C -- calls --> K
     end
-    K --> CPU[Serial or OpenMP backend<br/>no data copy]
-    K --> GPU[CUDA backend on the H100<br/>CPU-GPU traffic measured per step]
-    BIN --> M[WW3 regression matrix<br/>and per-field comparator<br/>run both paths without recompiling]
+    K -- runs on --> CPU[Serial or OpenMP backend<br/>no data copy]
+    K -- runs on --> GPU[CUDA backend on the H100<br/>CPU-GPU traffic measured per step]
+    M[WW3 regression matrix<br/>and per-field comparator] -. test both paths<br/>without recompiling .-> BIN
 ```
 
-<details>
+<details open>
 <summary>How to read this figure</summary>
 
 **Takeaway.** The GPU code is added next to the original Fortran, not in place of it; a switch read at run time picks which one runs, so both are tested with the same executable.
 
-**How to read.** The outer box is one compiled WW3 executable. The diamond is the run-time switch and its two labelled arrows are the two paths. Below the box, the same kernel runs on a CPU or a GPU backend, and the regression matrix at the bottom exercises both paths.
+**How to read.** The large box is one compiled WW3 executable. The diamond is the run-time switch; its two arrows are the two paths a call can take, the original Fortran or the new one through the C interface into the Kokkos kernel. Below the box, the same kernel runs on a CPU or a GPU backend. The dashed arrow is testing: the regression matrix and the comparator exercise both paths of the same executable.
 
 **Not shown.** How state moves between Fortran and the device beyond phase 1's copy in and out per call; that is the data-residency ladder in the next section.
 
@@ -169,7 +169,7 @@ flowchart TD
     E4g -- no --> LIM[Measure of the limit,<br/>recommendation not to operate on GPU]
 ```
 
-<details>
+<details open>
 <summary>How to read this figure</summary>
 
 **Takeaway.** The project tries cheap changes before expensive ones, and a change only moves on if the forecast it produces still matches the reference within the agreed tolerances and, in step 4, if it is measurably faster.
@@ -200,7 +200,7 @@ flowchart LR
     D --> OP[Operational configuration]
 ```
 
-<details>
+<details open>
 <summary>How to read this figure</summary>
 
 **Takeaway.** A rewritten piece of the model is used for real forecasts only if its results agree with the original's within the agreed tolerances and it makes the whole forecast faster on the GPU.

@@ -14,7 +14,7 @@ flowchart LR
     A --> B
 ```
 
-<details>
+<details open>
 <summary>How to read this figure</summary>
 
 **Takeaway.** A feeds B.

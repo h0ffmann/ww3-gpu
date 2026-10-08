@@ -14,7 +14,7 @@
     "kokkos-interop-one-binary": {
       "file": "course/13-bulk-porting-with-agents.md",
       "title": "How do the original Fortran routine and its Kokkos kernel coexist in one WW3 binary?",
-      "sha256": "32b314c9d9a6413852653c68f183a6bc223daa3a547546e2b4106e45744cb46c"
+      "sha256": "fa54b8e1abb117599d1601d500825219e8c4a588bc6076b63eb4b67a6ec8eb0b"
     },
     "optimisation-ladder-gates": {
       "file": "course/13-bulk-porting-with-agents.md",
@@ -24,7 +24,7 @@
     "porting-validation-ladder": {
       "file": "course/13-bulk-porting-with-agents.md",
       "title": "How is each translated version of a kernel checked against the one before it?",
-      "sha256": "b600e0fdb9c4b4123afc43db996dd709ea3c4008361a11a443da7d2d501ffcf9"
+      "sha256": "ba5270973abe196eb58116f82e323cb7ee89796364a2d92bfd21f3132e975b7c"
     },
     "proposta-cronograma": {
       "file": "pubs/proposal/mapas-mentais.pt.md",
@@ -44,17 +44,17 @@
     "proposta-interoperabilidade": {
       "file": "pubs/proposal/mapas-mentais.pt.md",
       "title": "Como a rotina original em Fortran e o kernel em Kokkos convivem em um único executável?",
-      "sha256": "761090e050a16c708177aadb62df27056fce5fed6af487af540e2aaade698ec0"
+      "sha256": "f88038f2e92c02541e0a2bb0f055da0dfb32a7c48f5f52654f2919aed26b512b"
     },
     "proposta-riscos": {
       "file": "pubs/proposal/mapas-mentais.pt.md",
       "title": "Quais são os riscos do projeto e como cada um é mitigado?",
-      "sha256": "046e513ec69351b318285651aeb55ee22ccebf66959fe4ccbd1c7cceac0c25c9"
+      "sha256": "6fe2ae76396561e76d6008ad5c53ebd767892950663393b2ebd82c0cba4fafe8"
     },
     "proposta-validacao-traducao": {
       "file": "pubs/proposal/mapas-mentais.pt.md",
       "title": "Como cada versão traduzida é verificada contra a anterior?",
-      "sha256": "b8556a95299d5774dda277a3811bc3e77e0f0f0f6d763e4d8afc740bc3f75503"
+      "sha256": "826a36a244145cc750d06b72d80d9fd90a53fd354f0ca2e36e7961f27071b36d"
     },
     "proposta-visao-geral": {
       "file": "pubs/proposal/mapas-mentais.pt.md",

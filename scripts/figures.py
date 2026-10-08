@@ -10,9 +10,10 @@ place. The harness adds three things:
 1. Two header comments as the fence's first lines, which Mermaid ignores:
        %% figure: <id>       unique, [a-z0-9-]+; names the rendered files
        %% title: <text>      the question the figure answers; the PDF caption
-2. A reading card right after the fence: a <details> block whose summary is "How to read this
-   figure" ("Como ler esta figura" in pt-BR files) and which carries the four bold labels in
-   CARD_LABELS, for readers new to the topic.
+2. A reading card right after the fence: a <details open> block (open, so the explanation shows
+   under the diagram without a click) whose summary is "How to read this figure" ("Como ler esta
+   figura" in pt-BR files) and which carries the four bold labels in CARD_LABELS, for readers new
+   to the topic.
 3. Renders in pubs/figures/mermaid/<id>.pdf (the LaTeX books) and <id>.png (Word, the gallery),
    made by a pinned mermaid-cli with a pinned font. index.json keeps each fence's sha256, so
    `check` can tell a stale render without Chromium. pubs/filters/mermaid.lua swaps each fence
@@ -102,8 +103,8 @@ def card(lines: list[str], k: int, lang: str, where: str, errors: list[str]) -> 
     summary, labels = CARD_LABELS[lang]
     while k < len(lines) and not lines[k].strip():
         k += 1
-    if k >= len(lines) or lines[k].strip() != "<details>":
-        errors.append(f"{where}: no reading card; put a <details> block right after the fence")
+    if k >= len(lines) or lines[k].strip() != "<details open>":
+        errors.append(f"{where}: no reading card; put a <details open> block right after the fence")
         return ""
     end = k
     while end < len(lines) and lines[end].strip() != "</details>":

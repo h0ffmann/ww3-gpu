@@ -34,7 +34,7 @@ renders each one with a pinned mermaid-cli and font for the PDF and Word builds
 3. **Write the reading card** right after the closing fence, in the page's language:
 
    ```
-   <details>
+   <details open>
    <summary>How to read this figure</summary>     (pt-BR: Como ler esta figura)
 
    **Takeaway.** one plain sentence, what to remember        (Em uma frase.)
@@ -45,6 +45,7 @@ renders each one with a pinned mermaid-cli and font for the PDF and Word builds
    </details>
    ```
 
+   `open` keeps the explanation visible under the diagram; a reader should never have to find it.
    Each label is its own paragraph (blank lines between). The takeaway has no jargon, not even
    *spectrum* or *kernel*. Evidence names the paragraph the figure summarises; a discrepancy you
    found between two copies or between figure and text is stated there with ⚠, not hidden.
@@ -60,6 +61,13 @@ renders each one with a pinned mermaid-cli and font for the PDF and Word builds
 
 - Rectangle: a thing or a step. Diamond: a test, written as a question. Every test labels both
   its *yes* and its *no* edge.
+- Solid arrow: makes or leads to the next thing. Dashed arrow (`-. label .->`): checks, tests or
+  compares against. Label every arrow that is not obvious from its two ends.
+- No self-loops: an arrow from a box back to itself says nothing about what it is compared with.
+  Draw the check as a dashed arrow to the thing it is checked against.
+- Number boxes that happen in order (`1 ·`, `2 ·`) so the sequence reads without the arrows.
+- Mind-map leaves say what role they play when a branch mixes kinds (`Risco 1 ·`, `Resposta:`,
+  `Causa:`); a reader cannot tell a problem from its fix by position alone.
 - One flow direction per figure (`LR` or `TD`); groups (`subgraph`) for stages.
 - Colour only through `classDef`, and never as the only carrier of meaning: the label or shape
   repeats it. The base theme is `pubs/figures/mermaid-config.json` (neutral, print-safe).

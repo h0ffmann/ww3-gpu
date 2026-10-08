@@ -39,7 +39,7 @@ mindmap
       Recomendação de operação
 ```
 
-<details>
+<details open>
 <summary>Como ler esta figura</summary>
 
 **Em uma frase.** O projeto mede quanto tempo o WW3 leva para produzir a previsão de ondas do LabECO e reduz esse tempo em quatro etapas, aceitando só as mudanças cujos resultados fiquem dentro das tolerâncias acordadas com o laboratório.
@@ -94,7 +94,7 @@ flowchart TD
     class E1g,E2g,E3g,E4g gate;
 ```
 
-<details>
+<details open>
 <summary>Como ler esta figura</summary>
 
 **Em uma frase.** As otimizações vão da mais barata (opções de compilação) à mais cara (reescrita para GPU), e cada alteração só avança se os resultados continuarem concordando com a execução de referência e, na etapa 4, se houver ganho medido.
@@ -123,7 +123,7 @@ flowchart LR
     D --> OP[Configuração operacional]
 ```
 
-<details>
+<details open>
 <summary>Como ler esta figura</summary>
 
 **Em uma frase.** Uma rotina reescrita para GPU só passa a ser usada nas previsões se seus resultados concordarem com os da original dentro das tolerâncias e se ela tornar a previsão completa mais rápida no H100.
@@ -177,7 +177,7 @@ mindmap
       Kernels testados na estrutura L1 e L2 do WW4
 ```
 
-<details>
+<details open>
 <summary>Como ler esta figura</summary>
 
 **Em uma frase.** O WW3 só informa se duas execuções são idênticas ou não, e o WW4 ainda não tem testes do modelo completo; o projeto constrói o comparador com tolerâncias e os testes por rotina que faltam.
@@ -203,19 +203,19 @@ flowchart TB
         C[Interface bind C<br/>ISO_C_BINDING]
         K[Kernel Kokkos<br/>Views com o leiaute dos<br/>vetores espectrais do WW3]
         SW -- caminho original --> F
-        SW -- caminho novo --> C --> K
+        SW -- caminho novo --> C -- chama --> K
     end
-    K --> CPU[Backend serial ou OpenMP<br/>sem cópia de dados]
-    K --> GPU[Backend CUDA no H100<br/>tráfego CPU-GPU medido por passo]
-    BIN --> M[Matriz de regressão do WW3<br/>e comparador por campo<br/>rodam os dois caminhos sem recompilar]
+    K -- roda em --> CPU[Backend serial ou OpenMP<br/>sem cópia de dados]
+    K -- roda em --> GPU[Backend CUDA no H100<br/>tráfego CPU-GPU medido por passo]
+    M[Matriz de regressão do WW3<br/>e comparador por campo] -. testam os dois caminhos<br/>sem recompilar .-> BIN
 ```
 
-<details>
+<details open>
 <summary>Como ler esta figura</summary>
 
 **Em uma frase.** O código novo em C++/Kokkos entra ao lado do Fortran original, e não no lugar dele; uma chave lida durante a execução escolhe qual dos dois roda, e os dois caminhos são testados com o mesmo executável.
 
-**Como ler.** A caixa externa é o executável do WW3. O losango é a chave de execução, e as setas rotuladas são os dois caminhos. Abaixo, o mesmo kernel roda em CPU ou em GPU, e a matriz de regressão, na base, testa os dois caminhos.
+**Como ler.** A caixa grande é um único executável do WW3. O losango é a chave de execução; suas duas setas são os caminhos que uma chamada pode seguir, o Fortran original ou o novo, pela interface em C até o kernel em Kokkos. Abaixo da caixa, o mesmo kernel roda em CPU ou em GPU. A seta tracejada é o teste: a matriz de regressão e o comparador exercitam os dois caminhos do mesmo executável.
 
 **Fora da figura.** A alternativa de manter os dados na GPU entre um passo de tempo e outro, que a proposta deixa para trabalho futuro (parágrafo *Riscos*).
 
@@ -229,26 +229,26 @@ flowchart TB
 %% figure: proposta-validacao-traducao
 %% title: Como cada versão traduzida é verificada contra a anterior?
 flowchart LR
-    A[Fortran original] -- tradução literal,<br/>assistente LLM dirigido<br/>pelos especialistas --> B[C de referência]
-    B -- verificado contra o Fortran<br/>em entradas capturadas --> B
-    B -- expressão em Kokkos --> C[Kokkos, backend serial]
-    C -- deve ser idêntico<br/>bit a bit ao C --> C
-    C -- mesmo código --> D[Kokkos, backend CUDA]
-    D -- comparação estatística<br/>e cronometragem no H100 --> D
+    A[1 · Fortran original] -- tradução literal,<br/>assistente LLM dirigido<br/>pelos especialistas --> B[2 · C de referência]
+    B -- reescrito<br/>com Kokkos --> C[3 · Kokkos,<br/>backend serial]
+    C -- mesmo código,<br/>compilado para GPU --> D[4 · Kokkos,<br/>backend CUDA]
+    B -. verificado contra,<br/>entradas capturadas .-> A
+    C -. idêntico bit a bit a .-> B
+    D -. comparação estatística,<br/>cronometragem no H100 .-> C
     subgraph T[Testes por kernel]
         L1[L1 · espectro sintético JONSWAP<br/>tolerâncias declaradas]
         L2[L2 · caso de regressão mais próximo<br/>e caso operacional]
     end
-    C --> T
-    D --> T
+    C -- precisa passar --> T
+    D -- precisa passar --> T
 ```
 
-<details>
+<details open>
 <summary>Como ler esta figura</summary>
 
 **Em uma frase.** O Fortran é traduzido para C e depois para C++/Kokkos em passos pequenos, e cada versão é verificada contra a anterior: o Kokkos serial deve ser idêntico bit a bit ao C, e a versão em GPU é comparada estatisticamente com a de CPU.
 
-**Como ler.** Da esquerda para a direita. Cada caixa é uma versão da mesma rotina; a seta entre caixas diz como a versão seguinte é feita, e a seta que volta à própria caixa diz como ela é verificada. As duas versões em Kokkos alimentam os testes L1 e L2 do quadro *Testes por kernel*, que segue a estrutura de testes do WW4.
+**Como ler.** As caixas numeradas são quatro versões da mesma rotina, feitas nessa ordem. A seta contínua diz como a versão seguinte é escrita; a seta tracejada aponta de volta para a versão contra a qual ela é verificada, e o rótulo diz o rigor da verificação. As duas versões em Kokkos também precisam passar nos testes L1 e L2 do quadro *Testes por kernel*, que segue a estrutura de testes do WW4.
 
 **Fora da figura.** As tolerâncias de cada teste e o atalho usado no `W3SNL1`, em que a etapa em C foi dispensada e o Kokkos serial foi comparado diretamente com o Fortran (`course/12-porting-a-kernel-w3snl1.md`).
 
@@ -282,7 +282,7 @@ gantt
     Primeiro lançamento do WW4 (ON 525, meados de 2027)    :milestone, w4, 2027-07-01, 0d
 ```
 
-<details>
+<details open>
 <summary>Como ler esta figura</summary>
 
 **Em uma frase.** O projeto ocupa dois períodos letivos, de outubro de 2026 a abril de 2027, com uma atividade por mês e a defesa a partir de maio de 2027.
@@ -301,28 +301,28 @@ gantt
 %% figure: proposta-riscos
 %% title: Quais são os riscos do projeto e como cada um é mitigado?
 mindmap
-  root((Riscos))
-    Divergência de resultados que passe despercebida
-      Critérios de concordância
-      Testes por rotina com entradas capturadas
-    Etapa 4 consumir o tempo das anteriores
-      Ordem fixa das etapas
-      Só reescrever rotina com custo residual medido
-    Ganho em GPU limitado pela transferência de dados
-      Estado permanece no Fortran
-      Resultado vira a medida do limite
+  root((Riscos e respostas))
+    Risco 1 · divergência de resultados que passe despercebida
+      Resposta: critérios de concordância
+      Resposta: testes por rotina com entradas capturadas
+    Risco 2 · etapa 4 consumir o tempo das anteriores
+      Resposta: ordem fixa das etapas
+      Resposta: só reescrever rotina com custo residual medido
+    Risco 3 · ganho em GPU limitado pela transferência de dados
+      Causa: estado permanece no Fortran
+      Resposta: o resultado vira a medida do limite
       Próximo passo: dados residentes na GPU
-    Atraso nos casos do LabECO ou no acesso ao H100
-      Regtest oficial como substituto provisório
-      Medições na GPU disponível, com ressalva
+    Risco 4 · atraso nos casos do LabECO ou no acesso ao H100
+      Resposta: regtest oficial como substituto provisório
+      Resposta: medições na GPU disponível, com ressalva
 ```
 
-<details>
+<details open>
 <summary>Como ler esta figura</summary>
 
 **Em uma frase.** São quatro riscos, e para cada um a proposta já define a resposta: testes contra divergências, ordem fixa das etapas, medida do limite imposto pela transferência CPU–GPU e substitutos provisórios para atrasos.
 
-**Como ler.** Cada ramo é um risco, do principal ao quarto, na ordem do texto; as folhas são as mitigações.
+**Como ler.** Cada ramo é um risco, numerado do principal ao quarto, na ordem do texto. As folhas dizem o que o projeto fará a respeito (*Resposta*); no risco 3, uma folha dá a causa e outra, o passo seguinte ao projeto.
 
 **Fora da figura.** A probabilidade e o impacto de cada risco, que o texto não quantifica.
 
