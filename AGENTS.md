@@ -33,11 +33,16 @@ looser.
 
 ## What this repository is
 
-An open lab for running WAVEWATCH III® (WW3) and for moving its expensive kernels to GPUs without
-changing the answer: a 16-lesson course, a Nix-pinned Fortran/MPI/NetCDF toolchain, a C++/Kokkos
-port of the DIA source term (`W3SNL1`) that matches the Fortran bit for bit on Serial, OpenMP and
-CUDA, benchmarks, plans, and the UFRJ/DEL project proposal co-advised at LabECO/UFSC. `README.md`
-has the study areas and their state; `README.pt-BR.md` is its Portuguese mirror, and a change in one
+A book in progress on agentic coding and agentic research, compiled from this repository, written
+around one problem: moving the expensive kernels of WAVEWATCH III® (WW3) to GPUs without changing
+the answer ([ADR-0003](docs/ADRs/ADR-0003-repository-is-a-book.md),
+[WFIP-0002](docs/WFIPs/WFIP-0002-lab-as-a-book.md)). The repository is the book's source and its
+evidence: the 16 lessons of `course/` are its chapters, built into a PDF on every merge; a
+Nix-pinned Fortran/MPI/NetCDF toolchain; a C++/Kokkos port of the DIA source term (`W3SNL1`) that
+matches the Fortran bit for bit on Serial, OpenMP and CUDA; benchmarks, plans, decisions and the
+UFRJ/DEL project proposal co-advised at LabECO/UFSC. The lab's rules below do not change because
+the repository is read as a book; a chapter that contradicts `kokkos/PORT_STATUS.md` is a bug in
+the chapter. `README.md` has the study areas and their state; `README.pt-BR.md` is its Portuguese mirror, and a change in one
 is made in the other (content must match, length need not; see `CONTRIBUTING.md`, "Ground rules").
 
 Lab code is C++, Fortran and shell. Python appears only in the publishing and repo tooling
@@ -54,7 +59,7 @@ recipe is a thin wrapper over a script in `scripts/`; `just` lists them.
 | A plan, an evaluation, a survey | `docs/` as `NAME_YYYYMM.md`, dated in the name | this file; the `(v)`/`⚠` convention; `docs/GLOSSARY.md` for every new abbreviation |
 | A non-trivial change, designed before it is built | a WFIP in `docs/WFIPs/`, numbered, tied to a proposal deliverable (D1–D6) with its definition of done in §7; a Spec Kit spec in `specs/<NNN-slug>/` when behaviour is worth specifying | [`docs/WFIPs/TEMPLATE.md`](docs/WFIPs/TEMPLATE.md), the `wfip` skill; `scripts/wfip.py check` is the gate and regenerates the index |
 | A decision that several plans or WFIPs follow (a tool, a method, a scope) | an ADR in `docs/ADRs/`, numbered, Proposed until the owner accepts it | [`docs/ADRs/README.md`](docs/ADRs/README.md); an accepted ADR is superseded, not edited |
-| A lesson, an example, an exercise | `course/`, `examples/`, `exercises/` | lessons are numbered and cross-linked; examples use `.nml`, never `.inp` |
+| A chapter (a lesson), an example, an exercise | `course/`, `examples/`, `exercises/` | lessons are numbered and cross-linked and are the book's chapters (`pubs/book/`, WFIP-0002); examples use `.nml`, never `.inp` |
 | The proposal | `pubs/proposal/pt/` (reference) and `en/` (mirror) | [The proposal](#the-proposal-hard-rule) |
 | A diagram | a Mermaid fence in the page it illustrates | [Figures](#figures-hard-rule) |
 | A skill or agent | `.claude/skills/<name>/SKILL.md`, `.claude/agents/<name>.md` | [Skills and agents](#skills-and-agents) |
@@ -92,7 +97,7 @@ Run the gates of what you changed before calling it done. CI (`.github/workflows
 | Fortran in `gpu/`, `examples/`, `exercises/` | they must compile with gfortran with directives ignored; the exercise parity test must pass |
 | a Mermaid fence or its page | `python3 scripts/figures.py check`, then `just figures` to re-render and `python3 -m unittest tests/test_figures.py` |
 | `pubs/proposal/` | `just proposal-lint`, the `revisor-proposta` review, `just proposal-review-record <parecer>`, `just proposal-review-check` |
-| `scripts/*.py` | `python3 -m unittest discover tests` |
+| `scripts/*.py` | `python3 -m unittest discover tests`; `scripts/leanpub_manuscript.py --self-test` also runs in `ci.yml` and the Leanpub workflow |
 | `bench/results/` or a table it quotes | `just results check` (`just results table` regenerates) |
 | `CITATION.cff` or `.zenodo.json` | `just codemeta` to regenerate `codemeta.json`, then `just codemeta --check` |
 | `docs/WFIPs/` or `specs/` | `just wfip check` (`scripts/wfip.py check`: index current, deliverable ids valid, every section present, DoD consistent with Status); `just wfip index` regenerates |
@@ -205,11 +210,13 @@ audience rule for its own job; a new one does too, and its YAML front matter mus
 | `wfip` | write, revise or report on a WFIP; `scripts/wfip.py` is its harness and `just specify` wires GitHub's Spec Kit (its `/speckit-*` skills are generated per clone and not tracked) |
 | `humanizar`, `humanizer` | remove AI tells from pt-BR and English prose without changing facts; third-party |
 | `ponytail`, `ponytail-review`, `ponytail-audit` | the laziest solution that works; over-engineering review and audit; third-party |
+| `sharingan` | port a skill, workflow or pattern from another repository by URL: fetch it pinned, let the licence decide vendor, adapt or rewrite, map each upstream concept to a home here; third-party (marola-devkit) |
 | `revisor-proposta` (agent) | the proposal's scientific reviewer, read-only |
 
-The third-party skills are vendored and pinned in `.claude/skills/skills.lock`, and the audience
-paragraph each carries is the `.claude/skills/<name>.patch` the lock names, re-applied on every
-update. **Edit the patch, not the copy.** `.github/workflows/skills.yml` opens a weekly update PR
+The third-party skills (`humanizar`, `humanizer`, `ponytail*`, `sharingan`) are vendored and pinned
+in `.claude/skills/skills.lock`, and the audience paragraph each carries, plus the paths `sharingan`
+re-points at this repository's homes, is the `.claude/skills/<name>.patch` the lock names,
+re-applied on every update. **Edit the patch, not the copy.** `.github/workflows/skills.yml` opens a weekly update PR
 with marola-devkit's `skills-vendor`; `skills-vendor update <name>` does it by hand.
 
 ## Commits and pull requests (hard rule)

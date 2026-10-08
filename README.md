@@ -5,20 +5,50 @@
 [![License: MIT + LGPL-3.0 kernels](https://img.shields.io/badge/license-MIT%20%2B%20LGPL--3.0%20kernels-blue)](#licensing)
 [![Leia em português](https://img.shields.io/badge/leia%20em-portugu%C3%AAs-green)](README.pt-BR.md)
 
-An open lab for running WAVEWATCH III® (WW3), NOAA's third-generation spectral wind-wave model,
-and for moving its expensive kernels to GPUs without changing the answer.
+A book in progress on agentic coding and agentic research, compiled from this repository, written
+around one problem: moving the expensive kernels of WAVEWATCH III® (WW3), NOAA's third-generation
+spectral wind-wave model, to GPUs without changing the answer.
 
-The repository holds a 16-lesson course, a Nix-pinned Fortran/MPI/NetCDF toolchain that builds
-WW3 and runs a regression test in one command, and a C++/Kokkos port of the DIA nonlinear
-interaction term (`W3SNL1`). That kernel reproduces the Fortran output bit for bit on the Serial,
-OpenMP and CUDA backends, and on an RTX 4090 it runs 1,000 sea points in 0.047 ms against 24.96 ms
-serial ([`kokkos/PORT_STATUS.md`](kokkos/PORT_STATUS.md)). The same repository is the groundwork
-for an undergraduate project at Escola Politécnica, UFRJ, co-advised at LabECO, UFSC.
+The repository is the book's source and its evidence. Its 16 lessons are the chapters, built into
+a PDF on every merge ([`pdf/ww3-lab-course.pdf`](pdf/ww3-lab-course.pdf)); the code they describe
+is next to them: a Nix-pinned Fortran/MPI/NetCDF toolchain that builds WW3 and runs a regression
+test in one command, and a C++/Kokkos port of the DIA nonlinear interaction term (`W3SNL1`),
+written with coding agents, that reproduces the Fortran output bit for bit on the Serial, OpenMP
+and CUDA backends. On an RTX 4090 it runs 1,000 sea points in 0.047 ms against 24.96 ms serial
+([`kokkos/PORT_STATUS.md`](kokkos/PORT_STATUS.md)). The plans, decisions and measurements that
+the chapters quote carry their evidence (`(v)` checked, `⚠` not) and the command that reproduces
+each number. The same repository is the groundwork for an undergraduate project at Escola
+Politécnica, UFRJ, co-advised at LabECO, UFSC.
 
 It is written first for scientists: PhD researchers, postdocs and independent researchers in
-wave modelling, numerical methods and HPC. Claims carry their evidence (`(v)` checked, `⚠` not),
-and every number comes with the command that reproduces it. If you use the repository, please
-[cite it](#how-to-cite).
+wave modelling, numerical methods and HPC. Its second reader is a researcher or engineer from
+another field who wants to run coding agents on scientific code without losing the answer. If you
+use the repository, please [cite it](#how-to-cite).
+
+## The book
+
+*Without Changing the Answer* (working title) is written in the tradition of self-published
+technical books built from a public repository, such as Sandy Maguire's *Thinking with Types* and
+Gabriel Volpe's *Practical FP in Scala* `(v)` marola's
+[MIP-0014 §4](https://github.com/marola-dev/marola/blob/main/docs/MIPs/MIP-0014-marola-book.md),
+read 2026-10-08. Its subject is a method, not only a model: how coding agents port Fortran under a
+bit-for-bit gate and a validation ladder (agentic coding), and how plans, evaluations and
+measurements are written so that an agent can be held to them, every claim with its evidence
+(agentic research). The repository is run the way the book says to run one. The rules in
+[`AGENTS.md`](AGENTS.md), the design docs in [`docs/WFIPs/`](docs/WFIPs/README.md), the decisions
+in [`docs/ADRs/`](docs/ADRs/README.md) and the research log in [`docs/log/`](docs/log/README.md)
+are chapters in waiting.
+
+[ADR-0003](docs/ADRs/ADR-0003-repository-is-a-book.md) records the decision and
+[WFIP-0002](docs/WFIPs/WFIP-0002-lab-as-a-book.md) the plan: parts and front matter, a gate that
+checks every quoted listing against the code on each build, the PDF attached to every release,
+and three new chapters on how this lab is run with agents. The shift is incremental, one pull
+request per task, and every gate is green after each. Each tagged release is an edition,
+archived with the source on Zenodo. `just book` builds it; [`pubs/README.md`](pubs/README.md)
+has the pipeline. A free Leanpub edition is fed by CI from the same chapters
+([`docs/LEANPUB_202610.md`](docs/LEANPUB_202610.md): what the workflow does and the steps only
+the author can take); [ADR-0004](docs/ADRs/ADR-0004-book-channels-and-first-slice.md) records the
+channels and what the first slice measured.
 
 ## Study areas
 
@@ -37,7 +67,7 @@ requests or issues, linked so you can follow them.
 | Triton and ML weather forcing | Does a Triton kernel of the `W3SDS4` cumulative term beat the Kokkos one, and can the Fortran call it? Does Google's WeatherNext 3 wind improve the wave forecast? | [#45](https://github.com/h0ffmann/ww3-gpu/issues/45), [`W3SDS4_TRITON_PLANO`](docs/W3SDS4_TRITON_PLANO_202610.pt.md) (pt-BR) | Planned, with ECMWF AIFS Single Wave as the ML wave reference; the port plan and the CPU/GPU balance on an H100 are written |
 | Single-H100 port | What would a full port to one H100 take? | [`KOKKOS_H100_PLAN`](docs/KOKKOS_H100_PLAN_202609.md) | Plan |
 | WW4 and SWAN | What replaces WW3, and what covers the coast? | [lesson 14](course/14-ww4-and-the-future.md), [lesson 15](course/15-swan.md) | Merged |
-| Publications | The course as a book, and the project proposal | [`pubs/`](pubs/README.md), PDFs and Word files in [`pdf/`](pdf/) | Built by CI on every merge |
+| The book and the proposal | The lessons compiled as a book, and the project proposal | [`pubs/`](pubs/README.md), PDFs and Word files in [`pdf/`](pdf/), [WFIP-0002](docs/WFIPs/WFIP-0002-lab-as-a-book.md) | Built by CI on every merge; parts, listings gate and new chapters planned |
 
 [`docs/AWESOME-WW3_202609.md`](docs/AWESOME-WW3_202609.md) is a curated, annotated link list, and
 [`docs/GLOSSARY.md`](docs/GLOSSARY.md) expands every abbreviation, switch, routine and tool name
@@ -109,7 +139,7 @@ are in [`course/09-benchmark-profile-compile-run.md`](course/09-benchmark-profil
 
 | Path | Contents |
 |---|---|
-| `course/` | 16 lessons, 00 to 15, from the wave spectrum through benchmarking, modern Fortran, Kokkos, the `W3SNL1` port and bulk porting, then WW4 and SWAN |
+| `course/` | The book's chapters: 16 lessons, 00 to 15, from the wave spectrum through benchmarking, modern Fortran, Kokkos, the `W3SNL1` port and bulk porting with agents, then WW4 and SWAN |
 | `examples/` | Self-contained runnable cases with real `.nml` input files |
 | `exercises/` | Exercises for lessons 09 to 13, with solutions, in shell, Fortran and C++ |
 | `kokkos/` | The `ww_kokkos` kernel library (`W3SNL1` ported), GoogleTest suites, and the tools `nccmp-tol`, `ww_bench_case` and `ww_fetch_analyse` |
@@ -119,8 +149,8 @@ are in [`course/09-benchmark-profile-compile-run.md`](course/09-benchmark-profil
 | `scripts/` | Get, build and run WW3 and SWAN; stage upstream regression tests; release |
 | `switches/` | Annotated switch files (WW3's compile-time feature selection) |
 | `env/` | conda environment and Dockerfile |
-| `docs/` | Plans, evaluations, the link list and the glossary |
-| `pubs/` | The course book and the UFRJ/DEL project proposal; built files land in `pdf/` |
+| `docs/` | Plans, evaluations, decisions (`ADRs/`), design docs (`WFIPs/`), the research log, the link list and the glossary |
+| `pubs/` | The book's build (`book/`) and the UFRJ/DEL project proposal; built files land in `pdf/` |
 | `nix-config/` | Submodule (sparse, `labs/pratico` only): the pinned toolchain |
 | `WW3/` | Submodule: the [h0ffmann/WW3](https://github.com/h0ffmann/WW3) fork of NOAA-EMC/WW3 |
 | `WW4/` | Submodule: the [h0ffmann/WW4](https://github.com/h0ffmann/WW4) fork of [NOAA-EMC/WW4](https://github.com/NOAA-EMC/WW4), for reading and comparing against WW3; not fetched by CI |
@@ -144,19 +174,20 @@ too long on a free runner.
 
 Cite the concept DOI [10.5281/zenodo.23221351](https://doi.org/10.5281/zenodo.23221351) for the
 project as a whole. It always resolves to the latest release. To pin the exact code you ran, cite
-that release's own DOI instead; v0.1.0 is
-[10.5281/zenodo.23221352](https://doi.org/10.5281/zenodo.23221352). GitHub's **Cite this repository**
-button (right sidebar) exports APA and BibTeX from [`CITATION.cff`](CITATION.cff).
+that release's own DOI and title instead; v0.1.0 is
+[10.5281/zenodo.23221352](https://doi.org/10.5281/zenodo.23221352), under the title that release
+carried. The title below is the one `CITATION.cff` carries from the next release on. GitHub's
+**Cite this repository** button (right sidebar) exports APA and BibTeX from
+[`CITATION.cff`](CITATION.cff).
 
 BibTeX:
 
 ```bibtex
 @software{hoffmann_ww3gpu,
   author    = {Hoffmann, Matheus},
-  title     = {{WW3 GPU Lab: hands-on WAVEWATCH III modelling and a C++/Kokkos GPU port}},
+  title     = {{WW3 GPU Lab: agentic coding and agentic research on a bit-for-bit GPU port of WAVEWATCH III}},
   year      = {2026},
   publisher = {Zenodo},
-  version   = {v0.1.0},
   doi       = {10.5281/zenodo.23221351},
   url       = {https://github.com/h0ffmann/ww3-gpu}
 }
@@ -164,13 +195,13 @@ BibTeX:
 
 APA:
 
-> Hoffmann, M. (2026). *WW3 GPU Lab: hands-on WAVEWATCH III modelling and a C++/Kokkos GPU port*
-> (Version v0.1.0) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.23221351
+> Hoffmann, M. (2026). *WW3 GPU Lab: agentic coding and agentic research on a bit-for-bit GPU
+> port of WAVEWATCH III* [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.23221351
 
 ABNT (NBR 6023):
 
-> HOFFMANN, Matheus. **WW3 GPU Lab**: hands-on WAVEWATCH III modelling and a
-> C++/Kokkos GPU port. Versão v0.1.0. [S. l.]: Zenodo, 2026. DOI 10.5281/zenodo.23221351.
+> HOFFMANN, Matheus. **WW3 GPU Lab**: agentic coding and agentic research on a bit-for-bit GPU
+> port of WAVEWATCH III. [S. l.]: Zenodo, 2026. DOI 10.5281/zenodo.23221351.
 > Disponível em: https://doi.org/10.5281/zenodo.23221351.
 
 A downstream project can also declare the dependency in its own `CITATION.cff`, which is how
@@ -179,7 +210,7 @@ A downstream project can also declare the dependency in its own `CITATION.cff`, 
 ```yaml
 references:
   - type: software
-    title: "WW3 GPU Lab: hands-on WAVEWATCH III modelling and a C++/Kokkos GPU port"
+    title: "WW3 GPU Lab: agentic coding and agentic research on a bit-for-bit GPU port of WAVEWATCH III"
     authors:
       - family-names: Hoffmann
         given-names: Matheus
@@ -229,4 +260,6 @@ and WW4.
 
 See [`CONTRIBUTING.md`](CONTRIBUTING.md). The most useful contribution is confirming or correcting
 anything marked `⚠`. Coding agents read [`AGENTS.md`](AGENTS.md) first: the repo invariants, where a
-change belongs and the gates CI runs.
+change belongs and the gates CI runs. A pattern or skill from another repository comes in through
+the [`sharingan`](.claude/skills/sharingan/SKILL.md) skill, which pins it, reads its licence and
+maps it to this repository's homes before anything is written.

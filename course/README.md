@@ -1,8 +1,12 @@
 # The course
 
-Sixteen lessons, in order. The first half is WW3 as a user runs it; the second half is the
-proposal's optimisation ladder, from a benchmark to a Kokkos kernel. A weekend for the
-first half if you run everything; the second half takes as long as the port you are doing.
+Sixteen lessons, in order, and the chapters of the book the repository compiles into
+(*Without Changing the Answer*, working title; [`pubs/README.md`](../pubs/README.md)). The first
+half is WW3 as a user runs it; the second half is the proposal's optimisation ladder, from a
+benchmark to a Kokkos kernel, and the agents that climb it. A weekend for the first half if you run
+everything; the second half takes as long as the port you are doing. The parts the book groups
+them in, and the three chapters still to write on agentic coding and agentic research, are in
+[WFIP-0002](../docs/WFIPs/WFIP-0002-lab-as-a-book.md) §5.2.
 
 | | Lesson | You'll be able to |
 |---|---|---|

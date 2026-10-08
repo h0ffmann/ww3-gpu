@@ -225,6 +225,10 @@ book style="abnt":
 book-docx:
     nix develop "{{justfile_directory()}}" --command scripts/build_docx.sh book
 
+# The book as a Leanpub manuscript (Markua) -> build/leanpub/manuscript; CI pushes it to the `leanpub` branch.
+leanpub *args:
+    python3 scripts/leanpub_manuscript.py {{args}}
+
 # Proposal as a Word document for review -> build/proposal_<lang>.docx (no DEL cover page).
 proposal-docx lang="pt":
     nix develop "{{justfile_directory()}}" --command scripts/build_docx.sh proposal {{lang}}

@@ -294,6 +294,9 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 
 | Term | Expansion | What it is | Where it appears |
 |---|---|---|---|
+| agentic coding / agentic research | the two subjects of the book this repository compiles into `(v)` [docs/ADRs/ADR-0003-repository-is-a-book.md](ADRs/ADR-0003-repository-is-a-book.md) | *Agentic coding*: coding agents write and port code under gates a person set (here the bit-for-bit L1/L2 ladder, `AGENTS_KOKKOS` §1.5); *agentic research*: agents write plans, evaluations and measurements that carry `(v)`/`⚠` and the command for every number, so they can be held to them. Neither term has a standard definition ⚠; this repo uses them as defined here. | [README.md](../README.md), [docs/WFIPs/WFIP-0002-lab-as-a-book.md](WFIPs/WFIP-0002-lab-as-a-book.md) |
+| Leanpub / Markua | the self-publishing platform (free to read when the minimum price is 0; a one-time fee per new book) and its Markdown dialect `(v)` [docs/LEANPUB_202610.md](LEANPUB_202610.md), 2026-10-08 | The book's free edition: `scripts/leanpub_manuscript.py` exports `course/*.md` as Markua into the `leanpub` branch, which the Leanpub book reads in its Git and GitHub writing mode; `leanpub.yml` does it on each merge. | [pubs/README.md](../pubs/README.md), [docs/WFIPs/WFIP-0002-lab-as-a-book.md](WFIPs/WFIP-0002-lab-as-a-book.md) |
+| `sharingan` | the skill that ports a skill, workflow or pattern from another repository by URL, vendored from marola-devkit (MIT) `(v)` [.claude/skills/sharingan/SKILL.md](../.claude/skills/sharingan/SKILL.md) | Fetches the unit at a pinned commit, lets the licence decide vendor, adapt or rewrite, maps every upstream concept to a home here (WFIP, ADR, `AGENTS.md`, a skill) and writes the `skills.lock` entry and the `.patch`. Named after the copying eye of the manga *Naruto*. | [AGENTS.md](../AGENTS.md), [CONTRIBUTING.md](../CONTRIBUTING.md) |
 | Spec Kit / `specify` | GitHub's spec-driven development toolkit and its CLI, `specify` 1.1.2 `(v)` [github.com/github/spec-kit](https://github.com/github/spec-kit), 2026-10-08 | `just specify init` generates `.specify/` and the `/speckit-*` skills per clone (not tracked); `.specify/memory/constitution.md` restates `AGENTS.md`; a spec lives in `specs/<NNN-slug>/spec.md` and is named in its WFIP. | [CONTRIBUTING.md](../CONTRIBUTING.md), [.claude/skills/wfip/SKILL.md](../.claude/skills/wfip/SKILL.md) |
 | Vale / `vale-ai-tells` | a prose linter (3.15.2) and its style package of AI-writing tells (v1.37.0) `(v)` [github.com/errata-ai/vale](https://github.com/errata-ai/vale), [github.com/tbhb/vale-ai-tells](https://github.com/tbhb/vale-ai-tells), 2026-10-08 | `just vale` is the CI gate on the English Markdown (the em dash and the never-right tells, `.vale.ini`); `just vale --report` lists the judgement rules (`.vale-report.ini`). | [CONTRIBUTING.md](../CONTRIBUTING.md), [scripts/vale.sh](../scripts/vale.sh) |
 | MPI | Message Passing Interface `(v)` `WW3/manual/impl/switch.tex` | Distributed-memory parallelism; Open MPI 5.0.10 is pinned, and Fortran owns `MPI_Init`. | [course/09-benchmark-profile-compile-run.md](../course/09-benchmark-profile-compile-run.md), [docs/AGENTS_KOKKOS_202609.md](AGENTS_KOKKOS_202609.md) |
@@ -401,6 +404,10 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | AGENTS_KOKKOS | [docs/AGENTS_KOKKOS_202609.md](AGENTS_KOKKOS_202609.md), "Operating coding agents on a phased WW3 → modern C++ / Kokkos port", written to be dropped in as `AGENTS.md` `(v)` | The rules (§1), ranked port list (§2), interop contract and residency ladder (§3) lessons 11–13 cite by section. | [course/13-bulk-porting-with-agents.md](../course/13-bulk-porting-with-agents.md) |
 | KOKKOS_H100_PLAN | [docs/KOKKOS_H100_PLAN_202609.md](KOKKOS_H100_PLAN_202609.md), the single-H100 port plan with the full `model/src` repository map `(v)` | Source of the "239 preprocessor guards in `w3srcemd.F90`" count and the Kokkos-vs-SYCL decision. | [course/10-modern-fortran-refactoring.md](../course/10-modern-fortran-refactoring.md) |
 | ADR-0001 | [docs/ADRs/ADR-0001-proof-language.md](ADRs/ADR-0001-proof-language.md), the decision record on whether the GPU port adopts a proof language `(v)` | No: bit-for-bit claims are settled by exhaustive sweeps, GIMPLE diffs and SMT `QF_FP` queries; it covers the Kokkos, Triton and WeatherNext 3 scenarios. ADRs are indexed in [docs/ADRs/README.md](ADRs/README.md). | [docs/BITWISE_PROOF_202610.md](BITWISE_PROOF_202610.md) |
+| ADR-0002 | Architecture Decision Record 0002, port order is measured wall time `(v)` [docs/ADRs/ADR-0002-port-order-wall-time.md](ADRs/ADR-0002-port-order-wall-time.md) | Routines are ported most expensive first, by the committed profile; Accepted. | [AGENTS.md](../AGENTS.md) |
+| ADR-0003 | Architecture Decision Record 0003, the repository is a book `(v)` [docs/ADRs/ADR-0003-repository-is-a-book.md](ADRs/ADR-0003-repository-is-a-book.md) | The repository's public form is a book in progress on agentic coding and agentic research; the lab's rules do not change; Proposed. | [README.md](../README.md) |
+| ADR-0004 | Architecture Decision Record 0004, the book's channels `(v)` [docs/ADRs/ADR-0004-book-channels-and-first-slice.md](ADRs/ADR-0004-book-channels-and-first-slice.md) | GitHub as source and first page, the PDF per release on Zenodo, a free Leanpub edition generated by CI on the `leanpub` branch; ends with the measured results of the repositioning PR; Proposed. | [docs/LEANPUB_202610.md](LEANPUB_202610.md) |
+| WFIP-0002 | the WFIP that builds the book `(v)` [docs/WFIPs/WFIP-0002-lab-as-a-book.md](WFIPs/WFIP-0002-lab-as-a-book.md) | Parts and front matter, `scripts/check_listings.py`, the PDF on each release, three new chapters; translated from marola's MIP-0014. | [docs/WFIPs/README.md](WFIPs/README.md) |
 | BITWISE_PROOF | [docs/BITWISE_PROOF_202610.md](BITWISE_PROOF_202610.md), the plan to prove the Fortran → C → C++/Kokkos translation bit for bit, rung by rung, with one page per proof tool under [docs/proof/](proof/README.md) `(v)` | Exhaustive sweeps, GIMPLE diffs and SMT queries now; ESBMC, Alive2 and TLA+ later; interactive provers not for this project ([ADR-0001](ADRs/ADR-0001-proof-language.md)). Its pilot is `proof/snl1_cons/`. | [kokkos/PORT_STATUS.md](../kokkos/PORT_STATUS.md), [course/12-porting-a-kernel-w3snl1.md](../course/12-porting-a-kernel-w3snl1.md) |
 | `proof/` | `snl1_cons/` (section 1 of `W3SNL1`, Fortran against the port on all 2^32 inputs of `KDMEAN`, `run.sh`) and `smt/` (two SMT-LIB queries over IEEE-754 from sections 3 and 4) `(v)` [docs/BITWISE_PROOF_202610.md](BITWISE_PROOF_202610.md) §4 | The runnable half of the proof plan: gfortran and g++ only, no Kokkos. | [docs/proof/README.md](proof/README.md) |
 | AWESOME-WW3 | [docs/AWESOME-WW3_202609.md](AWESOME-WW3_202609.md), the curated link list `(v)` | Where every third-party tool named in the course is catalogued. | [README.md](../README.md) |
@@ -448,7 +455,7 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | `WW3/` submodule / `just src-*` | the `h0ffmann/WW3` fork of NOAA-EMC/WW3 pinned at one revision, with `src-init`, `src-up`, `src-sync`, `src-pr` recipes `(v)` [docs/TOOLCHAIN.md](TOOLCHAIN.md), [justfile](../justfile) | Where the `PATCH.md` fork branch would live; nothing in this repo modifies it. | [course/01-build.md](../course/01-build.md) |
 | `nix-config/` submodule / `just submodule-*` | the sparse checkout of `h0ffmann/nix-config` (only `labs/pratico`) and its pin-management recipes `(v)` [docs/TOOLCHAIN.md](TOOLCHAIN.md) | `just submodule-init` after a fresh clone. | [course/01-build.md](../course/01-build.md) |
 | `pubs/` | the course book and the UFRJ/DEL proposal (`proposal/en/` source, `proposal/pt/` hand-revised reference, `mapas-mentais.pt.md`, `refs.bib`, `template.tex`) `(v)` [pubs/README.md](../pubs/README.md) | PDFs land in `pdf/` on `main`. | [pubs/README.md](../pubs/README.md) |
-| course book | `course/*.md` assembled by `scripts/book_prep.py` into one PDF `(v)` [justfile](../justfile) | `just book [abnt|ieee]`. | [README.md](../README.md) |
+| course book / the book / *Without Changing the Answer* | `course/*.md` assembled by `scripts/book_prep.py` into one PDF `(v)` [justfile](../justfile); *Without Changing the Answer* is its working title `(v)` [pubs/book/defaults.yaml](../pubs/book/defaults.yaml) | `just book [abnt|ieee]`. The repository's public form since ADR-0003: a book in progress on agentic coding and agentic research, whose parts, listings gate and new chapters WFIP-0002 plans. | [README.md](../README.md), [pubs/README.md](../pubs/README.md) |
 
 ## Citation and licensing
 
@@ -474,6 +481,12 @@ Every term above, alphabetically, with the section it lives in.
 - ADA89: [HPC and software](#hpc-and-software)
 - ADA89 / HOPPER90: [HPC and software](#hpc-and-software)
 - ADR-0001: [This repository's own names](#this-repositorys-own-names)
+- ADR-0002: [This repository's own names](#this-repositorys-own-names)
+- ADR-0003: [This repository's own names](#this-repositorys-own-names)
+- ADR-0004: [This repository's own names](#this-repositorys-own-names)
+- agentic coding / agentic research: [HPC and software](#hpc-and-software)
+- agentic coding: [HPC and software](#hpc-and-software)
+- agentic research: [HPC and software](#hpc-and-software)
 - AGENTS_KOKKOS: [This repository's own names](#this-repositorys-own-names)
 - AIFS Single Wave: [Models, projects and institutions](#models-projects-and-institutions)
 - Amdahl: [HPC and software](#hpc-and-software)
@@ -757,6 +770,7 @@ Every term above, alphabetically, with the section it lives in.
 - KOKKOS_LAMBDA: [HPC and software](#hpc-and-software)
 - KOKKOS_LAMBDA / KOKKOS_INLINE_FUNCTION: [HPC and software](#hpc-and-software)
 - KOKKOS_SNL1: [This repository's own names](#this-repositorys-own-names)
+- Leanpub / Markua: [HPC and software](#hpc-and-software)
 - L1: [HPC and software](#hpc-and-software)
 - L1 / L2 / L3 / L4: [HPC and software](#hpc-and-software)
 - `L1_test_intro`: [This repository's own names](#this-repositorys-own-names)
@@ -999,6 +1013,7 @@ Every term above, alphabetically, with the section it lives in.
 - Sbot/Sbt: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - ScopeGuard: [HPC and software](#hpc-and-software)
 - ScopeGuard / `Kokkos::initialize` / `finalize` / `push_finalize_hook`: [HPC and software](#hpc-and-software)
+- `sharingan`: [HPC and software](#hpc-and-software)
 - Spec Kit / `specify`: [HPC and software](#hpc-and-software)
 - spike / SPIKE-NNN: [This repository's own names](#this-repositorys-own-names)
 - SCOTCH: [WW3 switches](#ww3-switches)
@@ -1028,8 +1043,11 @@ Every term above, alphabetically, with the section it lives in.
 - shuffle: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - shuffle / card deck: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - Sice: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
+- the book / *Without Changing the Answer*: [This repository's own names](#this-repositorys-own-names)
 - Triton / Triton C / Triton G: [HPC and software](#hpc-and-software)
 - WeatherNext 3: [Models, projects and institutions](#models-projects-and-institutions)
+- WFIP-0002: [This repository's own names](#this-repositorys-own-names)
+- Without Changing the Answer: [This repository's own names](#this-repositorys-own-names)
 - Zenodo: [Citation and licensing](#citation-and-licensing)
 - σ (SIG): [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - Sin: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)

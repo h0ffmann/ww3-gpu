@@ -18,7 +18,7 @@ this file as plain text must open `AGENTS.md` itself. `CONTRIBUTING.md` is the l
   on the files you changed; `just proposal-review` does the same from a terminal in plan mode. It
   reports; you fix; it does not rewrite.
 - **Skills are invoked by name** (`/eli5 <topic>`, `/ww4-status`, `figure`, `release`, `humanizar`,
-  `humanizer`, `ponytail*`); each one's `SKILL.md` restates the audience rule for its job, and the
+  `humanizer`, `ponytail*`, `/sharingan <url>`); each one's `SKILL.md` restates the audience rule for its job, and the
   vendored ones are edited through their `.patch`, never in the copy.
 - **Attribution**: the harness appends `Co-Authored-By` and a `Claude-Session` link to commits and a
   "Generated with" line to PR bodies. They stay in the trailer block and the PR footer; never put a
