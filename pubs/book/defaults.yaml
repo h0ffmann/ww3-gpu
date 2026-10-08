@@ -11,10 +11,10 @@ filters:
   - pubs/filters/mermaid.lua
   - pubs/book/filters/symbols.lua
 metadata:
-  title: "WW Lab"
-  subtitle: "A self-paced course on WW3, NOAA's third-generation spectral wave model, from the wave spectrum to GPUs, WW4 and SWAN"
+  title: "Without Changing the Answer"
+  subtitle: "Agentic coding and agentic research on a GPU port of WAVEWATCH III. A book in progress, compiled from github.com/h0ffmann/ww3-gpu: from the wave spectrum to GPUs, WW4 and SWAN"
   author: "Matheus Hoffmann"
-  date: "2026-09"
+  date: "2026-10"
   lang: en-US
   documentclass: book
   classoption: [a4paper, 11pt, openany]

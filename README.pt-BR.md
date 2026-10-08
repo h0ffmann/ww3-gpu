@@ -5,21 +5,49 @@
 [![Licença: MIT + kernels LGPL-3.0](https://img.shields.io/badge/licen%C3%A7a-MIT%20%2B%20kernels%20LGPL--3.0-blue)](README.md#licensing)
 [![Read in English](https://img.shields.io/badge/read%20in-English-green)](README.md)
 
-Um laboratório aberto para rodar o WAVEWATCH III® (WW3), o modelo espectral de ondas de terceira
-geração da NOAA, e para levar os trechos mais caros dele para a GPU sem mudar a resposta.
+Um livro em construção sobre programação com agentes (*agentic coding*) e pesquisa com agentes
+(*agentic research*), compilado a partir deste repositório e escrito em torno de um problema: levar
+os trechos mais caros do WAVEWATCH III® (WW3), o modelo espectral de ondas de terceira geração da
+NOAA, para a GPU sem mudar a resposta.
 
-O repositório reúne um curso de 16 lições, um toolchain Fortran/MPI/NetCDF fixado com Nix que
-compila o WW3 e roda um teste de regressão com um comando só, e um port para C++/Kokkos do termo
-de interações não lineares DIA (`W3SNL1`). Esse kernel reproduz a saída do Fortran bit a bit nos
-backends Serial, OpenMP e CUDA. Numa RTX 4090, ele processa 1.000 pontos de mar em 0,047 ms, contra
-24,96 ms no serial ([`kokkos/PORT_STATUS.md`](kokkos/PORT_STATUS.md)). O mesmo repositório é a base
-de um projeto de graduação na Escola Politécnica da UFRJ, com coorientação no LabECO da UFSC.
+O repositório é a fonte do livro e a sua evidência. As 16 lições são os capítulos, gerados em PDF
+a cada merge ([`pdf/ww3-lab-course.pdf`](pdf/ww3-lab-course.pdf)); o código que elas descrevem
+está ao lado: um toolchain Fortran/MPI/NetCDF fixado com Nix que compila o WW3 e roda um teste de
+regressão com um comando só, e um port para C++/Kokkos do termo de interações não lineares DIA
+(`W3SNL1`), escrito com agentes de código, que reproduz a saída do Fortran bit a bit nos backends
+Serial, OpenMP e CUDA. Numa RTX 4090, ele processa 1.000 pontos de mar em 0,047 ms, contra 24,96 ms
+no serial ([`kokkos/PORT_STATUS.md`](kokkos/PORT_STATUS.md)). Os planos, as decisões e as medições
+que os capítulos citam trazem a evidência (`(v)` conferido, `⚠` não conferido) e o comando que
+reproduz cada número. O mesmo repositório é a base de um projeto de graduação na Escola
+Politécnica da UFRJ, com coorientação no LabECO da UFSC.
 
 O público principal são cientistas: doutores, pós-doutorandos e pesquisadores independentes em
-modelagem de ondas, métodos numéricos e HPC. Cada afirmação traz a evidência (`(v)` conferido, `⚠`
-não conferido), e cada número vem com o comando que o reproduz. O material técnico (lições,
-documentação, código) está em inglês; esta página resume o projeto em português. Se o repositório
-for útil no seu trabalho, [cite-o](#como-citar).
+modelagem de ondas, métodos numéricos e HPC. O segundo leitor é o pesquisador ou engenheiro de
+outra área que quer usar agentes de código em software científico sem perder a resposta. O
+material técnico (lições, documentação, código) está em inglês; esta página resume o projeto em
+português. Se o repositório for útil no seu trabalho, [cite-o](#como-citar).
+
+## O livro
+
+*Without Changing the Answer* (título provisório) segue a tradição dos livros técnicos
+autopublicados a partir de um repositório público, como *Thinking with Types*, de Sandy Maguire,
+e *Practical FP in Scala*, de Gabriel Volpe `(v)`
+[MIP-0014 §4](https://github.com/marola-dev/marola/blob/main/docs/MIPs/MIP-0014-marola-book.md)
+do marola, lida em 2026-10-08. O assunto é um método, não só um modelo: como agentes de código
+portam Fortran sob um critério bit a bit e uma escada de validação (programação com agentes), e
+como planos, avaliações e medições são escritos de modo que um agente possa ser cobrado por eles,
+cada afirmação com a sua evidência (pesquisa com agentes). O repositório é conduzido do jeito que o
+livro diz que se conduz um, então as regras em [`AGENTS.md`](AGENTS.md), os documentos de desenho
+em [`docs/WFIPs/`](docs/WFIPs/README.md), as decisões em [`docs/ADRs/`](docs/ADRs/README.md) e o
+diário de pesquisa em [`docs/log/`](docs/log/README.md) são capítulos à espera.
+
+A [ADR-0003](docs/ADRs/ADR-0003-repository-is-a-book.md) registra a decisão e a
+[WFIP-0002](docs/WFIPs/WFIP-0002-lab-as-a-book.md) o plano: partes e páginas iniciais, uma
+verificação que confere cada listagem citada contra o código a cada build, o PDF anexado a cada
+versão e três capítulos novos sobre como este laboratório é conduzido com agentes. A mudança é
+incremental, um pull request por tarefa, e todas as checagens passam depois de cada um. Cada
+versão etiquetada é uma edição, arquivada com o código no Zenodo. `just book` gera o livro;
+[`pubs/README.md`](pubs/README.md) descreve a cadeia.
 
 ## Frentes de estudo
 
@@ -38,7 +66,7 @@ request ou issue aberta, com link para acompanhar.
 | Triton e vento de ML | Um kernel Triton do termo cumulativo do `W3SDS4` supera o do Kokkos, e o Fortran consegue chamá-lo? O vento do WeatherNext 3, do Google, melhora a previsão de ondas? | [#45](https://github.com/h0ffmann/ww3-gpu/issues/45), [`W3SDS4_TRITON_PLANO`](docs/W3SDS4_TRITON_PLANO_202610.pt.md) | Planejado, com o AIFS Single Wave do ECMWF como referência de ondas por ML; o plano de port e o peso entre CPU e GPU num H100 estão escritos |
 | Port para uma H100 | O que exigiria um port completo para uma única H100? | [`KOKKOS_H100_PLAN`](docs/KOKKOS_H100_PLAN_202609.md) | Plano |
 | WW4 e SWAN | O que substitui o WW3, e o que cobre a costa? | [lição 14](course/14-ww4-and-the-future.md), [lição 15](course/15-swan.md) | Integrado |
-| Publicações | O curso em livro e a proposta do projeto | [`pubs/`](pubs/README.md), PDFs e arquivos Word em [`pdf/`](pdf/) | Gerados pelo CI a cada merge |
+| O livro e a proposta | As lições compiladas em livro e a proposta do projeto | [`pubs/`](pubs/README.md), PDFs e arquivos Word em [`pdf/`](pdf/), [WFIP-0002](docs/WFIPs/WFIP-0002-lab-as-a-book.md) | Gerados pelo CI a cada merge; partes, verificação de listagens e capítulos novos planejados |
 
 A proposta do projeto de graduação está em português em [`pubs/proposal/pt/`](pubs/proposal/pt/),
 com PDF em [`pdf/proposal_pt.pdf`](pdf/proposal_pt.pdf). [`docs/GLOSSARY.md`](docs/GLOSSARY.md)
@@ -80,13 +108,14 @@ experimentos estão na [lição 09](course/09-benchmark-profile-compile-run.md).
 
 Para citar o projeto como um todo, use o DOI conceitual
 [10.5281/zenodo.23221351](https://doi.org/10.5281/zenodo.23221351), que sempre aponta para a versão
-mais recente. Para fixar exatamente o código usado, cite o DOI da versão; o da v0.1.0 é
-[10.5281/zenodo.23221352](https://doi.org/10.5281/zenodo.23221352).
+mais recente. Para fixar exatamente o código usado, cite o DOI e o título da versão; o da v0.1.0 é
+[10.5281/zenodo.23221352](https://doi.org/10.5281/zenodo.23221352), com o título que aquela versão
+tinha. O título abaixo é o que o `CITATION.cff` passa a ter a partir da próxima versão.
 
 ABNT (NBR 6023):
 
-> HOFFMANN, Matheus. **WW3 GPU Lab**: hands-on WAVEWATCH III modelling and a
-> C++/Kokkos GPU port. Versão v0.1.0. [S. l.]: Zenodo, 2026. DOI 10.5281/zenodo.23221351.
+> HOFFMANN, Matheus. **WW3 GPU Lab**: agentic coding and agentic research on a bit-for-bit GPU
+> port of WAVEWATCH III. [S. l.]: Zenodo, 2026. DOI 10.5281/zenodo.23221351.
 > Disponível em: https://doi.org/10.5281/zenodo.23221351.
 
 BibTeX:
@@ -94,10 +123,9 @@ BibTeX:
 ```bibtex
 @software{hoffmann_ww3gpu,
   author    = {Hoffmann, Matheus},
-  title     = {{WW3 GPU Lab: hands-on WAVEWATCH III modelling and a C++/Kokkos GPU port}},
+  title     = {{WW3 GPU Lab: agentic coding and agentic research on a bit-for-bit GPU port of WAVEWATCH III}},
   year      = {2026},
   publisher = {Zenodo},
-  version   = {v0.1.0},
   doi       = {10.5281/zenodo.23221351},
   url       = {https://github.com/h0ffmann/ww3-gpu}
 }
@@ -138,4 +166,6 @@ aprendizado, sem vínculo, patrocínio ou endosso da NOAA.
 
 Veja [`CONTRIBUTING.md`](CONTRIBUTING.md). A contribuição mais útil é confirmar ou corrigir qualquer
 afirmação marcada com `⚠`. Agentes de código leem antes o [`AGENTS.md`](AGENTS.md): as invariantes do
-repositório, onde cada mudança entra e as checagens que a CI roda.
+repositório, onde cada mudança entra e as checagens que a CI roda. Um padrão ou uma skill de outro
+repositório entra pela skill [`sharingan`](.claude/skills/sharingan/SKILL.md), que fixa o commit,
+lê a licença e mapeia cada conceito para o lugar dele aqui antes de escrever qualquer coisa.

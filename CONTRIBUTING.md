@@ -8,6 +8,11 @@ the invariants, where a change belongs, and the gates. This file is the longer f
 The first readers of this repository are scientists: PhD researchers, postdocs and independent
 researchers working on ocean wave modelling, numerical methods or HPC. Every document, skill, agent
 and piece of metadata here is written for them, unless a section below names a different reader.
+The repository is read as a book in progress on agentic coding and agentic research
+([ADR-0003](docs/ADRs/ADR-0003-repository-is-a-book.md)), which adds a second reader without
+lowering the bar: a researcher or engineer from another field who wants to run coding agents on
+scientific code without losing the answer. A chapter is wrong if a wave modeller reading over the
+shoulder finds a mistake in it.
 
 - Write for a specialist. Do not gloss the action balance equation or what a source term is; give
   the equation, the routine and `file:line`, the source, and the measured number with its unit,
@@ -101,10 +106,13 @@ A mistake in a figure is as welcome as one in the text: the gallery links an iss
 
 - Keep the `⚠` / `(v)` convention. Marking uncertainty honestly is the point.
 - Don't vendor WW3 source. Scripts fetch it.
-- The third-party skills under `.claude/skills/` (`humanizer`, `humanizar`, `ponytail*`) are pinned
-  in `.claude/skills/skills.lock`, and the audience paragraph each one carries is the
+- The third-party skills under `.claude/skills/` (`humanizer`, `humanizar`, `ponytail*`, `sharingan`) are pinned
+  in `.claude/skills/skills.lock`, and the audience paragraph each one carries (for `sharingan`,
+  also the paths that point at this repository's homes instead of marola's) is the
   `.claude/skills/<name>.patch` the lock names, re-applied on every update. Edit the patch, not the
-  copy. `skills-vendor check` (marola-devkit's `scripts/skills_vendor.py`, run as
+  copy. `sharingan` is the skill that does this for a new pattern: given a URL it fetches the unit
+  pinned, reads the licence, maps each upstream concept to a home here and writes the lock entry
+  and the patch. `skills-vendor check` (marola-devkit's `scripts/skills_vendor.py`, run as
   `python3 skills_vendor.py check --lock .claude/skills/skills.lock`) verifies the copies;
   `.github/workflows/skills.yml` opens a weekly update PR, and `skills-vendor update <name>` does
   the same by hand.

@@ -1,9 +1,18 @@
 # Publications: markdown to PDF and Word
 
-Two documents are built from the markdown in this repository: the course, as a book, and the
-UFRJ/DEL project proposal, in English and Portuguese. CI builds them on every merge to `main` and
-commits the results to [`pdf/`](../pdf/). The directory keeps that name for the sake of existing
-links, though it also holds `.docx` files.
+Two documents are built from the markdown in this repository: the book, *Without Changing the
+Answer* (working title), whose chapters are the lessons in `course/`, and the UFRJ/DEL project
+proposal, in English and Portuguese. CI builds them on every merge to `main` and commits the
+results to [`pdf/`](../pdf/). The directory keeps that name for the sake of existing links, though
+it also holds `.docx` files.
+
+The book is the repository's public form ([ADR-0003](../docs/ADRs/ADR-0003-repository-is-a-book.md)):
+a book in progress on agentic coding and agentic research, written around moving WW3's kernels to
+GPUs without changing the answer. [WFIP-0002](../docs/WFIPs/WFIP-0002-lab-as-a-book.md) is the plan
+that turns the lessons into parts, adds the chapters on how this lab is run with agents, checks
+every quoted listing against the code on each build, and attaches the PDF to every release. Until
+its tasks land, `pdf/ww3-lab-course.pdf` is the sixteen lessons under the new title, one chapter
+each.
 
 The toolchain (pandoc, TeX Live, Python) comes from
 [`nix-config/labs/publisher`](https://github.com/h0ffmann/nix-config/tree/main/labs/publisher). The

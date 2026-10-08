@@ -1,0 +1,213 @@
+--- a/sharingan/SKILL.md
++++ b/sharingan/SKILL.md
+@@ -1,12 +1,28 @@
+ ---
+ name: sharingan
+-description: Port a skill, workflow or pattern from another repository into marola, given its URL — fetch the whole unit, check its licence, map every upstream concept to what marola or Claude Code already has, then vendor, adapt or rewrite it in marola's shape with evals. Use when the user pastes a GitHub/raw URL and says "port this", "copy this skill", "bring this pattern in", "do what that repo does", "/sharingan <url>" or "/skill-copy <url>". Not for writing a skill from nothing (skill-creator) or installing a plugin as-is.
++description: >-
++  Port a skill, workflow or pattern from another repository into ww3-gpu, given its URL: fetch
++  the whole unit, check its licence, map every upstream concept to what this repository or
++  Claude Code already has, then vendor, adapt or rewrite it in this repository's shape with
++  evals. Use when the user pastes a GitHub/raw URL and says "port this", "copy this skill",
++  "bring this pattern in", "do what that repo does", "adopt this skill", "/sharingan <url>" or
++  "/skill-copy <url>". Not for writing a skill from nothing (skill-creator) or installing a
++  plugin as-is.
+ argument-hint: <url> [name]
+-model: claude-opus-5-5
+ effort: xhigh
+ ---
+ 
+-# sharingan — copy a pattern, land it as marola's
++**Audience in this repository.** ww3-gpu is written first for scientists: PhD and independent
++researchers in wave modelling and HPC (see `CONTRIBUTING.md`, "Who this repository is for"). A
++skill ported here restates that rule for its own job, keeps the `(v)`/`⚠` evidence marks and the
++`Tested:`/`Cost:` trailers, and carries no model name into the repository (`CLAUDE.md`,
++"Attribution"). Vendored copies are pinned in `.claude/skills/skills.lock` and edited only through
++their `.claude/skills/<name>.patch` (`CONTRIBUTING.md`, "Ground rules").
++
++# sharingan: copy a pattern, land it as this repository's
++
++Pattern from marola-dev/marola-devkit (`plugins/marola-devkit/skills/sharingan`, MIT; vendored
++with the local edits in `.claude/skills/sharingan.patch`).
+ 
+ Target: $ARGUMENTS
+ 
+@@ -20,8 +36,8 @@
+ 1. **Fetch the whole unit, pinned.** A GitHub blob URL becomes
+    `https://raw.githubusercontent.com/<owner>/<repo>/<ref>/<path>`. List the siblings with
+    `gh api repos/<owner>/<repo>/contents/<dir>?ref=<ref>` (or `curl` on `api.github.com` when
+-   `gh` has no login — the jail never does) and download all of them — `evals/`, `scripts/`,
+-   `references/` — into the scratchpad. Pin the commit: `.../commits/<ref>` → `.sha`. Read every
++   `gh` has no login, as in a cloud session) and download all of them, `evals/`, `scripts/`,
++   `references/`, into the scratchpad. Pin the commit: `.../commits/<ref>` → `.sha`. Read every
+    file in full; a script not read is not ported.
+ 
+ 2. **Licence decides what is allowed.** `.../repos/<owner>/<repo>` → `.license.spdx_id`, plus
+@@ -33,58 +49,70 @@
+    | none, `NOASSERTION` | the idea only: write from scratch, no sentence copied, credit the URL as inspiration |
+    | GPL, AGPL, anything unclear | stop and ask |
+ 
+-3. **Map before writing.** One row per concept upstream introduces: *upstream concept → marola's
+-   home → port / point / drop*. Look, in this order:
+-   - **Claude Code itself** — `claude --continue`/`--resume`, compaction, auto-memory, `/rename`,
++3. **Map before writing.** One row per concept upstream introduces: *upstream concept → home
++   here → port / point / drop*. Look, in this order:
++   - **Claude Code itself**: `claude --continue`/`--resume`, compaction, auto-memory, `/rename`,
+      hooks, permissions, plugins, `enabledPlugins`.
+-   - **marola's own homes** — MIPs (decisions: an ADR here *is* a MIP), `AGENTS.md` and
+-     `.claude/rules/` (practices), `docs/MIPs/MIP-NNNN.tasks.md` and the GitHub project (tasks),
+-     `docs/*.md`, the justfile.
+-   - **Existing skills** — `.claude/skills/`, `docs/3-Working-on-the-repo/AGENT-SKILLS.md`, installed plugins.
++   - **This repository's own homes** (`AGENTS.md`, "Where a change belongs"): a WFIP in
++     `docs/WFIPs/` (a design with its definition of done), an ADR in `docs/ADRs/` (a decision),
++     `AGENTS.md` and `CONTRIBUTING.md` (practices), `docs/WFIPs/WFIP-NNNN.tasks.md` (tasks),
++     `docs/log/` (what was tried), `bench/results/` (numbers), `docs/*_YYYYMM.md` (plans), the
++     justfile and `scripts/`.
++   - **Existing skills**: `.claude/skills/`, the table in `AGENTS.md`, "Skills and agents",
++     `.claude/skills/skills.lock`, installed plugins.
+ 
+    Every row "point" or "drop" → stop and tell the user no skill is the right port.
+ 
+-4. **Choose vendor, adapt, or from scratch — and say so before writing.** Vendor only when the
++4. **Choose vendor, adapt, or from scratch, and say so before writing.** Vendor only when the
+    licence allows it and the map is almost all "port". Rewrite from scratch when more than about a
+    third of the rows were re-pointed or dropped: an adaptation that keeps someone else's structure
+    reads right and behaves wrong. This is the one checkpoint with the user.
+ 
+-5. **Write it as marola's.**
++5. **Write it as this repository's.**
+    - `.claude/skills/<name>/SKILL.md`, frontmatter like its neighbours: `name`, then a
+      `description` that says what it does, "Use when …" with phrases people actually type, and
+-     "Not for …" naming the neighbour skill it could be confused with.
+-   - Upstream's paths, user names and tools become marola's: `just` recipes, `nix develop`,
+-     `${CLAUDE_PROJECT_DIR}`, an env var with a default for anything machine-specific. Say what
+-     the ai-jail cannot see (`~/.config/gh`, most of `$HOME`).
+-   - `AGENTS.md` wins every conflict: comment restraint, the commit trailers, no secrets, the
+-     cloud cost gate, phase discipline.
+-   - Anything upstream does "proactively" becomes an offer that waits for a yes (`AGENTS.md`,
+-     "Before implementing a feature"). Nothing writes outside the repo without one.
++     "Not for …" naming the neighbour skill it could be confused with. The front matter must
++     parse (`python3 .claude/hooks/check_agent_frontmatter.py`); no `model:` key, since no model
++     name enters the repository.
++   - Upstream's paths, user names and tools become this repository's: `just` recipes,
++     `nix develop`, `${CLAUDE_PROJECT_DIR}`, an env var with a default for anything
++     machine-specific. Say what a cloud session cannot see (`~/.config/gh`, a GPU, `$WW3` and the
++     NOAA data bundle).
++   - `AGENTS.md` wins every conflict: the audience and evidence rule, WW3 read-only, translate
++     don't improve, no timing without parity, the `Tested:`/`Cost:` trailers.
++   - Anything upstream does "proactively" becomes an offer that waits for a yes (`AGENTS.md`: an
++     idea with no issue is not work yet). Nothing writes outside the repo without one.
++   - A vendored skill gets a lock entry (`skills-vendor init <name> --upstream o/r --path DIR
++     --lock .claude/skills/skills.lock`) and its edits as `.claude/skills/<name>.patch`, named in
++     `local_edits`; `skills-vendor update <name>` re-applies it and must succeed before the PR.
+    - A credit line under the title: `Pattern from <owner>/<repo>@<sha7> (<licence>; vendored |
+      adapted | rewritten).`
+    - Under ~150 lines; long reference material in a sibling file the skill reads on demand.
+ 
+-6. **Evals.** Carry upstream's evals across, rewritten for marola — its project names, paths and
+-   what "done" means here. None upstream: an output case per main mode, plus ~6 should-trigger /
++6. **Evals.** Carry upstream's evals across, rewritten for this repository, its paths and what
++   "done" means here. None upstream: an output case per main mode, plus ~6 should-trigger /
+    ~6 should-not queries where the negatives are near misses for neighbour skills.
+    Output cases in `evals/evals.json`, trigger queries in `evals/trigger-evals.json`, both in
+-   skill-creator's formats (`docs/3-Working-on-the-repo/AGENT-SKILLS.md` §2.3).
++   skill-creator's formats.
+ 
+ 7. **Verify, then report what happened.**
+    - `python3 "$(find ~/.claude/plugins -path '*skill-creator/scripts/quick_validate.py' | head -1)" .claude/skills/<name>`,
+-     — it knows only the portable spec's keys, so `model`/`effort`/`argument-hint`/
+-     `disable-model-invocation` warnings are expected; anything else is a real error.
++     when the plugin is installed; it knows only the portable spec's keys, so `effort`/
++     `argument-hint`/`disable-model-invocation` warnings are expected; anything else is a real
++     error.
+    - One eval case run by a subagent with the skill; the same case without it as a baseline when
+-     cheap (`writing-skills`). Report what the agent did, not what the skill says it should do.
+-   - A row in `docs/3-Working-on-the-repo/AGENT-SKILLS.md` §1 carrying the provenance; the
+-     consuming repo's quality gate (`quality-other` in a repo that splits `quality` that way,
+-     `just quality` here).
++     cheap. Report what the agent did, not what the skill says it should do.
++   - A row in `AGENTS.md`, "Skills and agents", with the provenance; a glossary row in
++     `docs/GLOSSARY.md`; the gates: `python3 .claude/hooks/check_agent_frontmatter.py` and
++     `skills-vendor check --lock .claude/skills/skills.lock`.
+    - Commit per `AGENTS.md`; a PR only when asked (`just pr`).
+ 
+ ## Red flags
+ 
+ - Upstream's section headings or file layout kept because they were there.
+-- A file per upstream concept (`tasks.md`, `adrs/`, `practices.md`) where marola already has a home.
++- A file per upstream concept (`tasks.md`, `adrs/`, `practices.md`) where this repository already
++  has a home.
+ - Upstream's user name, home directory or tool path surviving the port.
+ - A "proactively do X" with no confirmation step.
+ - A mode that re-implements a Claude Code built-in.
++- A model name in the front matter or the prose.
+--- a/sharingan/evals/evals.json
++++ b/sharingan/evals/evals.json
+@@ -4,22 +4,23 @@
+     {
+       "id": 0,
+       "prompt": "/sharingan https://github.com/edvmorango/nix-home-config/blob/main/programs/claude/skills/obsidian-vault/SKILL.md",
+-      "expected_output": "Fetches SKILL.md and evals/ at a pinned sha, finds no licence and so rewrites from scratch, maps ADRs to MIPs, practices to AGENTS.md/rules, tasks to MIP tasks and resume to claude --continue/--resume, states the from-scratch choice before writing, and produces .claude/skills/obsidian-vault/ with a vault path from an env var and adapted evals.",
++      "expected_output": "Fetches SKILL.md and evals/ at a pinned sha, finds no licence and so rewrites from scratch, maps ADRs to docs/ADRs/, practices to AGENTS.md and CONTRIBUTING.md, tasks to docs/WFIPs/WFIP-NNNN.tasks.md and resume to claude --continue/--resume, states the from-scratch choice before writing, and produces .claude/skills/obsidian-vault/ with a vault path from an env var and adapted evals.",
+       "files": [],
+       "assertions": [
+         {"id": "pins_sha", "description": "The credit line names a commit sha, not just a branch"},
+         {"id": "license_none_rewrite", "description": "Reports the repo has no licence and chooses rewrite, copying no upstream sentence verbatim"},
+-        {"id": "concept_map", "description": "Shows an upstream-concept -> marola-home table before writing"},
+-        {"id": "adr_to_mip", "description": "No adrs/ directory is created; decisions route to the mip skill"},
++        {"id": "concept_map", "description": "Shows an upstream-concept -> home-here table before writing"},
++        {"id": "adr_to_adrs", "description": "No second decisions directory is created; decisions route to docs/ADRs/ and designs to a WFIP"},
+         {"id": "continue_first", "description": "Resume points to claude --continue/--resume before any vault handoff"},
+         {"id": "no_upstream_path", "description": "~/edvmorango does not appear in the ported skill"},
+-        {"id": "evals_ported", "description": "evals/evals.json exists with cases rewritten for marola"}
++        {"id": "evals_ported", "description": "evals/evals.json exists with cases rewritten for ww3-gpu"},
++        {"id": "no_model_name", "description": "The front matter carries no model: key"}
+       ]
+     },
+     {
+       "id": 1,
+-      "prompt": "port this: https://github.com/blader/humanizer — we want it in marola",
+-      "expected_output": "Detects an MIT licence, finds no existing marola home for the concept, and vendors it verbatim with LICENSE beside it, adding a docs/3-Working-on-the-repo/AGENT-SKILLS.md row with provenance; or reports that .claude/skills/humanizer already exists and stops.",
++      "prompt": "port this: https://github.com/blader/humanizer — we want it in ww3-gpu",
++      "expected_output": "Detects an MIT licence, finds no existing home for the concept, and vendors it verbatim with LICENSE beside it, a skills.lock entry and an audience patch, adding an AGENTS.md 'Skills and agents' row with provenance; or reports that .claude/skills/humanizer already exists and is pinned in skills.lock, and stops.",
+       "files": [],
+       "assertions": [
+         {"id": "detects_existing", "description": "Notices .claude/skills/humanizer is already vendored and does not create a duplicate"},
+@@ -29,10 +30,10 @@
+     {
+       "id": 2,
+       "prompt": "copy the 'git commit helper' skill from https://github.com/example/dotfiles/tree/main/skills/commit — it writes commit messages with a Generated-by footer",
+-      "expected_output": "Maps the concept to AGENTS.md's commit-trailer rule and .claude/settings.json attribution, finds the footer conflicts with AGENTS.md, and either drops that part or reports that no skill is the right port.",
++      "expected_output": "Maps the concept to AGENTS.md's commit rule (Tested: and Cost: trailers, the harness's own attribution lines, no model name in the repository), finds the footer conflicts with it, and either drops that part or reports that no skill is the right port.",
+       "files": [],
+       "assertions": [
+-        {"id": "agents_wins", "description": "Does not keep a Generated-by footer; cites AGENTS.md's three-trailer rule"},
++        {"id": "agents_wins", "description": "Does not keep a Generated-by footer; cites AGENTS.md's Tested:/Cost: trailer rule"},
+         {"id": "no_blind_write", "description": "Does not write a SKILL.md before stating vendor/adapt/rewrite/none"}
+       ]
+     }
+--- a/sharingan/evals/trigger-evals.json
++++ b/sharingan/evals/trigger-evals.json
+@@ -1,15 +1,15 @@
+ [
+-  {"query": "port this skill into marola: https://github.com/foo/bar/blob/main/skills/x/SKILL.md", "should_trigger": true},
++  {"query": "port this skill into ww3-gpu: https://github.com/foo/bar/blob/main/skills/x/SKILL.md", "should_trigger": true},
+   {"query": "my friend has a nice obsidian skill in his dotfiles repo, can we bring it here? <url>", "should_trigger": true},
+   {"query": "copy the release-notes workflow from https://github.com/some/repo and adapt it to our justfile", "should_trigger": true},
+-  {"query": "do what this repo does for PR descriptions, but for marola: <url>", "should_trigger": true},
++  {"query": "do what this repo does for PR descriptions, but for ww3-gpu: <url>", "should_trigger": true},
+   {"query": "/skill-copy https://github.com/a/b/tree/main/skills/c", "should_trigger": true},
+-  {"query": "vendor the ponytail skill from DietrichGebert's repo", "should_trigger": true},
++  {"query": "adopt the sharingan skill from marola-devkit", "should_trigger": true},
+ 
+-  {"query": "write a new skill for re-recording the golden fixtures", "should_trigger": false},
+-  {"query": "run the evals for corpus-doc and tune its description", "should_trigger": false},
++  {"query": "write a new skill for re-recording the W3SNL1 fixtures", "should_trigger": false},
++  {"query": "run the evals for eli5 and tune its description", "should_trigger": false},
+   {"query": "install the code-review plugin", "should_trigger": false},
+-  {"query": "write a MIP for adopting Obsidian as a notes backend", "should_trigger": false},
++  {"query": "write a WFIP for a pt-BR edition of the book", "should_trigger": false},
+   {"query": "explain how the skills in .claude/skills get loaded", "should_trigger": false},
+-  {"query": "add a knowledge doc about rip currents sourced from NOAA's site", "should_trigger": false}
++  {"query": "add a lesson on the ST6 source-term package sourced from the WW3 manual", "should_trigger": false}
+ ]

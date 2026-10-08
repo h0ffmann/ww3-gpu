@@ -108,6 +108,29 @@
         "LICENSE": "715d483338cea4365f0d91a27799cf61226d6bcf",
         "SKILL.md": "e137a855bd87119a4517895a1000a59b0999e1b8"
       }
+    },
+    "sharingan": {
+      "upstream": "marola-dev/marola-devkit",
+      "path": "plugins/marola-devkit/skills/sharingan",
+      "commit": "ae64f4f39726de6934f15eaa1be3f8812999da60",
+      "files": {
+        "LICENSE": "c0c439ca1fde442052c22ef68e380f8dbd5a18c8",
+        "SKILL.md": "7bf1eab127415a96f62866a67604b0cbd94e0ded",
+        "evals/evals.json": "706400dff29293870e7a0aeb5c12efa9528099d2",
+        "evals/trigger-evals.json": "3db109d3e2a6409d8df09068779f6005d921df95"
+      },
+      "license": "MIT",
+      "local_edits": "sharingan.patch",
+      "hold": null,
+      "paths": {
+        "LICENSE": "LICENSE"
+      },
+      "upstream_files": {
+        "LICENSE": "c0c439ca1fde442052c22ef68e380f8dbd5a18c8",
+        "SKILL.md": "5bfb6114bc76e741ac27ffaffd504307351cf9f1",
+        "evals/evals.json": "5c0ce251dcd618ed9c528077103ad6d07e28a53d",
+        "evals/trigger-evals.json": "bfa038a2e95c161b119d6b44aea1fcc470bd774b"
+      }
     }
   }
 }

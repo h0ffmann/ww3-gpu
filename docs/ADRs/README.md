@@ -15,3 +15,4 @@ Superseded by ADR-NNNN. An accepted ADR is not edited; a new one supersedes it. 
 |---|---|---|---|
 | [ADR-0001](ADR-0001-proof-language.md) | No proof language for the GPU port; bit-for-bit claims are settled by exhaustive sweeps, GIMPLE diffs and SMT `QF_FP` queries (Kokkos, Triton and WeatherNext 3 scenarios) | Proposed | 2026-10-08 |
 | [ADR-0002](ADR-0002-port-order-wall-time.md) | Routines are ported in descending order of measured wall time in the operational case, most expensive first; effort, GPU fit and ease of validation do not change the order | Accepted | 2026-10-08 |
+| [ADR-0003](ADR-0003-repository-is-a-book.md) | The repository is a book in progress, compiled from the repository, on agentic coding and agentic research applied to a bit-for-bit GPU port of WW3; the lessons are its chapters, releases are its editions, the lab's rules do not change | Proposed | 2026-10-08 |
