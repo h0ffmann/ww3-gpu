@@ -190,26 +190,26 @@ None of these reads Fortran or C++, except Rocq via CompCert's C semantics. Each
 properties of a model someone writes, so for this port each is a specification tool at best. One
 line each here; the evidence is in the linked files.
 
-- **Rocq + Flocq** — the reference IEEE-754 formalisation; CompCert's C semantics are built on it
+- **Rocq + Flocq**: the reference IEEE-754 formalisation; CompCert's C semantics are built on it
   `(v, CompCert flocq/ directory)`; VST verifies C programs through CompCert's Clight ⚠; VCFloat2 bounds round-off
   automatically `(v, CPP 2024)`. The only route that reaches real C, at research-group cost.
   [`proof/rocq-flocq.md`](proof/rocq-flocq.md)
-- **Isabelle/HOL** — AFP `IEEE_Floating_Point` (with FMA, code generation) `(v)`; no C++ front end.
+- **Isabelle/HOL**: AFP `IEEE_Floating_Point` (with FMA, code generation) `(v)`; no C++ front end.
   [`proof/isabelle-hol.md`](proof/isabelle-hol.md)
-- **Lean 4** — core now gives `Float` and `Float32` a bit-level logical model for the basic operations, with
+- **Lean 4**: core now gives `Float` and `Float32` a bit-level logical model for the basic operations, with
   `exp` still `opaque` `(v, lean4 master Init/Data/Float)`; FloatSpec ports Flocq and proves the
   native operators correctly rounded `(v, its README)`. Promising, young.
   [`proof/lean4.md`](proof/lean4.md)
-- **Agda, Idris 2** — floats are postulated primitives (`postulate Float`, `primFloatExp` `(v)`);
+- **Agda, Idris 2**: floats are postulated primitives (`postulate Float`, `primFloatExp` `(v)`);
   good for writing the reference semantics of a kernel as a total function, nothing about bits.
   [`proof/agda-idris2.md`](proof/agda-idris2.md)
-- **Liquid Haskell + QuickCheck** — Liquid Haskell reads `Double` as an SMT real `(v, tech
+- **Liquid Haskell + QuickCheck**: Liquid Haskell reads `Double` as an SMT real `(v, tech
   report)`, so its float proofs are unsound for bits; QuickCheck-style generation is the useful
   part, and GoogleTest can already do it. [`proof/haskell-liquid-quickcheck.md`](proof/haskell-liquid-quickcheck.md)
-- **TLA+** — model checks concurrent protocols over integers and finite sets ⚠ (TLC has no floats);
+- **TLA+**: model checks concurrent protocols over integers and finite sets ⚠ (TLC has no floats);
   the right tool for phase 3's halo exchange and for a deterministic-reduction schedule, not
   for arithmetic. [`proof/tla-plus.md`](proof/tla-plus.md)
-- **F\*** — dropped: its verified-code story (HACL\*, Low\*) is integer and cryptographic ⚠, with
+- **F\***: dropped, its verified-code story (HACL\*, Low\*) is integer and cryptographic ⚠, with
   nothing for floating point.
 
 ## 7. Decision table
