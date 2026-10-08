@@ -294,6 +294,7 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 
 | Term | Expansion | What it is | Where it appears |
 |---|---|---|---|
+| Spec Kit / `specify` | GitHub's spec-driven development toolkit and its CLI, `specify` 1.1.2 `(v)` [github.com/github/spec-kit](https://github.com/github/spec-kit), 2026-10-08 | `just specify init` generates `.specify/` and the `/speckit-*` skills per clone (not tracked); `.specify/memory/constitution.md` restates `AGENTS.md`; a spec lives in `specs/<NNN-slug>/spec.md` and is named in its WFIP. | [CONTRIBUTING.md](../CONTRIBUTING.md), [.claude/skills/wfip/SKILL.md](../.claude/skills/wfip/SKILL.md) |
 | MPI | Message Passing Interface `(v)` `WW3/manual/impl/switch.tex` | Distributed-memory parallelism; Open MPI 5.0.10 is pinned, and Fortran owns `MPI_Init`. | [course/09-benchmark-profile-compile-run.md](../course/09-benchmark-profile-compile-run.md), [docs/AGENTS_KOKKOS_202609.md](AGENTS_KOKKOS_202609.md) |
 | OpenMP | ⚠ Open Multi-Processing (`\omp` = "OpenMP" in `WW3/manual/defs.tex`) | Directive-based threading (`OMPG`/`OMPH`) and one of the Kokkos backends; `OMP_NUM_THREADS`/`OMP_PROC_BIND` must be set explicitly. | [course/09-benchmark-profile-compile-run.md](../course/09-benchmark-profile-compile-run.md), [kokkos/CMakeLists.txt](../kokkos/CMakeLists.txt) |
 | OpenACC | ⚠ Open Accelerators directive standard | `!$acc` offload directives, used by Ikuyajolu et al. (2023) on `W3SRCEMD` and by `gpu/00_hello_acc.f90`; the contrast that motivates Kokkos. | [course/10-modern-fortran-refactoring.md](../course/10-modern-fortran-refactoring.md), [gpu/README.md](../gpu/README.md) |
@@ -376,6 +377,9 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 
 | Term | Expansion | What it is | Where it appears |
 |---|---|---|---|
+| WFIP | Wave Forecaster Improvement Proposal `(v)` [docs/WFIPs/TEMPLATE.md](WFIPs/TEMPLATE.md) | This repo's numbered design doc for a non-trivial change, on the shape of marola's MIP, tied to a proposal deliverable (D1–D6) and carrying its definition of done in §7; `scripts/wfip.py` builds the index. | [docs/WFIPs/README.md](WFIPs/README.md), [AGENTS.md](../AGENTS.md) |
+| D1–D6 | the six deliverables of the proposal, one per specific objective `(v)` [docs/WFIPs/README.md](WFIPs/README.md#proposal-deliverables) | The ids a WFIP's **Deliverable** row names; `wfip.py check` rejects any other. | [pubs/proposal/pt/06-objective.md](../pubs/proposal/pt/06-objective.md) |
+| DoD | definition of done `(v)` [docs/WFIPs/TEMPLATE.md](WFIPs/TEMPLATE.md) | The `- [ ]` checklist of a WFIP's §7, one verifiable outcome with its command per box; the index shows the ticked share. | [docs/WFIPs/README.md](WFIPs/README.md) |
 | ww3-gpu (ex ww-lab) | the GitHub repository `h0ffmann/ww3-gpu` `(v)` [README.md](../README.md); the `justfile` header and `flake.nix` still say `ww3-lab` / `ww-lab` `(v)` | This repo: course, examples, switches, the Kokkos port and the proposal, cited as `[@wwlab]` in the proposal. | [pubs/proposal/pt/07-methodology.md](../pubs/proposal/pt/07-methodology.md) |
 | `(v)` / `⚠` | "verified against a source I actually fetched" / "I could not verify this; check it before trusting it" `(v)` [README.md](../README.md) | The repo-wide honesty convention, used in this glossary too; confirming a `⚠` is the most useful contribution. | [CONTRIBUTING.md](../CONTRIBUTING.md) |
 | the ladder (*escada*) | the proposal's four steps in fixed order: 1 compile options, 2 run configuration, 3 modern Fortran, 4 C++/Kokkos kernels for the GPU `(v)` [pubs/proposal/pt/04-scope.md](../pubs/proposal/pt/04-scope.md) ("Quatro etapas … executadas nesta ordem"), *rungs* in the English proposal `(v)` [pubs/proposal/en/06-objective.md](../pubs/proposal/en/06-objective.md) | Lessons 09–13 follow it; each rung is gated by parity with the one before. | [course/README.md](../course/README.md), [course/13-bulk-porting-with-agents.md](../course/13-bulk-porting-with-agents.md) |
@@ -538,6 +542,7 @@ Every term above, alphabetically, with the section it lives in.
 - D (VS: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - data-residency ladder: [This repository's own names](#this-repositorys-own-names)
 - DataCite: [Citation and licensing](#citation-and-licensing)
+- D1–D6: [This repository's own names](#this-repositorys-own-names)
 - DB0: [WW3 switches](#ww3-switches)
 - DB0 / DB1: [WW3 switches](#ww3-switches)
 - DB1: [WW3 switches](#ww3-switches)
@@ -557,6 +562,7 @@ Every term above, alphabetically, with the section it lives in.
 - DMIN: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - `do concurrent`: [HPC and software](#hpc-and-software)
 - do not improve": [This repository's own names](#this-repositorys-own-names)
+- DoD: [This repository's own names](#this-repositorys-own-names)
 - DOE: [Models, projects and institutions](#models-projects-and-institutions)
 - DOE / E3SM / ORNL / LANL: [Models, projects and institutions](#models-projects-and-institutions)
 - DOI / concept DOI: [Citation and licensing](#citation-and-licensing)
@@ -976,6 +982,7 @@ Every term above, alphabetically, with the section it lives in.
 - Sbot/Sbt: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - ScopeGuard: [HPC and software](#hpc-and-software)
 - ScopeGuard / `Kokkos::initialize` / `finalize` / `push_finalize_hook`: [HPC and software](#hpc-and-software)
+- Spec Kit / `specify`: [HPC and software](#hpc-and-software)
 - SCOTCH: [WW3 switches](#ww3-switches)
 - scratch: [HPC and software](#hpc-and-software)
 - scratch / `team_scratch(0)` / `TeamThreadRange` / `team_barrier`: [HPC and software](#hpc-and-software)
@@ -1279,6 +1286,7 @@ Every term above, alphabetically, with the section it lives in.
 - WRST: [WW3 switches](#ww3-switches)
 - WRT: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - WRT / XNL (NL2): [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
+- WFIP: [This repository's own names](#this-repositorys-own-names)
 - WW3: [Models, projects and institutions](#models-projects-and-institutions)
 - ww3-gpu (ex ww-lab): [This repository's own names](#this-repositorys-own-names)
 - WW3-tools: [HPC and software](#hpc-and-software)

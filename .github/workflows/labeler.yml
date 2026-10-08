@@ -1,0 +1,22 @@
+# labeler — label a PR from the paths it touches (.github/labeler.yml). Today one label, `wfip`,
+# which the generated release notes group under their own heading (.github/release.yml).
+# `issues: write` lets the action create the label the first time.
+name: Labeler
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - uses: actions/labeler@v5
+        with:
+          sync-labels: true

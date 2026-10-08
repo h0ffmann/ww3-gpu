@@ -41,7 +41,9 @@ requests or issues, linked so you can follow them.
 
 [`docs/AWESOME-WW3_202609.md`](docs/AWESOME-WW3_202609.md) is a curated, annotated link list, and
 [`docs/GLOSSARY.md`](docs/GLOSSARY.md) expands every abbreviation, switch, routine and tool name
-used here.
+used here. Non-trivial changes are designed before they are built as Wave Forecaster Improvement
+Proposals, each tied to a deliverable of the project proposal with its definition of done;
+[`docs/WFIPs/README.md`](docs/WFIPs/README.md) is the index and the standing progress report.
 
 ## Quickstart
 

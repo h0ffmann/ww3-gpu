@@ -51,6 +51,7 @@ recipe is a thin wrapper over a script in `scripts/`; `just` lists them.
 | A kernel, its tests, its shim | `kokkos/` | [`kokkos/README.md`](kokkos/README.md), the ledger [`kokkos/PORT_STATUS.md`](kokkos/PORT_STATUS.md), the rules [`docs/AGENTS_KOKKOS_202609.md`](docs/AGENTS_KOKKOS_202609.md) §1 and §3 |
 | A measurement | `bench/`, `kokkos/PORT_STATUS.md`, the issue the number answers | [`bench/README.md`](bench/README.md): a row may only claim what a command in the repo reproduces |
 | A plan, an evaluation, a survey | `docs/` as `NAME_YYYYMM.md`, dated in the name | this file; the `(v)`/`⚠` convention; `docs/GLOSSARY.md` for every new abbreviation |
+| A non-trivial change, designed before it is built | a WFIP in `docs/WFIPs/`, numbered, tied to a proposal deliverable (D1–D6) with its definition of done in §7; a Spec Kit spec in `specs/<NNN-slug>/` when behaviour is worth specifying | [`docs/WFIPs/TEMPLATE.md`](docs/WFIPs/TEMPLATE.md), the `wfip` skill; `scripts/wfip.py check` is the gate and regenerates the index |
 | A lesson, an example, an exercise | `course/`, `examples/`, `exercises/` | lessons are numbered and cross-linked; examples use `.nml`, never `.inp` |
 | The proposal | `pubs/proposal/pt/` (reference) and `en/` (mirror) | [The proposal](#the-proposal-hard-rule) |
 | A diagram | a Mermaid fence in the page it illustrates | [Figures](#figures-hard-rule) |
@@ -64,7 +65,9 @@ Before implementing, check whether the idea is already designed or decided:
 the port planner issue #42, the
 `W3SDS4`/Triton issue #45 with its plan
 [`docs/W3SDS4_TRITON_PLANO_202610.pt.md`](docs/W3SDS4_TRITON_PLANO_202610.pt.md), and the
-port-order rule in #46. An idea with no issue is not work yet; filing is a person's act.
+port-order rule in #46, and the WFIP index [`docs/WFIPs/README.md`](docs/WFIPs/README.md), where
+every designed change says which proposal deliverable it moves and how far it is. An idea with
+no issue is not work yet; filing is a person's act.
 
 ## Setup and commands
 
@@ -88,6 +91,7 @@ Run the gates of what you changed before calling it done. CI (`.github/workflows
 | a Mermaid fence or its page | `python3 scripts/figures.py check`, then `just figures` to re-render and `python3 -m unittest tests/test_figures.py` |
 | `pubs/proposal/` | `just proposal-lint`, the `revisor-proposta` review, `just proposal-review-record <parecer>`, `just proposal-review-check` |
 | `scripts/*.py` | `python3 -m unittest discover tests` |
+| `docs/WFIPs/` or `specs/` | `just wfip check` (`scripts/wfip.py check`: index current, deliverable ids valid, every section present, DoD consistent with Status); `just wfip index` regenerates |
 | `.claude/skills/` or `.claude/agents/` | `python3 .claude/hooks/check_agent_frontmatter.py`; for a vendored skill, `skills-vendor check --lock .claude/skills/skills.lock` |
 | any Markdown | links are checked by lychee in CI; a relative link must resolve from the file |
 
@@ -191,6 +195,7 @@ audience rule for its own job; a new one does too, and its YAML front matter mus
 | `eli5` | explain a topic to someone from another field (the second audience exception) |
 | `release` | cut a citable release: tag, GitHub release, Zenodo DOI, `CITATION.cff`, `.zenodo.json` |
 | `ww4-status` | diff NOAA-EMC/WW4 against `docs/ww4-status.json` and refresh lesson 14 and the proposal |
+| `wfip` | write, revise or report on a WFIP; `scripts/wfip.py` is its harness and `just specify` wires GitHub's Spec Kit (its `/speckit-*` skills are generated per clone and not tracked) |
 | `humanizar`, `humanizer` | remove AI tells from pt-BR and English prose without changing facts; third-party |
 | `ponytail`, `ponytail-review`, `ponytail-audit` | the laziest solution that works; over-engineering review and audit; third-party |
 | `revisor-proposta` (agent) | the proposal's scientific reviewer, read-only |

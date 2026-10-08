@@ -42,7 +42,10 @@ request ou issue aberta, com link para acompanhar.
 
 A proposta do projeto de graduação está em português em [`pubs/proposal/pt/`](pubs/proposal/pt/),
 com PDF em [`pdf/proposal_pt.pdf`](pdf/proposal_pt.pdf). [`docs/GLOSSARY.md`](docs/GLOSSARY.md)
-explica cada sigla, switch, rotina e ferramenta citada no repositório.
+explica cada sigla, switch, rotina e ferramenta citada no repositório. Toda mudança não trivial é
+desenhada antes de ser feita como uma *Wave Forecaster Improvement Proposal* (WFIP), ligada a uma
+entrega prometida na proposta e com seu critério de pronto; [`docs/WFIPs/README.md`](docs/WFIPs/README.md)
+é o índice e o relatório de progresso.
 
 ## Primeiros passos
 
