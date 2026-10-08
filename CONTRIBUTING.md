@@ -68,7 +68,9 @@ in pt-BR, and the wave-modelling and HPC vocabulary. It reports, it does not rew
 
 Routines are ported in descending order of the **measured wall-clock time** they take in the
 operational case, most expensive first. Nothing else sets the order: not how easy a routine
-is to validate, not whether it already has a fixture, not how well it maps to a GPU.
+is to validate, not whether it already has a fixture, not how well it maps to a GPU. The decision
+and the alternatives weighed are
+[ADR-0002](docs/ADRs/ADR-0002-port-order-wall-time.md).
 
 - The measurement is the phase-0 profile (`docs/AGENTS_KOKKOS_202609.md` §2.4, task P0.1 in
   issue #42): inclusive and exclusive wall time per routine on 1, 4 and 16 ranks, committed to

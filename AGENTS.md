@@ -154,7 +154,7 @@ broken most often:
   is its own PR, with L2 evidence.
 - **Never widen a tolerance.** Report and stop.
 - **Order follows wall time.** The next routine is the one the committed profile says is most
-  expensive, not the one that is easiest to validate or already has a fixture (the rule of #46,
+  expensive, not the one that is easiest to validate or already has a fixture ([ADR-0002](docs/ADRs/ADR-0002-port-order-wall-time.md),
   applied in #45; `W3SDS4` before `W3SIN4`, both after `W3SNL1`).
 - **Done means all of §1.5:** the kernel with its heritage header, the shim with its argument
   table, an L1 test with stated and justified tolerances, an L2 regtest replay, a timing line in

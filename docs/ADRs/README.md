@@ -14,3 +14,4 @@ Superseded by ADR-NNNN. An accepted ADR is not edited; a new one supersedes it. 
 | ADR | Decision | Status | Date |
 |---|---|---|---|
 | [ADR-0001](ADR-0001-proof-language.md) | No proof language for the GPU port; bit-for-bit claims are settled by exhaustive sweeps, GIMPLE diffs and SMT `QF_FP` queries (Kokkos, Triton and WeatherNext 3 scenarios) | Proposed | 2026-10-08 |
+| [ADR-0002](ADR-0002-port-order-wall-time.md) | Routines are ported in descending order of measured wall time in the operational case, most expensive first; effort, GPU fit and ease of validation do not change the order | Accepted | 2026-10-08 |
