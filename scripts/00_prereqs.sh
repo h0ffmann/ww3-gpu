@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 # Host prerequisites for building WW3 (Debian / Ubuntu / WSL2).
-# Everything here is standard-repo; nothing exotic.
 set -euo pipefail
 
 echo ">> WW3 build prerequisites"
