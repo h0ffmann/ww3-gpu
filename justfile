@@ -200,6 +200,17 @@ proposal-docx lang="pt":
 proposal lang="pt" style="abnt":
     nix develop "{{justfile_directory()}}" --command scripts/build_pdf.sh proposal {{lang}} {{style}}
 
+# Pinned mermaid-cli and DejaVu Sans from flake.lock's nixpkgs; --force re-renders all (scripts/figures.py).
+# Render every mermaid fence to pubs/figures/mermaid/<id>.pdf|png and rewrite pubs/figures/README.md.
+figures *args:
+    FIGURES_FONT_DIR="$(nix build --inputs-from "{{justfile_directory()}}" nixpkgs#dejavu_fonts --no-link --print-out-paths)/share/fonts" \
+      nix shell --inputs-from "{{justfile_directory()}}" nixpkgs#mermaid-cli nixpkgs#python3 \
+      --command python3 scripts/figures.py render {{args}}
+
+# Every mermaid fence has its header, its reading card and a current render (what CI checks).
+figures-check:
+    python3 scripts/figures.py check
+
 # Parecer do revisor-proposta sobre pubs/proposal (norma ABNT/DEL, registro científico, jargão).
 # Sem argumentos revisa pt/ e en/; passe caminhos para revisar só parte.
 proposal-review *files:

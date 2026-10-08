@@ -1,0 +1,70 @@
+{
+  "renderer": {
+    "mermaid-cli": "11.17.0",
+    "nixpkgs": "eaad089433ca2bb662274377d33df3d0e51ef28b",
+    "font": "dejavu-fonts-2.37",
+    "config": "pubs/figures/mermaid-config.json"
+  },
+  "figures": {
+    "gpu-operation-decision": {
+      "file": "course/13-bulk-porting-with-agents.md",
+      "title": "When does a C++/Kokkos kernel enter the operational configuration?",
+      "sha256": "4ef01b6d2b6d389d0b88d7d3542bb454722e3789dd563ae8df5ec459567b1395"
+    },
+    "kokkos-interop-one-binary": {
+      "file": "course/13-bulk-porting-with-agents.md",
+      "title": "How do the original Fortran routine and its Kokkos kernel coexist in one WW3 binary?",
+      "sha256": "32b314c9d9a6413852653c68f183a6bc223daa3a547546e2b4106e45744cb46c"
+    },
+    "optimisation-ladder-gates": {
+      "file": "course/13-bulk-porting-with-agents.md",
+      "title": "Which gate must each optimisation step pass before the next step starts?",
+      "sha256": "d5ac5b58f718c7d68d6e1f3566d3c882ef2f346a43a8a5b5a6267f3176b162f3"
+    },
+    "porting-validation-ladder": {
+      "file": "course/13-bulk-porting-with-agents.md",
+      "title": "How is each translated version of a kernel checked against the one before it?",
+      "sha256": "b600e0fdb9c4b4123afc43db996dd709ea3c4008361a11a443da7d2d501ffcf9"
+    },
+    "proposta-cronograma": {
+      "file": "pubs/proposal/mapas-mentais.pt.md",
+      "title": "Quando acontece cada etapa do projeto?",
+      "sha256": "f34f5e5af929da76f5ba544bfdc5d711d74b64b685c0adaffe558d9959f9eb3b"
+    },
+    "proposta-decisao-operacao": {
+      "file": "pubs/proposal/mapas-mentais.pt.md",
+      "title": "Quando um kernel em GPU entra na configuração operacional?",
+      "sha256": "eb1913282b47a8421ee98aac4bec3fb7a942b5d755d88cbd23065d28b536b8cb"
+    },
+    "proposta-escada-otimizacao": {
+      "file": "pubs/proposal/mapas-mentais.pt.md",
+      "title": "Que critério cada etapa de otimização precisa cumprir antes da seguinte?",
+      "sha256": "c94aff0ea033062014516211558cead8265ba6b02c7bc9fcff3926572d670cef"
+    },
+    "proposta-interoperabilidade": {
+      "file": "pubs/proposal/mapas-mentais.pt.md",
+      "title": "Como a rotina original em Fortran e o kernel em Kokkos convivem em um único executável?",
+      "sha256": "761090e050a16c708177aadb62df27056fce5fed6af487af540e2aaade698ec0"
+    },
+    "proposta-riscos": {
+      "file": "pubs/proposal/mapas-mentais.pt.md",
+      "title": "Quais são os riscos do projeto e como cada um é mitigado?",
+      "sha256": "046e513ec69351b318285651aeb55ee22ccebf66959fe4ccbd1c7cceac0c25c9"
+    },
+    "proposta-validacao-traducao": {
+      "file": "pubs/proposal/mapas-mentais.pt.md",
+      "title": "Como cada versão traduzida é verificada contra a anterior?",
+      "sha256": "b8556a95299d5774dda277a3811bc3e77e0f0f0f6d763e4d8afc740bc3f75503"
+    },
+    "proposta-visao-geral": {
+      "file": "pubs/proposal/mapas-mentais.pt.md",
+      "title": "Do que trata a proposta, em um único mapa?",
+      "sha256": "7b5be3d75a4da1a91232562755696e04cfb26bafc85d16942ab24d3e2a077f9d"
+    },
+    "testes-ww3-ww4": {
+      "file": "pubs/proposal/mapas-mentais.pt.md",
+      "title": "Que testes o WW3 e o WW4 ofereciam em setembro e outubro de 2026, e o que o projeto acrescenta?",
+      "sha256": "20214597094cecf0bb882c7688fed53e9e1cf307cc456c89ef837786a0a155ae"
+    }
+  }
+}

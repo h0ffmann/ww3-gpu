@@ -1,0 +1,7 @@
+{
+  "theme": "neutral",
+  "fontFamily": "DejaVu Sans",
+  "flowchart": {
+    "htmlLabels": false
+  }
+}
