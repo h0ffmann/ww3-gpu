@@ -26,6 +26,17 @@ jobs:
       - name: WFIP index, deliverables and definitions of done are current
         run: python3 scripts/wfip.py --self-test && python3 scripts/wfip.py check
 
+      # The gate fails on the error-level rules of .vale.ini; the report prints the
+      # judgement rules of .vale-report.ini for the reviewer and never fails.
+      - name: Prose has no AI-writing tells (Vale, vale-ai-tells)
+        run: |
+          mkdir -p "$RUNNER_TEMP/bin" && export PATH="$RUNNER_TEMP/bin:$PATH"
+          curl -sSfL https://github.com/errata-ai/vale/releases/download/v3.15.2/vale_3.15.2_Linux_64-bit.tar.gz \
+            | tar xz -C "$RUNNER_TEMP/bin" vale
+          scripts/vale.sh --self-test
+          scripts/vale.sh
+          scripts/vale.sh --report --output=line | cut -d: -f4 | sort | uniq -c | sort -nr
+
       - name: Shellcheck
         uses: ludeeus/action-shellcheck@master
         with:

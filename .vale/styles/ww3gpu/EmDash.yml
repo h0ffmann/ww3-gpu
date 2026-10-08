@@ -1,0 +1,9 @@
+# The em dash as punctuation. Two uses stay legal: the en dash of a range
+# (1–5, D1–D6), which ai-tells.EmDashUsage would also flag, and a lone em dash
+# as the "no value" mark of a table cell, which has no word next to it.
+extends: existence
+message: "Em dash: use a comma, a colon, parentheses or a full stop."
+level: error
+nonword: true
+tokens:
+  - '(?<=\w[^\w—|]{0,3})—|—(?=[^\w—|]{0,3}\w)'

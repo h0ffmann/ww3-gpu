@@ -43,7 +43,7 @@ refactor with no behaviour change, or a one-file tweak: do those directly.
    their `Cost:` trailers, and the last one flips Status to Implemented; `wfip check` refuses
    Implemented with an unticked box.
 8. Filing the issues of the tasks file is a person's act (`AGENTS.md`); the *Issues* row says
-   `not filed — Draft` until then.
+   `not filed: Draft` until then.
 
 ## Report progress
 

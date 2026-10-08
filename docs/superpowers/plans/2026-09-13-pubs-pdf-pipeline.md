@@ -374,7 +374,7 @@ $body$
 - [x] **Step 6: Build and smoke-test**
 
 Run: `just book && pdfinfo build/ww3-lab-course.pdf | grep Pages && pdftotext build/ww3-lab-course.pdf - | grep -cE '⚠|\(v\)' && pdftotext build/ww3-lab-course.pdf - | grep -m1 -E 'partial N|∂'`
-Expected: a page count > 40, marker count > 0, and the action-balance equation text present. If pandoc reports an unsupported glyph or a warning, fix the template (add the glyph's font via `\newfontfamily`) or the defaults — never edit `course/`.
+Expected: a page count > 40, marker count > 0, and the action-balance equation text present. If pandoc reports an unsupported glyph or a warning, fix the template (add the glyph's font via `\newfontfamily`) or the defaults; never edit `course/`.
 
 - [x] **Step 7: Commit**
 
@@ -387,7 +387,7 @@ Tested: unittest tests/test_book_prep.py (2 pass); just book renders N pages, �
 
 ---
 
-### Task 3: Proposal — template, metadata, bibliography, styles, English text
+### Task 3: Proposal: template, metadata, bibliography, styles, English text
 
 **Files:**
 - Create: `pubs/proposal/template.tex`, `pubs/proposal/meta.pt.yaml`, `pubs/proposal/meta.en.yaml`, `pubs/proposal/refs.bib`, `pubs/csl/abnt.csl`, `pubs/csl/ieee.csl`, `pubs/proposal/en/01-title.md … 08-schedule.md`
@@ -643,7 +643,7 @@ if __name__ == "__main__":
     unittest.main()
 ```
 
-- [x] **Step 2: Run, expect failure** — `python3 -m unittest tests/test_translate_md.py -v` → error (module missing).
+- [x] **Step 2: Run, expect failure**: `python3 -m unittest tests/test_translate_md.py -v` → error (module missing).
 
 - [x] **Step 3: Write `scripts/translate_md.py`**
 
@@ -807,7 +807,7 @@ if __name__ == "__main__":
     sys.exit(main())
 ```
 
-- [x] **Step 4: Run the tests, expect pass** — `python3 -m unittest tests/test_translate_md.py -v` → 4 OK.
+- [x] **Step 4: Run the tests, expect pass**: `python3 -m unittest tests/test_translate_md.py -v` → 4 OK.
 
 - [x] **Step 5: Generate PT and build it**
 
@@ -932,7 +932,7 @@ jobs:
           git push
 ```
 
-- [x] **Step 2: README** — add `| \`pubs/\` | Course book and UFRJ/DEL proposal sources; \`just book\`, \`just proposal pt|en [abnt|ieee]\`, \`just translate\`; PDFs in \`pdf/\` |` to the table and a short "Publications" section listing the four recipes, the flake (`nix build .`), the EN-is-source rule, and the style option.
+- [x] **Step 2: README**: add `| \`pubs/\` | Course book and UFRJ/DEL proposal sources; \`just book\`, \`just proposal pt|en [abnt|ieee]\`, \`just translate\`; PDFs in \`pdf/\` |` to the table and a short "Publications" section listing the four recipes, the flake (`nix build .`), the EN-is-source rule, and the style option.
 
 - [x] **Step 3: Open the PR**
 
