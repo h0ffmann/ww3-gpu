@@ -189,7 +189,8 @@ references:
 
 Cite WW3 itself separately, as the WAVEWATCH III Development Group's user manual for the version
 you ran. A new patch release is cut every Friday when `main`
-has changed, or by hand with `just release`; see
+has changed, or by hand with `just release`, and Software Heritage archives the git history
+next to each Zenodo deposit; see
 [`.claude/skills/release`](.claude/skills/release/SKILL.md) for the chain from tag to DOI.
 
 ## Related work
