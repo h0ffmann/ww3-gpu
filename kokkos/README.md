@@ -1,4 +1,4 @@
-# `kokkos/` — the C++/Kokkos half of the lab
+# `kokkos/`: the C++/Kokkos half of the lab
 
 One CMake tree, one backend per configure preset. It holds the portable kernel
 library (`ww_kokkos`), the lesson-11 intro programs, the GoogleTest suites and the

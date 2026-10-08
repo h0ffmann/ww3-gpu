@@ -1,0 +1,42 @@
+{
+  "checked": "2026-10-07",
+  "develop": {
+    "sha": "74ea792",
+    "date": "2026-10-01",
+    "subject": "FT ww4_utils documentation type update (#71)",
+    "commits": 39
+  },
+  "version": "0.0.0",
+  "tags": [],
+  "spectral_space": {
+    "num_directions": 36.0,
+    "num_frequencies": 50.0,
+    "freq_increment_factor": 1.07,
+    "first_frequency": 0.035,
+    "first_direction_offset": 0.5
+  },
+  "kokkos_files": [],
+  "physics_loc": {},
+  "tests": [
+    "L1",
+    "L2"
+  ],
+  "pr_heads": {
+    "3": "b483ea3",
+    "6": "3cbb08a",
+    "8": "a19a163",
+    "9": "9431764",
+    "14": "e6d0ad1",
+    "15": "3a36b6c",
+    "16": "9871814",
+    "17": "cfb7b43",
+    "18": "5a3da75",
+    "19": "81ccf68",
+    "50": "ccf7b7f",
+    "60": "6b0912b",
+    "66": "67c3e8a",
+    "67": "62df69d",
+    "71": "7259e37",
+    "72": "afc40c2"
+  }
+}

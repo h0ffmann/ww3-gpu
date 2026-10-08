@@ -1,4 +1,4 @@
-# `PATCH.md` — wiring the Kokkos DIA into WAVEWATCH III
+# `PATCH.md`: wiring the Kokkos DIA into WAVEWATCH III
 
 > **Not applied in this repository.** `WW3/` here is an unmodified upstream
 > checkout and stays that way; this file is the recipe for the fork branch
@@ -33,7 +33,7 @@ out-of-bounds read, not a slowdown:
 
 ---
 
-## 1. The call site — `model/src/w3srcemd.F90`
+## 1. The call site: `model/src/w3srcemd.F90`
 
 ```console
 $ grep -n "CALL W3SNL1\|W3_NL1" WW3/model/src/w3srcemd.F90
@@ -78,7 +78,7 @@ Three facts about this call decide the shape of the patch:
 * The `IQTPE` branch must stay: `IQTPE <= 0` selects `W3SNLGQM`, a different
   routine that this port does not replace.
 
-### Hunk 1a — the `USE` (line 578)
+### Hunk 1a: the `USE` (line 578)
 
 ```diff
 @@ -576,6 +576,9 @@
@@ -112,7 +112,7 @@ all: `W3SRCE` takes only `STRACE` (line 648, under `W3_S`) and `EXTOPN`/`EXTIOF`
 `W3_KOKKOS` guard so that neither is a duplicate when `W3_NNT` is on: `ONLY`
 imports of the same entity from the same module are allowed to repeat.
 
-### Hunk 1b — a one-element `KDMEAN` (near the locals at line 712)
+### Hunk 1b: a one-element `KDMEAN` (near the locals at line 712)
 
 ```diff
 @@ -712,6 +712,10 @@
@@ -124,7 +124,7 @@ imports of the same entity from the same module are allowed to repeat.
 +#endif
 ```
 
-### Hunk 1c — the branch (lines 1258–1264)
+### Hunk 1c: the branch (lines 1258–1264)
 
 ```diff
 @@ -1256,10 +1256,23 @@
@@ -164,7 +164,7 @@ because a Fortran `CALL` cannot read a return value, so `WW_SNL1_LAST_ERROR()`
 is the only channel a failure has; silently keeping whatever was in `VSNL`
 would turn a failed launch into a plausible-looking wrong forecast.
 
-### Threading — why the `!$OMP CRITICAL` is there
+### Threading: why the `!$OMP CRITICAL` is there
 
 `W3SRCE` is not called from serial code. Under `W3_OMPG` it runs inside an
 `!$OMP PARALLEL` region:
@@ -209,7 +209,7 @@ correctness step, not the performance step.
 
 ---
 
-## 2. Set-up — `model/src/w3initmd.F90`
+## 2. Set-up: `model/src/w3initmd.F90`
 
 `INSNL1` itself is called once per grid from `w3iogrmd.F90:1802`, out of
 `W3IOGR('READ', ...)`, which `W3INIT` calls at line 735:
@@ -303,7 +303,7 @@ deliberately out of scope here.
 
 ---
 
-## 3. The switch — `model/src/cmake/switches.json`
+## 3. The switch: `model/src/cmake/switches.json`
 
 `check_switches.cmake` turns each selected switch into `-DW3_<NAME>` and adds
 its `build_files` to the library, so one new category is the whole build change:
@@ -340,7 +340,7 @@ target here (`ww_kokkos_f`) rather than folded into the C++ library.
 
 ---
 
-## 4. The link — `model/src/CMakeLists.txt`
+## 4. The link: `model/src/CMakeLists.txt`
 
 ```diff
 @@ -19,6 +19,17 @@

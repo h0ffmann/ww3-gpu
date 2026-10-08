@@ -6,7 +6,7 @@ name: proposal review
 
 on:
   pull_request:
-    paths: ['pubs/proposal/**']
+    paths: ['pubs/proposal/**', 'scripts/proposal_*.py', '.github/workflows/proposal-review.yml']
   workflow_dispatch:
 
 permissions:
@@ -21,6 +21,9 @@ jobs:
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
       - run: python3 scripts/proposal_review_gate.py --self-test
+      - run: python3 scripts/proposal_lint.py --self-test
+      - name: pt and en cite the same sources and numbers; no placeholders or decimal points in pt
+        run: python3 scripts/proposal_lint.py
       - name: a recorded review must cover the proposal as it stands
         run: python3 scripts/proposal_review_gate.py --check
       - name: show the recorded review in the job log

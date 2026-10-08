@@ -1,9 +1,9 @@
-# 02 — Anatomy of a run
+# 02. Anatomy of a run
 
 Work through [`examples/01-fetch-limited-growth`](../examples/01-fetch-limited-growth/) with
 this open. Every claim here is visible in those files.
 
-## ww3_grid — the most important program
+## ww3_grid: the most important program
 
 It reads `ww3_grid.nml` plus your ASCII bathymetry/mask, and writes `mod_def.ww3`.
 Its namelist blocks, in dependency order:
@@ -86,21 +86,21 @@ boundary points. That count is your first sanity check.
 Outputs: `mod_def.ww3` (binary, the model definition), `mapsta.ww3` (status map),
 `mask.ww3` (ASCII land/sea; open it and look at it).
 
-## ww3_strt — initial conditions
+## ww3_strt: initial conditions
 
 Writes `restart.ww3`. If it's absent, `ww3_shel` cold-starts from a calm sea and says so in
 the log, which is usually what you want for a spin-up run. For a specific initial spectrum
 (the propagation tests seed a Gaussian packet and watch it travel), copy an `ww3_strt` input
 from a regtest: `$WW3/regtests/ww3_tp1.1/input/` is the canonical one.
 
-## ww3_prnc — forcing
+## ww3_prnc: forcing
 
 netCDF → WW3 binary, interpolated onto your grid. One invocation per forcing type; you swap
 `ww3_prnc.nml` between runs. The failure modes are boring and universal: wrong variable
 names, wrong coordinate names, wrong longitude convention (0–360 vs −180–180), wrong time
 units. `ncdump -h` before you start.
 
-## ww3_shel — the model
+## ww3_shel: the model
 
 Reads `ww3_shel.nml` and `mod_def.ww3`.
 
@@ -121,7 +121,7 @@ moves, your forcing isn't arriving.
 
 For MPI builds: `mpirun -np N ww3_shel`.
 
-## ww3_ounf / ww3_ounp — output
+## ww3_ounf / ww3_ounp: output
 
 `ww3_ounf` turns `out_grd.ww3` into gridded netCDF. `ww3_ounp` turns `out_pnt.ww3` into
 spectral netCDF.

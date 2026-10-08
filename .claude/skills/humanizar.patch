@@ -1,0 +1,39 @@
+--- a/humanizar/SKILL.md
++++ b/humanizar/SKILL.md
+@@ -9,7 +9,7 @@
+   em português qualquer texto que uma pessoa vai assinar ou publicar (post, artigo,
+   e-mail, proposta, release, README, bio, descrição de produto): nesse caso a lista
+   de padrões funciona como filtro de saída. Para textos em inglês, use a skill-irmã
+-  `human-ai`.
++  `humanizer`.
+ metadata:
+   author: https://ft.ia.br
+   version: "1.6.0"
+@@ -19,6 +19,18 @@
+   category: code-quality-and-review
+ ---
+ 
++**Público neste repositório.** Os primeiros leitores do ww3-gpu são cientistas: doutores,
++pós-doutorandos e pesquisadores independentes (ver `CONTRIBUTING.md`, "Who this repository is
++for"). Use o perfil 🎓 Acadêmico por padrão, preserve a terminologia de domínio, as equações, os
++números com unidade e as marcas `(v)`/`⚠`, e não simplifique o raciocínio para um leitor leigo. A
++exceção é a proposta em `pubs/proposal/`, lida por uma banca do DEL sem formação em oceanografia,
++que segue as regras do `revisor-proposta`.
++
++<!-- Vendored from fabricioctelles/skills@4fcc2bf (skills/humanizar, Apache-2.0, see LICENSE).
++     Changed here: the optional TypeSafe Jev evaluation section and its files
++     (references/jev-integration.md, scripts/jev_questions.json) were removed, and the English
++     sibling skill points to this repo's humanizer instead of human-ai. -->
++
+ # Humanizar: Escrita Viva em Português Brasileiro
+ 
+ Atue como editor. Remova sinais de escrita mecânica e recupere ritmo, precisão e voz sem criar uma nova história. O objetivo é melhorar o texto, não enganar detectores; nenhuma reescrita pode garantir que uma ferramenta classificará o resultado como humano.
+@@ -38,7 +50,7 @@
+ 
+ Executar antes de diagnosticar ou reescrever:
+ 
+-1. Confirmar que há texto e que ele está em PT-BR. Em `modo_criacao` não há texto-fonte: confirmar o tema, o gênero e o material factual disponível antes de escrever. Para inglês, usar [`human-ai`](../human-ai/SKILL.md). Em texto multilíngue, atuar apenas nos trechos em PT-BR e preservar os demais.
++1. Confirmar que há texto e que ele está em PT-BR. Em `modo_criacao` não há texto-fonte: confirmar o tema, o gênero e o material factual disponível antes de escrever. Para inglês, usar [`humanizer`](../humanizer/SKILL.md). Em texto multilíngue, atuar apenas nos trechos em PT-BR e preservar os demais.
+ 2. Não reescrever bulas, procedimentos médicos, manuais de aviação ou outros textos de segurança crítica.
+ 3. Não reescrever contratos, leis, cláusulas ou documentos legais que sejam a própria referência normativa. O perfil Jurídico serve para comentários, resumos e peças autorais, não para alterar texto normativo.
+ 4. Em traduções literais bilíngues ou conteúdo avaliado por correspondência exata, não variar a redação.

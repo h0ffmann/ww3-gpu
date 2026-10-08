@@ -1,4 +1,4 @@
-# 08 — The Python ecosystem, and why this repo does not depend on it
+# 08. The Python ecosystem, and why this repo does not depend on it
 
 There is a real Python ecosystem around WW3, and you should know what is in it. This
 repo's rule: the lab code in `kokkos/`, `examples/`, `exercises/` and `bench/` is C++,

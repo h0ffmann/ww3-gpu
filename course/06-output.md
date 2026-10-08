@@ -1,4 +1,4 @@
-# 06 — Output and post-processing
+# 06. Output and post-processing
 
 ## The seven output types
 

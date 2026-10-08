@@ -1,0 +1,113 @@
+{
+  "version": 1,
+  "skills": {
+    "humanizar": {
+      "upstream": "fabricioctelles/skills",
+      "path": "skills/humanizar",
+      "commit": "c107bdd73bd6cdd72435e0d74c0260ff9fa80a7d",
+      "files": {
+        "LICENSE": "e42f3a02a35efbdcdcb5a115a49485a637b05a86",
+        "SKILL.md": "1c9109f8cdf22bfa144a8365eb4e0656de436ee6",
+        "references/padroes-composicao.md": "0fce97b42c0253bfe3309f8cb75e5f086fdb7a7c",
+        "references/padroes-consumo-rapido.md": "06438ed8c3b285bb88a3246b3c2d0074a4a5f759",
+        "references/padroes-conteudo.md": "2bba1065f8cea1d2f5ab94032b2f634fe22ea5e7",
+        "references/padroes-estilo.md": "d5590da5b18f4b1690a6fcaecb536f4d84609481",
+        "references/padroes-exclusivos-pt-br.md": "04d17c0b9377c24e2f570935bc34da63887bc189",
+        "references/padroes-linguagem.md": "d8530cf06af27087d8d17f3437093116c0ede59c",
+        "references/padroes-portugues-simplificado.md": "965e5f053cb676624accc8cbadb8fe60ad258c95",
+        "references/padroes-tom.md": "6d99e81d5afc95789ecc2efc7d606b2fee1cdea4"
+      },
+      "license": "Apache-2.0",
+      "local_edits": "humanizar.patch",
+      "hold": null,
+      "paths": {
+        "LICENSE": "LICENSE"
+      },
+      "upstream_files": {
+        "LICENSE": "e42f3a02a35efbdcdcb5a115a49485a637b05a86",
+        "SKILL.md": "e3b308d3dc0e359de33f3c92d215e1c8b75dbaee",
+        "references/padroes-composicao.md": "0fce97b42c0253bfe3309f8cb75e5f086fdb7a7c",
+        "references/padroes-consumo-rapido.md": "06438ed8c3b285bb88a3246b3c2d0074a4a5f759",
+        "references/padroes-conteudo.md": "2bba1065f8cea1d2f5ab94032b2f634fe22ea5e7",
+        "references/padroes-estilo.md": "d5590da5b18f4b1690a6fcaecb536f4d84609481",
+        "references/padroes-exclusivos-pt-br.md": "04d17c0b9377c24e2f570935bc34da63887bc189",
+        "references/padroes-linguagem.md": "d8530cf06af27087d8d17f3437093116c0ede59c",
+        "references/padroes-portugues-simplificado.md": "965e5f053cb676624accc8cbadb8fe60ad258c95",
+        "references/padroes-tom.md": "6d99e81d5afc95789ecc2efc7d606b2fee1cdea4"
+      }
+    },
+    "humanizer": {
+      "upstream": "blader/humanizer",
+      "path": "",
+      "commit": "fbdde4cd807509a4afecf062c670515ce5bd7736",
+      "files": {
+        "LICENSE": "625297fb778f32eb39d3a5b97e3e3b611b7304d6",
+        "SKILL.md": "0e9ca53c0cf7e50206c4ad8fb929001368857da1"
+      },
+      "license": "MIT",
+      "local_edits": "humanizer.patch",
+      "hold": null,
+      "upstream_files": {
+        "LICENSE": "625297fb778f32eb39d3a5b97e3e3b611b7304d6",
+        "SKILL.md": "d375fbf3e3ee8fb047c379bced82df3713c6ed3b"
+      }
+    },
+    "ponytail": {
+      "upstream": "DietrichGebert/ponytail",
+      "path": "skills/ponytail",
+      "commit": "b6c04480c03e8db2f035751d7c46289779ec3362",
+      "files": {
+        "LICENSE": "715d483338cea4365f0d91a27799cf61226d6bcf",
+        "SKILL.md": "b3d9146b1f74e6f07fbe5a5b5e8cb34dbae09dc6"
+      },
+      "license": "MIT",
+      "local_edits": "ponytail.patch",
+      "hold": null,
+      "paths": {
+        "LICENSE": "LICENSE"
+      },
+      "upstream_files": {
+        "LICENSE": "715d483338cea4365f0d91a27799cf61226d6bcf",
+        "SKILL.md": "02c0712c86277d49d18a77da3a2b825657bf02d1"
+      }
+    },
+    "ponytail-audit": {
+      "upstream": "DietrichGebert/ponytail",
+      "path": "skills/ponytail-audit",
+      "commit": "bd6176a9b33ab72594ff82e6f34f17b085f25565",
+      "files": {
+        "LICENSE": "715d483338cea4365f0d91a27799cf61226d6bcf",
+        "SKILL.md": "e50f98d96b41f05ca983a3a0155ce6508d5d5b47"
+      },
+      "license": "MIT",
+      "local_edits": "ponytail-audit.patch",
+      "hold": null,
+      "paths": {
+        "LICENSE": "LICENSE"
+      },
+      "upstream_files": {
+        "LICENSE": "715d483338cea4365f0d91a27799cf61226d6bcf",
+        "SKILL.md": "5582d10335daff5b5947f9b77927fbc97f2047f3"
+      }
+    },
+    "ponytail-review": {
+      "upstream": "DietrichGebert/ponytail",
+      "path": "skills/ponytail-review",
+      "commit": "bd6176a9b33ab72594ff82e6f34f17b085f25565",
+      "files": {
+        "LICENSE": "715d483338cea4365f0d91a27799cf61226d6bcf",
+        "SKILL.md": "ccc3e5182601295e507e9e48397c85b748d4c391"
+      },
+      "license": "MIT",
+      "local_edits": "ponytail-review.patch",
+      "hold": null,
+      "paths": {
+        "LICENSE": "LICENSE"
+      },
+      "upstream_files": {
+        "LICENSE": "715d483338cea4365f0d91a27799cf61226d6bcf",
+        "SKILL.md": "e137a855bd87119a4517895a1000a59b0999e1b8"
+      }
+    }
+  }
+}

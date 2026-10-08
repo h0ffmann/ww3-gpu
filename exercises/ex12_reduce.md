@@ -1,6 +1,6 @@
-# Exercise 12 — `Hs` from an action spectrum with a team `parallel_reduce`
+# Exercise 12: `Hs` from an action spectrum with a team `parallel_reduce`
 
-**Lesson:** [11 — Kokkos and modern C++](../course/11-kokkos-and-modern-cpp.md).
+**Lesson:** [11. Kokkos and modern C++](../course/11-kokkos-and-modern-cpp.md).
 **Time:** ~60 min. **Solution:** [`solutions/ex12_reduce.cpp`](solutions/ex12_reduce.cpp),
 built by [`solutions/CMakeLists.txt`](solutions/CMakeLists.txt).
 

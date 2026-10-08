@@ -1,4 +1,4 @@
-# 11 — Kokkos and modern C++ for Fortran people
+# 11. Kokkos and modern C++ for Fortran people
 
 Kokkos is a C++ library that lets one kernel run on a CPU thread pool or a GPU without
 rewriting it: the backend is a build choice. Every concept below is a Fortran concept

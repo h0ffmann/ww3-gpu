@@ -1,6 +1,6 @@
-# Exercise 11 — refactor a WW3-style routine, and prove you did not change it
+# Exercise 11: refactor a WW3-style routine, and prove you did not change it
 
-**Lesson:** [10 — modern Fortran refactoring](../course/10-modern-fortran-refactoring.md).
+**Lesson:** [10. modern Fortran refactoring](../course/10-modern-fortran-refactoring.md).
 **Time:** ~60 min. **Solution:** [`solutions/ex11_refactor.F90`](solutions/ex11_refactor.F90),
 [`solutions/ex11_refactor_test.F90`](solutions/ex11_refactor_test.F90).
 

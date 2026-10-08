@@ -9,6 +9,11 @@ description: >
   not apply fixes.
 ---
 
+**Audience in this repository.** The code is read by scientists who verify its numerics (see
+`CONTRIBUTING.md`, "Who this repository is for"). Do not rank as bloat a comment that cites WW3
+`file:line`, a parity flag, an explicit operation order or a reference implementation kept for
+bit-for-bit comparison.
+
 ponytail-review, repo-wide. Scan the whole tree instead of a diff. Rank
 findings biggest cut first.
 
