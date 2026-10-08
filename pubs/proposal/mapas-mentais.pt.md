@@ -256,9 +256,12 @@ flowchart LR
 
 ## 7. Cronograma
 
+Versão em inglês: [`schedule.en.md`](schedule.en.md). No PDF e no Word da proposta, a tabela de `pt/08-schedule.md` é desenhada como grade de meses, nas duas línguas.
+
 ```mermaid
 %% figure: proposta-cronograma
 %% title: Quando acontece cada etapa do projeto?
+%% schedule: pubs/proposal/pt/08-schedule.md
 gantt
     title Cronograma do projeto de graduação
     dateFormat YYYY-MM-DD
@@ -289,7 +292,7 @@ gantt
 
 **Fora da figura.** Os ajustes de datas com os orientadores, que o texto prevê.
 
-**Evidência.** Tabela de `pt/08-schedule.md` (v); o marco do WW4 vem de `pt/05-justification.md`, que o situa em meados de 2027 (v). ⚠ Os dias 01/05/2027 (a defesa ocorre "a partir de" maio) e 01/07/2027 são só a posição no gráfico.
+**Evidência.** Tabela de `pt/08-schedule.md` (v), da qual `scripts/figures.py check` confere o mês de início de cada atividade e o marco da defesa; o marco do WW4 vem de `pt/05-justification.md`, que o situa em meados de 2027 (v). ⚠ Os dias 01/05/2027 (a defesa ocorre "a partir de" maio) e 01/07/2027 são só a posição no gráfico.
 
 </details>
 

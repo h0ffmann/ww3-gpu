@@ -56,6 +56,7 @@ else
     --to docx \
     --metadata-file "$root/pubs/proposal/meta.$lang.yaml" \
     --metadata lang="$plang" \
+    --lua-filter "$root/pubs/filters/cronograma.lua" \
     --top-level-division=section --number-sections \
     --citeproc --bibliography "$root/pubs/proposal/refs.bib" --csl "$csl" \
     -o "$out_dir/proposal_$lang.docx"

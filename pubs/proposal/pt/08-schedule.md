@@ -12,7 +12,7 @@ O projeto ocupará dois períodos letivos, e as datas serão ajustadas com os or
 | Etapa 3: refatoração em Fortran moderno das rotinas dominantes                       | 02/2027 |
 | Etapa 4: *kernels* em C++/Kokkos; concordância em CPU e medição no H100              | 03/2027 |
 | Decisão de operação com o LabECO; relatório final e revisão                          | 04/2027 |
-| Defesa (a partir de)                                                                 | 05/2027 |
+| Defesa                                                                               | a partir de 05/2027 |
 
 Table: Cronograma do projeto de graduação.
 

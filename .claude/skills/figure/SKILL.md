@@ -30,7 +30,10 @@ renders each one with a pinned mermaid-cli and font for the PDF and Word builds
    ```
 
    Then the diagram, at most about 15 nodes; split it rather than grow it. A `gantt` also needs
-   `todayMarker off`, or the render changes with the day it was made.
+   `todayMarker off`, or the render changes with the day it was made. A gantt drawn from a schedule
+   table adds `%% schedule: <table.md>` (path from the repo root): `check` then fails when its first
+   tasks stop falling in the table's months or lose the table's milestones. The proposal's own
+   cronograma is drawn from that table by `pubs/filters/cronograma.lua`, not by a fence.
 3. **Write the reading card** right after the closing fence, in the page's language:
 
    ```

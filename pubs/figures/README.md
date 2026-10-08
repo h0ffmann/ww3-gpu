@@ -165,3 +165,14 @@ São quatro riscos, e para cada um a proposta já define a resposta: testes cont
 <img src="mermaid/proposta-riscos.png" alt="São quatro riscos, e para cada um a proposta já define a resposta: testes contra divergências, ordem fixa das etapas, medida do limite imposto pela transferência CPU–GPU e substitutos provisórios para atrasos." width="560" />
 
 `proposta-riscos` · [source](../../pubs/proposal/mapas-mentais.pt.md) · [PDF](mermaid/proposta-riscos.pdf) · [report a mistake](https://github.com/h0ffmann/ww3-gpu/issues/new?title=Figure%20proposta-riscos%3A%20)
+
+
+## [`pubs/proposal/schedule.en.md`](../../pubs/proposal/schedule.en.md)
+
+### When does each activity of the project happen?
+
+The project takes two academic periods, from October 2026 to April 2027, with one activity per month and the defence from May 2027.
+
+<img src="mermaid/proposal-schedule.png" alt="The project takes two academic periods, from October 2026 to April 2027, with one activity per month and the defence from May 2027." width="560" />
+
+`proposal-schedule` · [source](../../pubs/proposal/schedule.en.md) · [PDF](mermaid/proposal-schedule.pdf) · [report a mistake](https://github.com/h0ffmann/ww3-gpu/issues/new?title=Figure%20proposal-schedule%3A%20)

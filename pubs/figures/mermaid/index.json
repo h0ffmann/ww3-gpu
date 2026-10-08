@@ -29,10 +29,15 @@
       "title": "How is each translated version of a kernel checked against the one before it?",
       "sha256": "2ad02c79d961c347b0d2f4f278a5f13cbba0e675831779183afce08ce171ad14"
     },
+    "proposal-schedule": {
+      "file": "pubs/proposal/schedule.en.md",
+      "title": "When does each activity of the project happen?",
+      "sha256": "aeaaa23f0805c9906ba9bf2490e2254ce1d916568273ac61eb02063db4ba431e"
+    },
     "proposta-cronograma": {
       "file": "pubs/proposal/mapas-mentais.pt.md",
       "title": "Quando acontece cada etapa do projeto?",
-      "sha256": "98bab22c940d3ad21e8f9460c3a1ac2673c61b71f5e252450dc71a252dacdcd5"
+      "sha256": "0ee331cc13582d909f99c6ceb20d3f0d2b52ae73cff32c9c33a65ecfc523c9f5"
     },
     "proposta-decisao-operacao": {
       "file": "pubs/proposal/mapas-mentais.pt.md",
