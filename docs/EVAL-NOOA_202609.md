@@ -16,7 +16,7 @@ study-areas table instead of the retired `docs/` row). Re-checked: `nooa` on PyP
 `(v, PyPI JSON and `git ls-remote`, 2026-10-08)`. The question this document leaves open, whether
 NVIDIA's agents help the `W3SDS4` port and what the lab can ask NVIDIA for without paying, is answered
 in section 10 of `docs/W3SDS4_TRITON_PLANO_202610.pt.md`
-([PR #57](https://github.com/h0ffmann/ww3-gpu/pull/57)): the agents help the workflow and not the kernel, the Developer Program account is free today,
+([PR #60](https://github.com/h0ffmann/ww3-gpu/pull/60)): the agents help the workflow and not the kernel, the Developer Program account is free today,
 and the Academic Grant Program is faculty-only and closed since 2026-06-30.
 
 ## TL;DR
