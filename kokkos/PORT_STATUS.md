@@ -6,6 +6,11 @@ in this repository reproduces: each timing links the commands below, and the tim
 table is generated from its record in [`bench/results/`](../bench/results/)
 (`python3 scripts/results.py table`).
 
+Routines are ported in descending order of measured wall time in the operational case
+(`CONTRIBUTING.md`, "Port order is wall time"). That profile is not in this file yet, so
+the current order rests on published priors and the `ww3_ts1` gprof table in
+`docs/data/ww3_ts1_gprof_202610.md` (both ⚠).
+
 SPDX-License-Identifier: MIT
 
 ## The ledger
