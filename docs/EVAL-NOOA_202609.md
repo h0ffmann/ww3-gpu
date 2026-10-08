@@ -10,6 +10,14 @@ development of this repository, or the port of WW3 kernels to Kokkos on GPUs?
 NOOA `main` at `7919847` (2026-09-29) and from PyPI; §8 (costs) is new. Facts updated by the refresh carry
 the date 2026-10-01. Most nvidia.com hosts were unreachable from the sandbox, so several price claims in §8
 rest on search excerpts and are marked `⚠` (list in Sources).
+**Refreshed 2026-10-08:** merged `main` into this branch (the README now lists this document in its
+study-areas table instead of the retired `docs/` row). Re-checked: `nooa` on PyPI is still `v0.0.10`
+(2026-09-04) and the repository's tags still end at `v0.0.10`; `main` has moved on (HEAD `564a340`)
+`(v, PyPI JSON and `git ls-remote`, 2026-10-08)`. The question this document leaves open, whether
+NVIDIA's agents help the `W3SDS4` port and what the lab can ask NVIDIA for without paying, is answered
+in section 10 of `docs/W3SDS4_TRITON_PLANO_202610.pt.md`
+([PR #57](https://github.com/h0ffmann/ww3-gpu/pull/57)): the agents help the workflow and not the kernel, the Developer Program account is free today,
+and the Academic Grant Program is faculty-only and closed since 2026-06-30.
 
 ## TL;DR
 
