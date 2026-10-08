@@ -112,9 +112,9 @@ experimentos estão na [lição 09](course/09-benchmark-profile-compile-run.md).
 
 Para citar o projeto como um todo, use o DOI conceitual
 [10.5281/zenodo.23221351](https://doi.org/10.5281/zenodo.23221351), que sempre aponta para a versão
-mais recente. Para fixar exatamente o código usado, cite o DOI e o título da versão; o da v0.1.0 é
-[10.5281/zenodo.23221352](https://doi.org/10.5281/zenodo.23221352), com o título que aquela versão
-tinha. O título abaixo é o que o `CITATION.cff` passa a ter a partir da próxima versão.
+mais recente. Para fixar exatamente o código usado, cite o DOI e o título da versão. A v0.1.1, a primeira com o título abaixo, é
+[10.5281/zenodo.23233540](https://doi.org/10.5281/zenodo.23233540); a v0.1.0 é
+[10.5281/zenodo.23221352](https://doi.org/10.5281/zenodo.23221352), com o título que tinha na época.
 
 ABNT (NBR 6023):
 

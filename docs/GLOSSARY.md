@@ -461,7 +461,7 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 
 | Term | Expansion | What it is | Where it appears |
 |---|---|---|---|
-| DOI / concept DOI | Digital Object Identifier; the concept DOI names every version of a record at once `(v)` [README.md](../README.md#how-to-cite) | `10.5281/zenodo.23221351` resolves to the latest release; each release also gets its own (v0.1.0: `10.5281/zenodo.23221352`). | [README.md](../README.md), [CITATION.cff](../CITATION.cff) |
+| DOI / concept DOI | Digital Object Identifier; the concept DOI names every version of a record at once `(v)` [README.md](../README.md#how-to-cite) | `10.5281/zenodo.23221351` resolves to the latest release; each release also gets its own (v0.1.1: `10.5281/zenodo.23233540`; v0.1.0: `10.5281/zenodo.23221352`). | [README.md](../README.md), [CITATION.cff](../CITATION.cff) |
 | Zenodo | CERN's open research repository `(v)` [`.zenodo.json`](../.zenodo.json) | Archives every GitHub release of this repo through its webhook and mints the DOIs. | [README.md](../README.md), [`.claude/skills/release`](../.claude/skills/release/SKILL.md) |
 | DataCite | the registration agency for Zenodo's DOIs `(v)` [`.claude/skills/release`](../.claude/skills/release/SKILL.md) | Its API shows a new version DOI when zenodo.org is unreachable. | [`.claude/skills/release`](../.claude/skills/release/SKILL.md) |
 | ORCID | Open Researcher and Contributor ID `(v)` [CITATION.cff](../CITATION.cff) | The author's persistent researcher identifier, `0009-0009-1056-7661`, carried into every DOI record. | [CITATION.cff](../CITATION.cff), [`.zenodo.json`](../.zenodo.json) |

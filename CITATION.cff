@@ -23,6 +23,9 @@ identifiers:
     value: 10.5281/zenodo.23221351
     description: Concept DOI, resolves to the latest release
   - type: doi
+    value: 10.5281/zenodo.23233540
+    description: Version v0.1.1
+  - type: doi
     value: 10.5281/zenodo.23221352
     description: Version v0.1.0
 license:
