@@ -70,6 +70,31 @@ class Figures(unittest.TestCase):
         figures.pin_pdf_dates(pdf)
         self.assertEqual(pdf.read_bytes(), raw.replace(b"20261008020829", b"20000101000000"))
 
+    def chart_fig(self, edit=None):
+        table = pathlib.Path(tempfile.mkdtemp()) / "t.md"
+        table.write_text("| routine | a | b |\n|---|---|---|\n| X | 2,0 | 1 |\n"
+                         "| Y | 0.5 | n/a |\n| total | 2.5 | 1 |\n", encoding="utf-8")
+        body = figures.chart_body(table, "routine", ["a", "b"], "s")
+        source = "\n".join([f"%% figure: c", "%% title: q?",
+                             f"%% data: {table} --label routine --value a --value b --y-title s"]
+                            + [edit(l) if edit else l for l in body])
+        return body, {"file": "page.md", "line": 1, "source": source}
+
+    def test_chart_from_table(self):
+        body, fig = self.chart_fig()
+        self.assertIn('    x-axis ["X"]', body)  # Y lacks a number in b; total is skipped
+        self.assertIn("    bar [2]", body)       # comma decimal read as a number
+        self.assertIn("    line [1]", body)
+        errors = []
+        figures.check_data(fig, errors)
+        self.assertEqual(errors, [])
+
+    def test_chart_edited_by_hand_fails(self):
+        _, fig = self.chart_fig(lambda l: l.replace("bar [2]", "bar [3]"))
+        errors = []
+        figures.check_data(fig, errors)
+        self.assertTrue(any("no longer matches" in e for e in errors), errors)
+
     def test_repository_is_current(self):
         p = subprocess.run([sys.executable, SCRIPT, "check"], capture_output=True, text=True)
         self.assertEqual(p.returncode, 0, p.stderr)

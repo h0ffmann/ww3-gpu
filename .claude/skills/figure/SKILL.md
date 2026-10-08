@@ -1,6 +1,6 @@
 ---
 name: figure
-description: "Add, change or explain a Mermaid diagram or mind map anywhere in this repo's Markdown (course lessons, the proposal's mind maps, docs). Use when asked for a diagram, flowchart, mind map, gantt or 'a picture of' something, to update one after its prose changed, or when scripts/figures.py check fails. Not for plots of measured data."
+description: "Add, change or explain a Mermaid diagram or mind map anywhere in this repo's Markdown (course lessons, the proposal's mind maps, docs). Use when asked for a diagram, flowchart, mind map, gantt or 'a picture of' something, to update one after its prose changed, or when scripts/figures.py check fails. Bar charts of a measured table go through `figures.py chart`."
 ---
 
 **Audience.** The repo's first readers are scientists (PhD and independent researchers; see
@@ -74,5 +74,11 @@ renders each one with a pinned mermaid-cli and font for the PDF and Word builds
 
 ## Not this skill
 
-Plots of measured numbers (benchmarks, profiles) come from the data with a script and carry the
-command that made them; a Mermaid chart of typed-in numbers is not evidence.
+A Mermaid chart of typed-in numbers is not evidence. A measured table (a profile, a benchmark)
+becomes a bar chart with `python3 scripts/figures.py chart TABLE.md --label COL --value COL
+[--value COL] --id ID --title QUESTION --y-title 'UNIT'`: the first value column is the bars,
+any others are lines, and a `total` row is skipped. It prints the fence and a card stub; the
+fence keeps a `%% data:` line, and `check` fails if the chart and its table drift apart. Edit the
+table, never the chart, then rerun the command. Anything a bar chart cannot show (error bars,
+scaling curves, distributions) comes from the data with a plotting script that is committed and
+named in the figure's evidence.

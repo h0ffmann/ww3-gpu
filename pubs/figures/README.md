@@ -46,6 +46,49 @@ A rewritten piece of the model is used for real forecasts only if its results ag
 `gpu-operation-decision` · [source](../../course/13-bulk-porting-with-agents.md) · [PDF](mermaid/gpu-operation-decision.pdf) · [report a mistake](https://github.com/h0ffmann/ww3-gpu/issues/new?title=Figure%20gpu-operation-decision%3A%20)
 
 
+## [`docs/W3SDS4_TRITON_202610.md`](../../docs/W3SDS4_TRITON_202610.md)
+
+### Where does the source-term time go, and how much of it is W3SDS4?
+
+In this test, the routine that dissipates wave energy by breaking (`W3SDS4`) takes two thirds of the source-term time, about five times the nonlinear interaction (`W3SNL1`); with its cumulative-breaking term switched off it costs a quarter as much.
+
+<img src="mermaid/sds4-profile-ts1.png" alt="In this test, the routine that dissipates wave energy by breaking (`W3SDS4`) takes two thirds of the source-term time, about five times the nonlinear interaction (`W3SNL1`); with its cumulative-breaking term switched off it costs a quarter as much." width="560" />
+
+`sds4-profile-ts1` · [source](../../docs/W3SDS4_TRITON_202610.md) · [PDF](mermaid/sds4-profile-ts1.pdf) · [report a mistake](https://github.com/h0ffmann/ww3-gpu/issues/new?title=Figure%20sds4-profile-ts1%3A%20)
+
+### Which branch of the cumulative-breaking term does W3SDS4 run, and what does each cost?
+
+One number in the ST4 settings picks one of three versions of the same term, and the default picks the most expensive one, which WW3's own comment calls "the expensive and largely useless version".
+
+<img src="mermaid/sds4-sdscum-branches.png" alt="One number in the ST4 settings picks one of three versions of the same term, and the default picks the most expensive one, which WW3's own comment calls &quot;the expensive and largely useless version&quot;." width="560" />
+
+`sds4-sdscum-branches` · [source](../../docs/W3SDS4_TRITON_202610.md) · [PDF](mermaid/sds4-sdscum-branches.pdf) · [report a mistake](https://github.com/h0ffmann/ww3-gpu/issues/new?title=Figure%20sds4-sdscum-branches%3A%20)
+
+### In what order is W3SDS4 ported to Triton, and what gate does each step pass?
+
+The slowest routine is rewritten for a new GPU language in small, checked steps, and nothing is timed until its answers match the original within a stated tolerance.
+
+<img src="mermaid/triton-port-plan.png" alt="The slowest routine is rewritten for a new GPU language in small, checked steps, and nothing is timed until its answers match the original within a stated tolerance." width="560" />
+
+`triton-port-plan` · [source](../../docs/W3SDS4_TRITON_202610.md) · [PDF](mermaid/triton-port-plan.pdf) · [report a mistake](https://github.com/h0ffmann/ww3-gpu/issues/new?title=Figure%20triton-port-plan%3A%20)
+
+### Which implementations of W3SDS4 are timed, and when does a timing count?
+
+Five versions of the same routine get the same input, and only those whose results agree with the original Fortran are allowed into the speed comparison.
+
+<img src="mermaid/triton-benchmark-arms.png" alt="Five versions of the same routine get the same input, and only those whose results agree with the original Fortran are allowed into the speed comparison." width="560" />
+
+`triton-benchmark-arms` · [source](../../docs/W3SDS4_TRITON_202610.md) · [PDF](mermaid/triton-benchmark-arms.pdf) · [report a mistake](https://github.com/h0ffmann/ww3-gpu/issues/new?title=Figure%20triton-benchmark-arms%3A%20)
+
+### How does WeatherNext 3 enter the benchmark, and what are the waves compared with?
+
+WeatherNext 3 does not forecast waves: it supplies the wind that drives WW3, so the same wave model can be run with a different wind, and each of its 64 ensemble members becomes one WW3 run. The machine-learning wave forecast in the comparison is ECMWF's AIFS Single Wave.
+
+<img src="mermaid/weathernext-wind-chain.png" alt="WeatherNext 3 does not forecast waves: it supplies the wind that drives WW3, so the same wave model can be run with a different wind, and each of its 64 ensemble members becomes one WW3 run. The machine-learning wave forecast in the comparison is ECMWF's AIFS Single Wave." width="560" />
+
+`weathernext-wind-chain` · [source](../../docs/W3SDS4_TRITON_202610.md) · [PDF](mermaid/weathernext-wind-chain.pdf) · [report a mistake](https://github.com/h0ffmann/ww3-gpu/issues/new?title=Figure%20weathernext-wind-chain%3A%20)
+
+
 ## [`pubs/proposal/mapas-mentais.pt.md`](../../pubs/proposal/mapas-mentais.pt.md)
 
 ### Do que trata a proposta, em um único mapa?

@@ -3,6 +3,8 @@
 
     python3 scripts/figures.py check            # CI: fences, cards, renders and gallery agree
     python3 scripts/figures.py render [--force] # re-render changed fences (needs mmdc; `just figures`)
+    python3 scripts/figures.py chart TABLE.md --label COL --value COL [--value COL] --id ID --title T
+                                                # a measured table -> a bar-chart fence and card stub
 
 A diagram stays a ```mermaid fence in the Markdown it illustrates, so GitHub keeps drawing it in
 place. The harness adds three things:
@@ -28,6 +30,7 @@ import json
 import os
 import pathlib
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -181,6 +184,7 @@ def check() -> int:
     index = json.loads(INDEX.read_text(encoding="utf-8")) if INDEX.exists() else {"figures": {}}
     known = index.get("figures", {})
     for f in figs:
+        check_data(f, errors)
         if not f["id"]:
             continue
         rec = known.get(f["id"])
@@ -266,9 +270,113 @@ def render(force: bool) -> int:
     return check()
 
 
+NUMBER = re.compile(r"[-+]?\d+(?:[.,]\d+)?")
+
+
+def table_rows(text: str) -> list[dict]:
+    """The first Markdown table in text, as dicts keyed by header (markup stripped)."""
+    clean = lambda c: re.sub(r"[`*]", "", c).strip()
+    rows, header = [], None
+    for line in text.splitlines():
+        if not line.lstrip().startswith("|"):
+            if header:
+                break
+            continue
+        cells = [clean(c) for c in line.strip().strip("|").split("|")]
+        if header is None:
+            header = cells
+        elif not all(re.fullmatch(r":?-+:?", c) for c in cells if c):
+            rows.append(dict(zip(header, cells)))
+    return rows
+
+
+def number(cell: str) -> float | None:
+    m = NUMBER.search(cell)
+    return float(m.group(0).replace(",", ".")) if m else None
+
+
+def chart_body(table: pathlib.Path, label: str, values: list[str], y_title: str) -> list[str]:
+    """The xychart lines for one measured table: first value column as bars, the rest as lines.
+    Rows without a number in every value column, and a row labelled `total`, are skipped."""
+    rows = table_rows((ROOT / table).read_text(encoding="utf-8"))
+    missing = [c for c in [label] + values if rows and c not in rows[0]]
+    if not rows or missing:
+        raise ValueError(f"{table}: no table, or no column {missing}; columns: {list(rows[0]) if rows else []}")
+    keep = [r for r in rows if r[label].strip().lower() != "total"
+            and all(number(r[v]) is not None for v in values)]
+    q = lambda t: '"' + t.replace('"', "'") + '"'
+    top = max(number(r[v]) for r in keep for v in values)
+    # dark bars and a contrasting line: the neutral theme's default greys barely print
+    out = ['%%{init: {"themeVariables": {"xyChart": {"plotColorPalette": "#4c6a8c, #c0392b"}}}}%%',
+           "xychart-beta", f"    x-axis [{', '.join(q(r[label]) for r in keep)}]",
+           f"    y-axis {q(y_title)} 0 --> {top * 1.1:.3g}"]
+    for i, v in enumerate(values):
+        out.append(f"    {'bar' if i == 0 else 'line'} [{', '.join(f'{number(r[v]):g}' for r in keep)}]")
+    return out
+
+
+def data_args(argv: list[str]) -> tuple:
+    ap = argparse.ArgumentParser(prog="%% data:", add_help=False)
+    ap.add_argument("table", type=pathlib.Path)
+    ap.add_argument("--label", required=True)
+    ap.add_argument("--value", action="append", required=True)
+    ap.add_argument("--y-title", default="")
+    a = ap.parse_args(argv)
+    return a.table, a.label, a.value, a.y_title
+
+
+def check_data(fig: dict, errors: list[str]) -> None:
+    """A fence with a `%% data:` line must still be exactly what its table produces."""
+    line = next((l for l in fig["source"].splitlines() if l.startswith("%% data:")), None)
+    if not line:
+        return
+    where = f"{fig['file']}:{fig['line']}"
+    try:
+        want = chart_body(*data_args(shlex.split(line[len("%% data:"):])))
+    except (ValueError, SystemExit, OSError) as e:
+        errors.append(f"{where}: bad '%% data:' line: {e}")
+        return
+    body = [l for l in fig["source"].splitlines()
+            if not l.startswith(("%% figure:", "%% title:", "%% data:"))]
+    if body != want:
+        errors.append(f"{where}: chart no longer matches its table; regenerate it with `figures.py chart`")
+
+
+def chart(table: pathlib.Path, label: str, values: list[str], fid: str, title: str,
+          y_title: str, lang: str) -> int:
+    """Print a bar-chart fence and a card stub for one measured table, so a profile or benchmark
+    table becomes a figure without retyping its numbers; `check` keeps the two in step."""
+    try:
+        body = chart_body(table, label, values, y_title)
+    except ValueError as e:
+        print(f"figures: {e}", file=sys.stderr)
+        return 1
+    argv = [table.as_posix(), "--label", label] + sum((["--value", v] for v in values), [])
+    argv += ["--y-title", y_title] if y_title else []
+    out = ["```mermaid", f"%% figure: {fid}", f"%% title: {title}", f"%% data: {shlex.join(argv)}"]
+    summary, labels = CARD_LABELS[lang]
+    out += body + ["```", "", "<details open>", f"<summary>{summary}</summary>", ""]
+    for name in labels:
+        out += [f"**{name}.** TODO", ""]
+    out.append("</details>")
+    print("\n".join(out))
+    return 0
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("command", nargs="?", default="check", choices=["check", "render"])
-    ap.add_argument("--force", action="store_true", help="re-render every figure")
+    ap.add_argument("command", nargs="?", default="check", choices=["check", "render", "chart"])
+    ap.add_argument("table", nargs="?", type=pathlib.Path, help="chart: Markdown file holding the table")
+    ap.add_argument("--force", action="store_true", help="render: re-render every figure")
+    ap.add_argument("--label", help="chart: the column naming each bar")
+    ap.add_argument("--value", action="append", default=[], help="chart: numeric column; repeat for lines")
+    ap.add_argument("--id", help="chart: figure id")
+    ap.add_argument("--title", help="chart: the question the figure answers")
+    ap.add_argument("--y-title", default="", help="chart: y-axis title, with its unit")
+    ap.add_argument("--lang", choices=["en", "pt"], default="en", help="chart: card language")
     a = ap.parse_args()
+    if a.command == "chart":
+        if not (a.table and a.label and a.value and a.id and a.title):
+            ap.error("chart needs TABLE, --label, --value, --id and --title")
+        sys.exit(chart(a.table, a.label, a.value, a.id, a.title, a.y_title, a.lang))
     sys.exit(check() if a.command == "check" else render(a.force))

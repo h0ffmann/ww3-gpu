@@ -61,10 +61,35 @@
       "title": "Do que trata a proposta, em um único mapa?",
       "sha256": "7b5be3d75a4da1a91232562755696e04cfb26bafc85d16942ab24d3e2a077f9d"
     },
+    "sds4-profile-ts1": {
+      "file": "docs/W3SDS4_TRITON_202610.md",
+      "title": "Where does the source-term time go, and how much of it is W3SDS4?",
+      "sha256": "edacb979ee4bf7087547208fad8567b4f68b689f65311808fa5a3acc5abdadc4"
+    },
+    "sds4-sdscum-branches": {
+      "file": "docs/W3SDS4_TRITON_202610.md",
+      "title": "Which branch of the cumulative-breaking term does W3SDS4 run, and what does each cost?",
+      "sha256": "3f764d14bcf86e896a03a9e075c44c9e02eba7bd473fb45fa1a59d1de0164199"
+    },
     "testes-ww3-ww4": {
       "file": "pubs/proposal/mapas-mentais.pt.md",
       "title": "Que testes o WW3 e o WW4 ofereciam em setembro e outubro de 2026, e o que o projeto acrescenta?",
       "sha256": "20214597094cecf0bb882c7688fed53e9e1cf307cc456c89ef837786a0a155ae"
+    },
+    "triton-benchmark-arms": {
+      "file": "docs/W3SDS4_TRITON_202610.md",
+      "title": "Which implementations of W3SDS4 are timed, and when does a timing count?",
+      "sha256": "56308dbd04f403bcfbcfabf56f87ce680ae6dce4f52c8cd07c448ee41c324fee"
+    },
+    "triton-port-plan": {
+      "file": "docs/W3SDS4_TRITON_202610.md",
+      "title": "In what order is W3SDS4 ported to Triton, and what gate does each step pass?",
+      "sha256": "1283b90b31f890ea428622b0ef0af9d4378b90bac977c11b10bcca279b73920c"
+    },
+    "weathernext-wind-chain": {
+      "file": "docs/W3SDS4_TRITON_202610.md",
+      "title": "How does WeatherNext 3 enter the benchmark, and what are the waves compared with?",
+      "sha256": "a6afd580d96cd14a101c2fc3b9452bfb25ff148d4e59a28f892316fff90db513"
     }
   }
 }
