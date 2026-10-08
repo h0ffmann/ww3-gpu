@@ -101,3 +101,8 @@ Write the commit message properly (subject, a body paragraph saying what and why
 generated from the commits (`just uprd` regenerates it later). A PR opened from the GitHub UI
 gets the same treatment from `.github/workflows/pr-body.yml`. Delete the first `<!-- uprd -->`
 line of a description to hand-edit it and keep it.
+
+Name the branch after the work (`claude/<issue-number>-<short-kebab-slug>` for an agent's branch).
+The same workflow fails a PR whose head branch matches `^claude/project-thread-`, a generic session
+name that says nothing about the change in the PR list or in `git log`; push the commits to a named
+branch (`git push -u origin HEAD:claude/<issue>-<slug>`) and open the PR from there.

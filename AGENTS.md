@@ -213,6 +213,10 @@ with marola-devkit's `skills-vendor`; `skills-vendor update <name>` does it by h
   with a *Before* and an *After* paragraph.
 - **A PR links the issue or plan it answers**, and a number it adds points at the command that
   reproduces it. A merged PR is finished: follow-up work restarts from `main`.
+- **The branch is named after the work**, `claude/<issue-number>-<short-kebab-slug>` for an agent's
+  branch. A head branch matching `^claude/project-thread-` (a session name that says nothing about
+  the change) fails the `branch` job of `.github/workflows/pr-body.yml`, the rule marola-devkit
+  applies to every marola repo; push the same commits to a named branch and open the PR from it.
 - **Never** rewrite history on someone else's branch, skip or quarantine a test to get green, or
   push an empty commit to kick CI.
 - **Releases** go through `just release X.Y.Z` and the `release` skill; a release needs a change
