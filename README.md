@@ -120,7 +120,7 @@ are in [`course/09-benchmark-profile-compile-run.md`](course/09-benchmark-profil
 | `pubs/` | The course book and the UFRJ/DEL project proposal; built files land in `pdf/` |
 | `nix-config/` | Submodule (sparse, `labs/pratico` only): the pinned toolchain |
 | `WW3/` | Submodule: the [h0ffmann/WW3](https://github.com/h0ffmann/WW3) fork of NOAA-EMC/WW3 |
-| `bend-lang/` | Submodule: the [h0ffmann/bend](https://github.com/h0ffmann/bend) fork, pinned for the Bend tryout and not fetched by CI |
+| `WW4/` | Submodule: the [h0ffmann/WW4](https://github.com/h0ffmann/WW4) fork of [NOAA-EMC/WW4](https://github.com/NOAA-EMC/WW4), for reading and comparing against WW3; not fetched by CI |
 
 Lab code is C++, Fortran and shell. Python appears only in the publishing pipeline, which is the
 stance the [project proposal](pubs/proposal/pt/) takes: the model's own languages, plus the one the
