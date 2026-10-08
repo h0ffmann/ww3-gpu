@@ -244,6 +244,10 @@ figures *args:
 figures-check:
     python3 scripts/figures.py check
 
+# AI-writing tells in the English Markdown: the gate CI runs; --report lists every judgement rule (issue #36).
+vale *args:
+    scripts/vale.sh {{args}}
+
 # Parecer do revisor-proposta sobre pubs/proposal (norma ABNT/DEL, registro científico, jargão).
 # Sem argumentos revisa pt/ e en/; passe caminhos para revisar só parte.
 proposal-review *files:

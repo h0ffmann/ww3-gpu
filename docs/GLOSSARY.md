@@ -295,6 +295,7 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | Term | Expansion | What it is | Where it appears |
 |---|---|---|---|
 | Spec Kit / `specify` | GitHub's spec-driven development toolkit and its CLI, `specify` 1.1.2 `(v)` [github.com/github/spec-kit](https://github.com/github/spec-kit), 2026-10-08 | `just specify init` generates `.specify/` and the `/speckit-*` skills per clone (not tracked); `.specify/memory/constitution.md` restates `AGENTS.md`; a spec lives in `specs/<NNN-slug>/spec.md` and is named in its WFIP. | [CONTRIBUTING.md](../CONTRIBUTING.md), [.claude/skills/wfip/SKILL.md](../.claude/skills/wfip/SKILL.md) |
+| Vale / `vale-ai-tells` | a prose linter (3.15.2) and its style package of AI-writing tells (v1.37.0) `(v)` [github.com/errata-ai/vale](https://github.com/errata-ai/vale), [github.com/tbhb/vale-ai-tells](https://github.com/tbhb/vale-ai-tells), 2026-10-08 | `just vale` is the CI gate on the English Markdown (the em dash and the never-right tells, `.vale.ini`); `just vale --report` lists the judgement rules (`.vale-report.ini`). | [CONTRIBUTING.md](../CONTRIBUTING.md), [scripts/vale.sh](../scripts/vale.sh) |
 | MPI | Message Passing Interface `(v)` `WW3/manual/impl/switch.tex` | Distributed-memory parallelism; Open MPI 5.0.10 is pinned, and Fortran owns `MPI_Init`. | [course/09-benchmark-profile-compile-run.md](../course/09-benchmark-profile-compile-run.md), [docs/AGENTS_KOKKOS_202609.md](AGENTS_KOKKOS_202609.md) |
 | OpenMP | ⚠ Open Multi-Processing (`\omp` = "OpenMP" in `WW3/manual/defs.tex`) | Directive-based threading (`OMPG`/`OMPH`) and one of the Kokkos backends; `OMP_NUM_THREADS`/`OMP_PROC_BIND` must be set explicitly. | [course/09-benchmark-profile-compile-run.md](../course/09-benchmark-profile-compile-run.md), [kokkos/CMakeLists.txt](../kokkos/CMakeLists.txt) |
 | OpenACC | ⚠ Open Accelerators directive standard | `!$acc` offload directives, used by Ikuyajolu et al. (2023) on `W3SRCEMD` and by `gpu/00_hello_acc.f90`; the contrast that motivates Kokkos. | [course/10-modern-fortran-refactoring.md](../course/10-modern-fortran-refactoring.md), [gpu/README.md](../gpu/README.md) |
@@ -1137,6 +1138,7 @@ Every term above, alphabetically, with the section it lives in.
 - UST: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - `(v)`: [This repository's own names](#this-repositorys-own-names)
 - `(v)` / `⚠`: [This repository's own names](#this-repositorys-own-names)
+- Vale / `vale-ai-tells`: [HPC and software](#hpc-and-software)
 - VA: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - VA, VS/VD, SPEC, VSNL/VDNL, CG1, WNMEAN, DEPTH, ISEA/JSEA, IMOD: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - validação em escada: [This repository's own names](#this-repositorys-own-names)

@@ -96,7 +96,7 @@ Run the gates of what you changed before calling it done. CI (`.github/workflows
 | `CITATION.cff` or `.zenodo.json` | `just codemeta` to regenerate `codemeta.json`, then `just codemeta --check` |
 | `docs/WFIPs/` or `specs/` | `just wfip check` (`scripts/wfip.py check`: index current, deliverable ids valid, every section present, DoD consistent with Status); `just wfip index` regenerates |
 | `.claude/skills/` or `.claude/agents/` | `python3 .claude/hooks/check_agent_frontmatter.py`; for a vendored skill, `skills-vendor check --lock .claude/skills/skills.lock` |
-| any Markdown | links are checked by lychee in CI; a relative link must resolve from the file |
+| any Markdown | links are checked by lychee in CI; a relative link must resolve from the file; `just vale` (`scripts/vale.sh`) must pass on English Markdown |
 
 The toolchain is the pinned `nix-config/labs/pratico` shell (`just ww3`, `just dev`); `just prereqs`
 installs a host alternative on Debian/Ubuntu. In a fresh container (a cloud agent session, where
@@ -123,7 +123,8 @@ statement. In practice:
 - Prose is plain and direct. Length is not a measure of a research document: cut a sentence because
   it repeats or teaches nothing, never to hit a word count, and never pad one language's version to
   match the other's. `humanizar` (pt-BR) and `humanizer` (en) are the filters for text a person will
-  sign or publish.
+  sign or publish. No em dash in prose (`just vale` fails on one; a lone `—` in a table cell is
+  fine); `just vale --report` lists the judgement-call tells for a person to weigh.
 - Every abbreviation, switch, routine and tool name used here is expanded in
   [`docs/GLOSSARY.md`](docs/GLOSSARY.md); add the entry with the first use.
 
@@ -242,8 +243,8 @@ with marola-devkit's `skills-vendor`; `skills-vendor update <name>` does it by h
 - Fortran added here is a shim or a teaching example: `.nml` inputs, compiles with gfortran with
   directives ignored (CI checks), no edit to WW3 physics.
 - Comments say why, name a trap, or point to the issue or plan; they never restate the code or
-  narrate a fix's history. A docstring longer than its function is a defect. The same goes for prose
-  in docs.
+  narrate a fix's history (issue #36); verbatim upstream text keeps its comments as provenance.
+  A docstring longer than its function is a defect. The same goes for prose in docs.
 - Reproduce a bug with a failing test before fixing it; a parity bug gets a fixture point.
 
 ## When something here turns out to be wrong
