@@ -38,6 +38,13 @@ Portuguese text. `just translate` rewrites a `pt/` file only when its English so
 `--force`, and either would discard that revision. After editing the English, port the change to the
 Portuguese by hand.
 
+The schedule (`08-schedule.md`) stays a two-column Activity | Deadline table in the Markdown.
+In the PDF and the Word file, `filters/cronograma.lua` draws it as the month grid a cronograma is
+read as: one row per activity, one column per month, a bar in the activity's month and a diamond for
+the defence. Change the dates in the table only; the grid and the Gantt figure in
+`proposal/mapas-mentais.pt.md` follow it, and `scripts/figures.py check` fails if that figure's
+months drift from the table.
+
 The DEL section names are a fixed glossary in `scripts/translate_md.py`. Header fields (student,
 advisors, date) live in `proposal/meta.{pt,en}.yaml`. The LaTeX layout is the department's own
 proposal template (`proposal/template.tex`, styles under `proposal/shared/`).

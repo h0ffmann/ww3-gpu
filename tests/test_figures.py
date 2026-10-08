@@ -95,6 +95,27 @@ class Figures(unittest.TestCase):
         figures.check_data(fig, errors)
         self.assertTrue(any("no longer matches" in e for e in errors), errors)
 
+    def schedule_fig(self, defence="2027-05-01"):
+        table = pathlib.Path(tempfile.mkdtemp()) / "s.md"
+        table.write_text("| Atividade | Prazo |\n|---|---|\n| Revisão | 10/2026 |\n"
+                         "| Defesa (a partir de) | 05/2027 |\n", encoding="utf-8")
+        source = "\n".join(["%% figure: s", "%% title: q?", f"%% schedule: {table}", "gantt",
+                             "    dateFormat YYYY-MM-DD", "    todayMarker off", "    section A",
+                             "    Revisão       :a1, 2026-10-01, 2026-10-31",
+                             f"    Defesa        :milestone, d2, {defence}, 0d",
+                             "    section Marco externo",
+                             "    WW4           :milestone, w4, 2027-07-01, 0d"])
+        errors = []
+        figures.check_schedule({"file": "page.md", "line": 1, "source": source}, errors)
+        return errors
+
+    def test_schedule_matches_table(self):
+        self.assertEqual(self.schedule_fig(), [])  # a trailing external milestone is allowed
+
+    def test_schedule_drift_fails(self):
+        errors = self.schedule_fig(defence="2027-06-01")
+        self.assertTrue(any("no longer match the table" in e for e in errors), errors)
+
     def test_repository_is_current(self):
         p = subprocess.run([sys.executable, SCRIPT, "check"], capture_output=True, text=True)
         self.assertEqual(p.returncode, 0, p.stderr)

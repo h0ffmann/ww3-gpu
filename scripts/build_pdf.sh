@@ -45,6 +45,7 @@ else
     --template "$root/pubs/proposal/template.tex" \
     --metadata-file "$root/pubs/proposal/meta.$lang.yaml" \
     --metadata lang="$plang" \
+    --lua-filter "$root/pubs/filters/cronograma.lua" \
     --top-level-division=section --number-sections \
     --citeproc --bibliography "$root/pubs/proposal/refs.bib" --csl "$csl" \
     --pdf-engine=pdflatex \

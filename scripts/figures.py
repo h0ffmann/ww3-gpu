@@ -6,6 +6,11 @@
     python3 scripts/figures.py chart TABLE.md --label COL --value COL [--value COL] --id ID --title T
                                                 # a measured table -> a bar-chart fence and card stub
 
+A gantt with a `%% schedule: TABLE.md` line is checked against that Activity | Deadline table (the
+proposal's cronograma): its first tasks must fall in the table's months, in order, with a milestone
+where the table says "a partir de" or "from". Labels and sections stay hand-written; the dates
+cannot drift. pubs/filters/cronograma.lua draws the same table as a month grid in the proposal.
+
 A diagram stays a ```mermaid fence in the Markdown it illustrates, so GitHub keeps drawing it in
 place. The harness adds three things:
 
@@ -186,6 +191,7 @@ def check() -> int:
     known = index.get("figures", {})
     for f in figs:
         check_data(f, errors)
+        check_schedule(f, errors)
         if not f["id"]:
             continue
         rec = known.get(f["id"])
@@ -340,6 +346,52 @@ def check_data(fig: dict, errors: list[str]) -> None:
             if not l.startswith(("%% figure:", "%% title:", "%% data:"))]
     if body != want:
         errors.append(f"{where}: chart no longer matches its table; regenerate it with `figures.py chart`")
+
+
+MONTH = re.compile(r"(\d\d)/(\d{4})")
+GANTT_TASK = re.compile(r"^\s*[^%\s][^:]*:(.*)$")
+
+
+def schedule_rows(table: pathlib.Path) -> list[tuple[str, bool]]:
+    """(YYYY-MM, milestone) for each row of an Activity | Deadline table, the date in its last cell."""
+    rows = table_rows((ROOT / table).read_text(encoding="utf-8"))
+    out = []
+    for r in rows:
+        cells = list(r.values())
+        m = MONTH.search(cells[-1])
+        if not m:
+            raise ValueError(f"{table}: row '{cells[0]}' has no MM/YYYY in its last cell")
+        text = " ".join(cells).lower()
+        out.append((f"{m.group(2)}-{m.group(1)}", "a partir de" in text or re.search(r"\bfrom\b", text) is not None))
+    if not out:
+        raise ValueError(f"{table}: no table")
+    return out
+
+
+def check_schedule(fig: dict, errors: list[str]) -> None:
+    """A gantt with a `%% schedule:` line must date its first tasks as its table does."""
+    lines = fig["source"].splitlines()
+    line = next((l for l in lines if l.startswith("%% schedule:")), None)
+    if not line:
+        return
+    where = f"{fig['file']}:{fig['line']}"
+    try:
+        want = schedule_rows(pathlib.Path(line[len("%% schedule:"):].strip()))
+    except (ValueError, OSError) as e:
+        errors.append(f"{where}: bad '%% schedule:' line: {e}")
+        return
+    tasks = []
+    for l in lines:
+        m = GANTT_TASK.match(l)
+        if not m or l.strip().startswith(("title", "dateFormat", "axisFormat", "section")):
+            continue
+        fields = [x.strip() for x in m.group(1).split(",")]
+        day = next((x for x in fields if re.fullmatch(r"\d{4}-\d\d-\d\d", x)), None)
+        if day:
+            tasks.append((day[:7], "milestone" in fields))
+    if tasks[:len(want)] != want:
+        errors.append(f"{where}: gantt dates {tasks[:len(want)]} no longer match the table {want}; "
+                      "fix the gantt, not the table")
 
 
 def chart(table: pathlib.Path, label: str, values: list[str], fid: str, title: str,
