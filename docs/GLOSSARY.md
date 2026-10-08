@@ -400,6 +400,9 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | definition of done (six items) | kernel with heritage header; `bind(C)` shim + Fortran interface; L1 test with justified tolerances; L2 replay of the smallest regtest; timing line in `PORT_STATUS.md`; property test where physics allows `(v)` [docs/AGENTS_KOKKOS_202609.md](AGENTS_KOKKOS_202609.md) §1.5 | What a port PR must contain. | [course/12-porting-a-kernel-w3snl1.md](../course/12-porting-a-kernel-w3snl1.md) |
 | AGENTS_KOKKOS | [docs/AGENTS_KOKKOS_202609.md](AGENTS_KOKKOS_202609.md), "Operating coding agents on a phased WW3 → modern C++ / Kokkos port", written to be dropped in as `AGENTS.md` `(v)` | The rules (§1), ranked port list (§2), interop contract and residency ladder (§3) lessons 11–13 cite by section. | [course/13-bulk-porting-with-agents.md](../course/13-bulk-porting-with-agents.md) |
 | KOKKOS_H100_PLAN | [docs/KOKKOS_H100_PLAN_202609.md](KOKKOS_H100_PLAN_202609.md), the single-H100 port plan with the full `model/src` repository map `(v)` | Source of the "239 preprocessor guards in `w3srcemd.F90`" count and the Kokkos-vs-SYCL decision. | [course/10-modern-fortran-refactoring.md](../course/10-modern-fortran-refactoring.md) |
+| ADR-0001 | [docs/ADRs/ADR-0001-proof-language.md](ADRs/ADR-0001-proof-language.md), the decision record on whether the GPU port adopts a proof language `(v)` | No: bit-for-bit claims are settled by exhaustive sweeps, GIMPLE diffs and SMT `QF_FP` queries; it covers the Kokkos, Triton and WeatherNext 3 scenarios. ADRs are indexed in [docs/ADRs/README.md](ADRs/README.md). | [docs/BITWISE_PROOF_202610.md](BITWISE_PROOF_202610.md) |
+| BITWISE_PROOF | [docs/BITWISE_PROOF_202610.md](BITWISE_PROOF_202610.md), the plan to prove the Fortran → C → C++/Kokkos translation bit for bit, rung by rung, with one page per proof tool under [docs/proof/](proof/README.md) `(v)` | Exhaustive sweeps, GIMPLE diffs and SMT queries now; ESBMC, Alive2 and TLA+ later; interactive provers not for this project ([ADR-0001](ADRs/ADR-0001-proof-language.md)). Its pilot is `proof/snl1_cons/`. | [kokkos/PORT_STATUS.md](../kokkos/PORT_STATUS.md), [course/12-porting-a-kernel-w3snl1.md](../course/12-porting-a-kernel-w3snl1.md) |
+| `proof/` | `snl1_cons/` (section 1 of `W3SNL1`, Fortran against the port on all 2^32 inputs of `KDMEAN`, `run.sh`) and `smt/` (two SMT-LIB queries over IEEE-754 from sections 3 and 4) `(v)` [docs/BITWISE_PROOF_202610.md](BITWISE_PROOF_202610.md) §4 | The runnable half of the proof plan: gfortran and g++ only, no Kokkos. | [docs/proof/README.md](proof/README.md) |
 | AWESOME-WW3 | [docs/AWESOME-WW3_202609.md](AWESOME-WW3_202609.md), the curated link list `(v)` | Where every third-party tool named in the course is catalogued. | [README.md](../README.md) |
 | `switch_lab_shrd` / `switch_lab_mpi` / `switch_lab_st6` | the lab's serial / `DIST MPI` / `ST6`+`FLX4` switch files `(v)` [switches/README.md](../switches/README.md) | Reasonable defaults assembled from documentation, not copies of upstream files; five of their keys are inert (see [WW3 switches](#ww3-switches)). | [switches/README.md](../switches/README.md), [course/01-build.md](../course/01-build.md) |
 | `kokkos/` | the C++/Kokkos half of the lab: one CMake tree, one backend per preset `(v)` [kokkos/README.md](../kokkos/README.md) | `src/ww_kokkos` (kernels), `src/fortran_iface` (shim), `intro/`, `tests/`, `tools/`. | [course/11-kokkos-and-modern-cpp.md](../course/11-kokkos-and-modern-cpp.md) |
@@ -469,6 +472,7 @@ Every term above, alphabetically, with the section it lives in.
 - ABNT: [HPC and software](#hpc-and-software)
 - ADA89: [HPC and software](#hpc-and-software)
 - ADA89 / HOPPER90: [HPC and software](#hpc-and-software)
+- ADR-0001: [This repository's own names](#this-repositorys-own-names)
 - AGENTS_KOKKOS: [This repository's own names](#this-repositorys-own-names)
 - AIFS Single Wave: [Models, projects and institutions](#models-projects-and-institutions)
 - Amdahl: [HPC and software](#hpc-and-software)
@@ -487,6 +491,7 @@ Every term above, alphabetically, with the section it lives in.
 - BIN2NC: [WW3 switches](#ww3-switches)
 - `bind(C)`: [HPC and software](#hpc-and-software)
 - `bind(C)` / ISO_C_BINDING / `extern "C"`: [HPC and software](#hpc-and-software)
+- BITWISE_PROOF: [This repository's own names](#this-repositorys-own-names)
 - bmi-wavewatch3: [HPC and software](#hpc-and-software)
 - BS0: [WW3 switches](#ww3-switches)
 - BS0 / BS1: [WW3 switches](#ww3-switches)
@@ -960,6 +965,7 @@ Every term above, alphabetically, with the section it lives in.
 - pratico: [HPC and software](#hpc-and-software)
 - PTP: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - publisher: [HPC and software](#hpc-and-software)
+- `proof/`: [This repository's own names](#this-repositorys-own-names)
 - `pubs/`: [This repository's own names](#this-repositorys-own-names)
 - `PURE`: [HPC and software](#hpc-and-software)
 - `push_finalize_hook`: [HPC and software](#hpc-and-software)

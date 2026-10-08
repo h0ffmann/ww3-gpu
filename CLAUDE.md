@@ -26,4 +26,4 @@ this file as plain text must open `AGENTS.md` itself. `CONTRIBUTING.md` is the l
 - **On compaction, preserve**: which files were modified, which gates were run and their result,
   and the `(v)`/`⚠` status of any number you wrote. Everything else can go.
 - **Start in this repository's root** so `.claude/settings.json`, the hooks and the skills load;
-  `WW3/`, `nix-config/` and `bend-lang/` are submodules you read, not repositories you work in.
+  `WW3/`, `WW4/` and `nix-config/` are submodules you read, not repositories you work in.

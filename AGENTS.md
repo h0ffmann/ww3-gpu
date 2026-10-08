@@ -53,6 +53,7 @@ recipe is a thin wrapper over a script in `scripts/`; `just` lists them.
 | Something tried, including a negative result | a dated entry in `docs/log/` | [`docs/log/README.md`](docs/log/README.md): append, never rewrite |
 | A plan, an evaluation, a survey | `docs/` as `NAME_YYYYMM.md`, dated in the name | this file; the `(v)`/`⚠` convention; `docs/GLOSSARY.md` for every new abbreviation |
 | A non-trivial change, designed before it is built | a WFIP in `docs/WFIPs/`, numbered, tied to a proposal deliverable (D1–D6) with its definition of done in §7; a Spec Kit spec in `specs/<NNN-slug>/` when behaviour is worth specifying | [`docs/WFIPs/TEMPLATE.md`](docs/WFIPs/TEMPLATE.md), the `wfip` skill; `scripts/wfip.py check` is the gate and regenerates the index |
+| A decision that several plans or WFIPs follow (a tool, a method, a scope) | an ADR in `docs/ADRs/`, numbered, Proposed until the owner accepts it | [`docs/ADRs/README.md`](docs/ADRs/README.md); an accepted ADR is superseded, not edited |
 | A lesson, an example, an exercise | `course/`, `examples/`, `exercises/` | lessons are numbered and cross-linked; examples use `.nml`, never `.inp` |
 | The proposal | `pubs/proposal/pt/` (reference) and `en/` (mirror) | [The proposal](#the-proposal-hard-rule) |
 | A diagram | a Mermaid fence in the page it illustrates | [Figures](#figures-hard-rule) |
