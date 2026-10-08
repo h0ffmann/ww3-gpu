@@ -1,0 +1,16 @@
+/* style.css — the web edition's only stylesheet: a readable column, nothing else. */
+body { max-width: 46em; margin: 0 auto; padding: 1em; font: 17px/1.6 Georgia, serif; color: #222; background: #fff; }
+h1, h2, h3, nav { font-family: system-ui, sans-serif; line-height: 1.25; }
+a { color: #1a4f8b; }
+pre, code { font-size: 0.9em; }
+pre { overflow-x: auto; background: #f5f5f5; padding: 0.75em; }
+img { max-width: 100%; height: auto; }
+table { border-collapse: collapse; display: block; overflow-x: auto; }
+th, td { border: 1px solid #ccc; padding: 0.3em 0.6em; }
+nav.sitenav { border-bottom: 1px solid #ddd; margin-bottom: 1em; font-size: 0.9em; }
+@media (prefers-color-scheme: dark) {
+  body { color: #ddd; background: #161616; }
+  a { color: #8ab4f8; }
+  pre { background: #222; }
+  th, td { border-color: #444; }
+}

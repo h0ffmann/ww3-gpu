@@ -1,0 +1,5 @@
+# pubs/site/meta.yaml — title block of the web edition; the PDF's is pubs/book/defaults.yaml.
+title: "Without Changing the Answer"
+subtitle: "Agentic coding and agentic research on a GPU port of WAVEWATCH III. A book in progress, compiled from github.com/h0ffmann/ww3-gpu"
+author: "Matheus Hoffmann"
+lang: en-US

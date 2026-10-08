@@ -6,8 +6,8 @@ WW3 solves the **spectral action density balance equation**. At every point in s
 every moment in time, it carries a two-dimensional spectrum: how much wave energy sits at
 each frequency and each direction.
 
-$$\frac{\partial N}{\partial t} + \nabla_{\mathbf{x}} \cdot (\dot{\mathbf{x}} N)
-+ \frac{\partial}{\partial k}(\dot{k} N) + \frac{\partial}{\partial \theta}(\dot{\theta} N)
+$$\frac{\partial N}{\partial t} + \nabla_{\mathbf{x}} \cdot (\dot{\mathbf{x}} N) +
+\frac{\partial}{\partial k}(\dot{k} N) + \frac{\partial}{\partial \theta}(\dot{\theta} N)
 = \frac{S}{\sigma}$$
 
 where $N(k, \theta; \mathbf{x}, t) = F/\sigma$ is **action** density (energy over intrinsic

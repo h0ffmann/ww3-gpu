@@ -1,0 +1,49 @@
+# pages — the book as a static website on GitHub Pages (issue #76, ADR-0004 decision 6).
+# scripts/build_html.sh turns course/*.md into one HTML page per chapter with the same pandoc
+# reader and figure filter as the PDF; math is MathML, so the site loads nothing from a CDN.
+# A pull request only builds it, so a lesson that breaks the site fails there; a push to main,
+# a published release or a manual run also deploys it to https://h0ffmann.github.io/ww3-gpu/.
+# Needs the repository's Pages source set to "GitHub Actions" (Settings -> Pages), once.
+name: Pages
+
+on:
+  pull_request:
+    paths: ['course/**', 'pubs/figures/mermaid/**', 'pubs/filters/mermaid.lua', 'pubs/site/**', 'scripts/book_prep.py', 'scripts/build_html.sh', '.github/workflows/pages.yml']
+  push:
+    branches: [main]
+    paths: ['course/**', 'pubs/figures/mermaid/**', 'pubs/filters/mermaid.lua', 'pubs/site/**', 'scripts/book_prep.py', 'scripts/build_html.sh', '.github/workflows/pages.yml']
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: false # a deploy cut halfway leaves Pages on neither version
+
+jobs:
+  build:
+    # pandoc from the runner's apt, 3.1.3 on ubuntu-24.04: chunkedhtml needs >= 3.0.
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y pandoc && pandoc --version | head -1
+      - run: bash scripts/build_html.sh
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: build/site }
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4

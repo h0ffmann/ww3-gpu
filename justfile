@@ -225,6 +225,10 @@ book style="abnt":
 book-docx:
     nix develop "{{justfile_directory()}}" --command scripts/build_docx.sh book
 
+# The book as a static website, one page per chapter -> build/site; CI deploys it to GitHub Pages.
+book-html:
+    scripts/build_html.sh
+
 # The book as a Leanpub manuscript (Markua) -> build/leanpub/manuscript; CI pushes it to the `leanpub` branch.
 leanpub *args:
     python3 scripts/leanpub_manuscript.py {{args}}
