@@ -53,4 +53,4 @@ For each moved pin, with `old..new` from `git diff --cached --submodule=short`:
 
 Branch from the default branch, commit the pins (and `.gitmodules` if it changed) with a message
 naming each `path old -> new`, and open the PR with the summaries from step 2. CI does not fetch
-`WW3` or `WW4`, so a green CI says nothing about it: say what was and was not built.
+`WW3` or `WW4`, so a green CI says nothing about them: say what was and was not built.
