@@ -17,7 +17,9 @@ under one concept DOI. The chain has no secrets in it:
    with no version it bumps the patch of the latest tag. It refuses unless `main` is checked
    out, clean and level with `origin/main`, the tag is new, and `main` has commits since the
    previous tag. `--dry-run` shows what it would do.
-2. `.github/workflows/release.yml` turns the tag into a GitHub release with generated notes.
+2. `.github/workflows/release.yml` turns the tag into a GitHub release with generated notes. It
+   runs on the tag's `create` event, because GitHub skips a `push` whose commit says `[skip ci]`,
+   as the PDF bot's commits on main do.
 3. Zenodo's GitHub webhook (enabled by the owner at zenodo.org → GitHub) archives the release
    using `.zenodo.json` and mints the DOI a few minutes later.
 

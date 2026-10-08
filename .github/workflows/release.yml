@@ -6,15 +6,16 @@
 # the proposal's deliverables), above GitHub's generated list of merged PRs.
 name: Release
 
-on:
-  push:
-    tags: ['v*']
+# It listens to `create`, not `push`: GitHub drops a push whose commit message says `[skip ci]`,
+# and the tip of main is often the PDF bot's "ci: rebuild PDFs [skip ci]" (v0.1.1 got no release).
+on: create
 
 permissions:
   contents: write
 
 jobs:
   release:
+    if: github.ref_type == 'tag' && startsWith(github.ref_name, 'v')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
