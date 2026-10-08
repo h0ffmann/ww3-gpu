@@ -12,8 +12,8 @@ One working version of each exercise, in the language the sheet asks for.
 
 ## Building the compiled ones
 
-`CMakeLists.txt` here is a deliberately tiny standalone project — not part of the
-`kokkos/` tree — so it doubles as the template for building your own code against the
+`CMakeLists.txt` here is a deliberately tiny standalone project (not part of the
+`kokkos/` tree), so it doubles as the template for building your own code against the
 lab's headers. From the repository root, inside `just ww3`:
 
 ```bash
@@ -42,7 +42,7 @@ exercises/solutions/ex13_compare.sh $WW3 ww3_ts1
 
 ## If a shell solution does not run
 
-1. Read the log it names — `build.log`, `regtest.log`, `replay.log` under `out/exNN/`.
+1. Read the log it names: `build.log`, `regtest.log`, `replay.log` under `out/exNN/`.
 2. The flag plumbing (`FFLAGS`, `LDFLAGS`, the `None` build type in 09) assumes WW3's
    CMake seeds `CMAKE_Fortran_FLAGS` from the environment and appends its own per
    build type. Check `grep -n Fortran_FLAGS $WW3/model/CMakeLists.txt $WW3/cmake/*` for

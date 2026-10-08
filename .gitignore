@@ -17,6 +17,7 @@ param.scratch
 *.out
 *.nc
 *.png
+!pubs/figures/mermaid/*.png
 
 # generated grid inputs
 depth.inp
@@ -59,9 +60,7 @@ gpu/03_precision
 *.mod
 *.o
 
-# data you have to fetch yourself
-gebco.nc
-gfs_winds.nc
+# data you have to fetch yourself (*.nc is ignored above)
 examples/02-regional-real-forcing/gfs.*/
 
 # example helpers compiled by run.sh
@@ -85,6 +84,15 @@ Thumbs.db
 *.log
 *.tar.gz
 result
+result-*
 
 # repo media (social card, screenshots) is tracked despite the *.png rule above
 !docs/media/*.png
+
+# Spec Kit (github/spec-kit): `just specify init` regenerates these; only the constitution and
+# specs/ are ours and tracked
+.specify/*
+!.specify/memory/
+.specify/memory/*
+!.specify/memory/constitution.md
+.claude/skills/speckit-*/

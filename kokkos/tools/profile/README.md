@@ -1,4 +1,4 @@
-# `tools/profile` — where does `ww3_shel` spend its time?
+# `tools/profile`: where does `ww3_shel` spend its time?
 
 Two scripts that answer the same question with different samplers and print
 the same table: the top routines of one regtest run, each with its self share,
@@ -45,8 +45,8 @@ Rebuilds WW3 with `-pg` into `<ww3-dir>/build-pg` (the timing build in
 - `-pg` is passed as `-DCMAKE_Fortran_FLAGS=-pg -DCMAKE_EXE_LINKER_FLAGS=-pg`.
   WW3's CMake honours `CMAKE_Fortran_FLAGS` on top of its own per-build-type
   flags (`scripts/02_build_ww3.sh` passes only `-DCMAKE_BUILD_TYPE`, so the
-  script configures the tree itself). `BUILD_TYPE` defaults to `Debug` -- what
-  the brief asks for -- and `BUILD_TYPE=RelWithDebInfo` gives a profile of the
+  script configures the tree itself). `BUILD_TYPE` defaults to `Debug` (what
+  the brief asks for), and `BUILD_TYPE=RelWithDebInfo` gives a profile of the
   optimised code, which is the one that matters for the port.
 - Each WW3 program overwrites `gmon.out` in the cwd, so the script deletes it
   after every preparatory program and reads only `ww3_shel`'s.

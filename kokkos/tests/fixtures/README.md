@@ -1,4 +1,4 @@
-# `kokkos/tests/fixtures/` — captured Fortran answers
+# `kokkos/tests/fixtures/`: captured Fortran answers
 
 The L1 tests do not compare the C++ port against numbers a human typed. They
 compare it against what WAVEWATCH III's own Fortran produced, captured once into
@@ -18,8 +18,8 @@ just snl1-fixtures        # builds gen_snl1_fixture in serial-debug and runs it
 git diff --stat kokkos/tests/fixtures/snl1_nk25_nth24.bin
 ```
 
-The generator is deterministic — no random numbers, nothing read from the
-environment — so a byte-level diff means the reference or the sea state changed,
+The generator is deterministic: no random numbers, nothing read from the
+environment. So a byte-level diff means the reference or the sea state changed,
 and that change needs a reason in the commit message.
 
 ## What is in the fixture
@@ -61,14 +61,14 @@ per point float32 kdmean, cg(nk), a(nspec), s(nspec), d(nspec)
 ```
 
 `nspec = nk*nth`. The index tables are stored **1-based, exactly as Fortran holds
-them**, and may be ≤ 0 — `INSNL1` clamps `IF3..IF6` to zero, which puts addresses
+them**, and may be ≤ 0: `INSNL1` clamps `IF3..IF6` to zero, which puts addresses
 in `1-NTH .. 0`. `ww::fixture::load()` subtracts one from every index; the C++
 kernel then reads them at scratch slot `index + nth`.
 
-Reader: `kokkos/src/ww_kokkos/fixture_io.{hpp,cpp}` — the one place that knows
+Reader: `kokkos/src/ww_kokkos/fixture_io.{hpp,cpp}`, the one place that knows
 this layout.
 
-## `bench_small/` — the benchmark-case generator's byte-equality fixture
+## `bench_small/`: the benchmark-case generator's byte-equality fixture
 
 `kokkos/tools/bench_case/` replaced `bench/make_bench_case.py`. Before the Python
 was deleted it was run once, `python3 bench/make_bench_case.py --size small -o
@@ -78,7 +78,7 @@ committed unchanged. `L1_test_bench_case` regenerates the small case into a
 temporary directory and compares every file byte for byte, so the C++ generator
 cannot drift from the numbers the Python produced.
 
-The seventh file, `ww3_ounf.nml`, is **not** from the Python — it never wrote one.
+The seventh file, `ww3_ounf.nml`, is **not** from the Python. It never wrote one.
 It was produced by the C++ generator and is pinned here so that it, too, cannot
 change silently. The `.gitignore` rules for `depth.inp`/`mask.inp` are lifted for
 this directory only.

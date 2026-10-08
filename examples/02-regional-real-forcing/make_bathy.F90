@@ -43,7 +43,7 @@ program make_bathy
 
   character(len=:), allocatable :: src
   character(len=32) :: latname, lonname, zname
-  integer :: ncid, varid, dimids(2), londimid(1), nlon, nlat
+  integer :: ncid, varid, dimids(2), londimid(1), latdimid(1), nlon, nlat
   real(real64), allocatable :: lon(:), lat(:)
   real(real32), allocatable :: zsrc(:, :)     ! (lon, lat) in Fortran order
   real(real32) :: z(nx, ny)
@@ -82,7 +82,8 @@ program make_bathy
   allocate (lon(nlon))
   call check(nf90_get_var(ncid, varid, lon), 'read '//trim(lonname))
   call check(nf90_inq_varid(ncid, trim(latname), varid), 'inq '//trim(latname))
-  call check(nf90_inquire_dimension(ncid, dimid_of(ncid, varid), len=nlat), 'dim of '//trim(latname))
+  call check(nf90_inquire_variable(ncid, varid, dimids=latdimid), 'dims of '//trim(latname))
+  call check(nf90_inquire_dimension(ncid, latdimid(1), len=nlat), 'dim of '//trim(latname))
   allocate (lat(nlat))
   call check(nf90_get_var(ncid, varid, lat), 'read '//trim(latname))
 
@@ -112,9 +113,8 @@ program make_bathy
      do i = 1, nx
         x = x0 + sx * real(i - 1, real64)
         il = minloc(abs(lon - x), dim=1)
-        if (abs(lon(il) - x) > dlon .or. abs(lat(jl) - y) > dlat) then
-           z(i, j) = land_fill                        ! model point outside the tile
-        else if (ieee_is_nan(zsrc(il, jl))) then
+        if (abs(lon(il) - x) > dlon .or. abs(lat(jl) - y) > dlat &   ! outside the tile
+            .or. ieee_is_nan(zsrc(il, jl))) then
            z(i, j) = land_fill
         else
            z(i, j) = zsrc(il, jl)
@@ -177,15 +177,6 @@ contains
        end if
     end do
   end function first_present
-
-  !> The (single) dimension id of a 1-D coordinate variable.
-  function dimid_of(nc, vid) result(did)
-    integer, intent(in) :: nc, vid
-    integer :: did
-    integer :: ids(1)
-    call check(nf90_inquire_variable(nc, vid, dimids=ids), 'dims of coordinate')
-    did = ids(1)
-  end function dimid_of
 
   !> Abort with the library's message on a failed NetCDF call.
   subroutine check(status, what)

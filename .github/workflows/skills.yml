@@ -1,0 +1,20 @@
+name: skills
+
+# Weekly: re-vendor the third-party skills under .claude/skills/ (humanizer, humanizar, the three
+# ponytail skills) from their upstreams, 14 days behind HEAD, re-apply this repo's audience
+# paragraphs (.claude/skills/*.patch) and open one PR for a person to read. Never merges on its
+# own. The tool is marola-devkit's skills-vendor (MIP-0080, marola-dev/marola#701).
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    uses: marola-dev/marola-devkit/.github/workflows/skills-update.yml@v0.6.0
+    with:
+      devkit-ref: v0.6.0

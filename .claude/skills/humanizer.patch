@@ -1,0 +1,15 @@
+--- a/humanizer/SKILL.md
++++ b/humanizer/SKILL.md
+@@ -10,6 +10,12 @@
+   version: "3.0.0"
+ ---
+ 
++**Audience in this repository.** ww3-gpu is written first for scientists: PhD and independent
++researchers in wave modelling and HPC (see `CONTRIBUTING.md`, "Who this repository is for"). Use
++the reference/technical voice by default. Keep domain terms, equations, units, `file:line`
++references and the `(v)`/`⚠` marks exactly as they are, and do not explain basics a researcher
++already knows.
++
+ # Humanizer: remove AI writing patterns
+ 
+ Rewrite AI-sounding text so it reads like the writer, not a chatbot. Keep what it says. Do not make anything up.

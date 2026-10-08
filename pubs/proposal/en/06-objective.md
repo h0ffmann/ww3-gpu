@@ -1,11 +1,12 @@
 # OBJECTIVE
 
-The general objective is to reduce, in a measured and reproducible way, the wall-clock time of the operational WAVEWATCH III cycle run by LabECO/UFSC within ReNOMO, without changing its scientific results beyond tolerances agreed with the laboratory, and to deliver a written recommendation on how far the laboratory's hardware, including an NVIDIA H100, can take that reduction.
+The general objective is to reduce the run time of the operational WAVEWATCH III cycle maintained by LabECO/UFSC for ReNOMO, with measured and reproducible gains, without the results differing from the current ones by more than the tolerances agreed with the laboratory. A single criterion (measured gain and results within tolerance) will also decide whether C++/Kokkos kernels running on an NVIDIA H100 GPU become part of the operational configuration.
 
 The specific objectives are:
 
-1. To freeze and document the operational configuration (source revision, switch file, namelists, grid, forcing, outputs, hardware) and to build a reproducible benchmark of the reference run, with a defined metric (wall-clock per forecast hour and spectral bin updates per second).
-2. To produce a profile of the reference run by routine and by phase (source terms, propagation, gather/scatter communication, I/O), on one and on several MPI ranks.
-3. To quantify the gain of each rung of the optimisation ladder, build options, run configuration and targeted refactoring, each with its parity evidence against the reference, and to deliver the best configuration to the laboratory as a documented build.
-4. To assess the feasibility of GPU execution on an H100 through a study and a single-kernel prototype, reporting measured numbers and the data-movement constraints that bound them.
-5. To publish the tooling, the results and the recommendation in the open repository, in a form that the laboratory can rerun and that the WW4 developers can consult.
+1. To record and freeze the operational configuration of each case (source revision, switches, namelists, grid, forcing, outputs and hardware) and to build a reproducible benchmark of the reference run, with a defined metric: run time per forecast hour.
+2. To profile the reference run by routine and by phase (source terms, propagation, communication, input and output), on one and on several MPI processes.
+3. To quantify the gain of the build, configuration and Fortran refactoring rungs, each with its check of agreement with the reference, and to deliver the best configuration to the laboratory as a documented build.
+4. To build the validation infrastructure WW3 lacks: a field-by-field comparator with versioned tolerances and per-routine unit tests on inputs captured from the operational case, integrated with the model's regression matrix.
+5. To rewrite in C++/Kokkos, in the order given by the profile, the routines that remain dominant, validate them on CPU against the original Fortran, measure the gain on GPU (H100) and decide, on gain and agreement of results, whether they enter the operational configuration.
+6. To publish tooling, results and recommendations in the project repository, in a form that lets the laboratory repeat the measurements, subject to the disclosure policy described in the methodology.

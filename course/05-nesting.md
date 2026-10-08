@@ -1,4 +1,4 @@
-# 05 — Nesting and multi-grid
+# 05. Nesting and multi-grid
 
 Two ways to combine grids of different resolution. They are genuinely different, not two
 spellings of the same thing.

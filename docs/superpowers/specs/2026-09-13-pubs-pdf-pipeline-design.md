@@ -20,32 +20,32 @@ Two PDF products built from markdown in this repo, reproducibly, locally and in 
 
 *Redução do tempo de simulação e previsão do WAVEWATCH III na operação da ReNOMO (LabECO/UFSC)*,
 working title. Co-advised by **Pedro Veras Guimarães, Dr.** (doctorate in fluid mechanics, École
-Centrale de Nantes, 2018 — "Dr." is the correct rendering, not D.Sc.), head of the Laboratório de
+Centrale de Nantes, 2018; "Dr." is the correct rendering, not D.Sc.), head of the Laboratório de
 Engenharia e Ciências Oceânicas (LabECO), Departamento de Engenharia Mecânica, UFSC, within the
 Rede Nacional de Observação e Monitoramento Oceânico (ReNOMO, CNPq/MCTI/Finep 062/2022,
 coordinated from IO-FURG). The UFRJ/DEL advisor line is left as a metadata field to fill.
 
 The argument, in the order the sections will make it:
 
-1. **Tema/Justificativa** — operational wave forecasting at LabECO runs WW3; wall-clock time
+1. **Tema/Justificativa:** operational wave forecasting at LabECO runs WW3; wall-clock time
    bounds how many runs, members and resolutions a day are possible.
-2. **Delimitação** — a ladder of increasingly invasive optimisations, each measured on the lab's
+2. **Delimitação:** a ladder of increasingly invasive optimisations, each measured on the lab's
    own configuration before the next is attempted: (a) compile-time switches and build flags
    (`switch` file, `-O3 -march=native`, OpenMP/MPI hybrid layout, NetCDF-4 I/O); (b) run
    configuration (domain decomposition, time steps, output frequency); (c) targeted modern-Fortran
-   refactors of the measured hotspots (`W3SRCE`, propagation); (d) GPU feasibility on an H100 —
+   refactors of the measured hotspots (`W3SRCE`, propagation); (d) GPU feasibility on an H100,
    framed honestly as a study, since upstream WW3 has no GPU path and the only published port got
    ~1.3× (docs/KOKKOS_H100_PLAN_202609.md, docs/AGENTS_KOKKOS_202609.md).
-3. **Objetivo** — measurable: X× reduction of the operational cycle's wall-clock at equal output,
+3. **Objetivo:** measurable: X× reduction of the operational cycle's wall-clock at equal output,
    with a reproducible benchmark and a written recommendation for the lab.
-4. **Metodologia** — profiling first (regtest closest to the operational grid, `perf`/`gprof`,
+4. **Metodologia:** profiling first (regtest closest to the operational grid, `perf`/`gprof`,
    the `ww3-lab` just recipes and Nix toolchain), then one rung at a time, each gated by
    bit-for-bit or tolerance parity against the current run; results published in this repo.
-5. **Non-overlap with WW4** — the proposal states explicitly that it does not contribute to
+5. **Non-overlap with WW4:** the proposal states explicitly that it does not contribute to
    NOAA-EMC/WW4 (pre-alpha, C++ rewrite, first release hoped for 2027) and does not fork WW3
    physics; it optimises the operation of the WW3 the lab runs today, and any GPU kernel work is
    documented so it can inform, not compete with, WW4.
-6. **Cronograma** — a markdown table of stages and dates, rendered as the numbered table the
+6. **Cronograma:** a markdown table of stages and dates, rendered as the numbered table the
    format expects.
 
 Decisions already taken with the owner:
@@ -109,7 +109,7 @@ not in the list.
   (`eaad089433ca2bb662274377d33df3d0e51ef28b`, pandoc 3.7.0.2, TeX Live 2025) so both flakes
   agree; `flake-utils` for `forAllSystems`.
 - `packages.tex`: `texlive.combine { inherit (texlive) scheme-medium babel-portuges
-  fontspec unicode-math xetex …; }` — the set is whatever `\listfiles` on the two documents
+  fontspec unicode-math xetex …; }`. The set is whatever `\listfiles` on the two documents
   needs, recorded in a comment. No Tectonic: sandboxed `nix build` has no network, and one TeX
   engine everywhere is simpler.
 - `devShells.default`: pandoc, that TeX Live, `python3.withPackages (openai)`, `just`, `fontconfig`

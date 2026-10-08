@@ -30,7 +30,7 @@ STATUS="$ROOT/kokkos/PORT_STATUS.md"
 OUT="$ROOT/exercises/solutions/out/ex13"
 mkdir -p "$OUT"
 
-[ -x "$REPLAY" ] || [ -f "$REPLAY" ] || {
+[ -f "$REPLAY" ] || {
   echo "!! $REPLAY not found -- it arrives with the nccmp-tol/L2 tooling (kokkos/tools/nccmp-tol)"
   exit 1
 }
