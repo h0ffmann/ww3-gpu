@@ -6,7 +6,7 @@
 | **Author** | M. Hoffmann (asked 2026-10-08 in the project thread; "WF-001") |
 | **Created** | 2026-10-08 |
 | **Deliverable** | D1, D6 |
-| **Related** | [#45](https://github.com/h0ffmann/ww3-gpu/issues/45) §3 (verification table) and the plan's §5–§6 ([`W3SDS4_TRITON_PLANO_202610.pt.md`](../W3SDS4_TRITON_PLANO_202610.pt.md)); [`examples/02-regional-real-forcing`](../../examples/02-regional-real-forcing/README.md), whose grid and namelists this reuses |
+| **Related** | [#63](https://github.com/h0ffmann/ww3-gpu/issues/63) (tracking issue); [#45](https://github.com/h0ffmann/ww3-gpu/issues/45) §3 (verification table) and the plan's §5–§6 ([`W3SDS4_TRITON_PLANO_202610.pt.md`](../W3SDS4_TRITON_PLANO_202610.pt.md)); [`examples/02-regional-real-forcing`](../../examples/02-regional-real-forcing/README.md), whose grid and namelists this reuses |
 | **Effort** | M: no kernel and no new program; one data path (Zarr → NetCDF → `ww3_prnc`), one new namelist, one verification script in shell, and the box set-up |
 | **Gain** | `science` (the first measured answer to "does the WeatherNext 3 wind change Hs?"); `proposal` (D1: the first configuration frozen in the repo's format, with the box named; D6: a repeatable example); `lab/dev-loop` (the RTX 4090 becomes the CUDA test machine for `just kokkos-cuda-test`) |
 | **Effort vs Gain** | do next: it needs nothing from the LabECO cases, which are the schedule's main risk (`07-methodology.md`, "Riscos"), and it exercises the whole chain from forcing to output on hardware the author owns |
@@ -24,7 +24,7 @@
 | **Tasks** | [`WFIP-0001.tasks.md`](WFIP-0001.tasks.md) |
 | **Tests** | none: no Python or C++ changes; the checks are the commands in §7 |
 | **Spec-kit** | [`specs/001-weathernext3-wind/spec.md`](../../specs/001-weathernext3-wind/spec.md) |
-| **Issues** | not filed: Draft |
+| **Issues** | [h0ffmann/ww3-gpu#63](https://github.com/h0ffmann/ww3-gpu/issues/63), the tracking issue; one per task once Accepted |
 
 ## 1. Summary
 
