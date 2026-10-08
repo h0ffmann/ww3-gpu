@@ -7,8 +7,7 @@
 	path = WW3
 	url = git@github.com:h0ffmann/WW3.git
 	branch = develop
-[submodule "bend-lang"]
-	path = bend-lang
-	url = git@github.com:h0ffmann/bend.git
-	branch = main
-	shallow = true
+[submodule "WW4"]
+	path = WW4
+	url = git@github.com:h0ffmann/WW4.git
+	branch = develop
