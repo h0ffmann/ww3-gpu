@@ -462,6 +462,7 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | CFF / `CITATION.cff` | Citation File Format 1.2.0 `(v)` [CITATION.cff](../CITATION.cff) | Drives GitHub's "Cite this repository" button; validated in CI by `cffconvert`. | [README.md](../README.md), [.github/workflows/citation.yml](../.github/workflows/citation.yml) |
 | LGPL-3.0-or-later | GNU Lesser General Public License, version 3 or later `(v)` [README.md](../README.md#licensing) | WW3's licence, so the kernels translated from it carry it too; the rest of the repo is MIT. | [README.md](../README.md), [kokkos/README.md](../kokkos/README.md) |
 | `just release` | `scripts/release.sh`: tag an up-to-date `main` as `vX.Y.Z` (default: the next patch) and push; `weekly-release.yml` runs it every Friday at 09:00 BRT `(v)` [justfile](../justfile) | `release.yml` publishes the GitHub release and Zenodo mints its DOI. | [README.md](../README.md) |
+| SWHID | Software Heritage persistent IDentifier `(v)` [swh-save.yml](../.github/workflows/swh-save.yml) | The intrinsic identifier (`swh:1:…`) Software Heritage gives an archived snapshot, release or file; `swh-save.yml` requests a Save Code Now of this repository on each release, and Zenodo shows the SWHID of its own deposit. | [.claude/skills/release/SKILL.md](../.claude/skills/release/SKILL.md) |
 
 ## Remissive index
 

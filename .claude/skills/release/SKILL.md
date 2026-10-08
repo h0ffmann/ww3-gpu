@@ -26,6 +26,11 @@ BRT (12:00 UTC) and publishes the release itself (a tag pushed with `GITHUB_TOKE
 `release.yml`). A week with no new commits makes no release. The change notes of each version
 are the GitHub release's generated notes; Zenodo links the version to that release.
 
+Zenodo forwards each deposit to Software Heritage and shows its SWHID on the record.
+`.github/workflows/swh-save.yml` also asks Software Heritage to archive the full git history
+("Save Code Now") on each published release and on Fridays at 13:00 UTC, an hour after the
+weekly release; a refused request is a warning, since Software Heritage also crawls GitHub.
+
 `just releases` lists past tags.
 
 ## Before tagging

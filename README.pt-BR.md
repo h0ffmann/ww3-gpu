@@ -107,6 +107,8 @@ O botão **Cite this repository**, na lateral do GitHub, exporta APA e BibTeX a 
 [`CITATION.cff`](CITATION.cff). Um projeto que dependa deste pode declarar a referência no próprio
 `CITATION.cff`; o exemplo está na seção [How to cite](README.md#how-to-cite) do README em inglês. O
 WW3 deve ser citado à parte, pelo manual do WAVEWATCH III Development Group da versão usada.
+Cada depósito no Zenodo vai também para o Software Heritage, que arquiva ainda todo o histórico
+do git a cada versão ([`swh-save.yml`](.github/workflows/swh-save.yml)).
 
 ## Trabalhos relacionados
 

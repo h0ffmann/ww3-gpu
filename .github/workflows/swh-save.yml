@@ -1,0 +1,28 @@
+# swh-save — ask Software Heritage to archive the whole git history ("Save Code Now"), next to the
+# Zenodo deposit of each release. Zenodo already forwards its release zip to Software Heritage;
+# this adds every branch, tag and commit. A tag pushed or a release made with GITHUB_TOKEN starts
+# no workflow, so the weekly release is covered by the schedule an hour after it.
+name: Software Heritage save
+
+on:
+  release:
+    types: [published]
+  schedule:
+    - cron: '0 13 * * 5'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  save:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - run: |
+          origin="https://github.com/${GITHUB_REPOSITORY}"
+          if ! out="$(curl -fsS -X POST "https://archive.softwareheritage.org/api/1/origin/save/git/url/${origin}/")"; then
+            echo "::warning::Software Heritage refused the save request; its own crawler still visits ${origin}."
+            exit 0
+          fi
+          echo "$out" | jq '{save_request_status, save_task_status, request_url, visit_date}'
+          echo "::notice::Archive: https://archive.softwareheritage.org/browse/origin/?origin_url=${origin}"
