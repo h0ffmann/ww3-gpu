@@ -7,7 +7,7 @@
 #   fixture   gfortran -O0 -g (the serial-debug build that wrote the fixture)  vs  the same port
 #   fma-cxx   negative control: the port without -ffp-contract=off
 #   fma-f90   the Fortran reference itself built with -march=x86-64-v3 (FMA available)
-#   bend-exp  the port with exp evaluated as (float)exp((double)x), Bend 2's F32.exp lowering
+#   exp-double  the port with exp evaluated as (float)exp((double)x), a float32-only target's usual lowering
 #
 # Needs gfortran and g++ (any recent GCC; `just ww3` provides both). No Kokkos, no CMake:
 # each side is its own translation unit, so each gets exactly the flags named here.
@@ -43,7 +43,7 @@ run() {  # run <name> <fortran flags> <c++ flags>
 }
 
 configs=("$@")
-[ ${#configs[@]} -gt 0 ] || configs=(parity fixture fma-cxx fma-f90 bend-exp)
+[ ${#configs[@]} -gt 0 ] || configs=(parity fixture fma-cxx fma-f90 exp-double)
 
 "$FC" --version | head -1
 "$CXX" --version | head -1
@@ -54,7 +54,7 @@ for c in "${configs[@]}"; do
     fixture)  run fixture  "-O0 -g"                     "$CXX_PORT" ;;
     fma-cxx)  run fma-cxx  "$F_WW3"                     "-std=c++20 -O3 -march=x86-64-v3" ;;
     fma-f90)  run fma-f90  "$F_WW3 -march=x86-64-v3"    "$CXX_PORT" ;;
-    bend-exp) run bend-exp "$F_WW3"                     "$CXX_PORT -DWW_EXP_VIA_DOUBLE" ;;
+    exp-double) run exp-double "$F_WW3"                     "$CXX_PORT -DWW_EXP_VIA_DOUBLE" ;;
     *) echo "run.sh: unknown config '$c'" >&2; exit 2 ;;
   esac
 done

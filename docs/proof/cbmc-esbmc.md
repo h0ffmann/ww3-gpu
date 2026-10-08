@@ -32,7 +32,7 @@ assert(bits(cons_ref_c(kd, P)) == bits(cons_port(kd, P)));
 ## Wave model and physics fit
 
 Small, loop-free or short-loop kernels. Section 3 iterates 720 times over gathered table reads
-`(v, BEND_TRYOUT §3.2)`; unrolling that with symbolic floats is far beyond what bit-precise FP
+`(v, the fixture header: nspecy + nth)`; unrolling that with symbolic floats is far beyond what bit-precise FP
 solving handles ⚠, so the unit is one iteration. `W3SRCE`'s sub-stepping loop with a data-dependent
 trip count is out of reach. Module state becomes globals the harness sets.
 

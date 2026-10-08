@@ -25,7 +25,6 @@ This index is the short form.
 | [Agda, Idris 2](agda-idris2.md) | none (postulated floats) | hand model | weeks | **no** |
 | [Liquid Haskell, QuickCheck](haskell-liquid-quickcheck.md) | none (reals) / testing | hand model | weeks | **no** |
 | [TLA+](tla-plus.md) | operation order, not values | protocols | 1–2 wk | **later** |
-| [Bend 2](bend.md) | none (F32 axioms) | F32 kernels as programs | tryout week | **no** for proofs |
 
 Dropped: F\*, whose verified-code tooling (HACL\*, Low\*) is integer and cryptographic, with no
 floating-point story ⚠. Its row would repeat Isabelle's.

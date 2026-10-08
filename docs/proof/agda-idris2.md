@@ -47,11 +47,6 @@ tractable; anything numeric is not. Free.
 - Nothing about floating-point values.
 - No path to the Fortran or C++ code; a second implementation to maintain.
 
-## Relation to Bend
-
-Bend is also pure and checks laws by evaluating closed terms. It shares the limit: its `F32`
-operations are axioms in the checker today `(v, Bend WONTFIX.txt #1017)`.
-
 ## Verdict
 
 **No.**

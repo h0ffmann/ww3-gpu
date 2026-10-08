@@ -1,0 +1,5 @@
+# actions/labeler v5 config: a PR that touches a WFIP gets the `wfip` label, which
+# .github/release.yml turns into its own heading in the release notes.
+wfip:
+  - changed-files:
+      - any-glob-to-any-file: ['docs/WFIPs/**', 'specs/**']

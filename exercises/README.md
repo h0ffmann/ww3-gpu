@@ -6,11 +6,11 @@ of every one. Shell, Fortran and C++ only, the same languages as the lab code.
 
 | | Sheet | Lesson | You produce |
 |---|---|---|---|
-| 09 | [`ex09_bench.md`](ex09_bench.md) | [09 — benchmark, profile, compile, run](../course/09-benchmark-profile-compile-run.md) | a compile-option matrix: flags × threads → wall-clock and an `nccmp-tol` verdict |
-| 10 | [`ex10_profile.md`](ex10_profile.md) | [10 — modern Fortran refactoring](../course/10-modern-fortran-refactoring.md) | a gprof profile of `ww3_shel`, bucketed into source terms / propagation / communication / I/O |
-| 11 | [`ex11_refactor.md`](ex11_refactor.md) | [10 — modern Fortran refactoring](../course/10-modern-fortran-refactoring.md) | a WW3-style routine refactored (explicit interface, `intent`, `pure`, no automatic array) and a parity test to 1e-6 |
-| 12 | [`ex12_reduce.md`](ex12_reduce.md) | [11 — Kokkos and modern C++](../course/11-kokkos-and-modern-cpp.md) | `Hs` at every sea point from an action-density `View` with a team `parallel_reduce`, checked against a closed form |
-| 13 | [`ex13_port.md`](ex13_port.md) | [12 — porting a kernel: W3SNL1](../course/12-porting-a-kernel-w3snl1.md), [13 — bulk porting](../course/13-bulk-porting-with-agents.md) | an L2 replay of `ww3_ts1` (Fortran vs Kokkos `W3SNL1`) and a written reading of its table |
+| 09 | [`ex09_bench.md`](ex09_bench.md) | [09. benchmark, profile, compile, run](../course/09-benchmark-profile-compile-run.md) | a compile-option matrix: flags × threads → wall-clock and an `nccmp-tol` verdict |
+| 10 | [`ex10_profile.md`](ex10_profile.md) | [10. modern Fortran refactoring](../course/10-modern-fortran-refactoring.md) | a gprof profile of `ww3_shel`, bucketed into source terms / propagation / communication / I/O |
+| 11 | [`ex11_refactor.md`](ex11_refactor.md) | [10. modern Fortran refactoring](../course/10-modern-fortran-refactoring.md) | a WW3-style routine refactored (explicit interface, `intent`, `pure`, no automatic array) and a parity test to 1e-6 |
+| 12 | [`ex12_reduce.md`](ex12_reduce.md) | [11. Kokkos and modern C++](../course/11-kokkos-and-modern-cpp.md) | `Hs` at every sea point from an action-density `View` with a team `parallel_reduce`, checked against a closed form |
+| 13 | [`ex13_port.md`](ex13_port.md) | [12. porting a kernel: W3SNL1](../course/12-porting-a-kernel-w3snl1.md), [13. bulk porting](../course/13-bulk-porting-with-agents.md) | an L2 replay of `ww3_ts1` (Fortran vs Kokkos `W3SNL1`) and a written reading of its table |
 
 Do them in order: 09 gives you the reference run and the measuring habit, 10 tells you
 what to port, 11 is the Fortran half of a port, 12 the C++ half, and 13 is the validation

@@ -38,10 +38,9 @@ possible.
 - **Interactive provers** (Rocq + Flocq, Isabelle, Lean 4) and dependently typed languages (Agda,
   Idris 2) cannot read Fortran or C++. They prove things about a model written by hand. Not for
   this project's timeline. **TLA+** fits the MPI and halo protocol of phase 3, not arithmetic.
-- **Bend** stays where `BEND_TRYOUT_202609.md` put it: off the port's route. F64 is not the reason.
-  Most WW3 physics runs in default `REAL` and is F64-free `(v, §5)`. Upstream now lists F64 and a
-  library target as planned (§5), but Bend's `F32` operations are axioms in its checker, so it
-  cannot prove anything about this arithmetic today.
+- **Bend** was removed from the repository (#58): its `F32` operations are axioms in its checker, so it
+  cannot prove anything about this arithmetic, and it has no F64. F64 was never the real blocker:
+  most WW3 physics runs in default `REAL` `(v, §5)`.
 
 ## 2. What "bit for bit" can and cannot mean, stage by stage
 
@@ -59,7 +58,7 @@ Everything below is a way that one of those conditions breaks.
 | x87 vs SSE | 32-bit x86 only | GCC's default `-fexcess-precision=fast` lets x87 compute in 80 bits `(v, invoke.texi)`. x86-64 does scalar float arithmetic in SSE registers, so this does not arise on the lab's machines ⚠ (`FLT_EVAL_METHOD == 0` assumed, not printed). |
 | Denormals, FTZ/DAZ | CPU with fast-math, CUDA | `-funsafe-math-optimizations` (part of `-ffast-math`/`-Ofast`) "may include libraries or startup files that change the default FPU control word" `(v, invoke.texi)`. nvcc's `--use_fast_math` implies `--ftz=true --prec-div=false --prec-sqrt=false --fmad=true`, and `--fmad` defaults to true `(v, NVIDIA Best Practices Guide, via search)`. The DIA fixture has denormal bins, which is why its L1 gate has a 1e-30 floor `(v, course/12)`: an FTZ build changes those bits. |
 | `-fp-model precise`/`strict` (Intel) | ifx builds of WW3 | `precise` forbids value-changing optimisations; `strict` also honours the FP environment and exceptions ⚠ (Intel docs not reopened). WW3 uses `precise` with `-no-fma` `(v)`. |
-| libm | every stage with `exp`, `log`, `pow`, `tanh`… | gfortran lowers `EXP` on default `REAL` to `call expf` `(v, measured asm)`; `Kokkos::exp(float)` is `std::exp(float)` on the host `(v, Kokkos 5.2.0 Kokkos_MathematicalFunctions.hpp)`, so both reach glibc's `expf`. CUDA's device `expf` is another implementation with a bound of about 2 ULP ⚠, and `__expf` under fast-math is coarser. Bend computes `(float)exp((double)x)` `(v, BEND_TRYOUT §4)`, a different entry point: 3 350 physical inputs of section 1 change by it `(v, measured, §4)`. |
+| libm | every stage with `exp`, `log`, `pow`, `tanh`… | gfortran lowers `EXP` on default `REAL` to `call expf` `(v, measured asm)`; `Kokkos::exp(float)` is `std::exp(float)` on the host `(v, Kokkos 5.2.0 Kokkos_MathematicalFunctions.hpp)`, so both reach glibc's `expf`. CUDA's device `expf` is another implementation with a bound of about 2 ULP ⚠, and `__expf` under fast-math is coarser. A float32 target that computes `(float)exp((double)x)` uses a different entry point: 3 350 physical inputs of section 1 change by it `(v, measured, §4, config exp-double)`. |
 | `MAX`/`MIN` on NaN | Fortran ↔ C++ | Measured on section 1: gfortran `-O0` and `-O3 -march=x86-64-v3` return `KDMN` for `MAX(NaN, KDMN)`, gfortran `-O3` and the port (`Kokkos::max(a, b)` is `(a < b) ? b : a` `(v, Kokkos_MinMax.hpp)`) return NaN `(v, measured)`. No physical input is NaN, so this is a domain restriction to state, not a bug. |
 | Signed zero | rewrites | `-2*(a+b)` and `-2*a + -2*b` agree on every input with no overflow and a non-zero result, and differ when `a = -b` (`-0` against `+0`) `(v, Bitwuzla and cvc5, §4)`. A relative-tolerance test never sees this; a bitwise one does. |
 | Reductions | Serial ↔ OpenMP ↔ CUDA | Float addition is not associative. A parallel reduction's order depends on the thread or team layout, so it cannot equal the Fortran's left-to-right sum bit for bit. `WW_DETERMINISTIC` exists to pin the order `(v, kokkos/README.md)`. The DIA has no reduction `(v, snl1_dia.cpp)`; `W3SRCE` and ST4 will (`team_reduce` for integrals `(v, course/13)`). |
@@ -152,7 +151,7 @@ Result of `proof/snl1_cons/run.sh` (measured 2026-10-01, ~17 s per configuration
 | `fixture` | `-O0 -g` (serial-debug, which wrote the fixture) | same | **0** | 16 777 214 NaN inputs: Fortran returns a number, the port NaN |
 | `fma-cxx` | `-O3` | without `-ffp-contract=off` | 4 632 147 (1 ULP; ~7 % of the 6.2e7 floats between 2/3 and 111 where `CONS` varies) | |
 | `fma-f90` | `-O3 -march=x86-64-v3` | parity flags | 4 632 147 | plus the NaN inputs |
-| `bend-exp` | `-O3` | parity flags, `exp` as `(float)exp((double)x)` | 3 350 (1 ULP) | |
+| `exp-double` | `-O3` | parity flags, `exp` as `(float)exp((double)x)` | 3 350 (1 ULP) | |
 
 So section 1 of the port is proven bit-identical to the Fortran for every input on this toolchain,
 and both ways of losing that are measured. Steps, with effort for one person:
@@ -170,14 +169,10 @@ About a week in total, inside the course-12 material and without new dependencie
 installed by the user, never vendored: `pip install z3-solver` ships a `z3` command;
 `pip install bitwuzla cvc5` ships Python APIs only, which is how their timings above were taken.
 
-## 5. Bend for the modules that do not need F64
+## 5. Which WW3 modules need F64
 
-What Bend offers is restated in `BEND_TRYOUT_202609.md` §2–3 and not repeated here: pure functions,
-fork-join parallelism with no data races by construction, `Nat`, `U32` and `F32` as its only
-numbers, laws proved by evaluation in its checker. Two points matter for proofs and both are
-measured or read for this document.
-
-**F64 is not what keeps Bend out of WW3.** A scan of the pinned source (`model/src` @761cf79,
+A target that has only binary32 (Metal, a float-only language, a TF32 path) can still carry most
+of the physics. A scan of the pinned source (`model/src` @761cf79,
 counting non-comment lines with `DOUBLE PRECISION`, `REAL(8)`, `REAL*8`, `REAL(KIND=8)`, `DBLE(`,
 `_R8` or a `D`-exponent literal) gives `(v)`:
 
@@ -185,36 +180,9 @@ counting non-comment lines with `DOUBLE PRECISION`, `REAL(8)`, `REAL*8`, `REAL(K
 |---|---|
 | `w3src4md` (ST4), `w3sln1md`, `w3sbt1md`, `w3pro3md`, `w3uqckmd`, `w3dispmd`, `w3wavemd`, `w3iogomd`, `w3partmd`, `w3iorsmd`, `w3iogrmd`, `w3fldsmd`, `w3initmd`, `w3adatmd`, `w3wdatmd`, `w3odatmd`, `w3str1md`; and `W3SNL1` + `INSNL1` (`w3snl1md.F90:115-786`) | `w3sdb1md` (DB1, in the lab switch: `REAL*8` Battjes–Janssen internals); `W3SNLGQM` in the same file as the DIA (lines 789–1182); `w3srcemd` (ice attenuation `ATT`, `IS2`, a `DB1` implicit branch); `w3gdatmd` (`XGRD`/`YGRD` grid coordinates, unstructured-mesh arrays); `w3timemd` (`TIME2HOURS`, Julian days); `w3updtmd` (tidal arguments); `constants.F90` (Bessel functions); `w3servmd` (rotated-pole transforms); `w3parall` (timers); `w3gsrumd`, `w3profsmd`, `w3triamd` (grid search, unstructured) |
 
-So almost all of the lab's physics is F32 and would type-check against Bend's `F32`. The blockers
-are the ones `BEND_TRYOUT` §9 lists: no C ABI, single-owner arrays that parallel branches must
-clone, and a toolchain that changes daily. Since 18 September the first of these, and F64, have
-moved on paper: upstream's `WONTFIX.txt` now lists, under "SOON (we will add it; do not open an issue)", F64 (#1120: "It needs
-U64's 64-bit word design; we add both together, and we do not merge PRs for F64"), the native
-library target (#813: "planned, not scheduled"), and "F32 that computes in the checker" (#1017:
-"F32 operations are axioms today; bit-level definitions are planned") `(v, bendlang/bend main,
-2026-10-01)`. `BEND_TRYOUT` §3.1 and §9 read #813 as refused under CAPACITY and F64 as without a
-roadmap; both were correct on 18 September and are now out of date. None of the three has shipped.
-
-**For proofs Bend adds less than it seems.**
-- Purity and affinity give race freedom and termination by construction. The C++ already gets
-  race freedom for the DIA from its structure (no reduction, one writer per element `(v)`), and
-  a test catches the rest.
-- `F32` operations are axioms in the checker (#1017), so no law about float arithmetic can be
-  proved today, and none of the physics laws a modeller wants is true in float arithmetic anyway
-  (`BEND_TRYOUT` §8).
-- What Bend can prove is closed integer claims decided by evaluation: "every pre-shifted DIA
-  table entry lies in `[0, 1024)` for this grid", "the ISP map is a bijection for NK=25, NTH=24",
-  "the card-deck map `ISEA → (JSEA, ISPROC)` round-trips for NSEA=N, NAPROC=P". The same claims are
-  exhaustive tests in C++ in an afternoon. `U32` has no sign `(v, BEND_TRYOUT §3.1)`, so WW3's
-  negative DIA addresses must be shifted first.
-- Floating-point control: Bend's CPU build is `clang -std=c11 -O3` `(v, bend2/main.ts)`. On
-  baseline x86-64 that emits no FMA; on `-march=x86-64-v3` or aarch64 (Apple silicon) clang 18
-  contracts within an expression `(v, measured)`, and Bend exposes no flag. This settles the ⚠ in
-  `BEND_TRYOUT` §4 item 1 for the workstation: no contraction there unless `CC` adds `-march`.
-
-Verdict: a research curiosity for this repo's proofs. Run the tryout week as written; if it
-reaches its step 5, write the integer-table law there. Do not plan proof work around Bend.
-[`proof/bend.md`](proof/bend.md).
+So almost all of the lab's physics is F32: a float32-only target is width-matched to it, and the
+modules on the right are the ones that rule such a target out. Bend, the float32-only language this
+section was first written for, was dropped from the repository (#58).
 
 ## 6. Proof languages and assistants
 
@@ -244,10 +212,6 @@ line each here; the evidence is in the linked files.
 - **F\*** — dropped: its verified-code story (HACL\*, Low\*) is integer and cryptographic ⚠, with
   nothing for floating point.
 
-Bend relates to this family as a pure functional language whose laws are checked by evaluation,
-like Agda's `refl` on closed terms, and it inherits the same limit: floats are opaque to the
-checker.
-
 ## 7. Decision table
 
 | Stage | Technique | Provable or testable | Effort (one person) | When |
@@ -264,7 +228,7 @@ checker.
 | CPU ↔ CUDA | exhaustive sweep of device libm on the routine's domain; then `nccmp-tol` | testable; provable for `+ − × ÷ sqrt` only | 1 d per function | **now** for the DIA |
 | CPU ↔ CUDA | rigorous error bound (VCFloat2, Gappa) to justify a tolerance | provable bound | 2+ wk | later |
 | MPI / halo protocol | TLA+ model | provable for the model | 1–2 wk | later (phase 3) |
-| Integer bookkeeping | Bend or Lean laws | provable | days | no (C++ exhaustive tests do it) |
+| Integer bookkeeping | Lean laws | provable | days | no (C++ exhaustive tests do it) |
 | Physics properties (conservation) | Rocq / Isabelle / Lean on a model | provable for the model | months | no |
 
 ## 8. What was not verified
@@ -272,7 +236,7 @@ checker.
 - ⚠ The Fortran standard's clause on equivalent expressions, Intel's `-fp-model` definitions, and
   CUDA's documented `expf` bound: their documentation hosts are blocked from this sandbox.
 - ⚠ The pilot ran with GCC 13.3 and glibc 2.39, not the lab's GCC 15.3 under nix. Step 1 of §4
-  reruns it there. A different glibc `expf` could change the `bend-exp` count, and the `parity`
+  reruns it there. A different glibc `expf` could change the `exp-double` count, and the `parity`
   result holds for the lab only once that rerun reads 0.
 - ⚠ Alive2's handling of `llvm.exp.*`, ESBMC's `expf` model, and Frama-Clang's state were not
   run or read.
@@ -306,12 +270,11 @@ OpenMP ↔ CUDA. Effort is for one undergraduate. Verdict: **now**, **later** or
 | [Idris 2](proof/agda-idris2.md) | same as Agda | none | primitive `Double` ⚠ | no | hand model | — | weeks | no | medium | BSD-style | no | **no** |
 | [Liquid Haskell + QuickCheck](proof/haskell-liquid-quickcheck.md) | refinements over reals; random tests | none (reals ≠ floats) | `Double` as SMT real | Haskell only | hand model | — | weeks | no | medium | BSD-style | no | **no** (use GoogleTest) |
 | [TLA+](proof/tla-plus.md) | protocol safety/liveness | ordering specs, not values | none ⚠ | no | halos, reductions as protocols | — | 1–2 wk | phase 3 | low | MIT | yes, later | **later** |
-| [Bend](proof/bend.md) | closed integer laws by evaluation | none for floats | `F32` axioms; F64 planned | no, own language | F32 kernels as programs | INSNL1 tables | in tryout week | no | daily churn | Apache-2.0 | as a tryout | **no** for proofs |
 
 ## 10. Sources
 
 This repository, read 2026-10-01: `README.md`, `CONTRIBUTING.md`, `docs/KOKKOS_H100_PLAN_202609.md`,
-`docs/AGENTS_KOKKOS_202609.md`, `docs/BEND_TRYOUT_202609.md`, `docs/GLOSSARY.md`,
+`docs/AGENTS_KOKKOS_202609.md`, `docs/BEND_TRYOUT_202609.md` (removed in #58), `docs/GLOSSARY.md`,
 `course/12-porting-a-kernel-w3snl1.md`, `course/13-bulk-porting-with-agents.md`,
 `kokkos/README.md`, `kokkos/PORT_STATUS.md`, `kokkos/CMakeLists.txt`, `kokkos/CMakePresets.json`,
 `kokkos/src/ww_kokkos/{CMakeLists.txt,real.hpp,snl1_dia.cpp}`, `kokkos/tests/fixtures/{README.md,CMakeLists.txt,snl1_ref.F90}`,

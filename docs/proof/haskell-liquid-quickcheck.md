@@ -44,11 +44,6 @@ Weeks to learn Haskell and Liquid Haskell. A QuickCheck harness: days. Free.
 - A Haskell model is another implementation to keep in step.
 - GoogleTest already gives property tests in the port's own language.
 
-## Relation to Bend
-
-Bend is pure and functional like Haskell; the same reasoning style applies, and the same gap
-between reals and floats.
-
 ## Verdict
 
 **No.** Borrow the idea instead: edge-case generators and input shrinking in GoogleTest.

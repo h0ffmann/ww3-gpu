@@ -116,8 +116,30 @@ pr *args:
 uprd *args:
     scripts/uprd.sh "$@"
 
+# Wave Forecaster Improvement Proposals (docs/WFIPs): `just wfip new <slug> --title "…" --deliverable D5`, `index`, `check`, `status --since <tag>`.
+wfip *args:
+    python3 scripts/wfip.py "$@"
+
+# GitHub's Spec Kit (github.com/github/spec-kit). `just specify init` sets a clone up for the /speckit-* skills; anything else is passed to `specify`.
+specify *args:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    args=({{ args }})
+    if [ "${args[0]:-}" = init ] && [ "${#args[@]}" -eq 1 ]; then
+        args+=(--here --force --non-interactive --integration claude --script sh)
+    fi
+    uvx --from specify-cli specify "${args[@]:-}"
+
+# Tag main as v<version> (default: the next patch) and push it; CI publishes the GitHub release and Zenodo mints its DOI. `just release --dry-run`, `just release 0.2.0`.
+release *args:
+    scripts/release.sh "$@"
+
+# List release tags, newest first.
+releases:
+    git fetch -q --tags origin && git tag -l 'v*' --sort=-v:refname --format='%(refname:short)  %(creatordate:short)  %(subject)'
+
 # ---------------------------------------------------------------------
-# Submodules: nix-config (sparse, labs/pratico) and WW3 (fork of NOAA-EMC/WW3)
+# Submodules: nix-config (sparse, labs/pratico), WW3 and WW4 (forks of NOAA-EMC/WW3 and NOAA-EMC/WW4)
 # ---------------------------------------------------------------------
 
 setup_script := "scripts/ww-lab-tool-setup.sh"
@@ -168,6 +190,13 @@ src-st:
     @echo "pinned: $(git -C WW3 rev-parse --short HEAD)  fork/develop: $(git -C WW3 rev-parse --short origin/develop)  upstream/develop: $(git -C WW3 rev-parse --short upstream/develop)"
     @echo "fork is $(git -C WW3 rev-list --count origin/develop..upstream/develop) commits behind upstream"
 
+# Fast-forward the h0ffmann/WW4 fork from NOAA-EMC/WW4, push it, and bump ./WW4.
+ww4-sync branch="develop":
+    bash {{src_script}} . --path WW4 --branch {{branch}} --fork git@github.com:h0ffmann/WW4.git --upstream https://github.com/NOAA-EMC/WW4.git --sync --push --bump
+
+# Every submodule to its latest: nix-config, WW3 and WW4 (forks synced and pushed). Stages, no commit.
+sub-sync: submodule-update src-sync ww4-sync
+
 # ---------------------------------------------------------------------
 # Publications: markdown -> PDF (flake.nix at the repo root; sources in pubs/)
 # ---------------------------------------------------------------------
@@ -192,6 +221,17 @@ proposal-docx lang="pt":
 proposal lang="pt" style="abnt":
     nix develop "{{justfile_directory()}}" --command scripts/build_pdf.sh proposal {{lang}} {{style}}
 
+# Pinned mermaid-cli, Geist and DejaVu Sans (fallback glyphs) from flake.lock's nixpkgs; --force re-renders all (scripts/figures.py).
+# Render every mermaid fence to pubs/figures/mermaid/<id>.pdf|png and rewrite pubs/figures/README.md.
+figures *args:
+    FIGURES_FONT_DIR="$(nix build --inputs-from "{{justfile_directory()}}" nixpkgs#geist-font --no-link --print-out-paths)/share/fonts:$(nix build --inputs-from "{{justfile_directory()}}" nixpkgs#dejavu_fonts --no-link --print-out-paths)/share/fonts" \
+      nix shell --inputs-from "{{justfile_directory()}}" nixpkgs#mermaid-cli nixpkgs#python3 \
+      --command python3 scripts/figures.py render {{args}}
+
+# Every mermaid fence has its header, its reading card and a current render (what CI checks).
+figures-check:
+    python3 scripts/figures.py check
+
 # Parecer do revisor-proposta sobre pubs/proposal (norma ABNT/DEL, registro científico, jargão).
 # Sem argumentos revisa pt/ e en/; passe caminhos para revisar só parte.
 proposal-review *files:
@@ -201,9 +241,17 @@ proposal-review *files:
 proposal-review-record parecer:
     python3 scripts/proposal_review_gate.py --record {{parecer}}
 
+# Checagens determinísticas: paridade PT/EN de citações e números, marcadores, vírgula decimal, siglas.
+proposal-lint *args:
+    python3 scripts/proposal_lint.py {{args}}
+
 # O texto atual está coberto por um parecer? (o mesmo que a CI verifica)
 proposal-review-check:
     python3 scripts/proposal_review_gate.py --check
+
+# What changed in NOAA-EMC/WW4 since docs/ww4-status.json (--write records the new state). See the /ww4-status skill.
+ww4-status *args:
+    python3 scripts/ww4_status.py {{args}}
 
 # Translate pubs/proposal/en -> pt (changed files only; --force, --dry-run).
 translate *args:

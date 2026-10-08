@@ -34,6 +34,7 @@ if [ "$target" = book ]; then
   pandoc "${inputs[@]}" \
     --from gfm+tex_math_dollars+footnotes+definition_lists+attributes \
     --to docx \
+    --lua-filter "$root/pubs/filters/mermaid.lua" \
     --toc --toc-depth=2 --number-sections \
     --resource-path "$root/course" \
     --csl "$csl" \

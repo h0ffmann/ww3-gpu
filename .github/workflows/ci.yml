@@ -20,6 +20,12 @@ jobs:
             bash -n "$f"
           done
 
+      - name: Figures have headers, reading cards and current renders
+        run: python3 scripts/figures.py check
+
+      - name: WFIP index, deliverables and definitions of done are current
+        run: python3 scripts/wfip.py --self-test && python3 scripts/wfip.py check
+
       - name: Shellcheck
         uses: ludeeus/action-shellcheck@master
         with:

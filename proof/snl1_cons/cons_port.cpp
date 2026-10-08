@@ -8,9 +8,8 @@
 // KOKKOS_IMPL_MATH_UNARY_FUNCTION with namespace std). On a CUDA device the same call is
 // CUDA's expf, which this file does not model.
 //
-// -DWW_EXP_VIA_DOUBLE swaps exp for (float)exp((double)x), the lowering Bend 2 uses for
-// F32.exp (docs/BEND_TRYOUT_202609.md section 4), to measure that entry point on the
-// same inputs.
+// -DWW_EXP_VIA_DOUBLE swaps exp for (float)exp((double)x), the lowering a float32 language
+// may use for exp (Bend 2's F32.exp did), to measure that entry point on the same inputs.
 //
 // The copy is the weak link of this pilot: the sweep proves this file, not snl1_dia.cpp.
 // Closing it means moving these lines into one inline function both files include
