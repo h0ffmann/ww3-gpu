@@ -36,7 +36,7 @@ The six specific objectives of the proposal and the schedule rows that deliver t
 <!-- wfip-index:start -->
 | WFIP | Title | Status | Created | Deliverable | Effort | Verdict | DoD | Cost so far |
 |---|---|---|---|---|---|---|---|---|
-| — | no WFIP yet | | | | | | | |
+| [WFIP-0001](WFIP-0001-weathernext3-wind-rtx4090.md) | WW3 samples driven by WeatherNext 3 wind on an RTX 4090 box | Draft | 2026-10-08 | D1, D6 | M | do next | 0/6 | — |
 <!-- wfip-index:end -->
 
 ## Coverage
@@ -47,12 +47,12 @@ late; it means its work has not been designed here yet.
 <!-- wfip-coverage:start -->
 | Deliverable | WFIPs | Implemented |
 |---|---|---|
-| D1 | none yet | 0/0 |
+| D1 | [WFIP-0001](WFIP-0001-weathernext3-wind-rtx4090.md) | 0/1 |
 | D2 | none yet | 0/0 |
 | D3 | none yet | 0/0 |
 | D4 | none yet | 0/0 |
 | D5 | none yet | 0/0 |
-| D6 | none yet | 0/0 |
+| D6 | [WFIP-0001](WFIP-0001-weathernext3-wind-rtx4090.md) | 0/1 |
 <!-- wfip-coverage:end -->
 
 ## Dependency graph
