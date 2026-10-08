@@ -366,6 +366,10 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | Unified / Managed Memory | CUDA memory that migrates between host and device implicitly `(v)` [course/10-modern-fortran-refactoring.md](../course/10-modern-fortran-refactoring.md) | What `-stdpar=gpu` uses and what the agent rules forbid as a way of avoiding transfer design. | [docs/AGENTS_KOKKOS_202609.md](AGENTS_KOKKOS_202609.md) |
 | Triton / Triton C / Triton G | OpenAI's Python GPU-kernel language, on its CPU backend (`triton-cpu`) and its NVIDIA GPU backend ⚠ [issue #45](https://github.com/h0ffmann/ww3-gpu/issues/45) | Planned as a second route to the GPU for `W3SDS4`, measured against Fortran and Kokkos. | [README.md](../README.md) |
 | NOOA | NVIDIA-labs Object Oriented Agents (`NVIDIA-NeMo/labs-OO-Agents`) `(v)` [PR #25](https://github.com/h0ffmann/ww3-gpu/pull/25) | A Python agent framework evaluated for typed contracts and evidence gates in the port workflow. | [README.md](../README.md) |
+| NIM | NVIDIA Inference Microservices, NVIDIA's packaged model-serving containers `(v)` [PR #25](https://github.com/h0ffmann/ww3-gpu/pull/25) | The hosted free tier (build.nvidia.com) and the self-hosted route NOOA's default model uses; a licence applies only in production. | [docs/W3SDS4_TRITON_PLANO_202610.pt.md](W3SDS4_TRITON_PLANO_202610.pt.md) |
+| Nsight AI | NVIDIA's AI assistance for CUDA work: a hosted CUDA-docs MCP server, a self-hosted blueprint and an assistant inside Nsight Compute `(v)` [developer.nvidia.com/nsight-ai](https://developer.nvidia.com/nsight-ai) | The measurement weeks of the Triton G arm read the Nsight Compute profile with it. | [docs/W3SDS4_TRITON_PLANO_202610.pt.md](W3SDS4_TRITON_PLANO_202610.pt.md) |
+| cuTile / CUDA Tile / TileGym | NVIDIA's tile-based kernel language, its three backends and its example library `(v)` [NVIDIA/TileGym](https://github.com/NVIDIA/TileGym) | A fourth GPU arm only if Triton G stops at its AOT gate; no Hopper support yet, so it runs on the RTX 4090 and not on the H100. | [docs/W3SDS4_TRITON_PLANO_202610.pt.md](W3SDS4_TRITON_PLANO_202610.pt.md) |
+| Developer Program / Academic Grant Program / DLI | NVIDIA's free developer account, its faculty-only research grant (H100 hours or RTX PRO GPUs) and its Deep Learning Institute for educators `(v)` [docs/W3SDS4_TRITON_PLANO_202610.pt.md](W3SDS4_TRITON_PLANO_202610.pt.md) | What can be asked for free: the account today, the grant through the advisor when it reopens, teaching material without GPUs. | [docs/W3SDS4_TRITON_PLANO_202610.pt.md](W3SDS4_TRITON_PLANO_202610.pt.md) |
 | Antigravity / Consensus / NotebookLM | Google's agent IDE, a peer-reviewed literature search with an MCP server, and Google's notebook over uploaded sources ⚠ [PR #41](https://github.com/h0ffmann/ww3-gpu/pull/41) | Research and agent tooling evaluated next to Claude Code. | [README.md](../README.md) |
 
 ## This repository's own names
@@ -530,6 +534,7 @@ Every term above, alphabetically, with the section it lives in.
 - CUDA Fortran: [HPC and software](#hpc-and-software)
 - `cuda-release`: [This repository's own names](#this-repositorys-own-names)
 - current.ww3: [WW3 programs and files](#ww3-programs-and-files)
+- cuTile / CUDA Tile / TileGym: [HPC and software](#hpc-and-software)
 - CURRLINE: [WW3 programs and files](#ww3-programs-and-files)
 - CURV: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - D (VS: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
@@ -538,6 +543,7 @@ Every term above, alphabetically, with the section it lives in.
 - DB0: [WW3 switches](#ww3-switches)
 - DB0 / DB1: [WW3 switches](#ww3-switches)
 - DB1: [WW3 switches](#ww3-switches)
+- Developer Program / Academic Grant Program / DLI: [HPC and software](#hpc-and-software)
 - `deep_copy`: [HPC and software](#hpc-and-software)
 - definition of done (six items): [This repository's own names](#this-repositorys-own-names)
 - DEL: [Models, projects and institutions](#models-projects-and-institutions)
@@ -838,6 +844,8 @@ Every term above, alphabetically, with the section it lives in.
 - NOGRB: [WW3 switches](#ww3-switches)
 - NOMADS: [HPC and software](#hpc-and-software)
 - NONE: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
+- NIM: [HPC and software](#hpc-and-software)
+- Nsight AI: [HPC and software](#hpc-and-software)
 - NOOA: [HPC and software](#hpc-and-software)
 - NOPA: [WW3 switches](#ww3-switches)
 - NOSWLL): [Wave physics and the spectrum](#wave-physics-and-the-spectrum)

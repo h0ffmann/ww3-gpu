@@ -37,7 +37,11 @@ ainda não foi entregue (`pubs/proposal/pt/04-scope.md`).
    estado residente é obrigatório a partir da fase 2 e um erro na fase 1, quando o que importa é
    validar uma chamada de cada vez.
 7. **A proposta não muda de objetivo, de rota nem de cronograma.** Três frases do método merecem
-   ajuste (seção 10). Triton e WeatherNext ficam fora dela.
+   ajuste (seção 11). Triton e WeatherNext ficam fora dela.
+8. **Os agentes da NVIDIA ajudam no fluxo, não no kernel, e já são gratuitos.** O NOOA do PR #25
+   serve de harness para F1 a F3; nos dois estudos disponíveis o modelo aberto é o que falha na
+   tradução do Fortran. O único caminho para horas de H100 sem custo, o Academic Grant Program, é
+   pedido pelo orientador e está fechado desde 30/06/2026 `(v, seção 10)`.
 
 ## 1. O que já está medido
 
@@ -326,7 +330,113 @@ E uma ressalva sobre o H100 em si: para o `W3SRCE` em F4, a RTX 4090 já usada n
 medir ganho e paridade; o que o H100 muda é a capacidade (80 GB contra 24 GB) e a memória
 compartilhada por bloco, que decidem F6 e a grade do WW4, não F4.
 
-## 10. Opinião: a proposta deve mudar?
+## 10. Agentes da NVIDIA e acesso gratuito para fins educacionais
+
+O PR #25 avaliou o NOOA (`NVIDIA-NeMo/labs-OO-Agents`) em 16/09/2026 e refez a leitura em
+01/10/2026 `(v, PR #25)`. A conclusão de lá vale aqui: o NOOA é um framework de agentes em Python,
+sem uma linha sobre GPU, CUDA, Kokkos ou Fortran, e o que ele oferece ao repositório são portões
+de evidência tipados para o fluxo de port (referência congelada, fixture, teste que falha antes,
+paridade, shim, linha de tempo), hoje garantidos por uma pessoa lendo relatórios. Esta seção
+responde a duas perguntas mais estreitas, com o que a NVIDIA publicou até 08/10/2026: os agentes
+da NVIDIA ajudam a reescrever o `W3SDS4` e o `W3SRCE`? E o que dá para pedir de graça, em nome
+de um projeto de graduação?
+
+### O que a NVIDIA oferece e onde cada coisa encaixa
+
+| Oferta | O que é | Onde encaixa neste plano | Custo | Evidência |
+|---|---|---|---|---|
+| NOOA | agente como classe Python: campos são estado, métodos são ferramentas, tipos de retorno são contratos; rastreia toda chamada ao modelo e toda célula executada | harness das fases F1 a F3: um `PortAgent` por rotina, com os portões de `AGENTS_KOKKOS` §1.5 em Python (opção B do PR #25) | Apache-2.0; o modelo é por conta de quem roda | `(v, PR #25 §1, §3)` |
+| `NVIDIA/skills` | catálogo oficial de *skills* para Claude Code, Codex, Cursor e Kiro, instalado com `npx skills add nvidia/skills`; centenas de skills, nenhuma sobre CUDA C++, Kokkos, cuBLAS, Nsight ou Fortran | leitura, não execução: `tilegym-converting-cutile-to-triton` traz um fluxo *analyze → convert → validate → test → benchmark* com portões explícitos, que serve de molde ao braço Triton G; `earth2studio-*` roda modelos abertos de previsão por IA e é o caminho para um terceiro vento na seção 5, se o WeatherNext 3 não servir | CC BY 4.0 (skills) e Apache-2.0 (código) | `(v, README de NVIDIA/skills e SKILL.md da skill, 08/10/2026)` |
+| Nsight AI | três peças: um servidor MCP hospedado com a documentação e os exemplos de CUDA (`claude mcp add … nvidia-cuda-docs`), um *blueprint* auto-hospedado (Docker, NIMs, 200 GB de disco) e um assistente dentro do Nsight Compute que aponta, por exemplo, acessos não coalescidos | F2 e F4, na hora de medir: o assistente do Nsight Compute lê o perfil do kernel na RTX 4090 e no H100; o MCP dá ao agente a referência de CUDA sem sair do editor | conta gratuita no Developer Program; nenhum preço publicado; a extensão Nsight Copilot do VS Code está sendo descontinuada | `(v, developer.nvidia.com/nsight-ai, 08/10/2026)` |
+| NVIDIA Agent Toolkit (26/07/2026) | PhysicsNeMo, cuISS, cuDSS e cuEST reempacotados como ferramentas para agentes de engenharia; parceiros de EDA (Cadence, Synopsys, Siemens) | em nada: solvers esparsos, química quântica e física por IA; nenhum item sobre kernels de termos-fonte, Fortran ou código legado | sem licença nem preço publicados; "when-and-if-available" | `(v, nvidianews.nvidia.com, 26/07/2026)` |
+| Modelos Nemotron 3 | Super (120B-A12B) e Ultra (550B), pesos no Hugging Face sob a NVIDIA Nemotron Open Model License, que permite uso comercial e derivados; o padrão do NOOA quando há `NVIDIA_API_KEY` | modelo candidato aos passos determinísticos do `PortAgent` (gerar fixture, escrever shim a partir da tabela de argumentos); não ao passo de tradução, pela evidência abaixo | hospedado em build.nvidia.com sem cobrança em desenvolvimento, 40 pedidos por minuto; auto-hospedar o Super pede três GPUs classe H100 no *blueprint* da própria NVIDIA | `(v, PR #25 §8; licença lida em scancode-licensedb, 08/10/2026)` |
+| cuTile / CUDA Tile (TileGym) | a linguagem de kernels por *tiles* da NVIDIA, concorrente do Triton, com três *backends* (cuTile Python, CUDA Tile C++, Triton sobre Tile IR) | só se o Triton G parar em F3: é um quarto braço, com a mesma falta de caminho para o Fortran | MIT; o compilador `tileiras` 13.2 suporta Blackwell e Ampere/Ada, e o Hopper "em versões futuras": roda na RTX 4090, não no H100 | `(v, README de NVIDIA/cutile-python e NVIDIA/TileGym, 08/10/2026)` |
+| NeMo Agent Toolkit (`nvidia-nat`), OpenShell | observabilidade e perfil de agentes; a caixa de areia que o NOOA recomenda | o `ai-jail` do `nix-config` já faz o papel do OpenShell | Apache-2.0 | `(v, PR #25 §8.1)` |
+
+### Os agentes ajudam a reescrever?
+
+Ajudam no fluxo e não no kernel, e dois estudos de 2025 e 2026 dizem por quê.
+
+Gupta et al. `(v, arXiv:2509.12443v3, LANL, 17/11/2025)` montaram exatamente a cadeia que o PR #25
+desenha: agentes tradutor, validador, de compilação, de execução, de teste funcional e otimizador,
+sobre o OpenAI Agents SDK 0.1.0, traduzindo kernels Fortran do NAS Parallel Benchmarks e um
+DGEMM (129 a 230 linhas) para Kokkos em A100, GH200 e MI250. Com GPT-5 e o4-mini-high o código saiu
+funcional e, otimizado pelo perfil, acima da base Fortran, por "poucos dólares"; com o Llama 4
+Maverick, modelo aberto, a cadeia falhou com frequência em produzir código que compilasse. A
+tolerância numérica usada não está no texto; não é paridade bit a bit. O CERFACS mediu a mesma
+coisa sem agentes `(v, ISC 2026, slides do workshop de LLMs para HPC)`: em 164 tarefas de Fortran
+com um só disparo, o melhor modelo comercial acertou 60,4 % e o melhor aberto 41,5 %, e os modelos
+especializados em Fortran ficaram em 6,4 % na média; na tradução OpenACC → OpenMP, 82,3 % contra
+28,7 %.
+
+A leitura para este plano tem três partes.
+
+1. **O harness vale a pena onde o repositório já perde tempo**: provar que o teste falhou antes,
+   que a fixture é a do Fortran congelado e que o número da tabela é o que o `ctest` imprimiu. Isso
+   é o `PortAgent` do PR #25 sobre F1 a F3, com o `diff_reference()` recusando qualquer edição em
+   `WW3/` e o `timing_row()` lendo a saída do `ww_bench_*`. Nada disso exige um modelo da NVIDIA.
+2. **O passo de tradução fica com o modelo que já faz os ports**, porque nos dois estudos o modelo
+   aberto é o elo que quebra justamente no Fortran. O Nemotron gratuito entra nos passos cujo
+   resultado é verificado por código (fixture, shim, tabela de argumentos); se a tradução do
+   `W3SDS4` passar por ele, a L1 é quem decide, e o custo em chamadas entra no relatório do piloto.
+3. **F4 não é tarefa de agente.** Inverter o laço `DO JSEA` do `W3WAVE` e decidir o contrato de
+   memória são escolhas de engenharia que o PR #25 §4 já exclui do que um harness muda. O que os
+   agentes podem fazer em F4 é o que fazem em F2: manter a evidência honesta.
+
+O que a NVIDIA não tem, e não adianta procurar: skill de CUDA C++ ou de Kokkos, skill de Fortran,
+e um agente de Nsight. O Nsight AI é documentação por MCP e um assistente dentro do Nsight Compute.
+
+### Dá para pedir de graça?
+
+Os programas que existem, e quem pode pedir cada um, em 08/10/2026:
+
+| Programa | O que dá | Quem pode pedir | Estado |
+|---|---|---|---|
+| NVIDIA Developer Program | conta gratuita; build.nvidia.com em desenvolvimento, com limite de 40 pedidos por minuto; NIM auto-hospedado em até dois nós ou 16 GPUs para pesquisa, desenvolvimento e teste; o servidor MCP do Nsight AI | qualquer pessoa | aberto `(v, blog da NVIDIA de 29/07/2024; fórum da NVIDIA, 05/2026)` |
+| Academic Grant Program, chamada *Simulation and Modeling* | até 30 000 horas de H100 80 GB, ou até oito RTX PRO 6000; carta de apoio a pedidos de financiamento; vaga para apresentar no GTC | docente em tempo integral de instituição que forma doutores; submissões de qualquer país; o projeto deve usar modelos de ai.nvidia.com e/ou software da NVIDIA de forma extensiva | **fechado**: a página diz "currently not accepting new applications"; o portal fechou em 30/06/2026 antes do horário anunciado, e a equipe disse no fórum que o programa "shut down early"; sem data de reabertura `(v, nvidia.com e forums.developer.nvidia.com, 08/10/2026)` |
+| Graduate Fellowship 2027-2028 | até US$ 60 000 | doutorandos após o primeiro ano | abre em 30/09/2026 e fecha em 30/10/2026; não cobre graduação nem mestrado `(v, research.nvidia.com)` |
+| Teaching Kits e DLI | material de curso completo e acesso aos cursos *online* do DLI | docentes e monitores verificados; estudantes pedem por meio do docente | aberto; não inclui GPU `(v, developer.nvidia.com/educators-faq)` |
+| Créditos no Brev | crédito para instâncias de GPU na nuvem da NVIDIA | caso a caso: US$ 100 dados a um estudante no fórum em 10/2025, com a equipe dizendo que "ainda pensa" em um programa para estudantes; pedidos de 12/2025 a 05/2026 sem resposta | sem programa formal `(v, forums.developer.nvidia.com)` |
+| NVIDIA AI Enterprise, preço educacional | US$ 1 125 por GPU por ano, contra US$ 4 500 de lista ⚠ | instituições de ensino e pesquisa | só se um NIM for servido em produção; nada neste plano é `(⚠, PR #25 §8.2)` |
+
+O que isso diz na prática:
+
+- **Os agentes já são gratuitos.** NOOA, `NVIDIA/skills`, NeMo Agent Toolkit e OpenShell são
+  Apache-2.0 ou CC BY 4.0. Não há a quem pedir "uso educacional" deles, porque não há o que pagar.
+  O que custa é modelo e GPU.
+- **O modelo gratuito já existe**: uma conta no Developer Program dá o build.nvidia.com a 40 pedidos
+  por minuto, o bastante para um `PortAgent` sequencial e insuficiente para vários em paralelo
+  `(⚠, PR #25 §8.4, contagem de chamadas não medida)`. É o que o piloto do PR #25 precisa, e é
+  o que pedir primeiro: nada além do cadastro.
+- **O H100 de graça tem um só caminho, e ele está fechado.** O Academic Grant Program é a única
+  oferta da NVIDIA com horas de H100 para um projeto acadêmico, e quem submete é o orientador,
+  docente em tempo integral; o proponente de um projeto de graduação não é elegível. O que cabe
+  fazer agora é escrever a proposta no modelo da NVIDIA, com a chamada *Simulation and Modeling* em
+  mente, e acompanhar a reabertura pelo endereço do programa (NVIDIAAcademicGrants@nvidia.com). O
+  requisito que pesa é "uso extensivo de software da NVIDIA": Kokkos sobre CUDA, `nvfortran`,
+  Nsight Compute e Nsight Systems atendem com o que o repositório já faz; "modelos de ai.nvidia.com"
+  não atendem, e não devem ser acrescentados ao projeto para caber na chamada.
+- **A proposta não depende disso.** Ela já trata o atraso no acesso ao H100 como risco com
+  mitigação (medir na GPU disponível, com a ressalva registrada)
+  `(v, pubs/proposal/pt/07-methodology.md)`. Um *grant* da NVIDIA seria um segundo caminho, não
+  uma condição.
+- **O que não pedir**: a Graduate Fellowship (perfil de doutorado), o Inception (startups) e a
+  licença AI Enterprise (produção).
+
+### O que entra no plano por causa desta seção
+
+Nada muda nas fases F0 a F6 nem no cronograma do Triton G. Três coisas se acrescentam:
+
+1. O piloto do PR #25 (opção B) passa a ter alvo: o `PortAgent` roda sobre F1 a F3 do `W3SDS4`,
+   com o `W3SNL1` como resposta conhecida, e o relatório registra chamadas por rotina e intervenções
+   humanas lidas do rastro. O modelo de tradução é o mesmo de hoje; o Nemotron gratuito entra nos
+   passos verificados por código.
+2. As semanas 9 e 10 do Triton G (T6, medição) usam o Nsight Compute com o assistente do Nsight AI, na 4090 e
+   no H100, e o relatório diz o que o assistente apontou e o que foi confirmado no perfil.
+3. A preparação do pedido ao Academic Grant Program é tarefa do orientador, não deste plano, e fica
+   registrada em #45 como dependência externa sem prazo.
+
+## 11. Opinião: a proposta deve mudar?
 
 Não no que importa. O objetivo (reduzir o tempo do ciclo da ReNOMO dentro de tolerâncias acordadas),
 o critério único de decisão, a rota C → C++/Kokkos no H100 e o cronograma até 05/2027 continuam
