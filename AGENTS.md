@@ -61,7 +61,7 @@ recipe is a thin wrapper over a script in `scripts/`; `just` lists them.
 Before implementing, check whether the idea is already designed or decided:
 [`docs/KOKKOS_H100_PLAN_202609.md`](docs/KOKKOS_H100_PLAN_202609.md) (the single-H100 port),
 [`docs/AGENTS_KOKKOS_202609.md`](docs/AGENTS_KOKKOS_202609.md) (how agents port, in which order),
-[`docs/BEND_TRYOUT_202609.md`](docs/BEND_TRYOUT_202609.md), the port planner issue #42, the
+the port planner issue #42, the
 `W3SDS4`/Triton issue #45 with its plan
 [`docs/W3SDS4_TRITON_PLANO_202610.pt.md`](docs/W3SDS4_TRITON_PLANO_202610.pt.md), and the
 port-order rule in #46. An idea with no issue is not work yet; filing is a person's act.

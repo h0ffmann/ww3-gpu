@@ -23,9 +23,12 @@ ainda não foi entregue (`pubs/proposal/pt/04-scope.md`).
 2. **A decisão sobre `SDSCUM` vem antes de qualquer kernel.** Com `SDSCUM=0` o `W3SDS4` cai de
    2,01 s para 0,51 s no `ww3_ts1` e os termos-fonte caem 55 % `(v, #45)`. É uma mudança de física,
    e por isso é do LabECO, mas é o maior ganho de tempo de parede disponível sem escrever código.
-3. **Triton G cabe em 12 semanas** como braço de pesquisa, com um teste de compilação AOT na
-   última etapa para saber se o kernel pode ser chamado do Fortran. **Triton C** entra como gêmeo
-   de paridade na CPU, não como caminho operacional: o fork se declara "work in progress", com
+3. **O Triton não é uma rota de port do WW3; é um kernel.** O alvo do braço Triton G é o termo
+   cumulativo do `W3SDS4`, que é um GEMM contra a tabela `CUMULW`, medido contra o kernel Kokkos
+   da mesma rotina. O kernel literal por ponto existe só como base de paridade dentro do Triton, e
+   o portão de existência do braço é o AOT com chamada do Fortran, na semana 11: sem ele, o Triton
+   fica como comparação de kernel. Cabe em 12 semanas. **Triton C** entra como gêmeo de paridade
+   na CPU, não como caminho operacional: o fork se declara "work in progress", com
    suporte a CPU "under development" `(v, README do triton-lang/triton-cpu)`.
 4. **Bit a bit entre Triton e Fortran é improvável**, na GPU e na CPU: funções transcendentais,
    contração em FMA, ordem das reduções e o TF32 que `tl.dot` usa por padrão em FP32 `(v, triton-lang.org)`.
@@ -101,9 +104,14 @@ de traduzir e a parte difícil de reproduzir bit a bit, pela libm.
 
 ## 3. Triton G em doze semanas
 
-Um braço de pesquisa, sem compromisso com a operação. Cada semana termina num portão; a semana
-seguinte só começa quando o portão passa, e um portão que não passa é um resultado que vai para o
-relatório.
+Um braço de pesquisa, sem compromisso com a operação, e com o enquadramento que #45 passou a ter
+em 08/10/2026: o Triton não porta "partes do WW3". O código escalar por ponto do `W3SDS4` e do
+`W3SRCE` (subpassos, limitador, ramos) não ganha nada com uma linguagem de kernels por blocos, e
+ganha restrições (`tl.arange` em potência de dois, TF32 e fusão em FMA por padrão, nenhuma chamada
+nativa a partir do Fortran). O que o Triton tem a oferecer é o termo cumulativo, um GEMM contra
+`CUMULW`; o kernel B é o objeto do braço, o kernel A é a base de paridade, e a rota do modelo
+continua sendo o Kokkos. Cada semana termina num portão; a semana seguinte só começa quando o
+portão passa, e um portão que não passa é um resultado que vai para o relatório.
 
 | Semana | Tarefa de #45 | Entrega | Portão |
 |---|---|---|---|
@@ -457,14 +465,14 @@ Três frases do método merecem ajuste, pelo `revisor-proposta` e com o `just pr
    DIA, medidos no H100) e a decisão com o laboratório. Não cobre o `W3SRCE` em lote nem o estado
    residente. Dizer isso evita a leitura de que o modelo inteiro estaria na GPU na defesa.
 
-O que não deve entrar na proposta: o Triton, porque não tem caminho de CPU para o Fortran e o
-fork de CPU é experimental, e porque a proposta já escolheu a rota com precedente de produção; e o
+O que não deve entrar na proposta: o Triton, porque é um kernel e não uma rota (não tem caminho
+de CPU para o Fortran, o fork de CPU é experimental, e a proposta já escolheu a rota com precedente
+de produção); e o
 WeatherNext 3, porque mede acurácia, e a proposta mede tempo. Os dois ficam como está em #45:
 experimentos do repositório cujo resultado alimenta a decisão de 04/2027, e um resultado negativo
 em qualquer um deles não altera a proposta em nada.
 
 ## O que este documento não cobre
 
-O Bend como terceiro braço (`BEND_TRYOUT_202609.md`, #35), o estado do WW4 (lição 14 e
-`just ww4-status`) e a grade não estruturada além da nota sobre o PDLIB na seção 9. Onde este texto
+O estado do WW4 (lição 14 e `just ww4-status`) e a grade não estruturada além da nota sobre o PDLIB na seção 9. Onde este texto
 e a issue #45 discordarem, a issue vale e este texto é o erro.
