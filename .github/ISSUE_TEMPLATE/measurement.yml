@@ -1,0 +1,46 @@
+name: Measurement
+description: A number to take or a number that looks wrong (timing, profile, parity).
+title: "measure: "
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        A number enters a table only with the command that reproduces it (`bench/README.md`), and a
+        timing only after the L1 parity gate passed on the same build (`AGENTS.md`, "Porting").
+        Fill in what you know; leave a field `⚠ unknown` rather than guessing.
+  - type: textarea
+    id: question
+    attributes:
+      label: What the number answers
+      description: The question, and the plan, WFIP or table it feeds.
+    validations: { required: true }
+  - type: textarea
+    id: command
+    attributes:
+      label: Command
+      description: The exact `just` recipe or command line, from the repository root.
+      render: bash
+    validations: { required: true }
+  - type: input
+    id: commit
+    attributes:
+      label: Commit and build
+      placeholder: "ww3-gpu@<sha>, WW3@<sha>, preset openmp-release, -ffp-contract=off"
+    validations: { required: true }
+  - type: input
+    id: machine
+    attributes:
+      label: Machine
+      placeholder: "CPU, GPU, driver, compiler and version"
+    validations: { required: true }
+  - type: dropdown
+    id: l1
+    attributes:
+      label: L1 parity on the same build
+      options: ["passed", "failed", "not run", "not applicable (no ported kernel involved)"]
+    validations: { required: true }
+  - type: textarea
+    id: result
+    attributes:
+      label: Result
+      description: Median of three runs with its spread, or the output if this reports a wrong number.

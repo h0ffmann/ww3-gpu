@@ -38,6 +38,10 @@ Corrections are very welcome, especially the following, in order of usefulness:
    anything else here. Updates very welcome, with the date you checked; `just ww4-status`
    shows what changed since the last snapshot.
 
+The issue forms (*New issue* on GitHub) ask for what each kind of report needs: a **Measurement**
+asks for the command, commit, machine and L1 status; a **Spike** for one question, a time box and
+its output; a **WFIP idea** for the proposal deliverable it moves.
+
 ## The proposal (`pubs/proposal/`)
 
 Every change to `pubs/proposal/` goes through the `revisor-proposta` subagent before the pull
@@ -82,6 +86,12 @@ A mistake in a figure is as welcome as one in the text: the gallery links an iss
   `python3 skills_vendor.py check --lock .claude/skills/skills.lock`) verifies the copies;
   `.github/workflows/skills.yml` opens a weekly update PR, and `skills-vendor update <name>` does
   the same by hand.
+- A number a table quotes lives as a JSON record in `bench/results/` (machine, toolchain, commit,
+  L1 status, each run's command); the table is generated from it with `just results table`, and
+  `just results check` (CI) refuses a timing whose L1 did not pass. Anything tried that did not
+  become a number in a table, failures included, goes in a dated entry in `docs/log/`.
+- `codemeta.json` is generated from `CITATION.cff` and `.zenodo.json` (`just codemeta`); never
+  edit it by hand.
 - Run `just kokkos-test serial-debug` after touching `kokkos/`, and `bash -n` plus
   shellcheck on any shell script you touch. CI does all of these (the `kokkos` and
   `lint` jobs in `.github/workflows/ci.yml`).

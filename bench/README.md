@@ -14,6 +14,12 @@ So this directory measures three separate, honest things:
 | **A WW3-shaped kernel, CPU vs GPU** | `kernel_bench.f90` | The closest honest proxy: same data layout, same loop structure, same near-cancelling source terms as `W3SRCEMD`. Two modes: data resident on the device, and copied every step. |
 | **CPU and GPU at the same time** | `hetero_split.f90` | Sweeps the work split from all-GPU to all-CPU and finds your optimum. This is the direct answer to "can I use both together?" |
 
+A measurement that a table quotes is kept as data in [`results/`](results/), one JSON record per
+study: machine, toolchain, build commit, L1 status, statistic, and each run's command and numbers.
+The table on the page is generated between `<!-- results:<study>:start -->` and `:end -->` markers
+by `python3 scripts/results.py table`; CI (`results.py check`) fails when a record lacks a command
+or a passed L1, or a quoted table no longer matches its record.
+
 ```bash
 make run                                   # the kernel benchmarks
 just bench-case --size medium -o bench/case_medium   # generate a WW3 case (from the repo root)
