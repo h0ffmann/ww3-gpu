@@ -130,7 +130,7 @@ specify *args:
     fi
     uvx --from specify-cli specify "${args[@]:-}"
 
-# Tag main as v<version> and push it; CI publishes the GitHub release and Zenodo mints its DOI. `just release 0.2.0 --dry-run`.
+# Tag main as v<version> (default: the next patch) and push it; CI publishes the GitHub release and Zenodo mints its DOI. `just release --dry-run`, `just release 0.2.0`.
 release *args:
     scripts/release.sh "$@"
 
@@ -139,7 +139,7 @@ releases:
     git fetch -q --tags origin && git tag -l 'v*' --sort=-v:refname --format='%(refname:short)  %(creatordate:short)  %(subject)'
 
 # ---------------------------------------------------------------------
-# Submodules: nix-config (sparse, labs/pratico) and WW3 (fork of NOAA-EMC/WW3)
+# Submodules: nix-config (sparse, labs/pratico), WW3 and WW4 (forks of NOAA-EMC/WW3 and NOAA-EMC/WW4)
 # ---------------------------------------------------------------------
 
 setup_script := "scripts/ww-lab-tool-setup.sh"
@@ -189,6 +189,13 @@ src-st:
     @git -C WW3 fetch --quiet origin develop && git -C WW3 fetch --quiet upstream develop
     @echo "pinned: $(git -C WW3 rev-parse --short HEAD)  fork/develop: $(git -C WW3 rev-parse --short origin/develop)  upstream/develop: $(git -C WW3 rev-parse --short upstream/develop)"
     @echo "fork is $(git -C WW3 rev-list --count origin/develop..upstream/develop) commits behind upstream"
+
+# Fast-forward the h0ffmann/WW4 fork from NOAA-EMC/WW4, push it, and bump ./WW4.
+ww4-sync branch="develop":
+    bash {{src_script}} . --path WW4 --branch {{branch}} --fork git@github.com:h0ffmann/WW4.git --upstream https://github.com/NOAA-EMC/WW4.git --sync --push --bump
+
+# Every submodule to its latest: nix-config, WW3 and WW4 (forks synced and pushed). Stages, no commit.
+sub-sync: submodule-update src-sync ww4-sync
 
 # ---------------------------------------------------------------------
 # Publications: markdown -> PDF (flake.nix at the repo root; sources in pubs/)

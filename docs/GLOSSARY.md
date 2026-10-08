@@ -452,7 +452,7 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | ORCID | Open Researcher and Contributor ID `(v)` [CITATION.cff](../CITATION.cff) | The author's persistent researcher identifier, `0009-0009-1056-7661`, carried into every DOI record. | [CITATION.cff](../CITATION.cff), [`.zenodo.json`](../.zenodo.json) |
 | CFF / `CITATION.cff` | Citation File Format 1.2.0 `(v)` [CITATION.cff](../CITATION.cff) | Drives GitHub's "Cite this repository" button; validated in CI by `cffconvert`. | [README.md](../README.md), [.github/workflows/citation.yml](../.github/workflows/citation.yml) |
 | LGPL-3.0-or-later | GNU Lesser General Public License, version 3 or later `(v)` [README.md](../README.md#licensing) | WW3's licence, so the kernels translated from it carry it too; the rest of the repo is MIT. | [README.md](../README.md), [kokkos/README.md](../kokkos/README.md) |
-| `just release` | `scripts/release.sh`: tag an up-to-date `main` as `vX.Y.Z` and push `(v)` [justfile](../justfile) | `release.yml` publishes the GitHub release and Zenodo mints its DOI. | [README.md](../README.md) |
+| `just release` | `scripts/release.sh`: tag an up-to-date `main` as `vX.Y.Z` (default: the next patch) and push; `weekly-release.yml` runs it every Friday at 09:00 BRT `(v)` [justfile](../justfile) | `release.yml` publishes the GitHub release and Zenodo mints its DOI. | [README.md](../README.md) |
 
 ## Remissive index
 
