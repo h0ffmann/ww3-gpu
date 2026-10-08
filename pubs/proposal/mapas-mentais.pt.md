@@ -60,27 +60,27 @@ mindmap
 flowchart TD
     R[Execução de referência congelada<br/>código, switches, namelists, grade, forçante] --> B[Benchmark reprodutível<br/>tempo por hora de previsão]
     B --> P[Perfil por rotina e por fase<br/>1, 4 e 16 processos MPI]
-    P --> E1
+    P --> E1a
 
     subgraph E1[Etapa 1 · Opções de compilação]
         direction LR
         E1a[compilador, flags, switches,<br/>forçante, MPI x OpenMP] --> E1g{bit a bit ou<br/>dentro da tolerância?}
     end
-    E1g -- sim --> E2
+    E1g -- sim --> E2a
     E1g -- não --> X1[descartada]
 
     subgraph E2[Etapa 2 · Configuração da execução]
         direction LR
         E2a[passos de tempo,<br/>saídas, restart] --> E2g{dentro da tolerância<br/>por campo?}
     end
-    E2g -- sim --> E3
+    E2g -- sim --> E3a
     E2g -- não --> X2[descartada]
 
     subgraph E3[Etapa 3 · Fortran moderno]
         direction LR
         E3a[rotinas do topo do perfil,<br/>uma de cada vez, mesma aritmética] --> E3g{tolerância por campo<br/>e teste por rotina?}
     end
-    E3g -- sim --> E4
+    E3g -- sim --> E4a
     E3g -- não --> X3[descartada]
 
     subgraph E4[Etapa 4 · Kernels C++/Kokkos]
@@ -90,8 +90,6 @@ flowchart TD
     E4g -- sim --> OP[Entra na configuração operacional]
     E4g -- não --> LIM[Medida do limite,<br/>recomendação de não operar em GPU]
 
-    classDef gate fill:#fff3cd,stroke:#856404;
-    class E1g,E2g,E3g,E4g gate;
 ```
 
 <details open>
@@ -99,7 +97,7 @@ flowchart TD
 
 **Em uma frase.** As otimizações vão da mais barata (opções de compilação) à mais cara (reescrita para GPU), e cada alteração só avança se os resultados continuarem concordando com a execução de referência e, na etapa 4, se houver ganho medido.
 
-**Como ler.** De cima para baixo. As três caixas do topo fixam a referência e os instrumentos de medida (*benchmark* e perfil). Cada grupo é uma etapa: à esquerda, o que muda; à direita, o losango amarelo com o critério de aceite. Um *sim* leva à etapa seguinte; um *não* descarta a alteração nas etapas 1 a 3 e, na etapa 4, leva ao relatório do limite.
+**Como ler.** De cima para baixo. As três caixas do topo fixam a referência e os instrumentos de medida (*benchmark* e perfil). Cada grupo é uma etapa: à esquerda, o que muda; à direita, o losango com o critério de aceite. Um *sim* leva à etapa seguinte; um *não* descarta a alteração nas etapas 1 a 3 e, na etapa 4, leva ao relatório do limite.
 
 **Fora da figura.** Os valores das tolerâncias, que o grupo de pesquisa do LabECO definirá para cada campo, e o retorno da alteração reprovada à reescrita.
 

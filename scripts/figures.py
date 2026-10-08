@@ -141,7 +141,8 @@ def collect() -> tuple[list[dict], list[str]]:
 
 
 def digest(fig: dict) -> str:
-    return hashlib.sha256(fig["source"].encode("utf-8")).hexdigest()
+    """The fence plus the house style, so a style change also marks every render stale."""
+    return hashlib.sha256(fig["source"].encode("utf-8") + CONFIG.read_bytes()).hexdigest()
 
 
 def gallery(figs: list[dict]) -> str:
@@ -229,17 +230,18 @@ def render(force: bool) -> int:
     if not mmdc:
         print("figures: mmdc not on PATH; run `just figures`, which pins it with Nix", file=sys.stderr)
         return 1
-    font_dir = os.environ.get("FIGURES_FONT_DIR", "")
+    font_dirs = [d for d in os.environ.get("FIGURES_FONT_DIR", "").split(":") if d]
     index = json.loads(INDEX.read_text(encoding="utf-8")) if INDEX.exists() else {"figures": {}}
     old = index.get("figures", {})
     RENDERS.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory() as tmp:
         t = pathlib.Path(tmp)
         env = dict(os.environ)
-        if font_dir:  # only this font is visible to Chromium, so label widths match on every host
+        if font_dirs:  # only these fonts are visible to Chromium, so label widths match on every host
             (t / "fonts.conf").write_text(
                 '<?xml version="1.0"?><!DOCTYPE fontconfig SYSTEM "fonts.dtd"><fontconfig>'
-                f"<dir>{font_dir}</dir><cachedir>{t / 'fc'}</cachedir></fontconfig>\n")
+                + "".join(f"<dir>{d}</dir>" for d in font_dirs)
+                + f"<cachedir>{t / 'fc'}</cachedir></fontconfig>\n")
             env["FONTCONFIG_FILE"] = str(t / "fonts.conf")
         (t / "puppeteer.json").write_text('{"args": ["--no-sandbox"]}\n')
         base = [mmdc, "-q", "-p", str(t / "puppeteer.json"), "-c", str(CONFIG)]
@@ -262,7 +264,7 @@ def render(force: bool) -> int:
         for e in ("pdf", "png"):
             (RENDERS / f"{gone}.{e}").unlink(missing_ok=True)
     index = {"renderer": {"mermaid-cli": version, "nixpkgs": nixpkgs_rev(),
-                          "font": pathlib.Path(font_dir).parent.parent.name.split("-", 1)[-1] if font_dir else "host default",
+                          "fonts": [pathlib.Path(d).parent.name.split("-", 1)[-1] for d in font_dirs] or "host default",
                           "config": CONFIG.relative_to(ROOT).as_posix()},
              "figures": dict(sorted(new.items()))}
     INDEX.write_text(json.dumps(index, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
@@ -306,9 +308,7 @@ def chart_body(table: pathlib.Path, label: str, values: list[str], y_title: str)
             and all(number(r[v]) is not None for v in values)]
     q = lambda t: '"' + t.replace('"', "'") + '"'
     top = max(number(r[v]) for r in keep for v in values)
-    # dark bars and a contrasting line: the neutral theme's default greys barely print
-    out = ['%%{init: {"themeVariables": {"xyChart": {"plotColorPalette": "#4c6a8c, #c0392b"}}}}%%',
-           "xychart-beta", f"    x-axis [{', '.join(q(r[label]) for r in keep)}]",
+    out = ["xychart-beta", f"    x-axis [{', '.join(q(r[label]) for r in keep)}]",
            f"    y-axis {q(y_title)} 0 --> {top * 1.1:.3g}"]
     for i, v in enumerate(values):
         out.append(f"    {'bar' if i == 0 else 'line'} [{', '.join(f'{number(r[v]):g}' for r in keep)}]")

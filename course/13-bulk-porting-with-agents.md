@@ -142,24 +142,24 @@ ownership (a state object created by `ww_kokkos_init`, seeded by the `Ctx` in
 flowchart TD
     R[Frozen reference run<br/>code, switches, namelists, grid, forcing] --> B[Reproducible benchmark<br/>time per forecast hour]
     B --> P[Profile by routine and by phase<br/>1, 4 and 16 MPI processes]
-    P --> E1
+    P --> E1a
     subgraph E1[Step 1 · Compile options]
         direction LR
         E1a[compiler, flags, switches,<br/>forcing, MPI x OpenMP] --> E1g{bit for bit or<br/>within tolerance?}
     end
-    E1g -- yes --> E2
+    E1g -- yes --> E2a
     E1g -- no --> X1[discarded]
     subgraph E2[Step 2 · Run configuration]
         direction LR
         E2a[time steps,<br/>outputs, restart] --> E2g{within the per-field<br/>tolerance?}
     end
-    E2g -- yes --> E3
+    E2g -- yes --> E3a
     E2g -- no --> X2[discarded]
     subgraph E3[Step 3 · Modern Fortran]
         direction LR
         E3a[routines at the top of the profile,<br/>one at a time, same arithmetic] --> E3g{per-field tolerance<br/>and per-routine test?}
     end
-    E3g -- yes --> E4
+    E3g -- yes --> E4a
     E3g -- no --> X3[discarded]
     subgraph E4[Step 4 · C++/Kokkos kernels]
         direction LR

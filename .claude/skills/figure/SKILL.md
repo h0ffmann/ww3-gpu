@@ -49,7 +49,7 @@ renders each one with a pinned mermaid-cli and font for the PDF and Word builds
    Each label is its own paragraph (blank lines between). The takeaway has no jargon, not even
    *spectrum* or *kernel*. Evidence names the paragraph the figure summarises; a discrepancy you
    found between two copies or between figure and text is stated there with ⚠, not hidden.
-4. **Render**: `just figures` (pinned mermaid-cli and DejaVu Sans from `flake.lock`'s nixpkgs).
+4. **Render**: `just figures` (pinned mermaid-cli, Geist and DejaVu Sans from `flake.lock`'s nixpkgs).
    It re-renders only fences whose source changed and rewrites `index.json` and the gallery.
 5. **Look at it**: open `pubs/figures/mermaid/<id>.png`. Fix crowding in the source (shorter
    labels, `<br/>`, `direction`, splitting), never by editing a render.
@@ -69,8 +69,20 @@ renders each one with a pinned mermaid-cli and font for the PDF and Word builds
 - Mind-map leaves say what role they play when a branch mixes kinds (`Risco 1 ·`, `Resposta:`,
   `Causa:`); a reader cannot tell a problem from its fix by position alone.
 - One flow direction per figure (`LR` or `TD`); groups (`subgraph`) for stages.
-- Colour only through `classDef`, and never as the only carrier of meaning: the label or shape
-  repeats it. The base theme is `pubs/figures/mermaid-config.json` (neutral, print-safe).
+- Colour comes from the house style, not from the fence: leave `classDef`, `style` and
+  `%%{init}%%` out. A colour never carries meaning on its own; the label or shape says it.
+
+## House style
+
+`pubs/figures/mermaid-config.json` applies to every render. It follows the editorial skin of
+[`diagram-design`](https://github.com/cathrynlavery/diagram-design) (MIT), the diagram rules
+`marola-dev/agent-skills` catalogues for the marola docs: a hand-drawn look (`look: handDrawn`,
+fixed `handDrawnSeed`, so renders stay byte-identical), Geist, a warm paper fill with ink-coloured
+strokes, one accent (`#eb6c36`, atomic tangerine) kept for the centre of a mind map and the second
+series of a chart, and muted sage, dusty-blue, mustard, rust and slate tints for mind-map branches.
+Changing the file marks every render stale (it is part of each figure's sha256 in `index.json`);
+re-render all of them in the same commit. GitHub's own preview of a fence ignores this file and
+draws its default theme.
 
 ## Not this skill
 

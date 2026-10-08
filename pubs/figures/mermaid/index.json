@@ -2,94 +2,97 @@
   "renderer": {
     "mermaid-cli": "11.17.0",
     "nixpkgs": "eaad089433ca2bb662274377d33df3d0e51ef28b",
-    "font": "dejavu-fonts-2.37",
+    "fonts": [
+      "share",
+      "share"
+    ],
     "config": "pubs/figures/mermaid-config.json"
   },
   "figures": {
     "gpu-operation-decision": {
       "file": "course/13-bulk-porting-with-agents.md",
       "title": "When does a C++/Kokkos kernel enter the operational configuration?",
-      "sha256": "4ef01b6d2b6d389d0b88d7d3542bb454722e3789dd563ae8df5ec459567b1395"
+      "sha256": "84b970f871dc4b6ed954c1861cd4c5bfe1c071615fbe00aa65d437535d2568d1"
     },
     "kokkos-interop-one-binary": {
       "file": "course/13-bulk-porting-with-agents.md",
       "title": "How do the original Fortran routine and its Kokkos kernel coexist in one WW3 binary?",
-      "sha256": "fa54b8e1abb117599d1601d500825219e8c4a588bc6076b63eb4b67a6ec8eb0b"
+      "sha256": "6261d3f0afbabd85ec225dc5c077fa942900ead2347f1bb38dfd080f949d05ab"
     },
     "optimisation-ladder-gates": {
       "file": "course/13-bulk-porting-with-agents.md",
       "title": "Which gate must each optimisation step pass before the next step starts?",
-      "sha256": "d5ac5b58f718c7d68d6e1f3566d3c882ef2f346a43a8a5b5a6267f3176b162f3"
+      "sha256": "6c48e094643ef80fc5905d7c9deb36e3327d114ebace5a1c06e4104748097d82"
     },
     "porting-validation-ladder": {
       "file": "course/13-bulk-porting-with-agents.md",
       "title": "How is each translated version of a kernel checked against the one before it?",
-      "sha256": "ba5270973abe196eb58116f82e323cb7ee89796364a2d92bfd21f3132e975b7c"
+      "sha256": "2ad02c79d961c347b0d2f4f278a5f13cbba0e675831779183afce08ce171ad14"
     },
     "proposta-cronograma": {
       "file": "pubs/proposal/mapas-mentais.pt.md",
       "title": "Quando acontece cada etapa do projeto?",
-      "sha256": "f34f5e5af929da76f5ba544bfdc5d711d74b64b685c0adaffe558d9959f9eb3b"
+      "sha256": "98bab22c940d3ad21e8f9460c3a1ac2673c61b71f5e252450dc71a252dacdcd5"
     },
     "proposta-decisao-operacao": {
       "file": "pubs/proposal/mapas-mentais.pt.md",
       "title": "Quando um kernel em GPU entra na configuração operacional?",
-      "sha256": "eb1913282b47a8421ee98aac4bec3fb7a942b5d755d88cbd23065d28b536b8cb"
+      "sha256": "0b369c433591708ad37b144c95766fedc26b1378253fb69f1f3a153041f39215"
     },
     "proposta-escada-otimizacao": {
       "file": "pubs/proposal/mapas-mentais.pt.md",
       "title": "Que critério cada etapa de otimização precisa cumprir antes da seguinte?",
-      "sha256": "c94aff0ea033062014516211558cead8265ba6b02c7bc9fcff3926572d670cef"
+      "sha256": "d446d64e03e64e283a793558d30f1ccd9bd8ae6fd9a408d21b8145b780009e26"
     },
     "proposta-interoperabilidade": {
       "file": "pubs/proposal/mapas-mentais.pt.md",
       "title": "Como a rotina original em Fortran e o kernel em Kokkos convivem em um único executável?",
-      "sha256": "f88038f2e92c02541e0a2bb0f055da0dfb32a7c48f5f52654f2919aed26b512b"
+      "sha256": "0f17c6d5b8232dc03ca3755746ec4179cc519533eadf6f140753bd2b1eb6f337"
     },
     "proposta-riscos": {
       "file": "pubs/proposal/mapas-mentais.pt.md",
       "title": "Quais são os riscos do projeto e como cada um é mitigado?",
-      "sha256": "6fe2ae76396561e76d6008ad5c53ebd767892950663393b2ebd82c0cba4fafe8"
+      "sha256": "e3fd3240812cc8fe14d3aeba614e3e858ce7fa64bbd7b250e2c0a2b90d8416cf"
     },
     "proposta-validacao-traducao": {
       "file": "pubs/proposal/mapas-mentais.pt.md",
       "title": "Como cada versão traduzida é verificada contra a anterior?",
-      "sha256": "826a36a244145cc750d06b72d80d9fd90a53fd354f0ca2e36e7961f27071b36d"
+      "sha256": "f29c89c69301151231386bb300826db64c4b3a0e173ea37abde7d8a503a607ac"
     },
     "proposta-visao-geral": {
       "file": "pubs/proposal/mapas-mentais.pt.md",
       "title": "Do que trata a proposta, em um único mapa?",
-      "sha256": "7b5be3d75a4da1a91232562755696e04cfb26bafc85d16942ab24d3e2a077f9d"
+      "sha256": "4ef3ee99bb373454affcafdc56b81b9aa5944e2bcccaa3956a41906cba82b9a6"
     },
     "sds4-profile-ts1": {
       "file": "docs/W3SDS4_TRITON_202610.md",
       "title": "Where does the source-term time go, and how much of it is W3SDS4?",
-      "sha256": "edacb979ee4bf7087547208fad8567b4f68b689f65311808fa5a3acc5abdadc4"
+      "sha256": "4f7e6b64b35c4b0da4f7a41341b402fd6d2486d0eca20f2ba3e2bb48481eaccd"
     },
     "sds4-sdscum-branches": {
       "file": "docs/W3SDS4_TRITON_202610.md",
       "title": "Which branch of the cumulative-breaking term does W3SDS4 run, and what does each cost?",
-      "sha256": "3f764d14bcf86e896a03a9e075c44c9e02eba7bd473fb45fa1a59d1de0164199"
+      "sha256": "c6507ef5d52e90d2441e1197b5613be77f9ff0cb7f1ccfcbe053df6896e73678"
     },
     "testes-ww3-ww4": {
       "file": "pubs/proposal/mapas-mentais.pt.md",
       "title": "Que testes o WW3 e o WW4 ofereciam em setembro e outubro de 2026, e o que o projeto acrescenta?",
-      "sha256": "20214597094cecf0bb882c7688fed53e9e1cf307cc456c89ef837786a0a155ae"
+      "sha256": "3da37b6eaacadf8557d484cf388c2471f9ba788d009c04a1d459e142f9879342"
     },
     "triton-benchmark-arms": {
       "file": "docs/W3SDS4_TRITON_202610.md",
       "title": "Which implementations of W3SDS4 are timed, and when does a timing count?",
-      "sha256": "56308dbd04f403bcfbcfabf56f87ce680ae6dce4f52c8cd07c448ee41c324fee"
+      "sha256": "07156b88b10db8cf84a838acdf6fc97e0cd04d912892aefd92d3c90b17c5f25d"
     },
     "triton-port-plan": {
       "file": "docs/W3SDS4_TRITON_202610.md",
       "title": "In what order is W3SDS4 ported to Triton, and what gate does each step pass?",
-      "sha256": "1283b90b31f890ea428622b0ef0af9d4378b90bac977c11b10bcca279b73920c"
+      "sha256": "648fe9170d2d3487807e8219200b7e9332f332b2167e39cff9eaf976e789f80b"
     },
     "weathernext-wind-chain": {
       "file": "docs/W3SDS4_TRITON_202610.md",
       "title": "How does WeatherNext 3 enter the benchmark, and what are the waves compared with?",
-      "sha256": "a6afd580d96cd14a101c2fc3b9452bfb25ff148d4e59a28f892316fff90db513"
+      "sha256": "007b04d16adf55c27f5807a191022eef7972183c23f460e2b27516c500597961"
     }
   }
 }

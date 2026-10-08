@@ -12,7 +12,6 @@ disagree, the issue wins and the figure is a bug. `(v)` and `⚠` keep their usu
 %% figure: sds4-profile-ts1
 %% title: Where does the source-term time go, and how much of it is W3SDS4?
 %% data: docs/data/ww3_ts1_gprof_202610.md --label routine --value 'ST4 default (SDSCUM=-0.40344)' --value SDSCUM=0 --y-title 'self time (s)'
-%%{init: {"themeVariables": {"xyChart": {"plotColorPalette": "#4c6a8c, #c0392b"}}}}%%
 xychart-beta
     x-axis ["W3SDS4", "W3SNL1", "W3SIN4", "W3SPR4", "W3SRCE", "others"]
     y-axis "self time (s)" 0 --> 2.21
@@ -25,7 +24,7 @@ xychart-beta
 
 **Takeaway.** In this test, the routine that dissipates wave energy by breaking (`W3SDS4`) takes two thirds of the source-term time, about five times the nonlinear interaction (`W3SNL1`); with its cumulative-breaking term switched off it costs a quarter as much.
 
-**How to read.** One blue bar per routine: self time in seconds with ST4 at its default settings (`W3SRCE` is its own time, without the routines it calls; *others* is `W3SLN1`, `W3SDB1`, `W3SBT1` and `CALC_USTAR`). The red line is the same routines with `SDSCUM=0`, which removes the cumulative term; where the line sits far below the bar, that term is the cost.
+**How to read.** One dark bar per routine: self time in seconds with ST4 at its default settings (`W3SRCE` is its own time, without the routines it calls; *others* is `W3SLN1`, `W3SDB1`, `W3SBT1` and `CALC_USTAR`). The orange line is the same routines with `SDSCUM=0`, which removes the cumulative term; where the line sits far below the bar, that term is the cost.
 
 **Not shown.** Propagation, MPI, gather/scatter and output: `ww3_ts1` is a single-point source-term test (3×3 grid, NK=36, NTH=24). The operational grid is NK=32, NTH=36, and the cumulative term grows with NTH², so the gap should widen there ⚠.
 
