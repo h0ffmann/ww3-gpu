@@ -12,6 +12,8 @@ this file as plain text must open `AGENTS.md` itself. `CONTRIBUTING.md` is the l
   `revisor-proposta` subagent when a file under `pubs/proposal/` changes, and a `Stop` hook refuses
   to end a session that changed the proposal without a recorded review
   (`python3 scripts/proposal_review_gate.py --record <parecer.md>`). Both have `--self-test`.
+  A `SessionStart` hook runs `scripts/agent_env.sh` in cloud sessions only, so the gates' tools
+  and `nix-config` exist before the first command.
 - **The reviewer is a subagent**: run it with the Agent tool, `subagent_type: "revisor-proposta"`,
   on the files you changed; `just proposal-review` does the same from a terminal in plan mode. It
   reports; you fix; it does not rewrite.

@@ -2,8 +2,9 @@
 # latest tag, the same as running `just release` by hand. A tag pushed with GITHUB_TOKEN does not
 # start release.yml, so this job publishes the GitHub release itself; Zenodo's webhook then
 # archives it and mints the version DOI. A week with nothing new makes no release (a DOI is
-# permanent). "Run workflow" in the Actions tab runs it on demand; its dry_run box, ticked by
-# default, runs every check and prints the tag it would cut without tagging or releasing.
+# permanent). The notes open with `wfip.py status --since <previous tag>`. "Run workflow" in the
+# Actions tab runs it on demand; its dry_run box, ticked by default, runs every check and prints
+# the tag it would cut without tagging or releasing.
 name: Weekly release
 
 on:
@@ -46,6 +47,8 @@ jobs:
             scripts/release.sh --dry-run
             exit 0
           fi
+          prev="$(git tag -l 'v*' --sort=-v:refname | head -1)"
           scripts/release.sh
           tag="$(git tag -l 'v*' --sort=-v:refname | head -1)"
-          gh release create "$tag" --verify-tag --generate-notes --title "$tag"
+          python3 scripts/wfip.py status --since "$prev" > "$RUNNER_TEMP/notes.md"
+          gh release create "$tag" --verify-tag --generate-notes --notes-file "$RUNNER_TEMP/notes.md" --title "$tag"

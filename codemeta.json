@@ -1,0 +1,61 @@
+{
+  "@context": "https://w3id.org/codemeta/3.0",
+  "@type": "SoftwareSourceCode",
+  "name": "WW3 GPU Lab: hands-on WAVEWATCH III modelling and a C++/Kokkos GPU port",
+  "description": "A self-paced course and toolkit for the WAVEWATCH III spectral wind-wave model: build and run the Fortran model on real cases, benchmark it, and port its kernels (starting with the W3SNL1 nonlinear interaction source term) to C++/Kokkos with a numerical parity harness against the Fortran reference.",
+  "author": [
+    {
+      "@type": "Person",
+      "@id": "https://orcid.org/0009-0009-1056-7661",
+      "givenName": "Matheus",
+      "familyName": "Hoffmann",
+      "affiliation": {
+        "@type": "Organization",
+        "name": "Escola Politécnica, Universidade Federal do Rio de Janeiro"
+      }
+    }
+  ],
+  "contributor": [
+    {
+      "@type": "Person",
+      "givenName": "Pedro Veras",
+      "familyName": "Guimarães",
+      "affiliation": {
+        "@type": "Organization",
+        "name": "LabECO, Departamento de Engenharia Mecânica, Universidade Federal de Santa Catarina"
+      }
+    }
+  ],
+  "identifier": "https://doi.org/10.5281/zenodo.23221351",
+  "codeRepository": "https://github.com/h0ffmann/ww3-gpu",
+  "license": [
+    "https://spdx.org/licenses/MIT",
+    "https://spdx.org/licenses/LGPL-3.0-or-later"
+  ],
+  "keywords": [
+    "WAVEWATCH III",
+    "WW3",
+    "ocean waves",
+    "wind waves",
+    "spectral wave model",
+    "wave forecasting",
+    "nonlinear wave interactions",
+    "Discrete Interaction Approximation",
+    "GPU",
+    "Kokkos",
+    "OpenACC",
+    "CUDA Fortran",
+    "Fortran",
+    "C++",
+    "performance portability",
+    "high-performance computing",
+    "research software",
+    "reproducibility"
+  ],
+  "programmingLanguage": [
+    "C++",
+    "Fortran",
+    "Shell"
+  ],
+  "readme": "https://github.com/h0ffmann/ww3-gpu/blob/main/README.md"
+}

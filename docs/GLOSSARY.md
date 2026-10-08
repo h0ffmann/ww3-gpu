@@ -377,6 +377,10 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 
 | Term | Expansion | What it is | Where it appears |
 |---|---|---|---|
+| `bench/results/` | result records `(v)` [bench/README.md](../bench/README.md) | One JSON record per measured study (machine, toolchain, commit, L1 status, each run's command); `scripts/results.py` generates the tables that quote it and refuses a timing without a passed L1. | [kokkos/PORT_STATUS.md](../kokkos/PORT_STATUS.md) |
+| `docs/log/` | the research log `(v)` [docs/log/README.md](log/README.md) | Dated, append-only entries of what was tried, negative results included. | [AGENTS.md](../AGENTS.md) |
+| devcontainer / `agent_env.sh` | Development Container spec (`.devcontainer/devcontainer.json`) and the script it and the `SessionStart` hook run `(v)` [scripts/agent_env.sh](../scripts/agent_env.sh) | Sets a fresh container up for the gates: just, shellcheck, gfortran, PyYAML and `nix-config` over https. | [AGENTS.md](../AGENTS.md), [.claude/hooks/session-start.sh](../.claude/hooks/session-start.sh) |
+| spike / SPIKE-NNN | a time-boxed investigation that answers a question rather than ships a change `(v)` [.github/ISSUE_TEMPLATE/spike.yml](../.github/ISSUE_TEMPLATE/spike.yml) | An issue whose output is findings and WFIPs to open; SPIKE-001 is #65. | [CONTRIBUTING.md](../CONTRIBUTING.md) |
 | WFIP | Wave Forecaster Improvement Proposal `(v)` [docs/WFIPs/TEMPLATE.md](WFIPs/TEMPLATE.md) | This repo's numbered design doc for a non-trivial change, on the shape of marola's MIP, tied to a proposal deliverable (D1–D6) and carrying its definition of done in §7; `scripts/wfip.py` builds the index. | [docs/WFIPs/README.md](WFIPs/README.md), [AGENTS.md](../AGENTS.md) |
 | D1–D6 | the six deliverables of the proposal, one per specific objective `(v)` [docs/WFIPs/README.md](WFIPs/README.md#proposal-deliverables) | The ids a WFIP's **Deliverable** row names; `wfip.py check` rejects any other. | [pubs/proposal/pt/06-objective.md](../pubs/proposal/pt/06-objective.md) |
 | DoD | definition of done `(v)` [docs/WFIPs/TEMPLATE.md](WFIPs/TEMPLATE.md) | The `- [ ]` checklist of a WFIP's §7, one verifiable outcome with its command per box; the index shows the ticked share. | [docs/WFIPs/README.md](WFIPs/README.md) |
@@ -450,6 +454,7 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | Zenodo | CERN's open research repository `(v)` [`.zenodo.json`](../.zenodo.json) | Archives every GitHub release of this repo through its webhook and mints the DOIs. | [README.md](../README.md), [`.claude/skills/release`](../.claude/skills/release/SKILL.md) |
 | DataCite | the registration agency for Zenodo's DOIs `(v)` [`.claude/skills/release`](../.claude/skills/release/SKILL.md) | Its API shows a new version DOI when zenodo.org is unreachable. | [`.claude/skills/release`](../.claude/skills/release/SKILL.md) |
 | ORCID | Open Researcher and Contributor ID `(v)` [CITATION.cff](../CITATION.cff) | The author's persistent researcher identifier, `0009-0009-1056-7661`, carried into every DOI record. | [CITATION.cff](../CITATION.cff), [`.zenodo.json`](../.zenodo.json) |
+| codemeta / `codemeta.json` | CodeMeta, a JSON-LD vocabulary for software metadata, version 3.0 `(v)` [codemeta.json](../codemeta.json) (`@context` `https://w3id.org/codemeta/3.0`) | Generated from `CITATION.cff` and `.zenodo.json` by `scripts/codemeta.py` for software indexes; ⚠ that Software Heritage and OpenAIRE read it is from their documentation, not checked here. | [.github/workflows/citation.yml](../.github/workflows/citation.yml), [`.claude/skills/release`](../.claude/skills/release/SKILL.md) |
 | CFF / `CITATION.cff` | Citation File Format 1.2.0 `(v)` [CITATION.cff](../CITATION.cff) | Drives GitHub's "Cite this repository" button; validated in CI by `cffconvert`. | [README.md](../README.md), [.github/workflows/citation.yml](../.github/workflows/citation.yml) |
 | LGPL-3.0-or-later | GNU Lesser General Public License, version 3 or later `(v)` [README.md](../README.md#licensing) | WW3's licence, so the kernels translated from it carry it too; the rest of the repo is MIT. | [README.md](../README.md), [kokkos/README.md](../kokkos/README.md) |
 | `just release` | `scripts/release.sh`: tag an up-to-date `main` as `vX.Y.Z` (default: the next patch) and push; `weekly-release.yml` runs it every Friday at 09:00 BRT `(v)` [justfile](../justfile) | `release.yml` publishes the GitHub release and Zenodo mints its DOI. | [README.md](../README.md) |
@@ -475,6 +480,7 @@ Every term above, alphabetically, with the section it lives in.
 - B4B: [WW3 switches](#ww3-switches)
 - b4b: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - `bench/`: [This repository's own names](#this-repositorys-own-names)
+- `bench/results/`: [This repository's own names](#this-repositorys-own-names)
 - `bench_snl1.cpp`: [This repository's own names](#this-repositorys-own-names)
 - BETAMAX: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - BIN2NC: [WW3 switches](#ww3-switches)
@@ -497,6 +503,7 @@ Every term above, alphabetically, with the section it lives in.
 - cdo: [HPC and software](#hpc-and-software)
 - CDS: [HPC and software](#hpc-and-software)
 - CFF / `CITATION.cff`: [Citation and licensing](#citation-and-licensing)
+- codemeta / `codemeta.json`: [Citation and licensing](#citation-and-licensing)
 - CFL: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - CG: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - CG1: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -554,6 +561,7 @@ Every term above, alphabetically, with the section it lives in.
 - develop: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - develop / 7.14: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - devShell: [HPC and software](#hpc-and-software)
+- devcontainer / `agent_env.sh`: [This repository's own names](#this-repositorys-own-names)
 - DIA: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - dir: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - dir, dp (DIR, DP): [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
@@ -563,6 +571,7 @@ Every term above, alphabetically, with the section it lives in.
 - `do concurrent`: [HPC and software](#hpc-and-software)
 - do not improve": [This repository's own names](#this-repositorys-own-names)
 - DoD: [This repository's own names](#this-repositorys-own-names)
+- `docs/log/`: [This repository's own names](#this-repositorys-own-names)
 - DOE: [Models, projects and institutions](#models-projects-and-institutions)
 - DOE / E3SM / ORNL / LANL: [Models, projects and institutions](#models-projects-and-institutions)
 - DOI / concept DOI: [Citation and licensing](#citation-and-licensing)
@@ -983,6 +992,7 @@ Every term above, alphabetically, with the section it lives in.
 - ScopeGuard: [HPC and software](#hpc-and-software)
 - ScopeGuard / `Kokkos::initialize` / `finalize` / `push_finalize_hook`: [HPC and software](#hpc-and-software)
 - Spec Kit / `specify`: [HPC and software](#hpc-and-software)
+- spike / SPIKE-NNN: [This repository's own names](#this-repositorys-own-names)
 - SCOTCH: [WW3 switches](#ww3-switches)
 - scratch: [HPC and software](#hpc-and-software)
 - scratch / `team_scratch(0)` / `TeamThreadRange` / `team_barrier`: [HPC and software](#hpc-and-software)

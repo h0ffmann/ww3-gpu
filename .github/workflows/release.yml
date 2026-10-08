@@ -2,6 +2,8 @@
 # integration (enabled once at zenodo.org/account/settings/github) listens for published
 # releases through its own webhook, archives the tagged source and mints a new version DOI.
 # No secret is needed: the webhook belongs to Zenodo, and GITHUB_TOKEN creates the release.
+# The notes open with `wfip.py status --since <previous tag>` (what the version moved against
+# the proposal's deliverables), above GitHub's generated list of merged PRs.
 name: Release
 
 on:
@@ -15,6 +17,12 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: WFIP status since the previous tag
+        run: |
+          prev=$(git tag -l 'v*' --sort=-v:refname | grep -vx "$GITHUB_REF_NAME" | head -n1)
+          python3 scripts/wfip.py status ${prev:+--since "$prev"} > "$RUNNER_TEMP/notes.md"
       - env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --verify-tag --generate-notes --title "$GITHUB_REF_NAME"
+        run: gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --verify-tag --generate-notes --notes-file "$RUNNER_TEMP/notes.md" --title "$GITHUB_REF_NAME"

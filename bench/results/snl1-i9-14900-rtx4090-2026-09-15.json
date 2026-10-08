@@ -1,0 +1,31 @@
+{
+  "study": "snl1-backends",
+  "date": "2026-09-15",
+  "routine": "W3SNL1",
+  "what": "ww_bench_snl1: 1000 sea points (three fixture points tiled), nk=25 nth=24 (nspec=600), 3 warm-up + 20 timed calls; shim = end-to-end through the C ABI, kernel = kernel alone",
+  "machine": "Intel Core i9-14900 (32 hardware threads) + NVIDIA GeForce RTX 4090 (CMAKE_CUDA_ARCHITECTURES=89), driver 595.84; the owner's workstation, not the CI runner",
+  "toolchain": "Kokkos 5.2.0, GCC 15.3.0, -ffp-contract=off (CUDA: --fmad=false)",
+  "commit": null,
+  "recorded_in": "9afee86",
+  "commit_note": "the build commit was not written down; 9afee86 is the commit that recorded these numbers, so the build is at or before it",
+  "l1": "passed: L1_test_snl1_dia, L1_test_snl1_shim, shim_roundtrip bit-identical (max relative error 0.0) on all three presets",
+  "statistic": "median of three runs",
+  "runs": [
+    {
+      "backend": "Serial (OpenMP backend, 1 thread)",
+      "command": "env OMP_PROC_BIND=false OMP_NUM_THREADS=1 kokkos/build/openmp-release/tests/ww_bench_snl1",
+      "shim_ms": 25.88, "kernel_ms": 24.96, "points_per_s": "3.9e4", "speedup": "1.0x", "spread": "< 2 %"
+    },
+    {
+      "backend": "OpenMP, 32 threads",
+      "command": "env OMP_PROC_BIND=spread OMP_PLACES=cores OMP_NUM_THREADS=32 kokkos/build/openmp-release/tests/ww_bench_snl1",
+      "shim_ms": 5.95, "kernel_ms": 5.02, "points_per_s": "1.7e5", "speedup": "4.4x", "spread": "< 2 %"
+    },
+    {
+      "backend": "CUDA, RTX 4090",
+      "command": "env OMP_PROC_BIND=false kokkos/build/cuda-release/tests/ww_bench_snl1",
+      "shim_ms": 0.75, "kernel_ms": 0.047, "points_per_s": "1.3e6", "speedup": "34x", "spread": "< 4 %"
+    }
+  ],
+  "derived_note": "points_per_s and speedup are as recorded on 2026-09-15 from the unrounded medians, which were not kept; recomputing them from the rounded ms columns gives 4.3x and 35x"
+}

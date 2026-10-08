@@ -1,0 +1,33 @@
+name: Spike
+description: A time-boxed question whose answer decides what to build (SPIKE-NNN).
+title: "SPIKE-NNN: "
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        A spike answers a question; it does not ship the answer. Its output is findings (as
+        comments here, or an entry in `docs/log/`) and, where the answer is non-trivial work,
+        WFIPs to open with `just wfip new`. Every claim carries `(v)` with what was checked, or `⚠`.
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      description: One question, specific enough that "done" is obvious.
+    validations: { required: true }
+  - type: input
+    id: timebox
+    attributes:
+      label: Time box
+      placeholder: "one working week"
+    validations: { required: true }
+  - type: textarea
+    id: start
+    attributes:
+      label: Starting point
+      description: What exists today, with commit and files read (`(v)`), and the issues or plans it builds on.
+  - type: textarea
+    id: output
+    attributes:
+      label: Output
+      description: The checklist of findings this spike must produce, and what is out of scope.
+    validations: { required: true }

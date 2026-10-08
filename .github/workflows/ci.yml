@@ -26,6 +26,9 @@ jobs:
       - name: WFIP index, deliverables and definitions of done are current
         run: python3 scripts/wfip.py --self-test && python3 scripts/wfip.py check
 
+      - name: Result records are valid, every timing has a passed L1, quoted tables are current
+        run: python3 scripts/results.py check
+
       - name: Shellcheck
         uses: ludeeus/action-shellcheck@master
         with:
