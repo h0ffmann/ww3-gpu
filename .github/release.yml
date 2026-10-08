@@ -1,0 +1,10 @@
+# Categories of the generated release notes (`gh release create --generate-notes`, the Release
+# and Weekly release workflows). A PR labelled `wfip` by .github/labeler.yml lands under the
+# proposals heading, so each version's notes, which Zenodo links, say what moved against the
+# project proposal (docs/WFIPs/README.md).
+changelog:
+  categories:
+    - title: Wave Forecaster Improvement Proposals (docs/WFIPs)
+      labels: [wfip]
+    - title: Other changes
+      labels: ["*"]

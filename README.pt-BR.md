@@ -35,14 +35,17 @@ request ou issue aberta, com link para acompanhar.
 | Port com agentes | Como agentes de código podem portar quarenta rotinas sem que uma pessoa refaça as verificações? | [`AGENTS_KOKKOS`](docs/AGENTS_KOKKOS_202609.md), [lição 13](course/13-bulk-porting-with-agents.md), [#42](https://github.com/h0ffmann/ww3-gpu/issues/42) | Regras integradas; fila de tarefas e escada de paridade na #42 |
 | Ferramentas para agentes | Quais frameworks de agentes e ferramentas de pesquisa servem a esse fluxo? | [#25](https://github.com/h0ffmann/ww3-gpu/pull/25) (NVIDIA NOOA), [#41](https://github.com/h0ffmann/ww3-gpu/pull/41) (Consensus, Antigravity, NotebookLM), [#38](https://github.com/h0ffmann/ww3-gpu/issues/38) | Avaliações em revisão |
 | Prova bit a bit | O que dá para provar, e não só testar, sobre a tradução de Fortran para C++? | [#43](https://github.com/h0ffmann/ww3-gpu/pull/43) | Plano, uma página por ferramenta de prova e uma varredura exaustiva da seção 1 do `W3SNL1` |
-| Triton e vento de ML | O Triton é um caminho mais barato para levar o `W3SDS4` à GPU? O vento do WeatherNext 3, do Google, melhora a previsão de ondas? | [#45](https://github.com/h0ffmann/ww3-gpu/issues/45) | Planejado, com o AIFS Single Wave do ECMWF como referência de ondas por ML |
+| Triton e vento de ML | Um kernel Triton do termo cumulativo do `W3SDS4` supera o do Kokkos, e o Fortran consegue chamá-lo? O vento do WeatherNext 3, do Google, melhora a previsão de ondas? | [#45](https://github.com/h0ffmann/ww3-gpu/issues/45), [`W3SDS4_TRITON_PLANO`](docs/W3SDS4_TRITON_PLANO_202610.pt.md) | Planejado, com o AIFS Single Wave do ECMWF como referência de ondas por ML; o plano de port e o peso entre CPU e GPU num H100 estão escritos |
 | Port para uma H100 | O que exigiria um port completo para uma única H100? | [`KOKKOS_H100_PLAN`](docs/KOKKOS_H100_PLAN_202609.md) | Plano |
 | WW4 e SWAN | O que substitui o WW3, e o que cobre a costa? | [lição 14](course/14-ww4-and-the-future.md), [lição 15](course/15-swan.md) | Integrado |
 | Publicações | O curso em livro e a proposta do projeto | [`pubs/`](pubs/README.md), PDFs e arquivos Word em [`pdf/`](pdf/) | Gerados pelo CI a cada merge |
 
 A proposta do projeto de graduação está em português em [`pubs/proposal/pt/`](pubs/proposal/pt/),
 com PDF em [`pdf/proposal_pt.pdf`](pdf/proposal_pt.pdf). [`docs/GLOSSARY.md`](docs/GLOSSARY.md)
-explica cada sigla, switch, rotina e ferramenta citada no repositório.
+explica cada sigla, switch, rotina e ferramenta citada no repositório. Toda mudança não trivial é
+desenhada antes de ser feita como uma *Wave Forecaster Improvement Proposal* (WFIP), ligada a uma
+entrega prometida na proposta e com seu critério de pronto; [`docs/WFIPs/README.md`](docs/WFIPs/README.md)
+é o índice e o relatório de progresso.
 
 ## Primeiros passos
 
@@ -132,4 +135,5 @@ aprendizado, sem vínculo, patrocínio ou endosso da NOAA.
 ## Como contribuir
 
 Veja [`CONTRIBUTING.md`](CONTRIBUTING.md). A contribuição mais útil é confirmar ou corrigir qualquer
-afirmação marcada com `⚠`.
+afirmação marcada com `⚠`. Agentes de código leem antes o [`AGENTS.md`](AGENTS.md): as invariantes do
+repositório, onde cada mudança entra e as checagens que a CI roda.

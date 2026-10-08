@@ -5,6 +5,9 @@ the source of truth: the execution bottleneck of WW3 (`W3SDS4`, ST4 dissipation)
 Triton on CPU and GPU, the benchmark against Fortran and Kokkos, and WeatherNext 3 as wind input.
 These five figures summarise that issue as it stood on 2026-10-07; where they and the issue
 disagree, the issue wins and the figure is a bug. `(v)` and `⚠` keep their usual meaning.
+The port plan that answers the issue's open questions (incremental phases, the CPU/GPU balance on an
+H100, Triton C accuracy, IFS against WeatherNext 3 wind) is
+[`W3SDS4_TRITON_PLANO_202610.pt.md`](W3SDS4_TRITON_PLANO_202610.pt.md), in Portuguese.
 
 ## Where the source-term time goes
 

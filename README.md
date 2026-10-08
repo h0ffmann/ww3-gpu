@@ -34,14 +34,16 @@ requests or issues, linked so you can follow them.
 | Porting with agents | How can coding agents port forty routines without a human redoing the checks? | [`AGENTS_KOKKOS`](docs/AGENTS_KOKKOS_202609.md), [lesson 13](course/13-bulk-porting-with-agents.md), [#42](https://github.com/h0ffmann/ww3-gpu/issues/42) | Rules merged; task queue and parity ladder in #42 |
 | Agent tooling | Which agent frameworks and research tools fit that workflow? | [#25](https://github.com/h0ffmann/ww3-gpu/pull/25) (NVIDIA NOOA), [#41](https://github.com/h0ffmann/ww3-gpu/pull/41) (Consensus, Antigravity, NotebookLM), [#38](https://github.com/h0ffmann/ww3-gpu/issues/38) | Evaluations in review |
 | Bit-for-bit proof | What can be proved, and not only tested, about the Fortran → C++ translation? | [#43](https://github.com/h0ffmann/ww3-gpu/pull/43) | Plan, one page per proof tool, and an exhaustive sweep of `W3SNL1` section 1 |
-| Triton and ML weather forcing | Is Triton a cheaper route to the GPU for `W3SDS4`, and does Google's WeatherNext 3 wind improve the wave forecast? | [#45](https://github.com/h0ffmann/ww3-gpu/issues/45) | Planned, with ECMWF AIFS Single Wave as the ML wave reference |
+| Triton and ML weather forcing | Does a Triton kernel of the `W3SDS4` cumulative term beat the Kokkos one, and can the Fortran call it? Does Google's WeatherNext 3 wind improve the wave forecast? | [#45](https://github.com/h0ffmann/ww3-gpu/issues/45), [`W3SDS4_TRITON_PLANO`](docs/W3SDS4_TRITON_PLANO_202610.pt.md) (pt-BR) | Planned, with ECMWF AIFS Single Wave as the ML wave reference; the port plan and the CPU/GPU balance on an H100 are written |
 | Single-H100 port | What would a full port to one H100 take? | [`KOKKOS_H100_PLAN`](docs/KOKKOS_H100_PLAN_202609.md) | Plan |
 | WW4 and SWAN | What replaces WW3, and what covers the coast? | [lesson 14](course/14-ww4-and-the-future.md), [lesson 15](course/15-swan.md) | Merged |
 | Publications | The course as a book, and the project proposal | [`pubs/`](pubs/README.md), PDFs and Word files in [`pdf/`](pdf/) | Built by CI on every merge |
 
 [`docs/AWESOME-WW3_202609.md`](docs/AWESOME-WW3_202609.md) is a curated, annotated link list, and
 [`docs/GLOSSARY.md`](docs/GLOSSARY.md) expands every abbreviation, switch, routine and tool name
-used here.
+used here. Non-trivial changes are designed before they are built as Wave Forecaster Improvement
+Proposals, each tied to a deliverable of the project proposal with its definition of done;
+[`docs/WFIPs/README.md`](docs/WFIPs/README.md) is the index and the standing progress report.
 
 ## Quickstart
 
@@ -224,4 +226,5 @@ and WW4.
 ## Contributing
 
 See [`CONTRIBUTING.md`](CONTRIBUTING.md). The most useful contribution is confirming or correcting
-anything marked `⚠`.
+anything marked `⚠`. Coding agents read [`AGENTS.md`](AGENTS.md) first: the repo invariants, where a
+change belongs and the gates CI runs.

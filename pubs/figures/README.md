@@ -89,6 +89,17 @@ WeatherNext 3 does not forecast waves: it supplies the wind that drives WW3, so 
 `weathernext-wind-chain` · [source](../../docs/W3SDS4_TRITON_202610.md) · [PDF](mermaid/weathernext-wind-chain.pdf) · [report a mistake](https://github.com/h0ffmann/ww3-gpu/issues/new?title=Figure%20weathernext-wind-chain%3A%20)
 
 
+## [`docs/W3SDS4_TRITON_PLANO_202610.pt.md`](../../docs/W3SDS4_TRITON_PLANO_202610.pt.md)
+
+### Em que ordem o braço Triton G acontece em três meses, e onde ficam os portões?
+
+Três meses divididos em quatro blocos: preparar as ferramentas, construir a resposta de referência, escrever as duas versões do programa novo e, por fim, medir e decidir.
+
+<img src="mermaid/triton-g-doze-semanas.png" alt="Três meses divididos em quatro blocos: preparar as ferramentas, construir a resposta de referência, escrever as duas versões do programa novo e, por fim, medir e decidir." width="560" />
+
+`triton-g-doze-semanas` · [source](../../docs/W3SDS4_TRITON_PLANO_202610.pt.md) · [PDF](mermaid/triton-g-doze-semanas.pdf) · [report a mistake](https://github.com/h0ffmann/ww3-gpu/issues/new?title=Figure%20triton-g-doze-semanas%3A%20)
+
+
 ## [`pubs/proposal/mapas-mentais.pt.md`](../../pubs/proposal/mapas-mentais.pt.md)
 
 ### Do que trata a proposta, em um único mapa?
