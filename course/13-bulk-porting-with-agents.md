@@ -18,20 +18,35 @@ experts (`pubs/proposal/pt/05-justification.md` (v); details beyond that summary
 3. **A validation ladder.** Each rung compares against the rung below on captured inputs.
 
 ```mermaid
+%% figure: porting-validation-ladder
+%% title: How is each translated version of a kernel checked against the one before it?
 flowchart LR
-    A[Original Fortran] -- literal translation,<br/>LLM assistant directed<br/>by the experts --> B[Reference C]
-    B -- checked against the Fortran<br/>on captured inputs --> B
-    B -- expressed in Kokkos --> C[Kokkos, serial backend]
-    C -- must be bit-identical<br/>to the C --> C
-    C -- same code --> D[Kokkos, CUDA backend]
-    D -- statistical comparison<br/>and timing on the H100 --> D
-    subgraph T[Tests per kernel]
+    A[1 · Original Fortran] -- literal translation,<br/>LLM assistant directed<br/>by the experts --> B[2 · Reference C]
+    B -- rewritten<br/>with Kokkos --> C[3 · Kokkos,<br/>serial backend]
+    C -- same source,<br/>compiled for GPU --> D[4 · Kokkos,<br/>CUDA backend]
+    B -. checked against,<br/>captured inputs .-> A
+    C -. bit-identical to .-> B
+    D -. statistical comparison,<br/>timing on the H100 .-> C
+    subgraph T[Tests every kernel must pass]
         L1[L1 · synthetic JONSWAP spectrum<br/>declared tolerances]
         L2[L2 · nearest regression case<br/>and the operational case]
     end
-    C --> T
-    D --> T
+    C -- must pass --> T
+    D -- must pass --> T
 ```
+
+<details open>
+<summary>How to read this figure</summary>
+
+**Takeaway.** Fortran is translated into GPU-ready C++ in small steps, and each version is checked against the one before it: Kokkos serial must be bit-identical to the C, and the GPU version is compared statistically with the CPU one.
+
+**How to read.** The numbered boxes are four versions of the same routine, made in that order. A solid arrow says how the next version is written; a dashed arrow points back to the version it is checked against, and its label says how strict the check is. Both Kokkos versions must also pass the L1 and L2 tests in the group on the right, which follows WW4's test levels.
+
+**Not shown.** The tolerances, declared and justified per kernel (lesson 12), and the shortcut taken for `W3SNL1`, where the C stage was skipped and Kokkos serial was compared with the Fortran fixture directly (text below).
+
+**Evidence.** The recipe of Koldunov et al. (2026) as summarised in `pubs/proposal/pt/05-justification.md` and applied in `pubs/proposal/pt/07-methodology.md`, paragraph *Interoperabilidade e testes dos kernels* (v).
+
+</details>
 
 The lab collapsed the C stage for `W3SNL1` (100 lines, already CPP-preprocessed `.F90`):
 the "bit-identical to the C" rung became "bit-identical to the Fortran fixture on every
@@ -69,6 +84,8 @@ dimension; 5 flip to a C++ driver (v).
 ## Interoperability, one binary
 
 ```mermaid
+%% figure: kokkos-interop-one-binary
+%% title: How do the original Fortran routine and its Kokkos kernel coexist in one WW3 binary?
 flowchart TB
     subgraph BIN[One WW3 binary]
         direction LR
@@ -77,12 +94,25 @@ flowchart TB
         C[bind C interface<br/>ISO_C_BINDING]
         K[Kokkos kernel<br/>Views in the layout of<br/>the WW3 spectral arrays]
         SW -- original path --> F
-        SW -- new path --> C --> K
+        SW -- new path --> C -- calls --> K
     end
-    K --> CPU[Serial or OpenMP backend<br/>no data copy]
-    K --> GPU[CUDA backend on the H100<br/>CPU-GPU traffic measured per step]
-    BIN --> M[WW3 regression matrix<br/>and per-field comparator<br/>run both paths without recompiling]
+    K -- runs on --> CPU[Serial or OpenMP backend<br/>no data copy]
+    K -- runs on --> GPU[CUDA backend on the H100<br/>CPU-GPU traffic measured per step]
+    M[WW3 regression matrix<br/>and per-field comparator] -. test both paths<br/>without recompiling .-> BIN
 ```
+
+<details open>
+<summary>How to read this figure</summary>
+
+**Takeaway.** The GPU code is added next to the original Fortran, not in place of it; a switch read at run time picks which one runs, so both are tested with the same executable.
+
+**How to read.** The large box is one compiled WW3 executable. The diamond is the run-time switch; its two arrows are the two paths a call can take, the original Fortran or the new one through the C interface into the Kokkos kernel. Below the box, the same kernel runs on a CPU or a GPU backend. The dashed arrow is testing: the regression matrix and the comparator exercise both paths of the same executable.
+
+**Not shown.** How state moves between Fortran and the device beyond phase 1's copy in and out per call; that is the data-residency ladder in the next section.
+
+**Evidence.** `W3KOKKOSMD` and the `ww_kokkos_init` contract, lesson 12, section *The shim and `W3KOKKOSMD`* (v); `pubs/proposal/pt/07-methodology.md`, paragraph *Interoperabilidade e testes dos kernels* (v).
+
+</details>
 
 This is `W3KOKKOSMD` and `WW_KOKKOS_SNL1` from lesson 12, drawn; "measured per step" is `ww_bench_snl1`'s shim-versus-kernel gap.
 
@@ -107,27 +137,29 @@ ownership (a state object created by `ww_kokkos_init`, seeded by the `Ctx` in
 ## The ladder and its gates
 
 ```mermaid
+%% figure: optimisation-ladder-gates
+%% title: Which gate must each optimisation step pass before the next step starts?
 flowchart TD
     R[Frozen reference run<br/>code, switches, namelists, grid, forcing] --> B[Reproducible benchmark<br/>time per forecast hour]
     B --> P[Profile by routine and by phase<br/>1, 4 and 16 MPI processes]
-    P --> E1
+    P --> E1a
     subgraph E1[Step 1 · Compile options]
         direction LR
-        E1a[compiler, flags, switches,<br/>MPI x OpenMP] --> E1g{bit for bit<br/>or rounding?}
+        E1a[compiler, flags, switches,<br/>forcing, MPI x OpenMP] --> E1g{bit for bit or<br/>within tolerance?}
     end
-    E1g -- yes --> E2
+    E1g -- yes --> E2a
     E1g -- no --> X1[discarded]
     subgraph E2[Step 2 · Run configuration]
         direction LR
-        E2a[decomposition, time steps,<br/>outputs, restart, forcing] --> E2g{WW3 matrix<br/>bit for bit?}
+        E2a[time steps,<br/>outputs, restart] --> E2g{within the per-field<br/>tolerance?}
     end
-    E2g -- yes --> E3
+    E2g -- yes --> E3a
     E2g -- no --> X2[discarded]
     subgraph E3[Step 3 · Modern Fortran]
         direction LR
         E3a[routines at the top of the profile,<br/>one at a time, same arithmetic] --> E3g{per-field tolerance<br/>and per-routine test?}
     end
-    E3g -- yes --> E4
+    E3g -- yes --> E4a
     E3g -- no --> X3[discarded]
     subgraph E4[Step 4 · C++/Kokkos kernels]
         direction LR
@@ -137,11 +169,26 @@ flowchart TD
     E4g -- no --> LIM[Measure of the limit,<br/>recommendation not to operate on GPU]
 ```
 
+<details open>
+<summary>How to read this figure</summary>
+
+**Takeaway.** The project tries cheap changes before expensive ones, and a change only moves on if the forecast it produces still matches the reference within the agreed tolerances and, in step 4, if it is measurably faster.
+
+**How to read.** Top to bottom. The three boxes at the top fix the reference and the measuring instruments (benchmark and profile). Each group is one step: what changes, then a diamond with its acceptance test; *yes* leads to the next step, and *no* discards the change in steps 1 to 3 and, in step 4, leads to the report of the limit. The last step ends either in operation or in a measured limit.
+
+**Not shown.** The per-field tolerances, which LabECO sets for fields such as significant wave height, peak period and peak direction, and the return of a rejected change to the rewrite.
+
+**Evidence.** `pubs/proposal/pt/04-scope.md` (the four steps) and `pubs/proposal/pt/07-methodology.md`, paragraph *Critérios de concordância e ordem dos testes* (v).
+
+</details>
+
 Lessons 09, 10 and 12 are rungs; the gates are the matrix, `nccmp-tol` and the fixture tests. An agent may work on any rung; it may not skip one.
 
 ## The operation decision
 
 ```mermaid
+%% figure: gpu-operation-decision
+%% title: When does a C++/Kokkos kernel enter the operational configuration?
 flowchart LR
     K[Kernel rewritten<br/>in C++/Kokkos] --> S1{Kokkos serial<br/>bit-identical to the C?}
     S1 -- no --> F1[fix the translation]
@@ -152,6 +199,19 @@ flowchart LR
     S3 -- yes --> D[Decision with LabECO:<br/>timing table + parity report]
     D --> OP[Operational configuration]
 ```
+
+<details open>
+<summary>How to read this figure</summary>
+
+**Takeaway.** A rewritten piece of the model is used for real forecasts only if its results agree with the original's within the agreed tolerances and it makes the whole forecast faster on the GPU.
+
+**How to read.** Left to right. Each diamond is a test, taken in order; a *no* ends in a box that says what happens instead, and only three *yes* answers reach the decision with LabECO.
+
+**Not shown.** The parity tolerances (lesson 12) and the timing protocol (opening paragraph of the methodology): at least five repetitions on a dedicated node, reported as median and interquartile range.
+
+**Evidence.** The paragraph below the figure and `pubs/proposal/pt/07-methodology.md`, paragraphs *Interoperabilidade e testes dos kernels* and *Riscos* (v).
+
+</details>
 
 Two documents, one meeting: the timing table of the operational case with and without the
 kernel, and the parity report. If the H100 does not win, the deliverable is the measured limit and a recommendation *not* to operate on the GPU (`pubs/proposal/pt/07-methodology.md` (v)).

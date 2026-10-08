@@ -57,6 +57,17 @@ in pt-BR, and the wave-modelling and HPC vocabulary. It reports, it does not rew
 - The proposal is read by a DEL committee with no oceanography background: gloss a wave term in a
   few words the first time it appears; `humanizar` (pt-BR) and `humanizer` (en) catch AI tells.
 
+## Figures
+
+Diagrams are Mermaid fences in the page they illustrate, so GitHub draws them in place. Each one
+starts with `%% figure: <id>` and `%% title: <question>` and is followed by a *How to read this
+figure* card (takeaway, how to read, what is not shown, evidence) for readers new to the topic.
+`just figures` renders every fence with a pinned mermaid-cli, fonts and one house style
+(`pubs/figures/mermaid-config.json`) into `pubs/figures/mermaid/`,
+which the PDF and Word builds use, and rewrites the gallery `pubs/figures/README.md`; CI runs
+`python3 scripts/figures.py check`. The `figure` skill (`.claude/skills/figure/`) has the rules.
+A mistake in a figure is as welcome as one in the text: the gallery links an issue for each.
+
 ## Ground rules
 
 - Keep the `⚠` / `(v)` convention. Marking uncertainty honestly is the point.

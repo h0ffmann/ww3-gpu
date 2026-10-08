@@ -8,6 +8,7 @@ toc: true
 toc-depth: 2
 highlight-style: tango
 filters:
+  - pubs/filters/mermaid.lua
   - pubs/book/filters/symbols.lua
 metadata:
   title: "WW Lab"
