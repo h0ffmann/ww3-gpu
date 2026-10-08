@@ -45,7 +45,9 @@ checks every quoted listing against the code on each build, the PDF attached to 
 and three new chapters on how this lab is run with agents. The shift is incremental, one pull
 request per task, and every gate is green after each. Each tagged release is an edition,
 archived with the source on Zenodo. `just book` builds it; [`pubs/README.md`](pubs/README.md)
-has the pipeline.
+has the pipeline. A free Leanpub edition is fed by CI from the same chapters
+([`docs/LEANPUB_202610.md`](docs/LEANPUB_202610.md): what the workflow does and the steps only
+the author can take).
 
 ## Study areas
 

@@ -37,7 +37,7 @@ The six specific objectives of the proposal and the schedule rows that deliver t
 | WFIP | Title | Status | Created | Deliverable | Effort | Verdict | DoD | Cost so far |
 |---|---|---|---|---|---|---|---|---|
 | [WFIP-0001](WFIP-0001-weathernext3-wind-rtx4090.md) | WW3 samples driven by WeatherNext 3 wind on an RTX 4090 box | Draft | 2026-10-08 | D1, D6 | M | do next | 0/6 | — |
-| [WFIP-0002](WFIP-0002-lab-as-a-book.md) | The lab as a book: compiled from the repository, built in CI, released with each version | Draft | 2026-10-08 | D6 | L | do next, in slices | 0/6 | — |
+| [WFIP-0002](WFIP-0002-lab-as-a-book.md) | The lab as a book: compiled from the repository, built in CI, released with each version | Draft | 2026-10-08 | D6 | L | do next, in slices | 0/7 | — |
 <!-- wfip-index:end -->
 
 ## Coverage

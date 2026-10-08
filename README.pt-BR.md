@@ -47,7 +47,9 @@ verificação que confere cada listagem citada contra o código a cada build, o 
 versão e três capítulos novos sobre como este laboratório é conduzido com agentes. A mudança é
 incremental, um pull request por tarefa, e todas as checagens passam depois de cada um. Cada
 versão etiquetada é uma edição, arquivada com o código no Zenodo. `just book` gera o livro;
-[`pubs/README.md`](pubs/README.md) descreve a cadeia.
+[`pubs/README.md`](pubs/README.md) descreve a cadeia. Uma edição gratuita no Leanpub é alimentada
+pelo CI a partir dos mesmos capítulos ([`docs/LEANPUB_202610.md`](docs/LEANPUB_202610.md): o que o
+workflow faz e os passos que só o autor pode dar).
 
 ## Frentes de estudo
 

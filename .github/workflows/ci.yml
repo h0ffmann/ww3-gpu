@@ -29,6 +29,9 @@ jobs:
       - name: Result records are valid, every timing has a passed L1, quoted tables are current
         run: python3 scripts/results.py check
 
+      - name: The Leanpub manuscript exports from the lessons
+        run: python3 scripts/leanpub_manuscript.py --self-test && python3 scripts/leanpub_manuscript.py --out "$RUNNER_TEMP/leanpub"
+
       # The gate fails on the error-level rules of .vale.ini; the report prints the
       # judgement rules of .vale-report.ini for the reviewer and never fails.
       - name: Prose has no AI-writing tells (Vale, vale-ai-tells)

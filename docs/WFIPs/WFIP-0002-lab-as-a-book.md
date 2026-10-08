@@ -201,9 +201,14 @@ repository settings (a person's act): `wavewatch-iii`, `ocean-waves`, `wave-mode
 ### 5.7 Licence and distribution
 
 Today everything is MIT with the LGPL kernels `(v)` [`LICENSE`](../../LICENSE). The default is to
-leave the prose under MIT and distribute the PDF free from the release and Zenodo. A move of the
-prose to CC BY-SA 4.0, or a paid edition on Leanpub, is a person's decision (§11); either is a
-one-file change plus a note in the README.
+leave the prose under MIT and distribute the PDF free from the release and Zenodo, and a free
+Leanpub edition fed by CI: `.github/workflows/leanpub.yml` exports the lessons as a Markua
+manuscript (`scripts/leanpub_manuscript.py`, `pubs/book/parts.json`) and pushes it to the
+`leanpub` branch the Leanpub book reads; [`LEANPUB_202610.md`](../LEANPUB_202610.md) has the
+author's steps and what Leanpub charges `(v)` leanpub.com/pricing, 2026-10-08: a one-time fee per
+new book, a reader price that may be zero, and a Pro plan for the API. A move of the prose to
+CC BY-SA 4.0, or a paid edition, is a person's decision (§11); either is a one-file change plus a
+note in the README.
 
 ## 6. Parity and physics impact
 
@@ -219,6 +224,7 @@ None: it does not touch a kernel, a namelist or a measurement.
 - [ ] The listings gate exists, is tested and runs in CI: `python3 scripts/check_listings.py && python3 -m unittest tests/test_check_listings.py`
 - [ ] Chapters 16, 17 and 18 exist, pass `just vale`, and each ends with *Verify this yourself*: `ls course/1[678]-*.md && just vale course/16-*.md course/17-*.md course/18-*.md`
 - [ ] A tagged release carries the PDF: `gh release view <tag> --json assets --jq '.assets[].name' | grep ww3-lab-course`
+- [ ] The Leanpub edition is live and fed by CI: the `leanpub` branch holds `manuscript/Book.txt` from the latest `main` (`git ls-tree origin/leanpub manuscript/`) and `https://leanpub.com/<slug>` serves the book at minimum price 0
 
 ## 8. Risks, limitations, and honest caveats
 
@@ -256,8 +262,9 @@ None: it does not touch a kernel, a namelist or a measurement.
   §5.1 or another.
 - Which licence for the prose? **Default:** MIT as today; Hoffmann decides before the first
   release that carries the PDF.
-- Free PDF only, or also Leanpub? **Default:** free PDF from the release and Zenodo; a paid edition
-  is a later decision and changes no file in this WFIP.
+- Free PDF only, or also Leanpub? **Default:** both free: the PDF from the release and Zenodo, and
+  a free Leanpub edition kept current by `leanpub.yml` once Hoffmann creates the book
+  (`LEANPUB_202610.md`); a paid edition is a later decision and changes no file in this WFIP.
 - When does the pt-BR edition start? **Default:** after the English parts are stable (§7 all
   ticked), as its own WFIP, with segment-level translation memory if `translate_md.py`'s per-file
   cache proves too expensive.
@@ -270,6 +277,9 @@ None: it does not touch a kernel, a namelist or a measurement.
 
 - `marola-dev/marola@main`, `docs/MIPs/MIP-0014-marola-book.md`, read in full 2026-10-08 (clone).
 - `marola-dev/marola-devkit@ae64f4f`, `plugins/marola-devkit/skills/sharingan/`, MIT, 2026-10-08.
+- Leanpub, 2026-10-08: pricing, the API help page, the Git and GitHub writing mode and webhooks
+  articles, the LFM manual on `Book.txt` and images, the Markua manual on headings and resources
+  (cited in `LEANPUB_202610.md`).
 - This repository at `main@5a4f3bf`: `pubs/README.md`, `pubs/book/defaults.yaml`,
   `scripts/build_pdf.sh`, `scripts/book_prep.py`, `.github/workflows/pubs.yml`, `release.yml`,
   `weekly-release.yml`, `.claude/skills/release/SKILL.md`, `course/README.md`, `LICENSE`.
