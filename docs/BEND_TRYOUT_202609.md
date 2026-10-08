@@ -6,24 +6,6 @@ Prepared 18 September 2026 as a proposal. Nothing below has been run.
 was not checked. Bend released 2.0.8 and 2.0.9 on the day this was written `(v)`, so every
 version-specific claim here is dated and will go stale; re-check the marked lines before acting.
 
-> **Update 2026-10-08** (`bend-lang` pin `0da46e8` (v2.0.9+3) → `0592662` (v2.0.36+14); `/update-sub-modules`).
-> - **F64: still absent.** `README.md:231` "Numbers are Nat, U32 and F32 only: no U64, I64 or
->   F64 (Metal has no f64)"; `grep -c F64 bend2/base.bend` = 0 `(v)`. What changed is the roadmap:
->   `WONTFIX.txt:140`, under "SOON (we will add it; do not open an issue)", reads "F64 (#1120) It
->   needs U64's 64-bit word design; we add both together, and we do not merge PRs for F64"
->   (`573002f`, 2026-09-27) `(v)`. So §3.1's "no roadmap statement exists" and §4's "there is no
->   public plan" are out of date: a plan exists, undated, gated on U64, closed to outside PRs.
-> - The fork's `f64` patch (`492ea6b`) cherry-picked onto `0592662` conflicts in 11 hunks
->   (4 in `bend2/bend.ts`, 7 in `bend2/comp.ts`); `base.bend` applies cleanly `(v, git merge-tree
->   --write-tree --merge-base 492ea6b^ 0592662 492ea6b)`.
-> - §3's "no *shareable* flat buffer" is out of date: 2.0.22 added `Array.fork`/`Array.join` and
->   `Array.atomic.*` including `fadd`, for `@unsafe` defs, on cores and GPU (CHANGELOG #885) `(v)`.
->   `File.read_at`, `File.size`, `File.write_bytes` arrived in 2.0.13 (#823) `(v)`.
-> - §3's literal double-rounding ⚠ is addressed upstream: "F32 text rounds once to the nearest f32
->   on every lane and in literals" (2.0.32, #1055) ⚠ not re-tested here.
-> - Breaking since the old pin: an operator takes its type only from the `( .. : T)` around its own
->   expression, and a bare operator is no longer `Nat` (2.0.17) `(v, CHANGELOG)`.
-
 > Scope: one kernel, one week, and one written result whether it works or not. The
 > exercise measures what a proof-checked language that targets the GPU costs on real
 > wave-model arithmetic. It is off the ladder (`course/13`), leaves `kokkos/` alone, and

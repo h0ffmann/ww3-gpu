@@ -125,7 +125,7 @@ releases:
     git fetch -q --tags origin && git tag -l 'v*' --sort=-v:refname --format='%(refname:short)  %(creatordate:short)  %(subject)'
 
 # ---------------------------------------------------------------------
-# Submodules: nix-config (sparse, labs/pratico), WW3 (fork of NOAA-EMC/WW3) and bend-lang (fork of HigherOrderCO/Bend)
+# Submodules: nix-config (sparse, labs/pratico) and WW3 (fork of NOAA-EMC/WW3)
 # ---------------------------------------------------------------------
 
 setup_script := "scripts/ww-lab-tool-setup.sh"
@@ -176,14 +176,8 @@ src-st:
     @echo "pinned: $(git -C WW3 rev-parse --short HEAD)  fork/develop: $(git -C WW3 rev-parse --short origin/develop)  upstream/develop: $(git -C WW3 rev-parse --short upstream/develop)"
     @echo "fork is $(git -C WW3 rev-list --count origin/develop..upstream/develop) commits behind upstream"
 
-# Fast-forward the h0ffmann/bend fork from HigherOrderCO/Bend, push it, and bump ./bend-lang.
-bend-sync branch="main":
-    git submodule update --init -- bend-lang
-    if [ "$(git -C bend-lang rev-parse --is-shallow-repository)" = true ]; then git -C bend-lang fetch --quiet --unshallow origin; fi
-    bash {{src_script}} . --path bend-lang --branch {{branch}} --fork git@github.com:h0ffmann/bend.git --upstream https://github.com/HigherOrderCO/Bend.git --sync --push --bump
-
-# Every submodule to its latest: nix-config, WW3 and bend-lang (forks synced and pushed). Stages, no commit.
-sub-sync: submodule-update src-sync bend-sync
+# Every submodule to its latest: nix-config and WW3 (fork synced and pushed). Stages, no commit.
+sub-sync: submodule-update src-sync
 
 # ---------------------------------------------------------------------
 # Publications: markdown -> PDF (flake.nix at the repo root; sources in pubs/)
