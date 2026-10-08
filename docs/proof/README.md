@@ -1,4 +1,4 @@
-# `docs/proof/` — one page per proof option
+# `docs/proof/`: one page per proof option
 
 The evidence behind [`../BITWISE_PROOF_202610.md`](../BITWISE_PROOF_202610.md), the plan for
 proving the Fortran → C → C++/Kokkos port bit for bit. Each page has the same parts: what the tool
