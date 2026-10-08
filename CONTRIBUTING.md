@@ -94,6 +94,19 @@ A mistake in a figure is as welcome as one in the text: the gallery links an iss
   this for the proposal). Cut a sentence because it repeats or teaches nothing, never to hit a
   word count.
 
+## Designing a change before building it
+
+A non-trivial change (a new forcing or example, a port, a measurement campaign, a tool the lab
+will rely on) starts as a Wave Forecaster Improvement Proposal in `docs/WFIPs/`: a numbered design
+doc on marola's MIP shape, tied to one of the proposal's six deliverables and carrying its
+definition of done as the checklist of its §7. `just wfip new <slug> --title "…" --deliverable D5`
+creates one; `just wfip index` regenerates the index, coverage and graph in
+[`docs/WFIPs/README.md`](docs/WFIPs/README.md) from the files; `just wfip check` is the CI gate.
+Implementation is a separate PR that ticks the boxes. `just specify init` sets a clone up for
+GitHub's Spec Kit when a spec (`specs/<NNN-slug>/spec.md`) is worth writing; the
+[`wfip` skill](.claude/skills/wfip/SKILL.md) has the steps, and `just wfip status --since <tag>`
+prints what moved for the release notes.
+
 ## Opening a pull request
 
 Write the commit message properly (subject, a body paragraph saying what and why, and

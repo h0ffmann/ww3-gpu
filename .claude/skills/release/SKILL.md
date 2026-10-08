@@ -45,3 +45,14 @@ under one concept DOI. The chain has no secrets in it:
 - Validate `CITATION.cff` against the CFF 1.2.0 schema and parse `.zenodo.json` before pushing.
 - The README "How to cite" badge uses the concept DOI (it always resolves to the latest
   version), not a version DOI.
+
+## What moved against the proposal
+
+The index [`docs/WFIPs/README.md`](../../../docs/WFIPs/README.md) travels inside every archived
+release, so a Zenodo version always carries the WFIP status of its commit. For the release notes,
+run `just wfip status --since <previous tag>` and paste its output under the generated notes
+(`gh release edit <tag> --notes-file`): the WFIPs created or revised since the last version, each
+with its status and definition-of-done share, the index and the deliverables covered, with
+absolute links. PRs labelled `wfip` already land under their own heading through
+`.github/release.yml`. The weekly workflow (`weekly-release.yml`) can append the same output; that
+change belongs to the thread that owns it, not to a WFIP PR.

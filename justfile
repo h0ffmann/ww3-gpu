@@ -116,6 +116,20 @@ pr *args:
 uprd *args:
     scripts/uprd.sh "$@"
 
+# Wave Forecaster Improvement Proposals (docs/WFIPs): `just wfip new <slug> --title "…" --deliverable D5`, `index`, `check`, `status --since <tag>`.
+wfip *args:
+    python3 scripts/wfip.py "$@"
+
+# GitHub's Spec Kit (github.com/github/spec-kit). `just specify init` sets a clone up for the /speckit-* skills; anything else is passed to `specify`.
+specify *args:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    args=({{ args }})
+    if [ "${args[0]:-}" = init ] && [ "${#args[@]}" -eq 1 ]; then
+        args+=(--here --force --non-interactive --integration claude --script sh)
+    fi
+    uvx --from specify-cli specify "${args[@]:-}"
+
 # Tag main as v<version> and push it; CI publishes the GitHub release and Zenodo mints its DOI. `just release 0.2.0 --dry-run`.
 release *args:
     scripts/release.sh "$@"

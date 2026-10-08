@@ -88,3 +88,11 @@ result-*
 
 # repo media (social card, screenshots) is tracked despite the *.png rule above
 !docs/media/*.png
+
+# Spec Kit (github/spec-kit): `just specify init` regenerates these; only the constitution and
+# specs/ are ours and tracked
+.specify/*
+!.specify/memory/
+.specify/memory/*
+!.specify/memory/constitution.md
+.claude/skills/speckit-*/
