@@ -47,7 +47,7 @@ weekly release; a refused request is a warning, since Software Heritage also cra
 - Licences: MIT, plus `LGPL-3.0-or-later` for kernels translated from WW3. `CITATION.cff` lists
   both; Zenodo takes one licence id (`mit`), so `.zenodo.json` names the LGPL files in `notes`.
   A newly ported kernel adds its files there.
-- Concept DOI: 10.5281/zenodo.23221351 (v0.1.0 is 10.5281/zenodo.23221352). DataCite's API
+- Concept DOI: 10.5281/zenodo.23221351 (v0.1.1 is 10.5281/zenodo.23233540, v0.1.0 is 10.5281/zenodo.23221352). DataCite's API
   (`api.datacite.org/dois?query=ww3-gpu`) shows a new version DOI when zenodo.org is unreachable.
 - The author is Hoffmann, Matheus (Poli/UFRJ). Supervisors go under
   `contributors` with `"type": "Supervisor"` in `.zenodo.json`, never as creators.

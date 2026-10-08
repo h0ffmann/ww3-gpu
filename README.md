@@ -174,9 +174,9 @@ too long on a free runner.
 
 Cite the concept DOI [10.5281/zenodo.23221351](https://doi.org/10.5281/zenodo.23221351) for the
 project as a whole. It always resolves to the latest release. To pin the exact code you ran, cite
-that release's own DOI and title instead; v0.1.0 is
-[10.5281/zenodo.23221352](https://doi.org/10.5281/zenodo.23221352), under the title that release
-carried. The title below is the one `CITATION.cff` carries from the next release on. GitHub's
+that release's own DOI and title instead. v0.1.1, the first under the title below, is
+[10.5281/zenodo.23233540](https://doi.org/10.5281/zenodo.23233540); v0.1.0 is
+[10.5281/zenodo.23221352](https://doi.org/10.5281/zenodo.23221352), under the title it carried. GitHub's
 **Cite this repository** button (right sidebar) exports APA and BibTeX from
 [`CITATION.cff`](CITATION.cff).
 
