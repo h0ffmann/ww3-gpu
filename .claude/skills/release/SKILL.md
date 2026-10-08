@@ -49,16 +49,19 @@ are the GitHub release's generated notes; Zenodo links the version to that relea
 - An ORCID goes in `.zenodo.json` as `"orcid": "0000-0000-0000-0000"` (bare iD) and in
   `CITATION.cff` as `orcid: "https://orcid.org/0000-0000-0000-0000"` (full URL).
 - Validate `CITATION.cff` against the CFF 1.2.0 schema and parse `.zenodo.json` before pushing.
+- `codemeta.json` (what Software Heritage and OpenAIRE read) is derived from those two: after any
+  edit to either, run `python3 scripts/codemeta.py` and commit the result; `citation.yml` fails
+  when it is stale. Never edit it by hand.
 - The README "How to cite" badge uses the concept DOI (it always resolves to the latest
   version), not a version DOI.
 
 ## What moved against the proposal
 
 The index [`docs/WFIPs/README.md`](../../../docs/WFIPs/README.md) travels inside every archived
-release, so a Zenodo version always carries the WFIP status of its commit. For the release notes,
-run `just wfip status --since <previous tag>` and paste its output under the generated notes
-(`gh release edit <tag> --notes-file`): the WFIPs created or revised since the last version, each
-with its status and definition-of-done share, the index and the deliverables covered, with
-absolute links. PRs labelled `wfip` already land under their own heading through
-`.github/release.yml`. The weekly workflow (`weekly-release.yml`) can append the same output; that
-change belongs to the thread that owns it, not to a WFIP PR.
+release, so a Zenodo version always carries the WFIP status of its commit. Both release workflows
+(`weekly-release.yml`, `release.yml`) open the release notes with `just wfip status --since
+<previous tag>`, above GitHub's generated list of merged PRs: the WFIPs created or revised since the
+last version, each with its status and definition-of-done share, the index and the deliverables
+covered, with absolute links. PRs labelled `wfip` land under their own heading through
+`.github/release.yml`. For a release made before this, paste the same output with
+`gh release edit <tag> --notes-file`.

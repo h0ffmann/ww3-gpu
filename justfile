@@ -120,6 +120,18 @@ uprd *args:
 wfip *args:
     python3 scripts/wfip.py "$@"
 
+# Measured results as data (bench/results/*.json): `just results table` regenerates the tables that quote them; `check` is the CI gate.
+results *args:
+    python3 scripts/results.py "$@"
+
+# Regenerate codemeta.json from CITATION.cff and .zenodo.json; `just codemeta --check` is the CI gate.
+codemeta *args:
+    python3 scripts/codemeta.py "$@"
+
+# Install the gate tools (just, shellcheck, gfortran, PyYAML) and nix-config in a fresh container; `--dry-run` prints.
+agent-env *args:
+    bash scripts/agent_env.sh "$@"
+
 # GitHub's Spec Kit (github.com/github/spec-kit). `just specify init` sets a clone up for the /speckit-* skills; anything else is passed to `specify`.
 specify *args:
     #!/usr/bin/env bash
@@ -231,6 +243,10 @@ figures *args:
 # Every mermaid fence has its header, its reading card and a current render (what CI checks).
 figures-check:
     python3 scripts/figures.py check
+
+# AI-writing tells in the English Markdown: the gate CI runs; --report lists every judgement rule (issue #36).
+vale *args:
+    scripts/vale.sh {{args}}
 
 # Parecer do revisor-proposta sobre pubs/proposal (norma ABNT/DEL, registro científico, jargão).
 # Sem argumentos revisa pt/ e en/; passe caminhos para revisar só parte.

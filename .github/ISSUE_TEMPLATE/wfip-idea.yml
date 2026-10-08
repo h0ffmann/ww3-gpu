@@ -1,0 +1,44 @@
+name: WFIP idea
+description: A non-trivial change worth designing before building (becomes a WFIP in docs/WFIPs/).
+title: "WFIP idea: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        A WFIP is warranted for a new data path or forcing, a new program that runs the model, a
+        port or a change to how one is validated, a measurement campaign, or a tool the lab will
+        rely on; not for a doc fix or a one-file tweak (`.claude/skills/wfip/SKILL.md`). Once
+        accepted here, `just wfip new <slug> --title "..." --deliverable D<n>` writes the WFIP.
+  - type: textarea
+    id: idea
+    attributes:
+      label: The change
+      description: What would exist afterwards that does not exist now.
+    validations: { required: true }
+  - type: dropdown
+    id: deliverable
+    attributes:
+      label: Proposal deliverable it moves
+      description: "`docs/WFIPs/README.md`, Proposal deliverables"
+      multiple: true
+      options:
+        - "D1: frozen configuration and reproducible benchmark"
+        - "D2: performance profile per routine and phase"
+        - "D3: measured gain of compile, configuration and modern-Fortran steps"
+        - "D4: validation infrastructure (comparator, per-routine unit tests)"
+        - "D5: Kokkos kernels in profile order, measured on the H100"
+        - "D6: tools, results and recommendations published; final report"
+        - "none (say why below)"
+    validations: { required: true }
+  - type: textarea
+    id: why
+    attributes:
+      label: Why it is non-trivial
+      description: What it touches, what could go wrong, which rule in AGENTS.md it has to respect.
+    validations: { required: true }
+  - type: textarea
+    id: prior
+    attributes:
+      label: Already designed or decided?
+      description: Plans, issues (#42, #45, #46) or WFIPs it overlaps; "none found" after looking.

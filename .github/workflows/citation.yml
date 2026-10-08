@@ -1,13 +1,14 @@
 # citation — validate CITATION.cff with cffconvert, maintained by the Citation File Format
-# project, and check that .zenodo.json parses, so a broken file never reaches a release.
+# project, check that .zenodo.json parses, and that codemeta.json (derived from both by
+# scripts/codemeta.py) is current, so a broken or stale file never reaches a release.
 name: Citation metadata
 
 on:
   pull_request:
-    paths: [CITATION.cff, .zenodo.json]
+    paths: [CITATION.cff, .zenodo.json, codemeta.json, scripts/codemeta.py]
   push:
     branches: [main]
-    paths: [CITATION.cff, .zenodo.json]
+    paths: [CITATION.cff, .zenodo.json, codemeta.json, scripts/codemeta.py]
 
 permissions:
   contents: read
@@ -21,3 +22,7 @@ jobs:
         with:
           args: --validate
       - run: python3 -m json.tool .zenodo.json > /dev/null
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pyyaml && python3 scripts/codemeta.py --check

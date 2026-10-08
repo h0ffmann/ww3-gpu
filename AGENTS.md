@@ -49,7 +49,8 @@ recipe is a thin wrapper over a script in `scripts/`; `just` lists them.
 | Change | Where | Its own rules |
 |---|---|---|
 | A kernel, its tests, its shim | `kokkos/` | [`kokkos/README.md`](kokkos/README.md), the ledger [`kokkos/PORT_STATUS.md`](kokkos/PORT_STATUS.md), the rules [`docs/AGENTS_KOKKOS_202609.md`](docs/AGENTS_KOKKOS_202609.md) §1 and §3 |
-| A measurement | `bench/`, `kokkos/PORT_STATUS.md`, the issue the number answers | [`bench/README.md`](bench/README.md): a row may only claim what a command in the repo reproduces |
+| A measurement | a record in `bench/results/`, the table that quotes it (`just results table`), the issue the number answers | [`bench/README.md`](bench/README.md): a row may only claim what a command in the repo reproduces; `scripts/results.py check` refuses a timing without a passed L1 |
+| Something tried, including a negative result | a dated entry in `docs/log/` | [`docs/log/README.md`](docs/log/README.md): append, never rewrite |
 | A plan, an evaluation, a survey | `docs/` as `NAME_YYYYMM.md`, dated in the name | this file; the `(v)`/`⚠` convention; `docs/GLOSSARY.md` for every new abbreviation |
 | A non-trivial change, designed before it is built | a WFIP in `docs/WFIPs/`, numbered, tied to a proposal deliverable (D1–D6) with its definition of done in §7; a Spec Kit spec in `specs/<NNN-slug>/` when behaviour is worth specifying | [`docs/WFIPs/TEMPLATE.md`](docs/WFIPs/TEMPLATE.md), the `wfip` skill; `scripts/wfip.py check` is the gate and regenerates the index |
 | A lesson, an example, an exercise | `course/`, `examples/`, `exercises/` | lessons are numbered and cross-linked; examples use `.nml`, never `.inp` |
@@ -91,12 +92,16 @@ Run the gates of what you changed before calling it done. CI (`.github/workflows
 | a Mermaid fence or its page | `python3 scripts/figures.py check`, then `just figures` to re-render and `python3 -m unittest tests/test_figures.py` |
 | `pubs/proposal/` | `just proposal-lint`, the `revisor-proposta` review, `just proposal-review-record <parecer>`, `just proposal-review-check` |
 | `scripts/*.py` | `python3 -m unittest discover tests` |
+| `bench/results/` or a table it quotes | `just results check` (`just results table` regenerates) |
+| `CITATION.cff` or `.zenodo.json` | `just codemeta` to regenerate `codemeta.json`, then `just codemeta --check` |
 | `docs/WFIPs/` or `specs/` | `just wfip check` (`scripts/wfip.py check`: index current, deliverable ids valid, every section present, DoD consistent with Status); `just wfip index` regenerates |
 | `.claude/skills/` or `.claude/agents/` | `python3 .claude/hooks/check_agent_frontmatter.py`; for a vendored skill, `skills-vendor check --lock .claude/skills/skills.lock` |
-| any Markdown | links are checked by lychee in CI; a relative link must resolve from the file |
+| any Markdown | links are checked by lychee in CI; a relative link must resolve from the file; `just vale` (`scripts/vale.sh`) must pass on English Markdown |
 
 The toolchain is the pinned `nix-config/labs/pratico` shell (`just ww3`, `just dev`); `just prereqs`
-installs a host alternative on Debian/Ubuntu. `just figures` and the publication builds use the
+installs a host alternative on Debian/Ubuntu. In a fresh container (a cloud agent session, where
+the `SessionStart` hook runs it, or the `.devcontainer/`), `scripts/agent_env.sh` installs the gate
+tools and materialises `nix-config` over https. `just figures` and the publication builds use the
 root `flake.nix`. A missing tool is a reason to enter the shell, not to skip the gate.
 
 ## Audience and evidence (hard rule)
@@ -118,7 +123,8 @@ statement. In practice:
 - Prose is plain and direct. Length is not a measure of a research document: cut a sentence because
   it repeats or teaches nothing, never to hit a word count, and never pad one language's version to
   match the other's. `humanizar` (pt-BR) and `humanizer` (en) are the filters for text a person will
-  sign or publish.
+  sign or publish. No em dash in prose (`just vale` fails on one; a lone `—` in a table cell is
+  fine); `just vale --report` lists the judgement-call tells for a person to weigh.
 - Every abbreviation, switch, routine and tool name used here is expanded in
   [`docs/GLOSSARY.md`](docs/GLOSSARY.md); add the entry with the first use.
 
@@ -237,8 +243,8 @@ with marola-devkit's `skills-vendor`; `skills-vendor update <name>` does it by h
 - Fortran added here is a shim or a teaching example: `.nml` inputs, compiles with gfortran with
   directives ignored (CI checks), no edit to WW3 physics.
 - Comments say why, name a trap, or point to the issue or plan; they never restate the code or
-  narrate a fix's history. A docstring longer than its function is a defect. The same goes for prose
-  in docs.
+  narrate a fix's history (issue #36); verbatim upstream text keeps its comments as provenance.
+  A docstring longer than its function is a defect. The same goes for prose in docs.
 - Reproduce a bug with a failing test before fixing it; a parity bug gets a fixture point.
 
 ## When something here turns out to be wrong

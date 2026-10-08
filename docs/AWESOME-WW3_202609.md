@@ -190,7 +190,7 @@ the GitHub mirrors; they're stale snapshots.
 
 ## Courses and tutorials
 
-- **[IFREMER WW3 short course](https://data-ww3.ifremer.fr/COURS/WAVES_SHORT_COURSE/)** `(v)` —
+- **[IFREMER WW3 short course](https://data-ww3.ifremer.fr/COURS/WAVES_SHORT_COURSE/)** `(v)`:
   the best free structured course I found. Directory of tutorials, each a PDF exercise plus
   a config directory: basic run, inputs/outputs, nesting, unstructured grids, wave tracking.
   The `TUTORIAL_INOUT` exercise walks through `OUTPUT_TYPE_NML` / `OUTPUT_DATE_NML` and all
@@ -203,7 +203,7 @@ the GitHub mirrors; they're stale snapshots.
 - **[CHPC (South Africa) WW3 install tutorial](https://wiki.chpc.ac.za/research:wave_watch_3)**
   `(v)`: short, concrete, v7.14, CMake, ends with running `ww3_tp2.2`. Good sanity check
   that your build is real.
-- **[NCEP WW3 workshop exercises](https://polar.ncep.noaa.gov/waves/workshop/)** `(v)` —
+- **[NCEP WW3 workshop exercises](https://polar.ncep.noaa.gov/waves/workshop/)** `(v)`:
   the original 2013 workshop PDFs. Physics explanations still excellent; the *build*
   instructions are obsolete (`w3_make` era).
 - **COMET MetEd modules** on WW3 and swell analysis: free registration, forecaster-oriented

@@ -38,6 +38,10 @@ Corrections are very welcome, especially the following, in order of usefulness:
    anything else here. Updates very welcome, with the date you checked; `just ww4-status`
    shows what changed since the last snapshot.
 
+The issue forms (*New issue* on GitHub) ask for what each kind of report needs: a **Measurement**
+asks for the command, commit, machine and L1 status; a **Spike** for one question, a time box and
+its output; a **WFIP idea** for the proposal deliverable it moves.
+
 ## The proposal (`pubs/proposal/`)
 
 Every change to `pubs/proposal/` goes through the `revisor-proposta` subagent before the pull
@@ -82,11 +86,28 @@ A mistake in a figure is as welcome as one in the text: the gallery links an iss
   `python3 skills_vendor.py check --lock .claude/skills/skills.lock`) verifies the copies;
   `.github/workflows/skills.yml` opens a weekly update PR, and `skills-vendor update <name>` does
   the same by hand.
+- A number a table quotes lives as a JSON record in `bench/results/` (machine, toolchain, commit,
+  L1 status, each run's command); the table is generated from it with `just results table`, and
+  `just results check` (CI) refuses a timing whose L1 did not pass. Anything tried that did not
+  become a number in a table, failures included, goes in a dated entry in `docs/log/`.
+- `codemeta.json` is generated from `CITATION.cff` and `.zenodo.json` (`just codemeta`); never
+  edit it by hand.
 - Run `just kokkos-test serial-debug` after touching `kokkos/`, and `bash -n` plus
   shellcheck on any shell script you touch. CI does all of these (the `kokkos` and
   `lint` jobs in `.github/workflows/ci.yml`).
 - Prose style: plain, direct, no filler. If a sentence doesn't teach something,
-  cut it.
+  cut it. No em dash where a comma, a colon, parentheses or a full stop does; a lone `—` as the
+  "no value" mark of a table cell, and the en dash of a range (`1–5`), are fine.
+- `just vale` is the prose gate CI runs on the English Markdown (`.vale.ini`: the em dash and the
+  `vale-ai-tells` rules that are never right here, such as closing pleasantries and sycophancy);
+  it must pass. `just vale --report` lists every other `vale-ai-tells` rule as a suggestion for a
+  person to weigh, never to apply blindly: a flagged "dynamic" is often a scheduling policy.
+  Out of scope: the submodules, `.claude/`, `pubs/` (its own reviewer) and Portuguese files.
+- Code comments are of three kinds, and only these: a *why* (a rejected alternative, an external
+  constraint), a *trap* (what breaks if the line changes), or a *pointer* (an issue, a plan, a
+  `file:line`). A comment that restates the code or narrates the history of a fix is deleted in
+  review. Verbatim upstream text (`kokkos/tests/fixtures/snl1_ref.F90`) keeps its comments as
+  provenance.
 - Length is not a measure of a research doc (the proposal, the course, `docs/`). A Portuguese
   and an English version, or a revision and the text it replaces, may differ in length, and
   that is not a defect: do not pad or trim a text to match another one. What must match across
