@@ -21,8 +21,8 @@ under one concept DOI. The chain has no secrets in it:
 3. Zenodo's GitHub webhook (enabled by the owner at zenodo.org → GitHub) archives the release
    using `.zenodo.json` and mints the DOI a few minutes later.
 
-`.github/workflows/weekly-release.yml` runs the same `scripts/release.sh` every Monday at 09:00
-UTC and publishes the release itself (a tag pushed with `GITHUB_TOKEN` does not start
+`.github/workflows/weekly-release.yml` runs the same `scripts/release.sh` every Friday at 09:00
+BRT (12:00 UTC) and publishes the release itself (a tag pushed with `GITHUB_TOKEN` does not start
 `release.yml`). A week with no new commits makes no release. The change notes of each version
 are the GitHub release's generated notes; Zenodo links the version to that release.
 
