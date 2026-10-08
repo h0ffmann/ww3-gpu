@@ -116,7 +116,7 @@ pr *args:
 uprd *args:
     scripts/uprd.sh "$@"
 
-# Tag main as v<version> and push it; CI publishes the GitHub release and Zenodo mints its DOI. `just release 0.2.0 --dry-run`.
+# Tag main as v<version> (default: the next patch) and push it; CI publishes the GitHub release and Zenodo mints its DOI. `just release --dry-run`, `just release 0.2.0`.
 release *args:
     scripts/release.sh "$@"
 

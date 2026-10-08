@@ -13,12 +13,18 @@ author's ORCID, and references by DOI.
 Every published GitHub release of this repo is archived by Zenodo, which mints a version DOI
 under one concept DOI. The chain has no secrets in it:
 
-1. `just release X.Y.Z` (`scripts/release.sh`) tags `main` as `vX.Y.Z` and pushes the tag. It
-   refuses unless `main` is checked out, clean and level with `origin/main`, and the tag is new.
-   `--dry-run` shows what it would do.
+1. `just release [X.Y.Z]` (`scripts/release.sh`) tags `main` as `vX.Y.Z` and pushes the tag;
+   with no version it bumps the patch of the latest tag. It refuses unless `main` is checked
+   out, clean and level with `origin/main`, the tag is new, and `main` has commits since the
+   previous tag. `--dry-run` shows what it would do.
 2. `.github/workflows/release.yml` turns the tag into a GitHub release with generated notes.
 3. Zenodo's GitHub webhook (enabled by the owner at zenodo.org → GitHub) archives the release
    using `.zenodo.json` and mints the DOI a few minutes later.
+
+`.github/workflows/weekly-release.yml` runs the same `scripts/release.sh` every Friday at 09:00
+BRT (12:00 UTC) and publishes the release itself (a tag pushed with `GITHUB_TOKEN` does not start
+`release.yml`). A week with no new commits makes no release. The change notes of each version
+are the GitHub release's generated notes; Zenodo links the version to that release.
 
 `just releases` lists past tags.
 

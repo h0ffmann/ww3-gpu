@@ -1,0 +1,51 @@
+# weekly-release — every Friday at 09:00 BRT (12:00 UTC), cut the next patch release when main has commits since the
+# latest tag, the same as running `just release` by hand. A tag pushed with GITHUB_TOKEN does not
+# start release.yml, so this job publishes the GitHub release itself; Zenodo's webhook then
+# archives it and mints the version DOI. A week with nothing new makes no release (a DOI is
+# permanent). "Run workflow" in the Actions tab runs it on demand; its dry_run box, ticked by
+# default, runs every check and prints the tag it would cut without tagging or releasing.
+name: Weekly release
+
+on:
+  schedule:
+    - cron: '0 12 * * 5'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Run every check and print the tag, without tagging or releasing
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+concurrency: release
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - id: check
+        run: |
+          prev="$(git tag -l 'v*' --sort=-v:refname | head -1)"
+          if [ "$(git rev-list --count "$prev..HEAD")" -eq 0 ]; then
+            echo "::notice::Nothing new since $prev; no release this week."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.check.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898283+github-actions[bot]@users.noreply.github.com'
+          if [ "${{ inputs.dry_run }}" = true ]; then
+            scripts/release.sh --dry-run
+            exit 0
+          fi
+          scripts/release.sh
+          tag="$(git tag -l 'v*' --sort=-v:refname | head -1)"
+          gh release create "$tag" --verify-tag --generate-notes --title "$tag"
