@@ -11,7 +11,7 @@ jobs:
     name: syntax checks
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Shell syntax
         run: |
@@ -97,7 +97,7 @@ jobs:
       # --no-recommend-shallow: nix asks the flake input for revCount, which a
       # shallow clone cannot answer. The fallback fetches the pinned SHA directly
       # when it lives on a topic branch rather than the `branch = main` it tracks.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: false
 
@@ -134,7 +134,7 @@ jobs:
     name: markdown links
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: lycheeverse/lychee-action@v2
         with:
           args: --no-progress --max-concurrency 4 --accept 200,206,403,429 './**/*.md'
