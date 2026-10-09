@@ -20,6 +20,14 @@ jobs:
             bash -n "$f"
           done
 
+      # The Claude hooks only fire in Claude Code; this runs their checks for any harness.
+      - name: Agent and skill definitions parse, the Claude hooks pass their self-tests
+        run: |
+          python3 .claude/hooks/check_agent_frontmatter.py
+          bash .claude/hooks/proposal-review.sh --self-test
+          bash .claude/hooks/proposal-review-stop.sh --self-test
+          test -f .agents/skills/eli5/SKILL.md
+
       - name: Figures have headers, reading cards and current renders
         run: python3 scripts/figures.py check
 

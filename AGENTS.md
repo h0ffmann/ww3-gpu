@@ -197,7 +197,9 @@ the figure is the bug.
 
 ## Skills and agents
 
-Skills live in `.claude/skills/<name>/SKILL.md`, agents in `.claude/agents/`. Each restates the
+Skills live in `.claude/skills/<name>/SKILL.md`, agents in `.claude/agents/`; `.agents/skills` is
+a symlink to the same directory so Antigravity loads the same files (`CONTRIBUTING.md`, "Working
+with Antigravity", says what it does not get). Each restates the
 audience rule for its own job; a new one does too, and its YAML front matter must parse
 (`check_agent_frontmatter.py`: an unquoted description containing `: ` silently disables it).
 

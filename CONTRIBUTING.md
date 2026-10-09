@@ -158,6 +158,47 @@ GitHub's Spec Kit when a spec (`specs/<NNN-slug>/spec.md`) is worth writing; the
 [`wfip` skill](.claude/skills/wfip/SKILL.md) has the steps, and `just wfip status --since <tag>`
 prints what moved for the release notes.
 
+## Working with Antigravity
+
+Google's Antigravity (the IDE, Antigravity 2.0 and the `agy` CLI) reads the root `AGENTS.md` as an
+always-on rule and workspace skills from `.agents/skills/<name>/SKILL.md` `(v)` 2026-10-09
+([rules](https://antigravity.google/docs/rules), [skills](https://antigravity.google/docs/skills)).
+`.agents/skills` is a symlink to `.claude/skills`, so both harnesses load the same `SKILL.md`
+files; edit the copy under `.claude/skills/`, never through the link. There is no `GEMINI.md`: it
+would take precedence over `AGENTS.md`. Antigravity workflows (`.agents/workflows/`) are not used,
+because Antigravity stops running them on 2026-10-19 in favour of skills `(v)` 2026-10-09
+([workflows](https://antigravity.google/docs/ide/workflows/)). Gemini CLI stopped serving Google AI
+Pro and Ultra accounts on 2026-06-18; on those plans `agy` is its replacement `(v)` 2026-10-09
+([Google Developers Blog](https://developers.googleblog.com/en/an-important-update-transitioning-gemini-cli-to-antigravity-cli/)).
+
+What Antigravity does not get:
+
+- **The Claude hooks.** The proposal-review reminder and Stop gate, and the cloud `SessionStart`
+  setup, run only in Claude Code. The checks behind them run in CI whatever wrote the change:
+  `proposal-review.yml` refuses a proposal change without a recorded review, and `ci.yml` runs
+  `check_agent_frontmatter.py` and both hooks' `--self-test`. Run `scripts/agent_env.sh` yourself
+  in a fresh container.
+- **The `revisor-proposta` subagent.** It is a Claude Code agent definition; from Antigravity, ask
+  the agent to apply `.claude/agents/revisor-proposta.md` to the changed files, then record the
+  parecer with `just proposal-review-record`.
+- **Claude-only tools named in a skill** (the Agent tool, `ToolSearch`). A skill that needs one
+  says what it is for; do that step by hand.
+
+Keep it cheap. Antigravity's Individual tier is free with weekly limits that have been cut since
+launch, and Google AI Pro raises them ⚠ (limits not published as numbers; check
+[pricing](https://antigravity.google/pricing) before relying on them). Send small lookups to the
+local model (`just ask "…"`), and run builds and regtests through their `just` recipes so the model
+reads the result, not the compiler output. Google AI Pro also carries $10 a month of Google Cloud
+credit through the Google Developer Program `(v)` 2026-10-09
+([Google blog, 2026-01-27](https://blog.google/innovation-and-ai/technology/developers-tools/gdp-premium-ai-pro-ultra/));
+it must be activated there, and it does not cover a GPU for the Kokkos CUDA build.
+
+| Task | Surface | Usage against the weekly limit | Date |
+|---|---|---|---|
+| `/ponytail-review` of one PR diff | `agy` in Cloud Shell, Google AI Pro | ⚠ not measured yet | |
+
+Running `agy` inside `just dev` or ai-jail has not been tried ⚠.
+
 ## Opening a pull request
 
 Write the commit message properly (subject, a body paragraph saying what and why, and
