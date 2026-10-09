@@ -9,8 +9,8 @@ Sources (issue #85): the NWS notification page (PNS and SCN PDFs), NCEP's model-
 (which links the SCN/TIN behind each implementation) and NOAA-EMC/WW3's tags and `production/*`
 branches through `git ls-remote`. A notice is its PDF file name: an update gets a new suffix
 (`_aaa`, `_aab`) and so reads as new, which is wanted. The listings are scraped for PDF links only, so a page
-redesign that keeps the links keeps working; a page that yields no link at all is an error,
-never "no change". Standard library only.
+redesign that keeps the links keeps working; a page that yields no link is a warning, and no
+link on any page is an error, never "no change". Standard library only.
 """
 import argparse
 import datetime as dt
@@ -27,13 +27,13 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 STATE = ROOT / "docs" / "noaa-notices.json"
 PAGES = ["https://www.weather.gov/notification/", "https://www.nco.ncep.noaa.gov/pmb/changes/"]
 WW3 = "https://github.com/NOAA-EMC/WW3"
-LINK = re.compile(r'<a\b[^>]*href="([^"]*/notification/[^"]*?((?:pns|scn|tin)[^"/]*)\.pdf)"[^>]*>(.*?)</a>',
+LINK = re.compile(r'<a\b[^>]*href="([^"]*/notification/[^"]*?((?:pns|psn|scn|tin)[^"/]*)\.pdf)"[^>]*>(.*?)</a>',
                   re.I | re.S)
 # What this repository consumes: GFS winds from NOMADS (example 02), GFS-Wave as the reference
 # global run (lesson 04), WW3 itself, and the NCEP systems that run WW3 inside them.
-RELEVANT = re.compile(r"gfs|gefs|gdas|wave|wavewatch|ww3|nwps|glwu|rtofs|hafs|nomads|grib|"
-                      r"marine|sea.?state|parallel|ciphers?", re.I)
-YEAR = re.compile(r"(?:pns|scn|tin)(\d\d)", re.I)
+RELEVANT = re.compile(r"gfs|gefs|gdas|(?<!mountain )wave|ww3|nwps|glwu|rtofs|hafs|nomads|grib|"
+                      r"marine|seas\b|sea.?state|ocean prediction|parallel|ciphers?", re.I)
+YEAR = re.compile(r"(?:pns|psn|scn|tin)(\d\d)", re.I)
 
 
 def fetch(url: str) -> str:
@@ -117,8 +117,10 @@ def main() -> int:
     for url in PAGES:
         got = notices(fetch(url), url)
         if not got:
-            sys.exit(f"{url}: no notice PDF links found; the page layout changed, fix LINK in {__file__}")
+            print(f"warning: {url}: no notice PDF links found; fix LINK in {__file__}", file=sys.stderr)
         found.update(got)
+    if not found:
+        sys.exit("no notice links on any page: the layouts changed, so nothing was compared")
     ww3 = ww3_refs()
     old = json.loads(STATE.read_text()) if STATE.exists() else {}
     today = dt.date.today()

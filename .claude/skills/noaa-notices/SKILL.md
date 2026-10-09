@@ -24,13 +24,17 @@ It scrapes the PDF links of <https://www.weather.gov/notification/> (PNS, SCN) a
 <https://www.nco.ncep.noaa.gov/pmb/changes/> (the SCN/TIN behind each implementation), keeps the
 ones not in the snapshot, from this year or last, whose name or link text matches the keyword
 filter (`RELEVANT` in the script: GFS, GEFS, wave, WW3, NWPS, GLWU, RTOFS, HAFS, NOMADS, GRIB,
-marine, parallel, ciphers), and diffs NOAA-EMC/WW3's tags and `production/*` branches through
-`git ls-remote`. A page with no notice link at all exits non-zero: the layout changed, so fix
-`LINK`, never record an empty run.
+marine, seas, Ocean Prediction Center, parallel, ciphers), and diffs NOAA-EMC/WW3's tags and
+`production/*` branches through `git ls-remote`. A page with no notice link warns, and no link on any page exits non-zero: the
+layout changed, so fix `LINK`, never record an empty run.
 
 A cloud container may be refused weather.gov and nco.ncep.noaa.gov by its egress proxy (it was on
 2026-10-09); then run it from a workstation, or read the two pages with a web fetch and say the
 snapshot was not moved.
+
+These feeds announce changes to services, not weather: a hurricane in progress shows up in the
+National Hurricane Center's advisories (<https://www.nhc.noaa.gov/>), not here, unless NOAA
+suspends or changes a product because of it.
 
 If it prints "Nothing relevant since the snapshot", tell the user so in one line with the
 snapshot date and stop: no issue, no PR.
