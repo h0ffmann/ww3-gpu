@@ -25,7 +25,7 @@ that kernel was also swept over all 2^32 float32 inputs with 0 differences at th
 adopt a proof language (Rocq, Lean 4, Isabelle, Agda, Idris 2, Liquid Haskell, TLA+, F\*, or the
 since-removed Bend) as part of the port's workflow.
 
-Three facts shape the answer:
+Four facts shape the answer:
 
 1. **No proof assistant reads Fortran or C++.** Each one proves theorems about a model written by
    hand. Only Rocq reaches real C code, through CompCert's Clight and VST, and it does not reach
@@ -41,6 +41,16 @@ Three facts shape the answer:
    both pilot queries in 0.4–79 s, while Z3 did not finish one `unsat` in 15 min
    `(v, BITWISE_PROOF §3(c))`. For a loop body, equality "for every input" is therefore a solver
    query, not a proof someone has to write.
+4. **A proof language multiplies what agents write and people review.** In this lab an agent
+   writes most of the code and a person reviews all of it. A proof assistant adds a second artefact
+   per routine: the hand-written model, its lemmas and the proof scripts, which have to be kept in
+   step with the C++ and re-checked when it changes. Each of those is more tokens generated and
+   more lines a reviewer must read, and the reviewer must also check that the model says what the
+   code does, which Appendix A shows a checker cannot do. `BITWISE_PROOF` rates interactive proofs
+   at months per routine against 1–3 days per loop body for an SMT query
+   `(v, BITWISE_PROOF §7)`. The token and review cost of either route has not
+   been measured ⚠; the claim is that it scales with the size of the formal artefact, which is a
+   solver query for SMT and a whole theory for a proof assistant.
 
 ## Decision
 
