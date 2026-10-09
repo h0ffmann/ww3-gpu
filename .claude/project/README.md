@@ -7,7 +7,7 @@ left out.
 
 | File | What it holds | Read with |
 |---|---|---|
-| [`project.json`](project.json) | name, visibility, instructions, repositories, the model, effort and permission mode of thread sessions, the cloud environment, the routines | `get_session` (this session), `list_environments`, `list_triggers` |
+| [`project.json`](project.json) | name, visibility, instructions, repositories, the default model, memory and routine settings, what a thread session runs with, the cloud environment, the routines | `get_project_settings`, `get_session`, `list_environments`, `list_triggers` |
 | [`routines/a2a-wave-forecaster.txt`](routines/a2a-wave-forecaster.txt) | the stored prompt of the A2A routine, verbatim | `get_trigger trig_01JZ1SZK9ZimYALDctnzBRJW` |
 
 Everything the repository already holds is not repeated here: the hooks and permissions are
@@ -17,17 +17,17 @@ Everything the repository already holds is not repeated here: the hooks and perm
 
 ## Evidence
 
-All values were read on 2026-10-09 from a thread session of the project `(v)`. Two are `⚠`:
-
-- `thread_sessions` is what `get_session` reported for the session that wrote this file; that it is
-  the project's default for every thread, and not this one session's, was not checked.
-- `instructions: null` means the session context carried no project instructions; the project
-  settings page was not opened.
+All values were read on 2026-10-09 `(v)`: the `project` block with `get_project_settings`, which
+only the project's coordinator session has, and the rest from a thread session. `project.model` is
+the project's default; the project sets no effort default, so `thread_sessions.effort` is what the
+service gave the session that wrote this file. The environment is the account's only one; the
+project names no default. Memory is on for the project but off in the owner's account settings, so
+there was nothing to read.
 
 ## Restoring the project
 
 1. Create a private project named as in `project.json` and attach its repositories.
-2. Paste `instructions` into the project instructions, if it is not `null`.
+2. Set the default model, and paste `instructions` into the project instructions if it is not empty.
 3. Create each routine with its `cron` and the text of its `prompt` file, inside the project so it
    wakes a session with this project's repositories (lesson 19 explains why a routine must belong
    to the project that answers).

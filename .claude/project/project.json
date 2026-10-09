@@ -1,14 +1,20 @@
 {
   "read_on": "2026-10-09",
-  "read_with": "the Claude service's get_session, list_environments, list_triggers and get_trigger, from a thread session of this project; see README.md",
+  "read_with": "get_project_settings (from the project's coordinator session), get_session, list_environments, list_triggers and get_trigger; see README.md",
   "project": {
     "name": "Wave Forecaster",
     "visibility": "private",
-    "instructions": null,
+    "instructions": "",
     "repositories": [
       "https://github.com/h0ffmann/ww3-gpu",
       "https://github.com/marola-dev/marola"
-    ]
+    ],
+    "model": "claude-opus-5-5[1m]",
+    "effort": null,
+    "memory": "enabled in the project, off in the owner's account memory settings: nothing to read",
+    "tasks_enabled": false,
+    "min_routine_interval_minutes": 60,
+    "default_environment": null
   },
   "thread_sessions": {
     "model": "claude-opus-5-5[1m]",

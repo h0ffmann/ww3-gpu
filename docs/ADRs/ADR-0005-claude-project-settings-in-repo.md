@@ -27,16 +27,16 @@ A reader of the book who wants to reproduce the setup cannot see that layer, and
 reviewer of a PR that depends on it. The owner asked on 2026-10-09 whether all of it could be
 kept in the repository for reproducibility.
 
-What a session of the project can read back, checked on 2026-10-09 from a thread session `(v)`:
+What the project's sessions can read back, checked on 2026-10-09 `(v)` from a thread session and, for `get_project_settings`, from the coordinator session:
 
 | Setting | Readable from a session | Exportable to git |
 |---|---|---|
 | Name, visibility, repositories | yes, in the session context | yes |
-| Project instructions | yes, in the session context; none were present | yes |
-| Model, effort, permission mode of a session | yes, `get_session`, for that session ⚠ project default not confirmed | yes |
+| Project instructions, default model, routine and task settings | yes, `get_project_settings` (coordinator session only); instructions are empty, no effort default is set | yes |
+| Model, effort, permission mode of a session | yes, `get_session`, for that session | yes |
 | Cloud environment | name, kind and network policy, `list_environments` | yes; its secrets and variables no |
 | Routines | name, schedule, stored prompt, `list_triggers` / `get_trigger` | yes, prompt verbatim |
-| Project memory | only through the memory tools, which a thread session here does not have ⚠ | in part: content a person reviews, never wholesale |
+| Project memory | only through the coordinator's memory tools; on 2026-10-09 it was off in the owner's account settings, so empty | in part: content a person reviews, never wholesale |
 | Connectors (Gmail, Calendar, Drive, Docs, GitHub) | names only; they belong to the owner's account | no: each is an OAuth sign-in |
 | Chats, artifacts, project files | readable, and not settings | no |
 
@@ -49,8 +49,8 @@ each routine and the owner's e-mail address in the session context.
 restore from by hand. The service stays the truth; the snapshot is its copy, read back with the
 service's own tools and committed with the date it was read.**
 
-1. `project.json` holds what the table marks exportable: name, visibility, instructions (or
-   `null`), repositories, session model, effort and permission mode, environment name and network
+1. `project.json` holds what the table marks exportable: name, visibility, instructions,
+   repositories, default model, memory and routine settings, what a thread session runs with, environment name and network
    policy, and each routine's name, trigger id, schedule and the path of its prompt file. It
    carries `read_on` and the tools it was read with.
 2. Each routine's prompt is a text file under `routines/`, verbatim. Lesson 19 keeps quoting it,
@@ -86,8 +86,8 @@ service's own tools and committed with the date it was read.**
   the service is still made by a person or a session of this project.
 - The snapshot can be stale between a change on the service and the PR that records it; `read_on`
   says how old it is.
-- Two values are `⚠` until the owner confirms them on the project settings page: whether the
-  session model and effort are the project's default, and that the project has no instructions.
+- The snapshot is complete only while memory stays off; if the owner turns it on, what it holds is
+  read and triaged by the rule in point 4.
 
 ## Revisit when
 
