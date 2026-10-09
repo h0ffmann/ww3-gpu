@@ -1,0 +1,19 @@
+# About this book {#ch-about}
+
+*Without Changing the Answer* is compiled from the repository [h0ffmann/ww3-gpu](https://github.com/h0ffmann/ww3-gpu), which is
+its source and its evidence. This edition was exported from commit `5d8f420` on
+2026-10-09; the WAVEWATCH III® source it quotes is the fork pinned at `03adda9`.
+The chapters are the repository's lessons; the code, measurements, plans and decisions they
+describe are versioned next to them, and the newest edition is always the repository itself.
+
+Two marks run through the text. `(v)` after a claim means it was checked against the named source
+when it was written; `⚠` means it was not, and the claim is a thing to verify before relying on it.
+Every number comes with the command that reproduces it.
+
+The book is free to read. If you use it, please cite the repository's concept DOI,
+[10.5281/zenodo.23221351](https://doi.org/10.5281/zenodo.23221351), which resolves to the latest
+release. Corrections are welcome as issues or pull requests; the most useful one is confirming or
+correcting anything marked `⚠`.
+
+WAVEWATCH III® is a registered trademark of NOAA's National Weather Service, named here only to
+refer to that software; this is an independent project, not endorsed by NOAA.
