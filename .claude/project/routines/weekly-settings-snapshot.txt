@@ -1,0 +1,12 @@
+Rotina semanal do snapshot das configurações do projeto Wave Forecaster (ADR-0005, `.claude/project/README.md`, seção "Keeping it current"). Este prompt está gravado em `.claude/project/routines/weekly-settings-snapshot.txt`.
+
+1. Em h0ffmann/ww3-gpu: `git fetch origin main` e crie a partir de `origin/main` o branch `claude/claude-project-snapshot-AAAAMMDD` (data de hoje). Se `.claude/project/project.json` ainda não existir em `origin/main` (o PR do ADR-0005 não foi mergeado), encerre com no_reply_needed.
+2. Releia o que esta sessão consegue ler e compare com `.claude/project/project.json` e `routines/*.txt`:
+   - `list_triggers` (com `include_completed: false`): só as rotinas deste projeto, as que trazem `hearth_channel_id` = `chan_017D9Khj8joWFwBwfu6q6in8` (hoje a A2A, o atualizador diário de dependências e esta própria rotina); nunca as do Marola nem lembretes de uso único. Para cada uma, `get_trigger` e grave o prompt literal em `routines/<nome-curto>.txt` e nome, cron e trigger id no `project.json`; uma rotina nova ganha arquivo e entrada, uma apagada sai dos dois.
+   - `get_session` (sem id): modelo, effort e permission mode em `thread_sessions`.
+   - `list_environments`: nome, tipo e política de rede.
+   - Bloco `project`: use `get_project_settings` se a ferramenta existir nesta sessão; se não, mantenha o bloco como está e diga no PR que ele não foi relido (só a sessão coordenadora do projeto tem essa ferramenta).
+3. Nunca grave e-mail, account id, creator, session id, token ou segredo. Memória, conectores, segredos de ambiente, chats e artefatos continuam fora (`not_in_this_snapshot`).
+4. Se nada mudou além da data, não faça commit nem PR: encerre com no_reply_needed.
+5. Se algo mudou: atualize `read_on`; se o prompt da rotina A2A mudou, atualize também a citação literal na lição 19 (`course/19-two-agents-one-issue-tracker.md`), senão o teste falha. Rode `python3 -m unittest tests/test_claude_project.py` e `python3 -m unittest discover tests`. Commit com corpo dizendo o que mudou e os trailers `Tested:` e `Cost: none`. Faça push e abra um PR para `main` (corpo com Before/After), atribua a h0ffmann, assine a atividade do PR e conduza-o até o CI verde. Nunca faça merge.
+6. Poste na thread um resumo de uma ou duas linhas com o link do PR e o que mudou.

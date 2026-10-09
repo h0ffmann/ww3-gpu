@@ -212,6 +212,7 @@ audience rule for its own job; a new one does too, and its YAML front matter mus
 | `ponytail`, `ponytail-review`, `ponytail-audit` | the laziest solution that works; over-engineering review and audit; third-party |
 | `sharingan` | port a skill, workflow or pattern from another repository by URL: fetch it pinned, let the licence decide vendor, adapt or rewrite, map each upstream concept to a home here; third-party (marola-devkit) |
 | `revisor-proposta` (agent) | the proposal's scientific reviewer, read-only |
+| `security-reviewer` (agent) | security review of a branch's diff (secrets and personal data in git, hooks, prompts, workflows, scripts), read-only; run it before a PR that touches `.claude/`, `.github/workflows/` or `scripts/` is marked ready |
 
 The third-party skills (`humanizar`, `humanizer`, `ponytail*`, `sharingan`) are vendored and pinned
 in `.claude/skills/skills.lock`, and the audience paragraph each carries, plus the paths `sharingan`

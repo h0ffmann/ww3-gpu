@@ -138,7 +138,10 @@ owner twice a day.
 
 One trap belongs here. The prompt lives on the Claude service, not in git: change it there and
 this listing is stale, and nothing in CI will notice. Treat the copy above as the documentation
-of a deployed program, dated, and re-read it with `get_trigger` before trusting it.
+of a deployed program, dated, and re-read it with `get_trigger` before trusting it. The prompt is also
+kept as [`.claude/project/routines/a2a-wave-forecaster.txt`](../.claude/project/routines/a2a-wave-forecaster.txt),
+and a test fails if this listing and that file differ
+([ADR-0005](../docs/ADRs/ADR-0005-claude-project-settings-in-repo.md)).
 
 ## Provenance: why a label and not the body
 

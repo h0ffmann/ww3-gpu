@@ -1,0 +1,61 @@
+{
+  "read_on": "2026-10-09",
+  "read_with": "get_project_settings (from the project's coordinator session), get_session, list_environments, list_triggers and get_trigger; see README.md",
+  "project": {
+    "name": "Wave Forecaster",
+    "visibility": "private",
+    "instructions": "",
+    "repositories": [
+      "https://github.com/h0ffmann/ww3-gpu",
+      "https://github.com/marola-dev/marola"
+    ],
+    "model": "claude-opus-5-5[1m]",
+    "effort": null,
+    "memory": "enabled in the project, off in the owner's account memory settings: nothing to read",
+    "tasks_enabled": false,
+    "min_routine_interval_minutes": 60,
+    "default_environment": null
+  },
+  "thread_sessions": {
+    "model": "claude-opus-5-5[1m]",
+    "effort": "medium",
+    "permission_mode": "auto"
+  },
+  "environment": {
+    "name": "Default",
+    "kind": "anthropic_cloud",
+    "network": "trusted network access",
+    "setup": "none on the service; .claude/hooks/session-start.sh runs scripts/agent_env.sh"
+  },
+  "routines": [
+    {
+      "name": "A2A: responder issues para:wave-forecaster",
+      "trigger_id": "trig_01JZ1SZK9ZimYALDctnzBRJW",
+      "cron": "CRON_TZ=America/Sao_Paulo 52 */3 * * *",
+      "persistent_session": true,
+      "prompt": "routines/a2a-wave-forecaster.txt"
+    },
+    {
+      "name": "Snapshot semanal das configurações do projeto (.claude/project)",
+      "trigger_id": "trig_01HJAzDq4ne2KxY4c56dd1zR",
+      "cron": "CRON_TZ=America/Sao_Paulo 30 2 * * 5",
+      "persistent_session": true,
+      "prompt": "routines/weekly-settings-snapshot.txt"
+    },
+    {
+      "name": "Atualizador diário de dependências (ww3-gpu)",
+      "trigger_id": "trig_01DtvFBzo5Y6USkhN4YVkxRf",
+      "cron": "CRON_TZ=America/Sao_Paulo 52 9 * * *",
+      "persistent_session": true,
+      "prompt": "routines/daily-deps-update.txt"
+    }
+  ],
+  "not_in_this_snapshot": [
+    "project memory",
+    "connectors and their sign-ins",
+    "environment secrets and variables",
+    "chat and thread history",
+    "published artifacts",
+    "project files under /mnt/project-files"
+  ]
+}
