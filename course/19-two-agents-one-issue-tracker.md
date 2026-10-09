@@ -73,7 +73,7 @@ sequenceDiagram
     autonumber
     participant M as Marola Agent<br/>(routine)
     participant I as Issue 83<br/>in h0ffmann/ww3-gpu
-    participant W as Wave Forecaster Agent<br/>(routine, 08:52 and 20:52)
+    participant W as Wave Forecaster Agent<br/>(routine, every 3 h at :52)
     M->>I: open [A2A] issue with the question<br/>label para:wave-forecaster
     Note over I: waits, no agent running
     W->>I: list open issues labelled para:wave-forecaster
@@ -105,14 +105,15 @@ routine belongs to the project that created it. That is why Marola could not cre
 Forecaster's routine for it: it would have run with Marola's context and answered questions
 about this repository without having it (the owner's account of the setup, 2026-10-09 (v)).
 
-Wave Forecaster's routine was created on 2026-10-09 with this schedule:
+Wave Forecaster's routine was created on 2026-10-09 to run at 08:52 and 20:52, and moved the
+same night to this schedule, because twelve hours per move made a round take a day:
 
 ```text
-CRON_TZ=America/Sao_Paulo 52 8,20 * * *
+CRON_TZ=America/Sao_Paulo 52 */3 * * *
 ```
 
-That is 08:52 and 20:52 in São Paulo, so the worst-case latency of one move is twelve hours
-and a full question-and-answer round can take a day. The odd minute is deliberate: the service
+That is every three hours at minute 52 in São Paulo (00:52, 03:52, …, 21:52), so the
+worst-case latency of one move is three hours, set by the slower of the two routines. The odd minute is deliberate: the service
 advises against the hour and the half hour, where most schedules land and runs can be delayed (v, its
 scheduling documentation, 2026-10-09). Its prompt, which is the receiver's whole
 program, is in Portuguese because the projects work in Portuguese; it is quoted verbatim from
@@ -187,7 +188,7 @@ remember what it had answered would have needed state somewhere; here the label 
 |---|---|---|
 | An issue never gets an answer | The receiver's project cannot reach that repository, or its routine is paused | Add the repository to the receiving project; check the routine is enabled and its last run succeeded |
 | Both projects answer, or neither | Two `para:*` labels, or none, on an open issue | Fix the label by hand; the invariant is one label on every open A2A issue |
-| An answer arrives twelve hours later | That is the schedule | Fire the routine by hand when you are watching; do not shorten the schedule to hide it |
+| An answer arrives hours later | That is the schedule | Fire the routine by hand when you are watching; do not shorten the schedule to hide it |
 | The two agents keep thanking each other | The receiver is closing or replying to an *out* | Only the asker closes; a confirmation is the last comment, never a new question |
 | The documented prompt and the deployed one differ | The prompt was edited on the service | Re-read it with `get_trigger` and update this lesson in the same change |
 
@@ -210,7 +211,7 @@ Open an exchange yourself, in the direction that tests the receiver you care abo
    name the sender project, what it needs and why. Add the labels `A2A` and the receiver's
    `para:*`.
 2. Fire the receiver's routine by hand from a thread of that project ("dispare a rotina agora"),
-   or wait for 08:52 or 20:52.
+   or wait for its next run (every three hours at minute 52).
 3. Check that the issue has one new comment and that its `para:*` label now names the sender.
 4. As the sender, close it.
 
