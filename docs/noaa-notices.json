@@ -1,0 +1,21 @@
+{
+  "checked": null,
+  "notices": [],
+  "ww3": {
+    "tags": [
+      "6.07",
+      "6.07.1"
+    ],
+    "production": {
+      "prod/GLWUv2": "8310b51",
+      "production/GEFS.v12": "317c1e0",
+      "production/GFS.v16": "958891b",
+      "production/GFS.v16.3": "41e7c9c",
+      "production/GFS.v17": "7a23cd7",
+      "production/GLWUv2": "44b1799",
+      "production/hafs.v2": "eb5d9a7",
+      "production/hafs.v2.2": "8d6e712",
+      "production/hafs.v2.3": "86b84cc"
+    }
+  }
+}

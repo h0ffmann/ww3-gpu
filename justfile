@@ -277,6 +277,10 @@ proposal-review-check:
 ww4-status *args:
     python3 scripts/ww4_status.py {{args}}
 
+# NOAA notices (NWS PNS/SCN, NCEP model changes, NOAA-EMC/WW3 production branches) since docs/noaa-notices.json (--write records them). See the /noaa-notices skill.
+noaa-notices *args:
+    python3 scripts/noaa_notices.py {{args}}
+
 # Translate pubs/proposal/en -> pt (changed files only; --force, --dry-run).
 translate *args:
     nix develop "{{justfile_directory()}}" --command python3 scripts/translate_md.py "$@"

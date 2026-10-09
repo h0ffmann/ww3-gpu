@@ -17,7 +17,7 @@ this file as plain text must open `AGENTS.md` itself. `CONTRIBUTING.md` is the l
 - **The reviewer is a subagent**: run it with the Agent tool, `subagent_type: "revisor-proposta"`,
   on the files you changed; `just proposal-review` does the same from a terminal in plan mode. It
   reports; you fix; it does not rewrite.
-- **Skills are invoked by name** (`/eli5 <topic>`, `/ww4-status`, `figure`, `release`, `humanizar`,
+- **Skills are invoked by name** (`/eli5 <topic>`, `/ww4-status`, `/noaa-notices`, `figure`, `release`, `humanizar`,
   `humanizer`, `ponytail*`, `/sharingan <url>`); each one's `SKILL.md` restates the audience rule for its job, and the
   vendored ones are edited through their `.patch`, never in the copy.
 - **Attribution**: the harness appends `Co-Authored-By` and a `Claude-Session` link to commits and a
