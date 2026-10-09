@@ -387,6 +387,7 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | devcontainer / `agent_env.sh` | Development Container spec (`.devcontainer/devcontainer.json`) and the script it and the `SessionStart` hook run `(v)` [scripts/agent_env.sh](../scripts/agent_env.sh) | Sets a fresh container up for the gates: just, shellcheck, gfortran, PyYAML and `nix-config` over https. | [AGENTS.md](../AGENTS.md), [.claude/hooks/session-start.sh](../.claude/hooks/session-start.sh) |
 | spike / SPIKE-NNN | a time-boxed investigation that answers a question rather than ships a change `(v)` [.github/ISSUE_TEMPLATE/spike.yml](../.github/ISSUE_TEMPLATE/spike.yml) | An issue whose output is findings and WFIPs to open; SPIKE-001 is #65. | [CONTRIBUTING.md](../CONTRIBUTING.md) |
 | WFIP | Wave Forecaster Improvement Proposal `(v)` [docs/WFIPs/TEMPLATE.md](WFIPs/TEMPLATE.md) | This repo's numbered design doc for a non-trivial change, on the shape of marola's MIP, tied to a proposal deliverable (D1–D6) and carrying its definition of done in §7; `scripts/wfip.py` builds the index. | [docs/WFIPs/README.md](WFIPs/README.md), [AGENTS.md](../AGENTS.md) |
+| A2A / `para:*` | agent to agent: messages between the Claude projects Marola Agent and Wave Forecaster Agent `(v)` [AGENTS.md](../AGENTS.md#messages-between-claude-projects) | Issues titled `[A2A] …` in `h0ffmann/ww3-gpu` or `marola-dev/marola`; the `para:marola` / `para:wave-forecaster` label names the project whose turn it is to answer. | [AGENTS.md](../AGENTS.md) |
 | D1–D6 | the six deliverables of the proposal, one per specific objective `(v)` [docs/WFIPs/README.md](WFIPs/README.md#proposal-deliverables) | The ids a WFIP's **Deliverable** row names; `wfip.py check` rejects any other. | [pubs/proposal/pt/06-objective.md](../pubs/proposal/pt/06-objective.md) |
 | DoD | definition of done `(v)` [docs/WFIPs/TEMPLATE.md](WFIPs/TEMPLATE.md) | The `- [ ]` checklist of a WFIP's §7, one verifiable outcome with its command per box; the index shows the ticked share. | [docs/WFIPs/README.md](WFIPs/README.md) |
 | ww3-gpu (ex ww-lab) | the GitHub repository `h0ffmann/ww3-gpu` `(v)` [README.md](../README.md); the `justfile` header and `flake.nix` still say `ww3-lab` / `ww-lab` `(v)` | This repo: course, examples, switches, the Kokkos port and the proposal, cited as `[@wwlab]` in the proposal. | [pubs/proposal/pt/07-methodology.md](../pubs/proposal/pt/07-methodology.md) |
@@ -478,6 +479,7 @@ Every term above, alphabetically, with the section it lives in.
 
 - `02-regional-real-forcing`: [This repository's own names](#this-repositorys-own-names)
 - 7.14: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- A2A / `para:*`: [This repository's own names](#this-repositorys-own-names)
 - ABNT: [HPC and software](#hpc-and-software)
 - ADA89: [HPC and software](#hpc-and-software)
 - ADA89 / HOPPER90: [HPC and software](#hpc-and-software)
