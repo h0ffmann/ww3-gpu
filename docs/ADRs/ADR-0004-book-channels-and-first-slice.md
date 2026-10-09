@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Proposed |
+| **Status** | Accepted |
 | **Date** | 2026-10-08 |
 | **Deciders** | Hoffmann |
 | **Written by** | Hoffmann, with an agent |
