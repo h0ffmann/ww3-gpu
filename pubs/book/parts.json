@@ -5,7 +5,8 @@
     {"title": "Running the model", "lessons": ["00", "01", "02", "03", "04", "05", "06", "07", "08"]},
     {"title": "Porting without changing the answer", "lessons": ["09", "10", "11", "12"]},
     {"title": "Agentic coding", "lessons": ["13"]},
-    {"title": "What comes next", "lessons": ["14", "15"]}
+    {"title": "What comes next", "lessons": ["14", "15"]},
+    {"title": "Agents working together", "lessons": ["19"]}
   ],
   "sample": ["00", "13"]
 }

@@ -2,7 +2,7 @@
   "@context": "https://w3id.org/codemeta/3.0",
   "@type": "SoftwareSourceCode",
   "name": "WW3 GPU Lab: agentic coding and agentic research on a bit-for-bit GPU port of WAVEWATCH III",
-  "description": "A book in progress on agentic coding and agentic research, compiled from the repository that is its evidence, written around one problem: moving the expensive kernels of the WAVEWATCH III spectral wind-wave model to GPUs without changing the answer. Sixteen lessons take the reader from the wave spectrum to running the Fortran model on real cases, benchmarking it, and porting its kernels (starting with the W3SNL1 nonlinear interaction source term) to C++/Kokkos with coding agents under a bit-for-bit parity harness against the Fortran reference; the plans, decisions and measurements carry their evidence and the command that reproduces each number.",
+  "description": "A book in progress on agentic coding and agentic research, compiled from the repository that is its evidence, written around one problem: moving the expensive kernels of the WAVEWATCH III spectral wind-wave model to GPUs without changing the answer. Seventeen lessons take the reader from the wave spectrum to running the Fortran model on real cases, benchmarking it, and porting its kernels (starting with the W3SNL1 nonlinear interaction source term) to C++/Kokkos with coding agents under a bit-for-bit parity harness against the Fortran reference; the plans, decisions and measurements carry their evidence and the command that reproduces each number.",
   "author": [
     {
       "@type": "Person",

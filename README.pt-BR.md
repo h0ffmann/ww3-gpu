@@ -10,7 +10,7 @@ Um livro em construção sobre programação com agentes (*agentic coding*) e pe
 os trechos mais caros do WAVEWATCH III® (WW3), o modelo espectral de ondas de terceira geração da
 NOAA, para a GPU sem mudar a resposta.
 
-O repositório é a fonte do livro e a sua evidência. As 16 lições são os capítulos, gerados em PDF
+O repositório é a fonte do livro e a sua evidência. As 17 lições são os capítulos, gerados em PDF
 a cada merge ([`pdf/ww3-lab-course.pdf`](pdf/ww3-lab-course.pdf)); o código que elas descrevem
 está ao lado: um toolchain Fortran/MPI/NetCDF fixado com Nix que compila o WW3 e roda um teste de
 regressão com um comando só, e um port para C++/Kokkos do termo de interações não lineares DIA
@@ -61,7 +61,7 @@ request ou issue aberta, com link para acompanhar.
 
 | Frente | Pergunta | Onde | Situação |
 |---|---|---|---|
-| Curso | Como compilar, rodar e medir o WW3, e depois portar um kernel? | [`course/`](course/README.md), [`examples/`](examples/README.md), [`exercises/`](exercises/README.md) | 16 lições, integrado |
+| Curso | Como compilar, rodar e medir o WW3, e depois portar um kernel? | [`course/`](course/README.md), [`examples/`](examples/README.md), [`exercises/`](exercises/README.md) | 17 lições, integrado |
 | Port do `W3SNL1` para Kokkos | Um kernel do WW3 roda na GPU com resultado idêntico bit a bit? | [`kokkos/`](kokkos/README.md), [lição 12](course/12-porting-a-kernel-w3snl1.md) | Idêntico em 3 backends; falta o replay dentro do WW3 |
 | Benchmarks | Quanto um i9 e uma RTX 4090 entregam de fato para o WW3? | [`bench/`](bench/README.md), [`gpu/`](gpu/README.md), [lição 09](course/09-benchmark-profile-compile-run.md) | Ferramentas integradas |
 | Prioridade do port | Qual rotina portar em seguida? | [#46](https://github.com/h0ffmann/ww3-gpu/pull/46), [`PORT_STATUS.md`](kokkos/PORT_STATUS.md) | Regra em revisão: portar pela ordem do tempo de parede medido. Um primeiro perfil coloca o `W3SDS4` em 67 % do tempo dos termos-fonte ([#45](https://github.com/h0ffmann/ww3-gpu/issues/45)) |

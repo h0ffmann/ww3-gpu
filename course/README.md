@@ -1,6 +1,6 @@
 # The course
 
-Sixteen lessons, in order, and the chapters of the book the repository compiles into
+Seventeen lessons, in order, and the chapters of the book the repository compiles into
 (*Without Changing the Answer*, working title; [`pubs/README.md`](../pubs/README.md)). The first
 half is WW3 as a user runs it; the second half is the proposal's optimisation ladder, from a
 benchmark to a Kokkos kernel, and the agents that climb it. A weekend for the first half if you run
@@ -26,6 +26,7 @@ them in, and the three chapters still to write on agentic coding and agentic res
 | 13 | [Bulk porting with agents](13-bulk-porting-with-agents.md) | Run the FESOM2 recipe on the next forty routines with a coding agent: the ranked list, the residency ladder, the PR contents, and the decision that puts a kernel into operation. |
 | 14 | [WW4 and the future](14-ww4-and-the-future.md) | Judge how mature WW4 is, what's changing, and what of WW3 is worth learning anyway. |
 | 15 | [SWAN](15-swan.md) | Recognise the coastal problems WW3 is wrong for, and build the model that isn't. |
+| 19 | [Two agents, one issue tracker (A2A)](19-two-agents-one-issue-tracker.md) | Let two agent projects that are never awake together hold a conversation in GitHub issues, with a label as the turn token, and check the invariant that keeps it from stalling. |
 
 Do lesson 02 with `examples/01-fetch-limited-growth` open beside it. When an abbreviation,
 switch or routine name is unfamiliar, [`docs/GLOSSARY.md`](../docs/GLOSSARY.md) expands it and
@@ -41,3 +42,8 @@ Lessons 14 and 15 stand alone and can be read first. They answer two separate "s
 even be doing this?" questions: *should I wait for WW4* (no, but know it's coming and that
 WW3 is scheduled for sunset), and *is WW3 the right model at all* (often, but not
 nearshore).
+
+Lesson 19 is numbered after the three chapters [WFIP-0002](../docs/WFIPs/WFIP-0002-lab-as-a-book.md)
+§5.2 reserves as 16 to 18, and for now closes the book as its own part, *Agents working
+together*. It needs no WW3: it is about how the two Claude projects that work on these
+repositories ask each other questions.

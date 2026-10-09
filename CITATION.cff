@@ -5,7 +5,7 @@ title: "WW3 GPU Lab: agentic coding and agentic research on a bit-for-bit GPU po
 abstract: >-
   A book in progress on agentic coding and agentic research, compiled from the repository
   that is its evidence, written around one problem: moving the expensive kernels of the
-  WAVEWATCH III spectral wind-wave model to GPUs without changing the answer. Sixteen
+  WAVEWATCH III spectral wind-wave model to GPUs without changing the answer. Seventeen
   lessons take the reader from the wave spectrum to running the Fortran model on real
   cases, benchmarking it, and porting its kernels (starting with the W3SNL1 nonlinear
   interaction source term) to C++/Kokkos with coding agents under a bit-for-bit parity

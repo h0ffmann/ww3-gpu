@@ -9,6 +9,11 @@
     "config": "pubs/figures/mermaid-config.json"
   },
   "figures": {
+    "a2a-label-handover": {
+      "file": "course/19-two-agents-one-issue-tracker.md",
+      "title": "How do two agents that are never awake at the same time hold one conversation in an issue?",
+      "sha256": "9523e86afd404ac00830fb25d563be3e975eb5d12b3836c3105ae24e572e3330"
+    },
     "gpu-operation-decision": {
       "file": "course/13-bulk-porting-with-agents.md",
       "title": "When does a C++/Kokkos kernel enter the operational configuration?",
