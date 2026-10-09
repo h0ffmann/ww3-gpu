@@ -1,0 +1,41 @@
+{
+  "read_on": "2026-10-09",
+  "read_with": "the Claude service's get_session, list_environments, list_triggers and get_trigger, from a thread session of this project; see README.md",
+  "project": {
+    "name": "Wave Forecaster",
+    "visibility": "private",
+    "instructions": null,
+    "repositories": [
+      "https://github.com/h0ffmann/ww3-gpu",
+      "https://github.com/marola-dev/marola"
+    ]
+  },
+  "thread_sessions": {
+    "model": "claude-opus-5-5[1m]",
+    "effort": "medium",
+    "permission_mode": "auto"
+  },
+  "environment": {
+    "name": "Default",
+    "kind": "anthropic_cloud",
+    "network": "trusted network access",
+    "setup": "none on the service; .claude/hooks/session-start.sh runs scripts/agent_env.sh"
+  },
+  "routines": [
+    {
+      "name": "A2A: responder issues para:wave-forecaster",
+      "trigger_id": "trig_01JZ1SZK9ZimYALDctnzBRJW",
+      "cron": "CRON_TZ=America/Sao_Paulo 52 */3 * * *",
+      "persistent_session": true,
+      "prompt": "routines/a2a-wave-forecaster.txt"
+    }
+  ],
+  "not_in_this_snapshot": [
+    "project memory",
+    "connectors and their sign-ins",
+    "environment secrets and variables",
+    "chat and thread history",
+    "published artifacts",
+    "project files under /mnt/project-files"
+  ]
+}
