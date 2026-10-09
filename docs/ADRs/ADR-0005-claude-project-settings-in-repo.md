@@ -65,8 +65,12 @@ service's own tools and committed with the date it was read.**
    the first two patterns.
 6. A change to the project on the service is followed by a PR that updates the snapshot and its
    `read_on`. No CI job can check the snapshot against the service, since no command outside a
-   Claude session can read the project; this is a convention, as the lesson's quoted prompt already
-   was.
+   Claude session can read the project. A weekly routine of the project does it instead (added
+   2026-10-09 at the owner's request): every Friday at 02:30 São Paulo time it re-reads the
+   routines, the session defaults and the environment, opens a PR when anything changed and never
+   merges. Its own prompt is in the snapshot, `routines/weekly-settings-snapshot.txt`. It cannot
+   re-read the `project` block, since `get_project_settings` exists only in the coordinator
+   session; that block stays a hand update, and the routine's PR says so.
 
 ## Alternatives considered
 
@@ -93,5 +97,6 @@ service's own tools and committed with the date it was read.**
 
 - The service gains an export or import for projects, or an API a CI job can call: then the
   snapshot is generated and checked, and this record is superseded.
-- The project gains instructions, a second routine or a second environment.
+- The project gains instructions or a second environment.
+- The snapshot routine's PRs keep reporting the `project` block as not re-read while it has changed.
 - Memory turns out to hold settings the work depends on that no file in git carries.

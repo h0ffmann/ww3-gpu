@@ -34,6 +34,13 @@
       "cron": "CRON_TZ=America/Sao_Paulo 52 */3 * * *",
       "persistent_session": true,
       "prompt": "routines/a2a-wave-forecaster.txt"
+    },
+    {
+      "name": "Snapshot semanal das configurações do projeto (.claude/project)",
+      "trigger_id": "trig_01HJAzDq4ne2KxY4c56dd1zR",
+      "cron": "CRON_TZ=America/Sao_Paulo 30 2 * * 5",
+      "persistent_session": true,
+      "prompt": "routines/weekly-settings-snapshot.txt"
     }
   ],
   "not_in_this_snapshot": [
