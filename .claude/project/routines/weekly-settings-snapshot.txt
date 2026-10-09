@@ -2,7 +2,7 @@ Rotina semanal do snapshot das configurações do projeto Wave Forecaster (ADR-0
 
 1. Em h0ffmann/ww3-gpu: `git fetch origin main` e crie a partir de `origin/main` o branch `claude/claude-project-snapshot-AAAAMMDD` (data de hoje). Se `.claude/project/project.json` ainda não existir em `origin/main` (o PR do ADR-0005 não foi mergeado), encerre com no_reply_needed.
 2. Releia o que esta sessão consegue ler e compare com `.claude/project/project.json` e `routines/*.txt`:
-   - `list_triggers`: só as rotinas deste projeto (as que pertencem ao Wave Forecaster: a A2A `trig_01JZ1SZK9ZimYALDctnzBRJW` e esta própria rotina, `trig_01HJAzDq4ne2KxY4c56dd1zR`); nunca as do Marola. Para cada uma, `get_trigger` e grave o prompt literal no seu `.txt` e nome, cron e trigger id no `project.json`.
+   - `list_triggers` (com `include_completed: false`): só as rotinas deste projeto, as que trazem `hearth_channel_id` = `chan_017D9Khj8joWFwBwfu6q6in8` (hoje a A2A, o atualizador diário de dependências e esta própria rotina); nunca as do Marola nem lembretes de uso único. Para cada uma, `get_trigger` e grave o prompt literal em `routines/<nome-curto>.txt` e nome, cron e trigger id no `project.json`; uma rotina nova ganha arquivo e entrada, uma apagada sai dos dois.
    - `get_session` (sem id): modelo, effort e permission mode em `thread_sessions`.
    - `list_environments`: nome, tipo e política de rede.
    - Bloco `project`: use `get_project_settings` se a ferramenta existir nesta sessão; se não, mantenha o bloco como está e diga no PR que ele não foi relido (só a sessão coordenadora do projeto tem essa ferramenta).

@@ -41,6 +41,13 @@
       "cron": "CRON_TZ=America/Sao_Paulo 30 2 * * 5",
       "persistent_session": true,
       "prompt": "routines/weekly-settings-snapshot.txt"
+    },
+    {
+      "name": "Atualizador diário de dependências (ww3-gpu)",
+      "trigger_id": "trig_01DtvFBzo5Y6USkhN4YVkxRf",
+      "cron": "CRON_TZ=America/Sao_Paulo 52 9 * * *",
+      "persistent_session": true,
+      "prompt": "routines/daily-deps-update.txt"
     }
   ],
   "not_in_this_snapshot": [

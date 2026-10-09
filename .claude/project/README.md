@@ -10,6 +10,7 @@ left out.
 | [`project.json`](project.json) | name, visibility, instructions, repositories, the default model, memory and routine settings, what a thread session runs with, the cloud environment, the routines | `get_project_settings`, `get_session`, `list_environments`, `list_triggers` |
 | [`routines/a2a-wave-forecaster.txt`](routines/a2a-wave-forecaster.txt) | the stored prompt of the A2A routine, verbatim | `get_trigger trig_01JZ1SZK9ZimYALDctnzBRJW` |
 | [`routines/weekly-settings-snapshot.txt`](routines/weekly-settings-snapshot.txt) | the stored prompt of the routine that refreshes this folder every Friday, verbatim | `get_trigger trig_01HJAzDq4ne2KxY4c56dd1zR` |
+| [`routines/daily-deps-update.txt`](routines/daily-deps-update.txt) | the stored prompt of the daily dependency updater, verbatim | `get_trigger trig_01DtvFBzo5Y6USkhN4YVkxRf` |
 
 Everything the repository already holds is not repeated here: the hooks and permissions are
 [`../settings.json`](../settings.json), the skills [`../skills/`](../skills/), the reviewer
