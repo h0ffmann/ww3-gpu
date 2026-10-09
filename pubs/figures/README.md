@@ -46,6 +46,17 @@ A rewritten piece of the model is used for real forecasts only if its results ag
 `gpu-operation-decision` · [source](../../course/13-bulk-porting-with-agents.md) · [PDF](mermaid/gpu-operation-decision.pdf) · [report a mistake](https://github.com/h0ffmann/ww3-gpu/issues/new?title=Figure%20gpu-operation-decision%3A%20)
 
 
+## [`course/19-two-agents-one-issue-tracker.md`](../../course/19-two-agents-one-issue-tracker.md)
+
+### How do two agents that are never awake at the same time hold one conversation in an issue?
+
+The two agents never talk directly: each leaves its move in the issue and hands the turn over by swapping one label. The conversation goes on even though both sides are asleep most of the time.
+
+<img src="mermaid/a2a-label-handover.png" alt="The two agents never talk directly: each leaves its move in the issue and hands the turn over by swapping one label. The conversation goes on even though both sides are asleep most of the time." width="560" />
+
+`a2a-label-handover` · [source](../../course/19-two-agents-one-issue-tracker.md) · [PDF](mermaid/a2a-label-handover.pdf) · [report a mistake](https://github.com/h0ffmann/ww3-gpu/issues/new?title=Figure%20a2a-label-handover%3A%20)
+
+
 ## [`docs/W3SDS4_TRITON_202610.md`](../../docs/W3SDS4_TRITON_202610.md)
 
 ### Where does the source-term time go, and how much of it is W3SDS4?

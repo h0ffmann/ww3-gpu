@@ -11,7 +11,7 @@ a book in progress on agentic coding and agentic research, written around moving
 GPUs without changing the answer. [WFIP-0002](../docs/WFIPs/WFIP-0002-lab-as-a-book.md) is the plan
 that turns the lessons into parts, adds the chapters on how this lab is run with agents, checks
 every quoted listing against the code on each build, and attaches the PDF to every release. Until
-its tasks land, `pdf/ww3-lab-course.pdf` is the sixteen lessons under the new title, one chapter
+its tasks land, `pdf/ww3-lab-course.pdf` is the seventeen lessons under the new title, one chapter
 each. A free Leanpub edition is fed from the same lessons: `just leanpub` exports them as a Markua
 manuscript and `.github/workflows/leanpub.yml` pushes it to the `leanpub` branch the Leanpub book
 reads; [`docs/LEANPUB_202610.md`](../docs/LEANPUB_202610.md) has the author's steps. The same lessons

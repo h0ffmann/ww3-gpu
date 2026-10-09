@@ -9,7 +9,7 @@ A book in progress on agentic coding and agentic research, compiled from this re
 around one problem: moving the expensive kernels of WAVEWATCH III® (WW3), NOAA's third-generation
 spectral wind-wave model, to GPUs without changing the answer.
 
-The repository is the book's source and its evidence. Its 16 lessons are the chapters, built into
+The repository is the book's source and its evidence. Its 17 lessons are the chapters, built into
 a PDF on every merge ([`pdf/ww3-lab-course.pdf`](pdf/ww3-lab-course.pdf)); the code they describe
 is next to them: a Nix-pinned Fortran/MPI/NetCDF toolchain that builds WW3 and runs a regression
 test in one command, and a C++/Kokkos port of the DIA nonlinear interaction term (`W3SNL1`),
@@ -58,7 +58,7 @@ requests or issues, linked so you can follow them.
 
 | Area | Question it answers | Where | State |
 |---|---|---|---|
-| The course | How do you build, run and measure WW3, then port a kernel? | [`course/`](course/README.md), [`examples/`](examples/README.md), [`exercises/`](exercises/README.md) | 16 lessons, merged |
+| The course | How do you build, run and measure WW3, then port a kernel? | [`course/`](course/README.md), [`examples/`](examples/README.md), [`exercises/`](exercises/README.md) | 17 lessons, merged |
 | Kokkos port of `W3SNL1` | Can a WW3 kernel run on a GPU with bit-identical results? | [`kokkos/`](kokkos/README.md), [lesson 12](course/12-porting-a-kernel-w3snl1.md) | Bit-identical on 3 backends; WW3 replay pending |
 | Benchmarks | What do an i9 and an RTX 4090 actually give WW3? | [`bench/`](bench/README.md), [`gpu/`](gpu/README.md), [lesson 09](course/09-benchmark-profile-compile-run.md) | Tooling merged |
 | Port priority | Which routine should be ported next? | [#46](https://github.com/h0ffmann/ww3-gpu/pull/46), [`PORT_STATUS.md`](kokkos/PORT_STATUS.md) | Rule in review: port by measured wall time. A first profile puts `W3SDS4` at 67 % of source-term time ([#45](https://github.com/h0ffmann/ww3-gpu/issues/45)) |
@@ -140,7 +140,7 @@ are in [`course/09-benchmark-profile-compile-run.md`](course/09-benchmark-profil
 
 | Path | Contents |
 |---|---|
-| `course/` | The book's chapters: 16 lessons, 00 to 15, from the wave spectrum through benchmarking, modern Fortran, Kokkos, the `W3SNL1` port and bulk porting with agents, then WW4 and SWAN |
+| `course/` | The book's chapters: 17 lessons, 00 to 15 and 19, from the wave spectrum through benchmarking, modern Fortran, Kokkos, the `W3SNL1` port and bulk porting with agents, then WW4 and SWAN, and how two agents exchange messages through issues |
 | `examples/` | Self-contained runnable cases with real `.nml` input files |
 | `exercises/` | Exercises for lessons 09 to 13, with solutions, in shell, Fortran and C++ |
 | `kokkos/` | The `ww_kokkos` kernel library (`W3SNL1` ported), GoogleTest suites, and the tools `nccmp-tol`, `ww_bench_case` and `ww_fetch_analyse` |
