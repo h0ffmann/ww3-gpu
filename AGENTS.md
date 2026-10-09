@@ -207,6 +207,7 @@ audience rule for its own job; a new one does too, and its YAML front matter mus
 | `eli5` | explain a topic to someone from another field (the second audience exception) |
 | `release` | cut a citable release: tag, GitHub release, Zenodo DOI, `CITATION.cff`, `.zenodo.json` |
 | `ww4-status` | diff NOAA-EMC/WW4 against `docs/ww4-status.json` and refresh lesson 14 and the proposal |
+| `noaa-notices` | list NOAA notices (NWS PNS/SCN, NCEP model changes, NOAA-EMC/WW3 production branches) new since `docs/noaa-notices.json` and route each to the file it breaks or dates |
 | `wfip` | write, revise or report on a WFIP; `scripts/wfip.py` is its harness and `just specify` wires GitHub's Spec Kit (its `/speckit-*` skills are generated per clone and not tracked) |
 | `humanizar`, `humanizer` | remove AI tells from pt-BR and English prose without changing facts; third-party |
 | `ponytail`, `ponytail-review`, `ponytail-audit` | the laziest solution that works; over-engineering review and audit; third-party |

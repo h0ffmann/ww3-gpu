@@ -357,6 +357,7 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | GRIB / GRIB2 | ⚠ GRIdded Binary, the WMO meteorological format (not expanded in the repo) | What NOMADS serves; the `NOGRB`/`NCEP2` switches concern GRIB *output*. | [course/04-forcing.md](../course/04-forcing.md) |
 | GFS / GEFS | ⚠ Global Forecast System / Global Ensemble Forecast System (NOAA; not expanded in the repo) | NOAA's operational 0.25° winds used by example 02; 3-hourly forecast output. | [course/04-forcing.md](../course/04-forcing.md), [docs/AWESOME-WW3_202609.md](AWESOME-WW3_202609.md) |
 | NOMADS | ⚠ NOAA Operational Model Archive and Distribution System (not expanded in the repo) | Serves GFS GRIB2; `filter_gfs_0p25.pl` subsets it by box and variable. | [course/04-forcing.md](../course/04-forcing.md) |
+| PNS / SCN / TIN | Public Information Statement / Service Change Notice / Technical Implementation Notice `(v)` <https://www.weather.gov/notification/>, fetched 2026-10-09 | The NWS notices that announce changes: a PNS proposes one and opens comments, an SCN schedules it (usually 30 days ahead); TIN appears only in the 1996–2022 archive. `just noaa-notices` lists the new ones that touch this repository. | [.claude/skills/noaa-notices/SKILL.md](../.claude/skills/noaa-notices/SKILL.md) |
 | ERA5 / CDS | ECMWF's reanalysis and the Copernicus Climate Data Store that serves it `(v)` [course/04-forcing.md](../course/04-forcing.md) | The better hindcast product, not used because fetching it needs the Python `cdsapi` client. | [course/08-python.md](../course/08-python.md) |
 | GEBCO | ⚠ General Bathymetric Chart of the Oceans (not expanded in the repo) | 15-arc-second global bathymetry, `elevation` negative below sea level, sampled by example 02. | [course/03-grids.md](../course/03-grids.md) |
 | gridgen / genes_gmd / OceanMesh2D / GMSH / SMS | NOAA-EMC's MATLAB grid and obstruction generator / GMD coefficient fitter / unstructured mesh generators `(v)` [docs/AWESOME-WW3_202609.md](AWESOME-WW3_202609.md) | Grid-preparation tools outside this repo. | [course/03-grids.md](../course/03-grids.md), [course/07-physics-choices.md](../course/07-physics-choices.md) |
@@ -979,6 +980,8 @@ Every term above, alphabetically, with the section it lives in.
 - `pow11()`: [HPC and software](#hpc-and-software)
 - `powi()`: [HPC and software](#hpc-and-software)
 - `powi()` / `pow11()`: [HPC and software](#hpc-and-software)
+- PNS / SCN / TIN: [HPC and software](#hpc-and-software)
+- PNS: [HPC and software](#hpc-and-software)
 - PR0: [WW3 switches](#ww3-switches)
 - PR0 / PR1 / PR2 / PR3: [WW3 switches](#ww3-switches)
 - PR1: [WW3 switches](#ww3-switches)
@@ -1019,6 +1022,7 @@ Every term above, alphabetically, with the section it lives in.
 - RWND: [WW3 switches](#ww3-switches)
 - S, D (VS, VD): [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - Sbot/Sbt: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
+- SCN: [HPC and software](#hpc-and-software)
 - ScopeGuard: [HPC and software](#hpc-and-software)
 - ScopeGuard / `Kokkos::initialize` / `finalize` / `push_finalize_hook`: [HPC and software](#hpc-and-software)
 - `sharingan`: [HPC and software](#hpc-and-software)
@@ -1052,6 +1056,7 @@ Every term above, alphabetically, with the section it lives in.
 - shuffle / card deck: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - Sice: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - the book / *Without Changing the Answer*: [This repository's own names](#this-repositorys-own-names)
+- TIN: [HPC and software](#hpc-and-software)
 - Triton / Triton C / Triton G: [HPC and software](#hpc-and-software)
 - WeatherNext 3: [Models, projects and institutions](#models-projects-and-institutions)
 - WFIP-0002: [This repository's own names](#this-repositorys-own-names)
