@@ -85,7 +85,7 @@ real arithmetic and generally false bit for bit in float32, so they stay as the 
 | Option | Why not now | Page |
 |---|---|---|
 | Rocq + Flocq (CompCert, VST) | It is the reference IEEE-754 theory and the only one that reaches real C, but it reaches no C++, Fortran, CUDA or Triton. The proofs take months for one routine and are written by hand. CompCert's licence is non-commercial. | [rocq-flocq](../proof/rocq-flocq.md) |
-| Lean 4 (+ FloatSpec) | Core Lean now has a bit-level model of `+ − × ÷`, but `exp` is still `opaque` `(v, lean4 Init/Data/Float)`, and Lean has no path to C++. | [lean4](../proof/lean4.md) |
+| Lean 4 (+ FloatSpec) | Core Lean now has a bit-level model of `+ − × ÷`, but `exp` is still `opaque` `(v, lean4 Init/Data/Float)`, and Lean has no path to C++. A Lean check of an agent-written model is only as faithful as that translation (Appendix A). | [lean4](../proof/lean4.md) |
 | Isabelle/HOL | The AFP `IEEE_Floating_Point` entry includes FMA, but Isabelle has no C or C++ front end. | [isabelle-hol](../proof/isabelle-hol.md) |
 | Agda, Idris 2 | `Float` is a postulate, so nothing can be proved about bits. | [agda-idris2](../proof/agda-idris2.md) |
 | Liquid Haskell | It reads `Double` as an SMT real, which is unsound for bits. | [haskell-liquid-quickcheck](../proof/haskell-liquid-quickcheck.md) |
@@ -117,3 +117,31 @@ real arithmetic and generally false bit for bit in float32, so they stay as the 
   publication. Then a VCFloat2 or Gappa bound becomes worth its cost.
 - Triton gains a documented bitwise-reproducible mode ⚠ (none known on 2026-10-08).
 - NOAA-EMC/WW4 adopts a formal method for its own GPU port (`just ww4-status` would show it).
+
+## Appendix A: evidence from autoformalisation
+
+Bastounis, Circelli and Hansen (2026), *Navier-Stokes lost in translation: Why Lean verification
+of AI autoformalisation does not guarantee correct natural language proofs*,
+[arXiv:2610.08144](https://arxiv.org/abs/2610.08144) `(v, read on arxiv.org on 2026-10-09)`.
+
+The paper studies proofs that an AI translates from prose into Lean and then has Lean check. Its
+thesis is that "Lean acceptance (compilation) of translation does not imply semantic
+preservation" (§4.3). §2 gives translations that turn a wrong proof into a correct Lean proof. §3
+argues that the Lean code published with OpenAI's Navier-Stokes blow-up claim states weaker
+results than the paper it was translated from. §4 argues that resolving the ambiguities of a text
+is not computable in general (it sits at the top of the Solvability Complexity Index hierarchy).
+
+This supports fact 1 of the context by analogy. A checked theorem is a statement about the
+formal model, and its value depends on a translation step the checker does not see. Here that step
+is from the gfortran and nvcc builds to a hand-written model; in the paper it is from prose to
+Lean. The paper also covers the case of an agent writing the model, which is how a proof
+language would enter this repository.
+
+Its limits for this record:
+- It is about mathematics translated from prose, not about code. It says nothing about floating
+  point, compilers or GPUs.
+- It gives worked examples and a complexity argument, not error rates.
+- It does not bear on the SMT route of the decision, whose queries are written from the Fortran
+  and C++ operation graphs rather than from prose. A hand-written query carries the same fidelity
+  risk in a smaller form, which is why ESBMC, which builds the queries from the sources, is the
+  next rung.
