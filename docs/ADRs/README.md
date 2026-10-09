@@ -13,6 +13,9 @@ Superseded by ADR-NNNN. An accepted ADR is not edited; a new one supersedes it. 
 an ADR governs has landed, a *Results* section before *Revisit when* records what it measured, each
 number with its command.
 
+`just adrs` (or `/adrs` in Claude Code) prints one line per record: number, status, date and the
+decision its title states, read from the files rather than from the table below.
+
 | ADR | Decision | Status | Date |
 |---|---|---|---|
 | [ADR-0001](ADR-0001-proof-language.md) | No proof language for the GPU port; bit-for-bit claims are settled by exhaustive sweeps, GIMPLE diffs and SMT `QF_FP` queries (Kokkos, Triton and WeatherNext 3 scenarios) | Proposed | 2026-10-08 |

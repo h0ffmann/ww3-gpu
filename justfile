@@ -120,6 +120,10 @@ uprd *args:
 wfip *args:
     python3 scripts/wfip.py "$@"
 
+# One line per ADR (docs/ADRs): number, status, date, decision; `just adrs --status accepted`.
+adrs *args:
+    python3 scripts/adrs.py "$@"
+
 # Measured results as data (bench/results/*.json): `just results table` regenerates the tables that quote them; `check` is the CI gate.
 results *args:
     python3 scripts/results.py "$@"
