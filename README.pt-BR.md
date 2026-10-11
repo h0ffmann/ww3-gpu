@@ -51,7 +51,7 @@ versão etiquetada é uma edição, arquivada com o código no Zenodo. `just boo
 pelo CI a partir dos mesmos capítulos ([`docs/LEANPUB_202610.md`](docs/LEANPUB_202610.md): o que o
 workflow faz e os passos que só o autor pode dar), e os mesmos capítulos formam um site em
 <https://h0ffmann.github.io/ww3-gpu/>, refeito a cada merge, que também serve o PDF e uma
-página de andamento (`/andamento/`); a
+página de andamento (`/andamento/`) e a lista dos registros de decisão (`/adrs/`); a
 [ADR-0004](docs/ADRs/ADR-0004-book-channels-and-first-slice.md) registra os canais e o que a
 primeira fatia mediu.
 

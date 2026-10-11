@@ -14,7 +14,8 @@ an ADR governs has landed, a *Results* section before *Revisit when* records wha
 number with its command.
 
 `just adrs` (or `/adrs` in Claude Code) prints one line per record: number, status, date and the
-decision its title states, read from the files rather than from the table below.
+decision its title states, read from the files rather than from the table below. The same reader
+fills the `/adrs/` page of the book's website on every build.
 
 | ADR | Decision | Status | Date |
 |---|---|---|---|

@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Template: scripts/build_html.sh runs `scripts/adrs.py --site` to fill ADRS from docs/ADRs/ on every build, so this page cannot drift from the records. -->
+<title>Decisões do ww3-gpu</title>
+<style>
+/* Same layout and tokens as ../andamento/: one narrow column, summary strip, then one row per ADR, newest first, with its status pill */
+:root {
+  --bg: #f6f7f8; --surface: #ffffff; --fg: #1b1f24; --muted: #5d6670; --line: #e3e6ea;
+  --accent: #1f6f8b; --accent-soft: #e3f0f4;
+  --ok: #2f7d4f; --ok-soft: #e4f2e9; --wait: #9a5b0c; --wait-soft: #fbefdc;
+  --review: #5b4bb5; --review-soft: #ece9f8; --closed: #8a6d6d; --closed-soft: #f1ecec;
+  --sans: "Segoe UI", system-ui, sans-serif;
+  --mono: ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121417; --surface: #1a1d21; --fg: #e7eaee; --muted: #9aa3ad; --line: #2b3036;
+  --accent: #6cb6d0; --accent-soft: #1b2e36;
+  --ok: #7fc99a; --ok-soft: #1c2b22; --wait: #e7b062; --wait-soft: #33281a;
+  --review: #b0a5f0; --review-soft: #27243a; --closed: #c4a9a9; --closed-soft: #2c2424; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #121417; --surface: #1a1d21; --fg: #e7eaee; --muted: #9aa3ad; --line: #2b3036;
+  --accent: #6cb6d0; --accent-soft: #1b2e36;
+  --ok: #7fc99a; --ok-soft: #1c2b22; --wait: #e7b062; --wait-soft: #33281a;
+  --review: #b0a5f0; --review-soft: #27243a; --closed: #c4a9a9; --closed-soft: #2c2424; color-scheme: dark }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 15px; line-height: 1.5; }
+.wrap { max-width: 760px; margin: 0 auto; padding: 32px 16px 48px; display: grid; gap: 28px; }
+header { display: grid; gap: 6px; }
+.eyebrow { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+h1 { font-size: 28px; line-height: 1.2; margin: 0; text-wrap: balance; }
+.lede { color: var(--muted); margin: 0; max-width: 62ch; }
+.stats { display: flex; flex-wrap: wrap; gap: 8px 22px; font-size: 14px; color: var(--muted); }
+.stats b { color: var(--fg); font-family: var(--mono); font-weight: 500; font-variant-numeric: tabular-nums; }
+h2 { font-size: 13px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; font-weight: 600; }
+.filters { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.filters button { font: inherit; font-size: 13px; padding: 4px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); cursor: pointer; }
+.filters button[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.filters button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.feed { display: grid; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); overflow: hidden; }
+.thread { display: grid; gap: 6px; padding: 14px 16px; border-top: 1px solid var(--line); min-width: 0; }
+.thread:first-child { border-top: 0; }
+.row1 { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 10px; }
+.title { font-weight: 600; font-size: 15.5px; }
+.when { margin-left: auto; font-family: var(--mono); font-size: 12px; color: var(--muted); white-space: nowrap; }
+.desc { color: var(--muted); margin: 0; font-size: 14px; }
+.pill { font-size: 12px; font-weight: 600; padding: 1px 9px; border-radius: 999px; white-space: nowrap; }
+.s-done { background: var(--ok-soft); color: var(--ok); }
+.s-wait { background: var(--wait-soft); color: var(--wait); }
+.s-review { background: var(--review-soft); color: var(--review); }
+.dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+footer { font-size: 13px; color: var(--muted); display: grid; gap: 6px; }
+footer p { margin: 0; max-width: 70ch; }
+footer a, .lede a { color: var(--accent); }
+.num { font-family: var(--mono); font-size: 13px; color: var(--accent); text-decoration: none; }
+.num:hover { text-decoration: underline; }
+.title { flex-basis: 100%; }
+.s-closed { background: var(--closed-soft); color: var(--closed); }
+@media (max-width: 480px) { .when { margin-left: 0; width: 100%; } h1 { font-size: 24px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">ww3-gpu · registros de decisão</div>
+    <h1>Decisões de arquitetura (ADRs)</h1>
+    <p class="lede">Cada ADR registra uma escolha do laboratório, o contexto que a forçou, as alternativas pesadas e o que decorre dela. Uma ADR aceita não é editada: outra a substitui. O texto completo de cada uma está em <a href="https://github.com/h0ffmann/ww3-gpu/tree/main/docs/ADRs">docs/ADRs</a>.</p>
+    <div class="stats" id="stats"></div>
+  </header>
+
+  <section aria-labelledby="h-adrs">
+    <h2 id="h-adrs">Registros, mais recentes primeiro</h2>
+    <div class="filters" role="group" aria-label="Filtrar por estado">
+      <button type="button" data-f="all" aria-pressed="true">Todas</button>
+      <button type="button" data-f="accepted" aria-pressed="false">Aceitas</button>
+      <button type="button" data-f="proposed" aria-pressed="false">Propostas</button>
+      <button type="button" data-f="closed" aria-pressed="false">Substituídas ou rejeitadas</button>
+    </div>
+    <div class="feed" id="feed"></div>
+  </section>
+
+  <footer>
+    <p>Gerada a cada build do site a partir de <code>docs/ADRs/</code> por <code>scripts/adrs.py --site</code>, o mesmo leitor de <code>just adrs</code>: o título é a linha <code># ADR-NNNN</code> e o estado e a data vêm da tabela de cabeçalho de cada registro.</p>
+    <p><a href="../">O livro</a> · <a href="../andamento/">Andamento do projeto</a></p>
+  </footer>
+</div>
+
+<script>
+const BLOB = "https://github.com/h0ffmann/ww3-gpu/blob/main/docs/ADRs/";
+// n, status, date, title, file; filled from docs/ADRs/ at build time.
+const ADRS = [];
+const KIND = s => /^accepted/i.test(s) ? "accepted" : /^proposed/i.test(s) ? "proposed" : "closed";
+const LABEL = { accepted: "Aceita", proposed: "Proposta", closed: "Substituída ou rejeitada" };
+const CLS = { accepted: "s-done", proposed: "s-wait", closed: "s-closed" };
+const esc = s => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const fmt = d => /^\d{4}-\d{2}-\d{2}$/.test(d) ? new Date(d + "T12:00:00Z").toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" }) : esc(d);
+const count = k => ADRS.filter(a => KIND(a.status) === k).length;
+document.getElementById("stats").innerHTML =
+  `<span><b>${ADRS.length}</b> registros</span><span><b>${count("accepted")}</b> aceitos</span><span><b>${count("proposed")}</b> propostos</span><span><b>${count("closed")}</b> substituídos ou rejeitados</span>`;
+
+function render(f) {
+  document.getElementById("feed").innerHTML = ADRS.filter(a => f === "all" || KIND(a.status) === f).map(a => `
+    <article class="thread">
+      <div class="row1"><a class="num" href="${BLOB}${encodeURIComponent(a.file)}">${esc(a.n)}</a><span class="pill ${CLS[KIND(a.status)]}" title="${esc(a.status)}">${LABEL[KIND(a.status)]}</span><span class="when">${fmt(a.date)}</span><span class="title">${esc(a.title)}</span></div>
+    </article>`).join("") || `<article class="thread"><p class="desc">Nenhum registro neste estado.</p></article>`;
+}
+document.querySelectorAll(".filters button").forEach(b => b.addEventListener("click", () => {
+  document.querySelectorAll(".filters button").forEach(x => x.setAttribute("aria-pressed", x === b));
+  render(b.dataset.f);
+}));
+render("all");
+</script>
+</body>
+</html>
