@@ -44,6 +44,8 @@ The manual chapter behind most switch rows is `WW3/manual/impl/switch.tex`.
 | LabECO | Laboratório de Engenharia e Ciências Oceânicas `(v)` [pubs/proposal/pt/03-theme.md](../pubs/proposal/pt/03-theme.md) | The UFSC laboratory that runs WW3 operationally for ReNOMO and whose configuration the proposal optimises. | [pubs/proposal/pt/](../pubs/proposal/pt/), [course/09-benchmark-profile-compile-run.md](../course/09-benchmark-profile-compile-run.md) |
 | UFSC | Universidade Federal de Santa Catarina `(v)` [pubs/proposal/pt/03-theme.md](../pubs/proposal/pt/03-theme.md) | Home of LabECO and of the co-advisor. | [pubs/proposal/meta.pt.yaml](../pubs/proposal/meta.pt.yaml) |
 | UFRJ | Universidade Federal do Rio de Janeiro `(v)` [pubs/proposal/meta.pt.yaml](../pubs/proposal/meta.pt.yaml) | The university whose Escola Politécnica receives the graduation-project proposal. | [README.md](../README.md), [course/00-orientation.md](../course/00-orientation.md) |
+| UFBA | Universidade Federal da Bahia ⚠ general knowledge | The university of the LOSUFBA group. | [docs/ADRs/ADR-0008-portabilidade-projeto-max-team-losufba.pt.md](ADRs/ADR-0008-portabilidade-projeto-max-team-losufba.pt.md) |
+| LOSUFBA | ⚠ not expanded; the collaborating group at UFBA, named as the owner wrote it | The group whose Claude Team organization ADR-0008 plans the move to. | [docs/ADRs/ADR-0008-portabilidade-projeto-max-team-losufba.pt.md](ADRs/ADR-0008-portabilidade-projeto-max-team-losufba.pt.md) |
 | DEL | Departamento de Engenharia Eletrônica e de Computação `(v)` [pubs/proposal/meta.pt.yaml](../pubs/proposal/meta.pt.yaml) | The UFRJ/Poli department whose proposal template and fixed section names `pubs/proposal/` follows. | [README.md](../README.md), [pubs/proposal/template.tex](../pubs/proposal/template.tex) |
 | ReNOMO | Rede Nacional de Observação e Monitoramento Oceânico `(v)` [pubs/proposal/pt/03-theme.md](../pubs/proposal/pt/03-theme.md) | The national ocean-observation network whose forecast cycle LabECO's WW3 feeds. | [pubs/proposal/pt/01-title.md](../pubs/proposal/pt/01-title.md) |
 | CNPq / MCTI / Finep | ⚠ Conselho Nacional de Desenvolvimento Científico e Tecnológico / Ministério da Ciência, Tecnologia e Inovação / Financiadora de Estudos e Projetos; only the call number "062/2022" is `(v)` in [pubs/proposal/pt/03-theme.md](../pubs/proposal/pt/03-theme.md) | The funding call behind ReNOMO. | [pubs/proposal/pt/03-theme.md](../pubs/proposal/pt/03-theme.md) |
@@ -299,6 +301,7 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | Leanpub / Markua | the self-publishing platform (free to read when the minimum price is 0; a one-time fee per new book) and its Markdown dialect `(v)` [docs/LEANPUB_202610.md](LEANPUB_202610.md), 2026-10-08 | The book's free edition: `scripts/leanpub_manuscript.py` exports `course/*.md` as Markua into the `leanpub` branch, which the Leanpub book reads in its Git and GitHub writing mode; `leanpub.yml` does it on each merge. | [pubs/README.md](../pubs/README.md), [docs/WFIPs/WFIP-0002-lab-as-a-book.md](WFIPs/WFIP-0002-lab-as-a-book.md) |
 | `sharingan` | the skill that ports a skill, workflow or pattern from another repository by URL, vendored from marola-devkit (MIT) `(v)` [.claude/skills/sharingan/SKILL.md](../.claude/skills/sharingan/SKILL.md) | Fetches the unit at a pinned commit, lets the licence decide vendor, adapt or rewrite, maps every upstream concept to a home here (WFIP, ADR, `AGENTS.md`, a skill) and writes the `skills.lock` entry and the `.patch`. Named after the copying eye of the manga *Naruto*. | [AGENTS.md](../AGENTS.md), [CONTRIBUTING.md](../CONTRIBUTING.md) |
 | Spec Kit / `specify` | GitHub's spec-driven development toolkit and its CLI, `specify` 1.1.2 `(v)` [github.com/github/spec-kit](https://github.com/github/spec-kit), 2026-10-08 | `just specify init` generates `.specify/` and the `/speckit-*` skills per clone (not tracked); `.specify/memory/constitution.md` restates `AGENTS.md`; a spec lives in `specs/<NNN-slug>/spec.md` and is named in its WFIP. | [CONTRIBUTING.md](../CONTRIBUTING.md), [.claude/skills/wfip/SKILL.md](../.claude/skills/wfip/SKILL.md) |
+| Projects (Claude Code) / Claude Tag | Claude Code's project feature, which coordinates parallel cloud threads with shared instructions, memory and routines, in public beta on Pro and Max only; and Claude in Slack channels, on Team and Enterprise only `(v)` [code.claude.com/docs/en/claude-projects](https://code.claude.com/docs/en/claude-projects), 2026-10-11 | A project belongs to one user and cannot be shared; ADR-0008 says what of it can move to a Team organization. | [docs/ADRs/ADR-0005-claude-project-settings-in-repo.md](ADRs/ADR-0005-claude-project-settings-in-repo.md), [docs/ADRs/ADR-0008-portabilidade-projeto-max-team-losufba.pt.md](ADRs/ADR-0008-portabilidade-projeto-max-team-losufba.pt.md) |
 | Vale / `vale-ai-tells` | a prose linter (3.15.2) and its style package of AI-writing tells (v1.37.0) `(v)` [github.com/errata-ai/vale](https://github.com/errata-ai/vale), [github.com/tbhb/vale-ai-tells](https://github.com/tbhb/vale-ai-tells), 2026-10-08 | `just vale` is the CI gate on the English Markdown (the em dash and the never-right tells, `.vale.ini`); `just vale --report` lists the judgement rules (`.vale-report.ini`). | [CONTRIBUTING.md](../CONTRIBUTING.md), [scripts/vale.sh](../scripts/vale.sh) |
 | MPI | Message Passing Interface `(v)` `WW3/manual/impl/switch.tex` | Distributed-memory parallelism; Open MPI 5.0.10 is pinned, and Fortran owns `MPI_Init`. | [course/09-benchmark-profile-compile-run.md](../course/09-benchmark-profile-compile-run.md), [docs/AGENTS_KOKKOS_202609.md](AGENTS_KOKKOS_202609.md) |
 | OpenMP | ⚠ Open Multi-Processing (`\omp` = "OpenMP" in `WW3/manual/defs.tex`) | Directive-based threading (`OMPG`/`OMPH`) and one of the Kokkos backends; `OMP_NUM_THREADS`/`OMP_PROC_BIND` must be set explicitly. | [course/09-benchmark-profile-compile-run.md](../course/09-benchmark-profile-compile-run.md), [kokkos/CMakeLists.txt](../kokkos/CMakeLists.txt) |
@@ -533,6 +536,7 @@ Every term above, alphabetically, with the section it lives in.
 - cdo: [HPC and software](#hpc-and-software)
 - CDS: [HPC and software](#hpc-and-software)
 - CFF / `CITATION.cff`: [Citation and licensing](#citation-and-licensing)
+- Claude Tag: [HPC and software](#hpc-and-software)
 - codemeta / `codemeta.json`: [Citation and licensing](#citation-and-licensing)
 - CFL: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - CG: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
@@ -811,6 +815,7 @@ Every term above, alphabetically, with the section it lives in.
 - LN0 / LN1 / SEED: [WW3 switches](#ww3-switches)
 - LN1: [WW3 switches](#ww3-switches)
 - log.ww3: [WW3 programs and files](#ww3-programs-and-files)
+- LOSUFBA: [Models, projects and institutions](#models-projects-and-institutions)
 - LRB4: [WW3 switches](#ww3-switches)
 - LTA: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - Managed Memory: [HPC and software](#hpc-and-software)
@@ -993,6 +998,7 @@ Every term above, alphabetically, with the section it lives in.
 - PR2: [WW3 switches](#ww3-switches)
 - PR3: [WW3 switches](#ww3-switches)
 - pratico: [HPC and software](#hpc-and-software)
+- Projects (Claude Code): [HPC and software](#hpc-and-software)
 - PTP: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - publisher: [HPC and software](#hpc-and-software)
 - `proof/`: [This repository's own names](#this-repositorys-own-names)
@@ -1163,6 +1169,7 @@ Every term above, alphabetically, with the section it lives in.
 - TSA / FBI (NL4): [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - TUS: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - UBSan: [HPC and software](#hpc-and-software)
+- UFBA: [Models, projects and institutions](#models-projects-and-institutions)
 - UFRJ: [Models, projects and institutions](#models-projects-and-institutions)
 - UFS: [Models, projects and institutions](#models-projects-and-institutions)
 - UFSC: [Models, projects and institutions](#models-projects-and-institutions)
