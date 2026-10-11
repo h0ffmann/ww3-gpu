@@ -49,7 +49,7 @@ has the pipeline. A free Leanpub edition is fed by CI from the same chapters
 ([`docs/LEANPUB_202610.md`](docs/LEANPUB_202610.md): what the workflow does and the steps only
 the author can take), and the same chapters are a website at
 <https://h0ffmann.github.io/ww3-gpu/>, rebuilt on every merge, that also serves the PDF and a
-progress page (`/andamento/`); [ADR-0004](docs/ADRs/ADR-0004-book-channels-and-first-slice.md) records the
+progress page (`/andamento/`) and the list of decision records (`/adrs/`); [ADR-0004](docs/ADRs/ADR-0004-book-channels-and-first-slice.md) records the
 channels and what the first slice measured.
 
 ## Study areas
