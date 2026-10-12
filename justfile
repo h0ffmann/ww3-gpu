@@ -191,10 +191,12 @@ vm: _nix-config-full
 vm-reset: _nix-config-full
     just -f nix-config/justfile -d nix-config vm-reset
 
-# The VM lives at nix-config's root, which the labs/pratico sparse checkout leaves off disk.
+# The VM lives at nix-config's root, which the labs/pratico sparse checkout leaves off disk,
+# and nix refuses a shallow git checkout ("'revCount' is not available"), which .gitmodules makes it.
 # Local state only; `just submodule-init` or `just up` makes it sparse again.
 _nix-config-full:
     @[ -f nix-config/flake.nix ] || { echo "vm: checking out all of nix-config (was sparse: labs/pratico)"; git -C nix-config sparse-checkout disable; }
+    @[ "$(git -C nix-config rev-parse --is-shallow-repository)" = false ] || { echo "vm: fetching nix-config's full history (was shallow)"; git -C nix-config fetch --unshallow; }
 
 # Add the WW3 fork as ./WW3, or initialise it after a fresh clone.
 src-init:
