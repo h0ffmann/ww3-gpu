@@ -14,3 +14,6 @@ nav.sitenav { border-bottom: 1px solid #ddd; margin-bottom: 1em; font-size: 0.9e
   pre { background: #222; }
   th, td { border-color: #444; }
 }
+nav.site-links { font-size: 0.9em; margin-bottom: 1em; }
+/* pandoc's chunked nav gives each link half the row, which squeezes a phone into one word per line */
+@media (max-width: 40em) { div.sitenav span.navlink { flex: 1 1 auto; } }

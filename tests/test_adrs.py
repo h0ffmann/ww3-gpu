@@ -14,6 +14,19 @@ class AdrSummary(unittest.TestCase):
         (d / "README.md").write_text("# not an ADR\n", encoding="utf-8")
         self.assertEqual(adrs.load(d), [("ADR-0007", "Accepted", "2026-01-02", "Do the thing")])
 
+    def test_site_fills_the_placeholder_newest_first(self):
+        d = pathlib.Path(tempfile.mkdtemp())
+        for n in ("0001", "0002"):
+            (d / f"ADR-{n}-x.md").write_text(
+                f"# ADR-{n}: Do </script> {n}\n\n| **Status** | Accepted |\n| **Date** | 2026-01-0{n[-1]} |\n",
+                encoding="utf-8")
+        (d / "t.html").write_text("<script>const ADRS = [];</script>", encoding="utf-8")
+        adrs.site(d / "t.html", d / "o.html", d)
+        out = (d / "o.html").read_text(encoding="utf-8")
+        self.assertLess(out.index("ADR-0002"), out.index("ADR-0001"))
+        self.assertIn('"file": "ADR-0002-x.md"', out)
+        self.assertEqual(out.count("</script>"), 1)
+
     def test_every_committed_adr_parses(self):
         for num, status, date, title in adrs.load():
             self.assertNotIn("?", (status, date), num)

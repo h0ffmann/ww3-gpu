@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Snapshot of the Claude project threads and PRs; rebuilt by hand from the project, not by CI (the thread data only exists inside the project). -->
+<title>Andamento Wave Forecaster</title>
+<style>
+/* Layout: one narrow column like the Projects feed; summary strip, then threads newest first, each a row with status pill and its PRs */
+:root {
+  --bg: #f6f7f8; --surface: #ffffff; --fg: #1b1f24; --muted: #5d6670; --line: #e3e6ea;
+  --accent: #1f6f8b; --accent-soft: #e3f0f4;
+  --ok: #2f7d4f; --ok-soft: #e4f2e9; --wait: #9a5b0c; --wait-soft: #fbefdc;
+  --review: #5b4bb5; --review-soft: #ece9f8; --closed: #8a6d6d; --closed-soft: #f1ecec;
+  --sans: "Segoe UI", system-ui, sans-serif;
+  --mono: ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121417; --surface: #1a1d21; --fg: #e7eaee; --muted: #9aa3ad; --line: #2b3036;
+  --accent: #6cb6d0; --accent-soft: #1b2e36;
+  --ok: #7fc99a; --ok-soft: #1c2b22; --wait: #e7b062; --wait-soft: #33281a;
+  --review: #b0a5f0; --review-soft: #27243a; --closed: #c4a9a9; --closed-soft: #2c2424; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #121417; --surface: #1a1d21; --fg: #e7eaee; --muted: #9aa3ad; --line: #2b3036;
+  --accent: #6cb6d0; --accent-soft: #1b2e36;
+  --ok: #7fc99a; --ok-soft: #1c2b22; --wait: #e7b062; --wait-soft: #33281a;
+  --review: #b0a5f0; --review-soft: #27243a; --closed: #c4a9a9; --closed-soft: #2c2424; color-scheme: dark }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 15px; line-height: 1.5; }
+.wrap { max-width: 760px; margin: 0 auto; padding: 32px 16px 48px; display: grid; gap: 28px; }
+header { display: grid; gap: 6px; }
+.eyebrow { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+h1 { font-size: 28px; line-height: 1.2; margin: 0; text-wrap: balance; }
+.lede { color: var(--muted); margin: 0; max-width: 62ch; }
+.stats { display: flex; flex-wrap: wrap; gap: 8px 22px; font-size: 14px; color: var(--muted); }
+.stats b { color: var(--fg); font-family: var(--mono); font-weight: 500; font-variant-numeric: tabular-nums; }
+h2 { font-size: 13px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; font-weight: 600; }
+.filters { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.filters button { font: inherit; font-size: 13px; padding: 4px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); cursor: pointer; }
+.filters button[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.filters button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.feed { display: grid; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); overflow: hidden; }
+.thread { display: grid; gap: 6px; padding: 14px 16px; border-top: 1px solid var(--line); min-width: 0; }
+.thread:first-child { border-top: 0; }
+.row1 { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 10px; }
+.title { font-weight: 600; font-size: 15.5px; }
+.when { margin-left: auto; font-family: var(--mono); font-size: 12px; color: var(--muted); white-space: nowrap; }
+.desc { color: var(--muted); margin: 0; font-size: 14px; }
+.pill { font-size: 12px; font-weight: 600; padding: 1px 9px; border-radius: 999px; white-space: nowrap; }
+.s-done { background: var(--ok-soft); color: var(--ok); }
+.s-wait { background: var(--wait-soft); color: var(--wait); }
+.s-review { background: var(--review-soft); color: var(--review); }
+.prs { display: flex; flex-wrap: wrap; gap: 6px; }
+.pr { font-family: var(--mono); font-size: 12px; padding: 2px 8px; border-radius: 6px; border: 1px solid var(--line); color: var(--fg); text-decoration: none; display: inline-flex; gap: 6px; align-items: center; }
+.pr:hover { border-color: var(--accent); }
+.dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.merged .dot { background: var(--review); } .open .dot { background: var(--ok); } .closed .dot { background: var(--closed); }
+.open-list { display: grid; gap: 0; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); overflow: hidden; }
+.open-list a { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; padding: 12px 16px; border-top: 1px solid var(--line); color: var(--fg); text-decoration: none; }
+.open-list a:first-child { border-top: 0; }
+.open-list a:hover .t { color: var(--accent); }
+.open-list .n { font-family: var(--mono); font-size: 13px; color: var(--accent); }
+.open-list .t { min-width: 0; }
+.open-list .m { grid-column: 2; font-size: 13px; color: var(--muted); }
+footer { font-size: 13px; color: var(--muted); display: grid; gap: 6px; }
+footer p { margin: 0; max-width: 70ch; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+@media (max-width: 480px) { .when { margin-left: 0; width: 100%; } h1 { font-size: 24px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">ww3-gpu · projeto Wave Forecaster</div>
+    <h1>Andamento do Wave Forecaster</h1>
+    <p class="lede">O que foi feito no repositório <a href="https://github.com/h0ffmann/ww3-gpu" style="color:var(--accent)">h0ffmann/ww3-gpu</a> entre 7 e 11 de outubro de 2026, organizado como as conversas (threads) do projeto no Claude. Cada thread é uma tarefa; os PRs são o resultado no GitHub.</p>
+    <div class="stats" id="stats"></div>
+  </header>
+
+  <section aria-labelledby="h-open">
+    <h2 id="h-open">PRs abertos</h2>
+    <div class="open-list" id="open"></div>
+  </section>
+
+  <section aria-labelledby="h-threads">
+    <h2 id="h-threads">Threads, mais recentes primeiro</h2>
+    <div class="filters" role="group" aria-label="Filtrar por estado">
+      <button type="button" id="f-all" data-f="all" aria-pressed="true">Todas</button>
+      <button type="button" id="f-wait" data-f="wait" aria-pressed="false">Aguardando decisão</button>
+      <button type="button" id="f-review" data-f="review" aria-pressed="false">Para revisar</button>
+      <button type="button" id="f-done" data-f="done" aria-pressed="false">Concluídas</button>
+    </div>
+    <div class="feed" id="feed"></div>
+  </section>
+
+  <footer>
+    <div class="legend"><span><i class="dot" style="background:var(--review)"></i>PR integrado (merged)</span><span><i class="dot" style="background:var(--ok)"></i>PR aberto</span><span><i class="dot" style="background:var(--closed)"></i>PR fechado sem integrar</span></div>
+    <p>Retrato tirado em 11/10/2026 a partir das threads do projeto e do estado dos PRs no GitHub naquele momento. Um projeto do Claude não pode ser compartilhado com outra pessoa, por isso esta página é uma cópia estática; o estado ao vivo de cada PR está no link dele.</p>
+  </footer>
+</div>
+
+<script>
+const REPO = "https://github.com/h0ffmann/ww3-gpu/pull/";
+// state: done | wait | review. prs: [number, "merged"|"open"|"closed", title]
+const THREADS = [
+  { t: "ADR para adotar o Graphify", s: "done", d: "2026-10-11T05:04", x: "ADR-0007 registra a adoção do Graphify para consultar o código do repositório.", prs: [[97,"merged","docs(adr): ADR-0007"]] },
+  { t: "Levantamento de repositórios de skills de pesquisa", s: "done", d: "2026-10-11T04:46", x: "Comparação de coleções de skills para pesquisa agêntica; resultado em nota interna, sem PR.", prs: [] },
+  { t: "Atualização diária de dependências", s: "wait", d: "2026-10-11T13:02", x: "Rotina que move submódulos e Actions para as versões novas, um PR por dia.", prs: [[98,"open","nix-config na ponta de main"],[95,"merged","skills-vendor no marola-devkit v0.8.3"],[93,"merged","Actions do GitHub nas majors atuais"]] },
+  { t: "ADR: doar o ferramental para a UFSC", s: "review", d: "2026-10-10T19:10", x: "ADR-0006 (Proposta): mover figuras, gates e revisores genéricos para codigos.ufsc.br/agentic-research como submódulo. Depende de a UFSC criar um projeto público.", prs: [[96,"open","ADR-0006, doar o ferramental agêntico a codigos.ufsc.br"]] },
+  { t: "Avisos da NOAA", s: "done", d: "2026-10-09T05:10", x: "Skill que lista avisos da NWS, mudanças de modelo do NCEP e branches de produção do WW3 que afetam o repositório.", prs: [[87,"merged","noaa-notices"]] },
+  { t: "Comando de resumo das ADRs", s: "done", d: "2026-10-09T13:30", x: "`just adrs` mostra uma linha por ADR; ADR-0001, 0003, 0004 e 0005 aceitas.", prs: [[88,"merged","just adrs e /adrs"],[94,"merged","Aceitar ADR-0001, 0003, 0004, 0005"]] },
+  { t: "ADR: configurações do projeto Claude no repositório", s: "done", d: "2026-10-09T05:35", x: "ADR-0005: as instruções e rotinas do projeto ficam versionadas em .claude/project/.", prs: [[89,"merged","ADR-0005"]] },
+  { t: "Google Weather vs IFS", s: "done", d: "2026-10-09T06:04", x: "Comparação do vento do Google Weather com o IFS do ECMWF como forçante; respondida na thread.", prs: [] },
+  { t: "Corrigir issue 38 (Antigravity)", s: "wait", d: "2026-10-09T05:42", x: "As skills passam a ser lidas também pelo Antigravity e as checagens dos agentes rodam no CI.", prs: [[91,"merged","Skills no Antigravity, checagens no CI"]] },
+  { t: "Bump de submódulos e Bend F64", s: "done", d: "2026-10-09T05:05", x: "WW3 e nix-config atualizados, fork do WW4 no lugar do Bend; plano de prova bit a bit e ADR-0001.", prs: [[90,"merged","ADR-0001, apêndice sobre autoformalização"],[58,"merged","Remover o teste do Bend"],[56,"merged","Submódulos e /update-sub-modules"],[43,"merged","Plano de prova bit a bit, ADR-0001"]] },
+  { t: "Livro como site estático no GitHub Pages", s: "done", d: "2026-10-08T18:42", x: "O livro compilado do repositório também sai como site.", prs: [[78,"merged","O livro no GitHub Pages"]] },
+  { t: "Citação no Zenodo", s: "done", d: "2026-10-08T08:16", x: "DOI de conceito e de versão, release semanal, arquivo no Software Heritage. O PR do coorientador segue aberto.", prs: [[77,"merged","Citar v0.1.1 pelo DOI de versão"],[75,"merged","Release com [skip ci]"],[70,"merged","Software Heritage a cada release"],[59,"merged","Release semanal"],[23,"open","Proposta: Nelson Violante de Carvalho como coorientador"]] },
+  { t: "Reposicionar o repositório como livro", s: "done", d: "2026-10-08T07:42", x: "O repositório vira um livro sobre programação e pesquisa agêntica; edição Leanpub no CI.", prs: [[74,"merged","Reposicionamento como livro"]] },
+  { t: "Corrigir issue 37: cronograma", s: "done", d: "2026-10-08T06:12", x: "Cronograma da proposta desenhado como grade mensal, em português e inglês.", prs: [[71,"merged","Cronograma em grade mensal"]] },
+  { t: "Ordem de port por tempo medido", s: "done", d: "2026-10-08T06:30", x: "ADR-0002: a próxima rotina portada é a mais cara no perfil medido (W3SDS4 antes de W3SIN4).", prs: [[72,"merged","ADR-0002"],[69,"merged","Ordem de port por tempo de parede"],[73,"closed","Travessões fora dos docs de prova"]] },
+  { t: "Plano de port Triton (#45)", s: "done", d: "2026-10-08T06:08", x: "Plano de port do W3SDS4 para Triton, peso CPU/GPU num H100, WFIPs ligados às entregas da proposta. Avaliação do NOOA da NVIDIA aberta.", prs: [[64,"merged","WFIP-0001 aponta a issue #63"],[61,"merged","WFIPs, Spec Kit, WFIP-0001"],[60,"merged","Plano Triton do W3SDS4"],[57,"closed","Primeira versão do plano"],[25,"open","Avaliar NVIDIA NOOA para o port Kokkos"]] },
+  { t: "SPIKE-001: repositório pronto para pesquisa", s: "done", d: "2026-10-08T06:02", x: "codemeta, formulários de issue, diário de pesquisa, registros de resultados e ambiente dos agentes.", prs: [[67,"merged","Quick wins do SPIKE-001"]] },
+  { t: "Issue de acompanhamento do Triton C/G", s: "wait", d: "2026-10-08T06:00", x: "Issue de acompanhamento do port; aguarda uma decisão de escopo.", prs: [[46,"closed","Ordem de port (substituído por #69)"]] },
+  { t: "Corrigir issue 36: estilo da prosa", s: "done", d: "2026-10-08T05:36", x: "Gate do Vale contra marcas de texto gerado por IA; travessões fora dos docs.", prs: [[66,"merged","Gate de prosa do Vale"]] },
+  { t: "Diagramas determinísticos", s: "done", d: "2026-10-08T02:47", x: "Harness para os diagramas Mermaid: cartão de leitura obrigatório e renders checados no CI.", prs: [[55,"merged","Harness de figuras"]] },
+  { t: "Status do WW4", s: "done", d: "2026-10-07T23:18", x: "Estado do WAVEWATCH IV em 07/10, DIA na grade do WW4 e rotina /ww4-status.", prs: [[53,"merged","Status do WW4 e /ww4-status"]] },
+];
+const LABEL = { done: "Concluída", wait: "Aguardando decisão", review: "Pronta para revisão" };
+const CLS = { done: "s-done", wait: "s-wait", review: "s-review" };
+const fmt = iso => new Date(iso + ":00Z").toLocaleString("pt-BR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" });
+const esc = s => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const code = s => esc(s).replace(/`([^`]+)`/g, "<code>$1</code>");
+
+THREADS.sort((a, b) => b.d.localeCompare(a.d));
+const all = THREADS.flatMap(t => t.prs.map(p => ({ n: p[0], st: p[1], ti: p[2], th: t.t })));
+const merged = all.filter(p => p.st === "merged").length;
+const open = all.filter(p => p.st === "open");
+document.getElementById("stats").innerHTML =
+  `<span><b>${THREADS.length}</b> threads</span><span><b>${merged}</b> PRs integrados</span><span><b>${open.length}</b> PRs abertos</span><span><b>${THREADS.filter(t => t.s !== "done").length}</b> threads esperando alguém</span>`;
+document.getElementById("open").innerHTML = open.sort((a, b) => b.n - a.n).map(p =>
+  `<a href="${REPO}${p.n}"><span class="n">#${p.n}</span><span class="t">${esc(p.ti)}</span><span class="m">${esc(p.th)}</span></a>`).join("");
+
+function render(f) {
+  document.getElementById("feed").innerHTML = THREADS.filter(t => f === "all" || t.s === f).map(t => `
+    <article class="thread">
+      <div class="row1"><span class="title">${esc(t.t)}</span><span class="pill ${CLS[t.s]}">${LABEL[t.s]}</span><span class="when">${fmt(t.d)}</span></div>
+      <p class="desc">${code(t.x)}</p>
+      ${t.prs.length ? `<div class="prs">${t.prs.map(p => `<a class="pr ${p[1]}" href="${REPO}${p[0]}" title="${esc(p[2])}"><i class="dot"></i>#${p[0]}</a>`).join("")}</div>` : ""}
+    </article>`).join("");
+}
+document.querySelectorAll(".filters button").forEach(b => b.addEventListener("click", () => {
+  document.querySelectorAll(".filters button").forEach(x => x.setAttribute("aria-pressed", x === b));
+  render(b.dataset.f);
+}));
+render("all");
+</script>
+</body>
+</html>
