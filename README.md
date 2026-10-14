@@ -189,9 +189,12 @@ anyone's table, including the ones here. The Kokkos port takes the other route: 
 their data on the device and match the Fortran bit for bit
 ([`course/09-benchmark-profile-compile-run.md`](course/09-benchmark-profile-compile-run.md)).
 
-WW3 runs with that port in two ways (`scripts/hoff.sh`). The Fortran is WW3's own: the `WW3/`
-submodule, h0ffmann/WW3 at the branch `hoff/kokkos-snl1`; this repository holds only the Kokkos
-side.
+There are three ways to run WAVEWATCH here (`scripts/hoff.sh`). The model sources come only from
+personal forks: WW3's Fortran from the `WW3/` submodule (h0ffmann/WW3, branch `hoff/kokkos-snl1`)
+and WW4's C++ from the `WW4/` submodule (h0ffmann/WW4, `develop`). This repository holds only the
+Kokkos rewrite.
+
+![ww3-gpu: three ways to run WAVEWATCH. --ww3 runs WW3's Fortran from the fork; --hoff links the same fork to this repository's Kokkos rewrite and compares the two; --ww4 builds WAVEWATCH IV from its fork, and stops with exit 5 when a part the case needs is not ported](docs/figures/three-ways.svg)
 
 ```bash
 just smoke             # smoke-ww3, then smoke-hoff: regtest ww3_ts1, seconds
@@ -199,11 +202,16 @@ just smoke-ww3         # --ww3: WW3 as written
 just smoke-hoff        # --hoff: WW3 with the Kokkos DIA (W3SNL1), compared with the Fortran run
 just full-ww3          # the expensive case: bench_small, 9 520 sea points, minutes
 just full-hoff         # the same with the Kokkos DIA
+just smoke-ww4         # --ww4: WAVEWATCH IV; exit 5 while a part the case needs is not ported
+just full-ww4          # the same on bench_small; `just ww4-parts full` lists the parts
 just port-score        # how much of WW3 runs on Kokkos, and the routines ranked by time
 ```
 
-`--hoff` uses CUDA when `nvidia-smi` sees a GPU, else OpenMP (`just smoke-hoff openmp`). On
-14 October 2026 both cases passed on OpenMP; the GPU run was not made yet
+`--hoff` uses CUDA when `nvidia-smi` sees a GPU, else OpenMP (`just smoke-hoff openmp`); when an
+NVIDIA GPU is present and its driver does not answer, it stops and says why (exit 4). On
+14 October 2026 both cases passed on OpenMP; the GPU run was not made yet. `--ww4` stops with
+exit 5 on both cases today: WW4's `develop` has the time loop and no source term or propagation
+solver yet
 ([`docs/PORT_ASSESSMENT_202610.md`](docs/PORT_ASSESSMENT_202610.md)).
 
 ## structure

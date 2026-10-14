@@ -78,6 +78,18 @@ full-ww3:
 full-hoff backend="auto":
     bash scripts/hoff.sh --hoff full --backend {{backend}}
 
+# The same cases on WAVEWATCH IV, built from the WW4/ submodule (h0ffmann/WW4). Exit 5, before
+# any build, when a part the case needs is not ported to WW4 yet (scripts/ww4_parts.py).
+smoke-ww4:
+    bash scripts/hoff.sh --ww4 smoke
+
+full-ww4:
+    bash scripts/hoff.sh --ww4 full
+
+# Which parts of a case WW4 has, and which it does not (exit 5 if one is missing).
+ww4-parts case="smoke":
+    python3 scripts/ww4_parts.py {{case}}
+
 # Profile WW3 as written on a case (smoke: ww3_ts1; full: bench_small) with gprof -> docs/data/ww3_<case>_gprof.tsv.
 profile-case case="full":
     bash scripts/profile_case.sh {{case}}

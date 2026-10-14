@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" width="960" height="600" role="img" aria-labelledby="title desc" font-family="'Source Sans 3', 'Segoe UI', system-ui, sans-serif">
+  <title id="title">ww3-gpu: three ways to run WAVEWATCH</title>
+  <desc id="desc">Three columns. --ww3 builds WW3's Fortran from the h0ffmann/WW3 fork and runs it as written. --hoff builds the same fork with the KOKKOS switch and links this repository's Kokkos rewrite, runs W3SNL1 on OpenMP or CUDA, and compares the output with the Fortran run. --ww4 builds WAVEWATCH IV from the h0ffmann/WW4 fork, after checking that every part the case needs is ported; if one is not, it stops with exit code 5.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M1 1 L9 5 L1 9" fill="none" stroke="#1682D4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <style>
+      .card { fill: #FFFFFF; stroke: #1682D4; stroke-width: 3; }
+      .fork { fill: #EAF3FB; stroke: #1682D4; stroke-width: 2.5; }
+      .ours { fill: #FFF6D6; stroke: #F2B705; stroke-width: 2.5; }
+      .step { fill: #FFFFFF; stroke: #9DB4C6; stroke-width: 1.5; }
+      .stop { fill: #FDECEC; stroke: #C2410C; stroke-width: 2; }
+      .flow { fill: none; stroke: #1682D4; stroke-width: 2.5; stroke-linecap: round; marker-end: url(#arrow); }
+      .h { font-size: 26px; font-weight: 700; fill: #0B2A3F; }
+      .flag { font: 700 24px ui-monospace, 'SFMono-Regular', Menlo, monospace; fill: #1682D4; }
+      .sub { font-size: 15px; fill: #34515F; }
+      .t { font-size: 15px; fill: #0B2A3F; }
+      .b { font-size: 15px; font-weight: 700; fill: #0B2A3F; }
+      .m { font: 13px ui-monospace, 'SFMono-Regular', Menlo, monospace; fill: #34515F; }
+      .red { font-size: 15px; font-weight: 700; fill: #C2410C; }
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="960" height="600" rx="24" fill="#FFFFFF"/>
+  <text x="40" y="52" class="h">ww3-gpu: three ways to run WAVEWATCH</text>
+  <text x="40" y="78" class="sub">scripts/hoff.sh · each way has a cheap smoke and an expensive full case · no model source lives in this repository</text>
+
+  <!-- column 1: ww3 -->
+  <rect x="30" y="100" width="284" height="400" rx="18" class="card"/>
+  <text x="52" y="138" class="flag">--ww3</text>
+  <text x="52" y="160" class="sub">WW3 as NOAA writes it</text>
+  <rect x="52" y="178" width="240" height="64" rx="12" class="fork"/>
+  <text x="66" y="203" class="b">WW3 source, Fortran</text>
+  <text x="66" y="225" class="m">h0ffmann/WW3 (fork)</text>
+  <path d="M172 244 V 268" class="flow"/>
+  <rect x="52" y="272" width="240" height="52" rx="12" class="step"/>
+  <text x="66" y="295" class="t">CMake, the lab switch</text>
+  <text x="66" y="314" class="m">switch_lab_shrd</text>
+  <path d="M172 326 V 350" class="flow"/>
+  <rect x="52" y="354" width="240" height="52" rx="12" class="step"/>
+  <text x="66" y="377" class="t">ww3_shel on the CPU</text>
+  <text x="66" y="396" class="m">W3SNL1 in Fortran</text>
+  <text x="52" y="446" class="m">just smoke-ww3</text>
+  <text x="52" y="468" class="m">just full-ww3</text>
+
+  <!-- column 2: hoff -->
+  <rect x="338" y="100" width="284" height="400" rx="18" class="card"/>
+  <text x="360" y="138" class="flag">--hoff</text>
+  <text x="360" y="160" class="sub">WW3 + the Kokkos rewrite</text>
+  <rect x="360" y="178" width="116" height="64" rx="12" class="fork"/>
+  <text x="372" y="203" class="b">WW3 src</text>
+  <text x="372" y="225" class="t">fork, Fortran</text>
+  <rect x="484" y="178" width="116" height="64" rx="12" class="ours"/>
+  <text x="496" y="203" class="b">kokkos/</text>
+  <text x="496" y="225" class="t">here, C++</text>
+  <path d="M418 244 V 260 H 480 V 268" class="flow"/>
+  <path d="M542 244 V 260 H 480" fill="none" stroke="#1682D4" stroke-width="2.5" stroke-linecap="round"/>
+  <rect x="360" y="272" width="240" height="52" rx="12" class="step"/>
+  <text x="374" y="295" class="t">KOKKOS switch + ww_kokkos</text>
+  <text x="374" y="314" class="m">hoff/kokkos-snl1</text>
+  <path d="M480 326 V 350" class="flow"/>
+  <rect x="360" y="354" width="240" height="52" rx="12" class="step"/>
+  <text x="374" y="377" class="t">W3SNL1 on OpenMP or CUDA</text>
+  <text x="374" y="396" class="m">then nccmp-tol vs Fortran</text>
+  <text x="360" y="446" class="m">just smoke-hoff [openmp|cuda]</text>
+  <text x="360" y="468" class="m">just full-hoff  [openmp|cuda]</text>
+
+  <!-- column 3: ww4 -->
+  <rect x="646" y="100" width="284" height="400" rx="18" class="card"/>
+  <text x="668" y="138" class="flag">--ww4</text>
+  <text x="668" y="160" class="sub">WAVEWATCH IV</text>
+  <rect x="668" y="178" width="240" height="64" rx="12" class="fork"/>
+  <text x="682" y="203" class="b">WW4 source, C++</text>
+  <text x="682" y="225" class="m">h0ffmann/WW4 (fork)</text>
+  <path d="M788 244 V 268" class="flow"/>
+  <rect x="668" y="272" width="240" height="52" rx="12" class="step"/>
+  <text x="682" y="295" class="t">every part ported?</text>
+  <text x="682" y="314" class="m">scripts/ww4_parts.py</text>
+  <path d="M732 326 V 350" class="flow"/>
+  <path d="M846 326 V 350" class="flow"/>
+  <rect x="668" y="354" width="112" height="52" rx="12" class="step"/>
+  <text x="680" y="377" class="b">yes</text>
+  <text x="680" y="396" class="t">build, run</text>
+  <rect x="790" y="354" width="118" height="52" rx="12" class="stop"/>
+  <text x="802" y="377" class="red">no: exit 5</text>
+  <text x="802" y="396" class="t">says which</text>
+  <text x="668" y="446" class="m">just smoke-ww4</text>
+  <text x="668" y="468" class="m">just full-ww4</text>
+
+  <!-- legend and the wave -->
+  <rect x="40" y="528" width="22" height="16" rx="4" class="fork"/>
+  <text x="70" y="541" class="t">a personal fork's source</text>
+  <rect x="270" y="528" width="22" height="16" rx="4" class="ours"/>
+  <text x="300" y="541" class="t">ww3-gpu's own code (the Kokkos rewrite)</text>
+  <path d="M640 566 C 680 566, 694 556, 712 538 C 730 520, 756 504, 784 506 C 812 508, 822 532, 806 546 C 792 558, 772 552, 774 538 C 776 526, 792 524, 800 534 C 808 546, 794 566, 822 570 C 842 573, 870 566, 920 566"
+        fill="none" stroke="#1682D4" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M660 584 H 900" fill="none" stroke="#F2B705" stroke-width="2.5" stroke-linecap="round"/>
+</svg>

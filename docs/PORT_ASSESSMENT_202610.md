@@ -121,3 +121,20 @@ compile it from `WW3/model/src` (CI fetches that one file at the pinned commit).
 - Test drivers (`gen_snl1_fixture.F90`, `shim_driver.F90`, `snl1_sea_state.F90`), the lesson-11
   interop example, and the course's own Fortran (`gpu/`, `examples/`, `exercises/`, `bench/`).
   These are not WW3 source; whether the book keeps them is the owner's call.
+
+## 9. The third way: `--ww4`
+
+The owner asked for a third way, WAVEWATCH IV from the WW4/ submodule (h0ffmann/WW4, `develop`,
+`74ea792`), which returns an error code when a part the case needs is not ported yet.
+`scripts/ww4_parts.py` reads the parts from the lab switch: the time loop, each source-term switch
+that is on (LN1, ST4, NL1, BT1, DB1), and for `full` the UQ propagation solver. A part counts as
+ported when its WW4 file has more than 60 lines of code, the threshold of `scripts/ww4_status.py`.
+Today only the time loop is there (148 lines), so `just smoke-ww4` and `just full-ww4` stop with
+exit 5 before any build `(v)`. Against the tree of NOAA-EMC/WW4 pull request #72, whose files are
+placeholders, the same check reports each of them as a stub, 7 and 29 lines `(v)`.
+
+`hoff.sh --ww4 smoke --build-only` builds WW4 from the fork in the pinned toolchain `(v)`. It needs
+one flag: yaml-cpp 0.8.0, which WW4 pins, asks for a CMake older than 3.5, and CMake 4 refuses it
+unless `CMAKE_POLICY_VERSION_MINIMUM=3.5` is given. No WW4 file is changed. The run itself, and its
+input for each case (`kokkos/tests/fixtures/ww4/<case>/`, exit 6 while it is missing), wait for
+the parts.

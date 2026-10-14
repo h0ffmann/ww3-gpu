@@ -1,15 +1,24 @@
 #!/usr/bin/env bash
-# hoff — run WAVEWATCH III two ways, from the same Fortran source (the WW3/ submodule, the
-# h0ffmann/WW3 branch hoff/kokkos-snl1; no WW3 Fortran lives in this repository):
+# hoff — run WAVEWATCH three ways. WW3's Fortran comes only from the WW3/ submodule (the
+# h0ffmann/WW3 branch hoff/kokkos-snl1) and WW4's C++ only from the WW4/ submodule (h0ffmann/WW4,
+# develop); this repository holds the Kokkos port and nothing of either model's source:
 #
 #   --ww3    WW3 as NOAA writes it: the lab switch, the Fortran W3SNL1.
 #   --hoff   WW3 built with the KOKKOS switch and linked to this repository's Kokkos port
 #            (kokkos/, installed as the ww_kokkos package); W3SNL1 runs on the Kokkos backend.
+#   --ww4    WAVEWATCH IV, built from the WW4/ submodule. It runs only when every part the case
+#            needs is ported to WW4 (scripts/ww4_parts.py): if one is not, it exits 5 and says
+#            which, before building anything.
 #
 #   scripts/hoff.sh --ww3  smoke|full
 #   scripts/hoff.sh --hoff smoke|full [--backend openmp|cuda]
+#   scripts/hoff.sh --ww4  smoke|full
 #   add --build-only to build and stop before the run (a machine without the GPU can still compile)
 #   scripts/hoff.sh --self-test
+#
+# Exit codes: 0 pass; 1 a run or a comparison failed; 3 a submodule is missing or on the wrong
+# branch; 4 an NVIDIA GPU whose driver does not answer (--hoff); 5 a part the case needs is not
+# ported to WW4 (--ww4); 6 WW4 has every part but this repository has no WW4 input for the case.
 #
 # Cases:
 #   smoke  regtest ww3_ts1 (one point, ST4 + NL1, NK=36 NTH=24, 10 model days; seconds on a CPU)
@@ -39,7 +48,7 @@ usage() { sed -n '2,/^set -euo/{/^set -euo/!p}' "${BASH_SOURCE[0]}" | sed 's/^# 
 mode="" case_name="" backend="${HOFF_BACKEND:-auto}" build_only=""
 while [ $# -gt 0 ]; do
   case "$1" in
-    --ww3|--hoff) mode="${1#--}" ;;
+    --ww3|--hoff|--ww4) mode="${1#--}" ;;
     smoke|full) case_name="$1" ;;
     --backend) backend="${2:?--backend needs openmp or cuda}"; shift ;;
     --build-only) build_only=--build-only ;;
@@ -52,7 +61,7 @@ done
 
 if [ "$mode" = self-test ]; then
   out="$("${BASH_SOURCE[0]}" --help 2>&1 || true)"
-  if ! grep -q -- "--ww3" <<<"$out" || ! grep -q -- "--hoff" <<<"$out"; then echo "hoff: help text lost" >&2; exit 1; fi
+  if ! grep -q -- "--ww3" <<<"$out" || ! grep -q -- "--hoff" <<<"$out" || ! grep -q -- "--ww4" <<<"$out"; then echo "hoff: help text lost" >&2; exit 1; fi
   if "${BASH_SOURCE[0]}" --bogus >/dev/null 2>&1; then echo "hoff: accepted a bad argument" >&2; exit 1; fi
   echo "hoff self-test: ok"
   exit 0
@@ -82,12 +91,19 @@ gpu_doctor() {
 }
 has_nvidia_gpu() { lspci 2>/dev/null | grep -qiE 'VGA.*NVIDIA|3D controller.*NVIDIA'; }
 
-if [ "$backend" = auto ]; then
+# --ww4: what WW4 has decides whether there is anything to build. Checked before the toolchain.
+if [ "$mode" = ww4 ] && [ -z "${HOFF_IN_SHELL:-}" ] && [ -z "$build_only" ]; then
+  python3 "$root/scripts/ww4_parts.py" "$case_name" || exit $?
+fi
+
+# The backend matters to --hoff only: --ww3 and --ww4 run on the CPU.
+if [ "$mode" != hoff ]; then backend=openmp
+elif [ "$backend" = auto ]; then
   if nvidia-smi -L >/dev/null 2>&1; then backend=cuda
   elif has_nvidia_gpu; then gpu_doctor; exit 4
   else backend=openmp; fi
 fi
-if [ "$backend" = cuda ] && [ -z "${HOFF_IN_SHELL:-}" ] && ! nvidia-smi -L >/dev/null 2>&1 && [ -z "$build_only" ]; then
+if [ "$mode" = hoff ] && [ "$backend" = cuda ] && [ -z "${HOFF_IN_SHELL:-}" ] && ! nvidia-smi -L >/dev/null 2>&1 && [ -z "$build_only" ]; then
   gpu_doctor; exit 4
 fi
 case "$backend" in openmp|cuda) ;; *) echo "hoff: backend is openmp or cuda, not $backend" >&2; exit 64 ;; esac
@@ -97,6 +113,37 @@ if [ -z "${HOFF_IN_SHELL:-}" ]; then
   shell="ww3"; [ "$mode" = hoff ] && [ "$backend" = cuda ] && shell="cuda"
   exec env HOFF_IN_SHELL=1 HOFF_BACKEND="$backend" \
     nix develop "$pratico#$shell" --command bash "${BASH_SOURCE[0]}" "--$mode" "$case_name" --backend "$backend" $build_only
+fi
+
+# --- WW4 (--ww4) -----------------------------------------------------------------------------
+if [ "$mode" = ww4 ]; then
+  ww4="$root/WW4"
+  [ -d "$ww4/src/ww4_core" ] || { echo "hoff: WW4/ is empty: git submodule update --init WW4" >&2; exit 3; }
+  # yaml-cpp and googletest are WW4's own submodules.
+  [ -f "$ww4/externals/yaml-cpp/CMakeLists.txt" ] || git -C "$ww4" submodule update --init --depth 1 externals/yaml-cpp externals/googletest
+  wb="$root/build/ww4"
+  # yaml-cpp 0.8.0, which WW4 pins, asks for a CMake older than 3.5, which the toolchain's CMake 4
+  # refuses; the policy floor lets it configure without a change to WW4's files.
+  [ -f "$wb/Makefile" ] || [ -f "$wb/build.ninja" ] || cmake -S "$ww4" -B "$wb" -DCMAKE_BUILD_TYPE=Release \
+    -DWW4_ENABLE_TESTING=OFF -DCMAKE_POLICY_VERSION_MINIMUM=3.5 > "$root/build/ww4.configure.log" 2>&1 \
+    || { tail -30 "$root/build/ww4.configure.log"; exit 1; }
+  cmake --build "$wb" -j"${JOBS:-$(nproc)}" > "$root/build/ww4.build.log" 2>&1 || { grep -E -A8 "error" "$root/build/ww4.build.log" | head -60; exit 1; }
+  # WW4's CMakeLists puts the program in its own exe/, which its .gitignore lists.
+  exe="$ww4/exe/ww4_standalone"
+  [ -x "$exe" ] || { echo "hoff: WW4 built, but $exe is not there" >&2; exit 1; }
+  echo ">> WW4 ($(git -C "$ww4" rev-parse --short HEAD)) built: $exe"
+  [ -z "$build_only" ] || exit 0
+  # Reached only when scripts/ww4_parts.py found every part ported.
+  if [ ! -d "$root/kokkos/tests/fixtures/ww4/$case_name" ]; then
+    echo "hoff: WW4 has every part --ww4 $case_name needs, but there is no WW4 input for it yet (kokkos/tests/fixtures/ww4/$case_name/)" >&2
+    exit 6
+  fi
+  d="$root/build/runs/ww4-$case_name"
+  [[ "$d" == "$root/build/runs/"* ]] && rm -rf -- "$d"
+  mkdir -p "$d" && cp -r "$root/kokkos/tests/fixtures/ww4/$case_name"/. "$d"/
+  (cd "$d" && "$exe" > ww4_standalone.out 2>&1) || { tail -20 "$d/ww4_standalone.out" >&2; exit 1; }
+  echo ">> --ww4 $case_name: ww4_standalone finished; output in $d"
+  exit 0
 fi
 
 ww3="$root/WW3"

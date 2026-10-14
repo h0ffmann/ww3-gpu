@@ -91,6 +91,7 @@ just rt                      # build with ww3_tp1.1's switch and run that regtes
 just build                   # the lab switch (switches/switch_lab_shrd, ST4)
 just kokkos-test serial-debug
 just smoke                   # WW3 as written (--ww3), then WW3 with the Kokkos DIA (--hoff)
+just smoke-ww4               # WAVEWATCH IV from the WW4/ fork; exit 5 while a part is not ported
 ```
 
 Run the gates of what you changed before calling it done. CI (`.github/workflows/ci.yml`,
@@ -101,6 +102,7 @@ Run the gates of what you changed before calling it done. CI (`.github/workflows
 | any `*.sh` or `justfile` recipe | `bash -n <script>` and `shellcheck <script>`; a hook also has `--self-test` (`.claude/hooks/proposal-review.sh --self-test`) |
 | `kokkos/` | `just kokkos-test serial-debug` (sanitizers, bounds checks) and `just kokkos-test openmp-release`; `just kokkos-cuda-test` where a GPU exists |
 | a kernel WW3 calls, or the `WW3/` pin | `just smoke` (`just smoke-hoff openmp` without a GPU); `just full-hoff` before a status in `kokkos/ports.tsv` moves to L2 |
+| `scripts/hoff.sh` or `scripts/ww4_parts.py` | `bash scripts/hoff.sh --self-test`, `python3 scripts/ww4_parts.py --self-test`, shellcheck |
 | `kokkos/ports.tsv` or `docs/data/ww3_full_gprof.tsv` | `python3 scripts/port_score.py --write`, then `--check` (CI runs `--self-test` and `--check`) |
 | Fortran in `gpu/`, `examples/`, `exercises/` | they must compile with gfortran with directives ignored; the exercise parity test must pass |
 | a Mermaid fence or its page | `python3 scripts/figures.py check`, then `just figures` to re-render and `python3 -m unittest tests/test_figures.py` |
