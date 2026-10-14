@@ -94,10 +94,29 @@ ul.people li { padding: 10px 0; border-bottom: 1px solid var(--rule); display: f
 .aff { color: var(--muted); font-size: 1rem; }
 .empty { color: var(--muted); font-style: italic; }
 .foot { color: var(--muted); font-size: 0.8rem; padding: 32px 24px 56px; border-top: 1px solid var(--rule); }
+/* the port, measured: each step a bar in a shade of --proof, deeper as the speed-up grows; a step
+   slower than its baseline is --muted and says "slower" (DESIGN.md, "The port, measured"). */
+.report { margin-top: 1.6em; }
+.report h3 { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: baseline; }
+ol.steps { list-style: none; margin: 0.6em 0 0; padding: 0; }
+ol.steps li.step { display: grid; grid-template-columns: 2.2em 1fr auto; gap: 4px 14px; align-items: baseline; padding: 12px 0; border-bottom: 1px solid var(--rule); }
+.step .bar { grid-column: 2 / 3; height: 10px; border-radius: 999px; background: var(--surface); overflow: hidden; align-self: center; }
+.step .fill { display: block; height: 100%; border-radius: 999px; }
+.step .speed { grid-column: 3 / 4; font-family: var(--mono); font-size: 0.9rem; white-space: nowrap; }
+.step .aff { grid-column: 2 / -1; font-size: 0.85rem; font-family: var(--mono); }
+.fill.g1 { background: color-mix(in srgb, var(--proof) 30%, transparent); }
+.fill.g2 { background: color-mix(in srgb, var(--proof) 55%, transparent); }
+.fill.g3 { background: color-mix(in srgb, var(--proof) 80%, transparent); }
+.fill.g4 { background: var(--proof); }
+.fill.slower { background: var(--muted); }
+.speed.g1, .speed.g2, .speed.g3, .speed.g4 { color: var(--proof); }
+.speed.slower { color: var(--muted); }
 @media (max-width: 640px) {
   ul.records li { grid-template-columns: 1fr auto; }
   ul.records li .date { grid-column: 1 / -1; }
   section { padding: 36px 16px; }
+  ol.steps li.step { grid-template-columns: 2em 1fr; }
+  .step .date, .step .bar, .step .speed, .step .aff { grid-column: 2 / 3; }
   .wrap { padding: 0 16px; }
   .cover { padding: 40px 16px 32px; }
 }

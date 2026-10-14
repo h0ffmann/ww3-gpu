@@ -2,13 +2,16 @@
 //// this repository; the sentences that tell the story are written here, in lower case
 //// (DESIGN.md). The page is prerendered and needs no JavaScript.
 
+import gleam/float
 import gleam/int
 import gleam/list
 import gleam/string
 import lustre/attribute.{type Attribute}
 import lustre/element.{type Element}
 import lustre/element/html
-import ww3_gpu_site/content.{type Link, type Note, type Person, type Record}
+import ww3_gpu_site/content.{
+  type Bench, type Link, type Note, type Person, type Record, type Report,
+}
 
 pub const repo = "https://github.com/h0ffmann/ww3-gpu"
 
@@ -31,10 +34,146 @@ pub fn view() -> Element(msg) {
       "a change is designed before it is built, tied to a deliverable of the project proposal, with its definition of done.",
       content.wfips,
     ),
+    port(),
     brain(),
     cite(),
     related(),
     footer(),
+  ])
+}
+
+// ---- the port, measured ----------------------------------------------------------------------
+// Each bench row of kokkos/port_report/*_KOKKOS.md is one step: a bar as long as the log of its
+// speed-up (baseline / value), in a deeper shade of the proof light the larger the speed-up
+// (DESIGN.md); a step slower than its baseline is grey and says "slower".
+
+fn number(s: String) -> Float {
+  case float.parse(s) {
+    Ok(x) -> x
+    Error(_) ->
+      case int.parse(s) {
+        Ok(n) -> int.to_float(n)
+        Error(_) -> 0.0
+      }
+  }
+}
+
+pub fn speedup(b: Bench) -> Float {
+  let v = number(b.value)
+  case v >. 0.0 {
+    True -> number(b.baseline) /. v
+    False -> 0.0
+  }
+}
+
+/// "34.5x" or "531x" or "0.70x": two significant decimals below 10, one below 100, none above.
+pub fn times(x: Float) -> String {
+  let digits = case x <. 10.0, x <. 100.0 {
+    True, _ -> 2
+    False, True -> 1
+    False, False -> 0
+  }
+  let shown = case digits {
+    0 -> int.to_string(float.round(x))
+    _ -> float.to_string(float.to_precision(x, digits))
+  }
+  shown <> "x"
+}
+
+/// The shade of a step: g1 (under 2x) to g4 (100x and more); "slower" under 1x.
+pub fn shade(x: Float) -> String {
+  case x <. 1.0, x <. 2.0, x <. 10.0, x <. 100.0 {
+    True, _, _, _ -> "slower"
+    _, True, _, _ -> "g1"
+    _, _, True, _ -> "g2"
+    _, _, _, True -> "g3"
+    _, _, _, _ -> "g4"
+  }
+}
+
+fn log10(x: Float) -> Float {
+  case float.logarithm(x), float.logarithm(10.0) {
+    Ok(a), Ok(b) -> a /. b
+    _, _ -> 0.0
+  }
+}
+
+fn bar_width(x: Float, top: Float) -> String {
+  let w = case x <=. 1.0 || top <=. 1.0 {
+    True -> 4.0
+    False -> 4.0 +. 96.0 *. log10(x) /. log10(top)
+  }
+  float.to_string(float.to_precision(w, 1)) <> "%"
+}
+
+fn step(b: Bench, top: Float) -> Element(msg) {
+  let x = speedup(b)
+  html.li([attribute.class("step")], [
+    html.span([attribute.class("num")], [html.text(b.step)]),
+    html.span([attribute.class("name")], [
+      html.text(b.what <> " · " <> b.backend),
+    ]),
+    html.span([attribute.class("date")], [html.text(b.date)]),
+    html.span([attribute.class("bar")], [
+      html.span(
+        [
+          attribute.class("fill " <> shade(x)),
+          attribute.style("width", bar_width(x, top)),
+        ],
+        [],
+      ),
+    ]),
+    html.span([attribute.class("speed " <> shade(x))], [
+      html.text(case x <. 1.0 {
+        True -> times(x) <> " · slower"
+        False -> times(x)
+      }),
+    ]),
+    html.span([attribute.class("aff")], [
+      html.text(
+        b.value
+        <> " "
+        <> b.unit
+        <> " against "
+        <> b.baseline
+        <> " "
+        <> b.unit
+        <> " · "
+        <> b.source,
+      ),
+    ]),
+  ])
+}
+
+fn report(r: Report) -> Element(msg) {
+  let rows = list.filter(content.benches, fn(b) { b.report == r.name })
+  let top = list.fold(rows, 1.0, fn(acc, b) { float.max(acc, speedup(b)) })
+  html.div([attribute.class("report")], [
+    html.h3([], [
+      a(blob <> r.file, r.name),
+      html.text(" "),
+      html.span([attribute.class("chip code")], [html.text(r.status)]),
+    ]),
+    case rows {
+      [] ->
+        html.p([attribute.class("empty")], [
+          html.text("no benchmark: the report says why."),
+        ])
+      _ ->
+        html.ol(
+          [attribute.class("steps")],
+          list.map(rows, fn(b) { step(b, top) }),
+        )
+    },
+  ])
+}
+
+fn port() -> Element(msg) {
+  section("port", "the port, measured", [
+    lede(
+      "every number of every port report, step by step. a bar is the speed-up over its own baseline, on a log scale; the deeper the green, the larger it is. a step slower than its baseline is grey, and says so.",
+    ),
+    ..list.map(content.reports, report)
   ])
 }
 

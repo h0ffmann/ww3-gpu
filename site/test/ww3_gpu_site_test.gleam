@@ -17,7 +17,16 @@ fn html() -> String {
 pub fn every_section_test() {
   let page = html()
   list.each(
-    ["book", "chapters", "decisions", "designs", "brain", "cite", "related"],
+    [
+      "book",
+      "chapters",
+      "decisions",
+      "designs",
+      "port",
+      "brain",
+      "cite",
+      "related",
+    ],
     fn(id) {
       assert string.contains(page, "id=\"" <> id <> "\"")
     },
@@ -60,4 +69,31 @@ pub fn the_book_links_test() {
 
 pub fn no_script_test() {
   assert !string.contains(html(), "<script")
+}
+
+pub fn every_benchmark_number_test() {
+  let page = html()
+  assert content.reports != []
+  assert content.benches != []
+  list.each(content.reports, fn(r) {
+    assert string.contains(page, r.file)
+  })
+  list.each(content.benches, fn(b) {
+    assert string.contains(
+      page,
+      b.value <> " " <> b.unit <> " against " <> b.baseline,
+    )
+    assert string.contains(page, app.times(app.speedup(b)))
+  })
+}
+
+pub fn a_slower_step_is_never_green_test() {
+  assert app.shade(0.7) == "slower"
+  assert app.shade(1.0) == "g1"
+  assert app.shade(4.35) == "g2"
+  assert app.shade(34.5) == "g3"
+  assert app.shade(531.0) == "g4"
+  assert app.times(34.5066) == "34.5x"
+  assert app.times(0.7008) == "0.7x"
+  assert app.times(531.06) == "531x"
 }

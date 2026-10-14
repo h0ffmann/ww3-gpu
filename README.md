@@ -207,6 +207,21 @@ just full-ww4          # the same on bench_small; `just ww4-parts full` lists th
 just port-score        # how much of WW3 runs on Kokkos, and the routines ranked by time
 ```
 
+### Health
+
+[![health: h1](https://github.com/h0ffmann/ww3-gpu/actions/workflows/health.yml/badge.svg)](https://github.com/h0ffmann/ww3-gpu/actions/workflows/health.yml)
+
+| id | combination | what it runs | in CI |
+|---|---|---|---|
+| h1 | `--hoff --cpu` | WW3 with the Kokkos DIA on OpenMP, against the Fortran DIA and pair to pair against `--ww3` (`ww3_ts1`) | **yes**: [`health.yml`](.github/workflows/health.yml), on every pull request and on `main` |
+| h2 | `--hoff --gpu` | the same on CUDA | no: it needs a GPU and the owner supervising (AGENTS.md hard rule) |
+| w3 | `--ww3 --cpu` | WW3 as written | inside h1, as its pair |
+| w4 | `--ww4 --cpu` | WAVEWATCH IV | no: it exits 5 until WW4 has the parts |
+
+Only h1 is in CI, by the owner's word of 14 October 2026. Each ported routine has a report in
+[`kokkos/port_report/`](kokkos/port_report/README.md): what was ported, every benchmark, how it
+was regtested and what GoogleTest covers. The website draws its benchmarks.
+
 `--hoff` runs on the CPU (Kokkos OpenMP) by default, and is then compared pair to pair with
 `--ww3`. `just smoke-hoff gpu` runs CUDA, only with a human supervising: it asks at the terminal
 (AGENTS.md hard rule). An NVIDIA GPU whose driver does not answer stops it with exit 4 and the

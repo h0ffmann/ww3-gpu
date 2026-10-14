@@ -3,7 +3,8 @@
 
     scripts/port_score.py                     print the ranking and the port score
     scripts/port_score.py --write             write them into kokkos/PORT_STATUS.md (between markers)
-    scripts/port_score.py --check             exit 1 if PORT_STATUS.md's block is stale (CI)
+    scripts/port_score.py --check             exit 1 if PORT_STATUS.md's block is stale, or a ported
+                                              routine has no kokkos/port_report/<ROUTINE>_KOKKOS.md (CI)
     scripts/port_score.py --from-gprof GPROF OUT.tsv
                                               reduce a `gprof -b` text to the profile TSV this reads
     scripts/port_score.py --measure           count WW3's Fortran lines and routines at ports.tsv's
@@ -32,6 +33,7 @@ ROOT = Path(__file__).resolve().parent.parent
 PORTS = ROOT / "kokkos" / "ports.tsv"
 PROFILE = ROOT / "docs" / "data" / "ww3_full_gprof.tsv"
 STATUS_MD = ROOT / "kokkos" / "PORT_STATUS.md"
+REPORTS = ROOT / "kokkos" / "port_report"
 START, END = "<!-- port-score:start -->", "<!-- port-score:end -->"
 STEPS = ["ported", "L1", "L2", "gpu"]
 TOP = 15
@@ -131,7 +133,21 @@ def block():
     return render(meta_p, prof, meta_w, ports)
 
 
+def report_name(routine):
+    """w3snl1md:w3snl1 -> W3SNL1_KOKKOS.md, the report every ported routine has."""
+    return routine.split(":")[-1].upper() + "_KOKKOS.md"
+
+
+def missing_reports(ports, reports_dir):
+    return [report_name(p["routine"]) for p in ports if not (reports_dir / report_name(p["routine"])).exists()]
+
+
 def write_or_check(check):
+    _, ports = meta_and_rows(PORTS)
+    missing = missing_reports(ports, REPORTS)
+    if missing:
+        print(f"port_score: no port report for {', '.join(missing)} in kokkos/port_report/", file=sys.stderr)
+        return 1
     text = STATUS_MD.read_text(encoding="utf-8")
     if text.count(START) != 1 or text.count(END) != 1:
         print(f"port_score: {STATUS_MD.name} needs one {START} and one {END}", file=sys.stderr)
@@ -211,6 +227,10 @@ Each sample counts as 0.01 seconds.
         p.write_text("# about\n# ww3_rev\tabc\nroutine\tlines\nx\t3\n", encoding="utf-8")
         meta, rws = meta_and_rows(p)
         ok(meta == {"ww3_rev": "abc"} and rws == [{"routine": "x", "lines": "3"}], "metadata lines and rows are read apart")
+    ok(report_name("w3snl1md:w3snl1") == "W3SNL1_KOKKOS.md", "a report is named after the routine, upper case")
+    with tempfile.TemporaryDirectory() as tmp:
+        (Path(tmp) / "W3SNL1_KOKKOS.md").write_text("x", encoding="utf-8")
+        ok(missing_reports(ports, Path(tmp)) == ["INSNL1_KOKKOS.md"], "a ported routine without a report is named")
     print("port_score self-test: " + ("ok" if not fails else f"{fails} failure(s)"))
     return 1 if fails else 0
 

@@ -174,6 +174,12 @@ broken most often:
 - **Order follows wall time.** The next routine is the one the committed profile says is most
   expensive, not the one that is easiest to validate or already has a fixture ([ADR-0002](docs/ADRs/ADR-0002-port-order-wall-time.md),
   applied in #45; `W3SDS4` before `W3SIN4`, both after `W3SNL1`).
+- **Every ported routine has a port report**, `kokkos/port_report/<ROUTINE>_KOKKOS.md`: what was
+  ported, its benchmarks in the table the website reads, how it was regtested, and what GoogleTest
+  covers (the owner, 14 October 2026). `scripts/port_score.py --check` fails without it. A new
+  number goes into the report's bench table with its source, in the same pull request.
+- **CI keeps h1 alive**: `--hoff --cpu` on `ww3_ts1`, pair to pair with `--ww3`
+  ([`health.yml`](.github/workflows/health.yml)). It is the only combination in CI for now.
 - **Done means all of §1.5:** the kernel with its heritage header, the shim with its argument
   table, an L1 test with stated and justified tolerances, an L2 regtest replay, a timing line in
   `PORT_STATUS.md`, and a conservation or sign property where physics allows one.
