@@ -24,8 +24,10 @@ Never only in a chat.
 
 ## The long-term memory: ai-memory
 
-**Chosen on 2026-10-14, not in use yet**
-([ADR-0009](docs/ADRs/ADR-0009-ww3-gpu-adopts-ai-memory-from-fabio-akita.md)).
+**Chosen on 2026-10-14; in use on the owner's workstation since 2026-10-14, version 3.0.0**
+([ADR-0009](docs/ADRs/ADR-0009-ww3-gpu-adopts-ai-memory-from-fabio-akita.md);
+[the install](docs/log/2026-10-14-ai-memory-install.md)). Not in cloud sessions: they have no
+binary, so the plugin captures nothing there and says so once.
 [ai-memory](https://github.com/akitaonrails/ai-memory) is Fabio Akita's long-term memory for coding
 agents (MIT). It holds what each session did, what failed, what is open, and a handoff to the next
 session or the next agent. It does not hold the record: the files above do, because its wiki lives
@@ -48,6 +50,15 @@ What the owner does, once for each machine:
    and `AI_MEMORY_RERANKER` is not `llm` (ai-memory's `DATA_HANDLING.md`).
 4. Restart Claude Code, run `/ai-memory:status`, then `ai-memory backfill` to bring in the earlier
    sessions of this repository.
+
+[`.ai-memory.toml`](.ai-memory.toml) names the project `h0ffmann-ww3-gpu`, so every checkout,
+worktree and branch lands in the same one. `ai-memory setup` also writes its hooks into the user's
+`~/.claude/settings.json`; while those exist the plugin skips every event they deliver, so nothing
+is captured twice (ai-memory's `plugins/claude-code/README.md` at `v3.0.0`).
+
+What is in ai-memory is a lead, not evidence: its own routing puts `AGENTS.md` above it and says to
+check a recalled fact against the code and the tests. A fact that matters is copied into one of
+the files above, with its `(v)` or `⚠`.
 
 h0ffmann/closed-source has the full readiness list for the same adoption
 ([its PR #55](https://github.com/h0ffmann/closed-source/pull/55)).

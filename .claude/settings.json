@@ -42,5 +42,17 @@
         ]
       }
     ]
+  },
+  "enabledPlugins": {
+    "ai-memory@ai-memory": true
+  },
+  "extraKnownMarketplaces": {
+    "ai-memory": {
+      "source": {
+        "source": "github",
+        "repo": "akitaonrails/ai-memory",
+        "ref": "v3.0.0"
+      }
+    }
   }
 }

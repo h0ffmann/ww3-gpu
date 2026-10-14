@@ -1,0 +1,4 @@
+# ai-memory project routing (MEMORY.md, ADR-0009): every checkout, worktree and claude/* branch
+# of this repository lands in one project, whatever the folder is called.
+workspace = "default"
+project = "h0ffmann-ww3-gpu"
