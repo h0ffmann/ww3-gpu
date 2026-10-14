@@ -17,8 +17,8 @@ Today WW3 runs with it on the OpenMP backend, end to end `(v)`:
 
 | | `--ww3` (WW3 as written) | `--hoff` (WW3 with the Kokkos DIA) |
 |---|---|---|
-| smoke: `ww3_ts1`, one point, 10 days | `just smoke-ww3`: ww3_shel 2.67 s | `just smoke-hoff openmp`: 2.70 s Fortran DIA, 2.85 s Kokkos DIA; `hs` within 9.9e-8 relative, PASS |
-| full: `bench_small`, 9 520 points, 12 h | `just full-ww3` | `just full-hoff openmp`: 152.7 s Fortran DIA, 217.9 s Kokkos DIA; `hs` within 1.8e-7 relative over 119 652 values, PASS |
+| smoke: `ww3_ts1`, one point, 10 days | `just smoke-ww3`: ww3_shel 2.67 s | `just smoke-hoff` (CPU): 2.70 s Fortran DIA, 2.85 s Kokkos DIA; `hs` within 9.9e-8 relative, PASS |
+| full: `bench_small`, 9 520 points, 12 h | `just full-ww3` | `just full-hoff` (CPU): 152.7 s Fortran DIA, 217.9 s Kokkos DIA; `hs` within 1.8e-7 relative over 119 652 values, PASS |
 
 The Fortran comes only from WW3: the h0ffmann/WW3 branch `hoff/kokkos-snl1` (commit `6d1bcdfe`),
 which the `WW3/` submodule pins. The CUDA build compiles and links `(v)`; the CUDA run on the owner's
@@ -34,8 +34,13 @@ RTX 4090 is the step that remains `⚠`.
   `-DWW_KOKKOS=ON`, runs the case twice with the same executable (`WW_KOKKOS_SNL1=0` and `1`),
   checks that the second log says "Kokkos DIA (W3SNL1) enabled.", and compares the gridded output
   with `nccmp-tol` (the L2 replay).
-- The backend is CUDA when `nvidia-smi -L` lists a GPU, else OpenMP; `just smoke-hoff cuda`
-  forces it. The CUDA build configures WW3 with `CMAKE_CXX_COMPILER=nvcc_wrapper`.
+- `--cpu`, the default, runs Kokkos on OpenMP; `--gpu` runs it on CUDA and configures WW3 with
+  `CMAKE_CXX_COMPILER=nvcc_wrapper`. `--hoff --gpu` runs only under the owner's supervision, a
+  hard rule of AGENTS.md: it asks for a "yes" at a terminal and exits 7 without one. An NVIDIA GPU
+  whose driver does not answer stops it with exit 4 and the cause.
+- `--hoff --cpu` also builds and runs `--ww3` and compares the Kokkos run with it pair to pair:
+  on `ww3_ts1` the result is the same as against the Fortran DIA of the KOKKOS build, `hs` within
+  9.879e-8 relative, PASS `(v)`.
 
 ## 3. What the first build and runs found
 
@@ -95,7 +100,7 @@ the device; until then no speed claim is made for `--hoff`, on the CPU or the GP
 
 ## 7. What was not checked
 
-- **The CUDA run** `⚠`. The CUDA build is checked: `scripts/hoff.sh --hoff smoke --backend cuda
+- **The CUDA run** `⚠`. The CUDA build is checked: `scripts/hoff.sh --hoff smoke --gpu
   --build-only` builds `ww_kokkos` with the `cuda-release` preset, configures WW3 with
   `nvcc_wrapper` (Kokkos 5.2.0 CUDA, Ada 8.9), and links `ww3_shel` to `libcudart.so.12` `(v)`.
   Running it stopped at Kokkos' start, "no CUDA-capable device is detected" `(v)`, in both runs:

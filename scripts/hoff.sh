@@ -10,15 +10,23 @@
 #            needs is ported to WW4 (scripts/ww4_parts.py): if one is not, it exits 5 and says
 #            which, before building anything.
 #
-#   scripts/hoff.sh --ww3  smoke|full
-#   scripts/hoff.sh --hoff smoke|full [--backend openmp|cuda]
-#   scripts/hoff.sh --ww4  smoke|full
+#   scripts/hoff.sh --ww3  smoke|full [--cpu]
+#   scripts/hoff.sh --hoff smoke|full [--cpu|--gpu]
+#   scripts/hoff.sh --ww4  smoke|full [--cpu]
+#
+# --cpu is the default everywhere. --gpu exists for --hoff only (Kokkos on CUDA): WW3's Fortran
+# and WW4 have no GPU path here, so --ww3 --gpu and --ww4 --gpu are refused (exit 64).
+# Hard rule (AGENTS.md): --hoff --gpu runs only under a human's supervision. It asks for a
+# confirmation typed at a terminal and refuses without one (exit 7); --build-only compiles for
+# the GPU without running and needs none. --hoff --cpu is the agents' regtest: its Kokkos run is
+# compared pair to pair with --ww3, WW3 built from the same source without the KOKKOS switch.
 #   add --build-only to build and stop before the run (a machine without the GPU can still compile)
 #   scripts/hoff.sh --self-test
 #
 # Exit codes: 0 pass; 1 a run or a comparison failed; 3 a submodule is missing or on the wrong
-# branch; 4 an NVIDIA GPU whose driver does not answer (--hoff); 5 a part the case needs is not
-# ported to WW4 (--ww4); 6 WW4 has every part but this repository has no WW4 input for the case.
+# branch; 4 an NVIDIA GPU whose driver does not answer (--hoff --gpu); 5 a part the case needs is not
+# ported to WW4 (--ww4); 6 WW4 has every part but this repository has no WW4 input for the case;
+# 7 --hoff --gpu without a supervising human; 64 a bad argument or combination.
 #
 # Cases:
 #   smoke  regtest ww3_ts1 (one point, ST4 + NL1, NK=36 NTH=24, 10 model days; seconds on a CPU)
@@ -30,8 +38,8 @@
 # enabled." is missing from the second run's log. --ww3 runs the case once and fails when
 # ww3_shel does not reach "End of program".
 #
-# The backend defaults to cuda when `nvidia-smi -L` lists a GPU, else openmp. The script enters
-# the pinned toolchain itself (nix-config/labs/pratico: #ww3, or #cuda for the CUDA backend).
+# --cpu is Kokkos' OpenMP backend, --gpu its CUDA backend. The script enters the pinned toolchain
+# itself (nix-config/labs/pratico: #ww3, or #cuda for --gpu).
 # Builds go to build/<ww3|hoff-BACKEND>/, runs to build/runs/<mode>-<case>[-BACKEND]/.
 #
 # WW3 is built with its own Release flags in both modes. The two runs of --hoff agree to the
@@ -45,12 +53,13 @@ pratico="$root/nix-config/labs/pratico"
 
 usage() { sed -n '2,/^set -euo/{/^set -euo/!p}' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 64; }
 
-mode="" case_name="" backend="${HOFF_BACKEND:-auto}" build_only=""
+mode="" case_name="" device="" build_only=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --ww3|--hoff|--ww4) mode="${1#--}" ;;
     smoke|full) case_name="$1" ;;
-    --backend) backend="${2:?--backend needs openmp or cuda}"; shift ;;
+    --cpu|--gpu) [ -z "$device" ] || [ "$device" = "${1#--}" ] || { echo "hoff: --cpu or --gpu, not both" >&2; exit 64; }
+                 device="${1#--}" ;;
     --build-only) build_only=--build-only ;;
     --self-test) mode=self-test ;;
     -h|--help) usage ;;
@@ -63,6 +72,14 @@ if [ "$mode" = self-test ]; then
   out="$("${BASH_SOURCE[0]}" --help 2>&1 || true)"
   if ! grep -q -- "--ww3" <<<"$out" || ! grep -q -- "--hoff" <<<"$out" || ! grep -q -- "--ww4" <<<"$out"; then echo "hoff: help text lost" >&2; exit 1; fi
   if "${BASH_SOURCE[0]}" --bogus >/dev/null 2>&1; then echo "hoff: accepted a bad argument" >&2; exit 1; fi
+  for bad in "--ww3 smoke --gpu" "--ww4 smoke --gpu" "--hoff smoke --cpu --gpu"; do
+    # shellcheck disable=SC2086
+    "${BASH_SOURCE[0]}" $bad </dev/null >/dev/null 2>&1 && rc=0 || rc=$?
+    [ "$rc" = 64 ] || { echo "hoff: '$bad' gave exit $rc, not 64" >&2; exit 1; }
+  done
+  # Without a terminal --hoff --gpu never runs: 7 (no supervisor) or 4 (no driver), before any build.
+  "${BASH_SOURCE[0]}" --hoff smoke --gpu </dev/null >/dev/null 2>&1 && rc=0 || rc=$?
+  case "$rc" in 4|7) ;; *) echo "hoff: --hoff --gpu without a terminal gave exit $rc" >&2; exit 1 ;; esac
   echo "hoff self-test: ok"
   exit 0
 fi
@@ -87,32 +104,40 @@ gpu_doctor() {
   else
     echo "      The module for $k exists but is not loaded. Fix: sudo modprobe nvidia (or reboot)" >&2
   fi
-  echo "      To run on the CPU anyway: --backend openmp (just smoke-hoff openmp)." >&2
+  echo "      To run on the CPU instead: --cpu (just smoke-hoff)." >&2
 }
 has_nvidia_gpu() { lspci 2>/dev/null | grep -qiE 'VGA.*NVIDIA|3D controller.*NVIDIA'; }
+
+device="${device:-cpu}"
+if [ "$device" = gpu ] && [ "$mode" != hoff ]; then
+  echo "hoff: --$mode has no GPU path (only --hoff runs Kokkos on CUDA); use --cpu" >&2
+  exit 64
+fi
+if [ "$device" = gpu ]; then backend=cuda; else backend=openmp; fi
 
 # --ww4: what WW4 has decides whether there is anything to build. Checked before the toolchain.
 if [ "$mode" = ww4 ] && [ -z "${HOFF_IN_SHELL:-}" ] && [ -z "$build_only" ]; then
   python3 "$root/scripts/ww4_parts.py" "$case_name" || exit $?
 fi
 
-# The backend matters to --hoff only: --ww3 and --ww4 run on the CPU.
-if [ "$mode" != hoff ]; then backend=openmp
-elif [ "$backend" = auto ]; then
-  if nvidia-smi -L >/dev/null 2>&1; then backend=cuda
-  elif has_nvidia_gpu; then gpu_doctor; exit 4
-  else backend=openmp; fi
+# Hard rule: --hoff --gpu runs only with a human watching. Asked once, before the toolchain.
+if [ "$device" = gpu ] && [ -z "$build_only" ] && [ -z "${HOFF_IN_SHELL:-}" ]; then
+  nvidia-smi -L >/dev/null 2>&1 || { gpu_doctor; exit 4; }
+  if [ ! -t 0 ]; then
+    echo "hoff: --hoff --gpu runs only under a human's supervision (AGENTS.md hard rule): run it at a terminal" >&2
+    exit 7
+  fi
+  printf 'hoff: --hoff %s --gpu runs the Kokkos port on %s. Are you supervising this run? Type yes: ' \
+    "$case_name" "$(nvidia-smi -L | head -1)" >&2
+  read -r answer
+  [ "$answer" = yes ] || { echo "hoff: not confirmed; nothing ran" >&2; exit 7; }
 fi
-if [ "$mode" = hoff ] && [ "$backend" = cuda ] && [ -z "${HOFF_IN_SHELL:-}" ] && ! nvidia-smi -L >/dev/null 2>&1 && [ -z "$build_only" ]; then
-  gpu_doctor; exit 4
-fi
-case "$backend" in openmp|cuda) ;; *) echo "hoff: backend is openmp or cuda, not $backend" >&2; exit 64 ;; esac
 
 # Enter the pinned toolchain once, then continue inside it.
 if [ -z "${HOFF_IN_SHELL:-}" ]; then
   shell="ww3"; [ "$mode" = hoff ] && [ "$backend" = cuda ] && shell="cuda"
-  exec env HOFF_IN_SHELL=1 HOFF_BACKEND="$backend" \
-    nix develop "$pratico#$shell" --command bash "${BASH_SOURCE[0]}" "--$mode" "$case_name" --backend "$backend" $build_only
+  exec env HOFF_IN_SHELL=1 \
+    nix develop "$pratico#$shell" --command bash "${BASH_SOURCE[0]}" "--$mode" "$case_name" "--$device" $build_only
 fi
 
 # --- WW4 (--ww4) -----------------------------------------------------------------------------
@@ -243,4 +268,14 @@ grep -q "Kokkos DIA (W3SNL1) enabled" "$d1/log.ww3" \
 nc0="$(cd "$d0" && find . -maxdepth 1 -name 'ww3.*.nc' -printf '%f\n' | sort | head -1)"
 echo ">> --hoff $case_name ($backend): ww3_shel ${w0} s with the Fortran DIA, ${w1} s with the Kokkos DIA"
 if cmp -s "$d0/$nc0" "$d1/$nc0"; then echo ">> the two outputs are byte-identical"; fi
+echo ">> the Kokkos DIA against the Fortran DIA, same executable:"
 "$kbuild/tools/nccmp-tol/nccmp-tol" "$d0/$nc0" "$d1/$nc0"
+# --hoff --cpu is the agents' regtest: pair to pair with --ww3, WW3 from the same source built
+# without the KOKKOS switch.
+if [ "$device" = cpu ]; then
+  bash "${BASH_SOURCE[0]}" --ww3 "$case_name" --cpu
+  ref="$runs/ww3-$case_name/$nc0"
+  [ -f "$ref" ] || { echo "hoff: the --ww3 run wrote no $nc0" >&2; exit 1; }
+  echo ">> the Kokkos DIA against --ww3 (WW3 as written), pair to pair:"
+  "$kbuild/tools/nccmp-tol/nccmp-tol" "$ref" "$d1/$nc0"
+fi

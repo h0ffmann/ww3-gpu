@@ -187,8 +187,10 @@ just full-ww4          # o mesmo no bench_small; `just ww4-parts full` lista as 
 just port-score        # quanto do WW3 roda em Kokkos, e as rotinas em ordem de tempo
 ```
 
-O `--hoff` usa CUDA quando o `nvidia-smi` vê uma GPU, senão OpenMP (`just smoke-hoff openmp`); se
-há uma GPU NVIDIA e o driver não responde, ele para e diz por quê (código 4). Em 14 de outubro de
+O `--hoff` roda na CPU (Kokkos OpenMP) por padrão, e é comparado par a par com o `--ww3`. O
+`just smoke-hoff gpu` roda em CUDA, só com uma pessoa supervisionando: ele pergunta no terminal
+(regra rígida do AGENTS.md). Uma GPU NVIDIA cujo driver não responde para a execução com código 4
+e a causa. Em 14 de outubro de
 2026 os dois casos passaram em OpenMP; a rodada na GPU ainda não foi feita. Hoje o `--ww4` para
 com código 5 nos dois casos: o `develop` do WW4 tem o laço de tempo e ainda nenhum termo fonte nem
 solver de propagação

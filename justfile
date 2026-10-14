@@ -56,7 +56,8 @@ toolchain-smoke:
 # ---------------------------------------------------------------------
 # WW3 two ways (scripts/hoff.sh): --ww3, the Fortran as NOAA writes it; --hoff, WW3 built
 # with the KOKKOS switch from the h0ffmann/WW3 branch hoff/kokkos-snl1 and linked to kokkos/.
-# The backend of --hoff is cuda when nvidia-smi sees a GPU, else openmp (`just smoke-hoff openmp`).
+# --hoff runs on the CPU (Kokkos OpenMP) unless asked: `just smoke-hoff gpu` runs CUDA, and only
+# with a human supervising (AGENTS.md hard rule; it asks at the terminal).
 # ---------------------------------------------------------------------
 
 # Both smoke tests: WW3 as written, then WW3 with the Kokkos port (ww3_ts1, seconds on a CPU).
@@ -67,16 +68,16 @@ smoke-ww3:
     bash scripts/hoff.sh --ww3 smoke
 
 # WW3 with the Kokkos DIA: ww3_ts1 with the Fortran and the Kokkos W3SNL1, compared by nccmp-tol.
-smoke-hoff backend="auto":
-    bash scripts/hoff.sh --hoff smoke --backend {{backend}}
+smoke-hoff device="cpu":
+    bash scripts/hoff.sh --hoff smoke --{{device}}
 
 # The expensive case, as written: bench_small (120 x 80, 9 520 sea points, 12 hours).
 full-ww3:
     bash scripts/hoff.sh --ww3 full
 
 # The expensive case with the Kokkos DIA, compared with the Fortran by nccmp-tol.
-full-hoff backend="auto":
-    bash scripts/hoff.sh --hoff full --backend {{backend}}
+full-hoff device="cpu":
+    bash scripts/hoff.sh --hoff full --{{device}}
 
 # The same cases on WAVEWATCH IV, built from the WW4/ submodule (h0ffmann/WW4). Exit 5, before
 # any build, when a part the case needs is not ported to WW4 yet (scripts/ww4_parts.py).

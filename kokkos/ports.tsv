@@ -15,5 +15,5 @@
 # ww3_lines	263375
 # ww3_routines	1023
 routine	file	lines	status	evidence
-w3snl1md:w3snl1	model/src/w3snl1md.F90:115-473	359	L2	kokkos/tests/L1_test_snl1_dia.cpp (bit-identical, NK=25 NTH=24, three presets); `just smoke-hoff openmp` on ww3_ts1 and `just full-hoff openmp` on bench_small, 2026-10-14 (hs within 1.8e-7 relative over 119 652 values, PASS; not byte-identical)
+w3snl1md:w3snl1	model/src/w3snl1md.F90:115-473	359	L2	kokkos/tests/L1_test_snl1_dia.cpp (bit-identical, NK=25 NTH=24, three presets); `just smoke-hoff` and `just full-hoff` on the CPU (OpenMP), ww3_ts1 and bench_small, 2026-10-14 (hs within 1.8e-7 relative over 119 652 values, PASS; not byte-identical)
 w3snl1md:insnl1	model/src/w3snl1md.F90:483-786	304	L2	kokkos/tests/L1_test_snl1_tables.cpp; built by WW_SNL1_INIT in W3INIT on the branch, run by the same smoke

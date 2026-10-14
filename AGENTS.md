@@ -101,8 +101,8 @@ Run the gates of what you changed before calling it done. CI (`.github/workflows
 |---|---|
 | any `*.sh` or `justfile` recipe | `bash -n <script>` and `shellcheck <script>`; a hook also has `--self-test` (`.claude/hooks/proposal-review.sh --self-test`) |
 | `kokkos/` | `just kokkos-test serial-debug` (sanitizers, bounds checks) and `just kokkos-test openmp-release`; `just kokkos-cuda-test` where a GPU exists |
-| a kernel WW3 calls, or the `WW3/` pin | `just smoke` (`just smoke-hoff openmp` without a GPU); `just full-hoff` before a status in `kokkos/ports.tsv` moves to L2 |
-| `scripts/hoff.sh` or `scripts/ww4_parts.py` | `bash scripts/hoff.sh --self-test`, `python3 scripts/ww4_parts.py --self-test`, shellcheck |
+| a kernel WW3 calls, or the `WW3/` pin | `just smoke` (CPU); `just full-hoff` before a status in `kokkos/ports.tsv` moves to L2. Never `--gpu` without the owner (hard rule) |
+| `scripts/hoff.sh` or `scripts/ww4_parts.py` | `bash scripts/hoff.sh --self-test`, `python3 scripts/ww4_parts.py --self-test`, shellcheck; `just smoke-hoff` (CPU, pair to pair with `--ww3`) |
 | `kokkos/ports.tsv` or `docs/data/ww3_full_gprof.tsv` | `python3 scripts/port_score.py --write`, then `--check` (CI runs `--self-test` and `--check`) |
 | Fortran in `gpu/`, `examples/`, `exercises/` | they must compile with gfortran with directives ignored; the exercise parity test must pass |
 | a Mermaid fence or its page | `python3 scripts/figures.py check`, then `just figures` to re-render and `python3 -m unittest tests/test_figures.py` |
@@ -183,6 +183,39 @@ broken most often:
 - **The memory contract is explicit.** Phase 1 copies per call and exists to validate; phase 2
   keeps the spectrum resident. Never use Unified Memory to avoid thinking about transfers, and never
   read the CUDA kernel column as "the model will be this much faster".
+
+## Running on the GPU (hard rule)
+
+The owner, 14 October 2026: "never run --hoff --gpu without supervision, only --hoff --cpu must
+be regtested pair to pair to existing ww3 src."
+
+- **Never run `--hoff --gpu` without the owner supervising that run.** That is
+  `scripts/hoff.sh --hoff <case> --gpu`, `just smoke-hoff gpu` and `just full-hoff gpu`.
+  `hoff.sh` asks for a "yes" typed at a terminal and exits 7 without one. Never work around it:
+  no faked terminal, no `HOFF_IN_SHELL`, no piped answer. `--build-only` compiles for the GPU
+  without running it and is allowed.
+- **The agents' regtest is `--hoff --cpu`** (the default; Kokkos on OpenMP). Its Kokkos run is
+  compared pair to pair with `--ww3`, WW3 from the existing source built without the KOKKOS
+  switch, by `nccmp-tol`, after the comparison with the Fortran DIA of the same executable. Run
+  `just smoke-hoff` for every change to a kernel WW3 calls, and `just full-hoff` before a status
+  in `kokkos/ports.tsv` moves to L2.
+- `--ww3 --gpu` and `--ww4 --gpu` are refused (exit 64): neither has a GPU path here.
+
+## Which account writes Kokkos code (hard rule)
+
+The owner, 14 October 2026: "Never write any new Kokkos code under personal Max account of the
+owner, always under UFSC team on Claude. (enterprise account)"
+
+- Kokkos code (C++, CUDA and CMake under `kokkos/`) is written only in a session of the UFSC team
+  account on Claude, the enterprise account. Never in a session of the owner's personal Max
+  account.
+- Check before the first edit: `~/.claude.json`, `oauthAccount.organizationType`. `claude_max`
+  is the personal account: stop and say so. The value the UFSC account shows is not recorded
+  yet `⚠`; until it is, an account that cannot be read is a reason to ask.
+- `.claude/hooks/kokkos-account.sh` (PreToolUse on Write and Edit) denies an edit to Kokkos code
+  in a `claude_max` session. It is a guard, not the rule: the rule holds for any tool.
+- Scripts, documents, CI and the port's ledgers (`kokkos/ports.tsv`, `kokkos/PORT_STATUS.md`)
+  are not Kokkos code.
 
 ## The proposal (hard rule)
 

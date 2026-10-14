@@ -199,7 +199,7 @@ Kokkos rewrite.
 ```bash
 just smoke             # smoke-ww3, then smoke-hoff: regtest ww3_ts1, seconds
 just smoke-ww3         # --ww3: WW3 as written
-just smoke-hoff        # --hoff: WW3 with the Kokkos DIA (W3SNL1), compared with the Fortran run
+just smoke-hoff        # --hoff --cpu: WW3 with the Kokkos DIA (W3SNL1), compared with the Fortran and --ww3
 just full-ww3          # the expensive case: bench_small, 9 520 sea points, minutes
 just full-hoff         # the same with the Kokkos DIA
 just smoke-ww4         # --ww4: WAVEWATCH IV; exit 5 while a part the case needs is not ported
@@ -207,8 +207,10 @@ just full-ww4          # the same on bench_small; `just ww4-parts full` lists th
 just port-score        # how much of WW3 runs on Kokkos, and the routines ranked by time
 ```
 
-`--hoff` uses CUDA when `nvidia-smi` sees a GPU, else OpenMP (`just smoke-hoff openmp`); when an
-NVIDIA GPU is present and its driver does not answer, it stops and says why (exit 4). On
+`--hoff` runs on the CPU (Kokkos OpenMP) by default, and is then compared pair to pair with
+`--ww3`. `just smoke-hoff gpu` runs CUDA, only with a human supervising: it asks at the terminal
+(AGENTS.md hard rule). An NVIDIA GPU whose driver does not answer stops it with exit 4 and the
+cause. On
 14 October 2026 both cases passed on OpenMP; the GPU run was not made yet. `--ww4` stops with
 exit 5 on both cases today: WW4's `develop` has the time loop and no source term or propagation
 solver yet
