@@ -1,6 +1,7 @@
 {
   "title": "WW3 GPU Lab: agentic coding and agentic research on a bit-for-bit GPU port of WAVEWATCH III",
-  "upload_type": "software",
+  "upload_type": "publication",
+  "publication_type": "book",
   "description": "<p>A book in progress on agentic coding and agentic research, compiled from the repository that is its evidence, written around one problem: moving the expensive kernels of the WAVEWATCH III (WW3) third-generation spectral wind-wave model to GPUs without changing the answer.</p><ul><li>Seventeen lessons, built into a PDF on every merge, from the wave spectrum to running the Fortran model on real cases with a pinned Nix toolchain and annotated switch files.</li><li>Benchmarks on CPU (OpenMP, MPI) and GPU (OpenACC, CUDA Fortran), each number with the command that reproduces it.</li><li>A C++/Kokkos port of W3SNL1, the Discrete Interaction Approximation (DIA) of nonlinear four-wave interactions, written with coding agents and shown bit-identical to the Fortran on the Serial, OpenMP and CUDA backends by a field-by-field parity harness.</li><li>The method itself: the rules coding agents follow here, design docs with a definition of done (WFIPs), decision records (ADRs), a research log, and plans whose every claim carries its evidence.</li></ul><p>Includes runnable examples, exercises with solutions, and an undergraduate project proposal (Escola Politécnica, UFRJ, co-advised at LabECO, UFSC).</p>",
   "creators": [
     {
@@ -56,22 +57,32 @@
     {
       "identifier": "https://github.com/h0ffmann/ww3-gpu",
       "relation": "isSupplementTo",
-      "scheme": "url"
+      "scheme": "url",
+      "resource_type": "software"
+    },
+    {
+      "identifier": "https://h0ffmann.github.io/ww3-gpu/ww3-lab-course.pdf",
+      "relation": "isVariantFormOf",
+      "scheme": "url",
+      "resource_type": "publication-book"
     },
     {
       "identifier": "10.5281/zenodo.23224155",
       "relation": "isReferencedBy",
-      "scheme": "doi"
+      "scheme": "doi",
+      "resource_type": "software"
     },
     {
       "identifier": "10.5281/zenodo.23311208",
       "relation": "requires",
-      "scheme": "doi"
+      "scheme": "doi",
+      "resource_type": "software"
     },
     {
       "identifier": "10.5281/zenodo.23333656",
       "relation": "isCitedBy",
-      "scheme": "doi"
+      "scheme": "doi",
+      "resource_type": "publication-book"
     }
   ],
   "notes": "MIT, except the kernels translated from WAVEWATCH III, which are derived works of it and are LGPL-3.0-or-later (kokkos/src/ww_kokkos/snl1_*, kokkos/src/fortran_iface/w3kokkosmd.F90 and PATCH.md, kokkos/tests/fixtures/snl1_ref.F90). Each file states its licence in an SPDX-License-Identifier line. WAVEWATCH III is a registered trademark of NOAA's National Weather Service; this project is independent and not endorsed by NOAA."
