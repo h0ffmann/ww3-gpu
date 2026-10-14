@@ -44,14 +44,20 @@ writes it without the `ref`, which was added back by hand. `.ai-memory.toml` nam
 - ⚠ `doctor` still reports the plugin as disabled and "0 captured" for Claude Code: it reads the
   user scope, and the session that ran the install had not been restarted. To be checked after a
   restart with `/ai-memory:status`.
-
 - (v) After the security review, `.ai-memory.toml` gained a `[capture] ignore_paths` list (the
   account file `~/.claude.json`, credentials, ai-memory's own config and data, `.env` files, and
   `docs/ADRs/`, `docs/WFIPs/`). `doctor` still reads "marker valid". A first try with
   `~/.claude/**` made `doctor` report Claude Code capture as "excluded", so the glob was narrowed
   to the credentials file.
 
+- ⚠ Open from the same review: the plugin is enabled at project scope, so every clone that trusts
+  the folder runs its hooks outside the sandbox, and the pin is a tag (`v3.0.0`), not a commit.
+  Its hook only calls an installed `ai-memory` and exits when there is none (the reviewer read it
+  at `dbe928e`), but a moved tag would change that. On this workstation `setup`'s user-level hooks
+  already capture everything, so the project entry adds nothing here. Pinning by commit, or moving
+  the plugin to the owner's user settings, is the owner's decision.
+
 ## What it changes
 
 `MEMORY.md` says ai-memory is in use on this workstation. Next: restart Claude Code, run
-`/ai-memory:status`, and confirm a session is captured.
+`/ai-memory:status`, and confirm a session is captured; decide where the plugin is enabled.
