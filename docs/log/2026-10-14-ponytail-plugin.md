@@ -31,8 +31,8 @@ echo '{}' | CLAUDE_CONFIG_DIR=$(mktemp -d) CLAUDE_PLUGIN_ROOT=$P PONYTAIL_DEFAUL
   SessionStart, SubagentStart and UserPromptSubmit. Its skills (`ponytail`, `-audit`, `-review`,
   `-debt`, `-gain`, `-help`) load namespaced as `ponytail:<name>`, beside the vendored copies.
 - (v) Its default mode is `full` (`hooks/ponytail-config.js:16`). With `PONYTAIL_DEFAULT_MODE=off`
-  the SessionStart hook printed nothing; with `full` it printed 3534 characters starting "PONYTAIL
-  MODE ACTIVE — level: full", the rules AGENTS.md's "Translate, don't improve" would be fighting.
+  the SessionStart hook printed nothing; with `full` it printed 3534 characters starting with the
+  banner `PONYTAIL MODE ACTIVE` and the level `full`, the rules AGENTS.md's "Translate, don't improve" would be fighting.
 - (v) After the install, `claude plugin list` shows it enabled at project scope, 5.2.0.
 
 ## What it changes
