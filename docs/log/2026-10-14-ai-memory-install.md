@@ -45,6 +45,12 @@ writes it without the `ref`, which was added back by hand. `.ai-memory.toml` nam
   user scope, and the session that ran the install had not been restarted. To be checked after a
   restart with `/ai-memory:status`.
 
+- (v) After the security review, `.ai-memory.toml` gained a `[capture] ignore_paths` list (the
+  account file `~/.claude.json`, credentials, ai-memory's own config and data, `.env` files, and
+  `docs/ADRs/`, `docs/WFIPs/`). `doctor` still reads "marker valid". A first try with
+  `~/.claude/**` made `doctor` report Claude Code capture as "excluded", so the glob was narrowed
+  to the credentials file.
+
 ## What it changes
 
 `MEMORY.md` says ai-memory is in use on this workstation. Next: restart Claude Code, run
