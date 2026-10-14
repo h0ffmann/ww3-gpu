@@ -37,9 +37,22 @@ pub type Link {
   Link(kind: String, name: String, url: String, what: String, source: String)
 }
 
-/// A port report of kokkos/port_report/: its name, its status line and its file.
+/// A port report of kokkos/port_report/: its name, its status line, its file, and the record of
+/// kokkos/ports.tsv: was the Kokkos code regtested inside WW3, and is it under a GoogleTest.
 pub type Report {
-  Report(name: String, status: String, file: String)
+  Report(
+    name: String,
+    status: String,
+    file: String,
+    regtested: String,
+    googletest: String,
+  )
+}
+
+/// One global number of the port, a row of site/data/port_score.tsv (scripts/port_score.py):
+/// the share (the big number), the count behind it, and what it counts.
+pub type Stat {
+  Stat(name: String, share: String, count: String, what: String)
 }
 
 /// One row of a report's bench table. The speed-up is baseline / value, computed by the site.
@@ -206,6 +219,43 @@ pub fn benches(report: String, text: String) -> List(Bench) {
   }
 }
 
+/// The data rows of a TSV: no `#` line, no header, no empty line, split on tabs.
+pub fn tsv_rows(text: String, header_first: String) -> List(List(String)) {
+  text
+  |> string.split("\n")
+  |> list.filter(fn(line) {
+    line != ""
+    && !string.starts_with(line, "#")
+    && !string.starts_with(line, header_first <> "\t")
+  })
+  |> list.map(fn(line) { string.split(line, "\t") })
+}
+
+/// "W3SNL1_KOKKOS" from "w3snl1md:w3snl1": the report a row of kokkos/ports.tsv has.
+pub fn report_name(routine: String) -> String {
+  let name = case string.split_once(routine, ":") {
+    Ok(#(_, r)) -> r
+    Error(_) -> routine
+  }
+  string.uppercase(name) <> "_KOKKOS"
+}
+
+/// The regtested and googletest cells of kokkos/ports.tsv for a report, or "" for each.
+pub fn port_record(ports_tsv: String, report: String) -> #(String, String) {
+  let found =
+    tsv_rows(ports_tsv, "routine")
+    |> list.find(fn(cells) {
+      case cells {
+        [routine, ..] -> report_name(routine) == report
+        [] -> False
+      }
+    })
+  case found {
+    Ok([_, _, _, _, _, regtested, googletest, ..]) -> #(regtested, googletest)
+    _ -> #("", "")
+  }
+}
+
 /// "00" and "Orientation: what WW3 actually computes" from "00. Orientation: …".
 pub fn chapter(file: String, text: String) -> Chapter {
   let title = heading(text)
@@ -305,7 +355,11 @@ pub type Link {
 }
 
 pub type Report {
-  Report(name: String, status: String, file: String)
+  Report(name: String, status: String, file: String, regtested: String, googletest: String)
+}
+
+pub type Stat {
+  Stat(name: String, share: String, count: String, what: String)
 }
 
 pub type Bench {
@@ -327,6 +381,7 @@ pub fn render(
   links: List(Link),
   reports: List(Report),
   bench_rows: List(Bench),
+  stats: List(Stat),
 ) -> String {
   let record = fn(r: Record) {
     call("Record", [r.id, r.title, r.status, r.date, r.file])
@@ -374,7 +429,16 @@ pub fn render(
       items(
         "reports",
         "Report",
-        list.map(reports, fn(r) { call("Report", [r.name, r.status, r.file]) }),
+        list.map(reports, fn(r) {
+          call("Report", [r.name, r.status, r.file, r.regtested, r.googletest])
+        }),
+      ),
+      items(
+        "stats",
+        "Stat",
+        list.map(stats, fn(s) {
+          call("Stat", [s.name, s.share, s.count, s.what])
+        }),
       ),
       items(
         "benches",
@@ -467,14 +531,26 @@ pub fn main() -> Nil {
   let report_files =
     list_dir(root <> "kokkos/port_report")
     |> list.filter(fn(name) { string.ends_with(name, "_KOKKOS.md") })
+  let ports_tsv = read(root <> "kokkos/ports.tsv")
   let reports =
     list.map(report_files, fn(name) {
       let text = read(root <> "kokkos/port_report/" <> name)
+      let #(regtested, googletest) = port_record(ports_tsv, heading(text))
       Report(
         heading(text),
         bold_line(text, "Status"),
         "kokkos/port_report/" <> name,
+        regtested,
+        googletest,
       )
+    })
+  let stats =
+    tsv_rows(read("../data/port_score.tsv"), "name")
+    |> list.filter_map(fn(cells) {
+      case cells {
+        [name, share, count, what] -> Ok(Stat(name, share, count, what))
+        _ -> Error(Nil)
+      }
     })
   let bench_rows =
     list.flat_map(report_files, fn(name) {
@@ -496,6 +572,7 @@ pub fn main() -> Nil {
       links,
       reports,
       bench_rows,
+      stats,
     )
   write("../src/ww3_gpu_site/content.gleam", text)
 }

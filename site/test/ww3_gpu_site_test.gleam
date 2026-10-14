@@ -97,3 +97,18 @@ pub fn a_slower_step_is_never_green_test() {
   assert app.times(0.7008) == "0.7x"
   assert app.times(531.06) == "531x"
 }
+
+pub fn the_global_numbers_and_each_record_are_on_the_page_test() {
+  let page = html()
+  assert list.length(content.stats) == 5
+  list.each(content.stats, fn(s) {
+    assert string.contains(page, s.name)
+    assert string.contains(page, ">" <> s.share <> "<")
+    assert string.contains(page, ">" <> s.count <> "<")
+  })
+  list.each(content.reports, fn(r) {
+    assert r.regtested != "" && r.googletest != ""
+    assert string.contains(page, string.replace(r.regtested, "'", "&#39;"))
+    assert string.contains(page, string.replace(r.googletest, "'", "&#39;"))
+  })
+}
