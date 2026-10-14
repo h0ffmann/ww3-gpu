@@ -2,7 +2,7 @@
 
 Read `AGENTS.md` before doing anything here: it holds the repo invariants (write for scientists
 with `(v)`/`⚠` evidence, WW3 is read-only, translate don't improve, no timing without parity, the
-proposal goes through its reviewer, `Tested:`/`Cost:` trailers), where a change belongs, the gates
+proposal goes through its reviewer, `Tested:` trailers, no cost record), where a change belongs, the gates
 CI runs, and the skills and agents. The line above imports it for Claude Code; a tool that reads
 this file as plain text must open `AGENTS.md` itself. `CONTRIBUTING.md` is the longer form.
 

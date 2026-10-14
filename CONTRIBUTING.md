@@ -202,7 +202,7 @@ Running `agy` inside `just dev` or ai-jail has not been tried ⚠.
 ## Opening a pull request
 
 Write the commit message properly (subject, a body paragraph saying what and why, and
-`Tested:` / `Cost:` trailers in the final block of the message), then `just pr`: it pushes the branch and creates the PR with a description
+a `Tested:` trailer in the final block of the message; never a `Cost:` trailer), then `just pr`: it pushes the branch and creates the PR with a description
 generated from the commits (`just uprd` regenerates it later). A PR opened from the GitHub UI
 gets the same treatment from `.github/workflows/pr-body.yml`. Delete the first `<!-- uprd -->`
 line of a description to hand-edit it and keep it.

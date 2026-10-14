@@ -27,8 +27,8 @@ looser.
 - **The proposal goes through the reviewer**: any change under `pubs/proposal/` passes
   `revisor-proposta` and `just proposal-lint` before the PR, and the review is recorded
   ([The proposal](#the-proposal-hard-rule)).
-- **Commits carry `Tested:` and `Cost:`**, in the final block of the message, and the PR is opened
-  with `just pr` ([Commits and pull requests](#commits-and-pull-requests-hard-rule)).
+- **Commits carry `Tested:`**, in the final block of the message, and never a `Cost:` trailer; the
+  PR is opened with `just pr` ([Commits and pull requests](#commits-and-pull-requests-hard-rule)).
 <!-- invariants:end -->
 
 ## What this repository is
@@ -245,9 +245,10 @@ How the channel was built and tested, its failure modes and the commands that ch
 
 ## Commits and pull requests (hard rule)
 
-- **Commit message:** a subject, a body paragraph saying what and why, and `Tested:` and `Cost:`
-  trailers in the final block. `Tested:` names the commands run and their result; `Cost:` names
-  what the change costs to run or `none`. Agent commits also carry `Co-Authored-By` and the session
+- **Commit message:** a subject, a body paragraph saying what and why, and a `Tested:` trailer in
+  the final block, naming the commands run and their result. No commit, PR or document records a
+  cost: there is no `Cost:` trailer, no Cost row and no "Cost so far"
+  ([ADR-0009](docs/ADRs/ADR-0009-ww3-gpu-adopts-ai-memory-from-fabio-akita.md)). Agent commits also carry `Co-Authored-By` and the session
   link the harness adds; those lines stay in the trailer block, never in code, comments, PR titles
   or docs.
 - **PR workflow:** `just pr` pushes the branch and writes the PR body from the commits

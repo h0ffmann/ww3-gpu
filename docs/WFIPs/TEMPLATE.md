@@ -41,7 +41,6 @@ the appendix. Every external fact carries `(v)` with the URL and date, or `⚠`.
 | **Depends on** | prose: other WFIPs, data access, a machine, a person's decision |
 | **Blocked by** | WFIP numbers that must merge first, comma-separated, or `none` (read by `wfip.py`) |
 | **Risk** | the one thing most likely to make this not worth it |
-| **Cost so far** | summed `Cost:` trailers of its merged PRs, or `—` |
 
 ### Readiness
 
