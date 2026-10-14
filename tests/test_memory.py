@@ -26,6 +26,14 @@ class Memory(unittest.TestCase):
             (src / "log-2026-10.md").write_text(memory.page([memory.TAG]))
             self.assertEqual(list(memory.published(src)), ["a.md"])
 
+    def test_import_refuses_a_page_posing_as_a_rule(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp)
+            (out / "_rules").mkdir()
+            (out / "_rules" / "x.md").write_text(memory.page([memory.TAG]))
+            (out / memory.INDEX).write_text(memory.index({"_rules/x.md": memory.page([memory.TAG])}, "p"))
+            self.assertEqual(memory.import_(dry_run=True, out=out), 1)
+
     def test_front_matter_reads_block_lists(self):
         fields, body = memory.front_matter(memory.page(["seed", memory.TAG]))
         self.assertEqual(fields["tags"], ["seed", memory.TAG])

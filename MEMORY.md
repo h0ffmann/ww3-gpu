@@ -70,9 +70,13 @@ just memory check    # CI: no session page, log, e-mail address or home path; th
 
 Session pages (`sessions/`) and the monthly logs (`log-YYYY-MM.md`) are never exported, whatever
 their tags: they hold raw prompts and local paths. `import` writes into the project named by
-[`.ai-memory.toml`](.ai-memory.toml), so every reader's copy lands in `h0ffmann-ww3-gpu`; it keeps
-a page's kind, tier, tags and pin, but not its `entities` or `abstract`, which the CLI cannot set.
-A published page is public: the security reviewer reads `memory/` like any other diff.
+[`.ai-memory.toml`](.ai-memory.toml), so every reader's copy lands in `h0ffmann-ww3-gpu`. A page
+in `memory/` can arrive through any pull request, so `import` runs `check` first and refuses on a
+fault, writes each page under `published/`, tags it `imported`, never pins it, and turns any kind
+other than `fact`, `gotcha` or `decision` into `fact`: a page from git can inform a reader's agent
+but never pose as one of its rules. `check` also refuses the `_*` and `profile/` paths ai-memory
+reserves. The owner does not import (the pages are already in their wiki). A published page is
+public: the security reviewer reads `memory/` like any other diff.
 
 What is in ai-memory is a lead, not evidence: its own routing puts `AGENTS.md` above it and says to
 check a recalled fact against the code and the tests. A fact that matters is copied into one of

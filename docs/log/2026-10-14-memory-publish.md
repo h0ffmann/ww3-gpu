@@ -20,7 +20,7 @@ own ai-memory, without publishing the raw session capture?
   after `ai-memory backup`; CLI writes to `h0ffmann-ww3-gpu` then succeeded (v).
 - `scripts/memory.py` (`just memory`): `export` copies the wiki pages tagged `publish` into
   `memory/` and writes its index; `import` loads `memory/` into the local store with
-  `ai-memory write-page`, skipping pages whose body is unchanged; `check` refuses session pages,
+  `ai-memory write-page` under `published/`, skipping pages whose body is unchanged; `check` refuses session pages,
   monthly logs, ai-memory manifests, an untagged page, an e-mail address, a home path and a stale
   index. CI runs `--self-test` and `check`.
 - Machine: the owner's Linux workstation, ai-memory 3.0.0.
@@ -29,10 +29,15 @@ own ai-memory, without publishing the raw session capture?
 
 - `just memory export` wrote `memory/HUMAN.md` and `memory/README.md`; `just memory check`
   passed (v).
-- `just memory import` on the same machine printed `same   HUMAN.md` (v).
-- A throwaway page imported from a scratch directory landed in `h0ffmann-ww3-gpu` with its kind,
-  tags and pin, and was deleted (v). The CLI cannot set `entities` or `abstract`, so an imported
-  page lacks them (v) (`ai-memory write-page --help`).
+- The security reviewer found that `import` carried a page's path, `kind: rule` and pin into the
+  reader's store, so a page added by a pull request could become a pinned `_rules/` page that the
+  reader's agent reads at every session start. Fixed in the same PR: `import` runs `check` first,
+  writes under `published/`, tags `imported`, never pins, and turns any kind but `fact`, `gotcha`,
+  `decision` into `fact`; `check` refuses `_*` and `profile/` paths.
+- A forged `_rules/x.md` was refused at import (exit 1) (v). A throwaway page declaring
+  `kind: rule` and `pinned: true` landed as `published/scratch/probe.md`, `kind: fact`, unpinned,
+  tagged `imported`, and was deleted (v). The CLI cannot set `entities` or `abstract`, so an
+  imported page lacks them (v) (`ai-memory write-page --help`).
 - Not tested: an import on a second machine with an empty store ⚠.
 
 ## What it changes

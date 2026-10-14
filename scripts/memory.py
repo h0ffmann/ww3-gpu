@@ -2,7 +2,7 @@
 """memory: the ai-memory pages this repository publishes, in memory/ (MEMORY.md, ADR-0009).
 
     scripts/memory.py export [--dry-run]  # owner: wiki pages tagged `publish` -> memory/, index rewritten
-    scripts/memory.py import [--dry-run]  # reader: memory/ -> the local ai-memory store, unchanged pages skipped
+    scripts/memory.py import [--dry-run]  # reader: memory/ -> published/ in the local store, unpinned
     scripts/memory.py check               # CI: memory/ holds only publishable pages and its index is current
     scripts/memory.py --self-test         # give check bad pages and expect each fault
 
@@ -25,6 +25,12 @@ INDEX = "README.md"
 TAG = "publish"
 # Never published, whatever their tags: raw session capture and ai-memory's own manifests.
 NEVER = re.compile(r"(^|/)(sessions/|log-\d{4}-\d{2}\.md$|_meta\.md$)")
+# Prefixes ai-memory treats as maintained or cross-project; a page from git must not pose as one.
+RESERVED = re.compile(r"^(_|profile/)")
+# An imported page came from git, so it is a lead: it lands under its own prefix, unpinned, and a
+# kind such as `rule` becomes `fact` (a PR could otherwise plant a standing order in a reader's store).
+IMPORT_PREFIX = "published/"
+IMPORT_KINDS = {"fact", "gotcha", "decision"}
 # A published page is public: no e-mail address, no absolute path under a home directory.
 LEAKS = (
     (re.compile(r"[\w.+-]+@[\w-]+\.[\w.-]+"), "an e-mail address"),
@@ -132,6 +138,8 @@ def check(out=OUT, project=None):
             continue
         if NEVER.search(rel):
             faults.append(f"{rel}: session pages, logs and manifests are never published")
+        if RESERVED.search(rel):
+            faults.append(f"{rel}: `_*` and `profile/` paths are reserved by ai-memory")
         text = f.read_text()
         if TAG not in front_matter(text)[0].get("tags", []):
             faults.append(f"{rel}: has no `{TAG}` tag")
@@ -180,25 +188,29 @@ def import_(dry_run=False, out=OUT, data=None):
     if exe is None and not dry_run:
         print("memory: ai-memory is not on PATH; install it first (MEMORY.md)", file=sys.stderr)
         return 1
+    faults = check(out, project)
+    if faults:
+        for f in faults:
+            print(f"memory: {f}", file=sys.stderr)
+        print("memory: import refused; memory/ fails check", file=sys.stderr)
+        return 1
     local = wiki_dir(workspace, project, data)
     for f in sorted(out.rglob("*.md")):
         rel = f.relative_to(out).as_posix()
         if rel == INDEX:
             continue
         fields, body = front_matter(f.read_text())
+        rel = IMPORT_PREFIX + rel
         mine = local / rel if local else None
         if mine and mine.exists() and front_matter(mine.read_text())[1] == body:
             print(f"same   {rel}")
             continue
-        # The CLI takes kind, tier, tags and pin; entities and abstract stay in the file here.
-        cmd = [exe or "ai-memory", "write-page", "--path", rel, "--body", "-"]
-        for key in ("kind", "tier"):
-            if fields.get(key):
-                cmd += [f"--{key}", fields[key]]
+        # Never pinned, never a rule; entities and abstract stay in the file (the CLI cannot set them).
+        kind = fields.get("kind") if fields.get("kind") in IMPORT_KINDS else "fact"
+        cmd = [exe or "ai-memory", "write-page", "--path", rel, "--body", "-", "--kind", kind,
+               "--tier", "semantic", "--tag", "imported"]
         for tag in fields.get("tags", []):
             cmd += ["--tag", tag]
-        if fields.get("pinned") == "true":
-            cmd.append("--pinned")
         print(f"import {rel}")
         if not dry_run:
             subprocess.run(cmd, input=body, text=True, cwd=ROOT, check=True)
@@ -218,6 +230,8 @@ def self_test():
         "e-mail": ({"a.md": page([TAG], "# A\n\nwrite to someone@example.org\n")}, "e-mail"),
         "home path": ({"a.md": page([TAG], "# A\n\nsee /home/someone/x\n")}, "home path"),
         "stale index": ({"a.md": page([TAG])}, "stale"),
+        "reserved path": ({"_rules/a.md": page([TAG])}, "reserved"),
+        "profile path": ({"profile/a.md": page([TAG])}, "reserved"),
     }
     failed = 0
     for name, (files, expect) in cases.items():

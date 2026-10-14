@@ -106,8 +106,9 @@ copiadas para [`memory/`](memory/README.md), que começa por [`HUMAN.md`](memory
 o dono deste repositório e as ordens permanentes que deu, com as próprias palavras. Essas páginas são
 pistas, não evidência; o que importa também está num arquivo daqui com o seu `(v)` ou `⚠`. Com o
 plugin do ai-memory instalado no Claude Code (os passos estão no [`MEMORY.md`](MEMORY.md)),
-carregue-as no seu próprio acervo depois de clonar e depois de cada pull que mude `memory/`; as
-suas sessões passam a encontrá-las como qualquer página que você escreveu.
+carregue-as no seu próprio acervo depois de clonar e depois de cada pull que mude `memory/`. Elas
+entram em `published/`, sem fixação e nunca como regra, então uma página vinda de um pull request
+não vira uma ordem permanente no seu acervo.
 
 ```console
 just notes          # as notas seguem as regras: cabeçalho, ids, links, o índice

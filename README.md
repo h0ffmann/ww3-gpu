@@ -102,8 +102,8 @@ Part of that memory is published. The ai-memory pages the owner tags `publish` a
 repository and the standing orders they gave, in their own words. These pages are leads, not
 evidence; what matters is also in a file here with its `(v)` or `⚠`. With the ai-memory plugin
 installed for Claude Code ([`MEMORY.md`](MEMORY.md) has the steps), load them into your own store
-after cloning and after each pull that changes `memory/`; your sessions then find them like any
-page you wrote.
+after cloning and after each pull that changes `memory/`. They land under `published/`, unpinned
+and never as rules, so a page from a pull request cannot become a standing order in your store.
 
 ```console
 just notes          # the slip box keeps its rules: front matter, ids, links, the index
