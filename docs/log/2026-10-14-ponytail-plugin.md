@@ -41,3 +41,20 @@ echo '{}' | CLAUDE_CONFIG_DIR=$(mktemp -d) CLAUDE_PLUGIN_ROOT=$P PONYTAIL_DEFAUL
 `PONYTAIL_DEFAULT_MODE=off`. AGENTS.md says why. ⚠ Not checked: whether `/ponytail` still turns
 the mode on for one session with the default off, and whether the vendored and plugin skills both
 trigger on the same request; to look at after a restart.
+
+## Update, 2026-10-14
+
+- (v) Installed at user scope as well (`claude plugin install ponytail@ponytail --scope user`), as
+  ai-memory's `setup` wires every project. Its hooks need `node`, which is on the
+  non-interactive PATH (`/usr/bin/node`, v18.19.1). Outside this repository the default stays
+  `full`; here the project's `PONYTAIL_DEFAULT_MODE=off` still applies.
+- ⚠ Open from the security review of this branch: the `ref: v5.2.0` pin is not in force on this
+  workstation. `~/.claude/plugins/known_marketplaces.json` already held a `ponytail` marketplace
+  without a ref, from the earlier install for another repository, and its checkout follows
+  `main`. Today `main` and `v5.2.0` are the same commit, `2961b52`. Removing that entry and adding
+  it again with the ref would also touch the other repository's install, so it is the owner's
+  call. After each update, compare `gitCommitSha` in `installed_plugins.json` with `2961b52`.
+- (v) The same review read the three hooks: with `off`, SessionStart clears the mode and exits
+  before the code map and the statusline code, SubagentStart exits with no mode flag, and
+  UserPromptSubmit acts only on a prompt that starts with `/ponytail`. None of them uses the
+  network.
