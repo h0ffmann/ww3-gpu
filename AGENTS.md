@@ -223,10 +223,14 @@ owner, always under UFSC team on Claude. (enterprise account)"
   account on Claude, the enterprise account. Never in a session of the owner's personal Max
   account.
 - Check before the first edit: `~/.claude.json`, `oauthAccount.organizationType`. `claude_max`
-  is the personal account: stop and say so. The value the UFSC account shows is not recorded
-  yet `⚠`; until it is, an account that cannot be read is a reason to ask.
+  is the personal account: stop and say so. `claude_team` is the team account, the Claude Team
+  organisation shared by LOS/UFBA and LabECO/UFSC members by invitation (v) (read after the
+  owner's first `/login` to it, 14 October 2026; it is a Team plan, not Enterprise). Any other
+  value, or none, is a reason to ask.
 - `.claude/hooks/kokkos-account.sh` (PreToolUse on Write and Edit) denies an edit to Kokkos code
-  in a `claude_max` session. It is a guard, not the rule: the rule holds for any tool.
+  in a `claude_max` session (v) (live run with a `claude_max` `~/.claude.json` and with the
+  `claude_team` login, 14 October 2026; `docs/log/2026-10-14-kokkos-account-team.md`). It is a
+  guard, not the rule: the rule holds for any tool.
 - Scripts, documents, CI and the port's ledgers (`kokkos/ports.tsv`, `kokkos/PORT_STATUS.md`)
   are not Kokkos code.
 

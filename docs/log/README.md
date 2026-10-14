@@ -36,3 +36,4 @@ Date, author, issue/PR/WFIP.
 |---|---|---|
 | 2026-10-08 | [SPIKE-001 quick wins: research metadata, forms, log, results data, agent environment](2026-10-08-spike-001-quick-wins.md) | #65 |
 | 2026-10-11 | [Graphify on WW3 at the pin: raw and preprocessed, code only](2026-10-11-graphify-on-ww3.md) | #68, ADR-0007 |
+| 2026-10-14 | [First login to the Claude Team account, and the Kokkos account guard](2026-10-14-kokkos-account-team.md) | AGENTS.md hard rule |
