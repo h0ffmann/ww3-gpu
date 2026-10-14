@@ -189,6 +189,23 @@ anyone's table, including the ones here. The Kokkos port takes the other route: 
 their data on the device and match the Fortran bit for bit
 ([`course/09-benchmark-profile-compile-run.md`](course/09-benchmark-profile-compile-run.md)).
 
+WW3 runs with that port in two ways (`scripts/hoff.sh`). The Fortran is WW3's own: the `WW3/`
+submodule, h0ffmann/WW3 at the branch `hoff/kokkos-snl1`; this repository holds only the Kokkos
+side.
+
+```bash
+just smoke             # smoke-ww3, then smoke-hoff: regtest ww3_ts1, seconds
+just smoke-ww3         # --ww3: WW3 as written
+just smoke-hoff        # --hoff: WW3 with the Kokkos DIA (W3SNL1), compared with the Fortran run
+just full-ww3          # the expensive case: bench_small, 9 520 sea points, minutes
+just full-hoff         # the same with the Kokkos DIA
+just port-score        # how much of WW3 runs on Kokkos, and the routines ranked by time
+```
+
+`--hoff` uses CUDA when `nvidia-smi` sees a GPU, else OpenMP (`just smoke-hoff openmp`). On
+14 October 2026 both cases passed on OpenMP; the GPU run was not made yet
+([`docs/PORT_ASSESSMENT_202610.md`](docs/PORT_ASSESSMENT_202610.md)).
+
 ## structure
 
 | Path | Contents |

@@ -1,0 +1,19 @@
+# The WW3 routines ported to Kokkos, one row each, read by scripts/port_score.py (`just port-score`).
+# routine: the gprof name, module:routine in lower case (as kokkos/tools/profile names it)
+# file: the WW3 file and lines, at the upstream commit in `ww3_rev`
+# status: the furthest step passed, in this order:
+#   ported   a Kokkos kernel exists in kokkos/src
+#   L1       it matches the Fortran one call at a time (kokkos/tests, CTest)
+#   L2       inside WW3 (the hoff/kokkos-snl1 branch), the model's output agrees with the Fortran's
+#            within kokkos/tools/nccmp-tol/tolerances.txt (`just smoke-hoff`)
+#   gpu      the same L2 replay passed on a CUDA backend
+# evidence: the command or file that shows the status
+# ww3_rev / ww3_lines / ww3_routines: written by `scripts/port_score.py --measure` (needs WW3/);
+# the time score uses docs/data/ww3_full_gprof.tsv (`just profile-case full`)
+#
+# ww3_rev	03adda91
+# ww3_lines	263375
+# ww3_routines	1023
+routine	file	lines	status	evidence
+w3snl1md:w3snl1	model/src/w3snl1md.F90:115-473	359	L2	kokkos/tests/L1_test_snl1_dia.cpp (bit-identical, NK=25 NTH=24, three presets); `just smoke-hoff openmp` on ww3_ts1 and `just full-hoff openmp` on bench_small, 2026-10-14 (hs within 1.8e-7 relative over 119 652 values, PASS; not byte-identical)
+w3snl1md:insnl1	model/src/w3snl1md.F90:483-786	304	L2	kokkos/tests/L1_test_snl1_tables.cpp; built by WW_SNL1_INIT in W3INIT on the branch, run by the same smoke

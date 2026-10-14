@@ -169,6 +169,23 @@ A transferência de dados limitou o ganho, e o código não entrou no `NOAA-EMC/
 segue outro caminho: kernels em Kokkos que mantêm os dados na GPU e reproduzem o Fortran bit a bit,
 portados na ordem do tempo de parede medido ([lição 09](course/09-benchmark-profile-compile-run.md)).
 
+O WW3 roda com esse port de dois jeitos (`scripts/hoff.sh`). O Fortran é o do próprio WW3: o
+submódulo `WW3/`, h0ffmann/WW3 no branch `hoff/kokkos-snl1`; este repositório guarda só o lado
+Kokkos.
+
+```bash
+just smoke             # smoke-ww3, depois smoke-hoff: regtest ww3_ts1, segundos
+just smoke-ww3         # --ww3: o WW3 como está
+just smoke-hoff        # --hoff: o WW3 com o DIA em Kokkos (W3SNL1), comparado com o Fortran
+just full-ww3          # o caso caro: bench_small, 9 520 pontos de mar, minutos
+just full-hoff         # o mesmo com o DIA em Kokkos
+just port-score        # quanto do WW3 roda em Kokkos, e as rotinas em ordem de tempo
+```
+
+O `--hoff` usa CUDA quando o `nvidia-smi` vê uma GPU, senão OpenMP (`just smoke-hoff openmp`). Em
+14 de outubro de 2026 os dois casos passaram em OpenMP; a rodada na GPU ainda não foi feita
+([`docs/PORT_ASSESSMENT_202610.md`](docs/PORT_ASSESSMENT_202610.md)).
+
 ## estrutura
 
 A tabela completa está na seção [structure](README.md#structure) do README em inglês. Em resumo:

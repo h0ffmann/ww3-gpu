@@ -6,10 +6,48 @@ in this repository reproduces: each timing links the commands below, and the tim
 table is generated from its record in [`bench/results/`](../bench/results/)
 (`python3 scripts/results.py table`).
 
-Routines are ported in descending order of measured wall time in the operational case
-(`CONTRIBUTING.md`, "Port order is wall time"). That profile is not in this file yet, so
-the current order rests on published priors and the `ww3_ts1` gprof table in
-`docs/data/ww3_ts1_gprof_202610.md` (both ⚠).
+Routines are ported in descending order of measured wall time
+(`CONTRIBUTING.md`, "Port order is wall time"). The ranking below is measured: gprof on
+`bench_small`, a 2-D case with propagation (`just profile-case full`), not the operational
+case, which is not in this repository. The older `ww3_ts1` table in
+`docs/data/ww3_ts1_gprof_202610.md` stays ⚠ (transcribed from #45).
+
+## Port score
+
+How much of WW3 runs on the Kokkos backend, and what is next. Written by
+`scripts/port_score.py --write` from [`ports.tsv`](ports.tsv) and the profile; `just port-score`
+prints it, and CI checks that this block is current. How the port was assessed on 2026-10-14:
+[`docs/PORT_ASSESSMENT_202610.md`](../docs/PORT_ASSESSMENT_202610.md).
+
+<!-- port-score:start -->
+Profile: full (bench_small, 120 x 80, 9 520 sea points, 12 h), Release -pg, switches/switch_lab_shrd, 1 thread, ww3_shel 146 s under -pg, WW3@6d1bcdfe, 2026-10-14 (`just profile-case full`). Self time; a routine's callees are not in its row.
+
+| # | routine | self s | self % | cumulative % | port status |
+|---|---|---|---|---|---|
+| 1 | `w3snl1md:w3snl1` | 63.53 | 48.4 | 48.4 | L2 |
+| 2 | `w3src4md:w3sds4` | 30.52 | 23.2 | 71.6 | Fortran |
+| 3 | `w3src4md:w3sin4` | 16.63 | 12.7 | 84.2 | Fortran |
+| 4 | `w3srcemd:w3srce` | 7.36 | 5.6 | 89.8 | Fortran |
+| 5 | `w3src4md:w3spr4` | 4.10 | 3.1 | 93.0 | Fortran |
+| 6 | `w3pro3md:w3xyp3` | 3.92 | 3.0 | 95.9 | Fortran |
+| 7 | `w3uqckmd:w3qck3` | 1.50 | 1.1 | 97.1 | Fortran |
+| 8 | `w3uqckmd:w3qck1` | 1.19 | 0.9 | 98.0 | Fortran |
+| 9 | `init` | 0.86 | 0.7 | 98.6 | Fortran |
+| 10 | `w3sdb1md:w3sdb1` | 0.51 | 0.4 | 99.0 | Fortran |
+| 11 | `w3pro3md:w3ktp3` | 0.40 | 0.3 | 99.3 | Fortran |
+| 12 | `w3sbt1md:w3sbt1` | 0.28 | 0.2 | 99.6 | Fortran |
+| 13 | `w3wavemd:w3scat` | 0.21 | 0.2 | 99.7 | Fortran |
+| 14 | `w3sln1md:w3sln1` | 0.17 | 0.1 | 99.8 | Fortran |
+| 15 | `w3wavemd:w3gath` | 0.15 | 0.1 | 100.0 | Fortran |
+
+| port score | value | what it counts |
+|---|---|---|
+| time | **48.4 %** | the profile's self time in routines that pass the WW3 replay (L2 or gpu) |
+| routines | 2 of 1023 (0.20 %) | ported routines over every SUBROUTINE and FUNCTION in model/src at WW3@03adda91 |
+| lines | 663 of 263375 (0.25 %) | the ported routines' Fortran lines over model/src's |
+
+On a GPU: none yet. The CUDA build and the RTX 4090 run of `just smoke-hoff` are the next step.
+<!-- port-score:end -->
 
 SPDX-License-Identifier: MIT
 

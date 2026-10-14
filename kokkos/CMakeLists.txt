@@ -21,6 +21,7 @@ set(WW_WW3_BUILD_DIR "" CACHE PATH
     "A configured WW3 build directory (libww3.a + mod/); enables the ww3_lib cross-check target")
 
 include(cmake/CompilerWarnings.cmake)
+include(GNUInstallDirs)
 
 # Kokkos' package config runs find_dependency(OpenMP), which needs an enabled
 # language -- hence LANGUAGES above, and hence no cmake -P probing of this tree.
@@ -45,7 +46,9 @@ set(WW_TEST_ENVIRONMENT "OMP_PROC_BIND=false;OMP_NUM_THREADS=2")
 # WAVEWATCH III reaches them through. It hands its include path, Kokkos and the
 # WW_DETERMINISTIC contract to everything that links it.
 add_library(ww_kokkos STATIC)
-target_include_directories(ww_kokkos PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_include_directories(ww_kokkos PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 target_link_libraries(ww_kokkos PUBLIC Kokkos::kokkos)
 ww_apply_warnings(ww_kokkos)
 if(WW_DETERMINISTIC)
@@ -61,3 +64,23 @@ add_subdirectory(tools/nccmp-tol)
 add_subdirectory(tools/bench_case)
 add_subdirectory(tools/fetch_analyse)
 add_subdirectory(tests)
+
+# The package WAVEWATCH III finds with `find_package(ww_kokkos)` when it is built with the
+# KOKKOS switch (-DWW_KOKKOS=ON, the h0ffmann/WW3 branch hoff/kokkos-snl1): the static
+# library and its Kokkos dependency, installed with `cmake --install <build> --prefix <dir>`.
+# The Fortran module is compiled by WW3 itself, so only the C++ library is exported.
+include(CMakePackageConfigHelpers)
+install(TARGETS ww_kokkos EXPORT ww_kokkosTargets
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(DIRECTORY src/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    FILES_MATCHING PATTERN "*.hpp")
+install(EXPORT ww_kokkosTargets NAMESPACE ww_kokkos::
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ww_kokkos)
+file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/ww_kokkosConfig.cmake
+    "include(CMakeFindDependencyMacro)\nfind_dependency(Kokkos)\n"
+    "include(\"\${CMAKE_CURRENT_LIST_DIR}/ww_kokkosTargets.cmake\")\n")
+write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/ww_kokkosConfigVersion.cmake
+    COMPATIBILITY SameMinorVersion)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/ww_kokkosConfig.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/ww_kokkosConfigVersion.cmake
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ww_kokkos)

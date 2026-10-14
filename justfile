@@ -49,9 +49,43 @@ ww3-run *cmd:
 toolchain:
     just -f {{pratico}}/justfile toolchain
 
-# Fortran + MPI + NetCDF smoke test in the Nix sandbox (what pratico's CI runs).
-smoke:
+# Fortran + MPI + NetCDF smoke test of the toolchain in the Nix sandbox (what pratico's CI runs).
+toolchain-smoke:
     just -f {{pratico}}/justfile smoke
+
+# ---------------------------------------------------------------------
+# WW3 two ways (scripts/hoff.sh): --ww3, the Fortran as NOAA writes it; --hoff, WW3 built
+# with the KOKKOS switch from the h0ffmann/WW3 branch hoff/kokkos-snl1 and linked to kokkos/.
+# The backend of --hoff is cuda when nvidia-smi sees a GPU, else openmp (`just smoke-hoff openmp`).
+# ---------------------------------------------------------------------
+
+# Both smoke tests: WW3 as written, then WW3 with the Kokkos port (ww3_ts1, seconds on a CPU).
+smoke: smoke-ww3 smoke-hoff
+
+# WW3 as written: regtest ww3_ts1 (one point, ST4 + NL1, 10 model days) must finish.
+smoke-ww3:
+    bash scripts/hoff.sh --ww3 smoke
+
+# WW3 with the Kokkos DIA: ww3_ts1 with the Fortran and the Kokkos W3SNL1, compared by nccmp-tol.
+smoke-hoff backend="auto":
+    bash scripts/hoff.sh --hoff smoke --backend {{backend}}
+
+# The expensive case, as written: bench_small (120 x 80, 9 520 sea points, 12 hours).
+full-ww3:
+    bash scripts/hoff.sh --ww3 full
+
+# The expensive case with the Kokkos DIA, compared with the Fortran by nccmp-tol.
+full-hoff backend="auto":
+    bash scripts/hoff.sh --hoff full --backend {{backend}}
+
+# Profile WW3 as written on a case (smoke: ww3_ts1; full: bench_small) with gprof -> docs/data/ww3_<case>_gprof.tsv.
+profile-case case="full":
+    bash scripts/profile_case.sh {{case}}
+
+# How much of WW3 runs on the Kokkos backend: the ranking of the routines by measured time, each
+# with its port status, and the port score (kokkos/ports.tsv, docs/data/ww3_profile_full.tsv).
+port-score *args:
+    python3 scripts/port_score.py "$@"
 
 # ---------------------------------------------------------------------
 # WW3: get, build, regtest, examples, bench
