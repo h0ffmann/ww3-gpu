@@ -128,6 +128,14 @@ adrs *args:
 results *args:
     python3 scripts/results.py "$@"
 
+# Every entry of pubs/proposal/refs.bib has a row and a verdict in pubs/proposal/REFERENCES.md; --strict fails on unverified.
+refs *args:
+    python3 scripts/refs_check.py "$@"
+
+# The slip box (NOTES.md): front matter, ids, links, the index.
+notes *args:
+    python3 scripts/notes_check.py "$@"
+
 # Regenerate codemeta.json from CITATION.cff and .zenodo.json; `just codemeta --check` is the CI gate.
 codemeta *args:
     python3 scripts/codemeta.py "$@"
@@ -247,6 +255,16 @@ book-docx:
 # The book as a static website, one page per chapter -> build/site; CI deploys it to GitHub Pages.
 book-html:
     scripts/build_html.sh
+
+# The Gleam front page (site/, DESIGN.md) reads its facts from the repository; CI deploys build/site.
+# The whole website -> build/site: the chapters at /book/, then the Gleam front page at /.
+site:
+    scripts/build_html.sh
+    nix develop "{{justfile_directory()}}#site" --command scripts/build_site.sh --check
+
+# Serve build/site on http://localhost:8000 (after `just site`).
+site-serve:
+    python3 -m http.server 8000 --directory build/site
 
 # The book as a Leanpub manuscript (Markua) -> build/leanpub/manuscript; CI pushes it to the `leanpub` branch.
 leanpub *args:
