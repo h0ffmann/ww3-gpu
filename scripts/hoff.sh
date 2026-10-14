@@ -59,8 +59,36 @@ if [ "$mode" = self-test ]; then
 fi
 [ -n "$mode" ] && [ -n "$case_name" ] || usage
 
+# gpu_doctor: a machine with an NVIDIA GPU whose driver does not answer is a fault to fix, not a
+# reason to fall back to the CPU. The usual cause on Ubuntu: a new kernel was booted and the
+# driver's module package for it was not installed (2026-10-14: kernel 7.0.0-38, the 595 modules
+# installed for 7.0.0-31 only).
+gpu_doctor() {
+  local k pkg
+  k="$(uname -r)"
+  echo "hoff: this machine has an NVIDIA GPU, and nvidia-smi cannot reach its driver." >&2
+  if ! find "/lib/modules/$k" -name 'nvidia.ko*' 2>/dev/null | grep -q .; then
+    echo "      There is no nvidia kernel module for the running kernel, $k." >&2
+    pkg="$(dpkg-query -W -f '${Package}\n' 'linux-modules-nvidia-*-generic-hwe-*' 2>/dev/null | head -1 || true)"
+    if [ -n "$pkg" ]; then
+      echo "      Fix: sudo apt install $pkg   (brings the module for $k), then sudo modprobe nvidia" >&2
+    else
+      echo "      Fix: install the NVIDIA module package for $k (ubuntu-drivers install), then sudo modprobe nvidia" >&2
+    fi
+  else
+    echo "      The module for $k exists but is not loaded. Fix: sudo modprobe nvidia (or reboot)" >&2
+  fi
+  echo "      To run on the CPU anyway: --backend openmp (just smoke-hoff openmp)." >&2
+}
+has_nvidia_gpu() { lspci 2>/dev/null | grep -qiE 'VGA.*NVIDIA|3D controller.*NVIDIA'; }
+
 if [ "$backend" = auto ]; then
-  if nvidia-smi -L >/dev/null 2>&1; then backend=cuda; else backend=openmp; fi
+  if nvidia-smi -L >/dev/null 2>&1; then backend=cuda
+  elif has_nvidia_gpu; then gpu_doctor; exit 4
+  else backend=openmp; fi
+fi
+if [ "$backend" = cuda ] && [ -z "${HOFF_IN_SHELL:-}" ] && ! nvidia-smi -L >/dev/null 2>&1 && [ -z "$build_only" ]; then
+  gpu_doctor; exit 4
 fi
 case "$backend" in openmp|cuda) ;; *) echo "hoff: backend is openmp or cuda, not $backend" >&2; exit 64 ;; esac
 

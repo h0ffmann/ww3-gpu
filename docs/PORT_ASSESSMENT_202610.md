@@ -3,7 +3,7 @@
 Written 14 October 2026, at the owner's request: assess the existing port, make WW3 run with the
 forked code on the Kokkos backend, and give two ways of running it with a smoke test and a more
 expensive test each. `(v)` marks a claim checked by a command run for this document, on the
-author's workstation without a working GPU driver (`nvidia-smi` could not reach the driver), with
+owner's workstation (RTX 4090) while its NVIDIA driver was not loaded (§7), with
 the pratico toolchain (gfortran 15.3.0, Kokkos 5.2.0 OpenMP); `⚠` marks one that was not.
 
 ## 1. Summary
@@ -98,8 +98,11 @@ the device; until then no speed claim is made for `--hoff`, on the CPU or the GP
 - **The CUDA run** `⚠`. The CUDA build is checked: `scripts/hoff.sh --hoff smoke --backend cuda
   --build-only` builds `ww_kokkos` with the `cuda-release` preset, configures WW3 with
   `nvcc_wrapper` (Kokkos 5.2.0 CUDA, Ada 8.9), and links `ww3_shel` to `libcudart.so.12` `(v)`.
-  Running it here stops at Kokkos' start, "no CUDA-capable device is detected" `(v)`, and does so
-  in both runs: with the `KOKKOS` switch, `W3INIT` starts Kokkos even when `WW_KOKKOS_SNL1=0`.
+  Running it stopped at Kokkos' start, "no CUDA-capable device is detected" `(v)`, in both runs:
+  with the `KOKKOS` switch, `W3INIT` starts Kokkos even when `WW_KOKKOS_SNL1=0`. The cause was
+  the workstation, not the port: it had booted kernel 7.0.0-38, and the NVIDIA 595 module package
+  was installed for 7.0.0-31 only, so no `nvidia` module could load `(v)`. `hoff.sh` now says so
+  and stops, instead of falling back to the CPU when a GPU is present (`gpu_doctor`).
   `just smoke-hoff` on the RTX 4090 is the owner's test; the level-1 scratch on the GPU is
   untested.
 - **MPI and threaded switches** `⚠`. The lab switch is SHRD (no MPI); the `!$OMP CRITICAL` path
