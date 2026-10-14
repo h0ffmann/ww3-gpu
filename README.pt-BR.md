@@ -101,9 +101,20 @@ diário: [`docs/log/`](docs/log/README.md), só por acréscimo. Onde fica cada t
 [ai-memory](https://github.com/akitaonrails/ai-memory), escolhido na
 [ADR-0009](docs/ADRs/ADR-0009-ww3-gpu-adopts-ai-memory-from-fabio-akita.md).
 
+Parte dessa memória é publicada. As páginas do ai-memory que o dono marca com `publish` são
+copiadas para [`memory/`](memory/README.md), que começa por [`HUMAN.md`](memory/HUMAN.md): quem é
+o dono deste repositório e as ordens permanentes que deu, com as próprias palavras. Essas páginas são
+pistas, não evidência; o que importa também está num arquivo daqui com o seu `(v)` ou `⚠`. Com o
+plugin do ai-memory instalado no Claude Code (os passos estão no [`MEMORY.md`](MEMORY.md)),
+carregue-as no seu próprio acervo depois de clonar e depois de cada pull que mude `memory/`; as
+suas sessões passam a encontrá-las como qualquer página que você escreveu.
+
 ```console
-just notes         # as notas seguem as regras: cabeçalho, ids, links, o índice
-just refs          # cada referência da proposta tem um veredito no seu REFERENCES.md
+just notes          # as notas seguem as regras: cabeçalho, ids, links, o índice
+just refs           # cada referência da proposta tem um veredito no seu REFERENCES.md
+just memory import  # carrega memory/ no seu ai-memory; páginas iguais são puladas
+just memory export  # dono: copia para memory/ as páginas do wiki marcadas com `publish`
+just memory check   # memory/ só tem páginas publicadas: nada de sessão, log, e-mail ou caminho pessoal
 ```
 
 ## frentes de estudo

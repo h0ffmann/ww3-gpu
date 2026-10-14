@@ -20,6 +20,7 @@ Never only in a chat.
 | Each release and its permanent DOI | [`RELEASES.md`](RELEASES.md) |
 | The ties of the Zenodo record, with a date of record | [`RELATED_WORK.md`](RELATED_WORK.md) |
 | The measured numbers | [`bench/results/`](bench/README.md), [`kokkos/PORT_STATUS.md`](kokkos/PORT_STATUS.md) |
+| The ai-memory pages the owner publishes | [`memory/`](memory/README.md), written by `just memory export` |
 | The Claude project's settings | [`.claude/project/`](.claude/project/) ([ADR-0005](docs/ADRs/ADR-0005-claude-project-settings-in-repo.md)) |
 
 ## The long-term memory: ai-memory
@@ -55,6 +56,23 @@ What the owner does, once for each machine:
 worktree and branch lands in the same one. `ai-memory setup` also writes its hooks into the user's
 `~/.claude/settings.json`; while those exist the plugin skips every event they deliver, so nothing
 is captured twice (ai-memory's `plugins/claude-code/README.md` at `v3.0.0`).
+
+### Published pages
+
+Most of the wiki stays on the owner's machine. A page the owner wants every reader to have is
+tagged `publish` (ask the agent, or `ai-memory write-page --tag publish`), and then:
+
+```bash
+just memory export   # owner: the wiki pages tagged `publish` -> memory/, index rewritten
+just memory import   # any reader with ai-memory: memory/ -> their own store, unchanged pages skipped
+just memory check    # CI: no session page, log, e-mail address or home path; the index is current
+```
+
+Session pages (`sessions/`) and the monthly logs (`log-YYYY-MM.md`) are never exported, whatever
+their tags: they hold raw prompts and local paths. `import` writes into the project named by
+[`.ai-memory.toml`](.ai-memory.toml), so every reader's copy lands in `h0ffmann-ww3-gpu`; it keeps
+a page's kind, tier, tags and pin, but not its `entities` or `abstract`, which the CLI cannot set.
+A published page is public: the security reviewer reads `memory/` like any other diff.
 
 What is in ai-memory is a lead, not evidence: its own routing puts `AGENTS.md` above it and says to
 check a recalled fact against the code and the tests. A fact that matters is copied into one of

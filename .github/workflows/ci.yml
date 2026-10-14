@@ -40,6 +40,9 @@ jobs:
       - name: The slip box keeps its rules (NOTES.md)
         run: python3 scripts/notes_check.py --self-test && python3 scripts/notes_check.py
 
+      - name: memory/ holds only published ai-memory pages, and its index is current (MEMORY.md)
+        run: python3 scripts/memory.py --self-test && python3 scripts/memory.py check
+
       - name: Result records are valid, every timing has a passed L1, quoted tables are current
         run: python3 scripts/results.py check
 

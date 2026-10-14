@@ -38,8 +38,12 @@ This record makes the same choice here, and records everything the request bring
    and keeps a git-backed wiki of Markdown pages; the default makes no model call and sends
    nothing off the machine `(v)` its `DATA_HANDLING.md`, same commit. The Claude Code plugin is
    `ai-memory@ai-memory` from the marketplace `akitaonrails/ai-memory`, pinned to the tag `v3.0.0`.
-   The files of this repository stay the record: the wiki is on one machine, and no reader of the
-   repository sees it. [`MEMORY.md`](../../MEMORY.md) says where each kind of memory is.
+   The files of this repository stay the record. The wiki is on one machine; the pages its owner
+   tags `publish` are copied into [`memory/`](../../memory/README.md) by `just memory export`,
+   where every reader sees them and `just memory import` loads them into the reader's own
+   ai-memory (amended 2026-10-14, while Proposed; `scripts/memory.py check` keeps session pages,
+   logs, e-mail addresses and home paths out). [`MEMORY.md`](../../MEMORY.md) says where each kind
+   of memory is.
 2. **Citation discipline, from h0ffmann/closed-source** `(v)` its `AGENTS.md`, `REFERENCES.md`,
    `RELEASES.md` and `RELATED_WORK.md` at
    [`5cf9a6a`](https://github.com/h0ffmann/closed-source/tree/5cf9a6a):
@@ -95,7 +99,8 @@ This record makes the same choice here, and records everything the request bring
   marola's and closed-source's metadata name this record with `resource_type: software` until they
   change it.
 - The long-term memory works only on the owner's machine, after the owner installs it. Until then
-  `MEMORY.md` says it is chosen, not in use.
+  `MEMORY.md` says it is chosen, not in use. What the owner publishes reaches every reader through
+  `memory/`; the rest of the wiki does not.
 - A commit message is shorter by one trailer, and `just uprd` writes no Cost row.
 
 ## Revisit when

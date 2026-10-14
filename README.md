@@ -97,9 +97,20 @@ with its source and a status (`unverified` until a source is checked), linked to
 [ai-memory](https://github.com/akitaonrails/ai-memory), chosen in
 [ADR-0009](docs/ADRs/ADR-0009-ww3-gpu-adopts-ai-memory-from-fabio-akita.md).
 
+Part of that memory is published. The ai-memory pages the owner tags `publish` are copied into
+[`memory/`](memory/README.md), which starts with [`HUMAN.md`](memory/HUMAN.md): who owns this
+repository and the standing orders they gave, in their own words. These pages are leads, not
+evidence; what matters is also in a file here with its `(v)` or `⚠`. With the ai-memory plugin
+installed for Claude Code ([`MEMORY.md`](MEMORY.md) has the steps), load them into your own store
+after cloning and after each pull that changes `memory/`; your sessions then find them like any
+page you wrote.
+
 ```console
-just notes         # the slip box keeps its rules: front matter, ids, links, the index
-just refs          # every reference of the proposal has a verdict in its REFERENCES.md
+just notes          # the slip box keeps its rules: front matter, ids, links, the index
+just refs           # every reference of the proposal has a verdict in its REFERENCES.md
+just memory import  # load memory/ into your ai-memory; unchanged pages are skipped
+just memory export  # owner: copy the wiki pages tagged `publish` into memory/
+just memory check   # memory/ holds only published pages: no session, log, e-mail or home path
 ```
 
 ## study areas
