@@ -1,0 +1,14 @@
+# ai-memory project routing (MEMORY.md, ADR-0009): every checkout, worktree and claude/* branch
+# of this repository lands in one project, whatever the folder is called.
+workspace = "default"
+project = "h0ffmann-ww3-gpu"
+
+# Kept out of capture: the account and agent state an agent reads under AGENTS.md's account rule
+# (e-mail, account and org ids; the sanitizer does not strip them), ai-memory's own config, env
+# files, and the decision records this repository owns, so the wiki holds no stale copy of them
+# (ai-memory docs/marker-file.md, "Capture exclusions", at v3.0.0). Best effort for shell commands.
+[capture]
+ignore_paths = [
+  "~/.claude.json", "~/.claude/.credentials.json", "~/.config/ai-memory/**", "~/.local/share/ai-memory/**",
+  ".env", "**/.env", "docs/ADRs/**", "docs/WFIPs/**",
+]
