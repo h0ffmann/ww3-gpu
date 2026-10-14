@@ -5,7 +5,6 @@
 | | |
 |---|---|
 | **Tested** | <!-- fill: note from the `Tested:` trailer(s) --> |
-| **Cost** | <!-- fill: `Cost:` trailer(s) from the commits --> |
 
 **What changed**
 - <!-- fill: one bullet per commit -->

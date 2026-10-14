@@ -34,7 +34,7 @@ not work yet; filing is a person's act.
 
 ## Workflow and gates
 
-Commits carry `Tested:` and `Cost:` trailers; the PR is opened with `just pr` from a branch named
+Commits carry a `Tested:` trailer and no `Cost:` trailer; the PR is opened with `just pr` from a branch named
 after the work. Gates: `just kokkos-test`, `python3 scripts/figures.py check`,
 `python3 -m unittest discover tests`, `python3 scripts/wfip.py check`, `just proposal-lint` and
 the `revisor-proposta` review for `pubs/proposal/`. A Spec Kit spec lives in

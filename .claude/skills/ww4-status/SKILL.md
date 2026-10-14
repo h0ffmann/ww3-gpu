@@ -80,7 +80,7 @@ Branch per `CONTRIBUTING.md`, then:
    only for a fact that changed, never to refresh a date.
 4. `just ww4-status --write` to move the snapshot, and commit `docs/ww4-status.json` in the same
    PR, so the next run diffs from here.
-5. One PR, `Closes #<issue>`, commit trailers `Tested:` and `Cost:`.
+5. One PR, `Closes #<issue>`, commit trailer `Tested:`.
 
 ## Running it on a schedule
 

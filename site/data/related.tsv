@@ -1,0 +1,9 @@
+# The people and the works the site names that no other file of this repository holds. One row is one
+# link: kind (author|work), name, the link, what it is, and the source of the row.
+# Guimarães P.V. is not here: he comes from .zenodo.json, with his ORCID.
+# kind	name	link	what	source
+author	Fabio Akita	https://github.com/akitaonrails	legendary br dev; the author of ai-memory, the long-term memory this repository adopts (ADR-0009)	the owner's words, 2026-10-14
+work	marola	https://doi.org/10.5281/zenodo.23224155	sea conditions and bathing-water quality at brazilian beaches; this lab is its groundwork for a wave model	.zenodo.json, related works
+work	picasso	https://doi.org/10.5281/zenodo.23311208	the nix labs this repository's toolchain, papers and site come from	.zenodo.json, related works
+work	closed source: the god that failed	https://doi.org/10.5281/zenodo.23333656	the book whose citation and paper discipline this repository adopts	.zenodo.json, related works
+work	nashkell	https://doi.org/10.5281/zenodo.23356739	an open book in progress in the voice of nash, with a gleam site of the same shape	the owner, 2026-10-14

@@ -37,10 +37,9 @@ refactor with no behaviour change, or a one-file tweak: do those directly.
    `/speckit-specify` writes `specs/<NNN-slug>/spec.md`; name it in the *Spec-kit* row. A spec
    written by hand in that shape is fine (`specs/001-weathernext3-wind/spec.md`).
 5. `just wfip index` regenerates `README.md`; `just wfip check` is the CI gate.
-6. Commit with `Tested:` and `Cost:`; open the PR as a draft with `just pr` from a branch named
+6. Commit with `Tested:` (never `Cost:`); open the PR as a draft with `just pr` from a branch named
    after the work; the PR gets the `wfip` label from `.github/labeler.yml`.
-7. Do not build it in the same PR. Implementation PRs tick §7 boxes, update **Cost so far** from
-   their `Cost:` trailers, and the last one flips Status to Implemented; `wfip check` refuses
+7. Do not build it in the same PR. Implementation PRs tick §7 boxes, and the last one flips Status to Implemented; `wfip check` refuses
    Implemented with an unticked box.
 8. Filing the issues of the tasks file is a person's act (`AGENTS.md`); the *Issues* row says
    `not filed: Draft` until then.

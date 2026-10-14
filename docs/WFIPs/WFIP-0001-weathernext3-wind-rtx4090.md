@@ -13,7 +13,6 @@
 | **Depends on** | access to WeatherNext 3 data (form, 5–7 working days `(v)` plan §5); GEBCO and GFS downloads of example 02; a working CUDA driver on the box; nothing from other WFIPs |
 | **Blocked by** | none |
 | **Risk** | the access form is refused or the Zarr v3 store cannot be read without Python, which the lab rule forbids in `examples/`; then the conversion runs outside the repo and only the NetCDF enters, as a documented step |
-| **Cost so far** | — |
 
 ### Readiness
 

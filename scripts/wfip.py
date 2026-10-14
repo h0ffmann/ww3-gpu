@@ -89,10 +89,10 @@ def deliverable_ids(readme_text):
 
 
 def render_index(wfips):
-    head = ["| WFIP | Title | Status | Created | Deliverable | Effort | Verdict | DoD | Cost so far |",
-            "|---|---|---|---|---|---|---|---|---|"]
+    head = ["| WFIP | Title | Status | Created | Deliverable | Effort | Verdict | DoD |",
+            "|---|---|---|---|---|---|---|---|"]
     if not wfips:
-        return "\n".join(head + ["| — | no WFIP yet | | | | | | | |"])
+        return "\n".join(head + ["| — | no WFIP yet | | | | | | |"])
     rows = []
     for n in sorted(wfips):
         w = wfips[n]
@@ -101,7 +101,7 @@ def render_index(wfips):
         verdict = re.split(r":\s+|\s+—\s+|\s+-\s+", r.get("effort vs gain", ""), maxsplit=1)[0]
         deliv = ", ".join(w.deliverables) or "none"
         rows.append(f"| {w.link()} | {w.title} | {w.status} | {r.get('created', '')} | {deliv} | "
-                    f"{effort} | {verdict} | {w.dod[0]}/{w.dod[1]} | {r.get('cost so far', '—')} |")
+                    f"{effort} | {verdict} | {w.dod[0]}/{w.dod[1]} |")
     return "\n".join(head + rows)
 
 

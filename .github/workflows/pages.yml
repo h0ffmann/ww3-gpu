@@ -1,8 +1,11 @@
-# pages — the book as a static website on GitHub Pages (issue #76, ADR-0004 decision 6).
-# scripts/build_html.sh turns course/*.md into one HTML page per chapter with the same pandoc
-# reader and figure filter as the PDF; math is MathML, so the site loads nothing from a CDN.
-# It also serves the committed pdf/ww3-lab-course.pdf, the progress page pubs/site/andamento/ and
-# the ADR list pubs/site/adrs/, which scripts/adrs.py fills from docs/ADRs/ at build time.
+# pages — the website on GitHub Pages (issue #76, ADR-0004 decision 6, ADR-0009).
+# The front page, /, is Gleam + Lustre (site/, DESIGN.md): scripts/build_site.sh prerenders it in
+# `nix develop .#site`, its facts read from the repository (the chapters, the ADRs, the WFIPs, the
+# notes, .zenodo.json, RELEASES.md). The book is at /book/: scripts/build_html.sh turns
+# course/*.md into one HTML page per chapter with the same pandoc reader and figure filter as the
+# PDF; math is MathML. It also serves the committed pdf/ww3-lab-course.pdf, the progress page
+# pubs/site/andamento/ and the ADR list pubs/site/adrs/, which scripts/adrs.py fills from
+# docs/ADRs/ at build time, at their old URLs.
 # A pull request only builds it, so a lesson that breaks the site fails there; a push to main,
 # a published release or a manual run also deploys it to https://h0ffmann.github.io/ww3-gpu/.
 # Needs the repository's Pages source set to "GitHub Actions" (Settings -> Pages), once.
@@ -10,10 +13,10 @@ name: Pages
 
 on:
   pull_request:
-    paths: ['course/**', 'pubs/figures/mermaid/**', 'pubs/filters/mermaid.lua', 'pubs/site/**', 'pdf/ww3-lab-course.pdf', 'scripts/book_prep.py', 'scripts/build_html.sh', 'docs/ADRs/**', 'scripts/adrs.py', '.github/workflows/pages.yml']
+    paths: ['course/**', 'pubs/figures/mermaid/**', 'pubs/filters/mermaid.lua', 'pubs/site/**', 'pdf/ww3-lab-course.pdf', 'scripts/book_prep.py', 'scripts/build_html.sh', 'scripts/build_site.sh', 'docs/ADRs/**', 'docs/WFIPs/**', 'notes/**', 'site/**', 'DESIGN.md', '.zenodo.json', 'CITATION.cff', 'RELEASES.md', 'flake.nix', 'flake.lock', 'scripts/adrs.py', '.github/workflows/pages.yml']
   push:
     branches: [main]
-    paths: ['course/**', 'pubs/figures/mermaid/**', 'pubs/filters/mermaid.lua', 'pubs/site/**', 'pdf/ww3-lab-course.pdf', 'scripts/book_prep.py', 'scripts/build_html.sh', 'docs/ADRs/**', 'scripts/adrs.py', '.github/workflows/pages.yml']
+    paths: ['course/**', 'pubs/figures/mermaid/**', 'pubs/filters/mermaid.lua', 'pubs/site/**', 'pdf/ww3-lab-course.pdf', 'scripts/book_prep.py', 'scripts/build_html.sh', 'scripts/build_site.sh', 'docs/ADRs/**', 'docs/WFIPs/**', 'notes/**', 'site/**', 'DESIGN.md', '.zenodo.json', 'CITATION.cff', 'RELEASES.md', 'flake.nix', 'flake.lock', 'scripts/adrs.py', '.github/workflows/pages.yml']
   release:
     types: [published]
   # pubs.yml commits the rebuilt PDF with [skip ci], which starts no push run; redeploy after it.
@@ -36,8 +39,12 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
+        with: { fetch-depth: 0 } # the page names the commit it was read from
       - run: sudo apt-get update && sudo apt-get install -y pandoc && pandoc --version | head -1
       - run: bash scripts/build_html.sh
+      # The front page: Gleam, node and esbuild from picasso's gleam-website lab, pinned in flake.lock.
+      - uses: cachix/install-nix-action@v31
+      - run: nix develop --no-update-lock-file .#site --command scripts/build_site.sh --check
       - uses: actions/upload-pages-artifact@v5
         with: { path: build/site }
 

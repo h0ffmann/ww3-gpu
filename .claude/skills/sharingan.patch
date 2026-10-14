@@ -21,7 +21,7 @@
 +**Audience in this repository.** ww3-gpu is written first for scientists: PhD and independent
 +researchers in wave modelling and HPC (see `CONTRIBUTING.md`, "Who this repository is for"). A
 +skill ported here restates that rule for its own job, keeps the `(v)`/`⚠` evidence marks and the
-+`Tested:`/`Cost:` trailers, and carries no model name into the repository (`CLAUDE.md`,
++`Tested:` trailer (never `Cost:`), and carries no model name into the repository (`CLAUDE.md`,
 +"Attribution"). Vendored copies are pinned in `.claude/skills/skills.lock` and edited only through
 +their `.claude/skills/<name>.patch` (`CONTRIBUTING.md`, "Ground rules").
 +
@@ -94,7 +94,7 @@
 +     machine-specific. Say what a cloud session cannot see (`~/.config/gh`, a GPU, `$WW3` and the
 +     NOAA data bundle).
 +   - `AGENTS.md` wins every conflict: the audience and evidence rule, WW3 read-only, translate
-+     don't improve, no timing without parity, the `Tested:`/`Cost:` trailers.
++     don't improve, no timing without parity, the `Tested:` trailer and no `Cost:`.
 +   - Anything upstream does "proactively" becomes an offer that waits for a yes (`AGENTS.md`: an
 +     idea with no issue is not work yet). Nothing writes outside the repo without one.
 +   - A vendored skill gets a lock entry (`skills-vendor init <name> --upstream o/r --path DIR
@@ -178,11 +178,11 @@
        "id": 2,
        "prompt": "copy the 'git commit helper' skill from https://github.com/example/dotfiles/tree/main/skills/commit — it writes commit messages with a Generated-by footer",
 -      "expected_output": "Maps the concept to AGENTS.md's commit-trailer rule and .claude/settings.json attribution, finds the footer conflicts with AGENTS.md, and either drops that part or reports that no skill is the right port.",
-+      "expected_output": "Maps the concept to AGENTS.md's commit rule (Tested: and Cost: trailers, the harness's own attribution lines, no model name in the repository), finds the footer conflicts with it, and either drops that part or reports that no skill is the right port.",
++      "expected_output": "Maps the concept to AGENTS.md's commit rule (a Tested: trailer and never a Cost: trailer, the harness's own attribution lines, no model name in the repository), finds the footer conflicts with it, and either drops that part or reports that no skill is the right port.",
        "files": [],
        "assertions": [
 -        {"id": "agents_wins", "description": "Does not keep a Generated-by footer; cites AGENTS.md's three-trailer rule"},
-+        {"id": "agents_wins", "description": "Does not keep a Generated-by footer; cites AGENTS.md's Tested:/Cost: trailer rule"},
++        {"id": "agents_wins", "description": "Does not keep a Generated-by footer; cites AGENTS.md's Tested: trailer rule (no Cost:)"},
          {"id": "no_blind_write", "description": "Does not write a SKILL.md before stating vendor/adapt/rewrite/none"}
        ]
      }

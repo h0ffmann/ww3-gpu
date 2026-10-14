@@ -27,8 +27,8 @@ looser.
 - **The proposal goes through the reviewer**: any change under `pubs/proposal/` passes
   `revisor-proposta` and `just proposal-lint` before the PR, and the review is recorded
   ([The proposal](#the-proposal-hard-rule)).
-- **Commits carry `Tested:` and `Cost:`**, in the final block of the message, and the PR is opened
-  with `just pr` ([Commits and pull requests](#commits-and-pull-requests-hard-rule)).
+- **Commits carry `Tested:`**, in the final block of the message, and never a `Cost:` trailer; the
+  PR is opened with `just pr` ([Commits and pull requests](#commits-and-pull-requests-hard-rule)).
 <!-- invariants:end -->
 
 ## What this repository is
@@ -65,6 +65,11 @@ recipe is a thin wrapper over a script in `scripts/`; `just` lists them.
 | A skill or agent | `.claude/skills/<name>/SKILL.md`, `.claude/agents/<name>.md` | [Skills and agents](#skills-and-agents) |
 | The toolchain | `nix-config/` (submodule, sparse) and `flake.nix` | [`docs/TOOLCHAIN.md`](docs/TOOLCHAIN.md); pin deliberately, name the version |
 | A WW3 fact | nowhere here: cite `model/src/<file>.F90:<line>` at the pinned commit | [WW3 source](#ww3-source-is-read-only-hard-rule) |
+| An idea the lab stands on | a note in `notes/`, linked from `notes/index.md` | [`NOTES.md`](NOTES.md); `just notes` is the gate |
+| A reference of the proposal, and how it was checked | a row in `pubs/proposal/REFERENCES.md` beside the `refs.bib` entry | the verdicts `verified` / `partial` / `unverified`; `just refs` is the gate; `refs.bib` itself goes through the proposal's reviewer |
+| A release, a tie of the Zenodo record | `RELEASES.md`, `RELATED_WORK.md`, each with its date of record | never write a DOI, a tie or a count that was not read from DataCite or Zenodo that day |
+| The website's front page | `site/` (facts read from the repository's files by `site/content`) | [`DESIGN.md`](DESIGN.md); never type a title, a status, a date or a DOI into `site/src` |
+| Where a kind of memory lives; the long-term memory | [`MEMORY.md`](MEMORY.md) | ai-memory, [ADR-0009](docs/ADRs/ADR-0009-ww3-gpu-adopts-ai-memory-from-fabio-akita.md); the files stay the record |
 
 Before implementing, check whether the idea is already designed or decided:
 [`docs/KOKKOS_H100_PLAN_202609.md`](docs/KOKKOS_H100_PLAN_202609.md) (the single-H100 port),
@@ -100,6 +105,9 @@ Run the gates of what you changed before calling it done. CI (`.github/workflows
 | `scripts/*.py` | `python3 -m unittest discover tests`; `scripts/leanpub_manuscript.py --self-test` also runs in `ci.yml` and the Leanpub workflow |
 | `bench/results/` or a table it quotes | `just results check` (`just results table` regenerates) |
 | `CITATION.cff` or `.zenodo.json` | `just codemeta` to regenerate `codemeta.json`, then `just codemeta --check` |
+| `notes/` or `NOTES.md` | `just notes` (`scripts/notes_check.py`) |
+| `pubs/proposal/refs.bib` or its `REFERENCES.md` | `just refs` (`scripts/refs_check.py`) |
+| `site/`, `DESIGN.md`, `scripts/build_html.sh`, `scripts/build_site.sh` | `just site` (the book pages, then the front page's tests and prerender) |
 | `docs/WFIPs/` or `specs/` | `just wfip check` (`scripts/wfip.py check`: index current, deliverable ids valid, every section present, DoD consistent with Status); `just wfip index` regenerates |
 | `.claude/skills/` or `.claude/agents/` | `python3 .claude/hooks/check_agent_frontmatter.py`; for a vendored skill, `skills-vendor check --lock .claude/skills/skills.lock` |
 | any Markdown | links are checked by lychee in CI; a relative link must resolve from the file; `just vale` (`scripts/vale.sh`) must pass on English Markdown |
@@ -245,9 +253,10 @@ How the channel was built and tested, its failure modes and the commands that ch
 
 ## Commits and pull requests (hard rule)
 
-- **Commit message:** a subject, a body paragraph saying what and why, and `Tested:` and `Cost:`
-  trailers in the final block. `Tested:` names the commands run and their result; `Cost:` names
-  what the change costs to run or `none`. Agent commits also carry `Co-Authored-By` and the session
+- **Commit message:** a subject, a body paragraph saying what and why, and a `Tested:` trailer in
+  the final block, naming the commands run and their result. No commit, PR or document records a
+  cost: there is no `Cost:` trailer, no Cost row and no "Cost so far"
+  ([ADR-0009](docs/ADRs/ADR-0009-ww3-gpu-adopts-ai-memory-from-fabio-akita.md)). Agent commits also carry `Co-Authored-By` and the session
   link the harness adds; those lines stay in the trailer block, never in code, comments, PR titles
   or docs.
 - **PR workflow:** `just pr` pushes the branch and writes the PR body from the commits

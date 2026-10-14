@@ -61,7 +61,7 @@ the date.
 ## 4. Record it
 
 `just noaa-notices --write` moves the snapshot; commit `docs/noaa-notices.json` with the change
-the notices led to, or alone with `Tested: just noaa-notices` and `Cost: none` when nothing did.
+the notices led to, or alone with `Tested: just noaa-notices` when nothing did.
 
 ## Running it on a schedule
 

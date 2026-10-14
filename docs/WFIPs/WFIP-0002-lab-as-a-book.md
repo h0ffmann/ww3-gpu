@@ -13,7 +13,6 @@
 | **Depends on** | the publisher toolchain in `nix-config/labs/publisher` (exists `(v)` [`flake.nix`](../../flake.nix)); a person's decision on the title, the prose licence and the distribution (§11) |
 | **Blocked by** | none |
 | **Risk** | the chapters drift from the code they describe: a `file:line` or a pasted listing that no longer exists; MIP-0014 §5.3 names this as the central risk of a book about a moving repository, and this repository already quotes `WW3/model/src/<file>.F90:<line>` by hand in dozens of places |
-| **Cost so far** | — |
 
 ### Readiness
 

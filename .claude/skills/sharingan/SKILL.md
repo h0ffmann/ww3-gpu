@@ -15,7 +15,7 @@ effort: xhigh
 **Audience in this repository.** ww3-gpu is written first for scientists: PhD and independent
 researchers in wave modelling and HPC (see `CONTRIBUTING.md`, "Who this repository is for"). A
 skill ported here restates that rule for its own job, keeps the `(v)`/`⚠` evidence marks and the
-`Tested:`/`Cost:` trailers, and carries no model name into the repository (`CLAUDE.md`,
+`Tested:` trailer (never `Cost:`), and carries no model name into the repository (`CLAUDE.md`,
 "Attribution"). Vendored copies are pinned in `.claude/skills/skills.lock` and edited only through
 their `.claude/skills/<name>.patch` (`CONTRIBUTING.md`, "Ground rules").
 
@@ -79,7 +79,7 @@ agent's own guesses stacked on top ("menos com menos dá menos"), and a whole mo
      machine-specific. Say what a cloud session cannot see (`~/.config/gh`, a GPU, `$WW3` and the
      NOAA data bundle).
    - `AGENTS.md` wins every conflict: the audience and evidence rule, WW3 read-only, translate
-     don't improve, no timing without parity, the `Tested:`/`Cost:` trailers.
+     don't improve, no timing without parity, the `Tested:` trailer and no `Cost:`.
    - Anything upstream does "proactively" becomes an offer that waits for a yes (`AGENTS.md`: an
      idea with no issue is not work yet). Nothing writes outside the repo without one.
    - A vendored skill gets a lock entry (`skills-vendor init <name> --upstream o/r --path DIR
