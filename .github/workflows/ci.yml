@@ -34,6 +34,12 @@ jobs:
       - name: WFIP index, deliverables and definitions of done are current
         run: python3 scripts/wfip.py --self-test && python3 scripts/wfip.py check
 
+      - name: Every reference of the proposal has a row and a verdict in its REFERENCES.md
+        run: python3 scripts/refs_check.py --self-test && python3 scripts/refs_check.py
+
+      - name: The slip box keeps its rules (NOTES.md)
+        run: python3 scripts/notes_check.py --self-test && python3 scripts/notes_check.py
+
       - name: Result records are valid, every timing has a passed L1, quoted tables are current
         run: python3 scripts/results.py check
 
