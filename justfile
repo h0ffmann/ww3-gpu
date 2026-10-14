@@ -49,9 +49,56 @@ ww3-run *cmd:
 toolchain:
     just -f {{pratico}}/justfile toolchain
 
-# Fortran + MPI + NetCDF smoke test in the Nix sandbox (what pratico's CI runs).
-smoke:
+# Fortran + MPI + NetCDF smoke test of the toolchain in the Nix sandbox (what pratico's CI runs).
+toolchain-smoke:
     just -f {{pratico}}/justfile smoke
+
+# ---------------------------------------------------------------------
+# WW3 two ways (scripts/hoff.sh): --ww3, the Fortran as NOAA writes it; --hoff, WW3 built
+# with the KOKKOS switch from the h0ffmann/WW3 branch hoff/kokkos-snl1 and linked to kokkos/.
+# --hoff runs on the CPU (Kokkos OpenMP) unless asked: `just smoke-hoff gpu` runs CUDA, and only
+# with a human supervising (AGENTS.md hard rule; it asks at the terminal).
+# ---------------------------------------------------------------------
+
+# Both smoke tests: WW3 as written, then WW3 with the Kokkos port (ww3_ts1, seconds on a CPU).
+smoke: smoke-ww3 smoke-hoff
+
+# WW3 as written: regtest ww3_ts1 (one point, ST4 + NL1, 10 model days) must finish.
+smoke-ww3:
+    bash scripts/hoff.sh --ww3 smoke
+
+# WW3 with the Kokkos DIA: ww3_ts1 with the Fortran and the Kokkos W3SNL1, compared by nccmp-tol.
+smoke-hoff device="cpu":
+    bash scripts/hoff.sh --hoff smoke --{{device}}
+
+# The expensive case, as written: bench_small (120 x 80, 9 520 sea points, 12 hours).
+full-ww3:
+    bash scripts/hoff.sh --ww3 full
+
+# The expensive case with the Kokkos DIA, compared with the Fortran by nccmp-tol.
+full-hoff device="cpu":
+    bash scripts/hoff.sh --hoff full --{{device}}
+
+# The same cases on WAVEWATCH IV, built from the WW4/ submodule (h0ffmann/WW4). Exit 5, before
+# any build, when a part the case needs is not ported to WW4 yet (scripts/ww4_parts.py).
+smoke-ww4:
+    bash scripts/hoff.sh --ww4 smoke
+
+full-ww4:
+    bash scripts/hoff.sh --ww4 full
+
+# Which parts of a case WW4 has, and which it does not (exit 5 if one is missing).
+ww4-parts case="smoke":
+    python3 scripts/ww4_parts.py {{case}}
+
+# Profile WW3 as written on a case (smoke: ww3_ts1; full: bench_small) with gprof -> docs/data/ww3_<case>_gprof.tsv.
+profile-case case="full":
+    bash scripts/profile_case.sh {{case}}
+
+# How much of WW3 runs on the Kokkos backend: the ranking of the routines by measured time, each
+# with its port status, and the port score (kokkos/ports.tsv, docs/data/ww3_profile_full.tsv).
+port-score *args:
+    python3 scripts/port_score.py "$@"
 
 # ---------------------------------------------------------------------
 # WW3: get, build, regtest, examples, bench

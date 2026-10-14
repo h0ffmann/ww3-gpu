@@ -189,6 +189,48 @@ anyone's table, including the ones here. The Kokkos port takes the other route: 
 their data on the device and match the Fortran bit for bit
 ([`course/09-benchmark-profile-compile-run.md`](course/09-benchmark-profile-compile-run.md)).
 
+There are three ways to run WAVEWATCH here (`scripts/hoff.sh`). The model sources come only from
+personal forks: WW3's Fortran from the `WW3/` submodule (h0ffmann/WW3, branch `hoff/kokkos-snl1`)
+and WW4's C++ from the `WW4/` submodule (h0ffmann/WW4, `develop`). This repository holds only the
+Kokkos rewrite.
+
+![ww3-gpu: three ways to run WAVEWATCH. --ww3 runs WW3's Fortran from the fork; --hoff links the same fork to this repository's Kokkos rewrite and compares the two; --ww4 builds WAVEWATCH IV from its fork, and stops with exit 5 when a part the case needs is not ported](docs/figures/three-ways.svg)
+
+```bash
+just smoke             # smoke-ww3, then smoke-hoff: regtest ww3_ts1, seconds
+just smoke-ww3         # --ww3: WW3 as written
+just smoke-hoff        # --hoff --cpu: WW3 with the Kokkos DIA (W3SNL1), compared with the Fortran and --ww3
+just full-ww3          # the expensive case: bench_small, 9 520 sea points, minutes
+just full-hoff         # the same with the Kokkos DIA
+just smoke-ww4         # --ww4: WAVEWATCH IV; exit 5 while a part the case needs is not ported
+just full-ww4          # the same on bench_small; `just ww4-parts full` lists the parts
+just port-score        # how much of WW3 runs on Kokkos, and the routines ranked by time
+```
+
+### Health
+
+[![health: h1](https://github.com/h0ffmann/ww3-gpu/actions/workflows/health.yml/badge.svg)](https://github.com/h0ffmann/ww3-gpu/actions/workflows/health.yml)
+
+| id | combination | what it runs | in CI |
+|---|---|---|---|
+| h1 | `--hoff --cpu` | WW3 with the Kokkos DIA on OpenMP, against the Fortran DIA and pair to pair against `--ww3` (`ww3_ts1`) | **yes**: [`health.yml`](.github/workflows/health.yml), on every pull request and on `main` |
+| h2 | `--hoff --gpu` | the same on CUDA | no: it needs a GPU and the owner supervising (AGENTS.md hard rule) |
+| w3 | `--ww3 --cpu` | WW3 as written | inside h1, as its pair |
+| w4 | `--ww4 --cpu` | WAVEWATCH IV | no: it exits 5 until WW4 has the parts |
+
+Only h1 is in CI, by the owner's word of 14 October 2026. Each ported routine has a report in
+[`kokkos/port_report/`](kokkos/port_report/README.md): what was ported, every benchmark, how it
+was regtested and what GoogleTest covers. The website draws its benchmarks.
+
+`--hoff` runs on the CPU (Kokkos OpenMP) by default, and is then compared pair to pair with
+`--ww3`. `just smoke-hoff gpu` runs CUDA, only with a human supervising: it asks at the terminal
+(AGENTS.md hard rule). An NVIDIA GPU whose driver does not answer stops it with exit 4 and the
+cause. On
+14 October 2026 both cases passed on OpenMP; the GPU run was not made yet. `--ww4` stops with
+exit 5 on both cases today: WW4's `develop` has the time loop and no source term or propagation
+solver yet
+([`docs/PORT_ASSESSMENT_202610.md`](docs/PORT_ASSESSMENT_202610.md)).
+
 ## structure
 
 | Path | Contents |

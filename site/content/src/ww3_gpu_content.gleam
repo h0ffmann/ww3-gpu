@@ -37,6 +37,26 @@ pub type Link {
   Link(kind: String, name: String, url: String, what: String, source: String)
 }
 
+/// A port report of kokkos/port_report/: its name, its status line and its file.
+pub type Report {
+  Report(name: String, status: String, file: String)
+}
+
+/// One row of a report's bench table. The speed-up is baseline / value, computed by the site.
+pub type Bench {
+  Bench(
+    report: String,
+    step: String,
+    date: String,
+    what: String,
+    backend: String,
+    value: String,
+    baseline: String,
+    unit: String,
+    source: String,
+  )
+}
+
 @external(javascript, "./ww3_gpu_content_ffi.mjs", "read")
 fn read(path: String) -> String
 
@@ -118,6 +138,71 @@ pub fn split_id(title: String) -> #(String, String) {
   case string.split_once(title, ": ") {
     Ok(#(id, rest)) -> #(id, rest)
     Error(_) -> #("", title)
+  }
+}
+
+/// The text after a bold label at the start of a line, up to its first full stop:
+/// "L2 (inside WW3, on the CPU)" from "**Status:** L2 (inside WW3, on the CPU). Not run …".
+pub fn bold_line(text: String, label: String) -> String {
+  let prefix = "**" <> label <> ":** "
+  text
+  |> string.split("\n")
+  |> list.find(fn(line) { string.starts_with(line, prefix) })
+  |> fn(found) {
+    case found {
+      Ok(line) -> {
+        let rest =
+          string.drop_start(line, string.length(prefix))
+          |> string.replace("`", "")
+        case string.split_once(rest, ". ") {
+          Ok(#(first, _)) -> first
+          Error(_) -> drop_suffix(string.trim(rest), ".")
+        }
+      }
+      Error(_) -> ""
+    }
+  }
+}
+
+/// The rows of the table between `<!-- bench:start -->` and `<!-- bench:end -->`, as Bench
+/// values: the header and the separator are not rows, and a row of another width is skipped.
+pub fn benches(report: String, text: String) -> List(Bench) {
+  case string.split_once(text, "<!-- bench:start -->") {
+    Error(_) -> []
+    Ok(#(_, rest)) -> {
+      let block = case string.split_once(rest, "<!-- bench:end -->") {
+        Ok(#(b, _)) -> b
+        Error(_) -> ""
+      }
+      block
+      |> string.split("\n")
+      |> list.filter(fn(line) { string.starts_with(line, "| ") })
+      |> list.filter_map(fn(line) {
+        let cells =
+          line
+          |> string.trim
+          |> drop_suffix("|")
+          |> string.drop_start(1)
+          |> string.split("|")
+          |> list.map(string.trim)
+        case cells {
+          ["step", ..] -> Error(Nil)
+          [step, date, what, backend, value, baseline, unit, source] ->
+            Ok(Bench(
+              report,
+              step,
+              date,
+              what,
+              backend,
+              value,
+              baseline,
+              unit,
+              source,
+            ))
+          _ -> Error(Nil)
+        }
+      })
+    }
   }
 }
 
@@ -218,6 +303,14 @@ pub type Person {
 pub type Link {
   Link(kind: String, name: String, url: String, what: String, source: String)
 }
+
+pub type Report {
+  Report(name: String, status: String, file: String)
+}
+
+pub type Bench {
+  Bench(report: String, step: String, date: String, what: String, backend: String, value: String, baseline: String, unit: String, source: String)
+}
 "
 
 pub fn render(
@@ -232,6 +325,8 @@ pub fn render(
   notes: List(Note),
   people: List(Person),
   links: List(Link),
+  reports: List(Report),
+  bench_rows: List(Bench),
 ) -> String {
   let record = fn(r: Record) {
     call("Record", [r.id, r.title, r.status, r.date, r.file])
@@ -274,6 +369,28 @@ pub fn render(
         "Link",
         list.map(links, fn(l) {
           call("Link", [l.kind, l.name, l.url, l.what, l.source])
+        }),
+      ),
+      items(
+        "reports",
+        "Report",
+        list.map(reports, fn(r) { call("Report", [r.name, r.status, r.file]) }),
+      ),
+      items(
+        "benches",
+        "Bench",
+        list.map(bench_rows, fn(b) {
+          call("Bench", [
+            b.report,
+            b.step,
+            b.date,
+            b.what,
+            b.backend,
+            b.value,
+            b.baseline,
+            b.unit,
+            b.source,
+          ])
         }),
       ),
     ],
@@ -347,6 +464,23 @@ pub fn main() -> Nil {
     read("../data/related.tsv")
     |> string.split("\n")
     |> list.filter_map(link)
+  let report_files =
+    list_dir(root <> "kokkos/port_report")
+    |> list.filter(fn(name) { string.ends_with(name, "_KOKKOS.md") })
+  let reports =
+    list.map(report_files, fn(name) {
+      let text = read(root <> "kokkos/port_report/" <> name)
+      Report(
+        heading(text),
+        bold_line(text, "Status"),
+        "kokkos/port_report/" <> name,
+      )
+    })
+  let bench_rows =
+    list.flat_map(report_files, fn(name) {
+      let text = read(root <> "kokkos/port_report/" <> name)
+      benches(heading(text), text)
+    })
   let text =
     render(
       #(yaml(meta, "title"), yaml(meta, "subtitle")),
@@ -360,6 +494,8 @@ pub fn main() -> Nil {
       notes,
       people,
       links,
+      reports,
+      bench_rows,
     )
   write("../src/ww3_gpu_site/content.gleam", text)
 }

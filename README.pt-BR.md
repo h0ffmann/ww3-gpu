@@ -169,6 +169,33 @@ A transferência de dados limitou o ganho, e o código não entrou no `NOAA-EMC/
 segue outro caminho: kernels em Kokkos que mantêm os dados na GPU e reproduzem o Fortran bit a bit,
 portados na ordem do tempo de parede medido ([lição 09](course/09-benchmark-profile-compile-run.md)).
 
+Há três jeitos de rodar o WAVEWATCH aqui (`scripts/hoff.sh`). O código dos modelos vem só de forks
+pessoais: o Fortran do WW3 pelo submódulo `WW3/` (h0ffmann/WW3, branch `hoff/kokkos-snl1`) e o C++
+do WW4 pelo submódulo `WW4/` (h0ffmann/WW4, `develop`). Este repositório guarda só a reescrita em
+Kokkos.
+
+![ww3-gpu: três jeitos de rodar o WAVEWATCH. --ww3 roda o Fortran do WW3 do fork; --hoff liga o mesmo fork à reescrita em Kokkos deste repositório e compara os dois; --ww4 compila o WAVEWATCH IV do seu fork e para com código 5 quando falta portar uma parte que o caso usa](docs/figures/three-ways.svg)
+
+```bash
+just smoke             # smoke-ww3, depois smoke-hoff: regtest ww3_ts1, segundos
+just smoke-ww3         # --ww3: o WW3 como está
+just smoke-hoff        # --hoff: o WW3 com o DIA em Kokkos (W3SNL1), comparado com o Fortran
+just full-ww3          # o caso caro: bench_small, 9 520 pontos de mar, minutos
+just full-hoff         # o mesmo com o DIA em Kokkos
+just smoke-ww4         # --ww4: o WAVEWATCH IV; código 5 enquanto faltar portar uma parte do caso
+just full-ww4          # o mesmo no bench_small; `just ww4-parts full` lista as partes
+just port-score        # quanto do WW3 roda em Kokkos, e as rotinas em ordem de tempo
+```
+
+O `--hoff` roda na CPU (Kokkos OpenMP) por padrão, e é comparado par a par com o `--ww3`. O
+`just smoke-hoff gpu` roda em CUDA, só com uma pessoa supervisionando: ele pergunta no terminal
+(regra rígida do AGENTS.md). Uma GPU NVIDIA cujo driver não responde para a execução com código 4
+e a causa. Em 14 de outubro de
+2026 os dois casos passaram em OpenMP; a rodada na GPU ainda não foi feita. Hoje o `--ww4` para
+com código 5 nos dois casos: o `develop` do WW4 tem o laço de tempo e ainda nenhum termo fonte nem
+solver de propagação
+([`docs/PORT_ASSESSMENT_202610.md`](docs/PORT_ASSESSMENT_202610.md)).
+
 ## estrutura
 
 A tabela completa está na seção [structure](README.md#structure) do README em inglês. Em resumo:

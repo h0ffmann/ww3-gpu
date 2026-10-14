@@ -23,9 +23,12 @@
 // lab's NK=25/NTH=24 grid that is ~28 KB, and ~52 KB at NK=32/NTH=36. The
 // ceiling is TeamPolicy::scratch_size_max(0), which for the Kokkos 5.2 CUDA
 // backend is the device's opt-in shared-memory limit minus ~24.6 KB (about
-// 75 KB on an RTX 4090), not the classic 48 KB; a spectral grid beyond that
-// would need level-1 scratch instead, which is why the size is checked against
-// the policy's maximum before the launch.
+// 75 KB on an RTX 4090), not the classic 48 KB. A spectral grid beyond the
+// level-0 ceiling uses level-1 scratch: the same per-team buffers, in global
+// memory on a GPU and in the same host memory on the CPU backends. The host
+// backends' level-0 ceiling is smaller than the GPU's: WW3's ww3_ts1 grid
+// (NK=36, NTH=24) asks for 39 KB, which the OpenMP backend refused at level 0
+// (2026-10-14). The level changes where the buffers live, not the arithmetic.
 //
 // SPDX-License-Identifier: LGPL-3.0-or-later
 
@@ -80,27 +83,29 @@ void snl1(const Config& c, const Tables& t, ConstRealView1D sig, ConstRealView2D
                                ScratchReal::shmem_size(nspec);
 
   TeamPolicy policy(npts, Kokkos::AUTO);
-  policy.set_scratch_size(0, Kokkos::PerTeam(scratch_bytes));
-  if (scratch_bytes > static_cast<size_t>(policy.scratch_size_max(0))) {
+  const int level =
+      scratch_bytes <= static_cast<size_t>(policy.scratch_size_max(0)) ? 0 : 1;
+  if (scratch_bytes > static_cast<size_t>(policy.scratch_size_max(level))) {
     throw std::runtime_error("ww::snl1::snl1: the extended spectrum needs " +
                              std::to_string(scratch_bytes) +
-                             " B of level-0 team scratch, more than this backend offers");
+                             " B of team scratch, more than this backend offers at level 0 or 1");
   }
+  policy.set_scratch_size(level, Kokkos::PerTeam(scratch_bytes));
 
   Kokkos::parallel_for(
       "srce.snl1.dia", policy, KOKKOS_LAMBDA(const TeamMember& team) {
         const int ipt = team.league_rank();
 
-        ScratchReal ue(team.team_scratch(0), ue_len);
-        ScratchReal sa1(team.team_scratch(0), sa_len);
-        ScratchReal sa2(team.team_scratch(0), sa_len);
-        ScratchReal da1c(team.team_scratch(0), sa_len);
-        ScratchReal da1p(team.team_scratch(0), sa_len);
-        ScratchReal da1m(team.team_scratch(0), sa_len);
-        ScratchReal da2c(team.team_scratch(0), sa_len);
-        ScratchReal da2p(team.team_scratch(0), sa_len);
-        ScratchReal da2m(team.team_scratch(0), sa_len);
-        ScratchReal con(team.team_scratch(0), nspec);
+        ScratchReal ue(team.team_scratch(level), ue_len);
+        ScratchReal sa1(team.team_scratch(level), sa_len);
+        ScratchReal sa2(team.team_scratch(level), sa_len);
+        ScratchReal da1c(team.team_scratch(level), sa_len);
+        ScratchReal da1p(team.team_scratch(level), sa_len);
+        ScratchReal da1m(team.team_scratch(level), sa_len);
+        ScratchReal da2c(team.team_scratch(level), sa_len);
+        ScratchReal da2p(team.team_scratch(level), sa_len);
+        ScratchReal da2m(team.team_scratch(level), sa_len);
+        ScratchReal con(team.team_scratch(level), nspec);
 
         // 1.  Calculate prop. constant ----------------------------------- *
         //     Three flops, recomputed by every thread rather than broadcast

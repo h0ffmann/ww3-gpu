@@ -23,6 +23,14 @@ the colour: a reader who does not see colour loses nothing.
 
 No fourth light. A new colour is a new meaning, and it starts here.
 
+## The port, measured
+
+The one place a light has shades. Each bench row of `kokkos/port_report/*_KOKKOS.md` is a step,
+drawn as a bar as long as the log of its speed-up over its own baseline. The bar is `--proof`,
+because a measured number is evidence, at 30 %, 55 %, 80 % and 100 % for a speed-up under 2x,
+under 10x, under 100x and from 100x. A step slower than its baseline is `--muted`, never green,
+and the words say "slower". The speed-up is computed from the report's numbers, never typed.
+
 ## The ground
 
 Dark only, with no light theme: `--night #05090E` behind everything, `--deep #0A121B`,
@@ -50,7 +58,7 @@ The fonts load from Google Fonts, as on the sister sites. No font file is stored
 
 Every fact on the page comes from a file of this repository, through `site/content`: the chapters
 from `course/`, the decisions from `docs/ADRs/`, the designs from `docs/WFIPs/`, the notes from
-`notes/`, the DOI and the people from `CITATION.cff` and `.zenodo.json`, the latest release from
+`notes/`, the port's benchmarks from `kokkos/port_report/`, the DOI and the people from `CITATION.cff` and `.zenodo.json`, the latest release from
 `RELEASES.md`. A fact that no other file holds (a related author, a sister work) is a row of
 `site/data/related.tsv`, with its source. Never type a title, a status, a date, a count or a DOI
 into `site/src`.

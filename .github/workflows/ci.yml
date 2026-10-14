@@ -43,6 +43,14 @@ jobs:
       - name: Result records are valid, every timing has a passed L1, quoted tables are current
         run: python3 scripts/results.py check
 
+      - name: The port score in kokkos/PORT_STATUS.md is current; hoff.sh and ww4_parts.py pass their self-tests
+        run: |
+          python3 scripts/port_score.py --self-test
+          python3 scripts/port_score.py --check
+          bash scripts/hoff.sh --self-test
+          python3 scripts/ww4_parts.py --self-test
+          bash .claude/hooks/kokkos-account.sh --self-test
+
       - name: The Leanpub manuscript exports from the lessons
         run: python3 scripts/leanpub_manuscript.py --self-test && python3 scripts/leanpub_manuscript.py --out "$RUNNER_TEMP/leanpub"
 
@@ -116,6 +124,13 @@ jobs:
               fetch origin "$sha"
             git -C nix-config checkout -q "$sha"
           }
+
+      - name: Fetch WW3's w3kokkosmd.F90 at the pinned WW3 commit (no full WW3 clone)
+        run: |
+          sha=$(git ls-tree HEAD WW3 | awk '{print $3}')
+          mkdir -p WW3/model/src
+          curl -fsSL "https://raw.githubusercontent.com/h0ffmann/WW3/$sha/model/src/w3kokkosmd.F90" \
+            -o WW3/model/src/w3kokkosmd.F90
 
       - uses: DeterminateSystems/nix-installer-action@main
       - uses: DeterminateSystems/magic-nix-cache-action@main

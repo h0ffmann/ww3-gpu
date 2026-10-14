@@ -1,9 +1,13 @@
 # `PATCH.md`: wiring the Kokkos DIA into WAVEWATCH III
 
-> **Not applied in this repository.** `WW3/` here is an unmodified upstream
-> checkout and stays that way; this file is the recipe for the fork branch
-> (`just src-pr` / a `WW3` fork), written so that it can be applied and reviewed
-> hunk by hunk. Everything below was read off the tree at
+> **Applied on 2026-10-14** as the h0ffmann/WW3 branch `hoff/kokkos-snl1`
+> (commit `6d1bcdfe`), which the `WW3/` submodule now pins; `w3kokkosmd.F90` lives
+> there, not here. Two things changed on the way: `SIG(1)` in hunk 2 became
+> `SIG(1:NK)`, because `SIG` is a POINTER and gfortran rejects an element of a
+> pointer array as an assumed-size actual; and hunk 4 enables C++ before
+> `find_package(ww_kokkos)`, which the Kokkos package needs. `just smoke-hoff`
+> builds and runs it (`scripts/hoff.sh`). The text below is the original recipe,
+> kept as the account of why each hunk is there. Everything below was read off the tree at
 > `WW3/model/src` (WAVEWATCH III 7.14, `develop`). The line numbers are real and
 > were produced with the `grep` commands quoted next to each hunk.
 >

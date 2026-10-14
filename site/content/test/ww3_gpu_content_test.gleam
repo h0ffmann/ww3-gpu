@@ -99,10 +99,64 @@ pub fn lit_test() {
 }
 
 pub fn empty_list_test() {
-  let text = c.render(#("t", "s"), "d", "r", "", "x", [], [], [], [], [], [])
+  let text =
+    c.render(#("t", "s"), "d", "r", "", "x", [], [], [], [], [], [], [], [])
   assert text |> contains("pub const notes: List(Note) = []")
 }
 
 fn contains(haystack: String, needle: String) -> Bool {
   string.contains(haystack, needle)
+}
+
+const report =
+  "# W3SNL1_KOKKOS
+
+**Status:** L2 (inside WW3, on the CPU). Not run on a GPU inside WW3 yet.
+
+<!-- bench:start -->
+| step | date | what | backend | value | baseline | unit | source |
+|---|---|---|---|---|---|---|---|
+| 1 | 2026-09-15 | the shim | Serial | 25.88 | 25.88 | ms | bench/x.json |
+| 2 | 2026-10-14 | ww3_shel | OpenMP | 217.9 | 152.7 | s | just full-hoff |
+| 3 | too | few | cells |
+<!-- bench:end -->
+
+| 9 | outside | the | markers | 1 | 1 | s | x |
+"
+
+pub fn bold_line_test() {
+  assert c.bold_line(report, "Status") == "L2 (inside WW3, on the CPU)"
+  assert c.bold_line(report, "Missing") == ""
+  assert c.bold_line("**Status:** L2, with `W3SNL1`.", "Status")
+    == "L2, with W3SNL1"
+}
+
+pub fn benches_test() {
+  let rows = c.benches("W3SNL1_KOKKOS", report)
+  assert rows
+    == [
+      c.Bench(
+        "W3SNL1_KOKKOS",
+        "1",
+        "2026-09-15",
+        "the shim",
+        "Serial",
+        "25.88",
+        "25.88",
+        "ms",
+        "bench/x.json",
+      ),
+      c.Bench(
+        "W3SNL1_KOKKOS",
+        "2",
+        "2026-10-14",
+        "ww3_shel",
+        "OpenMP",
+        "217.9",
+        "152.7",
+        "s",
+        "just full-hoff",
+      ),
+    ]
+  assert c.benches("x", "no table") == []
 }

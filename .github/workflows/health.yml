@@ -1,0 +1,47 @@
+# health — the combinations of scripts/hoff.sh that CI keeps alive. For now one, by the owner's
+# word (2026-10-14): "h1 - --hoff + --cpu ... this combination is the only one that needs to be
+# present in CI for now". h1 builds WW3 from the WW3/ submodule (h0ffmann/WW3, hoff/kokkos-snl1)
+# with the KOKKOS switch and the ww_kokkos package on OpenMP, runs regtest ww3_ts1 with the
+# Fortran and the Kokkos DIA, then builds --ww3 and compares pair to pair (nccmp-tol). The other
+# combinations and why they are not here: README.md, "Health".
+name: health
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  h1:
+    name: h1 (--hoff --cpu, smoke)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: false
+
+      # .gitmodules uses ssh URLs a runner cannot clone, hence https. A pinned commit on a topic
+      # branch may not be fetched by `submodule update`; the fallback fetches the SHA itself.
+      - name: Fetch the pratico toolchain and the WW3 fork at their pinned commits
+        run: |
+          for sm in nix-config WW3; do
+            depth=""; [ "$sm" = WW3 ] && depth="--depth 1"
+            # shellcheck disable=SC2086
+            git -c url.https://github.com/.insteadOf=git@github.com: \
+              submodule update --init --no-recommend-shallow $depth "$sm" || {
+              sha=$(git ls-tree HEAD "$sm" | awk '{print $3}')
+              git -C "$sm" -c url.https://github.com/.insteadOf=git@github.com: fetch $depth origin "$sha"
+              git -C "$sm" checkout -q "$sha"
+            }
+          done
+
+      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: h1 — WW3 with the Kokkos DIA on the CPU, against the Fortran and --ww3
+        run: bash scripts/hoff.sh --hoff smoke --cpu
