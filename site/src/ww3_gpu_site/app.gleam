@@ -11,6 +11,7 @@ import lustre/element.{type Element}
 import lustre/element/html
 import ww3_gpu_site/content.{
   type Bench, type Link, type Note, type Person, type Record, type Report,
+  type Stat,
 }
 
 pub const repo = "https://github.com/h0ffmann/ww3-gpu"
@@ -145,6 +146,32 @@ fn step(b: Bench, top: Float) -> Element(msg) {
   ])
 }
 
+/// A record of kokkos/ports.tsv ("yes: …" or "no: …"): proof when yes, warn when no or missing.
+fn record_line(label: String, value: String) -> Element(msg) {
+  let class = case string.starts_with(value, "yes") {
+    True -> "chip proof"
+    False -> "chip warn"
+  }
+  let shown = case value {
+    "" -> "no record"
+    v -> v
+  }
+  html.p([attribute.class("record")], [
+    html.span([attribute.class(class)], [html.text(label)]),
+    html.text(" "),
+    html.span([attribute.class("aff")], [html.text(shown)]),
+  ])
+}
+
+fn stat(s: Stat) -> Element(msg) {
+  html.li([], [
+    html.span([attribute.class("value")], [html.text(s.share)]),
+    html.span([attribute.class("name")], [html.text(s.name)]),
+    html.span([attribute.class("count")], [html.text(s.count)]),
+    html.span([attribute.class("aff")], [html.text(s.what)]),
+  ])
+}
+
 fn report(r: Report) -> Element(msg) {
   let rows = list.filter(content.benches, fn(b) { b.report == r.name })
   let top = list.fold(rows, 1.0, fn(acc, b) { float.max(acc, speedup(b)) })
@@ -154,6 +181,8 @@ fn report(r: Report) -> Element(msg) {
       html.text(" "),
       html.span([attribute.class("chip code")], [html.text(r.status)]),
     ]),
+    record_line("regtested", r.regtested),
+    record_line("googletest", r.googletest),
     case rows {
       [] ->
         html.p([attribute.class("empty")], [
@@ -171,8 +200,9 @@ fn report(r: Report) -> Element(msg) {
 fn port() -> Element(msg) {
   section("port", "the port, measured", [
     lede(
-      "every number of every port report, step by step. a bar is the speed-up over its own baseline, on a log scale; the deeper the green, the larger it is. a step slower than its baseline is grey, and says so.",
+      "how much of WW3 runs on Kokkos, then every number of every port report, step by step. a bar is the speed-up over its own baseline, on a log scale; the deeper the green, the larger it is. a step slower than its baseline is grey, and says so.",
     ),
+    html.ul([attribute.class("stats")], list.map(content.stats, stat)),
     ..list.map(content.reports, report)
   ])
 }
