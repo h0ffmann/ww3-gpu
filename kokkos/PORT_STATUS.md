@@ -44,9 +44,11 @@ Profile: full (bench_small, 120 x 80, 9 520 sea points, 12 h), Release -pg, swit
 |---|---|---|
 | time | **48.4 %** | the profile's self time in routines that pass the WW3 replay (L2 or gpu) |
 | routines | 2 of 1023 (0.20 %) | ported routines over every SUBROUTINE and FUNCTION in model/src at WW3@03adda91 |
+| files | 1 of 147 (0.68 %) | WW3 .F90 files with a ported routine, over every .F90 file in model/src |
 | lines | 663 of 263375 (0.25 %) | the ported routines' Fortran lines over model/src's |
+| the port | 1464 lines in 11 files | the C++ under kokkos/src (every .cpp and .hpp line) |
 
-On a GPU: none yet. The CUDA build and the RTX 4090 run of `just smoke-hoff` are the next step.
+On a GPU: none yet. The CUDA build links; the RTX 4090 run, `just smoke-hoff gpu`, is the owner's, supervised.
 <!-- port-score:end -->
 
 SPDX-License-Identifier: MIT

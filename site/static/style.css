@@ -94,6 +94,15 @@ ul.people li { padding: 10px 0; border-bottom: 1px solid var(--rule); display: f
 .aff { color: var(--muted); font-size: 1rem; }
 .empty { color: var(--muted); font-style: italic; }
 .foot { color: var(--muted); font-size: 0.8rem; padding: 32px 24px 56px; border-top: 1px solid var(--rule); }
+/* the port's global numbers (site/data/port_score.tsv): data in mono, the value in the code light. */
+ul.stats { list-style: none; margin: 1.2em 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+ul.stats li { display: grid; align-content: start; gap: 2px; padding: 14px 16px; border: 1px solid var(--rule); border-radius: 18px; background: var(--surface); }
+ul.stats .value { font: 600 1.6rem var(--mono); color: var(--code); }
+ul.stats .name { font-weight: 600; }
+ul.stats .count { font: 500 0.95rem var(--mono); color: var(--ink); }
+ul.stats .aff { font-size: 0.85rem; }
+p.record { margin: 0.3em 0 0; }
+p.record .aff { font-size: 0.9rem; font-family: var(--mono); }
 /* the port, measured: each step a bar in a shade of --proof, deeper as the speed-up grows; a step
    slower than its baseline is --muted and says "slower" (DESIGN.md, "The port, measured"). */
 .report { margin-top: 1.6em; }

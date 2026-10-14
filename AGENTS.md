@@ -178,6 +178,13 @@ broken most often:
   ported, its benchmarks in the table the website reads, how it was regtested, and what GoogleTest
   covers (the owner, 14 October 2026). `scripts/port_score.py --check` fails without it. A new
   number goes into the report's bench table with its source, in the same pull request.
+- **Every ported routine records whether its Kokkos code was regtested and GoogleTested**: the
+  `regtested` and `googletest` columns of `kokkos/ports.tsv`, each "yes: <how>" or "no: <why>"
+  (the owner, 14 October 2026). `--check` refuses a row without both; the website shows them.
+- **The global numbers** (share of the run time, of the lines of code, of the files, of the
+  routines, and the size of the Kokkos code) are written by `scripts/port_score.py --write` into
+  `kokkos/PORT_STATUS.md` and `site/data/port_score.tsv`, which the website reads; `--check` fails
+  when either is stale.
 - **CI keeps h1 alive**: `--hoff --cpu` on `ww3_ts1`, pair to pair with `--ww3`
   ([`health.yml`](.github/workflows/health.yml)). It is the only combination in CI for now.
 - **Done means all of §1.5:** the kernel with its heritage header, the shim with its argument

@@ -8,12 +8,17 @@
 #            within kokkos/tools/nccmp-tol/tolerances.txt (`just smoke-hoff`)
 #   gpu      the same L2 replay passed on a CUDA backend
 # evidence: the command or file that shows the status
-# ww3_rev / ww3_lines / ww3_routines: written by `scripts/port_score.py --measure` (needs WW3/);
+# regtested: was the Kokkos code run inside WW3 and compared with the Fortran (the L2 replay,
+#   `--hoff --cpu` pair to pair with `--ww3`)? "yes: <how>" or "no: <why>". The owner, 2026-10-14.
+# googletest: is the Kokkos code under a GoogleTest (kokkos/tests, CTest), the way WW4 tests its
+#   code? "yes: <tests>" or "no: <why>". scripts/port_score.py --check refuses a row without both.
+# ww3_rev / ww3_lines / ww3_routines / ww3_files: written by `scripts/port_score.py --measure` (needs WW3/);
 # the time score uses docs/data/ww3_full_gprof.tsv (`just profile-case full`)
 #
 # ww3_rev	03adda91
 # ww3_lines	263375
 # ww3_routines	1023
-routine	file	lines	status	evidence
-w3snl1md:w3snl1	model/src/w3snl1md.F90:115-473	359	L2	kokkos/tests/L1_test_snl1_dia.cpp (bit-identical, NK=25 NTH=24, three presets); `just smoke-hoff` and `just full-hoff` on the CPU (OpenMP), ww3_ts1 and bench_small, 2026-10-14 (hs within 1.8e-7 relative over 119 652 values, PASS; not byte-identical)
-w3snl1md:insnl1	model/src/w3snl1md.F90:483-786	304	L2	kokkos/tests/L1_test_snl1_tables.cpp; built by WW_SNL1_INIT in W3INIT on the branch, run by the same smoke
+# ww3_files	147
+routine	file	lines	status	evidence	regtested	googletest
+w3snl1md:w3snl1	model/src/w3snl1md.F90:115-473	359	L2	kokkos/tests/L1_test_snl1_dia.cpp (bit-identical, NK=25 NTH=24, three presets); `just smoke-hoff` and `just full-hoff` on the CPU (OpenMP), ww3_ts1 and bench_small, 2026-10-14 (hs within 1.8e-7 relative over 119 652 values, PASS; not byte-identical)	yes: L2 on the CPU, ww3_ts1 and bench_small, against the Fortran DIA and pair to pair against --ww3; ww3_ts1 in CI (health h1)	yes: L1_test_snl1_dia, L1_test_snl1_shim (GoogleTest, CTest, three presets, CI job kokkos)
+w3snl1md:insnl1	model/src/w3snl1md.F90:483-786	304	L2	kokkos/tests/L1_test_snl1_tables.cpp; built by WW_SNL1_INIT in W3INIT on the branch, run by the same smoke	yes: through the DIA's L2, which reads these tables in every --hoff run (health h1)	yes: L1_test_snl1_tables (GoogleTest, CTest, three presets, CI job kokkos)

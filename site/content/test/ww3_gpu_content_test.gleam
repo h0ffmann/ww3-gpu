@@ -100,7 +100,7 @@ pub fn lit_test() {
 
 pub fn empty_list_test() {
   let text =
-    c.render(#("t", "s"), "d", "r", "", "x", [], [], [], [], [], [], [], [])
+    c.render(#("t", "s"), "d", "r", "", "x", [], [], [], [], [], [], [], [], [])
   assert text |> contains("pub const notes: List(Note) = []")
 }
 
@@ -159,4 +159,22 @@ pub fn benches_test() {
       ),
     ]
   assert c.benches("x", "no table") == []
+}
+
+const ports =
+  "# a comment
+# ww3_rev\tabc
+routine\tfile\tlines\tstatus\tevidence\tregtested\tgoogletest
+w3snl1md:w3snl1\tf:1-2\t2\tL2\te\tyes: L2\tyes: L1_test_snl1_dia
+"
+
+pub fn report_name_test() {
+  assert c.report_name("w3snl1md:w3snl1") == "W3SNL1_KOKKOS"
+  assert c.report_name("w3srce") == "W3SRCE_KOKKOS"
+}
+
+pub fn port_record_test() {
+  assert c.port_record(ports, "W3SNL1_KOKKOS")
+    == #("yes: L2", "yes: L1_test_snl1_dia")
+  assert c.port_record(ports, "W3SDS4_KOKKOS") == #("", "")
 }
