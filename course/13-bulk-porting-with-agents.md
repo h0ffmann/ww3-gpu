@@ -60,7 +60,7 @@ because the fixture tests were removed (ADR-0010). For `W3SRCE` and its 239 prep
 The six items of lesson 12's definition of done (`AGENTS_KOKKOS` §1.5, §5): kernel with
 heritage header; `bind(C)` shim plus Fortran interface; the L1 test is withdrawn (ADR-0010:
 the port has no tests of its own); the WW3 regtest replay and the regtest matrix on the CPU
-(`just smoke-hoff`, `just full-hoff`, `just hoff-matrix`); a `PORT_STATUS.md` timing line; a
+(`just smoke-ww3-gpu`, `just full-ww3-gpu`, `just ww3-gpu-matrix`); a `PORT_STATUS.md` timing line; a
 property checked inside a regtest run where physics allows. Any algorithmic change is a separate PR with its own L2 evidence (v).
 
 ## The ranked list and the phases
@@ -241,7 +241,7 @@ affects reduction order, a precision, a limiter or an integration scheme (§5).
 Two lab-specific lessons from the first port (`kokkos/README.md` (v)): an agent reaches
 for `std::pow` where gfortran multiplies, and for a fused multiply-add where the Fortran
 rounds twice. Neither is wrong C++; both failed the 1e-5 parity test the port had then. Run
-`just smoke-hoff` first: the regtest is the only place that catches them now (ADR-0010).
+`just smoke-ww3-gpu` first: the regtest is the only place that catches them now (ADR-0010).
 
 ## WW4: do not compete, build in its shape
 

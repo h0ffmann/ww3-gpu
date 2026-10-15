@@ -1,9 +1,9 @@
-# One entry of the matrix (cmake -DCONFIG=<hoff_config.cmake> -DN=<n> -DTEST=<test> -DOPTS=<options>
+# One entry of the matrix (cmake -DCONFIG=<ww3gpu_config.cmake> -DN=<n> -DTEST=<test> -DOPTS=<options>
 # -P run_entry.cmake): run_cmake_test twice from <build>/regtests with path_build_root shared,
 # WW_KOKKOS_SNL1=0 into work_F_<n> and WW_KOKKOS_SNL1=1 into work_K_<n>; then WW3's test.comp on
 # the pair and nccmp-tol on every ww3.*.nc both wrote. Writes <build>/rows/<n>.tsv (the columns
-# of summary.tsv) and fails per hoff_row_verdict. -DDRY_RUN=ON prints the commands and runs none.
-# HOFF_OMP_NESTED=ON exports OMP_MAX_ACTIVE_LEVELS=2 for both runs (regtests/CMakeLists.txt). The
+# of summary.tsv) and fails per ww3gpu_row_verdict. -DDRY_RUN=ON prints the commands and runs none.
+# WW3GPU_OMP_NESTED=ON exports OMP_MAX_ACTIVE_LEVELS=2 for both runs (regtests/CMakeLists.txt). The
 # Kokkos run sets WW_KOKKOS_SNL1_COUNT=1: every process prints the spectra the Kokkos DIA computed
 # to stderr at exit, and their sum is the row's kokkos_spectra. When test.comp finds a file
 # different, the Fortran run is repeated into work_G_<n>: a file that two Fortran runs of the same
@@ -11,14 +11,14 @@
 # file that differs Fortran/Kokkos and is identical Fortran/Fortran counts in test_comp.
 cmake_minimum_required(VERSION 3.21)
 include("${CONFIG}")
-include("${CMAKE_CURRENT_LIST_DIR}/hoff_common.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/ww3gpu_common.cmake")
 
 # Not string(TIMESTAMP): it honours SOURCE_DATE_EPOCH, which the Nix shell sets to 1980.
 execute_process(COMMAND date +%s OUTPUT_VARIABLE t0 OUTPUT_STRIP_TRAILING_WHITESPACE)
-hoff_words(o "${OPTS}")
-hoff_opt_of(sw -s ${o})
-hoff_opt_of(inp -i ${o})
-hoff_opt_of(oo -o ${o})
+ww3gpu_words(o "${OPTS}")
+ww3gpu_opt_of(sw -s ${o})
+ww3gpu_opt_of(inp -i ${o})
+ww3gpu_opt_of(oo -o ${o})
 if(sw STREQUAL "")
   set(swname default)
 else()
@@ -27,21 +27,21 @@ endif()
 if(inp STREQUAL "")
   set(inp input)
 endif()
-set(wf "${HOFF_STAGE}/${TEST}/work_F_${N}")
-set(wk "${HOFF_STAGE}/${TEST}/work_K_${N}")
-set(log "${HOFF_OUT}/logs/${N}")
-set(rowf "${HOFF_OUT}/rows/${N}.tsv")
+set(wf "${WW3GPU_STAGE}/${TEST}/work_F_${N}")
+set(wk "${WW3GPU_STAGE}/${TEST}/work_K_${N}")
+set(log "${WW3GPU_OUT}/logs/${N}")
+set(rowf "${WW3GPU_OUT}/rows/${N}.tsv")
 
-set(ENV{CMAKE_OPTIONS} "-DWW_KOKKOS=ON -DCMAKE_PREFIX_PATH=${HOFF_KPREFIX}")
-set(ENV{path_build_root} "${HOFF_OUT}/build_${N}")
-if(NOT DEFINED HOFF_MPI_RANKS)
-  set(HOFF_MPI_RANKS 4)
+set(ENV{CMAKE_OPTIONS} "-DWW_KOKKOS=ON -DCMAKE_PREFIX_PATH=${WW3GPU_KPREFIX}")
+set(ENV{path_build_root} "${WW3GPU_OUT}/build_${N}")
+if(NOT DEFINED WW3GPU_MPI_RANKS)
+  set(WW3GPU_MPI_RANKS 4)
 endif()
 # An MPI line shares the entry's threads among its ranks, the Kokkos OpenMP backend of each rank
-# included, so a job uses about HOFF_OMP_THREADS cores whatever its kind.
-set(thr "${HOFF_OMP_THREADS}")
+# included, so a job uses about WW3GPU_OMP_THREADS cores whatever its kind.
+set(thr "${WW3GPU_OMP_THREADS}")
 if("-p" IN_LIST o)
-  math(EXPR thr "${HOFF_OMP_THREADS} / ${HOFF_MPI_RANKS}")
+  math(EXPR thr "${WW3GPU_OMP_THREADS} / ${WW3GPU_MPI_RANKS}")
   if(thr LESS 1)
     set(thr 1)
   endif()
@@ -50,22 +50,22 @@ set(ENV{OMP_NUM_THREADS} "${thr}")
 if(NOT DEFINED ENV{OMP_PROC_BIND})
   set(ENV{OMP_PROC_BIND} false)
 endif()
-if(HOFF_OMP_NESTED)
+if(WW3GPU_OMP_NESTED)
   set(ENV{OMP_MAX_ACTIVE_LEVELS} 2)
 endif()
 
 if(DRY_RUN)
   foreach(k F K)
-    hoff_entry_args(a ${N} ${k} "${TEST}" "${OPTS}" "${HOFF_WW3}" "${thr}" "${HOFF_MPI_RANKS}")
+    ww3gpu_entry_args(a ${N} ${k} "${TEST}" "${OPTS}" "${WW3GPU_WW3}" "${thr}" "${WW3GPU_MPI_RANKS}")
     if(k STREQUAL "F")
       set(s 0)
     else()
       set(s 1)
     endif()
     list(JOIN a " " a)
-    message("CMAKE_OPTIONS='$ENV{CMAKE_OPTIONS}' WW_KOKKOS_SNL1=${s} path_build_root=$ENV{path_build_root} ${HOFF_WW3}/regtests/bin/run_cmake_test ${a}")
+    message("CMAKE_OPTIONS='$ENV{CMAKE_OPTIONS}' WW_KOKKOS_SNL1=${s} path_build_root=$ENV{path_build_root} ${WW3GPU_WW3}/regtests/bin/run_cmake_test ${a}")
   endforeach()
-  message("${HOFF_WW3}/regtests/bin/test.comp ${TEST} work_F_${N} work_K_${N}; ${HOFF_NCCMP} work_F_${N}/ww3.*.nc work_K_${N}/ww3.*.nc ${HOFF_TOLS}")
+  message("${WW3GPU_WW3}/regtests/bin/test.comp ${TEST} work_F_${N} work_K_${N}; ${WW3GPU_NCCMP} work_F_${N}/ww3.*.nc work_K_${N}/ww3.*.nc ${WW3GPU_TOLS}")
   return()
 endif()
 
@@ -76,14 +76,14 @@ find_program(_gf gfortran)
 find_program(_cxx c++)
 file(REAL_PATH "${_gf}" _gf)
 file(REAL_PATH "${_cxx}" _cxx)
-set(_tc "${_gf} ${_cxx} ${HOFF_KPREFIX}")
-set(_tcf "${HOFF_OUT}/build_${N}.toolchain")
+set(_tc "${_gf} ${_cxx} ${WW3GPU_KPREFIX}")
+set(_tcf "${WW3GPU_OUT}/build_${N}.toolchain")
 set(_old "")
 if(EXISTS "${_tcf}")
   file(READ "${_tcf}" _old)
 endif()
 if(NOT _old STREQUAL _tc)
-  file(GLOB _stale LIST_DIRECTORIES true "${HOFF_OUT}/build_${N}" "${HOFF_OUT}/build_${N}_*")
+  file(GLOB _stale LIST_DIRECTORIES true "${WW3GPU_OUT}/build_${N}" "${WW3GPU_OUT}/build_${N}_*")
   file(REMOVE_RECURSE ${_stale})
 endif()
 file(WRITE "${_tcf}" "${_tc}")
@@ -91,7 +91,7 @@ file(GLOB old "${log}.*")
 if(old)
   file(REMOVE ${old})
 endif()
-file(MAKE_DIRECTORY "${HOFF_OUT}/rows" "${HOFF_OUT}/logs")
+file(MAKE_DIRECTORY "${WW3GPU_OUT}/rows" "${WW3GPU_OUT}/logs")
 # A placeholder, so an entry killed before its end still has a row.
 file(WRITE "${rowf}" "${N}\t${TEST}\t${swname}\tno\tno\tno\tn/a\tn/a\t-\t0\t0\t-\t${OPTS}\n")
 
@@ -104,16 +104,16 @@ function(run k)
     set(ENV{WW_KOKKOS_SNL1} 0)
     unset(ENV{WW_KOKKOS_SNL1_COUNT})
   endif()
-  hoff_entry_args(a ${N} ${k} "${TEST}" "${OPTS}" "${HOFF_WW3}" "${thr}" "${HOFF_MPI_RANKS}")
-  execute_process(COMMAND "${HOFF_WW3}/regtests/bin/run_cmake_test" ${a}
-                  WORKING_DIRECTORY "${HOFF_STAGE}"
+  ww3gpu_entry_args(a ${N} ${k} "${TEST}" "${OPTS}" "${WW3GPU_WW3}" "${thr}" "${WW3GPU_MPI_RANKS}")
+  execute_process(COMMAND "${WW3GPU_WW3}/regtests/bin/run_cmake_test" ${a}
+                  WORKING_DIRECTORY "${WW3GPU_STAGE}"
                   OUTPUT_FILE "${log}.${k}.log" ERROR_FILE "${log}.${k}.log" RESULT_VARIABLE rc)
 endfunction()
 # compare(<prefix> <a> <b>): test.comp on work_<a>_<n> and work_<b>_<n>; <prefix>_DIFF the files
 # it finds different, <prefix>_N the files it compared.
 function(compare prefix x y)
-  execute_process(COMMAND "${HOFF_WW3}/regtests/bin/test.comp" "${TEST}" "work_${x}_${N}" "work_${y}_${N}"
-                  WORKING_DIRECTORY "${HOFF_STAGE}"
+  execute_process(COMMAND "${WW3GPU_WW3}/regtests/bin/test.comp" "${TEST}" "work_${x}_${N}" "work_${y}_${N}"
+                  WORKING_DIRECTORY "${WW3GPU_STAGE}"
                   OUTPUT_FILE "${log}.test_comp.${x}${y}.log" ERROR_FILE "${log}.test_comp.${x}${y}.log")
   file(STRINGS "${log}.test_comp.${x}${y}.log" d REGEX " is different$")
   file(STRINGS "${log}.test_comp.${x}${y}.log" s REGEX " is identical$")
@@ -124,7 +124,7 @@ function(compare prefix x y)
   set(${prefix}_N "${nt}" PARENT_SCOPE)
 endfunction()
 
-file(REMOVE_RECURSE "${HOFF_STAGE}/${TEST}/work_G_${N}")
+file(REMOVE_RECURSE "${WW3GPU_STAGE}/${TEST}/work_G_${N}")
 run(F)
 run(K)
 
@@ -183,7 +183,7 @@ if(ran STREQUAL "yes")
   set(port "${FK_DIFF}")
   if(FK_DIFF)
     run(G)
-    if(EXISTS "${HOFF_STAGE}/${TEST}/work_G_${N}")
+    if(EXISTS "${WW3GPU_STAGE}/${TEST}/work_G_${N}")
       compare(FG F G)
       list(LENGTH FG_DIFF ng)
       set(self "${ng}/${FG_N}")
@@ -209,12 +209,12 @@ if(ran STREQUAL "yes")
       continue()
     endif()
     math(EXPR nc "${nc} + 1")
-    execute_process(COMMAND "${HOFF_NCCMP}" "${wf}/${f}" "${wk}/${f}" "${HOFF_TOLS}"
+    execute_process(COMMAND "${WW3GPU_NCCMP}" "${wf}/${f}" "${wk}/${f}" "${WW3GPU_TOLS}"
                     OUTPUT_VARIABLE out ERROR_VARIABLE out RESULT_VARIABLE rc)
     string(REPLACE "/" "_" fo "${f}")
     file(WRITE "${log}.nccmp.${fo}.out" "${out}")
     file(APPEND "${log}.nccmp.log" "== ${f}\n${out}")
-    hoff_judged_vars(j "${out}")
+    ww3gpu_judged_vars(j "${out}")
     if(NOT rc EQUAL 0)
       set(nv FAIL)
     elseif(NOT j STREQUAL "" AND NOT nv STREQUAL "FAIL")
@@ -225,7 +225,7 @@ if(ran STREQUAL "yes")
       list(APPEND judged ${j})
     endif()
   endforeach()
-  hoff_has_ounf(ounf "${HOFF_WW3}/regtests/${TEST}/${inp}")
+  ww3gpu_has_ounf(ounf "${WW3GPU_WW3}/regtests/${TEST}/${inp}")
   if(nc EQUAL 0 AND ounf AND NOT oo STREQUAL "native")
     set(nv MISSING)
   endif()
@@ -243,7 +243,7 @@ math(EXPR wall "${t1} - ${t0}")
 set(row "${N}\t${TEST}\t${swname}\t${built}\t${ran}\t${klog}\t${tc}\t${nv}\t${judged}\t${wall}\t${spectra}\t${self}\t${OPTS}")
 file(WRITE "${rowf}" "${row}\n")
 message(STATUS "entry ${N} ${TEST} ${swname}: built=${built} ran=${ran} kokkos_log=${klog} test.comp=${tc} nccmp-tol=${nv} kokkos_spectra=${spectra} ww3_self=${self}; logs ${log}.*")
-hoff_row_verdict(why "${row}" "${HOFF_STRICT}")
+ww3gpu_row_verdict(why "${row}" "${WW3GPU_STRICT}")
 if(NOT why STREQUAL "")
   message(FATAL_ERROR "entry ${N} ${TEST} ${swname} fails: ${why}")
 endif()

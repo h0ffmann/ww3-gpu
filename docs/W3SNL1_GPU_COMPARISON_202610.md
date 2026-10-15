@@ -55,7 +55,7 @@ before any bin's section 4 (in the port, a `team_barrier`, `snl1_dia.cpp:196`).
 | | Issue #1583 | This repository |
 |---|---|---|
 | Compared | its parallel CUDA kernel against its sequential CUDA kernel: the same arithmetic on the same GPU, in two loop orders | the Kokkos DIA against the Fortran DIA of the same WW3 executable |
-| Result | max relative error 0.000 (the README) | `test.comp`: no file different, on the CPU, on WW3's regtest entries (`just hoff-matrix`, [`kokkos/port_report/W3SNL1_KOKKOS.md`](../kokkos/port_report/W3SNL1_KOKKOS.md)); on CUDA, bit-identical on the three fixture points, 2026-09-15 |
+| Result | max relative error 0.000 (the README) | `test.comp`: no file different, on the CPU, on WW3's regtest entries (`just ww3-gpu-matrix`, [`kokkos/port_report/W3SNL1_KOKKOS.md`](../kokkos/port_report/W3SNL1_KOKKOS.md)); on CUDA, bit-identical on the three fixture points, 2026-09-15 |
 | Floating-point contraction | `nvcc -O3` without `--fmad=false`: the default fuses `AWG*UE + AWG*UE` and `E00*(...)` into FMAs, one rounding where the Fortran does two ⚠ (from `nvcc`'s documented default; not compiled here) | off: `-ffp-contract=off` on the CPU, `--fmad=false` on CUDA (`kokkos/src/ww_kokkos/CMakeLists.txt:19-31`) |
 
 The issue's equality is between two programs that perform the same operations in the same order

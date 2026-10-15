@@ -55,7 +55,7 @@ if [ "${1:-}" = --self-test ]; then
   for p in kokkos/src/ww_kokkos/snl1_dia.cpp /r/kokkos/CMakeLists.txt kokkos/tests/bench_snl1.cpp kokkos/CMakePresets.json; do
     is_kokkos_code "$p" || { echo "should match: $p"; fail=1; }
   done
-  for p in scripts/hoff.sh README.md kokkos/PORT_STATUS.md kokkos/ports.tsv docs/x.cpp; do
+  for p in scripts/ww3-gpu.sh README.md kokkos/PORT_STATUS.md kokkos/ports.tsv docs/x.cpp; do
     is_kokkos_code "$p" && { echo "should not match: $p"; fail=1; }
   done
   decide kokkos/src/a.cpp claude_max | grep -q '"deny"' || { echo "Max on Kokkos code: not denied"; fail=1; }

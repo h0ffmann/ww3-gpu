@@ -1,7 +1,7 @@
 # kokkos/tests/CMakeLists.txt
 # GoogleTest suites of the lessons and the tools, not of the port: the port has
 # no tests of its own (the owner, 2026-10-14). The DIA is validated by WW3's own
-# regtests, replayed by scripts/hoff.sh --hoff --cpu pair to pair with --ww3.
+# regtests, replayed by scripts/ww3-gpu.sh --ww3-gpu --cpu pair to pair with --ww3.
 #
 # SPDX-License-Identifier: MIT
 

@@ -181,7 +181,7 @@ def render(meta_p, prof, meta_w, ports):
         f"| the port | {s['kokkos_lines']} lines in {s['kokkos_files']} files | the C++ under kokkos/src (every .cpp and .hpp line) |",
         "",
         "On a GPU: " + (", ".join(f"`{p['routine']}`" for p in ports if p["status"] == "gpu") or
-                        "none yet. The CUDA build links; the RTX 4090 run, `just smoke-hoff gpu`, is the owner's, supervised."),
+                        "none yet. The CUDA build links; the RTX 4090 run, `just smoke-ww3-gpu gpu`, is the owner's, supervised."),
     ]
     return "\n".join(lines)
 
@@ -236,7 +236,7 @@ def ranking(meta_p, prof, meta_w, ports):
         "",
         "The port has no tests of its own ([ADR-0010](../docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md)):",
         "a ported routine is tested only by WW3's regtests, run inside WW3 with the routine on Kokkos and",
-        "compared pair to pair with the same WW3 without it (`scripts/hoff.sh --hoff --cpu`, `just hoff-matrix`).",
+        "compared pair to pair with the same WW3 without it (`scripts/ww3-gpu.sh --ww3-gpu --cpu`, `just ww3-gpu-matrix`).",
         "The record is the `regtested` column of `kokkos/ports.tsv`.",
         "",
         "| routine | status | Kokkos files | regtested |",

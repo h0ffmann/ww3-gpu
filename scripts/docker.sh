@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 # docker — the Ubuntu runtime image of docker/Dockerfile: WW3 (--ww3), WW3 with the Kokkos DIA
-# (--hoff) and WW4 (--ww4), compiled in the image's build stage, no Nix. scripts/hoff.sh is its
-# entry point, with HOFF_PREBUILT set, so a run in the image is the same run as on the host.
+# (--ww3-gpu) and WW4 (--ww4), compiled in the image's build stage, no Nix. scripts/ww3-gpu.sh is its
+# entry point, with WW3GPU_PREBUILT set, so a run in the image is the same run as on the host.
 #
 #   scripts/docker.sh build [tag]          build ww3-gpu:<tag> (default local) from this checkout
-#   scripts/docker.sh run [hoff.sh args]   run hoff.sh in the image, any of its options; runs land in
+#   scripts/docker.sh run [ww3-gpu.sh args]   run ww3-gpu.sh in the image, any of its options; runs land in
 #                                          build/docker-runs/. The image's /opt/ww3-gpu/BUILD_INFO says
 #                                          what it was built from.
 #   scripts/docker.sh --dry-run <cmd> ...  print the docker command, run nothing
 #   scripts/docker.sh --self-test
 #
 # DOCKER_IMAGE overrides the image name (ww3-gpu:local). CPU only: the image has no CUDA build,
-# and hoff.sh refuses --gpu in it (exit 64).
+# and ww3-gpu.sh refuses --gpu in it (exit 64).
 set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -24,8 +24,8 @@ do_or_say() { if [ -n "$dry" ]; then say "$@"; else "$@"; fi; }
 rev() { git -C "$1" rev-parse --short HEAD 2>/dev/null || echo "?"; }
 
 if [ "${1:-}" = --self-test ]; then
-  out="$(bash "${BASH_SOURCE[0]}" --dry-run run --hoff smoke)"
-  for want in --user /work/runs "--hoff smoke"; do
+  out="$(bash "${BASH_SOURCE[0]}" --dry-run run --ww3-gpu smoke)"
+  for want in --user /work/runs "--ww3-gpu smoke"; do
     grep -q -- "$want" <<<"$out" || { echo "docker: run lost '$want': $out" >&2; exit 1; }
   done
   out="$(bash "${BASH_SOURCE[0]}" --dry-run build t1)"

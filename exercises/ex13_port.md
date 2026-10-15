@@ -54,4 +54,4 @@ replay appends to `kokkos/PORT_STATUS.md` and a reading of it.
   anything at all?
 - Lesson 13's recipe: pick the next routine on the ranked list in
   `kokkos/PORT_RANKING.md` and list (not run) the `matrix.base` entries that exercise it (for
-  `W3SNL1` that list is `just hoff-matrix-list`) and the L2 replay entry it would need. That is a port PR's skeleton.
+  `W3SNL1` that list is `just ww3-gpu-matrix-list`) and the L2 replay entry it would need. That is a port PR's skeleton.

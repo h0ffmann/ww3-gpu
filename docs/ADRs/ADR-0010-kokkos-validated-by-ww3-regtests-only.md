@@ -30,12 +30,12 @@ The L1 fixture is the lab's own capture of the Fortran, a second copy of the ref
 
 **Kokkos code in this repository has no tests of its own. A ported routine is validated only by
 WW3's regression tests, run inside WW3 built from the h0ffmann/WW3 fork with the routine on Kokkos,
-and compared with the same WW3 built without it.** The tests are `scripts/hoff.sh --hoff --cpu`,
+and compared with the same WW3 built without it.** The tests are `scripts/ww3-gpu.sh --ww3-gpu --cpu`,
 pair to pair with `--ww3` (CI health h1), and the matrix of WFIP-0003 (`scripts/hoff_matrix.sh`):
 every serial `NL1` entry of `regtests/bin/matrix.base`, compared by WW3's `test.comp` and by
 `nccmp-tol` within `kokkos/tools/nccmp-tol/tolerances.txt`. If WW3's regtests agree for the
 Fortran routine and for its Kokkos translation, the routine is ported. They run on the CPU (Kokkos
-on OpenMP): no `--hoff --gpu` run is part of validating a port (`AGENTS.md`, "Running on the
+on OpenMP): no `--ww3-gpu --gpu` run is part of validating a port (`AGENTS.md`, "Running on the
 GPU").
 
 In this repository that means:

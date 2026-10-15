@@ -1,13 +1,13 @@
 # syntax=docker/dockerfile:1
-# A runtime image for WAVEWATCH III three ways (scripts/hoff.sh): --ww3 (WW3 as written), --hoff
+# A runtime image for WAVEWATCH III three ways (scripts/ww3-gpu.sh): --ww3 (WW3 as written), --ww3-gpu
 # (WW3 with the Kokkos DIA, OpenMP backend) and --ww4 (WAVEWATCH IV). Ubuntu packages only, no
 # Nix: the build stage compiles everything, and the final image keeps the programs, their
 # runtime libraries and the case inputs, not the sources. CPU only; there is no CUDA build here.
 #
 #   just dbuild                        # docker build -f docker/Dockerfile -t ww3-gpu:local .
-#   just dsmoke-hoff                   # scripts/hoff.sh --hoff smoke inside the image
+#   just dsmoke-ww3-gpu                   # scripts/ww3-gpu.sh --ww3-gpu smoke inside the image
 #
-# Bit for bit is judged inside one executable (AGENTS.md): --hoff runs the Fortran and the Kokkos
+# Bit for bit is judged inside one executable (AGENTS.md): --ww3-gpu runs the Fortran and the Kokkos
 # DIA of the same program here, so the verdict holds for this image's compiler too. Its numbers
 # are not the Nix toolchain's numbers: gfortran differs (Ubuntu's 15.2 against Nix's 16.2).
 
@@ -39,7 +39,7 @@ RUN curl -fsSL -o /tmp/kokkos.tgz \
 # The sources, in the repository's layout (kokkos/ finds WW3's w3kokkosmd.F90 at ../WW3).
 WORKDIR /src
 # Each source is copied just before the step that needs it, so a change to a later one does not
-# rebuild the earlier ones (hoff.sh, the entry point, is copied into the runtime stage only).
+# rebuild the earlier ones (ww3-gpu.sh, the entry point, is copied into the runtime stage only).
 COPY kokkos/ kokkos/
 COPY WW3/ WW3/
 COPY switches/switch_lab_shrd switches/
@@ -52,20 +52,20 @@ RUN cmake -S kokkos --preset openmp-release -B /build/kokkos -DCMAKE_PREFIX_PATH
  && install -D -m 755 /build/kokkos/tools/nccmp-tol/nccmp-tol "$P/bin/nccmp-tol" \
  && install -D -m 644 kokkos/tools/nccmp-tol/tolerances.txt "$P/share/tolerances.txt"
 
-# WW3 twice, as scripts/hoff.sh builds it: the lab switch (--ww3), and the same switch plus
-# KOKKOS linked to the port (--hoff). WW3's own Release flags.
+# WW3 twice, as scripts/ww3-gpu.sh builds it: the lab switch (--ww3), and the same switch plus
+# KOKKOS linked to the port (--ww3-gpu). WW3's own Release flags.
 RUN cat switches/switch_lab_shrd > /tmp/switch_ww3 \
- && printf '%s KOKKOS\n' "$(cat switches/switch_lab_shrd)" > /tmp/switch_hoff \
+ && printf '%s KOKKOS\n' "$(cat switches/switch_lab_shrd)" > /tmp/switch_ww3gpu \
  && cmake -S WW3 -B /build/ww3 -DSWITCH=/tmp/switch_ww3 -DCMAKE_BUILD_TYPE=Release \
  && cmake --build /build/ww3 -j"$(nproc)" \
- && cmake -S WW3 -B /build/hoff -DSWITCH=/tmp/switch_hoff -DCMAKE_BUILD_TYPE=Release \
+ && cmake -S WW3 -B /build/ww3-gpu -DSWITCH=/tmp/switch_ww3gpu -DCMAKE_BUILD_TYPE=Release \
       -DWW_KOKKOS=ON "-DCMAKE_PREFIX_PATH=/opt/ww_kokkos;/opt/kokkos" \
- && cmake --build /build/hoff -j"$(nproc)" \
- && mkdir -p "$P/ww3" "$P/hoff-openmp" \
- && cp -r /build/ww3/bin "$P/ww3/bin" && cp -r /build/hoff/bin "$P/hoff-openmp/bin"
+ && cmake --build /build/ww3-gpu -j"$(nproc)" \
+ && mkdir -p "$P/ww3" "$P/ww3-gpu-openmp" \
+ && cp -r /build/ww3/bin "$P/ww3/bin" && cp -r /build/ww3-gpu/bin "$P/ww3-gpu-openmp/bin"
 
 # WW4: its parts report for each case is recorded now, since the image has no WW4 source;
-# ww4_standalone is kept when WW4 builds (scripts/hoff.sh --ww4 exits 5 before running it while a
+# ww4_standalone is kept when WW4 builds (scripts/ww3-gpu.sh --ww4 exits 5 before running it while a
 # part the case needs is not ported).
 COPY WW4/ WW4/
 COPY scripts/ww4_parts.py scripts/ww4_status.py scripts/
@@ -107,13 +107,13 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 # Not root. Ubuntu's image already has uid 1000 (ubuntu), so the user takes the next free one.
 RUN useradd --create-home --shell /bin/bash wave
-# The entry point: the same scripts/hoff.sh the host runs, with HOFF_PREBUILT set.
-COPY --chmod=755 scripts/hoff.sh /opt/ww3-gpu/scripts/hoff.sh
-ENV HOFF_PREBUILT=/opt/ww3-gpu/prebuilt \
-    HOFF_RUNS=/work/runs \
+# The entry point: the same scripts/ww3-gpu.sh the host runs, with WW3GPU_PREBUILT set.
+COPY --chmod=755 scripts/ww3-gpu.sh /opt/ww3-gpu/scripts/ww3-gpu.sh
+ENV WW3GPU_PREBUILT=/opt/ww3-gpu/prebuilt \
+    WW3GPU_RUNS=/work/runs \
     OMP_PROC_BIND=false
 WORKDIR /work
 RUN chown wave:wave /work
 USER wave
-ENTRYPOINT ["/opt/ww3-gpu/scripts/hoff.sh"]
-CMD ["--hoff", "smoke"]
+ENTRYPOINT ["/opt/ww3-gpu/scripts/ww3-gpu.sh"]
+CMD ["--ww3-gpu", "smoke"]

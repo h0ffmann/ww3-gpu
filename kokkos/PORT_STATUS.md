@@ -46,9 +46,9 @@ Profile: full (bench_small, 120 x 80, 9 520 sea points, 12 h), Release -pg, swit
 | routines | 2 of 1023 (0.20 %) | ported routines over every SUBROUTINE and FUNCTION in model/src at WW3@03adda91 |
 | files | 1 of 147 (0.68 %) | WW3 .F90 files with a ported routine, over every .F90 file in model/src |
 | lines | 663 of 263375 (0.25 %) | the ported routines' Fortran lines over model/src's |
-| the port | 1470 lines in 11 files | the C++ under kokkos/src (every .cpp and .hpp line) |
+| the port | 1559 lines in 11 files | the C++ under kokkos/src (every .cpp and .hpp line) |
 
-On a GPU: none yet. The CUDA build links; the RTX 4090 run, `just smoke-hoff gpu`, is the owner's, supervised.
+On a GPU: none yet. The CUDA build links; the RTX 4090 run, `just smoke-ww3-gpu gpu`, is the owner's, supervised.
 <!-- port-score:end -->
 
 SPDX-License-Identifier: MIT
@@ -57,7 +57,7 @@ SPDX-License-Identifier: MIT
 
 | Routine | WW3 file:lines | Phase | Shim | L1 parity | L2 replay | Serial ms | OpenMP ms | CUDA ms | Notes |
 |---|---|---|---|---|---|---|---|---|---|
-| `W3SNL1` + `INSNL1` | `model/src/w3snl1md.F90:115-473`, `:483-786` | 1 (copy-in / kernel / copy-out) | `ww_snl1_init`, `ww_snl1` | **bit-identical** on all three presets, 2026-09-15 (CPU presets re-run 2026-10-14); removed with the tests, 2026-10-14 (see [L1 / L2](#l1--l2)) | **PASS on the CPU** inside WW3 (h0ffmann/WW3 `hoff/kokkos-snl1`): `just smoke-hoff`, `just full-hoff`, `just hoff-matrix` (100 entries): **byte-identical** to the Fortran DIA, 2026-10-15 ([`port_report/W3SNL1_KOKKOS.md`](port_report/W3SNL1_KOKKOS.md)) | [25.88](#where-the-numbers-come-from) | [5.95](#where-the-numbers-come-from) | [0.75](#where-the-numbers-come-from) | 1 000 points/call, end-to-end through the shim. Kernel alone: 24.96 / 5.02 / **0.047** ms. Timed with `-ffp-contract=off`; see below. Level-0 team scratch per point = (NSPECY+NTH) + 8(NSPECX+NTH) + NSPEC floats (`snl1_dia.cpp`): 28 608 B = 27.9 KiB at NK=25/NTH=24 (XFR 1.1, λ 0.25); 52 992 B ≈ 52 KiB at NK=32/NTH=36. When the request exceeds `TeamPolicy::scratch_size_max(0)` (for the Kokkos 5.2 CUDA backend the device's opt-in shared-memory limit minus ~24.6 KB, ≈75 KB on the RTX 4090; on OpenMP less than the 39 248 B that `ww3_ts1`'s NK=36 NTH=24 needs), the kernel falls back to level-1 scratch (2026-10-14, `docs/PORT_ASSESSMENT_202610.md` §3); it throws (→ `WW_KOKKOS_ERR_KERNEL`) only when level 1 is too small too. WW4's default grid (NK=50/NTH=36, XFR 1.07) is one of them on the 4090: see [Level-0 scratch at WW4's default grid](#level-0-scratch-at-ww4s-default-grid). |
+| `W3SNL1` + `INSNL1` | `model/src/w3snl1md.F90:115-473`, `:483-786` | 1 (copy-in / kernel / copy-out) | `ww_snl1_init`, `ww_snl1` | **bit-identical** on all three presets, 2026-09-15 (CPU presets re-run 2026-10-14); removed with the tests, 2026-10-14 (see [L1 / L2](#l1--l2)) | **PASS on the CPU** inside WW3 (h0ffmann/WW3 `hoff/kokkos-snl1`): `just smoke-ww3-gpu`, `just full-ww3-gpu`, `just ww3-gpu-matrix` (100 entries): **byte-identical** to the Fortran DIA, 2026-10-15 ([`port_report/W3SNL1_KOKKOS.md`](port_report/W3SNL1_KOKKOS.md)) | [25.88](#where-the-numbers-come-from) | [5.95](#where-the-numbers-come-from) | [0.75](#where-the-numbers-come-from) | 1 000 points/call, end-to-end through the shim. Kernel alone: 24.96 / 5.02 / **0.047** ms. Timed with `-ffp-contract=off`; see below. Level-0 team scratch per point = (NSPECY+NTH) + 8(NSPECX+NTH) + NSPEC floats (`snl1_dia.cpp`): 28 608 B = 27.9 KiB at NK=25/NTH=24 (XFR 1.1, λ 0.25); 52 992 B ≈ 52 KiB at NK=32/NTH=36. When the request exceeds `TeamPolicy::scratch_size_max(0)` (for the Kokkos 5.2 CUDA backend the device's opt-in shared-memory limit minus ~24.6 KB, ≈75 KB on the RTX 4090; on OpenMP less than the 39 248 B that `ww3_ts1`'s NK=36 NTH=24 needs), the kernel falls back to level-1 scratch (2026-10-14, `docs/PORT_ASSESSMENT_202610.md` §3); it throws (→ `WW_KOKKOS_ERR_KERNEL`) only when level 1 is too small too. WW4's default grid (NK=50/NTH=36, XFR 1.07) is one of them on the 4090: see [Level-0 scratch at WW4's default grid](#level-0-scratch-at-ww4s-default-grid). |
 | `W3SNL2`…`W3SNL5` | `model/src/w3snl{2,3,4,5}md.F90` | not started | — | — | — | — | — | — | Out of scope; the `IQTPE <= 0` branch (`W3SNLGQM`) is not replaced either. |
 | `W3SIN4` / `W3SDS4` | `model/src/w3src4md.F90` | not started | — | — | — | — | — | — | The next candidate: same per-point shape as the DIA, so the same shim generalises. |
 
@@ -189,12 +189,12 @@ reference and the fixture generator were removed on 2026-10-14; the fixture
 itself stays as the benchmark's frozen input
 ([`tests/fixtures/README.md`](tests/fixtures/README.md)).
 
-**L2** is the validation now: a WW3 regtest replay. `scripts/hoff.sh --hoff --cpu`
+**L2** is the validation now: a WW3 regtest replay. `scripts/ww3-gpu.sh --ww3-gpu --cpu`
 runs WW3 from one executable with `WW_KOKKOS_SNL1` flipped, compares the NetCDF
 output field by field with `kokkos/tools/nccmp-tol`, then compares the Kokkos run
 pair to pair with `--ww3` (WW3 built without the KOKKOS switch). The caller patch
 lives on the h0ffmann/WW3 branch `hoff/kokkos-snl1` (`src/fortran_iface/PATCH.md`);
 nothing in this repository modifies `WW3/`. The WW3 regtest matrix of WFIP-0003
-(`just hoff-matrix`, CTest in `regtests/` since 2026-10-15) extends the replay to WW3's own
+(`just ww3-gpu-matrix`, CTest in `regtests/` since 2026-10-15) extends the replay to WW3's own
 regtests: byte-identical on the 100 serial and the 25 shared-memory OpenMP `NL1` entries (v,
 `kokkos/port_report/W3SNL1_KOKKOS.md`, "How it was regtested").

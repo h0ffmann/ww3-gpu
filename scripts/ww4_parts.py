@@ -4,9 +4,9 @@
     scripts/ww4_parts.py smoke|full [--ww4 DIR] [--switch FILE]
     scripts/ww4_parts.py --self-test
 
-`scripts/hoff.sh --ww4` runs this first. Exit 0: every part is ported. Exit 5: a part is not
+`scripts/ww3-gpu.sh --ww4` runs this first. Exit 0: every part is ported. Exit 5: a part is not
 ported yet, and the table says which. The parts come from the WW3 switch the case runs with
-(switches/switch_lab_shrd, as in --ww3 and --hoff):
+(switches/switch_lab_shrd, as in --ww3 and --ww3-gpu):
   - each source-term switch that is on (LN1, ST4, NL1, BT1, DB1, ...; a 0 means off) is WW4's
     src/ww4_core/source_terms/ww4_<SWITCH>/ww4_<SWITCH>.cpp;
   - the propagation scheme (UQ, SMC) is src/ww4_core/solver_<uq|smc>/solver_<uq|smc>.cpp, needed

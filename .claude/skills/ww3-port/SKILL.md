@@ -69,7 +69,7 @@ compile the module with the flags in `<build>/model/src/CMakeFiles/ww3_lib.dir/f
 ## 4. Claiming "regtested": count the denominator
 
 - The denominator is every `matrix.base` entry whose switch has the routine's switch (`NL1` for
-  W3SNL1), `just hoff-matrix-list all`; `selection:count` pins it per WW3 commit. `run_cmake_test`
+  W3SNL1), `just ww3-gpu-matrix-list all`; `selection:count` pins it per WW3 commit. `run_cmake_test`
   keeps the last `-s` (`-s MPI -s PDLIB` is `switch_PDLIB`), and `$(( $np -1 ))` is shell
   arithmetic.
 - The verdict is bit for bit (`AGENTS.md`, "Bit for bit with the Fortran"): `test.comp` finds
@@ -87,6 +87,6 @@ compile the module with the flags in `<build>/model/src/CMakeFiles/ww3_lib.dir/f
 ## 5. Before calling it done
 
 `just kokkos-test serial-debug`, `just kokkos-test openmp-release`, the CUDA preset compiled,
-`just smoke-hoff`, `just full-hoff`, `just hoff-matrix <jobs> all`, `just hoff-matrix-selftest`,
+`just smoke-ww3-gpu`, `just full-ww3-gpu`, `just ww3-gpu-matrix <jobs> all`, `just ww3-gpu-matrix-selftest`,
 then the port report, `kokkos/ports.tsv` (`regtested`), `python3 scripts/port_score.py --write`
 and `--check`, and a dated `docs/log/` entry with what was run and what it showed.

@@ -107,8 +107,8 @@ instructions for whichever kitchen is there.
 **Why it matters here.** The `W3SNL1` port is one source that gave the Fortran's numbers bit for
 bit on Serial, OpenMP and CUDA (L1 tests, 2026-09-15, removed on 2026-10-14 by
 [ADR-0010](../docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md)), and the OpenMP build
-is byte-identical to the Fortran DIA inside WW3 on the CPU (L2; `just smoke-hoff`,
-`just full-hoff`, and `test.comp` on all 100 entries of `just hoff-matrix`) (v,
+is byte-identical to the Fortran DIA inside WW3 on the CPU (L2; `just smoke-ww3-gpu`,
+`just full-ww3-gpu`, and `test.comp` on all 100 entries of `just ww3-gpu-matrix`) (v,
 [`PORT_STATUS.md`](PORT_STATUS.md), 2026-10-15). Same source did not mean same numbers for free: it took turning off
 contraction and copying gfortran's `x**n` ([The W3SNL1 port](#the-w3snl1-port)).
 
@@ -247,10 +247,10 @@ suites left in CTest test the lessons and the tools, not the port:
 | `L1_test_bench_case` | the benchmark-case generator |
 | `L1_test_fetch_analyse` | the fetch-growth analyser |
 
-The DIA and its shim are validated by WW3's regtests: `scripts/hoff.sh --hoff --cpu`
+The DIA and its shim are validated by WW3's regtests: `scripts/ww3-gpu.sh --ww3-gpu --cpu`
 runs a WW3 case with the Kokkos DIA and compares it with the Fortran DIA of the same
 executable and pair to pair with `--ww3` (WW3 built without the KOKKOS switch), and
-the regtest matrix of WFIP-0003 (`just hoff-matrix`, a CMake/CTest driver in `regtests/`, one
+the regtest matrix of WFIP-0003 (`just ww3-gpu-matrix`, a CMake/CTest driver in `regtests/`, one
 CTest test per `matrix.base` entry) extends that to WW3's own regtests: the 100 serial `NL1` entries
 and the 25 shared-memory OpenMP ones, byte-identical (v, `docs/data/hoff_matrix_2026-10-15.tsv`,
 `docs/data/hoff_matrix_omp_2026-10-15.tsv`, both written by the shell script the driver replaced).

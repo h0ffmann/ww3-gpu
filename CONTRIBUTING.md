@@ -121,12 +121,12 @@ A mistake in a figure is as welcome as one in the text: the gallery links an iss
   `just results check` (CI) refuses a timing without a passed parity check: `regtest: passed`
   (ADR-0010), or the `l1: passed` of a record made before 2026-10-14.
 - The Kokkos port has no tests of its own (ADR-0010): no L1 test, GoogleTest or fixture of a ported
-  routine. Its tests are WW3's regtests, `just smoke-hoff`, `just full-hoff` and `just hoff-matrix`,
-  on the CPU. `just hoff-matrix` is a CMake/CTest driver in `regtests/` (WFIP-0003), the one set of
+  routine. Its tests are WW3's regtests, `just smoke-ww3-gpu`, `just full-ww3-gpu` and `just ww3-gpu-matrix`,
+  on the CPU. `just ww3-gpu-matrix` is a CMake/CTest driver in `regtests/` (WFIP-0003), the one set of
   recipes that does not wrap a script in `scripts/`: one CTest test per `matrix.base` entry, each
   WW3's own regtest run with the Fortran routine and with the Kokkos routine; CTest is the runner,
-  not a test of the port's own. A change to `regtests/` runs `just hoff-matrix-selftest` and
-  `just hoff-matrix-list`. Anything tried that did not become a number in a table, failures included, goes in a dated entry in `docs/log/`.
+  not a test of the port's own. A change to `regtests/` runs `just ww3-gpu-matrix-selftest` and
+  `just ww3-gpu-matrix-list`. Anything tried that did not become a number in a table, failures included, goes in a dated entry in `docs/log/`.
 - `codemeta.json` is generated from `CITATION.cff` and `.zenodo.json` (`just codemeta`); never
   edit it by hand.
 - Run `just kokkos-test serial-debug` after touching `kokkos/`, and `bash -n` plus
