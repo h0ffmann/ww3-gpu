@@ -32,7 +32,7 @@
   <text x="52" y="160" class="sub">WW3 as NOAA writes it</text>
   <rect x="52" y="178" width="240" height="64" rx="12" class="fork"/>
   <text x="66" y="203" class="b">WW3 source, Fortran</text>
-  <text x="66" y="225" class="m">h0ffmann/WW3 (fork)</text>
+  <text x="66" y="225" class="m">NOAA-EMC/WW3 (pure)</text>
   <path d="M172 244 V 268" class="flow"/>
   <rect x="52" y="272" width="240" height="52" rx="12" class="step"/>
   <text x="66" y="295" class="t">CMake, the lab switch</text>
@@ -90,7 +90,7 @@
 
   <!-- legend and the wave -->
   <rect x="40" y="528" width="22" height="16" rx="4" class="fork"/>
-  <text x="70" y="541" class="t">a personal fork's source</text>
+  <text x="70" y="541" class="t">model source, submodule</text>
   <rect x="270" y="528" width="22" height="16" rx="4" class="ours"/>
   <text x="300" y="541" class="t">ww3-gpu's own code (the Kokkos rewrite)</text>
   <path d="M640 566 C 680 566, 694 556, 712 538 C 730 520, 756 504, 784 506 C 812 508, 822 532, 806 546 C 792 558, 772 552, 774 538 C 776 526, 792 524, 800 534 C 808 546, 794 566, 822 570 C 842 573, 870 566, 920 566"

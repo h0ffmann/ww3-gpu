@@ -42,6 +42,9 @@ cmd="${1:-}"; [ -n "$cmd" ] || usage; shift
 case "$cmd" in
   build)
     tag="${1:-local}"
+    # --ww3 is built from pure NOAA WW3 (WW3-noaa/), --ww3-gpu from the fork (WW3/).
+    [ -n "$dry" ] || [ -f "$root/WW3-noaa/model/src/CMakeLists.txt" ] \
+      || git -C "$root" submodule update --init --depth 1 WW3-noaa
     # WW4's sources and its yaml-cpp/googletest are compiled in the build stage.
     [ -n "$dry" ] || [ -f "$root/WW4/externals/yaml-cpp/CMakeLists.txt" ] || {
       git -C "$root" submodule update --init --depth 1 WW4
@@ -49,6 +52,7 @@ case "$cmd" in
     }
     do_or_say docker build -f "$root/docker/Dockerfile" -t "ww3-gpu:$tag" \
       --build-arg "WW3_GPU_REV=$(rev "$root")" --build-arg "WW3_REV=$(rev "$root/WW3")" \
+      --build-arg "WW3_NOAA_REV=$(rev "$root/WW3-noaa")" \
       --build-arg "WW4_REV=$(rev "$root/WW4")" "$root" ;;
   run)
     # As the caller's uid, so the runs on the host belong to whoever started them.

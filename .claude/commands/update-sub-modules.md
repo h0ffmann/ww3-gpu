@@ -1,6 +1,6 @@
 ---
-description: Bump every submodule (picasso, WW3, WW4) to its latest, summarise what changed upstream, and open a PR.
-argument-hint: "[picasso|WW3|WW4 ...]  (default: all three)"
+description: Bump every submodule (picasso, WW3, WW3-noaa, WW4) to its latest, summarise what changed upstream, and open a PR.
+argument-hint: "[picasso|WW3|WW3-noaa|WW4 ...]  (default: all four)"
 ---
 
 Bump the submodules named in `$ARGUMENTS` (all when empty) and open one pull request.
@@ -13,6 +13,7 @@ Give the command that reproduces each count.
 |---|---|---|---|---|
 | `picasso` | h0ffmann/picasso | none | `main` | sparse: only `labs/pratico` is checked out |
 | `WW3` | h0ffmann/WW3 | NOAA-EMC/WW3 | `develop` | fork may carry its own commits |
+| `WW3-noaa` | NOAA-EMC/WW3 | none | `develop` | pure WW3 for `--ww3`: move it only to the NOAA commit the fork branched from (`git -C WW3 merge-base HEAD <NOAA develop>`), never to the tip on its own; `scripts/ww3-gpu.sh --ww3` stops when the two disagree |
 | `WW4` | h0ffmann/WW4 | NOAA-EMC/WW4 | `develop` | read-only reference; `docs/ww4-status.json` records the last snapshot |
 
 ## 1. Sync and bump
