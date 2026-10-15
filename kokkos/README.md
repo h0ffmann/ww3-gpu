@@ -32,6 +32,7 @@ tests/                kokkos_env.hpp (runtime lifetime), L1_* GoogleTest suites,
 tests/fixtures/       the verbatim Fortran reference, the shared sea state, the committed
                       binary fixtures and shim_driver.F90 (the shim_roundtrip CTest case)
 PORT_STATUS.md        the port ledger: phase, parity and ms/call per routine
+PORT_RANKING.md       what is still in Fortran, by self time, and each port's test coverage
 tools/nccmp-tol/      per-field NetCDF comparator                (Task 5)
 tools/bench_case/     benchmark-case generator                   (Task 6)
 tools/fetch_analyse/  fetch-growth analyser                      (Task 6)
