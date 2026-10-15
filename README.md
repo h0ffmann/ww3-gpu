@@ -149,7 +149,7 @@ the pinned flake, so there is nothing else to install.
 
 ```console
 git clone --recurse-submodules git@github.com:h0ffmann/ww3-gpu.git && cd ww3-gpu
-just submodule-init             # sparse-checkout nix-config (once per clone)
+just submodule-init             # sparse-checkout picasso (once per clone)
 just get                        # clone upstream NOAA-EMC/WW3 develop into ~/src/WW3
 just rt                         # build with ww3_tp1.1's own switch and run that regtest (~30 s)
 just build                      # rebuild with the lab switch (switches/switch_lab_shrd, ST4 physics)
@@ -167,7 +167,7 @@ presets are in [`docs/TOOLCHAIN.md`](docs/TOOLCHAIN.md). For coastal cases, add 
 
 | Type | Program |
 | :---- | :-----: |
-| Fortran, MPI, NetCDF | `nix-config/labs/pratico`, pinned (`just ww3`, `just dev`) |
+| Fortran, MPI, NetCDF | `picasso/labs/pratico`, pinned (`just ww3`, `just dev`) |
 | C++ kernels | Kokkos (Serial, OpenMP, CUDA), GoogleTest |
 | Publications | picasso's `labs/publisher` through `flake.nix` |
 | Host alternative | `just prereqs` on Debian/Ubuntu |
@@ -211,6 +211,40 @@ script the host uses, so the options, the checks and the exit codes are the same
 Ubuntu's: `--ww3-gpu` still compares the Kokkos and the Fortran DIA inside one executable, so its
 bit-for-bit verdict holds in the image; a number from the image is not a number from the pinned
 toolchain of [`docs/TOOLCHAIN.md`](docs/TOOLCHAIN.md), which uses another gfortran.
+
+## build with picasso instead of Docker
+
+[picasso](https://github.com/h0ffmann/picasso) is the Nix toolchain of this lab. Here it is the
+submodule `picasso/`, with only `labs/pratico` checked out. It is the alternative to the Docker
+image, and it is the reference: the bit-for-bit verdicts, the regtest matrix and the timings
+come from it, not from the image.
+
+| | picasso (`nix develop ./picasso/labs/pratico#ww3`) | Docker (`just dbuild`) |
+|---|---|---|
+| You need | Nix and just | Docker (just is optional) |
+| Compilers | one locked nixpkgs: gfortran 16.2.0, CMake 4.4.3, Kokkos 5.2.2 ([`docs/TOOLCHAIN.md`](docs/TOOLCHAIN.md)) | Ubuntu 26.04 packages, Kokkos 5.2.2 from its release tarball |
+| MPI, PDLIB | Open MPI 5.0.11, PT-Scotch, METIS and ParMETIS | none |
+| CUDA | the `#cuda` shell (Kokkos for `ADA89`) | none |
+| WW3's regtests | all of them: `just ww3-gpu-matrix`, with NOAA's regtest data pinned by SHA-256 | `ww3_ts1` and `bench_small` only |
+| Bit for bit | the reference toolchain | holds inside one executable of the image, but the image is not the reference |
+
+```console
+just submodule-init     # once per clone: picasso/, sparse (labs/pratico)
+just ww3                # enter the toolchain shell
+just smoke              # WW3 as written, then the Kokkos DIA against the Fortran DIA (ww3_ts1)
+just full-ww3-gpu       # the Kokkos DIA on bench_small
+just ww3-gpu-matrix     # WW3's regtest matrix, CPU only
+```
+
+The recipes without a `d` in front run on picasso; the same recipes with a `d` run in the image.
+
+The submodule directory was `nix-config/` until 2026-10-15. In a clone made before that date,
+run this once after `git pull`:
+
+```console
+git submodule sync && just submodule-init
+[ -z "$(git -C nix-config status --short)" ] && rm -rf nix-config   # only when it holds no edits
+```
 
 ## two things worth knowing before you invest
 
@@ -304,7 +338,7 @@ solver yet
 | `pubs/` | The book's build and the UFRJ/DEL project proposal; built files land in `pdf/` |
 | `scripts/`, `switches/`, `env/` | Get, build and run WW3 and SWAN; annotated switch files; conda and an untested build-environment Dockerfile |
 | `docker/`, `.dockerignore` | The Ubuntu runtime image: WW3, WW3 with the Kokkos DIA and WW4 compiled, no sources ([run it in Docker](#run-it-in-docker)) |
-| `nix-config/`, `WW3/`, `WW4/` | Submodules: the pinned toolchain, the [h0ffmann/WW3](https://github.com/h0ffmann/WW3) fork, the [h0ffmann/WW4](https://github.com/h0ffmann/WW4) fork |
+| `picasso/`, `WW3/`, `WW4/` | Submodules: the pinned toolchain, the [h0ffmann/WW3](https://github.com/h0ffmann/WW3) fork, the [h0ffmann/WW4](https://github.com/h0ffmann/WW4) fork |
 
 Lab code is C++, Fortran and shell. Python appears only in the publishing pipeline and the repo's
 own checks. CI checks shell syntax, compiles the Fortran sandbox and examples, builds and tests

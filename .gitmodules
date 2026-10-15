@@ -1,5 +1,5 @@
-[submodule "nix-config"]
-	path = nix-config
+[submodule "picasso"]
+	path = picasso
 	url = git@github.com:h0ffmann/picasso.git
 	branch = main
 	shallow = true

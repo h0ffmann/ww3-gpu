@@ -1,9 +1,9 @@
 {
-  description = "ww3-lab publications: course book and UFRJ/DEL proposal, built with nix-config's labs/publisher toolchain";
+  description = "ww3-lab publications: course book and UFRJ/DEL proposal, built with picasso's labs/publisher toolchain";
 
   inputs = {
     # The markdown -> document toolchain and the mkPdf / mkDocx helpers live in picasso (h0ffmann/
-    # picasso, formerly nix-config; the submodule directory keeps that name) so other
+    # picasso, formerly nix-config; the submodule directory has the same name) so other
     # repositories can reuse them.
     publisher.url = "github:h0ffmann/picasso?dir=labs/publisher";
     nixpkgs.follows = "publisher/nixpkgs"; # only for symlinkJoin; same pin as the toolchain

@@ -1,11 +1,11 @@
 {
   "version": 10,
-  "$comment": "Which Kokkos backend you get is decided by the pratico devShell, not by this file: `nix develop nix-config/labs/pratico#ww3` puts a Serial+OpenMP Kokkos on the CMake search path, `#cuda` puts a CUDA/ADA89 one there. These presets only choose build type, instrumentation, and -- for CUDA -- the compiler nvcc insists on. Presets schema 10 needs CMake >= 4.1; the lab shell pins 4.4.2.",
+  "$comment": "Which Kokkos backend you get is decided by the pratico devShell, not by this file: `nix develop picasso/labs/pratico#ww3` puts a Serial+OpenMP Kokkos on the CMake search path, `#cuda` puts a CUDA/ADA89 one there. These presets only choose build type, instrumentation, and -- for CUDA -- the compiler nvcc insists on. Presets schema 10 needs CMake >= 4.1; the lab shell pins 4.4.2.",
   "configurePresets": [
     {
       "name": "serial-debug",
       "displayName": "Debug, sanitizers, deterministic reductions",
-      "$comment": "Kokkos_ENABLE_DEBUG_BOUNDS_CHECK is deliberately not set here: it is an option of the Kokkos *build*, not of a consumer, so it is fixed by the pinned Kokkos derivation in nix-config/labs/pratico and cannot be switched on from this file. The safety net is AddressSanitizer + UndefinedBehaviorSanitizer plus WW_DETERMINISTIC. The name describes the build type, not the backend: OpenMP is the default execution space in #ww3, so code that must run on Serial names Kokkos::Serial explicitly.",
+      "$comment": "Kokkos_ENABLE_DEBUG_BOUNDS_CHECK is deliberately not set here: it is an option of the Kokkos *build*, not of a consumer, so it is fixed by the pinned Kokkos derivation in picasso/labs/pratico and cannot be switched on from this file. The safety net is AddressSanitizer + UndefinedBehaviorSanitizer plus WW_DETERMINISTIC. The name describes the build type, not the backend: OpenMP is the default execution space in #ww3, so code that must run on Serial names Kokkos::Serial explicitly.",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/serial-debug",
       "cacheVariables": {

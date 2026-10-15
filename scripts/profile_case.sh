@@ -19,7 +19,7 @@ case_name="${1:-full}"
 case "$case_name" in smoke|full) ;; *) echo "profile_case: smoke or full, not $case_name" >&2; exit 64 ;; esac
 
 if [ -z "${PROFILE_IN_SHELL:-}" ]; then
-  exec env PROFILE_IN_SHELL=1 nix develop "$root/nix-config/labs/pratico#ww3" --command bash "${BASH_SOURCE[0]}" "$case_name"
+  exec env PROFILE_IN_SHELL=1 nix develop "$root/picasso/labs/pratico#ww3" --command bash "${BASH_SOURCE[0]}" "$case_name"
 fi
 
 ww3="$root/WW3"

@@ -156,7 +156,7 @@ do flake fixado, então não há mais nada para instalar.
 
 ```console
 git clone --recurse-submodules git@github.com:h0ffmann/ww3-gpu.git && cd ww3-gpu
-just submodule-init             # sparse-checkout do nix-config (uma vez por clone)
+just submodule-init             # sparse-checkout do picasso (uma vez por clone)
 just get                        # clona o develop do NOAA-EMC/WW3 em ~/src/WW3
 just rt                         # compila com a switch do ww3_tp1.1 e roda esse regtest (~30 s)
 just build                      # recompila com a switch do laboratório (física ST4)
@@ -208,6 +208,40 @@ compiladores são os do Ubuntu: o `--ww3-gpu` continua comparando o DIA em Kokko
 dentro de um mesmo executável, então o veredito bit a bit vale na imagem; um número medido na
 imagem não é um número do toolchain fixado de [`docs/TOOLCHAIN.md`](docs/TOOLCHAIN.md), que usa
 outro gfortran.
+
+## compilar com o picasso em vez do Docker
+
+O [picasso](https://github.com/h0ffmann/picasso) é o toolchain Nix do laboratório. Aqui ele é o
+submódulo `picasso/`, com só `labs/pratico` no disco. É a alternativa à imagem Docker e é a
+referência: os veredictos bit a bit, a matriz de regtests e as medições de tempo saem dele, não
+da imagem.
+
+| | picasso (`nix develop ./picasso/labs/pratico#ww3`) | Docker (`just dbuild`) |
+|---|---|---|
+| Precisa de | Nix e just | Docker (just é opcional) |
+| Compiladores | um nixpkgs travado: gfortran 16.2.0, CMake 4.4.3, Kokkos 5.2.2 ([`docs/TOOLCHAIN.md`](docs/TOOLCHAIN.md)) | pacotes do Ubuntu 26.04, Kokkos 5.2.2 do tarball da versão |
+| MPI, PDLIB | Open MPI 5.0.11, PT-Scotch, METIS e ParMETIS | nenhum |
+| CUDA | o shell `#cuda` (Kokkos para `ADA89`) | nenhum |
+| Regtests do WW3 | todos: `just ww3-gpu-matrix`, com os dados de regtest da NOAA fixados por SHA-256 | só `ww3_ts1` e `bench_small` |
+| Bit a bit | o toolchain de referência | vale dentro de um executável da imagem, mas a imagem não é a referência |
+
+```console
+just submodule-init     # uma vez por clone: picasso/, esparso (labs/pratico)
+just ww3                # entra no shell do toolchain
+just smoke              # o WW3 como escrito, depois a DIA em Kokkos contra a DIA em Fortran (ww3_ts1)
+just full-ww3-gpu       # a DIA em Kokkos no bench_small
+just ww3-gpu-matrix     # a matriz de regtests do WW3, só CPU
+```
+
+As receitas sem `d` na frente rodam no picasso; as mesmas com `d` rodam na imagem.
+
+O diretório do submódulo era `nix-config/` até 15/10/2026. Num clone feito antes dessa data,
+rode uma vez depois do `git pull`:
+
+```console
+git submodule sync && just submodule-init
+[ -z "$(git -C nix-config status --short)" ] && rm -rf nix-config   # só quando não há edições
+```
 
 ## duas coisas para saber antes de investir
 

@@ -1,5 +1,5 @@
 # profile activity — a merged PR here pings h0ffmann/h0ffmann, which rebuilds its recent-activity list
-# right away (nix-config's reusable profile-ping.yml). Needs the PROFILE_DISPATCH_TOKEN secret; without
+# right away (picasso's reusable profile-ping.yml). Needs the PROFILE_DISPATCH_TOKEN secret; without
 # it the job only leaves a notice.
 name: profile activity
 

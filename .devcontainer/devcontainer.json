@@ -1,6 +1,6 @@
 // Codespaces / VS Code dev container: Ubuntu 24.04 with Nix (flakes on) for the pinned toolchain
 // (`just ww3`, `just kokkos-test serial-debug`), and scripts/agent_env.sh for the apt-side gate
-// tools and the nix-config submodule. CPU only; a GPU gate (`just kokkos-cuda-test`) needs a host
+// tools and the picasso submodule. CPU only; a GPU gate (`just kokkos-cuda-test`) needs a host
 // with a driver. The first `nix develop` downloads the toolchain; later ones hit the store.
 {
   "name": "ww3-gpu",

@@ -121,11 +121,11 @@ jobs:
       - name: Fetch the pratico toolchain submodule
         run: |
           git -c url.https://github.com/.insteadOf=git@github.com: \
-            submodule update --init --no-recommend-shallow nix-config || {
-            sha=$(git ls-tree HEAD nix-config | awk '{print $3}')
-            git -C nix-config -c url.https://github.com/.insteadOf=git@github.com: \
+            submodule update --init --no-recommend-shallow picasso || {
+            sha=$(git ls-tree HEAD picasso | awk '{print $3}')
+            git -C picasso -c url.https://github.com/.insteadOf=git@github.com: \
               fetch origin "$sha"
-            git -C nix-config checkout -q "$sha"
+            git -C picasso checkout -q "$sha"
           }
 
       - name: Fetch WW3's w3kokkosmd.F90 at the pinned WW3 commit (no full WW3 clone)
@@ -140,7 +140,7 @@ jobs:
 
       - name: serial-debug (sanitizers)
         run: |
-          nix develop ./nix-config/labs/pratico#ww3 --command bash -c '
+          nix develop ./picasso/labs/pratico#ww3 --command bash -c '
             cd kokkos &&
             cmake --preset serial-debug &&
             cmake --build --preset serial-debug &&
@@ -148,7 +148,7 @@ jobs:
 
       - name: openmp-release
         run: |
-          nix develop ./nix-config/labs/pratico#ww3 --command bash -c '
+          nix develop ./picasso/labs/pratico#ww3 --command bash -c '
             cd kokkos &&
             cmake --preset openmp-release &&
             cmake --build --preset openmp-release &&

@@ -16,7 +16,7 @@ import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 RESULTS = ROOT / "bench" / "results"
-SKIP = {"WW3", "WW4", "nix-config", ".git", "build"}
+SKIP = {"WW3", "WW4", "picasso", ".git", "build"}
 REQUIRED = ("study", "date", "routine", "what", "machine", "toolchain", "statistic", "runs")
 # ADR-0010: from this date parity is a passed WW3 regtest replay; a record dated before it kept
 # the L1 test of its day (`l1`) and stays valid as history.

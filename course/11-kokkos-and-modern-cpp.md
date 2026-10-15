@@ -170,7 +170,7 @@ just kokkos-cuda-test             # configure, build, ctest inside the #cuda she
 ```
 
 The pinned CUDA Kokkos is built for **one architecture only, `Kokkos_ARCH_ADA89`**: the
-RTX 4090. An H100 needs a Kokkos rebuild with `HOPPER90` in `nix-config`, not a change to
+RTX 4090. An H100 needs a Kokkos rebuild with `HOPPER90` in `picasso`, not a change to
 the presets (v, `CMakePresets.json` comment). Kokkos 5.2.0 is the pin (v, `kokkos/README.md`).
 `Kokkos_ENABLE_DEBUG_BOUNDS_CHECK` is an option of the Kokkos build itself, so the lab
 cannot switch it on from here; the sanitizers are the net (v).

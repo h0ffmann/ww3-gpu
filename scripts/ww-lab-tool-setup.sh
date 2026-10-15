@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# ww-lab-tool-setup — wire nix-config into a consumer repo (ww3-gpu) as a git submodule with
+# ww-lab-tool-setup — wire picasso into a consumer repo (ww3-gpu) as a git submodule with
 # only labs/pratico checked out. Git cannot submodule a subdirectory, so the submodule points
 # at the whole repo and sparse-checkout keeps everything but labs/pratico off disk.
 #
@@ -13,11 +13,11 @@
 #   scripts/ww-lab-tool-setup.sh ~/code/ww-lab --commit        # also commit .gitmodules + pin
 #
 # Sparse-checkout is local state, not recorded in .gitmodules, which is why fresh clones
-# need this script (or `git -C nix-config sparse-checkout set labs/pratico`) once.
+# need this script (or `git -C picasso sparse-checkout set labs/pratico`) once.
 set -euo pipefail
 
 url="git@github.com:h0ffmann/picasso.git"
-path="nix-config"
+path="picasso"
 sparse="labs/pratico"
 branch="main"
 bump=0
@@ -83,7 +83,7 @@ if [ "$commit" -eq 1 ]; then
     if git -C "$root" diff --cached --quiet; then
         echo "ww-lab-tool-setup: nothing to commit"
     else
-        git -C "$root" commit -q -m "nix-config submodule: $path @ $(git -C "$sub" rev-parse --short HEAD) ($sparse only)"
+        git -C "$root" commit -q -m "picasso submodule: $path @ $(git -C "$sub" rev-parse --short HEAD) ($sparse only)"
         echo "ww-lab-tool-setup: committed"
     fi
 else

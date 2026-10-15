@@ -61,7 +61,7 @@ No rebuild: copies the prepared `work_lab` to `work_perf`, runs
 into the same table (`work_perf/perf_table.md`, raw in `perf_report.txt`).
 
 **`perf` is not in the pratico shell.** It is tied to the host kernel, so
-`nix-config/labs/pratico` does not ship it; when `perf` is not on PATH the
+`picasso/labs/pratico` does not ship it; when `perf` is not on PATH the
 script says so and exits 3. On Debian/Ubuntu install `linux-perf` (or
 `linux-tools-$(uname -r)`) and run from a host shell; `perf record` may also
 need `kernel.perf_event_paranoid` lowered.
