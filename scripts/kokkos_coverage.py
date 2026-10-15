@@ -76,6 +76,12 @@ def from_gcov_json(text, source):
     return len(lines), len(lines) - len(missed), len(funcs), sum(1 for c in funcs.values() if c), missed
 
 
+def in_src(f):
+    """A ports.tsv cell may come from any PR: only a file inside kokkos/src is measured."""
+    p = (ROOT / f).resolve()
+    return p.is_relative_to((ROOT / "kokkos" / "src").resolve()) and p.suffix == ".cpp"
+
+
 def gcno_for(src):
     """kokkos/src/ww_kokkos/snl1_dia.cpp -> the .gcno CMake writes for it in the ww_kokkos target."""
     rel = Path(src).relative_to("kokkos")
@@ -91,6 +97,10 @@ def run(cmd, dry, **kw):
 
 def measure(dry):
     files = sorted({f for fs in port_files().values() for f in fs})
+    outside = [f for f in files if not in_src(f)]
+    if outside:
+        print(f"kokkos_coverage: not a file under kokkos/src: {', '.join(outside)}", file=sys.stderr)
+        return 1
     if not files:
         print("kokkos_coverage: no file in ports.tsv's `kokkos` column", file=sys.stderr)
         return 1
@@ -146,6 +156,9 @@ def self_test():
     ok(from_gcov_json(doc + "\n" + doc.replace('"count": 0}, {"line_number": 12', '"count": 5}, {"line_number": 12'),
                       "kokkos/src/ww_kokkos/a.cpp")[1] == 2, "a line run in any instantiation counts as run")
     ok(gcno_for("kokkos/src/ww_kokkos/snl1_dia.cpp").name == "snl1_dia.cpp.gcno", "the notes file keeps the .cpp")
+    ok(in_src("kokkos/src/ww_kokkos/snl1_dia.cpp") and not in_src("kokkos/src/../../x.cpp")
+       and not in_src("/etc/passwd") and not in_src("kokkos/src/ww_kokkos/real.hpp"),
+       "only a .cpp inside kokkos/src is measured")
     import tempfile
     with tempfile.TemporaryDirectory() as tmp:
         p = Path(tmp) / "ports.tsv"
