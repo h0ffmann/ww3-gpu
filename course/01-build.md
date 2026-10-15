@@ -37,11 +37,11 @@ benchmarking project cannot afford.
 ## Building inside the pinned toolchain
 
 The compilers and libraries come from one locked nixpkgs revision, via the
-`nix-config/labs/pratico` flake (a sparse git submodule; `just submodule-init` after a
+`picasso/labs/pratico` flake (a sparse git submodule; `just submodule-init` after a
 fresh clone). Three recipes cover almost everything:
 
 ```bash
-just ww3               # enter the toolchain-only shell  (== nix develop ./nix-config/labs/pratico#ww3)
+just ww3               # enter the toolchain-only shell  (== nix develop ./picasso/labs/pratico#ww3)
 just toolchain         # print the exact pinned versions
 just build [switch]    # full rebuild of $WW3 with a switch file (default: switches/switch_lab_shrd)
 ```

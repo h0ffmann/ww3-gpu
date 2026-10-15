@@ -10,7 +10,7 @@
 | **Effort** | L: no new toolchain (the pandoc and TeX pipeline is in the root flake); the work is front matter and parts, three new chapters, a listings gate, a PDF on each release, and the metadata |
 | **Gain** | `outreach` (a citable, dated book that a researcher can read start to finish, where today there are sixteen lessons and a dozen plans); `proposal` (D6 asks for tools, results and recommendations published so the lab can repeat them: the book is that publication); `lab/dev-loop` (the rules agents follow here become chapters, so a new agent or person reads one text, not twelve) |
 | **Effort vs Gain** | do next, in slices: each slice is one PR that leaves the repository consistent, and nothing here competes with a measurement for the same machine |
-| **Depends on** | the publisher toolchain in `nix-config/labs/publisher` (exists `(v)` [`flake.nix`](../../flake.nix)); a person's decision on the title, the prose licence and the distribution (§11) |
+| **Depends on** | the publisher toolchain in `picasso/labs/publisher` (exists `(v)` [`flake.nix`](../../flake.nix)); a person's decision on the title, the prose licence and the distribution (§11) |
 | **Blocked by** | none |
 | **Risk** | the chapters drift from the code they describe: a `file:line` or a pasted listing that no longer exists; MIP-0014 §5.3 names this as the central risk of a book about a moving repository, and this repository already quotes `WW3/model/src/<file>.F90:<line>` by hand in dozens of places |
 
@@ -54,7 +54,7 @@ that is a lesson yet. The course's own README says lessons 09 to 13 are "the pro
 it are not.
 
 The book pipeline exists and runs on every merge: `just book` builds `pdf/ww3-lab-course.pdf`
-from `course/*.md` with pandoc and xelatex through `nix-config/labs/publisher` `(v)`
+from `course/*.md` with pandoc and xelatex through `picasso/labs/publisher` `(v)`
 [`pubs/README.md`](../../pubs/README.md), [`scripts/build_pdf.sh`](../../scripts/build_pdf.sh).
 Its title page still says "WW Lab" `(v)` [`pubs/book/defaults.yaml`](../../pubs/book/defaults.yaml),
 the name the repository had before it was renamed.
@@ -110,7 +110,7 @@ this WFIP drops: LaTeX as the source (§4.5 there), and a separate repository (�
 `.github/workflows/pubs.yml` `(v)` read 2026-10-08. Markdown (GitHub-flavoured, with math and
 footnotes) through pandoc to xelatex, one chapter per lesson, Mermaid fences swapped for their
 renders by `pubs/filters/mermaid.lua`, the Word edition by `build_docx.sh`. CI builds and commits
-`pdf/` on every merge to `main`. The toolchain comes from `nix-config/labs/publisher`, consumed by
+`pdf/` on every merge to `main`. The toolchain comes from `picasso/labs/publisher`, consumed by
 the root flake, so a contributor who never builds the book pays nothing for it: the argument
 MIP-0014 §5.4 made for a separate repository does not hold here.
 

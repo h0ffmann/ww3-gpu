@@ -1,13 +1,13 @@
 # Toolchain: reproducible gfortran, OpenMPI and NetCDF
 
 The compilers and libraries come from one locked nixpkgs revision, through the
-[`nix-config/labs/pratico`](https://github.com/h0ffmann/picasso/tree/main/labs/pratico) flake in
-`nix-config`, a sparse git submodule. `scripts/00_prereqs.sh` (`just prereqs`) is the host-package
+[`picasso/labs/pratico`](https://github.com/h0ffmann/picasso/tree/main/labs/pratico) flake in
+`picasso`, a sparse git submodule. `scripts/00_prereqs.sh` (`just prereqs`) is the host-package
 alternative on Debian/Ubuntu. The `justfile` at the repo root wraps the flake:
 
 ```bash
 just up          # bump the submodule pin to origin/main and stage it  (just st = status)
-just ww3         # enter the toolchain-only shell  (== nix develop ./nix-config/labs/pratico#ww3)
+just ww3         # enter the toolchain-only shell  (== nix develop ./picasso/labs/pratico#ww3)
 just ww3-run …   # run one command inside that shell, e.g. just ww3-run gfortran --version
 just toolchain   # exact pinned versions
 just toolchain-smoke  # Fortran 2008 + MPI + NetCDF-4 build-and-run in the Nix sandbox
@@ -38,7 +38,7 @@ just bench-case --size small -o bench/case_small   # a self-contained WW3 benchm
 just bench                           # kernel proxies + real WW3 MPI scaling (bench/run_all.sh)
 ```
 
-What `just toolchain` prints on the lab machine `(v)` (2026-10-15, nix-config at picasso `be76132`, PR #126,
+What `just toolchain` prints on the lab machine `(v)` (2026-10-15, picasso at `be76132`, PR #126,
 `labs/pratico` with PT-Scotch, one METIS prefix and WW3's regtest data as packages):
 
 ```
@@ -61,15 +61,16 @@ valgrind     valgrind-3.27.1
 python       Python 3.14.7 numpy 2.5.2 xarray 2026.7.0
 ```
 
-The `nix-config/` submodule is `h0ffmann/picasso` (renamed from `nix-config` on 2026-10-12; the
-directory keeps the old name). What the regtests need besides the compilers is built there, not
+The `picasso/` submodule is `h0ffmann/picasso` (renamed from `nix-config` on 2026-10-12). The
+submodule directory was `nix-config/` until 2026-10-15 and is `picasso/` since; a clone made
+before then moves it with the steps in `README.md`, "build with picasso instead of Docker". What the regtests need besides the compilers is built there, not
 here: `ww3-regtest-data` (NOAA's `ww3_from_ftp` tarball, SHA-256 pinned), `ptscotch-static`
 (`SCOTCH_PATH`) and `ww3-metis` (`METIS_PATH`), so this repository only runs them. A WW3 or
 Kokkos build directory remembers the toolchain it was configured with and is rebuilt from
 scratch when a pin bump changes it (`scripts/ww3-gpu.sh`, `regtests/cmake/run_entry.cmake`).
 
-Nix prints `warning: Git tree '…/nix-config' has uncommitted changes` because of the sparse
-checkout. There are no real edits, and `git -C nix-config status` is clean.
+Nix prints `warning: Git tree '…/picasso' has uncommitted changes` because of the sparse
+checkout. There are no real edits, and `git -C picasso status` is clean.
 
 The `WW3/` submodule is the fork, kept in step with upstream by `just src-sync`
 (`just src-st` shows pinned vs. fork vs. upstream). Pass `WW3` as the last argument of

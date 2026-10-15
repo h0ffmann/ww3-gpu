@@ -16,7 +16,9 @@ Every WW3 fact you write cites `model/src/<file>.F90:<line>` at the pin, read fr
 - `git status` is clean, and `WW3/` is initialised at its pin (`just src-st`).
 
 **1. The order.** Run `python3 scripts/port_score.py --check`, then read `kokkos/PORT_RANKING.md`.
-If `$ARGUMENTS` is not row 1, stop and ask the owner. Name row 1 and both shares; the order is
+If `$ARGUMENTS` is not row 1, stop and ask the owner. A unit (ADR-0011) is ported with a plan
+in `docs/`, such as `docs/ST4_KOKKOS_PLAN_202610.md`: run this command once per routine of the
+unit, in the unit's order, and the first routine must be row 1; the others may sit lower. Name row 1 and both shares; the order is
 wall time (ADR-0002), and choosing another routine is the owner's call. A row below the
 10 ms line has no measured cost: say so.
 
@@ -61,7 +63,10 @@ and the tools', not the port's), then `python3 scripts/port_score.py --write` an
 `kokkos/PORT_RANKING.md` shows the new row. The validation is WW3's regtests, pair to pair with
 the same WW3 without the port: `just smoke-ww3-gpu`, `just full-ww3-gpu` and `just ww3-gpu-matrix` (CTest in
 `regtests/`, which runs WW3's regtests and is not a test of the port's own), all on
-the CPU, once the caller patch exists; same results within `kokkos/tools/nccmp-tol/tolerances.txt`
+the CPU, once the caller patch exists. They run at the checkpoints of ADR-0011, normally when the
+whole unit (for example all of ST4) is translated and wired, not after each routine; until then
+the row says `regtested` `no: waiting for the checkpoint of <unit>`, and the port report records
+the GIMPLE comparison of ADR-0011 as static parity, ⚠. Same results within `kokkos/tools/nccmp-tol/tolerances.txt`
 means ported, and only then does `regtested` say `yes: <how>` and `status` move to `L2`. A timing
 enters the report only after that regtest replay passed on the same commit. Never `--ww3-gpu --gpu`.
 

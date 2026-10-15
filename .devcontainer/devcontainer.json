@@ -1,7 +1,7 @@
 // Codespaces / VS Code dev container, built from the project's own docker/Dockerfile (stage
 // `dev`): Ubuntu 26.04 with the compilers, netCDF and Kokkos 5.2.2 the runtime image is built
 // with, the gate tools, and Nix (flakes on) for the pinned toolchain (`just ww3`,
-// `just kokkos-test serial-debug`). scripts/agent_env.sh then fetches the nix-config submodule
+// `just kokkos-test serial-debug`). scripts/agent_env.sh then fetches the picasso submodule
 // over https. CPU only; a GPU gate (`just kokkos-cuda-test`) needs a host with a driver. The
 // first `nix develop` downloads the toolchain; later ones hit the store.
 {

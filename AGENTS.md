@@ -32,6 +32,11 @@ looser.
   WW3 from the h0ffmann/WW3 fork and compared with the same WW3 without it; no L1, GoogleTest or
   fixture of a ported routine is written here
   ([ADR-0010](docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md)).
+- **Port in units, regtest at checkpoints**: a port step is a unit such as all of ST4; the
+  regtests run when a unit is finished, when the pin, the toolchain or the memory contract moves,
+  and before L2, a timing or a release; between checkpoints bit parity is argued from the `-O3`
+  GIMPLE of the Fortran and the C++, and every flag defaults to the Fortran
+  ([ADR-0011](docs/ADRs/ADR-0011-port-in-units-regtest-at-checkpoints.md)).
 - **The proposal goes through the reviewer**: any change under `pubs/proposal/` passes
   `revisor-proposta` and `just proposal-lint` before the PR, and the review is recorded
   ([The proposal](#the-proposal-hard-rule)).
@@ -73,7 +78,7 @@ configure and run the CMake/CTest driver in `regtests/`; `just` lists them.
 | The proposal | `pubs/proposal/pt/` (reference) and `en/` (mirror) | [The proposal](#the-proposal-hard-rule) |
 | A diagram | a Mermaid fence in the page it illustrates | [Figures](#figures-hard-rule) |
 | A skill or agent | `.claude/skills/<name>/SKILL.md`, `.claude/agents/<name>.md` | [Skills and agents](#skills-and-agents) |
-| The toolchain | `nix-config/` (submodule, sparse) and `flake.nix` | [`docs/TOOLCHAIN.md`](docs/TOOLCHAIN.md); pin deliberately, name the version |
+| The toolchain | `picasso/` (submodule, sparse) and `flake.nix` | [`docs/TOOLCHAIN.md`](docs/TOOLCHAIN.md); pin deliberately, name the version |
 | A WW3 fact | nowhere here: cite `model/src/<file>.F90:<line>` at the pinned commit | [WW3 source](#ww3-source-is-read-only-hard-rule) |
 | An idea the lab stands on | a note in `notes/`, linked from `notes/index.md` | [`NOTES.md`](NOTES.md); `just notes` is the gate |
 | A reference of the proposal, and how it was checked | a row in `pubs/proposal/REFERENCES.md` beside the `refs.bib` entry | the verdicts `verified` / `partial` / `unverified`; `just refs` is the gate; `refs.bib` itself goes through the proposal's reviewer |
@@ -95,7 +100,7 @@ no issue is not work yet; filing is a person's act.
 
 ```bash
 git clone --recurse-submodules git@github.com:h0ffmann/ww3-gpu.git && cd ww3-gpu
-just submodule-init          # nix-config, sparse (labs/pratico)
+just submodule-init          # picasso, sparse (labs/pratico)
 just get                     # upstream NOAA-EMC/WW3 develop into ~/src/WW3 (or set $WW3)
 just rt                      # build with ww3_tp1.1's switch and run that regtest
 just build                   # the lab switch (switches/switch_lab_shrd, ST4)
@@ -110,8 +115,8 @@ Run the gates of what you changed before calling it done. CI (`.github/workflows
 | You changed | Run |
 |---|---|
 | any `*.sh` or `justfile` recipe | `bash -n <script>` and `shellcheck <script>`; a hook also has `--self-test` (`.claude/hooks/proposal-review.sh --self-test`) |
-| `kokkos/` | `just kokkos-test serial-debug` (sanitizers, bounds checks) and `just kokkos-test openmp-release`, which build the port and run the tests of the intro programs and the tools (the port has none, ADR-0010); `just smoke-ww3-gpu` for the port itself |
-| a kernel WW3 calls, or the `WW3/` pin | `just smoke` (CPU); `just full-ww3-gpu` and `just ww3-gpu-matrix` (the WW3 regtest matrix, WFIP-0003, serial entries by default, `omp` for the OpenMP ones) before a status in `kokkos/ports.tsv` moves to L2. Never `--gpu` without the owner (hard rule) |
+| `kokkos/` | `just kokkos-test serial-debug` (sanitizers, bounds checks) and `just kokkos-test openmp-release`, which build the port and run the tests of the intro programs and the tools (the port has none, ADR-0010); for a ported routine, the GIMPLE comparison of ADR-0011; `just smoke-ww3-gpu` at a checkpoint (ADR-0011) |
+| a kernel WW3 calls, or the `WW3/` pin | at a checkpoint of ADR-0011 (a finished port unit, the pin, the toolchain, before L2): `just smoke` (CPU); `just full-ww3-gpu` and `just ww3-gpu-matrix` (the WW3 regtest matrix, WFIP-0003, serial entries by default, `omp` for the OpenMP ones) before a status in `kokkos/ports.tsv` moves to L2. Never `--gpu` without the owner (hard rule) |
 | `scripts/ww3-gpu.sh` or `scripts/ww4_parts.py` | `bash scripts/ww3-gpu.sh --self-test`, `python3 scripts/ww4_parts.py --self-test`, shellcheck; `just smoke-ww3-gpu` (CPU, pair to pair with `--ww3`) |
 | `regtests/` | `just ww3-gpu-matrix-selftest` (the selection, the argument lists and the verdict on fixtures) and `just ww3-gpu-matrix-list` (the entry count at the pin) |
 | `kokkos/ports.tsv` or `docs/data/ww3_full_gprof.tsv` | `python3 scripts/port_score.py --write`, then `--check` (CI runs `--self-test` and `--check`) |
@@ -128,10 +133,10 @@ Run the gates of what you changed before calling it done. CI (`.github/workflows
 | `.claude/skills/` or `.claude/agents/` | `python3 .claude/hooks/check_agent_frontmatter.py`; for a vendored skill, `skills-vendor check --lock .claude/skills/skills.lock` |
 | any Markdown | links are checked by lychee in CI; a relative link must resolve from the file; `just vale` (`scripts/vale.sh`) must pass on English Markdown |
 
-The toolchain is the pinned `nix-config/labs/pratico` shell (`just ww3`, `just dev`); `just prereqs`
+The toolchain is the pinned `picasso/labs/pratico` shell (`just ww3`, `just dev`); `just prereqs`
 installs a host alternative on Debian/Ubuntu. In a fresh container (a cloud agent session, where
 the `SessionStart` hook runs it, or the `.devcontainer/`), `scripts/agent_env.sh` installs the gate
-tools and materialises `nix-config` over https. `just figures` and the publication builds use the
+tools and materialises `picasso` over https. `just figures` and the publication builds use the
 root `flake.nix`. A missing tool is a reason to enter the shell, not to skip the gate.
 
 ## Audience and evidence (hard rule)
@@ -278,8 +283,8 @@ be regtested pair to pair to existing ww3 src."
 - **The agents' regtest is `--ww3-gpu --cpu`** (the default; Kokkos on OpenMP). Its Kokkos run is
   compared pair to pair with `--ww3`, WW3 from the existing source built without the KOKKOS
   switch, by `nccmp-tol`, after the comparison with the Fortran DIA of the same executable. Run
-  `just smoke-ww3-gpu` for every change to a kernel WW3 calls, and `just full-ww3-gpu` before a status
-  in `kokkos/ports.tsv` moves to L2.
+  `just smoke-ww3-gpu` and `just full-ww3-gpu` at every checkpoint of ADR-0011, and always before a
+  status in `kokkos/ports.tsv` moves to L2.
 - `--ww3 --gpu` and `--ww4 --gpu` are refused (exit 64): neither has a GPU path here.
 
 ## Which account writes Kokkos code (hard rule)

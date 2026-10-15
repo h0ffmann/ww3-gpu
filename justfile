@@ -13,7 +13,7 @@ alias hoff-matrix := ww3-gpu-matrix
 
 ww3_src  := env_var_or_default("WW3",   env_var("HOME") + "/src/WW3")
 swan_src := env_var_or_default("SWAN",  env_var("HOME") + "/src/swan")
-pratico  := justfile_directory() + "/nix-config/labs/pratico"
+pratico  := justfile_directory() + "/picasso/labs/pratico"
 ww3_shell := 'nix develop "' + pratico + '#ww3" --command'
 ww3gpu_build := justfile_directory() + "/build/ww3-gpu-matrix-"
 
@@ -29,7 +29,7 @@ prereqs:
     bash scripts/00_prereqs.sh
 
 # ---------------------------------------------------------------------
-# Nix toolchain from nix-config/labs/pratico (gfortran, OpenMPI, NetCDF, ...)
+# Nix toolchain from picasso/labs/pratico (gfortran, OpenMPI, NetCDF, ...)
 # ---------------------------------------------------------------------
 
 # Enter the toolchain-only shell (`nix develop .#ww3` in pratico).
@@ -123,7 +123,7 @@ ww3-gpu-matrix-list selection="serial":
     {{ww3_shell}} ctest --test-dir "{{ww3gpu_build}}{{selection}}" -N -L entry -FA ".*"
 
 # WW3's regtest data kept on NOAA's ftp (ww3_tp2.15's wind.nc, ...), SHA-256 pinned: pratico's
-# ww3-regtest-data package (nix-config/labs/pratico/flake.nix). Prints its store path.
+# ww3-regtest-data package (picasso/labs/pratico/flake.nix). Prints its store path.
 ww3-gpu-matrix-fetch:
     nix build --no-link --print-out-paths "{{pratico}}#ww3-regtest-data"
 
@@ -296,7 +296,7 @@ memory *args:
 codemeta *args:
     python3 scripts/codemeta.py "$@"
 
-# Install the gate tools (just, shellcheck, gfortran, PyYAML) and nix-config in a fresh container; `--dry-run` prints.
+# Install the gate tools (just, shellcheck, gfortran, PyYAML) and picasso in a fresh container; `--dry-run` prints.
 agent-env *args:
     bash scripts/agent_env.sh "$@"
 
@@ -319,17 +319,17 @@ releases:
     git fetch -q --tags origin && git tag -l 'v*' --sort=-v:refname --format='%(refname:short)  %(creatordate:short)  %(subject)'
 
 # ---------------------------------------------------------------------
-# Submodules: nix-config (sparse, labs/pratico), WW3 and WW4 (forks of NOAA-EMC/WW3 and NOAA-EMC/WW4)
+# Submodules: picasso (sparse, labs/pratico), WW3 and WW4 (forks of NOAA-EMC/WW3 and NOAA-EMC/WW4)
 # ---------------------------------------------------------------------
 
 setup_script := "scripts/ww-lab-tool-setup.sh"
 src_script   := "scripts/ww3-submodule.sh"
 
-# Materialise nix-config (sparse: only labs/pratico). Safe after a fresh clone.
+# Materialise picasso (sparse: only labs/pratico). Safe after a fresh clone.
 submodule-init:
     bash {{setup_script}} .
 
-# Move the nix-config pin to the latest origin/<branch> and stage it.
+# Move the picasso pin to the latest origin/<branch> and stage it.
 submodule-update branch="main":
     bash {{setup_script}} . --bump --branch {{branch}}
 
@@ -337,30 +337,30 @@ submodule-update branch="main":
 submodule-commit branch="main":
     bash {{setup_script}} . --bump --branch {{branch}} --commit
 
-# Show the nix-config pinned commit vs. the branch tip.
+# Show the picasso pinned commit vs. the branch tip.
 submodule-status:
-    @git submodule status -- nix-config
-    @git -C nix-config fetch --quiet --depth 1 origin "$(git config -f .gitmodules submodule.nix-config.branch)"
-    @echo "tip: $(git -C nix-config rev-parse --short FETCH_HEAD)  pinned: $(git -C nix-config rev-parse --short HEAD)"
-    @echo "checked out: $(git -C nix-config sparse-checkout list | tr '\n' ' ')"
+    @git submodule status -- picasso
+    @git -C picasso fetch --quiet --depth 1 origin "$(git config -f .gitmodules submodule.picasso.branch)"
+    @echo "tip: $(git -C picasso rev-parse --short FETCH_HEAD)  pinned: $(git -C picasso rev-parse --short HEAD)"
+    @echo "checked out: $(git -C picasso sparse-checkout list | tr '\n' ' ')"
 
 alias up := submodule-update
 alias st := submodule-status
 
-# Boot nix-config's workstation VM (its root `just vm`) at the pinned commit.
-vm: _nix-config-full
-    just -f nix-config/justfile -d nix-config vm
+# Boot picasso's workstation VM (its root `just vm`) at the pinned commit.
+vm: _picasso-full
+    just -f picasso/justfile -d picasso vm
 
 # Delete that VM's disk; the next `just vm` starts fresh.
-vm-reset: _nix-config-full
-    just -f nix-config/justfile -d nix-config vm-reset
+vm-reset: _picasso-full
+    just -f picasso/justfile -d picasso vm-reset
 
-# The VM lives at nix-config's root, which the labs/pratico sparse checkout leaves off disk,
+# The VM lives at picasso's root, which the labs/pratico sparse checkout leaves off disk,
 # and nix refuses a shallow git checkout ("'revCount' is not available"), which .gitmodules makes it.
 # Local state only; `just submodule-init` or `just up` makes it sparse again.
-_nix-config-full:
-    @[ -f nix-config/flake.nix ] || { echo "vm: checking out all of nix-config (was sparse: labs/pratico)"; git -C nix-config sparse-checkout disable; }
-    @[ "$(git -C nix-config rev-parse --is-shallow-repository)" = false ] || { echo "vm: fetching nix-config's full history (was shallow)"; git -C nix-config fetch --unshallow; }
+_picasso-full:
+    @[ -f picasso/flake.nix ] || { echo "vm: checking out all of picasso (was sparse: labs/pratico)"; git -C picasso sparse-checkout disable; }
+    @[ "$(git -C picasso rev-parse --is-shallow-repository)" = false ] || { echo "vm: fetching picasso's full history (was shallow)"; git -C picasso fetch --unshallow; }
 
 # Add the WW3 fork as ./WW3, or initialise it after a fresh clone.
 src-init:
@@ -389,7 +389,7 @@ src-st:
 ww4-sync branch="develop":
     bash {{src_script}} . --path WW4 --branch {{branch}} --fork git@github.com:h0ffmann/WW4.git --upstream https://github.com/NOAA-EMC/WW4.git --sync --push --bump
 
-# Every submodule to its latest: nix-config, WW3 and WW4 (forks synced and pushed). Stages, no commit.
+# Every submodule to its latest: picasso, WW3 and WW4 (forks synced and pushed). Stages, no commit.
 sub-sync: submodule-update src-sync ww4-sync
 
 # ---------------------------------------------------------------------

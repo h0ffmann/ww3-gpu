@@ -111,7 +111,7 @@ regtest table cites it.
 
 `scripts/hoff_matrix.sh` (shell, `set -euo pipefail`, shellcheck clean, `--self-test`,
 `--dry-run`, `--list`, `--only <test>[:<switch>]`), behind `just ww3-gpu-matrix`, entering
-`nix-config/labs/pratico#ww3` itself as `ww3-gpu.sh` does. CPU only: Kokkos on OpenMP. It refuses
+`picasso/labs/pratico#ww3` itself as `ww3-gpu.sh` does. CPU only: Kokkos on OpenMP. It refuses
 `--gpu` (exit 64): GPU runs stay the owner's, supervised (`AGENTS.md`).
 
 1. **Select.** Read `$WW3/regtests/bin/matrix.base` at the pin; keep an entry when its switch

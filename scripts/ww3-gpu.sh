@@ -39,7 +39,7 @@
 # ww3_shel does not reach "End of program".
 #
 # --cpu is Kokkos' OpenMP backend, --gpu its CUDA backend. The script enters the pinned toolchain
-# itself (nix-config/labs/pratico: #ww3, or #cuda for --gpu).
+# itself (picasso/labs/pratico: #ww3, or #cuda for --gpu).
 # Builds go to build/<ww3|ww3-gpu-BACKEND>/, runs to build/runs/<mode>-<case>[-BACKEND]/ ($WW3GPU_RUNS).
 #
 # WW3GPU_PREBUILT=<prefix> runs programs built beforehand and builds nothing, with no Nix: the
@@ -53,7 +53,7 @@
 set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-pratico="$root/nix-config/labs/pratico"
+pratico="$root/picasso/labs/pratico"
 pre="${WW3GPU_PREBUILT:-}"
 tols=()
 
@@ -224,7 +224,7 @@ else
   fi
   jobs="${JOBS:-$(nproc)}"
 
-  # A nix-config bump changes the compilers and libraries a CMake cache has baked in, and a stale
+  # A picasso bump changes the compilers and libraries a CMake cache has baked in, and a stale
   # cache links the new libraries against the old glibc. Each build directory keeps the toolchain
   # it was configured with and is rebuilt from scratch when that changes.
   toolchain="$(readlink -f "$(command -v gfortran)") $(readlink -f "$(command -v c++)") ${CMAKE_PREFIX_PATH:-}"

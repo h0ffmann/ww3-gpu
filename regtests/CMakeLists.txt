@@ -17,7 +17,7 @@
 #   WW3GPU_WW3          the h0ffmann/WW3 hoff/kokkos-snl1 tree; never written (the inputs are staged
 #                     in <build>/regtests/, and record:summary fails when `git status` shows a change)
 #   WW3GPU_DATA         WW3's ftp data, <WW3GPU_DATA>/data_regtests: the store path of
-#                     `nix build ./nix-config/labs/pratico#ww3-regtest-data` (`just ww3-gpu-matrix` passes
+#                     `nix build ./picasso/labs/pratico#ww3-regtest-data` (`just ww3-gpu-matrix` passes
 #                     it); its version must be ww3ver of WW3's model/bin/ww3_from_ftp.sh
 #   WW3GPU_STRICT       a file test.comp finds different fails the entry (the DIA is byte-identical
 #                     on every entry since 2026-10-15, kokkos/port_report/W3SNL1_KOKKOS.md)
@@ -77,7 +77,7 @@ if(WW3GPU_DATA MATCHES "-ww3-regtest-data-([0-9.]+)$")
   set(_dataver "v${CMAKE_MATCH_1}")
   if(NOT _dataver STREQUAL _ftpver)
     message(FATAL_ERROR "${WW3GPU_DATA} is data ${_dataver}, and WW3's ww3_from_ftp.sh wants ${_ftpver}: "
-                        "bump ww3RegtestData in nix-config/labs/pratico/flake.nix with the WW3 pin")
+                        "bump ww3RegtestData in picasso/labs/pratico/flake.nix with the WW3 pin")
   endif()
 endif()
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${_base}")

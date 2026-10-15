@@ -143,4 +143,4 @@ else
 fi
 
 echo "ww3-submodule: $sub -> $(short HEAD)  origin=$(git -C "$sub" remote get-url origin)  upstream=$(git -C "$sub" remote get-url upstream)"
-echo "  nix develop ./nix-config/labs/pratico#ww3 --command cmake -S $path/model -B build -DSWITCH=... -DCMAKE_INSTALL_PREFIX=install"
+echo "  nix develop ./picasso/labs/pratico#ww3 --command cmake -S $path/model -B build -DSWITCH=... -DCMAKE_INSTALL_PREFIX=install"

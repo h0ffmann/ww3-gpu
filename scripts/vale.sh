@@ -13,7 +13,7 @@ set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
 scope() {
-  git ls-files '*.md' | grep -v -E '^(WW3|WW4|nix-config|bend-lang|\.claude|\.specify|pubs|\.vale)/' \
+  git ls-files '*.md' | grep -v -E '^(WW3|WW4|picasso|bend-lang|\.claude|\.specify|pubs|\.vale)/' \
     | grep -v -E '\.pt(-BR)?\.md$'
 }
 

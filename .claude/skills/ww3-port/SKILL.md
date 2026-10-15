@@ -86,6 +86,11 @@ compile the module with the flags in `<build>/model/src/CMakeFiles/ww3_lib.dir/f
 
 ## 5. Before calling it done
 
+Between checkpoints (ADR-0011) a routine is `ported`, never done: compare the optimised GIMPLE
+of the Fortran (WW3's Release flags) and of the C++ (`openmp-release`) operation by operation,
+and record it in the port report as static parity, ⚠. At the checkpoint of its unit:
+
+
 `just kokkos-test serial-debug`, `just kokkos-test openmp-release`, the CUDA preset compiled,
 `just smoke-ww3-gpu`, `just full-ww3-gpu`, `just ww3-gpu-matrix <jobs> all`, `just ww3-gpu-matrix-selftest`,
 then the port report, `kokkos/ports.tsv` (`regtested`), `python3 scripts/port_score.py --write`
