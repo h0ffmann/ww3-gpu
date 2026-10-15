@@ -88,8 +88,40 @@ Output of the cold run: `>> --ww3 smoke: ww3_shel finished in 4.72 s; output: ww
 Wall time is `date +%s.%N` around `docker run`, so it includes the container start and the
 incremental `cmake --build`; the `ww3_shel` time is the one the script prints.
 
+## Checkpoint 2026-10-15, RTX 4090 workstation, CPU only
+
+Machine: Intel Core i9-14900, 32 hardware threads, NVIDIA GeForce RTX 4090 (not used: the image
+has no CUDA build, and `--ww3-gpu --gpu` runs only under the owner's supervision) `(v)` `nproc`,
+`lscpu`, `nvidia-smi`. ww3-gpu `7b8c0fb`, `WW3/` at `bb08623a` (h0ffmann/WW3 `hoff/kokkos-snl1`),
+`WW4/` at `74ea792`. The image `ww3-gpu:local` (234 MB): Ubuntu 26.04, gfortran 15.2.0, CMake
+4.2.3, Kokkos 5.2.2 built from its tarball, no Nix `(v)` `/opt/ww3-gpu/BUILD_INFO`. Wall time is
+`date +%s.%N` around the `just` command, so it includes the container start and, on the host,
+the incremental build; `ww3_shel` times are the ones the script prints. Each row is the median
+of three runs, the three in parentheses; all ran between 21:55 and 22:33 UTC with nothing else
+on the machine.
+
+| # | Step | Environment | Command | Status | Wall time | `ww3_shel` | Date (UTC) |
+|---|---|---|---|---|---|---|---|
+| 1 | Image build, cold | Docker, `docker build --no-cache` | `just dbuild` with `--no-cache` | pass | 154.1 s (once) | — | 2026-10-15 |
+| 2 | `smoke-ww3` | Docker image | `just dsmoke-ww3` | pass | 10.5 s (10.3, 10.5, 10.5) | 2.47 s (2.44, 2.47, 2.51) | 2026-10-15 |
+| 3 | `smoke-ww3-gpu` (Kokkos OpenMP) | Docker image | `just dsmoke-ww3-gpu` | pass, byte-identical, nccmp-tol PASS | 30.5 s (30.4, 30.5, 30.6) | Fortran DIA 2.53 s (2.52, 2.53, 2.54); Kokkos DIA 2.68 s (2.67, 2.68, 2.69) | 2026-10-15 |
+| 4 | `full-ww3` (bench_small, 9 520 sea points, 12 h) | Docker image | `just dfull-ww3` | pass | 146.8 s (143.4, 146.8, 148.8) | 138.12 s (135.37, 138.12, 140.64) | 2026-10-15 |
+| 5 | `full-ww3-gpu` (Kokkos OpenMP) | Docker image | `just dfull-ww3-gpu` | pass, byte-identical | 508.9 s (507.7, 508.9, 509.8) | Fortran DIA 138.74 s (136.99, 138.74, 139.62); Kokkos DIA 210.54 s (209.07, 210.54, 210.73) | 2026-10-15 |
+| 6 | `smoke-ww4` | Docker image | `just dsmoke-ww4` | exit 5: a part the case needs is not ported to WW4 | 0.2 s | — | 2026-10-15 |
+| 7 | `smoke-ww3` | host, pinned Nix `#ww3` | `just smoke-ww3` | pass | 12.8 s (12.5, 12.8, 13.0) | 2.85 s (2.80, 2.85, 2.88) | 2026-10-15 |
+| 8 | `smoke-ww3-gpu` (Kokkos OpenMP) | host, pinned Nix `#ww3` | `just smoke-ww3-gpu` | pass, byte-identical, nccmp-tol PASS | 33.1 s (33.0, 33.1, 37.7) | Fortran DIA 2.71 s (2.68, 2.71, 2.93); Kokkos DIA 2.87 s (2.86, 2.87, 3.28) | 2026-10-15 |
+| 9 | Vulnerability scan | Trivy 0.76.0 on the image | `just dscan` | clean: no HIGH or CRITICAL with a fix | 10.4 s | — | 2026-10-15 |
+
+Rows 7 and 8 are rows 2 and 3 of the cloud checkpoint, now run on a machine whose network
+reaches github.com. On the CPU the Kokkos DIA is slower than the Fortran inside `ww3_shel` (row
+5: 210.5 s against 138.7 s); the image's times are
+not the pinned toolchain's (Ubuntu's gfortran 15.2 against Nix's 16.2), and none of these is a
+port timing (see the top of this file).
+
 ## Next checkpoint
 
-On the RTX 4090 workstation, with the pinned Nix toolchain: rows 2, 3 and 5 again, then row 4
-under supervision, and rows 6 to 8 once the Docker setup lands. Add a dated section above this one
-with the same columns.
+On the RTX 4090 workstation, run from the Claude CLI with the owner supervising: the GPU rows
+(`just smoke-ww3-gpu gpu`, `just full-ww3-gpu gpu`), and the full 311-entry regtest matrix
+(`just ww3-gpu-matrix 3 all`, WFIP-0003), which was skipped in #125 by the owner's decision and
+will be recorded then, with its `docs/log` entry. Add a dated section above this one with the
+same columns.
