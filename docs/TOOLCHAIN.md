@@ -38,7 +38,8 @@ just bench-case --size small -o bench/case_small   # a self-contained WW3 benchm
 just bench                           # kernel proxies + real WW3 MPI scaling (bench/run_all.sh)
 ```
 
-What `just toolchain` prints on the lab machine `(v)` (2026-10-15, picasso at `be76132`, PR #126,
+[`VERSIONS.md`](../VERSIONS.md) collects every pinned version: these, the Docker image's and the
+CMake files'. What `just toolchain` prints on the lab machine `(v)` (2026-10-15, picasso at `be76132`, PR #126,
 `labs/pratico` with PT-Scotch, one METIS prefix and WW3's regtest data as packages):
 
 ```

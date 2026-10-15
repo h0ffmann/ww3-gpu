@@ -234,6 +234,7 @@ just ww3-gpu-matrix     # a matriz de regtests do WW3, só CPU
 ```
 
 As receitas sem `d` na frente rodam no picasso; as mesmas com `d` rodam na imagem.
+[`VERSIONS.md`](VERSIONS.md) lista cada versão fixada dos dois builds e dos arquivos CMake.
 
 O diretório do submódulo era `nix-config/` até 15/10/2026. Num clone feito antes dessa data,
 rode uma vez depois do `git pull`:
