@@ -288,11 +288,14 @@ with marola-devkit's `skills-vendor`; `skills-vendor update <name>` does it by h
 
 ponytail is also enabled as a Claude Code plugin (`ponytail@ponytail`, `.claude/settings.json`,
 pinned to `v5.2.0`) for its commands (`/ponytail:ponytail-debt`, `-gain`, `-help`) and the
-statusline. Its SessionStart hook would otherwise switch "full" mode on in every session and
-inject its rules, which contradict "Translate, don't improve"; `PONYTAIL_DEFAULT_MODE=off` in the
-same file keeps it off until someone asks for it (v) (the hook run with `off` emits nothing, with
-`full` 3534 characters; `docs/log/2026-10-14-ponytail-plugin.md`). The vendored skills above stay
-the ones that carry this repository's audience paragraph.
+statusline. `PONYTAIL_DEFAULT_MODE=full` in the same file switches its mode on in every session,
+at the owner's request in the review of #112 (14 October 2026); its SessionStart hook then injects
+its rules (v) (3536 characters with `full` and with `on`, nothing with `off`;
+`docs/log/2026-10-14-ponytail-plugin.md`). Those rules are a default, not a hard rule: where they
+meet this file, this file wins. In particular, "the smallest change" never licenses a refactor,
+a vectorisation or a "simplification" of a ported routine ("Translate, don't improve"), and
+"stop ponytail" or `/ponytail off` turns it off for a session. The vendored skills above stay the
+ones that carry this repository's audience paragraph.
 
 ## Messages between Claude projects
 

@@ -1,6 +1,6 @@
 {
   "env": {
-    "PONYTAIL_DEFAULT_MODE": "off"
+    "PONYTAIL_DEFAULT_MODE": "full"
   },
   "hooks": {
     "PostToolUse": [

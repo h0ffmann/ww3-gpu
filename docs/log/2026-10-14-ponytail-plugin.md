@@ -58,3 +58,15 @@ trigger on the same request; to look at after a restart.
   before the code map and the statusline code, SubagentStart exits with no mode flag, and
   UserPromptSubmit acts only on a prompt that starts with `/ponytail`. None of them uses the
   network.
+
+## Update, 2026-10-14, later
+
+- The owner's review of #112 suggested `"PONYTAIL_DEFAULT_MODE": "on"`. `on` is not a mode the
+  hook knows: `VALID_MODES` is `off`, `lite`, `full`, `ultra`, `review`, and a default must be one
+  of the first four (v) (`hooks/ponytail-config.js:17-18,85` at 5.2.0); an unknown value falls
+  through to `~/.config/ponytail/config.json` (absent here) and then to the built-in `full`. The
+  setting is therefore `full`, the same effect, written as the value the hook reads.
+- (v) Run again with the commands above: `full` and `on` both emit 3536 characters (the first
+  run gave 3534; ⚠ why the count moved by 2 was not checked).
+- AGENTS.md now says the mode is on and that its rules give way to this repository's, the porting
+  rules first.
