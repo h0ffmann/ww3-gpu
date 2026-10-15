@@ -152,6 +152,11 @@ since L2 is not byte-identical even on `ww3_ts1` (`W3SNL1_KOKKOS.md`); it is rec
 A tolerance failure on any entry is reported and stops a status change in `kokkos/ports.tsv`; it
 never widens a tolerance.
 
+*Update, 2026-10-15:* the first full run did find a defect, not slack: the `AF11` table of the
+Kokkos `INSNL1` used gfortran's `-O0` chain for `x**11`; with the `-O3` chain the matrix is
+byte-identical on all 100 entries (`docs/data/hoff_matrix_2026-10-15.tsv`,
+`docs/log/2026-10-14-snl1-bitwise-af11.md`).
+
 ## 7. Verification plan and definition of done
 
 - [x] The selection matched the grep in the Appendix (100 entries at `WW3@6d1bcdfe`): `just hoff-matrix --list | wc -l`

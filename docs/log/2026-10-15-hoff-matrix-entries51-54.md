@@ -56,3 +56,14 @@ per-call difference is the known one: close to the Fortran at `-O3`, not bit-for
 `W3SNL1` is not ported by the rule on these entries. The owner chooses between a logged
 per-entry exception judged against the Fortran's own FMA spread, and closing the bit-identity
 gap, after which deterministic paths would agree exactly.
+
+## Update, 2026-10-15
+
+Resolved by the fix of `pow11()` (`kokkos/src/ww_kokkos/snl1_tables.cpp`, commit `e305841`): the
+Kokkos table `AF11 = (SIG*TPIINV)**11` used the `-O0` chain `x^3*x^8`, WW3 at `-O3` computes
+`x^5*x^6`. With that one change the Kokkos DIA is byte-identical to the Fortran inside WW3, and this
+entry's `test.comp` finds 0 differing files (v)
+([`2026-10-14-snl1-bitwise-af11.md`](2026-10-14-snl1-bitwise-af11.md),
+[`../data/hoff_matrix_2026-10-15.tsv`](../data/hoff_matrix_2026-10-15.tsv)). The amplification
+described above is real in WW3, so a perturbation of the Fortran's own round-off (FMA) still
+moves these entries; the port no longer perturbs it.
