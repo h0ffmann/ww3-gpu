@@ -176,12 +176,18 @@ as entradas dos casos, não o código-fonte. Só CPU.
 
 ```console
 git clone --recurse-submodules git@github.com:h0ffmann/ww3-gpu.git && cd ww3-gpu
-just docker-build               # constrói a imagem ww3-gpu:local a partir deste clone
-just docker-run --ww3 smoke     # o WW3 como escrito: regtest ww3_ts1, segundos
-just docker-run --hoff smoke    # o DIA em Kokkos contra o DIA em Fortran, mesmo executável
-just docker-run --hoff full     # o mesmo no bench_small (9 520 pontos de mar, 12 horas)
-just docker-run --ww4 smoke     # o WAVEWATCH IV; sai com 5 enquanto faltar uma parte do caso
+just dbuild         # constrói a imagem ww3-gpu:local a partir deste clone
+just dsmoke         # o WW3 como escrito, depois o DIA em Kokkos contra o DIA em Fortran (ww3_ts1, segundos)
+just dfull-hoff     # o DIA em Kokkos no bench_small (9 520 pontos de mar, 12 horas)
+just dsmoke-ww4     # o WAVEWATCH IV; sai com 5 enquanto faltar uma parte do caso
+just drun --help    # qualquer outra opção do scripts/hoff.sh
 ```
+
+Cada receita que roda o `scripts/hoff.sh` no host tem seu par na imagem, com um `d` na frente:
+`smoke`, `smoke-ww3`, `smoke-hoff`, `full-ww3`, `full-hoff`, `smoke-ww4` e `full-ww4` viram
+`dsmoke`, `dsmoke-ww3` e assim por diante. A imagem não precisa de Nix nem do picasso: o estágio de
+build instala os compiladores e as bibliotecas do Ubuntu, compila o Kokkos 5.2.2 a partir do tarball
+da versão (o Ubuntu empacota uma mais antiga), e o estágio final copia só os programas compilados.
 
 Sem o just, o mesmo com Docker puro:
 

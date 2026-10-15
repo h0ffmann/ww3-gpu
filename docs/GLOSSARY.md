@@ -399,7 +399,7 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | Term | Expansion | What it is | Where it appears |
 |---|---|---|---|
 | `bench/results/` | result records `(v)` [bench/README.md](../bench/README.md) | One JSON record per measured study (machine, toolchain, commit, parity status, each run's command); `scripts/results.py` generates the tables that quote it and refuses a timing without a passed WW3 regtest replay (`regtest`), or, for a record made before 2026-10-14, the `l1` of its day. | [kokkos/PORT_STATUS.md](../kokkos/PORT_STATUS.md) |
-| `docker/Dockerfile` / `just docker-*` / `HOFF_PREBUILT` | the Ubuntu runtime image and its recipes (`scripts/docker.sh`), and the variable that makes `scripts/hoff.sh` run prebuilt programs `(v)` [docker/Dockerfile](../docker/Dockerfile) | Ubuntu 26.04, no Nix: the build stage compiles Kokkos 5.2.2, the port, `nccmp-tol`, WW3 with and without `KOKKOS`, and WW4; the image keeps the programs, their runtime libraries and the case inputs. CPU only. | [README.md](../README.md#run-it-in-docker) |
+| `docker/Dockerfile` / `just dbuild` / `just drun` / `just d<recipe>` / `HOFF_PREBUILT` | the Ubuntu runtime image and its recipes (`scripts/docker.sh`), and the variable that makes `scripts/hoff.sh` run prebuilt programs `(v)` [docker/Dockerfile](../docker/Dockerfile) | Ubuntu 26.04, no Nix: the build stage compiles Kokkos 5.2.2, the port, `nccmp-tol`, WW3 with and without `KOKKOS`, and WW4; the image keeps the programs, their runtime libraries and the case inputs. CPU only. | [README.md](../README.md#run-it-in-docker) |
 | `docs/log/` | the research log `(v)` [docs/log/README.md](log/README.md) | Dated, append-only entries of what was tried, negative results included. | [AGENTS.md](../AGENTS.md) |
 | devcontainer / `agent_env.sh` | Development Container spec (`.devcontainer/devcontainer.json`) and the script it and the `SessionStart` hook run `(v)` [scripts/agent_env.sh](../scripts/agent_env.sh) | Sets a fresh container up for the gates: just, shellcheck, gfortran, PyYAML and `nix-config` over https. | [AGENTS.md](../AGENTS.md), [.claude/hooks/session-start.sh](../.claude/hooks/session-start.sh) |
 | spike / SPIKE-NNN | a time-boxed investigation that answers a question rather than ships a change `(v)` [.github/ISSUE_TEMPLATE/spike.yml](../.github/ISSUE_TEMPLATE/spike.yml) | An issue whose output is findings and WFIPs to open; SPIKE-001 is #65. | [CONTRIBUTING.md](../CONTRIBUTING.md) |
@@ -626,7 +626,7 @@ Every term above, alphabetically, with the section it lives in.
 - DMIN: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - `do concurrent`: [HPC and software](#hpc-and-software)
 - do not improve": [This repository's own names](#this-repositorys-own-names)
-- `docker/Dockerfile` / `just docker-*` / `HOFF_PREBUILT`: [This repository's own names](#this-repositorys-own-names)
+- `docker/Dockerfile` / `just dbuild` / `just drun` / `just d<recipe>` / `HOFF_PREBUILT`: [This repository's own names](#this-repositorys-own-names)
 - DoD: [This repository's own names](#this-repositorys-own-names)
 - `docs/log/`: [This repository's own names](#this-repositorys-own-names)
 - Docker: [HPC and software](#hpc-and-software)

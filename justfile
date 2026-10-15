@@ -128,16 +128,48 @@ hoff-matrix-fetch:
 bench-dia *args:
     bash scripts/bench_dia.sh {{args}}
 
-# docker/Dockerfile: WW3, WW3 with the Kokkos DIA and WW4 compiled in Ubuntu, no sources, no Nix.
-# Build the Ubuntu runtime image ww3-gpu:<tag> (CPU only)
-docker-build tag="local":
+# ---------------------------------------------------------------------
+# The same runs in Docker (docker/Dockerfile): Ubuntu 26.04, no Nix, no picasso. The build stage
+# compiles Kokkos 5.2.2, the port, nccmp-tol, WW3 with and without KOKKOS, and WW4; the image keeps
+# only the compiled programs, their runtime libraries and the case inputs. CPU only. Every recipe
+# that runs scripts/hoff.sh has its pair here, `d` in front: smoke-hoff -> dsmoke-hoff. Runs land
+# in build/docker-runs/; DOCKER_IMAGE picks another image than ww3-gpu:local.
+# ---------------------------------------------------------------------
+
+# Build the Ubuntu image ww3-gpu:<tag> from this checkout (CPU only, compiled code only)
+dbuild tag="local":
     bash scripts/docker.sh build {{tag}}
 
-# Every scripts/hoff.sh option passes through (--ww3|--hoff|--ww4, smoke|full, --cpu, --build-only,
-# --help, --self-test); runs land in build/docker-runs/; DOCKER_IMAGE picks another image.
-# Run scripts/hoff.sh in the image: `just docker-run --hoff smoke`
-docker-run *args:
+# Run scripts/hoff.sh in the image, any of its options: `just drun --hoff full`
+drun *args:
     bash scripts/docker.sh run {{args}}
+
+# `just smoke` in the image: WW3 as written, then WW3 with the Kokkos DIA.
+dsmoke: dsmoke-ww3 dsmoke-hoff
+
+# `just smoke-ww3` in the image.
+dsmoke-ww3:
+    bash scripts/docker.sh run --ww3 smoke
+
+# `just smoke-hoff` in the image (CPU only: the image has no CUDA build).
+dsmoke-hoff:
+    bash scripts/docker.sh run --hoff smoke
+
+# `just full-ww3` in the image.
+dfull-ww3:
+    bash scripts/docker.sh run --ww3 full
+
+# `just full-hoff` in the image (CPU only).
+dfull-hoff:
+    bash scripts/docker.sh run --hoff full
+
+# `just smoke-ww4` in the image; exit 5 while a part the case needs is not ported.
+dsmoke-ww4:
+    bash scripts/docker.sh run --ww4 smoke
+
+# `just full-ww4` in the image.
+dfull-ww4:
+    bash scripts/docker.sh run --ww4 full
 
 # The matrix's parsers and verdict on fixtures, and the entry counts at the WW3 pin.
 hoff-matrix-selftest:

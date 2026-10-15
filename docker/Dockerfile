@@ -4,8 +4,8 @@
 # Nix: the build stage compiles everything, and the final image keeps the programs, their
 # runtime libraries and the case inputs, not the sources. CPU only; there is no CUDA build here.
 #
-#   just docker-build                  # docker build -f docker/Dockerfile -t ww3-gpu .
-#   just docker-run --hoff smoke       # scripts/hoff.sh inside the image
+#   just dbuild                        # docker build -f docker/Dockerfile -t ww3-gpu:local .
+#   just dsmoke-hoff                   # scripts/hoff.sh --hoff smoke inside the image
 #
 # Bit for bit is judged inside one executable (AGENTS.md): --hoff runs the Fortran and the Kokkos
 # DIA of the same program here, so the verdict holds for this image's compiler too. Its numbers

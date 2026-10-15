@@ -180,12 +180,18 @@ the sources. CPU only.
 
 ```console
 git clone --recurse-submodules git@github.com:h0ffmann/ww3-gpu.git && cd ww3-gpu
-just docker-build               # build the image ww3-gpu:local from this checkout
-just docker-run --ww3 smoke     # WW3 as written: regtest ww3_ts1, seconds
-just docker-run --hoff smoke    # the Kokkos DIA against the Fortran DIA, same executable
-just docker-run --hoff full     # the same on bench_small (9 520 sea points, 12 hours)
-just docker-run --ww4 smoke     # WAVEWATCH IV; exit 5 while a part the case needs is not ported
+just dbuild         # build the image ww3-gpu:local from this checkout
+just dsmoke         # WW3 as written, then the Kokkos DIA against the Fortran DIA (ww3_ts1, seconds)
+just dfull-hoff     # the Kokkos DIA on bench_small (9 520 sea points, 12 hours)
+just dsmoke-ww4     # WAVEWATCH IV; exit 5 while a part the case needs is not ported
+just drun --help    # any other scripts/hoff.sh option
 ```
+
+Every recipe that runs `scripts/hoff.sh` on the host has its pair in the image, with a `d` in
+front: `smoke`, `smoke-ww3`, `smoke-hoff`, `full-ww3`, `full-hoff`, `smoke-ww4` and `full-ww4`
+become `dsmoke`, `dsmoke-ww3`, and so on. The image needs no Nix and no picasso: its build stage
+installs Ubuntu's compilers and libraries, compiles Kokkos 5.2.2 from its release tarball (Ubuntu
+packages an older one), and the final stage copies only the compiled programs.
 
 Without just, the same with plain Docker:
 
