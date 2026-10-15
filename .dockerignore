@@ -1,0 +1,16 @@
+# docker/Dockerfile reads only these; everything else stays out of the build context.
+*
+!kokkos/
+!WW3/
+!WW4/
+!switches/switch_lab_shrd
+!scripts/hoff.sh
+!scripts/ww4_parts.py
+!scripts/ww4_status.py
+kokkos/build/
+**/.git
+**/__pycache__
+WW3/regtests/*/work*
+WW3/regtests/
+!WW3/regtests/ww3_ts1/
+WW3/manual/

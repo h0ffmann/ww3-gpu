@@ -1,7 +1,7 @@
 # Toolchain: reproducible gfortran, OpenMPI and NetCDF
 
 The compilers and libraries come from one locked nixpkgs revision, through the
-[`nix-config/labs/pratico`](https://github.com/h0ffmann/nix-config/tree/main/labs/pratico) flake in
+[`nix-config/labs/pratico`](https://github.com/h0ffmann/picasso/tree/main/labs/pratico) flake in
 `nix-config`, a sparse git submodule. `scripts/00_prereqs.sh` (`just prereqs`) is the host-package
 alternative on Debian/Ubuntu. The `justfile` at the repo root wraps the flake:
 
@@ -38,23 +38,35 @@ just bench-case --size small -o bench/case_small   # a self-contained WW3 benchm
 just bench                           # kernel proxies + real WW3 MPI scaling (bench/run_all.sh)
 ```
 
-What `just toolchain` prints on the lab machine `(v)`:
+What `just toolchain` prints on the lab machine `(v)` (2026-10-15, nix-config at picasso `be76132`, PR #126,
+`labs/pratico` with PT-Scotch, one METIS prefix and WW3's regtest data as packages):
 
 ```
 $ just toolchain
-ww3 toolchain: GNU Fortran (GCC) 15.3.0 | mpirun (Open MPI) 5.0.10 | netcdf-c 4.10.1 / netcdf-fortran 4.4.6-development
-nixpkgs      eaad089433ca2bb662274377d33df3d0e51ef28b
-gfortran     GNU Fortran (GCC) 15.3.0
-openmpi      mpirun (Open MPI) 5.0.10
+ww3 toolchain: GNU Fortran (GCC) 16.2.0 | mpirun (Open MPI) 5.0.11 | netcdf-c 4.10.1 / netcdf-fortran 4.4.6-development
+nixpkgs      6510408d147d8c5e6d76043e899e9251756f6a75
+gfortran     GNU Fortran (GCC) 16.2.0
+openmpi      mpirun (Open MPI) 5.0.11
 netcdf-c     netCDF 4.10.1
 netcdf-f     netCDF-Fortran 4.4.6-development
 hdf5         h5dump: Version 1.14.6
-metis        /nix/store/kakzikafyrpx9pp49kxxgmjvvnymm6vr-metis-5.2.1
-parmetis     /nix/store/rdkv3jg7b52dw0qlkwx9f1aihjsm7xwb-parmetis-4.0.3-unstable-2023-03-26
+metis        /nix/store/2sxmb2qk62pv3f73psif7cc1plwcldns-ww3-metis
+parmetis     /nix/store/95c8ikisvwinc16qh2q9r26sbsvf2crm-parmetis-4.0.3-unstable-2023-03-26
+pt-scotch    /nix/store/v6003b5s6nr5by0zhncxkg7h4n06gvyq-ptscotch-static-7.0.12
 eccodes      2.48.0
-cmake        cmake version 4.4.2
-python       Python 3.14.7 numpy 2.5.1 xarray 2026.7.0
+cmake        cmake version 4.4.3
+kokkos       5.2.2 gtest 1.18.0
+gdb          GNU gdb (GDB) 17.2
+valgrind     valgrind-3.27.1
+python       Python 3.14.7 numpy 2.5.2 xarray 2026.7.0
 ```
+
+The `nix-config/` submodule is `h0ffmann/picasso` (renamed from `nix-config` on 2026-10-12; the
+directory keeps the old name). What the regtests need besides the compilers is built there, not
+here: `ww3-regtest-data` (NOAA's `ww3_from_ftp` tarball, SHA-256 pinned), `ptscotch-static`
+(`SCOTCH_PATH`) and `ww3-metis` (`METIS_PATH`), so this repository only runs them. A WW3 or
+Kokkos build directory remembers the toolchain it was configured with and is rebuilt from
+scratch when a pin bump changes it (`scripts/hoff.sh`, `regtests/cmake/run_entry.cmake`).
 
 Nix prints `warning: Git tree '…/nix-config' has uncommitted changes` because of the sparse
 checkout. There are no real edits, and `git -C nix-config status` is clean.

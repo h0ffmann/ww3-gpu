@@ -38,19 +38,20 @@
 #include <string>
 
 namespace ww::snl1 {
-namespace {
+// Named, not anonymous: nvcc rejects an extended __device__ lambda whose enclosing
+// function has internal linkage.
+namespace detail {
 
-using ExecSpace = Kokkos::DefaultExecutionSpace;
-using TeamPolicy = Kokkos::TeamPolicy<ExecSpace>;
-using TeamMember = TeamPolicy::member_type;
-/// Unmanaged because team scratch is a bump allocator: the view never owns it.
-using ScratchReal = Kokkos::View<Real*, Kokkos::LayoutRight, ExecSpace::scratch_memory_space,
-                                 Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
+template <class ExecSpace>
+void run(const Config& c, const Tables& t, ConstRealView1D sig, ConstRealView2D a,
+         ConstRealView2D cg, ConstRealView1D kdmean, RealView2D s, RealView2D d) {
+  using TeamPolicy = Kokkos::TeamPolicy<ExecSpace>;
+  using TeamMember = typename TeamPolicy::member_type;
+  /// Unmanaged because team scratch is a bump allocator: the view never owns it.
+  using ScratchReal = Kokkos::View<Real*, Kokkos::LayoutRight,
+                                   typename ExecSpace::scratch_memory_space,
+                                   Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
 
-}  // namespace
-
-void snl1(const Config& c, const Tables& t, ConstRealView1D sig, ConstRealView2D a,
-          ConstRealView2D cg, ConstRealView1D kdmean, RealView2D s, RealView2D d) {
   const int npts = a.extent_int(1);
   if (npts == 0) return;
 
@@ -220,5 +221,19 @@ void snl1(const Config& c, const Tables& t, ConstRealView1D sig, ConstRealView2D
         });
       });
 }
+
+}  // namespace detail
+
+void snl1(const Config& c, const Tables& t, ConstRealView1D sig, ConstRealView2D a,
+          ConstRealView2D cg, ConstRealView1D kdmean, RealView2D s, RealView2D d) {
+  detail::run<Kokkos::DefaultExecutionSpace>(c, t, sig, a, cg, kdmean, s, d);
+}
+
+#if defined(WW_SNL1_SERIAL_NESTED)
+void snl1_serial(const Config& c, const Tables& t, ConstRealView1D sig, ConstRealView2D a,
+                 ConstRealView2D cg, ConstRealView1D kdmean, RealView2D s, RealView2D d) {
+  detail::run<Kokkos::Serial>(c, t, sig, a, cg, kdmean, s, d);
+}
+#endif
 
 }  // namespace ww::snl1

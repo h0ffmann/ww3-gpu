@@ -24,14 +24,15 @@ bisectable against the model it is replacing.
 
 ## What phase 1 does not support
 
-The shim holds exactly one set of tables and one set of device buffers in a
-file-static context, and nothing in it is locked. Three limits follow, and the
-patch below has to respect all three: each one is a wrong answer or an
-out-of-bounds read, not a slowdown:
+The shim held exactly one set of tables and one set of device buffers in a
+file-static context, and nothing in it is locked. Three limits followed, and the
+patch below had to respect all three: each one is a wrong answer or an
+out-of-bounds read, not a slowdown. The first is lifted (per-grid contexts,
+2026-10-15); the hunks below are the original recipe:
 
 | limit | why | where the patch handles it |
 |---|---|---|
-| **One spectral grid per process** | `ww_snl1_init` *replaces* the tables; it does not add a grid. A `ww3_multi` run whose grids differ in `NK*NTH` would read past the end of the later grids' spectra. | hunk 2 aborts with `EXTCDE` when `IMOD > 1` |
+| **One spectral grid per process** (lifted 2026-10-15) | `ww_snl1_init` *replaced* the tables; it did not add a grid. A `ww3_multi` run whose grids differ in `NK*NTH` would read past the end of the later grids' spectra. | hunk 2 aborted with `EXTCDE` when `IMOD > 1`. Since h0ffmann/WW3 `bb08623a` the shim keeps one context per grid: `WW_SNL1_INIT(IMOD, ...)` and `WW_SNL1(IGRID, ...)`, and the abort is gone |
 | **One caller at a time** | Two threads in `ww_snl1` share the context, and one may be reallocating the device buffers while the other copies into them. | hunk 1c wraps the call in `!$OMP CRITICAL` |
 | **`SIG` must start at bin 1** | the C dummy is assumed-size, so the actual argument's lower bound is lost; `W3GDATMD` allocates `SIG(0:MK+1)` | hunk 2 passes `SIG(1)` |
 

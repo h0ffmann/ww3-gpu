@@ -26,4 +26,15 @@ namespace ww::snl1 {
 void snl1(const Config& c, const Tables& t, ConstRealView1D sig, ConstRealView2D a,
           ConstRealView2D cg, ConstRealView1D kdmean, RealView2D s, RealView2D d);
 
+#if defined(WW_SNL1_SERIAL_NESTED)
+/// The same kernel run by the calling thread on Kokkos::Serial, for a caller that
+/// is already inside an OpenMP parallel region: Kokkos 5.2's OpenMP backend aborts
+/// on that nesting unless OMP_MAX_ACTIVE_LEVELS > 1. Host builds only
+/// (WW_SNL1_SERIAL_NESTED, snl1_config.hpp), where the views are HostSpace and
+/// Serial reads them as they are. Same arithmetic: the kernel has no reduction,
+/// so who runs it does not change a bit.
+void snl1_serial(const Config& c, const Tables& t, ConstRealView1D sig, ConstRealView2D a,
+                 ConstRealView2D cg, ConstRealView1D kdmean, RealView2D s, RealView2D d);
+#endif
+
 }  // namespace ww::snl1

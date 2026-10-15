@@ -21,6 +21,10 @@ looser.
 - **Translate, don't improve**: a ported routine reproduces the Fortran's arithmetic; a change of
   reduction order, limiter or integration order is a separate PR with its own L2 evidence, asked
   about first, and a tolerance is never widened to pass ([Porting](#porting-hard-rule)).
+- **Bit for bit with the Fortran**: every ported routine gives the same bits as the Fortran
+  routine it replaces, inside the same WW3 executable; `test.comp` finds no file different on any
+  regtest entry that exercises it, and a tolerance is a diagnostic, never the verdict
+  ([Bit for bit](#bit-for-bit-with-the-fortran-hard-rule)).
 - **No timing without parity**: a speed figure enters a table only after the WW3 regtest replay
   passed on the same commit, with the machine, the command and the median of three runs
   ([Porting](#porting-hard-rule)).
@@ -215,6 +219,52 @@ broken most often:
   keeps the spectrum resident. Never use Unified Memory to avoid thinking about transfers, and never
   read the CUDA kernel column as "the model will be this much faster".
 
+## Bit for bit with the Fortran (hard rule)
+
+The owner, 15 October 2026: every ported code of WW3 is bit-to-bit equal to the behaviour of the
+Fortran.
+
+- **What it means.** A ported routine computes the same bits as the Fortran routine it replaces
+  in the same WW3 executable: WW3's own CMake build with the pinned toolchain, the same switches,
+  flags, inputs, threads and MPI ranks, the Fortran selected at run time
+  (`WW_KOKKOS_SNL1=0` against `=1`). The reference is that build, not the source read by eye:
+  gfortran expands `x**11` differently at `-O0` and `-O3` (v)
+  ([`docs/log/2026-10-14-snl1-bitwise-af11.md`](docs/log/2026-10-14-snl1-bitwise-af11.md)).
+- **How it is checked.** `just hoff-matrix <jobs> all`, every `matrix.base` entry whose switch
+  has the routine's switch, with `HOFF_STRICT=ON`: an entry fails when `test.comp` finds a file
+  different. `nccmp-tol` and its tolerances say how large a difference is; they never turn one
+  into a pass. A row with `kokkos_spectra` 0 did not exercise the port and is reported as such.
+- **What is excused.** Only a file that two runs of the Fortran itself write differently. The
+  matrix measures it: when `test.comp` finds a difference, it runs the Fortran a second time
+  (`work_G_<n>`) and records those files as `ww3_self`; a file different Fortran/Kokkos and
+  identical Fortran/Fortran fails the entry.
+- **A difference is a defect of the port** until a Fortran/Fortran run shows WW3 does it too.
+  Read the optimised code WW3's build produces before suspecting the physics (`ww3-port` skill).
+  Never widen a tolerance, never mark an entry expected-to-fail, never change the Fortran.
+- **Reductions** keep the Fortran's order per point. A parallel tree reduction, a fused
+  multiply-add or an atomic that reorders a sum breaks this rule: ask the owner first, and it is
+  its own PR.
+
+Is WW3 deterministic enough for this rule? Measured on the owner's workstation, CPU only:
+
+- (v) Serial, OpenMP and MPI runs reproduce: the Fortran and Kokkos DIA of one executable gave
+  byte-identical output on the 100 serial and 25 OpenMP `NL1` entries
+  ([`docs/data/hoff_matrix_2026-10-15.tsv`](docs/data/hoff_matrix_2026-10-15.tsv),
+  [`docs/data/hoff_matrix_omp_2026-10-15.tsv`](docs/data/hoff_matrix_omp_2026-10-15.tsv)), which
+  needs each run to be reproducible; `ww3_multi`, MPI and hybrid MPI/OpenMP entries were
+  byte-identical in the pilots of 2026-10-15 (`docs/log/2026-10-15-snl1-regtest-all.md`).
+- (v) Not everywhere: with PDLIB under MPI (`ww3_tp2.17 -g d`, 4 ranks), two runs of the same
+  Fortran executable wrote 25 of 67 files differently, all `restart.ww3`, while every field
+  output was identical. That is what `ww3_self` exists for. The cause is not traced ⚠; the
+  bytes look undefined rather than computed (one run wrote 0 where the other did not).
+- (v) WW3 has a data race of its own under `OMPG`: `IKN`, `ALLOCATABLE, SAVE`, allocated inside
+  the parallel region in `W3SWL6` (`model/src/w3swldmd.F90:359-377`). It aborts a run; it does not
+  change bits. Rerun, record, never edit WW3.
+- ⚠ On a GPU the rule needs the kernel's transcendental functions (`expf`, `logf`) to return
+  glibc's bits. CUDA's math library uses other algorithms, and the 2026-09-15 match on fixture
+  points does not show it for every input; contraction off (`--fmad=false`) is necessary, not
+  sufficient. A GPU port that cannot meet the rule stops and asks the owner.
+
 ## Running on the GPU (hard rule)
 
 The owner, 14 October 2026: "never run --hoff --gpu without supervision, only --hoff --cpu must
@@ -294,6 +344,7 @@ audience rule for its own job; a new one does too, and its YAML front matter mus
 | `release` | cut a citable release: tag, GitHub release, Zenodo DOI, `CITATION.cff`, `.zenodo.json` |
 | `ww4-status` | diff NOAA-EMC/WW4 against `docs/ww4-status.json` and refresh lesson 14 and the proposal |
 | `noaa-notices` | list NOAA notices (NWS PNS/SCN, NCEP model changes, NOAA-EMC/WW3 production branches) new since `docs/noaa-notices.json` and route each to the file it breaks or dates |
+| `ww3-port` | the WW3-specific traps of a Fortran-to-Kokkos translation (gfortran `-O3` powers, array bases, per-grid tables, OpenMP nesting) and of claiming a routine regtested; follows `/port-next` |
 | `wfip` | write, revise or report on a WFIP; `scripts/wfip.py` is its harness and `just specify` wires GitHub's Spec Kit (its `/speckit-*` skills are generated per clone and not tracked) |
 | `humanizar`, `humanizer` | remove AI tells from pt-BR and English prose without changing facts; third-party |
 | `ponytail`, `ponytail-review`, `ponytail-audit` | the laziest solution that works; over-engineering review and audit; third-party |

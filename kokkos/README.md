@@ -15,7 +15,7 @@ what put Kokkos, GoogleTest, CMake, Ninja and NetCDF on the search path:
 | `nix develop ./nix-config/labs/pratico#ww3` | Serial + OpenMP | `serial-debug`, `openmp-release`, CI |
 | `nix develop ./nix-config/labs/pratico#cuda` | CUDA (ADA89) + Serial | `cuda-release`, this host only |
 
-Pins: Kokkos 5.2.0, GoogleTest 1.18.0, CMake 4.4.2, gfortran 15.3.
+Pins: Kokkos 5.2.2, GoogleTest 1.18.0, CMake 4.4.3, gfortran 16.2 (`just toolchain`, 2026-10-15; nixpkgs `6510408`).
 
 ## Why Kokkos, not Fortran 90, in plain words
 

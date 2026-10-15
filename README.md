@@ -10,6 +10,7 @@
 [![release](https://img.shields.io/github/v/tag/h0ffmann/ww3-gpu?style=flat-square&label=release&color=FF4F00)](RELEASES.md)
 [![CI](https://github.com/h0ffmann/ww3-gpu/actions/workflows/ci.yml/badge.svg)](https://github.com/h0ffmann/ww3-gpu/actions/workflows/ci.yml)
 [![site](https://img.shields.io/badge/site-live-3FB950?style=flat-square)](https://h0ffmann.github.io/ww3-gpu/)
+[![deliverable: ww3-dia-gpu-v2](https://img.shields.io/badge/deliverable-ww3--dia--gpu--v2-181717?style=flat-square&logo=github)](https://github.com/h0ffmann/ww3-dia-gpu-v2)
 [![license](https://img.shields.io/badge/license-MIT%20%2B%20LGPL--3.0%20kernels-1682D4?style=flat-square)](#licensing)
 [![leia em português](https://img.shields.io/badge/leia%20em-portugu%C3%AAs-3FB950?style=flat-square)](README.pt-BR.md)
 
@@ -170,6 +171,36 @@ presets are in [`docs/TOOLCHAIN.md`](docs/TOOLCHAIN.md). For coastal cases, add 
 
 </details>
 
+## run it in Docker
+
+You need [Docker](https://docs.docker.com/engine/install/) and, for the short commands,
+[just](https://github.com/casey/just). The image is Ubuntu 26.04 with WW3, WW3 with the Kokkos DIA
+and WW4 already compiled: it holds the programs, their runtime libraries and the case inputs, not
+the sources. CPU only.
+
+```console
+git clone --recurse-submodules git@github.com:h0ffmann/ww3-gpu.git && cd ww3-gpu
+just docker-build               # build the image ww3-gpu:local from this checkout
+just docker-run --ww3 smoke     # WW3 as written: regtest ww3_ts1, seconds
+just docker-run --hoff smoke    # the Kokkos DIA against the Fortran DIA, same executable
+just docker-run --hoff full     # the same on bench_small (9 520 sea points, 12 hours)
+just docker-run --ww4 smoke     # WAVEWATCH IV; exit 5 while a part the case needs is not ported
+```
+
+Without just, the same with plain Docker:
+
+```console
+docker build -f docker/Dockerfile -t ww3-gpu:local .
+docker run --rm --user "$(id -u):$(id -g)" -v "$PWD/build/docker-runs:/work/runs" ww3-gpu:local --hoff smoke
+```
+
+Every run lands in `build/docker-runs/`. Inside, the entry point is `scripts/hoff.sh`, the same
+script the host uses, so the options, the checks and the exit codes are the same
+([`docker/Dockerfile`](docker/Dockerfile) says what each stage builds). The compilers are
+Ubuntu's: `--hoff` still compares the Kokkos and the Fortran DIA inside one executable, so its
+bit-for-bit verdict holds in the image; a number from the image is not a number from the pinned
+toolchain of [`docs/TOOLCHAIN.md`](docs/TOOLCHAIN.md), which uses another gfortran.
+
 ## two things worth knowing before you invest
 
 WAVEWATCH IV™ (WW4) exists, and WW3 is scheduled for sunset. [NOAA-EMC/WW4](https://github.com/NOAA-EMC/WW4)
@@ -260,7 +291,8 @@ solver yet
 | `notes/` | The second brain ([`NOTES.md`](NOTES.md)) |
 | `site/` | The Gleam front page ([`DESIGN.md`](DESIGN.md)) |
 | `pubs/` | The book's build and the UFRJ/DEL project proposal; built files land in `pdf/` |
-| `scripts/`, `switches/`, `env/` | Get, build and run WW3 and SWAN; annotated switch files; conda and Docker |
+| `scripts/`, `switches/`, `env/` | Get, build and run WW3 and SWAN; annotated switch files; conda and an untested build-environment Dockerfile |
+| `docker/`, `.dockerignore` | The Ubuntu runtime image: WW3, WW3 with the Kokkos DIA and WW4 compiled, no sources ([run it in Docker](#run-it-in-docker)) |
 | `nix-config/`, `WW3/`, `WW4/` | Submodules: the pinned toolchain, the [h0ffmann/WW3](https://github.com/h0ffmann/WW3) fork, the [h0ffmann/WW4](https://github.com/h0ffmann/WW4) fork |
 
 Lab code is C++, Fortran and shell. Python appears only in the publishing pipeline and the repo's
