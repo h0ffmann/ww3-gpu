@@ -78,7 +78,7 @@ configure and run the CMake/CTest driver in `regtests/`; `just` lists them.
 | The proposal | `pubs/proposal/pt/` (reference) and `en/` (mirror) | [The proposal](#the-proposal-hard-rule) |
 | A diagram | a Mermaid fence in the page it illustrates | [Figures](#figures-hard-rule) |
 | A skill or agent | `.claude/skills/<name>/SKILL.md`, `.claude/agents/<name>.md` | [Skills and agents](#skills-and-agents) |
-| The toolchain | `nix-config/` (submodule, sparse) and `flake.nix` | [`docs/TOOLCHAIN.md`](docs/TOOLCHAIN.md); pin deliberately, name the version |
+| The toolchain | `picasso/` (submodule, sparse) and `flake.nix` | [`docs/TOOLCHAIN.md`](docs/TOOLCHAIN.md); pin deliberately, name the version |
 | A WW3 fact | nowhere here: cite `model/src/<file>.F90:<line>` at the pinned commit | [WW3 source](#ww3-source-is-read-only-hard-rule) |
 | An idea the lab stands on | a note in `notes/`, linked from `notes/index.md` | [`NOTES.md`](NOTES.md); `just notes` is the gate |
 | A reference of the proposal, and how it was checked | a row in `pubs/proposal/REFERENCES.md` beside the `refs.bib` entry | the verdicts `verified` / `partial` / `unverified`; `just refs` is the gate; `refs.bib` itself goes through the proposal's reviewer |
@@ -100,7 +100,7 @@ no issue is not work yet; filing is a person's act.
 
 ```bash
 git clone --recurse-submodules git@github.com:h0ffmann/ww3-gpu.git && cd ww3-gpu
-just submodule-init          # nix-config, sparse (labs/pratico)
+just submodule-init          # picasso, sparse (labs/pratico)
 just get                     # upstream NOAA-EMC/WW3 develop into ~/src/WW3 (or set $WW3)
 just rt                      # build with ww3_tp1.1's switch and run that regtest
 just build                   # the lab switch (switches/switch_lab_shrd, ST4)
@@ -133,10 +133,10 @@ Run the gates of what you changed before calling it done. CI (`.github/workflows
 | `.claude/skills/` or `.claude/agents/` | `python3 .claude/hooks/check_agent_frontmatter.py`; for a vendored skill, `skills-vendor check --lock .claude/skills/skills.lock` |
 | any Markdown | links are checked by lychee in CI; a relative link must resolve from the file; `just vale` (`scripts/vale.sh`) must pass on English Markdown |
 
-The toolchain is the pinned `nix-config/labs/pratico` shell (`just ww3`, `just dev`); `just prereqs`
+The toolchain is the pinned `picasso/labs/pratico` shell (`just ww3`, `just dev`); `just prereqs`
 installs a host alternative on Debian/Ubuntu. In a fresh container (a cloud agent session, where
 the `SessionStart` hook runs it, or the `.devcontainer/`), `scripts/agent_env.sh` installs the gate
-tools and materialises `nix-config` over https. `just figures` and the publication builds use the
+tools and materialises `picasso` over https. `just figures` and the publication builds use the
 root `flake.nix`. A missing tool is a reason to enter the shell, not to skip the gate.
 
 ## Audience and evidence (hard rule)

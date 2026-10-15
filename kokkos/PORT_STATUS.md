@@ -71,15 +71,15 @@ at a time.
 
 ```bash
 just kokkos-build openmp-release
-nix develop ./nix-config/labs/pratico#ww3 --command \
+nix develop ./picasso/labs/pratico#ww3 --command \
   env OMP_PROC_BIND=false OMP_NUM_THREADS=1 \
       kokkos/build/openmp-release/tests/ww_bench_snl1          # the Serial column
-nix develop ./nix-config/labs/pratico#ww3 --command \
+nix develop ./picasso/labs/pratico#ww3 --command \
   env OMP_PROC_BIND=spread OMP_PLACES=cores OMP_NUM_THREADS=32 \
       kokkos/build/openmp-release/tests/ww_bench_snl1          # the OpenMP column
 
 just kokkos-cuda-test                                          # builds ww_bench_snl1
-nix develop ./nix-config/labs/pratico#cuda --command \
+nix develop ./picasso/labs/pratico#cuda --command \
   env OMP_PROC_BIND=false kokkos/build/cuda-release/tests/ww_bench_snl1
 ```
 

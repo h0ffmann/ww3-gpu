@@ -89,8 +89,8 @@ started before that.
      wrapped, since it cannot find a call path across files.
 3. **Pin the tool.** graphify is run as `uvx --from graphifyy==<version>`, the mechanism `just
    specify` already uses, with the version in one variable in `scripts/graph.sh`. When
-   `nix-config/labs/pratico` carries the nixpkgs `graphify` package, the pin moves there in a
-   `nix-config` PR and the `uvx` line goes ⚠ until then: `uvx` pins the version, not the wheel's hash.
+   `picasso/labs/pratico` carries the nixpkgs `graphify` package, the pin moves there in a
+   `picasso` PR and the `uvx` line goes ⚠ until then: `uvx` pins the version, not the wheel's hash.
    An update is a PR that re-runs step 1's question (c) and records the graph size.
 4. **Keep its output out of git and out of context.** `graphify-out/` goes in `.gitignore`, and
    `.claude/settings.json` denies `Read(**/graphify-out/**)` and `Read(**/GRAPH_REPORT.md)`, so an

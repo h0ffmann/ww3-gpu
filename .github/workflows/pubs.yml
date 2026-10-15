@@ -1,4 +1,4 @@
-# pubs — build every PDF with nix-config's labs/publisher action: unit tests and (on main, when
+# pubs — build every PDF with picasso's labs/publisher action: unit tests and (on main, when
 # TRANSLATE_* secrets exist) the EN -> PT translation as pre-build, then nix flake check,
 # nix build, artifact upload, and on main a commit of pdf/ + pubs/proposal/pt back.
 name: Publications

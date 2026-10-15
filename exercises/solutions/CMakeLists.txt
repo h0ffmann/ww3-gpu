@@ -4,7 +4,7 @@
 # of the kokkos/ tree on purpose -- a student's own port will live outside it
 # too, and this is the minimum CMake that builds against the lab's headers.
 #
-#   nix develop ./nix-config/labs/pratico#ww3            # from the repo root
+#   nix develop ./picasso/labs/pratico#ww3            # from the repo root
 #   cmake -S exercises/solutions -B exercises/solutions/build -G Ninja
 #   cmake --build exercises/solutions/build
 #   ctest --test-dir exercises/solutions/build --output-on-failure

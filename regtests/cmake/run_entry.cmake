@@ -70,7 +70,7 @@ if(DRY_RUN)
 endif()
 
 file(REMOVE_RECURSE "${wf}" "${wk}")
-# A build_<n> configured by another toolchain (a nix-config bump) is rebuilt from scratch: its
+# A build_<n> configured by another toolchain (a picasso bump) is rebuilt from scratch: its
 # CMake cache keeps the old compilers, and they link the new libraries against the old glibc.
 find_program(_gf gfortran)
 find_program(_cxx c++)

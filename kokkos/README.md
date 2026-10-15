@@ -7,13 +7,13 @@ interactions), lives in `src/ww_kokkos/snl1_*`.
 
 ## Toolchain
 
-Everything is built inside the pinned `nix-config/labs/pratico` shells. They are
+Everything is built inside the pinned `picasso/labs/pratico` shells. They are
 what put Kokkos, GoogleTest, CMake, Ninja and NetCDF on the search path:
 
 | shell | Kokkos backends | used by |
 |---|---|---|
-| `nix develop ./nix-config/labs/pratico#ww3` | Serial + OpenMP | `serial-debug`, `openmp-release`, CI |
-| `nix develop ./nix-config/labs/pratico#cuda` | CUDA (ADA89) + Serial | `cuda-release`, this host only |
+| `nix develop ./picasso/labs/pratico#ww3` | Serial + OpenMP | `serial-debug`, `openmp-release`, CI |
+| `nix develop ./picasso/labs/pratico#cuda` | CUDA (ADA89) + Serial | `cuda-release`, this host only |
 
 Pins: Kokkos 5.2.2, GoogleTest 1.18.0, CMake 4.4.3, gfortran 16.2 (`just toolchain`, 2026-10-15; nixpkgs `6510408`).
 
@@ -203,7 +203,7 @@ Two things the names do *not* promise:
   build. Code that must run on Serial says `Kokkos::Serial` explicitly: see
   `intro/03_reduce_and_scan.cpp` and the last case in `tests/L1_test_intro.cpp`.
 - **`Kokkos_ENABLE_DEBUG_BOUNDS_CHECK` cannot be set here.** It is an option of the
-  Kokkos *build*, so it is fixed by the pinned Kokkos derivation in nix-config; a
+  Kokkos *build*, so it is fixed by the pinned Kokkos derivation in picasso; a
   consumer project cannot turn it on. `serial-debug`'s safety net is the sanitizers.
 
 `CMakePresets.json` uses presets schema version 10, which needs CMake ≥ 4.1.

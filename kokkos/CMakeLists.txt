@@ -3,7 +3,7 @@
 # (ww_kokkos), the lesson-11 intro programs, the GoogleTest suites and the
 # NetCDF/bench tools. One tree, one backend per configure preset.
 #
-# Everything is built inside `nix develop nix-config/labs/pratico#ww3` (Serial +
+# Everything is built inside `nix develop picasso/labs/pratico#ww3` (Serial +
 # OpenMP) or `#cuda` (CUDA/ADA89); those shells are what provide Kokkos, GoogleTest
 # and NetCDF to find_package/pkg-config.
 #

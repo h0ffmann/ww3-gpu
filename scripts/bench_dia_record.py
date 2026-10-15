@@ -67,7 +67,7 @@ def main(argv):
     commit = sh("git", "-C", str(ROOT), "rev-parse", "--short", "HEAD")
     dirty = sh("git", "-C", str(ROOT), "status", "--porcelain", "--untracked-files=no")
     toolchain = (f"{sh('gfortran', '--version').splitlines()[0] if sh('gfortran', '--version') else '?'}; "
-                 f"Kokkos from nix-config/labs/pratico; WW3 {sh('git', '-C', str(ROOT / 'WW3'), 'rev-parse', '--short', 'HEAD')} "
+                 f"Kokkos from picasso/labs/pratico; WW3 {sh('git', '-C', str(ROOT / 'WW3'), 'rev-parse', '--short', 'HEAD')} "
                  f"built with WW3's Release flags and the switch '{a.switch}'; ww_kokkos -ffp-contract=off; "
                  "v1 -O3 -march=x86-64-v3, GCC's default contraction")
     common = {"date": today, "routine": "W3SNL1", "machine": machine(), "toolchain": toolchain,

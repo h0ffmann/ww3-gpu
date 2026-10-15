@@ -13,7 +13,7 @@ this file as plain text must open `AGENTS.md` itself. `CONTRIBUTING.md` is the l
   to end a session that changed the proposal without a recorded review
   (`python3 scripts/proposal_review_gate.py --record <parecer.md>`). Both have `--self-test`.
   A `SessionStart` hook runs `scripts/agent_env.sh` in cloud sessions only, so the gates' tools
-  and `nix-config` exist before the first command. A `PreToolUse` hook,
+  and `picasso` exist before the first command. A `PreToolUse` hook,
   `.claude/hooks/kokkos-account.sh`, denies Write/Edit on Kokkos code under a `claude_max`
   account unless `TEAM_PROTECTION=off`, which the `env` of `settings.json` sets for now.
 - **The reviewer is a subagent**: run it with the Agent tool, `subagent_type: "revisor-proposta"`,
@@ -28,4 +28,4 @@ this file as plain text must open `AGENTS.md` itself. `CONTRIBUTING.md` is the l
 - **On compaction, preserve**: which files were modified, which gates were run and their result,
   and the `(v)`/`⚠` status of any number you wrote. Everything else can go.
 - **Start in this repository's root** so `.claude/settings.json`, the hooks and the skills load;
-  `WW3/`, `WW4/` and `nix-config/` are submodules you read, not repositories you work in.
+  `WW3/`, `WW4/` and `picasso/` are submodules you read, not repositories you work in.

@@ -23,7 +23,7 @@ switch and one run-time flag per routine, and make it compile on Serial, OpenMP 
 from the Fortran's `W3GDATMD` at init, so they have the same bits by construction.
 
 **Tech stack.** C++20, Kokkos (Serial, OpenMP, CUDA presets in `kokkos/CMakePresets.json`),
-gfortran and WW3's own CMake build from the pinned `nix-config/labs/pratico` shell.
+gfortran and WW3's own CMake build from the pinned `picasso/labs/pratico` shell.
 
 **Spec.** This file, issue #45, [`AGENTS_KOKKOS_202609.md`](AGENTS_KOKKOS_202609.md) §1 and §3,
 [`kokkos/src/fortran_iface/PATCH.md`](../kokkos/src/fortran_iface/PATCH.md) and the template port
@@ -531,7 +531,7 @@ port has none (ADR-0010).
 - [ ] **Step 1:** `just kokkos-test serial-debug` (sanitizers and bounds checks). Expected: pass.
 - [ ] **Step 2:** `just kokkos-test openmp-release`. Expected: pass.
 - [ ] **Step 3: CUDA, compile only.** Run:
-  `nix develop nix-config/labs/pratico#cuda --command cmake -S kokkos --preset cuda-release && nix develop nix-config/labs/pratico#cuda --command cmake --build kokkos/build/cuda-release`.
+  `nix develop picasso/labs/pratico#cuda --command cmake -S kokkos --preset cuda-release && nix develop picasso/labs/pratico#cuda --command cmake --build kokkos/build/cuda-release`.
   Do not run `just kokkos-cuda-test` (it runs `ctest` on the GPU).
 - [ ] **Step 4: The fork build of Task 7, Step 4**, again on the final commit.
 - [ ] **Step 5:** `python3 .claude/hooks/check_agent_frontmatter.py` only if a skill changed;
@@ -646,7 +646,7 @@ and 10.3 are needed before the ST4 checkpoint can run; 10.3 belongs to that chec
 
 ### 10.4 Other repositories and the Docker image
 
-- **picasso** (`nix-config/`, `labs/pratico`): no change. The ST4 port uses the same Kokkos
+- **picasso** (`picasso/`, `labs/pratico`): no change. The ST4 port uses the same Kokkos
   5.2.2, gfortran and CMake as the `W3SNL1` port, and it adds no package (v, the
   dependencies of section 5, 2026-10-15). A picasso PR is needed only if Task 9 finds a missing
   tool.

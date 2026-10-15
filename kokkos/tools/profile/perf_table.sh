@@ -11,7 +11,7 @@
 #
 # environment: TOP (rows in the table, 25), PERF_OPTS (extra `perf record` flags)
 #
-# perf is NOT part of the pratico shell (nix-config/labs/pratico): it is tied to
+# perf is NOT part of the pratico shell (picasso/labs/pratico): it is tied to
 # the host kernel, so it has to come from the host (Debian: linux-perf). When
 # `perf` is not on PATH this script says so and exits 3.
 #
@@ -39,7 +39,7 @@ work="$test_dir/work_perf"
 
 if ! command -v perf > /dev/null 2>&1; then
   cat >&2 <<'EOF'
-!! perf is not on PATH. It is not in the pratico shell (nix-config/labs/pratico):
+!! perf is not on PATH. It is not in the pratico shell (picasso/labs/pratico):
    perf is tied to the running kernel, so install it on the host (Debian/Ubuntu:
    `apt install linux-perf` or `linux-tools-$(uname -r)`) and run this script
    from a host shell, or use gprof_table.sh, which needs only gfortran.

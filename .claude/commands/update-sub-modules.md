@@ -1,6 +1,6 @@
 ---
-description: Bump every submodule (nix-config, WW3, WW4) to its latest, summarise what changed upstream, and open a PR.
-argument-hint: "[nix-config|WW3|WW4 ...]  (default: all three)"
+description: Bump every submodule (picasso, WW3, WW4) to its latest, summarise what changed upstream, and open a PR.
+argument-hint: "[picasso|WW3|WW4 ...]  (default: all three)"
 ---
 
 Bump the submodules named in `$ARGUMENTS` (all when empty) and open one pull request.
@@ -11,7 +11,7 @@ Give the command that reproduces each count.
 
 | Submodule | Fork (origin) | Upstream | Branch | Notes |
 |---|---|---|---|---|
-| `nix-config` | h0ffmann/picasso | none | `main` | sparse: only `labs/pratico` is checked out |
+| `picasso` | h0ffmann/picasso | none | `main` | sparse: only `labs/pratico` is checked out |
 | `WW3` | h0ffmann/WW3 | NOAA-EMC/WW3 | `develop` | fork may carry its own commits |
 | `WW4` | h0ffmann/WW4 | NOAA-EMC/WW4 | `develop` | read-only reference; `docs/ww4-status.json` records the last snapshot |
 
@@ -40,7 +40,7 @@ git diff --cached --submodule=short
 For each moved pin, with `old..new` from `git diff --cached --submodule=short`:
 
 - `git log --format='%h %ad %s' --date=short old..new` and `git rev-list --count old..new`.
-- `nix-config`: does the range touch `labs/pratico`? (`git diff --stat old new -- labs/pratico`).
+- `picasso`: does the range touch `labs/pratico`? (`git diff --stat old new -- labs/pratico`).
   If not, the toolchain this repo builds with is unchanged; say so.
 - `WW3`: list each upstream PR in the range; flag any touching `model/src/w3snl1md.F90`,
   `w3srcemd`, other source terms, the switches in `switches/`, or the build (`CMakeLists.txt`,

@@ -21,7 +21,7 @@
 set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-pratico="$root/nix-config/labs/pratico"
+pratico="$root/picasso/labs/pratico"
 threads="${BENCH_THREADS:-1 32}" runs="${BENCH_RUNS:-3}" points="${BENCH_POINTS:-10000}"
 calls="${BENCH_CALLS:-20}" kernel_only=""
 
