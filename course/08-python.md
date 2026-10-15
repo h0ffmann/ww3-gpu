@@ -55,6 +55,6 @@ and `wavespectra` the best way to re-partition a spectrum offline.
 | Forcing download | `cdsapi` for ERA5 | `get_gfs.sh` + ecCodes `grib_to_netcdf`; lesson 04 |
 | Reading output | `xarray`, `wavespectra` | `ncdump` (netcdf-c) and NCO's `ncks`; `ww_fetch_analyse` for the example-01 growth table; lesson 06 |
 | "Did the answer change?" | ad-hoc `numpy.allclose` | `nccmp-tol REF TEST [TOLERANCES]` with a versioned tolerances file and an exit code; lesson 06, and every lesson after 09 |
-| Per-routine tests | none | GoogleTest against captured-Fortran fixtures in `kokkos/tests/`; lesson 12 |
+| Per-routine tests | none | none for the Kokkos port: WW3's regtests, Fortran routine against Kokkos routine, are its tests (ADR-0010; the GoogleTest suites against captured-Fortran fixtures it had were removed on 2026-10-14); lesson 12 |
 
 → [`09-benchmark-profile-compile-run.md`](09-benchmark-profile-compile-run.md): measure first.

@@ -57,7 +57,7 @@ SPDX-License-Identifier: MIT
 
 | Routine | WW3 file:lines | Phase | Shim | L1 parity | L2 replay | Serial ms | OpenMP ms | CUDA ms | Notes |
 |---|---|---|---|---|---|---|---|---|---|
-| `W3SNL1` + `INSNL1` | `model/src/w3snl1md.F90:115-473`, `:483-786` | 1 (copy-in / kernel / copy-out) | `ww_snl1_init`, `ww_snl1` | **bit-identical** on all three presets (`L1_test_snl1_dia`, `L1_test_snl1_shim`, `shim_roundtrip`) | **PASS on the CPU** inside WW3 (h0ffmann/WW3 `hoff/kokkos-snl1`): `just smoke-hoff`, `just full-hoff`, `hs` within 1.8e-7 relative, not byte-identical ([`port_report/W3SNL1_KOKKOS.md`](port_report/W3SNL1_KOKKOS.md)) | [25.88](#where-the-numbers-come-from) | [5.95](#where-the-numbers-come-from) | [0.75](#where-the-numbers-come-from) | 1 000 points/call, end-to-end through the shim. Kernel alone: 24.96 / 5.02 / **0.047** ms. Timed with `-ffp-contract=off`; see below. Level-0 team scratch per point = (NSPECY+NTH) + 8(NSPECX+NTH) + NSPEC floats (`snl1_dia.cpp`): 28 608 B = 27.9 KiB at NK=25/NTH=24 (XFR 1.1, λ 0.25); 52 992 B ≈ 52 KiB at NK=32/NTH=36. When the request exceeds `TeamPolicy::scratch_size_max(0)` (for the Kokkos 5.2 CUDA backend the device's opt-in shared-memory limit minus ~24.6 KB, ≈75 KB on the RTX 4090; on OpenMP less than the 39 248 B that `ww3_ts1`'s NK=36 NTH=24 needs), the kernel falls back to level-1 scratch (2026-10-14, `docs/PORT_ASSESSMENT_202610.md` §3); it throws (→ `WW_KOKKOS_ERR_KERNEL`) only when level 1 is too small too. WW4's default grid (NK=50/NTH=36, XFR 1.07) is one of them on the 4090: see [Level-0 scratch at WW4's default grid](#level-0-scratch-at-ww4s-default-grid). |
+| `W3SNL1` + `INSNL1` | `model/src/w3snl1md.F90:115-473`, `:483-786` | 1 (copy-in / kernel / copy-out) | `ww_snl1_init`, `ww_snl1` | **bit-identical** on all three presets, 2026-09-15 (CPU presets re-run 2026-10-14); removed with the tests, 2026-10-14 (see [L1 / L2](#l1--l2)) | **PASS on the CPU** inside WW3 (h0ffmann/WW3 `hoff/kokkos-snl1`): `just smoke-hoff`, `just full-hoff`, `hs` within 1.8e-7 relative, not byte-identical ([`port_report/W3SNL1_KOKKOS.md`](port_report/W3SNL1_KOKKOS.md)) | [25.88](#where-the-numbers-come-from) | [5.95](#where-the-numbers-come-from) | [0.75](#where-the-numbers-come-from) | 1 000 points/call, end-to-end through the shim. Kernel alone: 24.96 / 5.02 / **0.047** ms. Timed with `-ffp-contract=off`; see below. Level-0 team scratch per point = (NSPECY+NTH) + 8(NSPECX+NTH) + NSPEC floats (`snl1_dia.cpp`): 28 608 B = 27.9 KiB at NK=25/NTH=24 (XFR 1.1, λ 0.25); 52 992 B ≈ 52 KiB at NK=32/NTH=36. When the request exceeds `TeamPolicy::scratch_size_max(0)` (for the Kokkos 5.2 CUDA backend the device's opt-in shared-memory limit minus ~24.6 KB, ≈75 KB on the RTX 4090; on OpenMP less than the 39 248 B that `ww3_ts1`'s NK=36 NTH=24 needs), the kernel falls back to level-1 scratch (2026-10-14, `docs/PORT_ASSESSMENT_202610.md` §3); it throws (→ `WW_KOKKOS_ERR_KERNEL`) only when level 1 is too small too. WW4's default grid (NK=50/NTH=36, XFR 1.07) is one of them on the 4090: see [Level-0 scratch at WW4's default grid](#level-0-scratch-at-ww4s-default-grid). |
 | `W3SNL2`…`W3SNL5` | `model/src/w3snl{2,3,4,5}md.F90` | not started | — | — | — | — | — | — | Out of scope; the `IQTPE <= 0` branch (`W3SNLGQM`) is not replaced either. |
 | `W3SIN4` / `W3SDS4` | `model/src/w3src4md.F90` | not started | — | — | — | — | — | — | The next candidate: same per-point shape as the DIA, so the same shim generalises. |
 
@@ -113,10 +113,11 @@ the GPU row.
 `-O3 -march=x86-64-v3` fuses `AWG1*UE(..) + AWG2*UE(..)` into an FMA (one
 rounding where WW3 does two), and the `openmp-release` build drifted 1.1e-5
 relative from the committed fixture while `serial-debug` stayed bit-identical.
-With contraction off, all three presets reproduce the Fortran bit for bit, which
-is what the "bit-identical" in the L1 column means. Every row in the timing table
-is therefore the cost of the **parity build**. Turning contraction back on is a
-physics change, not a tuning knob, and it would invalidate the L1 column.
+With contraction off, all three presets reproduced the Fortran bit for bit, which
+is what the "bit-identical" in the L1 column means (a historical result: the L1
+tests were removed on 2026-10-14). Every row in the timing table is therefore the
+cost of the **parity build**. Turning contraction back on is a physics change, not
+a tuning knob, and it would invalidate the L2 replay verdicts.
 
 **They are not what WW3 would see today.** `PATCH.md`'s phase-1 call site passes
 `NPTS = 1`, one sea point per launch, because that is the shape `W3SRCE` has. The
@@ -162,26 +163,37 @@ is inferred from the hardware limit, not run.
 
 The fix for the 4090, not done: move the eight `SA*`/`DA*` work arrays, 16 128 of the
 20 088 floats (80 %) at the WW4 grid, to level-1 scratch (global memory). That changes
-the kernel's memory traffic, so it needs the L1 parity tests rerun and new timings before
+the kernel's memory traffic, so it needs the WW3 regtest replay rerun and new timings before
 this table can say "yes".
 
 ## L1 / L2
 
-**L1** is a unit test against the Fortran: either a committed binary fixture
-captured from the verbatim reference (`kokkos/tests/fixtures/snl1_ref.F90`) or the
-reference called in the same process.
+The port has no tests of its own. The owner's rule, 2026-10-14: "kokkos code
+should NOT have its own tests, hard rule. All tests should come [from] WW3
+regtests."
 
-| test | what it covers |
+**L1 (history, removed with the tests, 2026-10-14)** was a unit test against the
+Fortran: a committed binary fixture captured from a standalone copy of
+`W3SNL1`/`INSNL1`, or that copy called in the same process.
+
+| test | what it covered |
 |---|---|
 | `L1_test_snl1_tables` | `make_tables` vs. `INSNL1`: all 32 address tables exactly, weights and `AF11` to 1e-6 relative |
 | `L1_test_snl1_dia` | `snl1` vs. `W3SNL1` to 1e-5 relative; zero-in/zero-out; cubic scaling; launch-to-launch bit-reproducibility |
 | `L1_test_snl1_shim` | the same parity *through the C ABI*, plus the error paths: call before init, negative `npts`, null pointers, buffer growth, idempotent init |
 | `shim_roundtrip` | a Fortran program calling `W3KOKKOSMD` → shim → kernel and comparing with `W3SNL1_REF` in the same process |
 
-All four report a max relative error of exactly **0.0** on all three presets.
+All four reported a max relative error of exactly **0.0** on all three presets
+(2026-09-15; the two CPU presets re-run 2026-10-14). The tests, the standalone
+reference and the fixture generator were removed on 2026-10-14; the fixture
+itself stays as the benchmark's frozen input
+([`tests/fixtures/README.md`](tests/fixtures/README.md)).
 
-**L2** is a whole-regtest replay: run WW3 twice from one executable with
-`WW_KOKKOS_SNL1` flipped, and compare the NetCDF output field by field with
-`kokkos/tools/nccmp-tol`. It needs the caller patch, so the column reads
-*pending fork branch (`src/fortran_iface/PATCH.md`)* and will stay that way until
-that branch exists. Nothing in this repository modifies `WW3/`.
+**L2** is the validation now: a WW3 regtest replay. `scripts/hoff.sh --hoff --cpu`
+runs WW3 from one executable with `WW_KOKKOS_SNL1` flipped, compares the NetCDF
+output field by field with `kokkos/tools/nccmp-tol`, then compares the Kokkos run
+pair to pair with `--ww3` (WW3 built without the KOKKOS switch). The caller patch
+lives on the h0ffmann/WW3 branch `hoff/kokkos-snl1` (`src/fortran_iface/PATCH.md`);
+nothing in this repository modifies `WW3/`. The WW3 regtest matrix of WFIP-0003
+(`scripts/hoff_matrix.sh`) extends the replay to more of WW3's regtests ⚠ (being
+written on 2026-10-14; no result from it is quoted here).

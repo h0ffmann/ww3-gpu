@@ -27,10 +27,12 @@ profile of `bench_small` does not list it among the routines that take time
 
 | Level | What | Result | Where |
 |---|---|---|---|
-| L1 | the tables against `INSNL1`'s, three presets | all 32 address tables exactly; the weights and `AF11` within 1e-6 relative | `L1_test_snl1_tables` ([`../tests/`](../tests/)), CI job `kokkos` |
+| L1 (history) | the tables against `INSNL1`'s, three presets | all 32 address tables exactly; the weights and `AF11` within 1e-6 relative | `L1_test_snl1_tables`: removed with the tests, 2026-10-14 |
 | L2 | every `--hoff --cpu` run builds the tables through `WW_SNL1_INIT`; the DIA that reads them passes | PASS, as in [`W3SNL1_KOKKOS.md`](W3SNL1_KOKKOS.md) | `just smoke-hoff`, `just full-hoff`, 2026-10-14 |
 
 ## GoogleTest, the WW4 way
 
-`L1_test_snl1_tables.cpp` is a GoogleTest, run by CTest on every preset, as WW4 tests its code.
-The tables have no L2 test of their own: they are judged through the DIA's.
+None. `L1_test_snl1_tables.cpp` was a GoogleTest, run by CTest on every preset, until it was
+removed on 2026-10-14 under the owner's rule: "kokkos code should NOT have its own tests, hard
+rule. All tests should come [from] WW3 regtests." The tables are judged through the DIA's WW3
+regtest replay (`scripts/hoff.sh --hoff --cpu`, pair to pair with `--ww3`).

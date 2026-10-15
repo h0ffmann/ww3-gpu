@@ -1,7 +1,7 @@
 {
   "renderer": {
     "mermaid-cli": "11.17.0",
-    "nixpkgs": "eaad089433ca2bb662274377d33df3d0e51ef28b",
+    "nixpkgs": "6510408d147d8c5e6d76043e899e9251756f6a75, eaad089433ca2bb662274377d33df3d0e51ef28b",
     "fonts": [
       "share",
       "share"
@@ -24,6 +24,11 @@
       "title": "How do the original Fortran routine and its Kokkos kernel coexist in one WW3 binary?",
       "sha256": "6261d3f0afbabd85ec225dc5c077fa942900ead2347f1bb38dfd080f949d05ab"
     },
+    "kokkos-one-source-backends": {
+      "file": "kokkos/README.md",
+      "title": "How does one Kokkos source reach the CPU and the GPU of the lab's workstation?",
+      "sha256": "9179f59dd8b28f5afe0a293a165c69b8f1960246281410030fa6292d71dc86b0"
+    },
     "optimisation-ladder-gates": {
       "file": "course/13-bulk-porting-with-agents.md",
       "title": "Which gate must each optimisation step pass before the next step starts?",
@@ -32,7 +37,7 @@
     "porting-validation-ladder": {
       "file": "course/13-bulk-porting-with-agents.md",
       "title": "How is each translated version of a kernel checked against the one before it?",
-      "sha256": "2ad02c79d961c347b0d2f4f278a5f13cbba0e675831779183afce08ce171ad14"
+      "sha256": "b5b40d9f043114063d1a8c6153da5c6df82613f75c870d5fc6de34b46638c153"
     },
     "proposal-schedule": {
       "file": "pubs/proposal/schedule.en.md",

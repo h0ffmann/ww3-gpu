@@ -7,6 +7,8 @@ checked. "Measured" means run in this document's sandbox (x86-64, 4 cores, GCC/g
 clang 18.1, glibc 2.39, Z3 5.1.0, cvc5 1.4.1, Bitwuzla 0.9.1), not on the lab workstation that
 `kokkos/PORT_STATUS.md` reports.
 
+> **2026-10-14, [ADR-0010](ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md).** The port's own tests that this plan lists as existing (the verbatim `snl1_ref.F90`, the committed fixture's generator, `L1_test_snl1_*`, `shim_roundtrip`) and the GoogleTest property tests it proposes were removed or ruled out: the Kokkos code has no tests of its own, and WW3's regtests, Fortran routine against Kokkos routine on the CPU, are its only tests. `proof/snl1_cons`, which compares the Fortran expression with the port's outside CTest, and the SMT queries are not tests of the Kokkos build and are not touched by the ADR. The plan is otherwise kept as written on 1 October 2026; the removed files are in git history at `f721736`.
+
 Per-tool evidence (one page each: what it is, where it fits this repo, physics fit, bit-for-bit
 reach, cost, verdict) is in [`docs/proof/`](proof/README.md). This file is the plan; the
 side-by-side comparison of every option is §9.

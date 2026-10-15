@@ -1,8 +1,8 @@
 # `kokkos/`: the C++/Kokkos half of the lab
 
 One CMake tree, one backend per configure preset. It holds the portable kernel
-library (`ww_kokkos`), the lesson-11 intro programs, the GoogleTest suites and the
-C++ tools. The first ported source term, `W3SNL1`/`INSNL1` (the DIA nonlinear
+library (`ww_kokkos`), the lesson-11 intro programs, the GoogleTest suites of the
+lessons and the tools, and the C++ tools. The first ported source term, `W3SNL1`/`INSNL1` (the DIA nonlinear
 interactions), lives in `src/ww_kokkos/snl1_*`.
 
 ## Toolchain
@@ -17,6 +17,137 @@ what put Kokkos, GoogleTest, CMake, Ninja and NetCDF on the search path:
 
 Pins: Kokkos 5.2.0, GoogleTest 1.18.0, CMake 4.4.2, gfortran 15.3.
 
+## Why Kokkos, not Fortran 90, in plain words
+
+**The short answer.** The port writes the expensive part of the wave model once, in a form
+that can be built for one processor thread, for every core of the processor, or for the
+graphics card, and each build must give the same numbers.
+
+```mermaid
+%% figure: kokkos-one-source-backends
+%% title: How does one Kokkos source reach the CPU and the GPU of the lab's workstation?
+flowchart LR
+    subgraph ww3["1 · WW3 as written"]
+        F["Fortran source<br/>(.F90 files)"]
+        C["CPU<br/>OpenMP threads, MPI ranks"]
+    end
+    subgraph port["2 · the Kokkos port of W3SNL1"]
+        K["one C++/Kokkos source"]
+        S["Serial<br/>one CPU thread"]
+        O["OpenMP<br/>i9-14900, 32 threads"]
+        G["CUDA<br/>RTX 4090<br/>16 384 CUDA cores"]
+    end
+    F -- "gfortran +<br/>switches OMPG, MPI" --> C
+    F -- "DIA routine<br/>translated line by line" --> K
+    K -- "build choice" --> S
+    K -- "build choice" --> O
+    K -- "build choice" --> G
+    O -. "compared pair to pair<br/>in WW3's regtests" .-> C
+```
+
+<details open>
+<summary>How to read this figure</summary>
+
+**Takeaway.** WW3's own code is built for the processor only; the ported piece is written once and turned into a program for one thread, for the whole processor or for the graphics card, depending on how it is built.
+
+**How to read.** Left to right. Box 1 is WW3 as NOAA ships it, compiled with its parallel switches. Box 2 is this repository's port of one routine: one source, three builds, chosen when the code is compiled, not when it runs. The dashed arrow is the check: the OpenMP build runs inside WW3 and its output is compared with WW3 as written.
+
+**Not shown.** HIP, SYCL and the other Kokkos backends (not built here); the `bind(C)` shim between WW3 and the port; the copies between processor and graphics-card memory; the other WW3 routines, which stay in Fortran. The CUDA build has not yet been run inside WW3 (that run is the owner's, supervised).
+
+**Evidence.** The three presets and the two shells in [Toolchain](#toolchain) and [Presets](#presets) (v, this file); the regtest comparison in [`PORT_STATUS.md`](PORT_STATUS.md), ledger row `W3SNL1` (v, 2026-10-14); hardware as in the text below.
+
+</details>
+
+**A story in three machines.**
+
+- FORTRAN came out in 1957, and IBM's first Fortran compiler was for the IBM 704 (v, [IBM
+  history, "Fortran"](https://www.ibm.com/history/fortran), read 2026-10-14). The language was
+  shaped by the computers it had to drive.
+- Fortran 90 (ISO/IEC 1539:1991 ⚠: ISO's own catalogue page refused the fetch; IBM's XL Fortran
+  manual lists it as "ISO/IEC 1539-1:1991 ... informal name, Fortran 90" (v, [IBM
+  docs](https://www.ibm.com/docs/en/SSAT4T_16.1.0/com.ibm.xlf161.lelinux.doc/language_ref/standards.html),
+  2026-10-14)) added whole-array statements. John Reid wrote that
+  arrays belonged in the language "the more so in an era when an increasing number of computers
+  have the hardware capability to perform operations on vectors or arrays of operands", and that
+  the design "was much influenced by" the ICL DAP, a SIMD machine (v, Reid, *The advantages of
+  Fortran 90*, [RAL report](https://numerical.rl.ac.uk/media/reports/rRAL92017.pdf), §§4–5, read
+  2026-10-14).
+- WW3 is that kind of code: free-form `.F90` files in which parallelism comes from preprocessor
+  switches on the CPU, OpenMP threads (`W3_OMPG`, an `!$OMP PARALLEL DO` over sea points at
+  `WW3/model/src/w3wavemd.F90:1696-1697`) and MPI ranks (`W3_MPI`, `:193`) (v, WW3@6d1bcdfe). It
+  has no GPU path upstream ([README.md](../README.md), "can WW3 use my GPU?").
+
+**The analogy.** Think of the routine as a recipe. WW3's Fortran is a recipe written for one
+kind of kitchen, a row of cooks at a counter (CPU cores). To use a factory line with thousands
+of workers (a GPU) you would add a second set of instructions to the same card, or write a second
+card. Kokkos is a way of writing the recipe once, in C++, and letting the build turn it into
+instructions for whichever kitchen is there.
+
+**The words the field uses.**
+
+- *Kokkos* is "a programming model in C++ for writing performance portable applications
+  targeting all major HPC platforms" (v, [kokkos/kokkos README](https://github.com/kokkos/kokkos),
+  read 2026-10-14). *Performance portability* means one source that runs well on different
+  hardware, not just runs.
+- A *backend* is what one source is compiled for. Kokkos has a Serial backend for CPUs, which is
+  enabled when no other is; OpenMP, C++ threads and HPX (experimental) on the host; CUDA, HIP, SYCL
+  and OpenACC (experimental) on devices (v, [Kokkos configuration
+  guide](https://kokkos.org/kokkos-core-wiki/get-started/configuration-guide.html), read
+  2026-10-14). Only one device backend can be enabled per build (the H100 plan, §2 ⚠). This
+  repository builds Serial, OpenMP and CUDA, nothing else ([Toolchain](#toolchain)).
+- *This workstation*: an Intel Core i9-14900, 24 cores (8 performance, 16 efficient), 32 threads
+  (v, [Intel ARK](https://www.intel.com/content/www/us/en/products/sku/236793/intel-core-i9-processor-14900-36m-cache-up-to-5-80-ghz/specifications.html),
+  2026-10-14), and an NVIDIA GeForce RTX 4090, 16 384 CUDA cores (v, [NVIDIA's 40-series
+  comparison](https://www.nvidia.com/en-us/geforce/graphics-cards/compare/), 2026-10-14). The
+  pairing is the one in
+  [`bench/results/snl1-i9-14900-rtx4090-2026-09-15.json`](../bench/results/snl1-i9-14900-rtx4090-2026-09-15.json)
+  ("Intel Core i9-14900 (32 hardware threads) + NVIDIA GeForce RTX 4090"). A CUDA core is a far
+  simpler unit than a CPU core, so the two counts are not comparable ⚠.
+
+**Why it matters here.** The `W3SNL1` port is one source that gave the Fortran's numbers bit for
+bit on Serial, OpenMP and CUDA (L1 tests, 2026-09-15, removed on 2026-10-14 by
+[ADR-0010](../docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md)), and the OpenMP build
+passes the WW3 regtest replay inside WW3 on the CPU, `hs` within 1.8e-7 relative and not
+byte-identical (L2; `just smoke-hoff`, `just full-hoff`) (v, [`PORT_STATUS.md`](PORT_STATUS.md),
+read 2026-10-14). Same source did not mean same numbers for free: it took turning off
+contraction and copying gfortran's `x**n` ([The W3SNL1 port](#the-w3snl1-port)).
+
+**Where the analogy breaks.** Fortran is not stuck in 1957 or 1991. Modern Fortran has coarrays
+(Fortran 2008 ⚠) and `do concurrent`, and `nvfortran` offloads `do concurrent`, OpenACC and OpenMP
+target regions to an NVIDIA GPU ([README.md](../README.md), "can WW3 use my GPU?"). Lesson 10
+builds one `do concurrent` file for the GPU, for multicore and for plain `gfortran`
+([course/10](../course/10-modern-fortran-refactoring.md#do-concurrent)). So the choice is not
+"old language, new language". The reasons this repository gives are in
+[`docs/KOKKOS_H100_PLAN_202609.md`](../docs/KOKKOS_H100_PLAN_202609.md) (no ADR records the choice
+of Kokkos itself):
+
+- §1 and §2: Kokkos over SYCL, chiefly because the Serial backend runs the same kernels on the CPU
+  as a deterministic reference, `View` layouts express the column-major question directly, and
+  Earth-system models (E3SM's EAMxx and Omega, LICOM3, FESOM2) already went this way.
+- §5, conclusion 4: "Directive ports are fast to start and slow to finish; Kokkos rewrites are
+  slow to start and then portable"; the LICOM3 row reads "Portability layer ends the 'N variants'
+  maintenance problem".
+- §7: Route A (Fortran + OpenACC) leaves "a fork with directives"; Route B (C++/Kokkos) a "clean
+  C++ product; Serial backend runs anywhere".
+- Lesson 11 adds that memory spaces are written on every `View`, so host code cannot quietly read
+  device memory ([course/11](../course/11-kokkos-and-modern-cpp.md#execution-and-memory-spaces));
+  `nvfortran -stdpar=gpu` instead moves data through managed memory implicitly (lesson 10), which
+  [AGENTS.md](../AGENTS.md) forbids as a way to avoid thinking about transfers.
+
+The plan's projections (months, stall risk, speed ceilings) are estimates, not measurements.
+
+**Where to read more.** Lesson 11, [Kokkos and modern C++ for Fortran
+people](../course/11-kokkos-and-modern-cpp.md); lesson 12, [porting
+`W3SNL1`](../course/12-porting-a-kernel-w3snl1.md); lesson 10, [modern
+Fortran](../course/10-modern-fortran-refactoring.md). Papers: Edwards, Trott and Sunderland,
+"Kokkos: Enabling manycore performance portability through polymorphic memory access patterns",
+*J. Parallel Distrib. Comput.* 74(12), 3202–3216, 2014,
+[doi:10.1016/j.jpdc.2014.07.003](https://doi.org/10.1016/j.jpdc.2014.07.003) (v, Crossref,
+2026-10-14); Trott et al., "Kokkos 3: Programming model extensions for the exascale era", *IEEE
+Trans. Parallel Distrib. Syst.* 33(4), 805–817, 2022,
+[doi:10.1109/TPDS.2021.3097283](https://doi.org/10.1109/TPDS.2021.3097283) (v, Crossref,
+2026-10-14; `trott2022` in [`refs.bib`](../pubs/proposal/refs.bib)).
+
 ## Layout
 
 ```
@@ -28,9 +159,9 @@ src/ww_kokkos/        real.hpp (float32 + helpers), spectrum_fixtures.hpp (JONSW
 src/fortran_iface/    ww_kokkos_c.hpp + snl1_shim.cpp (the C ABI, built into ww_kokkos),
                       w3kokkosmd.F90 (the Fortran module), PATCH.md (the WW3 caller)
 intro/                01..06, one Kokkos concept each, each a CTest case
-tests/                kokkos_env.hpp (runtime lifetime), L1_* GoogleTest suites, bench_snl1.cpp
-tests/fixtures/       the verbatim Fortran reference, the shared sea state, the committed
-                      binary fixtures and shim_driver.F90 (the shim_roundtrip CTest case)
+tests/                kokkos_env.hpp (runtime lifetime), L1_* suites of the lessons and tools,
+                      bench_snl1.cpp, L2_replay.sh
+tests/fixtures/       the benchmark's inputs: snl1_nk25_nth24.bin (frozen) and bench_small/
 PORT_STATUS.md        the port ledger: phase, parity and ms/call per routine
 PORT_RANKING.md       what is still in Fortran, by self time, and each port's test coverage
 tools/nccmp-tol/      per-field NetCDF comparator                (Task 5)
@@ -47,7 +178,6 @@ just kokkos-test serial-debug     # configure + build + ctest
 just kokkos-test openmp-release
 just kokkos-cuda-test             # cuda-release, inside the #cuda shell
 just kokkos-clean                 # rm -rf kokkos/build
-just snl1-fixtures                # regenerate the committed W3SNL1 fixture
 ```
 
 Or directly, from this directory inside a pratico shell:
@@ -82,9 +212,8 @@ Two things the names do *not* promise:
 
 | option | default | meaning |
 |---|---|---|
-| `WW_ENABLE_FORTRAN` | `ON` | build the Fortran interface module, reference and drivers (incl. `intro_06`) |
+| `WW_ENABLE_FORTRAN` | `ON` | build the Fortran interface module `W3KOKKOSMD` and `intro_06` |
 | `WW_DETERMINISTIC` | `OFF` | pin reductions to a fixed summation order for bit-reproducible validation runs |
-| `WW_WW3_BUILD_DIR` | *(empty)* | a configured WW3 build (`libww3.a` + `mod/`); empty skips the WW3-linked targets |
 
 ## Intro programs
 
@@ -107,16 +236,29 @@ concept it demonstrates does not hold, so CI runs the lesson material too.
 `tests/CMakeLists.txt` builds `<name>.cpp`, hands it `WW_FIXTURE_DIR` and registers
 it with CTest.
 
-Naming: `L1_*` are unit tests against analytic or captured-Fortran fixtures; `L2_*`
-replay a whole WW3 regtest.
+The port has no tests of its own. The owner's rule (2026-10-14): "kokkos code should
+NOT have its own tests, hard rule. All tests should come [from] WW3 regtests." The
+suites left in CTest test the lessons and the tools, not the port:
 
 | suite | what it pins down |
 |---|---|
-| `L1_test_intro` | the lesson material's invariants |
-| `L1_test_snl1_tables` | `make_tables` against `INSNL1`: all 32 address tables exactly, the weights and `AF11` to 1e-6 relative |
-| `L1_test_snl1_dia` | `snl1` against `W3SNL1` to 1e-5 relative; plus zero-in/zero-out, the cubic scaling of `Snl`, and launch-to-launch bit-reproducibility |
-| `L1_test_snl1_shim` | the same parity through the raw C ABI, plus the error paths: call before init, negative `npts`, null pointers, buffer growth, idempotent init |
-| `shim_roundtrip` | a Fortran program (`tests/fixtures/shim_driver.F90`) calling `W3KOKKOSMD` → shim → kernel and comparing with `W3SNL1_REF` in the same process |
+| `L1_test_intro`, `intro_01`..`intro_06` | the lesson material's invariants |
+| `L1_test_nccmp_tol` | the per-field NetCDF comparator |
+| `L1_test_bench_case` | the benchmark-case generator |
+| `L1_test_fetch_analyse` | the fetch-growth analyser |
+
+The DIA and its shim are validated by WW3's regtests: `scripts/hoff.sh --hoff --cpu`
+runs a WW3 case with the Kokkos DIA and compares it with the Fortran DIA of the same
+executable and pair to pair with `--ww3` (WW3 built without the KOKKOS switch), and
+the regtest matrix of WFIP-0003 (`scripts/hoff_matrix.sh`) extends that to more of
+WW3's regtests ⚠ (being written in parallel on 2026-10-14; not run from here).
+
+Removed on 2026-10-14 under that rule: `L1_test_snl1_tables`, `L1_test_snl1_dia`,
+`L1_test_snl1_shim`, the Fortran `shim_roundtrip` CTest case, and the standalone
+Fortran reference and fixture generator they were built on. Before removal they
+showed the port bit-identical to the Fortran (max relative error 0.0) on
+serial-debug, openmp-release and cuda-release (2026-09-15; the two CPU presets
+re-run 2026-10-14). That result is history now, with no test left to reproduce it.
 
 Kernels live in free functions rather than in `TEST()` bodies: nvcc rejects an
 extended lambda inside a private member function, and a `TEST()` body is one.
@@ -135,26 +277,15 @@ Two consequences worth knowing before touching them:
   `-O3 -march=x86-64-v3` fuses `AWG1*UE(..) + AWG2*UE(..)` into an FMA (one
   rounding where the Fortran does two), and `openmp-release` drifted 1.1e-5
   relative from the fixture while `serial-debug` was bit-identical. With
-  contraction off all three presets reproduce the Fortran **bit for bit**.
+  contraction off all three presets reproduced the Fortran **bit for bit** in the L1 tests
+  removed on 2026-10-14.
 - **`x**n` is not `std::pow`.** gfortran lowers a real raised to an integer to a
   binary-exponent chain of multiplications; `powf` does something else, to within
   a ULP. `snl1_tables.cpp` has a `powi()` that reproduces the chain, and that is
-  what makes the parity exact rather than merely close.
+  what made the L1 parity of the removed tests exact rather than merely close.
 
 The DIA has no reduction, so `WW_DETERMINISTIC` changes nothing here: every output
 element is written by one thread from inputs no thread modifies.
-
-### The `ww3_lib` cross-check -- untested
-
-`tests/fixtures/gen_snl1_ww3lib.F90` and `just l1-crosscheck` exist to prove that
-`snl1_ref.F90` really is a verbatim copy, by running the genuine `W3SNL1` out of a
-configured WW3 build and `cmp`-ing the two fixture files. **Neither has ever been
-run.** The WW3 build available on this host (`~/src/WW3/build`) was configured with
-switch `NL0`, so `w3snl1md` is not compiled into its `libww3.a` and `w3snl1md.mod`
-does not exist; the CMake guard detects exactly that and skips the target with a
-warning. Running it needs a WW3 built with an `NL1` switch, e.g.
-`just build switches/switch_lab_shrd`. Until then the committed fixture, generated
-from the standalone reference, is the sole source of truth.
 
 ## The bind(C) boundary
 
@@ -167,8 +298,8 @@ rule each:
 | `snl1_shim.cpp` | ownership (finalize only a Kokkos *we* started), lifetime (a `push_finalize_hook` drops the Views before `Kokkos::finalize`), and errors (every entry point is a `try`/`catch` that records a code) |
 | `w3kokkosmd.F90` | `MODULE W3KOKKOSMD`: one `ISO_C_BINDING` interface block per C declaration, plus `LOGICAL :: KOKKOS_SNL1` |
 
-The C++ half is compiled into `ww_kokkos` unconditionally, so the shim is testable
-with no Fortran compiler in the loop; only `w3kokkosmd.F90` needs
+The C++ half is compiled into `ww_kokkos` unconditionally, so the benchmark calls
+the shim with no Fortran compiler in the loop; only `w3kokkosmd.F90` needs
 `WW_ENABLE_FORTRAN`, and it is built as its own target (`ww_kokkos_f`) because it
 is meant to be *copied into* `WW3/model/src`. That is what
 `src/fortran_iface/PATCH.md` describes, hunk by hunk, with real line numbers.

@@ -79,6 +79,13 @@ full-ww3:
 full-hoff device="cpu":
     bash scripts/hoff.sh --hoff full --{{device}}
 
+# The Kokkos DIA through WW3's own regtest harness (WFIP-0003): every serial NL1 entry of
+# matrix.base, Fortran and Kokkos DIA from one executable, test.comp and nccmp-tol. CPU only.
+# `just hoff-matrix --list`, `--dry-run`, `--only ww3_ts1:ST4`, `--jobs N`; `--fetch-data` once
+# for the inputs WW3 keeps on NOAA's ftp (ww3_tp2.15's wind.nc), cached in build/ww3-data/.
+hoff-matrix *args:
+    bash scripts/hoff_matrix.sh {{args}}
+
 # The same cases on WAVEWATCH IV, built from the WW4/ submodule (h0ffmann/WW4). Exit 5, before
 # any build, when a part the case needs is not ported to WW4 yet (scripts/ww4_parts.py).
 smoke-ww4:
@@ -377,7 +384,7 @@ translate *args:
 pubs: book (proposal "pt") (proposal "en")
 
 # ---------------------------------------------------------------------
-# Kokkos (kokkos/): C++ kernels, intro programs and GoogleTest suites
+# Kokkos (kokkos/): C++ kernels; GoogleTest suites of the intro programs and tools (the port has none, ADR-0010)
 # ---------------------------------------------------------------------
 
 kokkos_dir := justfile_directory() + "/kokkos"
@@ -390,10 +397,6 @@ kokkos-configure preset="serial-debug":
 kokkos-build preset="serial-debug": (kokkos-configure preset)
     nix develop "{{pratico}}#ww3" --command cmake --build "{{kokkos_dir}}/build/{{preset}}"
 
-# Line and function coverage of each port's Kokkos files under CTest -> docs/data/kokkos_coverage.tsv.
-kokkos-coverage *args:
-    python3 scripts/kokkos_coverage.py {{args}}
-
 # Build and run ctest for a preset.
 kokkos-test preset="serial-debug": (kokkos-build preset)
     nix develop "{{pratico}}#ww3" --command ctest --test-dir "{{kokkos_dir}}/build/{{preset}}" --output-on-failure
@@ -403,21 +406,6 @@ kokkos-cuda-test:
     nix develop "{{pratico}}#cuda" --command cmake -S "{{kokkos_dir}}" --preset cuda-release
     nix develop "{{pratico}}#cuda" --command cmake --build "{{kokkos_dir}}/build/cuda-release"
     nix develop "{{pratico}}#cuda" --command ctest --test-dir "{{kokkos_dir}}/build/cuda-release" --output-on-failure
-
-# Regenerate the committed W3SNL1 parity fixture from the Fortran reference.
-snl1-fixtures: (kokkos-configure "serial-debug")
-    nix develop "{{pratico}}#ww3" --command cmake --build "{{kokkos_dir}}/build/serial-debug" --target snl1-fixtures
-    git -C "{{justfile_directory()}}" diff --stat -- kokkos/tests/fixtures
-
-# UNTESTED (see kokkos/README.md): cross-check snl1_ref.F90 against the real W3SNL1 in <ww3>'s build.
-l1-crosscheck ww3=ww3_src:
-    nix develop "{{pratico}}#ww3" --command cmake -S "{{kokkos_dir}}" -B "{{kokkos_dir}}/build/crosscheck" \
-        -DCMAKE_BUILD_TYPE=Release -DWW_WW3_BUILD_DIR="{{ww3}}/build"
-    nix develop "{{pratico}}#ww3" --command cmake --build "{{kokkos_dir}}/build/crosscheck" \
-        --target gen_snl1_fixture gen_snl1_ww3lib
-    nix develop "{{pratico}}#ww3" --command "{{kokkos_dir}}/build/crosscheck/tests/fixtures/gen_snl1_fixture" /tmp/snl1_ref.bin
-    nix develop "{{pratico}}#ww3" --command "{{kokkos_dir}}/build/crosscheck/tests/fixtures/gen_snl1_ww3lib" /tmp/snl1_ww3lib.bin
-    cmp /tmp/snl1_ref.bin /tmp/snl1_ww3lib.bin && echo "snl1_ref.F90 is byte-identical to WW3's own W3SNL1"
 
 # Remove kokkos/build.
 kokkos-clean:

@@ -1,8 +1,8 @@
 # PORT_RANKING
 
 The WW3 routines still in Fortran, the most expensive first, and how much of each ported
-routine's Kokkos code the tests run. Written by `scripts/port_score.py --write` from
-`docs/data/ww3_full_gprof.tsv`, `kokkos/ports.tsv` and `docs/data/kokkos_coverage.tsv`; do not
+routine's Kokkos code was regtested. Written by `scripts/port_score.py --write` from
+`docs/data/ww3_full_gprof.tsv` and `kokkos/ports.tsv`; do not
 edit. Port order is wall time ([ADR-0002](../docs/ADRs/ADR-0002-port-order-wall-time.md)):
 the next port is row 1, and `/port-next` starts it.
 
@@ -105,19 +105,14 @@ The profile names 87 routines, 2 of them ported, so this table has 85 rows, not 
 The cumulative column starts from the ported routines' share, so it reads as the share of the run
 that would be in Kokkos once every row down to it is ported.
 
-## Tested, per port
+## Regtested, per port
 
-Coverage: Debug -O0 --coverage, OpenMP and Serial backends, WW_DETERMINISTIC=ON; no CUDA; 100% tests passed out of 14; commit 6b7003b, 2026-10-14 (`just kokkos-coverage`).
+The port has no tests of its own ([ADR-0010](../docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md)):
+a ported routine is tested only by WW3's regtests, run inside WW3 with the routine on Kokkos and
+compared pair to pair with the same WW3 without it (`scripts/hoff.sh --hoff --cpu`, `just hoff-matrix`).
+The record is the `regtested` column of `kokkos/ports.tsv`.
 
-| routine | status | Kokkos files | lines run | functions run | lines not run | regtested |
-|---|---|---|---|---|---|---|
-| `w3snl1md:w3snl1` | L2 | `snl1_dia.cpp`, `snl1_shim.cpp` | 252 of 293 (86.01 %) | 19 of 19 | `snl1_dia.cpp` 89-91; `snl1_shim.cpp` 167-168, 186-192, 203-207, 220-221, 237-238, 250-261, 279-280, 322-327 | yes |
-| `w3snl1md:insnl1` | L2 | `snl1_tables.cpp`, `snl1_shim.cpp` | 296 of 335 (88.36 %) | 19 of 19 | `snl1_tables.cpp` 71; `snl1_shim.cpp` 167-168, 186-192, 203-207, 220-221, 237-238, 250-261, 279-280, 322-327 | yes |
-
-What these numbers are not:
-
-- A line that ran is not a line that was checked: a test can run a line and never compare its result.
-- They are the L1 level only (CTest, Serial and OpenMP). The CUDA build and the L2 replay inside WW3
-  are not instrumented, so a path only those take, such as level-1 team scratch, counts only if CTest
-  takes it too.
-- A shim file shared by two routines is counted in full for each, so the rows do not add up.
+| routine | status | Kokkos files | regtested |
+|---|---|---|---|
+| `w3snl1md:w3snl1` | L2 | `snl1_dia.cpp`, `snl1_shim.cpp` | yes: L2 on the CPU, ww3_ts1 and bench_small, against the Fortran DIA and pair to pair against --ww3; ww3_ts1 in CI (health h1); WW3 regtest matrix of 100 entries, 66 PASS, 29 n/a, 5 FAIL from round-off amplified by WW3 (docs/data/hoff_matrix_2026-10-14.tsv) |
+| `w3snl1md:insnl1` | L2 | `snl1_tables.cpp`, `snl1_shim.cpp` | yes: through the DIA's L2, which reads these tables in every --hoff run (health h1) |

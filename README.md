@@ -23,8 +23,11 @@ The repository is the book's source and its evidence. Its 17 lessons are the cha
 a PDF on every merge ([`pdf/ww3-lab-course.pdf`](pdf/ww3-lab-course.pdf)). The code they describe
 is next to them: a Nix-pinned Fortran/MPI/NetCDF toolchain that builds WW3 and runs a regression
 test in one command, and a C++/Kokkos port of the DIA nonlinear interaction term (`W3SNL1`),
-written with coding agents, that reproduces the Fortran output bit for bit on the Serial, OpenMP
-and CUDA backends. On an RTX 4090 it runs 1,000 sea points in 0.047 ms against 24.96 ms serial
+written with coding agents, that reproduced the Fortran output bit for bit on the Serial, OpenMP
+and CUDA backends in its former unit tests, and agrees with WW3 within 1.8e-7 relative in `hs` in
+WW3's own regtests on the CPU, the port's only tests since
+[ADR-0010](docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md). On an RTX 4090 it runs
+1,000 sea points in 0.047 ms against 24.96 ms serial
 ([`kokkos/PORT_STATUS.md`](kokkos/PORT_STATUS.md)). Every claim carries its evidence (`(v)`
 checked, `⚠` not) and every number the command that reproduces it. The same repository is the
 groundwork for an undergraduate project at Escola Politécnica, UFRJ, co-advised at LabECO, UFSC.
@@ -121,7 +124,7 @@ or issues, linked so you can follow them.
 | Area | Question it answers | Where | State |
 |---|---|---|---|
 | The course | How do you build, run and measure WW3, then port a kernel? | [`course/`](course/README.md), [`examples/`](examples/README.md), [`exercises/`](exercises/README.md) | 17 lessons, merged |
-| Kokkos port of `W3SNL1` | Can a WW3 kernel run on a GPU with bit-identical results? | [`kokkos/`](kokkos/README.md), [lesson 12](course/12-porting-a-kernel-w3snl1.md) | Bit-identical on 3 backends; WW3 replay pending |
+| Kokkos port of `W3SNL1` | Can a WW3 kernel run on a GPU with bit-identical results? | [`kokkos/`](kokkos/README.md), [lesson 12](course/12-porting-a-kernel-w3snl1.md) | Bit-identical on 3 backends in the unit tests ADR-0010 removed; WW3 regtest replay passed on the CPU, `hs` within 1.8e-7 relative, not byte-identical |
 | Benchmarks | What do an i9 and an RTX 4090 actually give WW3? | [`bench/`](bench/README.md), [`gpu/`](gpu/README.md), [lesson 09](course/09-benchmark-profile-compile-run.md) | Tooling merged |
 | Port priority | Which routine should be ported next? | [ADR-0002](docs/ADRs/ADR-0002-port-order-wall-time.md), [`PORT_STATUS.md`](kokkos/PORT_STATUS.md) | Port by measured wall time. A first profile puts `W3SDS4` at 67 % of source-term time ([#45](https://github.com/h0ffmann/ww3-gpu/issues/45)) |
 | Porting with agents | How can coding agents port forty routines without a human redoing the checks? | [`AGENTS_KOKKOS`](docs/AGENTS_KOKKOS_202609.md), [lesson 13](course/13-bulk-porting-with-agents.md), [#42](https://github.com/h0ffmann/ww3-gpu/issues/42) | Rules merged; task queue and parity ladder in #42 |
@@ -197,7 +200,7 @@ module, `W3SRCEMD`, and got about 1.3× against 42 CPU cores on Summit's V100s. 
 the result, and the code was not merged into `NOAA-EMC/WW3`. So compile WW3 with `nvfortran` for the
 CPU, use `gpu/` to learn GPU Fortran, and `bench/` to measure your own hardware instead of trusting
 anyone's table, including the ones here. The Kokkos port takes the other route: kernels that keep
-their data on the device and match the Fortran bit for bit
+their data on the device and match the Fortran within the tolerances WW3's regtests are judged by
 ([`course/09-benchmark-profile-compile-run.md`](course/09-benchmark-profile-compile-run.md)).
 
 There are three ways to run WAVEWATCH here (`scripts/hoff.sh`). The model sources come only from
@@ -231,7 +234,8 @@ just port-score        # how much of WW3 runs on Kokkos, and the routines ranked
 
 Only h1 is in CI, by the owner's word of 14 October 2026. Each ported routine has a report in
 [`kokkos/port_report/`](kokkos/port_report/README.md): what was ported, every benchmark, how it
-was regtested and what GoogleTest covers. The website draws its benchmarks.
+was regtested. The port has no tests of its own; WW3's regtests are its tests
+([ADR-0010](docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md)). The website draws its benchmarks.
 
 `--hoff` runs on the CPU (Kokkos OpenMP) by default, and is then compared pair to pair with
 `--ww3`. `just smoke-hoff gpu` runs CUDA, only with a human supervising: it asks at the terminal
@@ -248,7 +252,7 @@ solver yet
 |---|---|
 | `course/` | The book's chapters: 17 lessons, 00 to 15 and 19 |
 | `examples/`, `exercises/` | Runnable cases with real `.nml` inputs; exercises for lessons 09 to 13, with solutions |
-| `kokkos/` | The `ww_kokkos` kernel library (`W3SNL1` ported), GoogleTest suites and tools |
+| `kokkos/` | The `ww_kokkos` kernel library (`W3SNL1` ported), the tools and their GoogleTest suites (none for the port, ADR-0010) |
 | `gpu/`, `bench/` | GPU Fortran sandbox for an RTX 4090; i9 against 4090 benchmarks |
 | `proof/` | The runnable half of the proof plan (all 2^32 inputs of `W3SNL1` section 1; SMT queries) |
 | `docs/` | Plans, decisions (`ADRs/`), designs (`WFIPs/`), the research log, the link list, the glossary |
@@ -372,7 +376,7 @@ you ran. A new patch release is cut every Friday when `main` has changed, or by 
 | What | Whose | Terms |
 |---|---|---|
 | This repository | Matheus Hoffmann | MIT ([`LICENSE`](LICENSE)) |
-| The kernels translated from WW3: `kokkos/src/ww_kokkos/snl1_*`, `kokkos/src/fortran_iface/w3kokkosmd.F90`, the patch in `kokkos/src/fortran_iface/PATCH.md`, `kokkos/tests/fixtures/snl1_ref.F90` | derived works of WW3 | `LGPL-3.0-or-later`, stated in each file's `SPDX-License-Identifier` line |
+| The kernels translated from WW3: `kokkos/src/ww_kokkos/snl1_*`, `kokkos/src/fortran_iface/w3kokkosmd.F90`, the patch in `kokkos/src/fortran_iface/PATCH.md` | derived works of WW3 | `LGPL-3.0-or-later`, stated in each file's `SPDX-License-Identifier` line |
 | Vendored skills (`humanizar`, `humanizer`, `ponytail*`, `sharingan`) | their authors | their own licences, pinned in [`.claude/skills/skills.lock`](.claude/skills/skills.lock) |
 | ai-memory, used and not vendored | Fabio Akita | MIT |
 

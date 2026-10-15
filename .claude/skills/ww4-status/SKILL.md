@@ -51,7 +51,7 @@ Check each, and say which ones changed:
 
 1. **`ww4_NL1` implemented** (the DIA): read the body. Is it a port of WW3's `W3SNL1`? Does it
    have parity tests against WW3, and with what tolerance? Compare with `kokkos/PORT_STATUS.md`
-   (`L1_test_snl1_dia`, bit-identical on three presets). Any other source term or solver
+   (L2: WW3's regtests on the CPU, pair to pair with `--ww3`; the port has no tests of its own, ADR-0010). Any other source term or solver
    implemented: name it and its WW3 counterpart.
 2. **`ISourceTerm::calculate` signature** (`src/ww4_core/source_term.h`, `std::span<double>` on
    2026-10-07): a batch of points, a Kokkos `View` or a device memory space decides whether our

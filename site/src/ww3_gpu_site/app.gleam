@@ -182,7 +182,6 @@ fn report(r: Report) -> Element(msg) {
       html.span([attribute.class("chip code")], [html.text(r.status)]),
     ]),
     record_line("regtested", r.regtested),
-    record_line("googletest", r.googletest),
     case rows {
       [] ->
         html.p([attribute.class("empty")], [

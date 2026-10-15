@@ -27,7 +27,7 @@ picks one preset (default `hubs`), `all` runs every preset, anything else is a f
 | `hubs` | `graphify god-nodes --top 15` | the most connected symbols |
 | `kernel` | `graphify explain snl1_dia.hpp` | what includes the Kokkos DIA kernel |
 | `shim` | `graphify explain snl1_shim.cpp` | the `bind(C)` shim WW3 calls, and what it uses |
-| `tests` | `graphify explain L1_test_snl1_dia.cpp` | the L1 parity test and its fixtures |
+| `tests` | `graphify explain kokkos_env.hpp` | the GoogleTest suites of the lessons and tools; the port has none (ADR-0010) |
 | `bench` | `graphify explain bench_snl1.cpp` | the timing harness and what it times |
 | `ledger` | `graphify explain port_score.py` | the script that writes the port's global numbers |
 | `grid` | `graphify affected SpectralGrid` | what breaks if the spectral grid type changes |

@@ -15,10 +15,8 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-option(WW_ENABLE_FORTRAN "Build the Fortran interface module, reference and drivers" ON)
+option(WW_ENABLE_FORTRAN "Build the Fortran interface module (W3KOKKOSMD from the WW3/ submodule)" ON)
 option(WW_DETERMINISTIC "Force serial reductions for bit-reproducible validation builds" OFF)
-set(WW_WW3_BUILD_DIR "" CACHE PATH
-    "A configured WW3 build directory (libww3.a + mod/); enables the ww3_lib cross-check target")
 
 include(cmake/CompilerWarnings.cmake)
 include(GNUInstallDirs)

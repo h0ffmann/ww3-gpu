@@ -6,9 +6,10 @@
 
 ## Goal
 
-Run the validation ladder's second rung yourself. The L1 tests in `kokkos/tests/` say the
-Kokkos `W3SNL1` reproduces the Fortran on captured inputs; the L2 replay says the *model*
-reproduces itself when the kernel is swapped at run time. You produce the table the
+Run the port's only test yourself. The port has no tests of its own
+([ADR-0010](../docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md); earlier versions had
+L1 tests on captured inputs, removed on 2026-10-14): the L2 replay says the *model* reproduces
+itself when the kernel is swapped at run time, and that is the whole evidence. You produce the table the
 replay appends to `kokkos/PORT_STATUS.md` and a reading of it.
 
 ## Steps
@@ -52,5 +53,5 @@ replay appends to `kokkos/PORT_STATUS.md` and a reading of it.
 - Replay `ww3_tp2.2` as well. `W3SNL1` is a smaller share there; does the table say
   anything at all?
 - Lesson 13's recipe: pick the next routine on the ranked list in
-  `docs/AGENTS_KOKKOS_202609.md` and write (not run) the L1 fixture generator and the
-  L2 replay entry it would need. That is a port PR's skeleton.
+  `kokkos/PORT_RANKING.md` and list (not run) the `matrix.base` entries that exercise it (for
+  `W3SNL1` that list is `just hoff-matrix --list`) and the L2 replay entry it would need. That is a port PR's skeleton.

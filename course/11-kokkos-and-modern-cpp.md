@@ -104,7 +104,8 @@ exactly that reason (v). The rule ("no host memory in kernels",
 helpers such as `ww::jonswap` (v, `spectrum_fixtures.hpp`): no `std::vector`, no
 `std::function`, no `this`, no allocation, no exceptions. One nvcc quirk the lab hit:
 an extended lambda cannot live inside a private member function, and a GoogleTest
-`TEST()` body is one, so kernels sit in free functions (v, `kokkos/README.md`).
+`TEST()` body is one, so kernels sit in free functions (v, `kokkos/README.md`). The intro
+programs' tests are GoogleTest; the port has none of its own (ADR-0010).
 
 ## Fences
 

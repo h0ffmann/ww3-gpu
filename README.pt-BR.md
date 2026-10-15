@@ -24,8 +24,11 @@ O repositório é a fonte do livro e a sua evidência. As 17 lições são os ca
 a cada merge ([`pdf/ww3-lab-course.pdf`](pdf/ww3-lab-course.pdf)). O código que elas descrevem
 está ao lado: um toolchain Fortran/MPI/NetCDF fixado com Nix que compila o WW3 e roda um teste de
 regressão com um comando só, e um port para C++/Kokkos do termo de interações não lineares DIA
-(`W3SNL1`), escrito com agentes de código, que reproduz a saída do Fortran bit a bit nos backends
-Serial, OpenMP e CUDA. Numa RTX 4090, ele processa 1.000 pontos de mar em 0,047 ms, contra 24,96 ms
+(`W3SNL1`), escrito com agentes de código, que reproduziu a saída do Fortran bit a bit nos backends
+Serial, OpenMP e CUDA nos seus antigos testes unitários e concorda com o WW3 dentro de 1,8e-7
+relativo em `hs` nos próprios regtests do WW3 na CPU, os únicos testes do port desde o
+[ADR-0010](docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md). Numa RTX 4090, ele
+processa 1.000 pontos de mar em 0,047 ms, contra 24,96 ms
 no serial ([`kokkos/PORT_STATUS.md`](kokkos/PORT_STATUS.md)). Cada afirmação traz a sua evidência
 (`(v)` conferido, `⚠` não conferido) e cada número, o comando que o reproduz. O mesmo repositório é
 a base de um projeto de graduação na Escola Politécnica da UFRJ, com coorientação no LabECO da
@@ -126,7 +129,7 @@ request ou issue aberta, com link para acompanhar.
 | Frente | Pergunta | Onde | Situação |
 |---|---|---|---|
 | Curso | Como compilar, rodar e medir o WW3, e depois portar um kernel? | [`course/`](course/README.md), [`examples/`](examples/README.md), [`exercises/`](exercises/README.md) | 17 lições, integrado |
-| Port do `W3SNL1` para Kokkos | Um kernel do WW3 roda na GPU com resultado idêntico bit a bit? | [`kokkos/`](kokkos/README.md), [lição 12](course/12-porting-a-kernel-w3snl1.md) | Idêntico em 3 backends; falta o replay dentro do WW3 |
+| Port do `W3SNL1` para Kokkos | Um kernel do WW3 roda na GPU com resultado idêntico bit a bit? | [`kokkos/`](kokkos/README.md), [lição 12](course/12-porting-a-kernel-w3snl1.md) | Idêntico em 3 backends nos testes unitários que o ADR-0010 removeu; o replay de regtest do WW3 passou na CPU, `hs` dentro de 1,8e-7 relativo, sem identidade byte a byte |
 | Benchmarks | Quanto um i9 e uma RTX 4090 entregam de fato para o WW3? | [`bench/`](bench/README.md), [`gpu/`](gpu/README.md), [lição 09](course/09-benchmark-profile-compile-run.md) | Ferramentas integradas |
 | Prioridade do port | Qual rotina portar em seguida? | [ADR-0002](docs/ADRs/ADR-0002-port-order-wall-time.md), [`PORT_STATUS.md`](kokkos/PORT_STATUS.md) | Portar pela ordem do tempo de parede medido. Um primeiro perfil coloca o `W3SDS4` em 67 % do tempo dos termos-fonte ([#45](https://github.com/h0ffmann/ww3-gpu/issues/45)) |
 | Port com agentes | Como agentes de código podem portar quarenta rotinas sem que uma pessoa refaça as verificações? | [`AGENTS_KOKKOS`](docs/AGENTS_KOKKOS_202609.md), [lição 13](course/13-bulk-porting-with-agents.md), [#42](https://github.com/h0ffmann/ww3-gpu/issues/42) | Regras integradas; fila de tarefas e escada de paridade na #42 |
@@ -178,7 +181,8 @@ O WW3 oficial não tem suporte a GPU. O único port publicado
 ([Ikuyajolu et al., GMD 2023](https://gmd.copernicus.org/articles/16/1445/2023/)) colocou OpenACC
 num módulo só, o `W3SRCEMD`, e chegou a cerca de 1,3× contra 42 núcleos de CPU nas V100 do Summit.
 A transferência de dados limitou o ganho, e o código não entrou no `NOAA-EMC/WW3`. Este laboratório
-segue outro caminho: kernels em Kokkos que mantêm os dados na GPU e reproduzem o Fortran bit a bit,
+segue outro caminho: kernels em Kokkos que mantêm os dados na GPU e concordam com o Fortran dentro
+das tolerâncias pelas quais os regtests do WW3 são julgados,
 portados na ordem do tempo de parede medido ([lição 09](course/09-benchmark-profile-compile-run.md)).
 
 Há três jeitos de rodar o WAVEWATCH aqui (`scripts/hoff.sh`). O código dos modelos vem só de forks

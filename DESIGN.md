@@ -33,8 +33,8 @@ and the words say "slower". The speed-up is computed from the report's numbers, 
 Above the steps, the port's global numbers (`site/data/port_score.tsv`, written by
 `scripts/port_score.py`): the share of the run time, of the routines, of the files and of the
 lines of code, and the size of the Kokkos code, each value in the `--code` light. Under each
-report's name, its record from `kokkos/ports.tsv`: regtested and googletest, a `--proof` chip
-for "yes" and a `--warn` chip for "no".
+report's name, its record from `kokkos/ports.tsv`: regtested, a `--proof` chip for "yes" and a
+`--warn` chip for "no" (the googletest column went with the port's own tests, ADR-0010).
 
 ## The ground
 

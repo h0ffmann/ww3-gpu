@@ -72,8 +72,9 @@ Enough detail that the implementing agent has nothing to guess. A flow gets a Me
 with its reading card (the `figure` skill).
 
 ## 6. Parity and physics impact
-Does the result change the model's answer? Which L1/L2 tolerance applies, which fixture point is
-added, or "None: it does not touch a kernel".
+Does the result change the model's answer? Which WW3 regtests judge it and which entry of
+`kokkos/tools/nccmp-tol/tolerances.txt` applies (a Kokkos change has no test of its own, ADR-0010),
+or "None: it does not touch a kernel".
 
 ## 7. Verification plan and definition of done
 The checks, each with the command that runs it. The definition of done is the checklist below;
