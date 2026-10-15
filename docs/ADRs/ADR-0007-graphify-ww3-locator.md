@@ -147,3 +147,18 @@ started before that.
   would replace the `gfortran -E` pass in step 2.
 - The WW3 pin moves to a branch whose switches change which modules `W3SRCE` uses.
 - WW4 (C++/Kokkos) becomes a porting reference here; its tree is a different question.
+
+## Revision, 2026-10-14: this repository's own code
+
+The owner widened the scope on 2026-10-14 to this repository's code as well, for two Claude Code
+commands: `/graph-check` (is the CLI installed, and how far behind) and `/graph-view` (prepared
+queries over `kokkos/`, `scripts/`, `tests/` and the rest). The alternative "Index this repository
+too" above is set aside for code only; the Markdown stays out, as does the semantic pass. The rest
+of the envelope holds: `--code-only --no-label`, `env -i` with `GRAPHIFY_NO_AUTO_REFRESH=1` and a
+closed `OLLAMA_BASE_URL`, output under `~/.cache/ww3-gpu-graph/self-<sha>/`, `graphify-out/` in
+`.gitignore`, and a graph result is a lead to a file, never a citation. The measurement, including
+what the graph misses, is the [log entry of 2026-10-14](../log/2026-10-14-graphify-on-ww3-gpu.md).
+
+graphify's `/graphify` skill exists on the owner's workstation from a user-level `graphify install`
+outside this repository (v) `~/.claude/skills/graphify/SKILL.md`, 0.9.91, 14 October 2026; step 7
+still holds for the repository: nothing here installs it, and `graphify-out/` stays out of git.

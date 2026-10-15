@@ -38,5 +38,6 @@ Date, author, issue/PR/WFIP.
 | 2026-10-11 | [Graphify on WW3 at the pin: raw and preprocessed, code only](2026-10-11-graphify-on-ww3.md) | #68, ADR-0007 |
 | 2026-10-14 | [ponytail enabled as a Claude Code plugin, off by default](2026-10-14-ponytail-plugin.md) | AGENTS.md skills |
 | 2026-10-14 | [ai-memory 3.0.0 installed on the owner's workstation](2026-10-14-ai-memory-install.md) | ADR-0009 |
+| 2026-10-14 | [Graphify on ww3-gpu's own code: build cost, query cost, what it misses](2026-10-14-graphify-on-ww3-gpu.md) | ADR-0007 revision |
 | 2026-10-14 | [First login to the Claude Team account, and the Kokkos account guard](2026-10-14-kokkos-account-team.md) | AGENTS.md hard rule |
 | 2026-10-14 | [The first published ai-memory page, and `memory/`](2026-10-14-memory-publish.md) | ADR-0009 |
