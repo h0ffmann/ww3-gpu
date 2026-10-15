@@ -1,15 +1,17 @@
-// Codespaces / VS Code dev container: Ubuntu 24.04 with Nix (flakes on) for the pinned toolchain
-// (`just ww3`, `just kokkos-test serial-debug`), and scripts/agent_env.sh for the apt-side gate
-// tools and the nix-config submodule. CPU only; a GPU gate (`just kokkos-cuda-test`) needs a host
-// with a driver. The first `nix develop` downloads the toolchain; later ones hit the store.
+// Codespaces / VS Code dev container, built from the project's own docker/Dockerfile (stage
+// `dev`): Ubuntu 26.04 with the compilers, netCDF and Kokkos 5.2.2 the runtime image is built
+// with, the gate tools, and Nix (flakes on) for the pinned toolchain (`just ww3`,
+// `just kokkos-test serial-debug`). scripts/agent_env.sh then fetches the nix-config submodule
+// over https. CPU only; a GPU gate (`just kokkos-cuda-test`) needs a host with a driver. The
+// first `nix develop` downloads the toolchain; later ones hit the store.
 {
   "name": "ww3-gpu",
-  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-24.04",
-  "features": {
-    "ghcr.io/devcontainers/features/nix:1": {
-      "extraNixConfig": "experimental-features = nix-command flakes"
-    }
+  "build": {
+    "dockerfile": "../docker/Dockerfile",
+    "context": "..",
+    "target": "dev"
   },
+  "remoteUser": "ubuntu",
   "postCreateCommand": "bash scripts/agent_env.sh",
   "customizations": {
     "vscode": {
