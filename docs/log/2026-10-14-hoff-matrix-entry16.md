@@ -67,3 +67,14 @@ widened. The owner decides between:
 Reproduction: the drivers and the per-step comparison were kept outside the repository; the
 commands above, with `bash scripts/hoff_matrix.sh --dry-run --only 16` for the exact
 `run_cmake_test` line, rebuild them.
+
+## Update, 2026-10-15
+
+Resolved by the fix of `pow11()` (`kokkos/src/ww_kokkos/snl1_tables.cpp`, commit `e305841`): the
+Kokkos table `AF11 = (SIG*TPIINV)**11` used the `-O0` chain `x^3*x^8`, WW3 at `-O3` computes
+`x^5*x^6`. With that one change the Kokkos DIA is byte-identical to the Fortran inside WW3, and this
+entry's `test.comp` finds 0 differing files (v)
+([`2026-10-14-snl1-bitwise-af11.md`](2026-10-14-snl1-bitwise-af11.md),
+[`../data/hoff_matrix_2026-10-15.tsv`](../data/hoff_matrix_2026-10-15.tsv)). The amplification
+described above is real in WW3, so a perturbation of the Fortran's own round-off (FMA) still
+moves these entries; the port no longer perturbs it.

@@ -78,6 +78,11 @@ out: building the Fortran with `-ffp-contract=off` changed nothing in `ww3_ts1`'
 which `gen_snl1_ww3lib` (`kokkos/tests/fixtures`) can produce from a WW3 build. Until then the
 ledger says L2, not bit-identical.
 
+> **Update, 2026-10-15.** Closed: `pow11()` computed `AF11 = (SIG*TPIINV)**11` with the chain
+> gfortran uses at `-O0` (`x^3*x^8`); at `-O3` GCC uses `x^5*x^6`. With the `-O3` chain the
+> Kokkos DIA is byte-identical inside WW3 on all 100 matrix entries `(v)`
+> ([`log/2026-10-14-snl1-bitwise-af11.md`](log/2026-10-14-snl1-bitwise-af11.md)).
+
 ## 5. Where the time goes, and the port score
 
 The ranking in `kokkos/PORT_STATUS.md` ("Port score", `just port-score`) is gprof on `bench_small`

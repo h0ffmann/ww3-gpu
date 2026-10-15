@@ -5,4 +5,4 @@ of the run time	48.4 %		the profile's self time in routines that pass the WW3 re
 of the lines of code	0.25 %	663 of 263 375	the ported routines' Fortran lines, of every line in WW3's model/src
 of the files	0.68 %	1 of 147	WW3 .F90 files with a ported routine
 of the routines	0.20 %	2 of 1 023	ported routines, of every SUBROUTINE and FUNCTION in model/src
-lines of Kokkos C++	1 464	in 11 files	under kokkos/src: the port itself
+lines of Kokkos C++	1 470	in 11 files	under kokkos/src: the port itself

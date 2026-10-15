@@ -1,0 +1,40 @@
+# WFIP-0003: the Kokkos DIA (W3SNL1) against the Fortran DIA, one KOKKOS executable, every shared-memory OpenMP NL1 entry of WW3 matrix.base
+# full run, --omp: switch with NL1 and OMPG or OMPH, no MPI, no -p, no -m (25 entries, all ww3_ts3, all OMPG; the 25 mww3_test_05 -m twins
+# are left out because the port refuses IMOD > 1, WW3 model/src/w3initmd.F90:754-759). matrix.base's -f -O -n $np kept, $np = OMP_NUM_THREADS.
+#   started: 2026-10-15T04:04:06Z
+#   date: 2026-10-15T04:23:25Z
+#   ww3-gpu commit: 551684a (dirty: the --omp selection of this commit)
+#   WW3 commit: 6d1bcdfe (origin/hoff/kokkos-snl1)
+#   machine: Intel(R) Core(TM) i9-14900, 32 hardware threads (nproc --all), OMP_NUM_THREADS=8 per entry, OMP_MAX_ACTIVE_LEVELS=2 for both runs
+#   command: OMP_MAX_ACTIVE_LEVELS=2 just hoff-matrix --omp --jobs 4
+# OMP_MAX_ACTIVE_LEVELS=2: without it every Kokkos run aborts at the first DIA call ("Kokkos::OpenMP: Nested parallelism requires the
+#   maximum active levels to be larger than 1"), since the shim is called inside W3WAVE's !$OMP PARALLEL region (w3wavemd.F90:2240-2243,
+#   w3srcemd.F90:1275); first try, same commit, entries 1-4: ran=fortran-only on all four
+# test_comp: files differing/compared (WW3 test.comp, bytes); nccmp_tol: kokkos/tools/nccmp-tol/tolerances.txt, unchanged
+# every entry 0 differing files
+n	test	switch	built	ran	kokkos_log	test_comp	nccmp_tol	judged	wall_s	options
+1	ww3_ts3	ST1_PR1_OMP	yes	yes	yes	0/20	PASS	hs	80	-s ST1_PR1_OMP -w work_ST1_PR1_OMP -f -O -n $np
+2	ww3_ts3	ST1_PR2_UQ_OMP	yes	yes	yes	0/20	PASS	hs	79	-s ST1_PR2_UQ_OMP -w work_ST1_PR2_UQ_OMP -f -O -n $np
+3	ww3_ts3	ST1_PR2_UNO_OMP	yes	yes	yes	0/20	PASS	hs	84	-s ST1_PR2_UNO_OMP -w work_ST1_PR2_UNO_OMP -f -O -n $np
+4	ww3_ts3	ST1_PR3_UQ_OMP	yes	yes	yes	0/20	PASS	hs	88	-s ST1_PR3_UQ_OMP -w work_ST1_PR3_UQ_OMP -f -O -n $np
+5	ww3_ts3	ST1_PR3_UNO_OMP	yes	yes	yes	0/20	PASS	hs	122	-s ST1_PR3_UNO_OMP -w work_ST1_PR3_UNO_OMP -f -O -n $np
+6	ww3_ts3	ST2_PR1_OMP	yes	yes	yes	0/20	PASS	hs	115	-s ST2_PR1_OMP -w work_ST2_PR1_OMP -f -O -n $np
+7	ww3_ts3	ST2_PR2_UQ_OMP	yes	yes	yes	0/20	PASS	hs	117	-s ST2_PR2_UQ_OMP -w work_ST2_PR2_UQ_OMP -f -O -n $np
+8	ww3_ts3	ST2_PR2_UNO_OMP	yes	yes	yes	0/20	PASS	hs	116	-s ST2_PR2_UNO_OMP -w work_ST2_PR2_UNO_OMP -f -O -n $np
+9	ww3_ts3	ST2_PR3_UQ_OMP	yes	yes	yes	0/20	PASS	hs	190	-s ST2_PR3_UQ_OMP -w work_ST2_PR3_UQ_OMP -f -O -n $np
+10	ww3_ts3	ST2_PR3_UNO_OMP	yes	yes	yes	0/20	PASS	hs	195	-s ST2_PR3_UNO_OMP -w work_ST2_PR3_UNO_OMP -f -O -n $np
+11	ww3_ts3	ST3_PR1_OMP	yes	yes	yes	0/20	PASS	hs	193	-s ST3_PR1_OMP -w work_ST3_PR1_OMP -f -O -n $np
+12	ww3_ts3	ST3_PR2_UQ_OMP	yes	yes	yes	0/20	PASS	hs	191	-s ST3_PR2_UQ_OMP -w work_ST3_PR2_UQ_OMP -f -O -n $np
+13	ww3_ts3	ST3_PR2_UNO_OMP	yes	yes	yes	0/20	PASS	hs	197	-s ST3_PR2_UNO_OMP -w work_ST3_PR2_UNO_OMP -f -O -n $np
+14	ww3_ts3	ST3_PR3_UQ_OMP	yes	yes	yes	0/20	PASS	hs	196	-s ST3_PR3_UQ_OMP -w work_ST3_PR3_UQ_OMP -f -O -n $np
+15	ww3_ts3	ST3_PR3_UNO_OMP	yes	yes	yes	0/20	PASS	hs	202	-s ST3_PR3_UNO_OMP -w work_ST3_PR3_UNO_OMP -f -O -n $np
+16	ww3_ts3	ST4_PR1_OMP	yes	yes	yes	0/20	PASS	hs	214	-s ST4_PR1_OMP -w work_ST4_PR1_OMP -f -O -n $np
+17	ww3_ts3	ST4_PR2_UQ_OMP	yes	yes	yes	0/20	PASS	hs	210	-s ST4_PR2_UQ_OMP -w work_ST4_PR2_UQ_OMP -f -O -n $np
+18	ww3_ts3	ST4_PR2_UNO_OMP	yes	yes	yes	0/20	PASS	hs	215	-s ST4_PR2_UNO_OMP -w work_ST4_PR2_UNO_OMP -f -O -n $np
+19	ww3_ts3	ST4_PR3_UQ_OMP	yes	yes	yes	0/20	PASS	hs	221	-s ST4_PR3_UQ_OMP -w work_ST4_PR3_UQ_OMP -f -O -n $np
+20	ww3_ts3	ST4_PR3_UNO_OMP	yes	yes	yes	0/20	PASS	hs	224	-s ST4_PR3_UNO_OMP -w work_ST4_PR3_UNO_OMP -f -O -n $np
+21	ww3_ts3	ST6_PR1_OMP	yes	yes	yes	0/20	PASS	hs	193	-s ST6_PR1_OMP -w work_ST6_PR1_OMP -f -O -n $np
+22	ww3_ts3	ST6_PR2_UQ_OMP	yes	yes	yes	0/20	PASS	hs	200	-s ST6_PR2_UQ_OMP -w work_ST6_PR2_UQ_OMP -f -O -n $np
+23	ww3_ts3	ST6_PR2_UNO_OMP	yes	yes	yes	0/20	PASS	hs	196	-s ST6_PR2_UNO_OMP -w work_ST6_PR2_UNO_OMP -f -O -n $np
+24	ww3_ts3	ST6_PR3_UQ_OMP	yes	yes	yes	0/20	PASS	hs	199	-s ST6_PR3_UQ_OMP -w work_ST6_PR3_UQ_OMP -f -O -n $np
+25	ww3_ts3	ST6_PR3_UNO_OMP	yes	yes	yes	0/20	PASS	hs	166	-s ST6_PR3_UNO_OMP -w work_ST6_PR3_UNO_OMP -f -O -n $np

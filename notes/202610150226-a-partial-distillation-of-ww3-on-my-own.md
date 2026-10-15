@@ -29,9 +29,9 @@ checked against what NOAA itself runs, the regtest matrix, not against a test of
 **Status: partial.** The numbers and the non-affiliation are read from the repository; that
 "distillation" is the right word is my position, not a fact with a source. It is not model
 distillation in the machine-learning sense, where a small model learns from a large one's outputs:
-here the code is translated and the outputs are compared, case by case. ⚠ Not yet settled: three
-entries of the first full matrix fail `nccmp-tol` (`docs/log/2026-10-14-hoff-matrix-entry16.md`),
-so even the DIA's distillation is not complete by the rule above.
+here the code is translated and the outputs are compared, case by case. By that rule the DIA is
+distilled: WW3's `test.comp` finds 0 differing files on all 100 serial `NL1` entries of its
+regtest matrix `(v)` (`docs/data/hoff_matrix_2026-10-15.tsv`).
 
 What it is not: an improvement of WW3. A distilled routine reproduces the Fortran's arithmetic,
 and the order in which routines are drawn out follows wall time:

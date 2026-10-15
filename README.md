@@ -24,8 +24,8 @@ a PDF on every merge ([`pdf/ww3-lab-course.pdf`](pdf/ww3-lab-course.pdf)). The c
 is next to them: a Nix-pinned Fortran/MPI/NetCDF toolchain that builds WW3 and runs a regression
 test in one command, and a C++/Kokkos port of the DIA nonlinear interaction term (`W3SNL1`),
 written with coding agents, that reproduced the Fortran output bit for bit on the Serial, OpenMP
-and CUDA backends in its former unit tests, and agrees with WW3 within 1.8e-7 relative in `hs` in
-WW3's own regtests on the CPU, the port's only tests since
+and CUDA backends in its former unit tests, and is byte-identical to the Fortran DIA on all 100
+serial `NL1` entries of WW3's own regtests on the CPU, the port's only tests since
 [ADR-0010](docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md). On an RTX 4090 it runs
 1,000 sea points in 0.047 ms against 24.96 ms serial
 ([`kokkos/PORT_STATUS.md`](kokkos/PORT_STATUS.md)). Every claim carries its evidence (`(v)`
@@ -124,7 +124,7 @@ or issues, linked so you can follow them.
 | Area | Question it answers | Where | State |
 |---|---|---|---|
 | The course | How do you build, run and measure WW3, then port a kernel? | [`course/`](course/README.md), [`examples/`](examples/README.md), [`exercises/`](exercises/README.md) | 17 lessons, merged |
-| Kokkos port of `W3SNL1` | Can a WW3 kernel run on a GPU with bit-identical results? | [`kokkos/`](kokkos/README.md), [lesson 12](course/12-porting-a-kernel-w3snl1.md) | Bit-identical on 3 backends in the unit tests ADR-0010 removed; WW3 regtest replay passed on the CPU, `hs` within 1.8e-7 relative, not byte-identical |
+| Kokkos port of `W3SNL1` | Can a WW3 kernel run on a GPU with bit-identical results? | [`kokkos/`](kokkos/README.md), [lesson 12](course/12-porting-a-kernel-w3snl1.md) | Bit-identical on 3 backends in the unit tests ADR-0010 removed; WW3 regtest matrix on the CPU byte-identical to the Fortran DIA on all 100 serial `NL1` entries (2026-10-15) |
 | Benchmarks | What do an i9 and an RTX 4090 actually give WW3? | [`bench/`](bench/README.md), [`gpu/`](gpu/README.md), [lesson 09](course/09-benchmark-profile-compile-run.md) | Tooling merged |
 | Port priority | Which routine should be ported next? | [ADR-0002](docs/ADRs/ADR-0002-port-order-wall-time.md), [`PORT_STATUS.md`](kokkos/PORT_STATUS.md) | Port by measured wall time. A first profile puts `W3SDS4` at 67 % of source-term time ([#45](https://github.com/h0ffmann/ww3-gpu/issues/45)) |
 | Porting with agents | How can coding agents port forty routines without a human redoing the checks? | [`AGENTS_KOKKOS`](docs/AGENTS_KOKKOS_202609.md), [lesson 13](course/13-bulk-porting-with-agents.md), [#42](https://github.com/h0ffmann/ww3-gpu/issues/42) | Rules merged; task queue and parity ladder in #42 |
@@ -154,7 +154,8 @@ just kokkos-test serial-debug   # build and test the C++/Kokkos kernels
 ```
 
 Then start at [`course/00-orientation.md`](course/00-orientation.md). `just` lists every task; each
-recipe is a thin wrapper over a script in `scripts/`. The toolchain, the WW3 fork and the Kokkos
+recipe is a thin wrapper over a script in `scripts/`, except `just hoff-matrix*`, which drive WW3's
+regtest matrix through CMake/CTest in `regtests/`. The toolchain, the WW3 fork and the Kokkos
 presets are in [`docs/TOOLCHAIN.md`](docs/TOOLCHAIN.md). For coastal cases, add SWAN with
 `just swan`.
 

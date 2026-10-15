@@ -81,7 +81,8 @@ full-hoff device="cpu":
 
 # The Kokkos DIA through WW3's own regtest harness (WFIP-0003): every serial NL1 entry of
 # matrix.base, Fortran and Kokkos DIA from one executable, test.comp and nccmp-tol. CPU only.
-# `just hoff-matrix --list`, `--dry-run`, `--only ww3_ts1:ST4`, `--jobs N`; `--fetch-data` once
+# `just hoff-matrix --list`, `--dry-run`, `--only ww3_ts1:ST4`, `--jobs N`; `--omp` for the shared-
+# memory OpenMP entries instead (build/hoff-matrix-omp/), `--out DIR`; `--fetch-data` once
 # for the inputs WW3 keeps on NOAA's ftp (ww3_tp2.15's wind.nc), cached in build/ww3-data/.
 hoff-matrix *args:
     bash scripts/hoff_matrix.sh {{args}}

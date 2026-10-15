@@ -107,9 +107,9 @@ instructions for whichever kitchen is there.
 **Why it matters here.** The `W3SNL1` port is one source that gave the Fortran's numbers bit for
 bit on Serial, OpenMP and CUDA (L1 tests, 2026-09-15, removed on 2026-10-14 by
 [ADR-0010](../docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md)), and the OpenMP build
-passes the WW3 regtest replay inside WW3 on the CPU, `hs` within 1.8e-7 relative and not
-byte-identical (L2; `just smoke-hoff`, `just full-hoff`) (v, [`PORT_STATUS.md`](PORT_STATUS.md),
-read 2026-10-14). Same source did not mean same numbers for free: it took turning off
+is byte-identical to the Fortran DIA inside WW3 on the CPU (L2; `just smoke-hoff`,
+`just full-hoff`, and `test.comp` on all 100 entries of `just hoff-matrix`) (v,
+[`PORT_STATUS.md`](PORT_STATUS.md), 2026-10-15). Same source did not mean same numbers for free: it took turning off
 contraction and copying gfortran's `x**n` ([The W3SNL1 port](#the-w3snl1-port)).
 
 **Where the analogy breaks.** Fortran is not stuck in 1957 or 1991. Modern Fortran has coarrays
@@ -250,8 +250,11 @@ suites left in CTest test the lessons and the tools, not the port:
 The DIA and its shim are validated by WW3's regtests: `scripts/hoff.sh --hoff --cpu`
 runs a WW3 case with the Kokkos DIA and compares it with the Fortran DIA of the same
 executable and pair to pair with `--ww3` (WW3 built without the KOKKOS switch), and
-the regtest matrix of WFIP-0003 (`scripts/hoff_matrix.sh`) extends that to more of
-WW3's regtests ⚠ (being written in parallel on 2026-10-14; not run from here).
+the regtest matrix of WFIP-0003 (`just hoff-matrix`, a CMake/CTest driver in `regtests/`, one
+CTest test per `matrix.base` entry) extends that to WW3's own regtests: the 100 serial `NL1` entries
+and the 25 shared-memory OpenMP ones, byte-identical (v, `docs/data/hoff_matrix_2026-10-15.tsv`,
+`docs/data/hoff_matrix_omp_2026-10-15.tsv`, both written by the shell script the driver replaced).
+That CTest project runs WW3's regtests, Fortran against Kokkos; it is not a test of the port's own.
 
 Removed on 2026-10-14 under that rule: `L1_test_snl1_tables`, `L1_test_snl1_dia`,
 `L1_test_snl1_shim`, the Fortran `shim_roundtrip` CTest case, and the standalone
@@ -283,6 +286,12 @@ Two consequences worth knowing before touching them:
   binary-exponent chain of multiplications; `powf` does something else, to within
   a ULP. `snl1_tables.cpp` has a `powi()` that reproduces the chain, and that is
   what made the L1 parity of the removed tests exact rather than merely close.
+  The chain depends on the optimisation level: a literal exponent such as
+  `**11` is a call of `__powisf2` at `-O0` (ending `x^3*x^8`) and GCC's power tree
+  at `-O3` (ending `x^5*x^6`), and the two differ in the last bit for about 64 %
+  of inputs. `pow11()` follows `-O3`, the level WW3 is built at; with it the
+  Kokkos DIA inside WW3 is byte-identical to the Fortran
+  ([`../docs/log/2026-10-14-snl1-bitwise-af11.md`](../docs/log/2026-10-14-snl1-bitwise-af11.md)).
 
 The DIA has no reduction, so `WW_DETERMINISTIC` changes nothing here: every output
 element is written by one thread from inputs no thread modifies.

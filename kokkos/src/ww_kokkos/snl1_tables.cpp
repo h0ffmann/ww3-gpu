@@ -25,9 +25,9 @@ namespace {
 
 /// Fortran's `x ** n` for a runtime INTEGER n, in the same order gfortran uses.
 ///
-/// This is not std::pow: gfortran lowers a real**integer to the binary-exponent
-/// chain of libgcc's __powisf2 (and GCC's own inline expansion follows the same
-/// addition chain), while powf goes through libm's general algorithm. The two
+/// This is not std::pow: gfortran lowers a real**integer with a runtime exponent
+/// to a call of libgcc's __powisf2, at -O3 as at -O0, and this is that function's
+/// binary-exponent chain; powf goes through libm's general algorithm. The two
 /// agree to a ULP or so, not exactly -- and "or so" is the whole budget of a
 /// parity test. INSNL1 needs XFR**IFRP with IFRP in {-4,-3,2,3}, so the negative
 /// branch matters too.
@@ -41,14 +41,20 @@ Real powi(Real x, int n) {
   return (n < 0) ? static_cast<Real>(1) / y : y;
 }
 
-/// x**11 by the same addition chain gfortran emits for a literal exponent:
-/// x^2, x^3 = x*x^2, x^4, x^8, x^11 = x^3 * x^8.
+/// x**11 as the WW3 executable computes it. WW3 builds at -O3, where GCC expands
+/// a literal integer power with its power tree (powi_table in
+/// tree-ssa-math-opts.cc): x^2, x^3 = x^2*x, x^5 = x^2*x^3, x^6 = x^3*x^3,
+/// x^11 = x^5*x^6 (v) (-fdump-tree-optimized of w3snl1md.F90, INSNL1 section 8,
+/// gfortran 15.3.0, 2026-10-14). At -O0 the same source calls __powisf2, whose
+/// binary chain ends x^3*x^8 instead: the two differ in the last bit for about
+/// 64 % of inputs, which is why a fixture built at -g matched x^3*x^8 and WW3 did
+/// not (docs/log/2026-10-14-snl1-bitwise-af11.md).
 Real pow11(Real x) {
   const Real x2 = x * x;
-  const Real x3 = x * x2;
-  const Real x4 = x2 * x2;
-  const Real x8 = x4 * x4;
-  return x3 * x8;
+  const Real x3 = x2 * x;
+  const Real x5 = x2 * x3;
+  const Real x6 = x3 * x3;
+  return x5 * x6;
 }
 
 /// The host-side mirror type of an index table. Spelled with decltype rather

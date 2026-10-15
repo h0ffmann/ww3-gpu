@@ -1,0 +1,112 @@
+# WFIP-0003: the Kokkos DIA (W3SNL1) against the Fortran DIA, one KOKKOS executable, every serial NL1 entry of WW3 matrix.base
+# full run, after pow11() was made to follow gfortran's -O3 power tree (docs/log/2026-10-14-snl1-bitwise-af11.md):
+#   started: 2026-10-15T02:58:30Z
+#   date: 2026-10-15T03:21:07Z
+#   ww3-gpu commit: 7fd6bb2 (dirty: the pow11() change of this commit)
+#   WW3 commit: 6d1bcdfe (origin/hoff/kokkos-snl1)
+#   machine: Intel(R) Core(TM) i9-14900, 4 threads, OMP_NUM_THREADS=4
+#   correction, 2026-10-15: the machine has 32 hardware threads (nproc --all); "4 threads" above is plain nproc, which honours OMP_NUM_THREADS (docs/log/2026-10-15-hoff-matrix-omp.md)
+#   command: just hoff-matrix --jobs 8
+# test_comp: files differing/compared (WW3 test.comp, bytes); nccmp_tol: kokkos/tools/nccmp-tol/tolerances.txt, unchanged
+# every entry 0 differing files; the previous run, before the fix: docs/data/hoff_matrix_2026-10-14.tsv
+n	test	switch	built	ran	kokkos_log	test_comp	nccmp_tol	judged	wall_s	options
+1	ww3_tp2.6	ST0	yes	yes	yes	0/36	PASS	hs,t0m1	155	-s ST0 -w work_ST0
+2	ww3_tp2.7	ST0	yes	yes	yes	0/23	PASS	hs	15	-s ST0 -w work_ST0
+3	ww3_tp2.6	ST4	yes	yes	yes	0/36	PASS	hs,t0m1	187	-s ST4 -w work_ST4
+4	ww3_tp2.6	ST4_ASCII	yes	yes	yes	0/38	PASS	hs,t0m1	183	-s ST4_ASCII -w work_ST4_ASCII
+5	ww3_tp2.15	default	yes	yes	yes	0/23	PASS	dir,dp,fp,hs	100	-w work_PR3_UQ
+6	ww3_tp2.15	default	yes	yes	yes	0/23	PASS	dir,dp,fp,hs	1350	-w work_5km -g 5km
+7	ww3_tp2.15	default	yes	yes	yes	0/23	PASS	dir,dp,fp,hs	74	-i input_const -w work_PR3_UQ_CONST
+8	ww3_tp2.15	default	yes	yes	yes	0/25	PASS	dir,dp,fp,hs	74	-i input_rho -w work_PR3_UQ_RHO
+9	ww3_tp2.15	ST4	yes	yes	yes	0/25	PASS	dir,dp,fp,hs	77	-s ST4 -i input_rho -w work_ST4FLX5
+10	ww3_tp2.15	ST6	yes	yes	yes	0/25	PASS	dir,dp,fp,hs	92	-s ST6 -i input_rho -w work_ST6FLX5
+11	ww3_ts1	ST1	yes	yes	yes	0/22	PASS	hs	18	-s ST1 -w work_ST1
+12	ww3_ts1	ST1_RWND	yes	yes	yes	0/22	PASS	hs	20	-s ST1_RWND -w work_ST1_RWND
+13	ww3_ts1	ST2	yes	yes	yes	0/22	PASS	hs	20	-s ST2 -w work_ST2
+14	ww3_ts1	ST3	yes	yes	yes	0/22	PASS	hs	20	-s ST3 -w work_ST3
+15	ww3_ts1	ST4	yes	yes	yes	0/22	PASS	hs	45	-s ST4 -w work_ST4
+16	ww3_ts1	ST4	yes	yes	yes	0/22	PASS	hs	196	-s ST4 -w work_ST4_T500 -g ST4_T500 -N
+17	ww3_ts1	ST4	yes	yes	yes	0/22	PASS	hs	49	-s ST4 -w work_ST4_T700 -g ST4_T700 -N
+18	ww3_ts1	ST6	yes	yes	yes	0/22	PASS	hs	20	-s ST6 -w work_ST6
+19	ww3_ts1	default	yes	yes	yes	0/21	PASS	hs	39	-g Romero -w work_Romero -i input_10ms -N
+20	ww3_ts1	default	yes	yes	yes	0/21	PASS	hs	40	-g ST4_T701 -w work_T701 -i input_10ms -N
+21	ww3_ts1	default	yes	yes	yes	0/21	PASS	hs	39	-g ST4_T702 -w work_T702 -i input_10ms -N
+22	ww3_ts1	default	yes	yes	yes	0/21	PASS	hs	21	-g ST4_T707 -w work_T707GQM -i input_10ms -N
+23	ww3_ts1	default	yes	yes	yes	0/21	PASS	hs	21	-g ST4_T713 -w work_T713GQM -i input_10ms -N
+24	ww3_ts1	ST4	yes	yes	yes	0/22	PASS	hs	11	-s ST4 -w work_ST4_CAP -i input_capcha -N
+25	ww3_ts1	ST6	yes	yes	yes	0/22	PASS	hs	9	-s ST6 -w work_ST6_CAP -i input_capcha -N
+26	ww3_ts2	ST1_PR1	yes	yes	yes	0/22	n/a	-	12	-s ST1_PR1 -w work_ST1_PR1
+27	ww3_ts2	ST1_PR2_UQ	yes	yes	yes	0/22	n/a	-	15	-s ST1_PR2_UQ -w work_ST1_PR2_UQ
+28	ww3_ts2	ST1_PR2_UNO	yes	yes	yes	0/22	n/a	-	13	-s ST1_PR2_UNO -w work_ST1_PR2_UNO
+29	ww3_ts2	ST1_PR3_UQ	yes	yes	yes	0/22	n/a	-	13	-s ST1_PR3_UQ -w work_ST1_PR3_UQ
+30	ww3_ts2	ST1_PR3_UNO	yes	yes	yes	0/22	n/a	-	13	-s ST1_PR3_UNO -w work_ST1_PR3_UNO
+31	ww3_ts2	ST2_PR1	yes	yes	yes	0/22	n/a	-	16	-s ST2_PR1 -w work_ST2_PR1
+32	ww3_ts2	ST2_PR2_UQ	yes	yes	yes	0/22	n/a	-	18	-s ST2_PR2_UQ -w work_ST2_PR2_UQ
+33	ww3_ts2	ST2_PR2_UNO	yes	yes	yes	0/22	n/a	-	13	-s ST2_PR2_UNO -w work_ST2_PR2_UNO
+34	ww3_ts2	ST2_PR3_UQ	yes	yes	yes	0/22	n/a	-	19	-s ST2_PR3_UQ -w work_ST2_PR3_UQ
+35	ww3_ts2	ST2_PR3_UNO	yes	yes	yes	0/22	n/a	-	19	-s ST2_PR3_UNO -w work_ST2_PR3_UNO
+36	ww3_ts2	ST3_PR1	yes	yes	yes	0/22	n/a	-	15	-s ST3_PR1 -w work_ST3_PR1
+37	ww3_ts2	ST3_PR2_UQ	yes	yes	yes	0/22	n/a	-	14	-s ST3_PR2_UQ -w work_ST3_PR2_UQ
+38	ww3_ts2	ST3_PR2_UNO	yes	yes	yes	0/22	n/a	-	16	-s ST3_PR2_UNO -w work_ST3_PR2_UNO
+39	ww3_ts2	ST3_PR3_UQ	yes	yes	yes	0/22	n/a	-	16	-s ST3_PR3_UQ -w work_ST3_PR3_UQ
+40	ww3_ts2	ST3_PR3_UNO	yes	yes	yes	0/22	n/a	-	15	-s ST3_PR3_UNO -w work_ST3_PR3_UNO
+41	ww3_ts2	ST4_PR1	yes	yes	yes	0/22	n/a	-	42	-s ST4_PR1 -w work_ST4_PR1
+42	ww3_ts2	ST4_PR2_UQ	yes	yes	yes	0/22	n/a	-	41	-s ST4_PR2_UQ -w work_ST4_PR2_UQ
+43	ww3_ts2	ST4_PR2_UNO	yes	yes	yes	0/22	n/a	-	41	-s ST4_PR2_UNO -w work_ST4_PR2_UNO
+44	ww3_ts2	ST4_PR3_UQ	yes	yes	yes	0/22	n/a	-	46	-s ST4_PR3_UQ -w work_ST4_PR3_UQ
+45	ww3_ts2	ST4_PR3_UNO	yes	yes	yes	0/22	n/a	-	44	-s ST4_PR3_UNO -w work_ST4_PR3_UNO
+46	ww3_ts2	ST6_PR1	yes	yes	yes	0/22	n/a	-	10	-s ST6_PR1 -w work_ST6_PR1
+47	ww3_ts2	ST6_PR2_UQ	yes	yes	yes	0/22	n/a	-	11	-s ST6_PR2_UQ -w work_ST6_PR2_UQ
+48	ww3_ts2	ST6_PR2_UNO	yes	yes	yes	0/22	n/a	-	16	-s ST6_PR2_UNO -w work_ST6_PR2_UNO
+49	ww3_ts2	ST6_PR3_UQ	yes	yes	yes	0/22	n/a	-	14	-s ST6_PR3_UQ -w work_ST6_PR3_UQ
+50	ww3_ts2	ST6_PR3_UNO	yes	yes	yes	0/22	n/a	-	15	-s ST6_PR3_UNO -w work_ST6_PR3_UNO
+51	ww3_ts3	ST1_PR1	yes	yes	yes	0/20	PASS	hs	70	-s ST1_PR1 -w work_ST1_PR1
+52	ww3_ts3	ST1_PR2_UQ	yes	yes	yes	0/20	PASS	hs	62	-s ST1_PR2_UQ -w work_ST1_PR2_UQ
+53	ww3_ts3	ST1_PR2_UNO	yes	yes	yes	0/20	PASS	hs	90	-s ST1_PR2_UNO -w work_ST1_PR2_UNO
+54	ww3_ts3	ST1_PR3_UQ	yes	yes	yes	0/20	PASS	hs	105	-s ST1_PR3_UQ -w work_ST1_PR3_UQ
+55	ww3_ts3	ST1_PR3_UNO	yes	yes	yes	0/20	PASS	hs	86	-s ST1_PR3_UNO -w work_ST1_PR3_UNO
+56	ww3_ts3	ST2_PR1	yes	yes	yes	0/20	PASS	hs	75	-s ST2_PR1 -w work_ST2_PR1
+57	ww3_ts3	ST2_PR2_UQ	yes	yes	yes	0/20	PASS	hs	87	-s ST2_PR2_UQ -w work_ST2_PR2_UQ
+58	ww3_ts3	ST2_PR2_UNO	yes	yes	yes	0/20	PASS	hs	116	-s ST2_PR2_UNO -w work_ST2_PR2_UNO
+59	ww3_ts3	ST2_PR3_UQ	yes	yes	yes	0/20	PASS	hs	69	-s ST2_PR3_UQ -w work_ST2_PR3_UQ
+60	ww3_ts3	ST2_PR3_UNO	yes	yes	yes	0/20	PASS	hs	84	-s ST2_PR3_UNO -w work_ST2_PR3_UNO
+61	ww3_ts3	ST3_PR1	yes	yes	yes	0/20	PASS	hs	78	-s ST3_PR1 -w work_ST3_PR1
+62	ww3_ts3	ST3_PR2_UQ	yes	yes	yes	0/20	PASS	hs	92	-s ST3_PR2_UQ -w work_ST3_PR2_UQ
+63	ww3_ts3	ST3_PR2_UNO	yes	yes	yes	0/20	PASS	hs	96	-s ST3_PR2_UNO -w work_ST3_PR2_UNO
+64	ww3_ts3	ST3_PR3_UQ	yes	yes	yes	0/20	PASS	hs	83	-s ST3_PR3_UQ -w work_ST3_PR3_UQ
+65	ww3_ts3	ST3_PR3_UNO	yes	yes	yes	0/20	PASS	hs	82	-s ST3_PR3_UNO -w work_ST3_PR3_UNO
+66	ww3_ts3	ST4_PR1	yes	yes	yes	0/20	PASS	hs	124	-s ST4_PR1 -w work_ST4_PR1
+67	ww3_ts3	ST4_PR1_FLD1	yes	yes	yes	0/20	PASS	hs	248	-s ST4_PR1_FLD1 -w work_ST4_FLD1
+68	ww3_ts3	ST4_PR1_FLD2	yes	yes	yes	0/20	PASS	hs	130	-s ST4_PR1_FLD2 -w work_ST4_FLD2
+69	ww3_ts3	ST4_PR2_UQ	yes	yes	yes	0/20	PASS	hs	115	-s ST4_PR2_UQ -w work_ST4_PR2_UQ
+70	ww3_ts3	ST4_PR2_UNO	yes	yes	yes	0/20	PASS	hs	143	-s ST4_PR2_UNO -w work_ST4_PR2_UNO
+71	ww3_ts3	ST4_PR3_UQ	yes	yes	yes	0/20	PASS	hs	113	-s ST4_PR3_UQ -w work_ST4_PR3_UQ
+72	ww3_ts3	ST4_PR3_UNO	yes	yes	yes	0/20	PASS	hs	142	-s ST4_PR3_UNO -w work_ST4_PR3_UNO
+73	ww3_ts3	ST6_PR1	yes	yes	yes	0/20	PASS	hs	60	-s ST6_PR1 -w work_ST6_PR1
+74	ww3_ts3	ST6_PR2_UQ	yes	yes	yes	0/20	PASS	hs	105	-s ST6_PR2_UQ -w work_ST6_PR2_UQ
+75	ww3_ts3	ST6_PR2_UNO	yes	yes	yes	0/20	PASS	hs	77	-s ST6_PR2_UNO -w work_ST6_PR2_UNO
+76	ww3_ts3	ST6_PR3_UQ	yes	yes	yes	0/20	PASS	hs	116	-s ST6_PR3_UQ -w work_ST6_PR3_UQ
+77	ww3_ts3	ST6_PR3_UNO	yes	yes	yes	0/20	PASS	hs	72	-s ST6_PR3_UNO -w work_ST6_PR3_UNO
+78	ww3_ts3	ST6_PR1_FLD1	yes	yes	yes	0/20	PASS	hs	100	-s ST6_PR1_FLD1 -w work_ST6_PR1_FLD1
+79	ww3_ts3	ST6_PR1_FLD2	yes	yes	yes	0/20	PASS	hs	75	-s ST6_PR1_FLD2 -w work_ST6_PR1_FLD2
+80	ww3_tr1	default	yes	yes	yes	0/23	n/a	-	7	
+81	ww3_tr1	default	yes	yes	yes	0/23	n/a	-	7	-i input_std -w work_std
+82	ww3_tr1	default	yes	yes	yes	0/21	n/a	-	8	-i input_bndin -w work_bndin
+83	ww3_ta1	ST4	yes	yes	yes	0/24	PASS	hs	34	-s ST4 -w work_UPD0F_O -i input_UPD0F_O
+84	ww3_ta1	ST4	yes	yes	yes	0/23	PASS	hs	35	-s ST4 -w work_UPD0F_U -i input_UPD0F_U
+85	ww3_ta1	ST4	yes	yes	yes	0/24	PASS	hs	34	-s ST4 -w work_UPD2_O -i input_UPD2_O
+86	ww3_ta1	ST4	yes	yes	yes	0/24	PASS	hs	34	-s ST4 -w work_UPD2_U -i input_UPD2_U
+87	ww3_ta1	ST4	yes	yes	yes	0/24	PASS	hs	33	-s ST4 -w work_UPD2_U_cap -i input_UPD2_U_cap
+88	ww3_ta1	ST4	yes	yes	yes	0/24	PASS	hs	33	-s ST4 -w work_UPD3_O -i input_UPD3_O
+89	ww3_ta1	ST4	yes	yes	yes	0/24	PASS	hs	32	-s ST4 -w work_UPD3_U -i input_UPD3_U
+90	ww3_ta1	ST4	yes	yes	yes	0/24	PASS	hs	33	-s ST4 -w work_UPD3_U_cap -i input_UPD3_U_cap
+91	ww3_ta1	ST4	yes	yes	yes	0/24	PASS	hs	33	-s ST4 -w work_UPD5_O -i input_UPD5_O
+92	ww3_ta1	ST4	yes	yes	yes	0/24	PASS	hs	34	-s ST4 -w work_UPD5_U -i input_UPD5_U
+93	ww3_ta1	ST4	yes	yes	yes	0/24	PASS	hs	33	-s ST4 -w work_UPD5_U_cap -i input_UPD5_U_cap
+94	ww3_ta1	ST4	yes	yes	yes	0/24	PASS	hs	32	-s ST4 -w work_UPD6_O -i input_UPD6_O
+95	ww3_ta1	ST4	yes	yes	yes	0/24	PASS	hs	32	-s ST4 -w work_UPD6_U -i input_UPD6_U
+96	ww3_ta1	ST4	yes	yes	yes	0/24	PASS	hs	30	-s ST4 -w work_UPD6_U_cap -i input_UPD6_U_cap
+97	ww3_tc1	default	yes	yes	yes	0/21	PASS	hs	7	-g STD -w work_STD
+98	ww3_tc1	default	yes	yes	yes	0/21	PASS	hs	7	-g C360 -w work_C360
+99	ww3_tc1	default	yes	yes	yes	0/21	PASS	hs	7	-g C365 -w work_C365
+100	ww3_tnc1	default	yes	yes	yes	0/30	n/a	-	8	-N

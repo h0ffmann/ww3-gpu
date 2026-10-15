@@ -42,6 +42,24 @@
           proposalEnDocx = mkDocx { name = "proposal-en-docx"; inherit src; command = "bash scripts/build_docx.sh proposal en"; };
           proposalPt = mkPdf { name = "proposal-pt"; inherit src; command = "bash scripts/build_pdf.sh proposal pt"; };
           proposalEn = mkPdf { name = "proposal-en"; inherit src; command = "bash scripts/build_pdf.sh proposal en"; };
+          # PT-Scotch as static archives, for WW3's PDLIB regtests (`just hoff-matrix`, SCOTCH_PATH).
+          # WW3's FindSCOTCH.cmake wants libptscotchparmetisv3.a and four more .a files and links
+          # nothing else, so compression is off; the prefixed MeTiS names (SCOTCH_METIS_PREFIX, kept
+          # from nixpkgs) are what model/src/PDLIB/yowpdlibmain.F90 calls under SCOTCH_707. Same
+          # nixpkgs as nix-config/labs/pratico, so the same openmpi and gfortran as the ww3 shell.
+          ptscotchStatic = (pkgs.scotch.override { withPtScotch = true; }).overrideAttrs (o: {
+            pname = "ptscotch-static";
+            outputs = [ "out" ];
+            buildInputs = [ ];
+            cmakeFlags = o.cmakeFlags ++ [
+              "-DBUILD_SHARED_LIBS=OFF"
+              "-DUSE_ZLIB=OFF"
+              "-DUSE_BZ2=OFF"
+              "-DUSE_LZMA=OFF"
+            ];
+            doCheck = false;
+            postFixup = "";
+          });
           all = pkgs.symlinkJoin {
             name = "ww3-lab-pubs";
             paths = [ book bookDocx proposalPt proposalEn proposalPtDocx proposalEnDocx ];
@@ -49,6 +67,7 @@
         in
         {
           inherit book all;
+          ptscotch-static = ptscotchStatic;
           book-docx = bookDocx;
           proposal-pt = proposalPt;
           proposal-en = proposalEn;

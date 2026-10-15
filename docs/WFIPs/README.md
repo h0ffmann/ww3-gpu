@@ -38,7 +38,7 @@ The six specific objectives of the proposal and the schedule rows that deliver t
 |---|---|---|---|---|---|---|---|
 | [WFIP-0001](WFIP-0001-weathernext3-wind-rtx4090.md) | WW3 samples driven by WeatherNext 3 wind on an RTX 4090 box | Draft | 2026-10-08 | D1, D6 | M | do next | 0/6 |
 | [WFIP-0002](WFIP-0002-lab-as-a-book.md) | The lab as a book: compiled from the repository, built in CI, released with each version | Draft | 2026-10-08 | D6 | L | do next, in slices | 0/7 |
-| [WFIP-0003](WFIP-0003-kokkos-regtest-matrix.md) | The Kokkos DIA through WW3's own regtest harness, on the h0ffmann/WW3 fork | Draft | 2026-10-14 | D4, D5 | M | do next | 6/7 |
+| [WFIP-0003](WFIP-0003-kokkos-regtest-matrix.md) | The Kokkos DIA through WW3's own regtest harness, on the h0ffmann/WW3 fork | Draft | 2026-10-14 | D4, D5 | M | do next | 7/7 |
 <!-- wfip-index:end -->
 
 ## Coverage
