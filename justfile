@@ -183,6 +183,10 @@ refs *args:
 notes *args:
     python3 scripts/notes_check.py "$@"
 
+# The ai-memory pages tagged `publish`, in memory/ (MEMORY.md): export (owner), import (reader), check (CI).
+memory *args:
+    python3 scripts/memory.py "$@"
+
 # Regenerate codemeta.json from CITATION.cff and .zenodo.json; `just codemeta --check` is the CI gate.
 codemeta *args:
     python3 scripts/codemeta.py "$@"
