@@ -15,7 +15,8 @@ Docker").
 
 | Component | Version | Pinned in | Read with |
 |---|---|---|---|
-| WW3 | `bb08623a` (2026-10-15), branch `hoff/kokkos-snl1` of the h0ffmann/WW3 fork, on upstream NOAA-EMC/WW3 `03adda91` | the `WW3/` submodule; `.gitmodules` | `git submodule status WW3`; `git -C WW3 merge-base HEAD origin/develop` |
+| WW3-noaa (pure WW3, built by `--ww3`) | NOAA-EMC/WW3 `03adda91` (2026-10-05), unchanged; moves only with the fork's base | the `WW3-noaa/` submodule; `.gitmodules` | `git submodule status WW3-noaa`; `scripts/ww3-gpu.sh --ww3` checks it against the fork |
+| WW3 (the fork, built by `--ww3-gpu`) | `bb08623a` (2026-10-15), branch `hoff/kokkos-snl1` of the h0ffmann/WW3 fork, on upstream NOAA-EMC/WW3 `03adda91` | the `WW3/` submodule; `.gitmodules` | `git submodule status WW3`; `git -C WW3 merge-base HEAD origin/develop` |
 | WW3 regtest data | 7.14.2 (`ww3_from_ftp.v7.14.2.tar.gz`, SHA-256 pinned) | `WW3/model/bin/ww3_from_ftp.sh:23`; `ww3RegtestData` in `picasso/labs/pratico/flake.nix:147` | `grep ww3ver= WW3/model/bin/ww3_from_ftp.sh` |
 | WW4 | `74ea792` (2026-10-01), branch `develop` of the h0ffmann/WW4 fork | the `WW4/` submodule | `git submodule status WW4` |
 | picasso | `be76132` (`v0.1.1-20-gbe76132`), branch `main` | the `picasso/` submodule | `git submodule status picasso` |

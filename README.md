@@ -282,12 +282,23 @@ anyone's table, including the ones here. The Kokkos port takes the other route: 
 their data on the device and match the Fortran within the tolerances WW3's regtests are judged by
 ([`course/09-benchmark-profile-compile-run.md`](course/09-benchmark-profile-compile-run.md)).
 
-There are three ways to run WAVEWATCH here (`scripts/ww3-gpu.sh`). The model sources come only from
-personal forks: WW3's Fortran from the `WW3/` submodule (h0ffmann/WW3, branch `hoff/kokkos-snl1`)
-and WW4's C++ from the `WW4/` submodule (h0ffmann/WW4, `develop`). This repository holds only the
-Kokkos rewrite.
+There are three ways to run WAVEWATCH here (`scripts/ww3-gpu.sh`). The model sources come from
+three submodules, and this repository holds only the Kokkos rewrite:
 
-![ww3-gpu: three ways to run WAVEWATCH. --ww3 runs WW3's Fortran from the fork; --ww3-gpu links the same fork to this repository's Kokkos rewrite and compares the two; --ww4 builds WAVEWATCH IV from its fork, and stops with exit 5 when a part the case needs is not ported](docs/figures/three-ways.svg)
+| Directory | What it is | Used by |
+|---|---|---|
+| `WW3-noaa/` | pure WW3: [NOAA-EMC/WW3](https://github.com/NOAA-EMC/WW3) at `03adda91`, not changed | `--ww3`, the reference |
+| `WW3/` | your fork, [h0ffmann/WW3](https://github.com/h0ffmann/WW3) branch `hoff/kokkos-snl1`: `WW3-noaa/` plus the KOKKOS patch, 5 files under `model/src/` and 282 added lines | `--ww3-gpu` and the regtest matrix |
+| `WW4/` | [h0ffmann/WW4](https://github.com/h0ffmann/WW4), `develop` | `--ww4` |
+
+The fork exists for one reason: the call from WW3 into the Kokkos code has to be inside WW3
+(`W3SRCE`, `model/src/w3srcemd.F90`), and this repository never edits WW3. The fork carries that
+call behind the `KOKKOS` switch and leaves the Fortran routine selectable. Before each `--ww3`,
+`scripts/ww3-gpu.sh` compares the two trees and stops (exit 3) when the fork differs from
+`WW3-noaa/` outside the KOKKOS patch. So `--ww3` is pure NOAA WW3, and `--ww3-gpu --cpu` compares
+the Kokkos port with it.
+
+![ww3-gpu: three ways to run WAVEWATCH. --ww3 runs pure NOAA WW3 from WW3-noaa/; --ww3-gpu links the same fork to this repository's Kokkos rewrite and compares the two; --ww4 builds WAVEWATCH IV from its fork, and stops with exit 5 when a part the case needs is not ported](docs/figures/three-ways.svg)
 
 ```bash
 just smoke             # smoke-ww3, then smoke-ww3-gpu: regtest ww3_ts1, seconds
@@ -340,7 +351,7 @@ solver yet
 | `pubs/` | The book's build and the UFRJ/DEL project proposal; built files land in `pdf/` |
 | `scripts/`, `switches/`, `env/` | Get, build and run WW3 and SWAN; annotated switch files; conda and an untested build-environment Dockerfile |
 | `docker/`, `.dockerignore` | The Ubuntu runtime image: WW3, WW3 with the Kokkos DIA and WW4 compiled, no sources ([run it in Docker](#run-it-in-docker)) |
-| `picasso/`, `WW3/`, `WW4/` | Submodules: the pinned toolchain, the [h0ffmann/WW3](https://github.com/h0ffmann/WW3) fork, the [h0ffmann/WW4](https://github.com/h0ffmann/WW4) fork |
+| `picasso/`, `WW3-noaa/`, `WW3/`, `WW4/` | Submodules: the pinned toolchain, pure [NOAA-EMC/WW3](https://github.com/NOAA-EMC/WW3), the [h0ffmann/WW3](https://github.com/h0ffmann/WW3) fork, the [h0ffmann/WW4](https://github.com/h0ffmann/WW4) fork |
 
 Lab code is C++, Fortran and shell. Python appears only in the publishing pipeline and the repo's
 own checks. CI checks shell syntax, compiles the Fortran sandbox and examples, builds and tests

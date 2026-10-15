@@ -11,3 +11,7 @@
 	path = WW4
 	url = git@github.com:h0ffmann/WW4.git
 	branch = develop
+[submodule "WW3-noaa"]
+	path = WW3-noaa
+	url = https://github.com/NOAA-EMC/WW3.git
+	branch = develop

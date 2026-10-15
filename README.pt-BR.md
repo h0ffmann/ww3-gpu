@@ -264,12 +264,23 @@ segue outro caminho: kernels em Kokkos que mantêm os dados na GPU e concordam c
 das tolerâncias pelas quais os regtests do WW3 são julgados,
 portados na ordem do tempo de parede medido ([lição 09](course/09-benchmark-profile-compile-run.md)).
 
-Há três jeitos de rodar o WAVEWATCH aqui (`scripts/ww3-gpu.sh`). O código dos modelos vem só de forks
-pessoais: o Fortran do WW3 pelo submódulo `WW3/` (h0ffmann/WW3, branch `hoff/kokkos-snl1`) e o C++
-do WW4 pelo submódulo `WW4/` (h0ffmann/WW4, `develop`). Este repositório guarda só a reescrita em
-Kokkos.
+Há três jeitos de rodar o WAVEWATCH aqui (`scripts/ww3-gpu.sh`). O código dos modelos vem de três
+submódulos, e este repositório guarda só a reescrita em Kokkos:
 
-![ww3-gpu: três jeitos de rodar o WAVEWATCH. --ww3 roda o Fortran do WW3 do fork; --ww3-gpu liga o mesmo fork à reescrita em Kokkos deste repositório e compara os dois; --ww4 compila o WAVEWATCH IV do seu fork e para com código 5 quando falta portar uma parte que o caso usa](docs/figures/three-ways.svg)
+| Diretório | O que é | Usado por |
+|---|---|---|
+| `WW3-noaa/` | o WW3 puro: [NOAA-EMC/WW3](https://github.com/NOAA-EMC/WW3) em `03adda91`, sem mudança | `--ww3`, a referência |
+| `WW3/` | o seu fork, [h0ffmann/WW3](https://github.com/h0ffmann/WW3) branch `hoff/kokkos-snl1`: `WW3-noaa/` mais o patch KOKKOS, 5 arquivos em `model/src/` e 282 linhas acrescentadas | `--ww3-gpu` e a matriz de regtests |
+| `WW4/` | [h0ffmann/WW4](https://github.com/h0ffmann/WW4), `develop` | `--ww4` |
+
+O fork existe por um motivo só: a chamada do WW3 para o código em Kokkos precisa estar dentro do
+WW3 (`W3SRCE`, `model/src/w3srcemd.F90`), e este repositório nunca edita o WW3. O fork carrega essa
+chamada atrás da chave `KOKKOS` e deixa a rotina em Fortran selecionável. Antes de cada `--ww3`, o
+`scripts/ww3-gpu.sh` compara as duas árvores e para (código 3) quando o fork difere do `WW3-noaa/`
+fora do patch KOKKOS. Assim o `--ww3` é o WW3 puro da NOAA, e o `--ww3-gpu --cpu` compara o port em
+Kokkos com ele.
+
+![ww3-gpu: três jeitos de rodar o WAVEWATCH. --ww3 roda o WW3 puro da NOAA, do WW3-noaa/; --ww3-gpu liga o mesmo fork à reescrita em Kokkos deste repositório e compara os dois; --ww4 compila o WAVEWATCH IV do seu fork e para com código 5 quando falta portar uma parte que o caso usa](docs/figures/three-ways.svg)
 
 ```bash
 just smoke             # smoke-ww3, depois smoke-ww3-gpu: regtest ww3_ts1, segundos

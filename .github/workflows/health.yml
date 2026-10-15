@@ -27,10 +27,10 @@ jobs:
 
       # .gitmodules uses ssh URLs a runner cannot clone, hence https. A pinned commit on a topic
       # branch may not be fetched by `submodule update`; the fallback fetches the SHA itself.
-      - name: Fetch the pratico toolchain and the WW3 fork at their pinned commits
+      - name: Fetch the pratico toolchain, the WW3 fork and pure NOAA WW3 at their pinned commits
         run: |
-          for sm in picasso WW3; do
-            depth=""; [ "$sm" = WW3 ] && depth="--depth 1"
+          for sm in picasso WW3 WW3-noaa; do
+            depth=""; [ "$sm" != picasso ] && depth="--depth 1"
             # shellcheck disable=SC2086
             git -c url.https://github.com/.insteadOf=git@github.com: \
               submodule update --init --no-recommend-shallow $depth "$sm" || {

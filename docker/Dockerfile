@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
-# A runtime image for WAVEWATCH III three ways (scripts/ww3-gpu.sh): --ww3 (WW3 as written), --ww3-gpu
-# (WW3 with the Kokkos DIA, OpenMP backend) and --ww4 (WAVEWATCH IV). Ubuntu packages only, no
+# A runtime image for WAVEWATCH III three ways (scripts/ww3-gpu.sh): --ww3 (pure NOAA WW3, from
+# WW3-noaa/), --ww3-gpu (the fork WW3/ with the Kokkos DIA, OpenMP backend) and --ww4 (WAVEWATCH IV). Ubuntu packages only, no
 # Nix: the build stage compiles everything, and the final image keeps the programs, their
 # runtime libraries and the case inputs, not the sources. CPU only; there is no CUDA build here.
 #
@@ -52,6 +52,7 @@ WORKDIR /src
 # rebuild the earlier ones (ww3-gpu.sh, the entry point, is copied into the runtime stage only).
 COPY kokkos/ kokkos/
 COPY WW3/ WW3/
+COPY WW3-noaa/ WW3-noaa/
 COPY switches/switch_lab_shrd switches/
 
 ENV P=/opt/ww3-gpu/prebuilt
@@ -62,11 +63,12 @@ RUN cmake -S kokkos --preset openmp-release -B /build/kokkos -DCMAKE_PREFIX_PATH
  && install -D -m 755 /build/kokkos/tools/nccmp-tol/nccmp-tol "$P/bin/nccmp-tol" \
  && install -D -m 644 kokkos/tools/nccmp-tol/tolerances.txt "$P/share/tolerances.txt"
 
-# WW3 twice, as scripts/ww3-gpu.sh builds it: the lab switch (--ww3), and the same switch plus
-# KOKKOS linked to the port (--ww3-gpu). WW3's own Release flags.
+# WW3 twice, as scripts/ww3-gpu.sh builds it: pure NOAA WW3 from WW3-noaa/ with the lab switch
+# (--ww3), and the fork WW3/ with the same switch plus KOKKOS linked to the port (--ww3-gpu).
+# WW3's own Release flags.
 RUN cat switches/switch_lab_shrd > /tmp/switch_ww3 \
  && printf '%s KOKKOS\n' "$(cat switches/switch_lab_shrd)" > /tmp/switch_ww3gpu \
- && cmake -S WW3 -B /build/ww3 -DSWITCH=/tmp/switch_ww3 -DCMAKE_BUILD_TYPE=Release \
+ && cmake -S WW3-noaa -B /build/ww3 -DSWITCH=/tmp/switch_ww3 -DCMAKE_BUILD_TYPE=Release \
  && cmake --build /build/ww3 -j"$(nproc)" \
  && cmake -S WW3 -B /build/ww3-gpu -DSWITCH=/tmp/switch_ww3gpu -DCMAKE_BUILD_TYPE=Release \
       -DWW_KOKKOS=ON "-DCMAKE_PREFIX_PATH=/opt/ww_kokkos;/opt/kokkos" \
@@ -105,7 +107,9 @@ RUN find "$P" -type f -perm -u+x -exec ldd {} + 2>/dev/null \
 
 ARG WW3_GPU_REV=?
 ARG WW3_REV=?
+ARG WW3_NOAA_REV=?
 RUN { echo "ww3-gpu ${WW3_GPU_REV}"; echo "WW3 ${WW3_REV} (h0ffmann/WW3 hoff/kokkos-snl1)"; \
+      echo "WW3-noaa ${WW3_NOAA_REV} (NOAA-EMC/WW3)"; \
       echo "WW4 ${WW4_REV}"; echo "kokkos ${KOKKOS_VERSION}"; gfortran --version | head -1; \
       cmake --version | head -1; } > /opt/ww3-gpu/BUILD_INFO
 

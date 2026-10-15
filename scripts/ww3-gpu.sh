@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
-# ww3-gpu — run WAVEWATCH three ways. WW3's Fortran comes only from the WW3/ submodule (the
-# h0ffmann/WW3 branch hoff/kokkos-snl1) and WW4's C++ only from the WW4/ submodule (h0ffmann/WW4,
-# develop); this repository holds the Kokkos port and nothing of either model's source:
+# ww3-gpu — run WAVEWATCH three ways. WW3's Fortran comes from two submodules: WW3-noaa/ is pure
+# NOAA-EMC/WW3 at the commit the fork branched from, and WW3/ is the fork (the h0ffmann/WW3 branch
+# hoff/kokkos-snl1: WW3-noaa plus the KOKKOS switch and the shim call). WW4's C++ comes only from
+# the WW4/ submodule (h0ffmann/WW4, develop); this repository holds the Kokkos port and nothing of
+# either model's source:
 #
-#   --ww3    WW3 as NOAA writes it: the lab switch, the Fortran W3SNL1.
-#   --ww3-gpu   WW3 built with the KOKKOS switch and linked to this repository's Kokkos port
+#   --ww3    WW3 as NOAA writes it, built from WW3-noaa/: the lab switch, the Fortran W3SNL1.
+#   --ww3-gpu   WW3 from the fork, built with the KOKKOS switch and linked to this repository's Kokkos port
 #            (kokkos/, installed as the ww_kokkos package); W3SNL1 runs on the Kokkos backend.
 #   --ww4    WAVEWATCH IV, built from the WW4/ submodule. It runs only when every part the case
 #            needs is ported to WW4 (scripts/ww4_parts.py): if one is not, it exits 5 and says
@@ -19,12 +21,14 @@
 # Hard rule (AGENTS.md): --ww3-gpu --gpu runs only under a human's supervision. It asks for a
 # confirmation typed at a terminal and refuses without one (exit 7); --build-only compiles for
 # the GPU without running and needs none. --ww3-gpu --cpu is the agents' regtest: its Kokkos run is
-# compared pair to pair with --ww3, WW3 built from the same source without the KOKKOS switch.
+# compared pair to pair with --ww3, pure NOAA WW3 at the fork's base. Before it builds --ww3, the
+# script checks that the fork differs from WW3-noaa/ only in the files of the KOKKOS patch
+# (kokkos_patch below) and exits 3 when it does not.
 #   add --build-only to build and stop before the run (a machine without the GPU can still compile)
 #   scripts/ww3-gpu.sh --self-test
 #
-# Exit codes: 0 pass; 1 a run or a comparison failed; 3 a submodule is missing or on the wrong
-# branch; 4 an NVIDIA GPU whose driver does not answer (--ww3-gpu --gpu); 5 a part the case needs is not
+# Exit codes: 0 pass; 1 a run or a comparison failed; 3 a submodule is missing, on the wrong
+# branch, or the fork is more than WW3-noaa/ plus the KOKKOS patch; 4 an NVIDIA GPU whose driver does not answer (--ww3-gpu --gpu); 5 a part the case needs is not
 # ported to WW4 (--ww4); 6 WW4 has every part but this repository has no WW4 input for the case;
 # 7 --ww3-gpu --gpu without a supervising human; 64 a bad argument or combination.
 #
@@ -215,8 +219,30 @@ if [ -n "$pre" ]; then
   echo ">> WW3 --$mode prebuilt: $bin"
   [ -z "$build_only" ] || exit 0
 else
-  ww3="$root/WW3"
-  [ -f "$ww3/model/src/CMakeLists.txt" ] || { echo "ww3-gpu: WW3/ is empty: git submodule update --init WW3" >&2; exit 3; }
+  fork="$root/WW3" noaa="$root/WW3-noaa"
+  if [ "$mode" = ww3 ]; then ww3="$noaa"; else ww3="$fork"; fi
+  sm="${ww3#"$root/"}"
+  [ -f "$ww3/model/src/CMakeLists.txt" ] || { echo "ww3-gpu: $sm/ is empty: git submodule update --init $sm" >&2; exit 3; }
+  # --ww3 is the reference of --ww3-gpu, so the fork must be WW3-noaa/ plus the KOKKOS patch and
+  # nothing else: a fork rebased onto a newer NOAA commit, with WW3-noaa/ left behind, would
+  # compare two versions of WW3's physics.
+  kokkos_patch=(model/src/CMakeLists.txt model/src/cmake/switches.json model/src/w3initmd.F90
+                model/src/w3kokkosmd.F90 model/src/w3srcemd.F90)
+  if [ "$mode" = ww3 ] && [ -f "$fork/model/src/w3kokkosmd.F90" ]; then
+    # The trees, not the histories: CI clones the fork one commit deep. model/ holds every source
+    # file WW3 compiles, and nothing a build or a regtest writes.
+    # Relative paths, so the patterns below never contain the checkout's own path.
+    extra="$(cd "$root" && diff -rq WW3-noaa/model WW3/model \
+      | sed -E -e 's#^Files WW3-noaa/model/(.*) and WW3/model/.* differ$#\1#' \
+               -e 's#^Only in (WW3-noaa|WW3)/model/?([^:]*): (.*)$#\2/\3#' -e 's#^/##' -e 's#^#model/#' \
+      | grep -v -x -F -f <(printf '%s\n' "${kokkos_patch[@]}") || true)"
+    if [ -n "$extra" ]; then
+      echo "ww3-gpu: the fork WW3/ differs from WW3-noaa/ ($(git -C "$noaa" rev-parse --short HEAD)) outside the KOKKOS patch:" >&2
+      printf '%s\n' "$extra" | sed 's/^/  /' >&2
+      echo "      move WW3-noaa/ to the NOAA commit the fork branched from, or add a new patch file to kokkos_patch" >&2
+      exit 3
+    fi
+  fi
   if [ "$mode" = ww3-gpu ] && [ ! -f "$ww3/model/src/w3kokkosmd.F90" ]; then
     echo "ww3-gpu: WW3/ is not the hoff/kokkos-snl1 branch of h0ffmann/WW3 (no model/src/w3kokkosmd.F90):" >&2
     echo "      git -C WW3 fetch origin hoff/kokkos-snl1 && git -C WW3 switch hoff/kokkos-snl1" >&2
@@ -252,6 +278,11 @@ else
   if [ "$mode" = ww3 ]; then bdir="$root/build/ww3"; else bdir="$root/build/ww3-gpu-$backend"; fi
   fresh_for_toolchain "$bdir"
   switch_file="$bdir/switch"
+  # build/ww3 was built from the fork before WW3-noaa/ existed: a new source needs a fresh configure.
+  if [ "$(cat "$bdir/source" 2>/dev/null)" != "$ww3" ]; then
+    [ -d "$bdir/ww3" ] && [[ "$bdir/ww3" == "$root/build/"* ]] && rm -rf -- "$bdir/ww3"
+    printf '%s\n' "$ww3" > "$bdir/source"
+  fi
   switch_now="$(cat "$root/switches/switch_lab_shrd")"
   [ "$mode" = ww3-gpu ] && switch_now="$switch_now KOKKOS"
   # A changed switch needs a fresh configure: WW3 bakes it into the preprocessed sources.
@@ -328,12 +359,12 @@ echo ">> --ww3-gpu $case_name ($backend): ww3_shel ${w0} s with the Fortran DIA,
 if cmp -s "$d0/$nc0" "$d1/$nc0"; then echo ">> the two outputs are byte-identical"; fi
 echo ">> the Kokkos DIA against the Fortran DIA, same executable:"
 "$nccmp" "$d0/$nc0" "$d1/$nc0" "${tols[@]}"
-# --ww3-gpu --cpu is the agents' regtest: pair to pair with --ww3, WW3 from the same source built
-# without the KOKKOS switch.
+# --ww3-gpu --cpu is the agents' regtest: pair to pair with --ww3, pure NOAA WW3 (WW3-noaa/) at
+# the fork's base, without the KOKKOS switch.
 if [ "$device" = cpu ]; then
   bash "${BASH_SOURCE[0]}" --ww3 "$case_name" --cpu
   ref="$runs/ww3-$case_name/$nc0"
   [ -f "$ref" ] || { echo "ww3-gpu: the --ww3 run wrote no $nc0" >&2; exit 1; }
-  echo ">> the Kokkos DIA against --ww3 (WW3 as written), pair to pair:"
+  echo ">> the Kokkos DIA against --ww3 (pure NOAA WW3, WW3-noaa/), pair to pair:"
   "$nccmp" "$ref" "$d1/$nc0" "${tols[@]}"
 fi

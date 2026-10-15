@@ -15,7 +15,7 @@ looser.
   independent researchers in wave modelling, numerical methods and HPC; every claim carries `(v)`
   with what was checked or `⚠` when it was not, and every number comes with the command that
   reproduces it ([Audience and evidence](#audience-and-evidence-hard-rule)).
-- **WW3 is read-only**: never vendor WW3 source or edit the Fortran physics; the `WW3/` submodule
+- **WW3 is read-only**: never vendor WW3 source or edit the Fortran physics; the `WW3/` and `WW3-noaa/` submodules
   and `$WW3` are references, and the only Fortran this repo adds is a shim behind a switch
   ([WW3 source](#ww3-source-is-read-only-hard-rule)).
 - **Translate, don't improve**: a ported routine reproduces the Fortran's arithmetic; a change of
@@ -166,7 +166,8 @@ statement. In practice:
 ## WW3 source is read-only (hard rule)
 
 `WW3/` is the `h0ffmann/WW3` fork of NOAA-EMC/WW3 as a submodule, pinned (`just src-st` shows the
-pin); `just get` clones upstream into `~/src/WW3`. Neither is edited from here, and no WW3 source is
+pin), and `WW3-noaa/` is pure NOAA-EMC/WW3 at the commit the fork branched from: `--ww3` builds it,
+and `scripts/ww3-gpu.sh` stops when the fork differs from it outside the KOKKOS patch; `just get` clones upstream into `~/src/WW3`. Neither is edited from here, and no WW3 source is
 copied into this repository (`CONTRIBUTING.md`, "Don't vendor WW3 source. Scripts fetch it."). The
 exceptions are a `bind(C)` shim module and the caller patch described in
 `kokkos/src/fortran_iface/PATCH.md`, which live on a fork branch, behind a switch, and leave the

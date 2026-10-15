@@ -2,6 +2,7 @@
 *
 !kokkos/
 !WW3/
+!WW3-noaa/
 !WW4/
 !switches/switch_lab_shrd
 !scripts/ww3-gpu.sh
@@ -14,3 +15,7 @@ WW3/regtests/*/work*
 WW3/regtests/
 !WW3/regtests/ww3_ts1/
 WW3/manual/
+WW3-noaa/regtests/
+WW3-noaa/manual/
+WW3-noaa/docs/
+WW3-noaa/smc_docs/
