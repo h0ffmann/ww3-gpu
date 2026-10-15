@@ -20,7 +20,7 @@ are a website at <https://h0ffmann.github.io/ww3-gpu/>: `just book-html` builds 
 `.github/workflows/pages.yml` deploys it on every merge that touches a lesson.
 
 The toolchain (pandoc, TeX Live, Python) comes from
-[`nix-config/labs/publisher`](https://github.com/h0ffmann/nix-config/tree/main/labs/publisher). The
+[`nix-config/labs/publisher`](https://github.com/h0ffmann/picasso/tree/main/labs/publisher). The
 root `flake.nix` uses its `mkPdf` and `mkDocx` helpers, so `nix build .` produces the three PDFs and
 the Word files in a sandbox.
 

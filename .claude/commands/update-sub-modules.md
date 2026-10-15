@@ -11,7 +11,7 @@ Give the command that reproduces each count.
 
 | Submodule | Fork (origin) | Upstream | Branch | Notes |
 |---|---|---|---|---|
-| `nix-config` | h0ffmann/nix-config | none | `main` | sparse: only `labs/pratico` is checked out |
+| `nix-config` | h0ffmann/picasso | none | `main` | sparse: only `labs/pratico` is checked out |
 | `WW3` | h0ffmann/WW3 | NOAA-EMC/WW3 | `develop` | fork may carry its own commits |
 | `WW4` | h0ffmann/WW4 | NOAA-EMC/WW4 | `develop` | read-only reference; `docs/ww4-status.json` records the last snapshot |
 

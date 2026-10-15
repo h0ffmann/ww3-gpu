@@ -1,6 +1,6 @@
 [submodule "nix-config"]
 	path = nix-config
-	url = git@github.com:h0ffmann/nix-config.git
+	url = git@github.com:h0ffmann/picasso.git
 	branch = main
 	shallow = true
 [submodule "WW3"]

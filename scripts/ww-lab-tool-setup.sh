@@ -16,7 +16,7 @@
 # need this script (or `git -C nix-config sparse-checkout set labs/pratico`) once.
 set -euo pipefail
 
-url="git@github.com:h0ffmann/nix-config.git"
+url="git@github.com:h0ffmann/picasso.git"
 path="nix-config"
 sparse="labs/pratico"
 branch="main"
