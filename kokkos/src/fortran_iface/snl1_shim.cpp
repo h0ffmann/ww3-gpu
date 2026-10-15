@@ -21,7 +21,8 @@
 //    try/catch that prints one line and records a code.
 //
 // Phase 1 is copy-in / kernel / copy-out, with the device buffers kept across
-// calls and grown on demand. Phase 2 is where WW3 keeps its state on the device
+// calls and grown on demand, one context per WW3 grid (IMOD at W3INIT, IGRID at
+// W3SRCE), so a ww3_multi run gets each grid's own tables, as W3SNL1 gets them. Phase 2 is where WW3 keeps its state on the device
 // and this copy disappears.
 //
 // SPDX-License-Identifier: MIT
@@ -35,13 +36,19 @@
 #include <cstdlib>
 #include <cstring>
 #include <exception>
+#include <map>
 #include <new>
+#include <string>
 #include <utility>
 
 #include "ww_kokkos/real.hpp"
 #include "ww_kokkos/snl1_config.hpp"
 #include "ww_kokkos/snl1_dia.hpp"
 #include "ww_kokkos/snl1_tables.hpp"
+
+#if defined(WW_SNL1_SERIAL_NESTED)
+#include <omp.h>
+#endif
 
 namespace {
 
@@ -58,8 +65,8 @@ template <class T>
 using Borrowed1D = Kokkos::View<T*, Kokkos::LayoutLeft, Kokkos::HostSpace,
                                 Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
 
-/// Everything the shim keeps between calls: one grid's tables and the device
-/// buffers of the largest batch seen so far.
+/// Everything the shim keeps between calls for one grid: its tables and the
+/// device buffers of the largest batch seen so far.
 struct Ctx {
   snl1::Config cfg{};
   snl1::Tables tables{};
@@ -70,11 +77,12 @@ struct Ctx {
   bool ready = false;
 };
 
-/// Function-local so its construction order is defined; never destroyed through
-/// this reference -- release() empties it before Kokkos::finalize().
-Ctx& ctx() {
-  static Ctx c;
-  return c;
+/// One context per grid index. Function-local so its construction order is
+/// defined; release() empties it before Kokkos::finalize(). A std::map, so a
+/// grid added by ww_snl1_init() moves no other grid's context.
+std::map<int, Ctx>& contexts() {
+  static std::map<int, Ctx> m;
+  return m;
 }
 
 std::atomic<int> g_last_error{WW_KOKKOS_OK};
@@ -82,6 +90,15 @@ bool g_we_started_kokkos = false;  ///< only then may we finalize it
 bool g_runtime_ready = false;      ///< ww_kokkos_init() completed
 bool g_hook_pushed = false;
 bool g_enabled = false;  ///< WW_KOKKOS_SNL1 as read at ww_kokkos_init()
+/// Spectra the Kokkos DIA computed in this process. WW_KOKKOS_SNL1_COUNT=1 prints
+/// it to stderr at exit, so the regtest matrix can tell a run that exercised the
+/// port from one that only linked it (an NL1 switch with IQTYPE <= 0 calls GQM).
+std::atomic<long long> g_points{0};
+bool g_count_registered = false;
+
+void print_count() {
+  std::fprintf(stderr, "ww_kokkos: W3SNL1 spectra computed: %lld\n", g_points.load());
+}
 
 void set_error(int code, const char* what) {
   g_last_error.store(code, std::memory_order_relaxed);
@@ -89,19 +106,7 @@ void set_error(int code, const char* what) {
 }
 
 /// Drop every View the shim holds. Idempotent, and callable from a finalize hook.
-void release() {
-  Ctx& c = ctx();
-  c.tables = snl1::Tables{};
-  c.sig_d = snl1::RealView1D();
-  c.kdmean_d = snl1::RealView1D();
-  c.a_d = snl1::RealView2D();
-  c.cg_d = snl1::RealView2D();
-  c.s_d = snl1::RealView2D();
-  c.d_d = snl1::RealView2D();
-  c.cfg = snl1::Config{};
-  c.capacity = 0;
-  c.ready = false;
-}
+void release() { contexts().clear(); }
 
 /// Registered with Kokkos so the Views die inside finalize, not at process exit.
 void release_on_finalize() {
@@ -134,8 +139,25 @@ int device_id_from_env() {
 }
 #endif
 
-/// (Re)allocate the device batch buffers for at least `npts` columns.
-void grow(Ctx& c, int npts) {
+/// True when the caller is inside an OpenMP parallel region, as WW3's OMPG
+/// source-term loop is (w3wavemd.F90:2240-2243 at WW3@6d1bcdfe). Kokkos 5.2's
+/// OpenMP backend aborts there unless OMP_MAX_ACTIVE_LEVELS > 1
+/// (OpenMP/Kokkos_OpenMP_Instance.hpp:91-110), and so does a large HostSpace
+/// deep_copy or zero-fill, which run on the OpenMP backend too. omp_get_level(),
+/// not omp_in_parallel(): a one-thread region is inactive but still a level,
+/// and Kokkos counts levels. Kokkos itself is initialised outside any region.
+bool nested_in_openmp() {
+#if defined(WW_SNL1_SERIAL_NESTED)
+  return omp_get_level() > 0;
+#else
+  return false;
+#endif
+}
+
+/// (Re)allocate the device batch buffers for at least `npts` columns; `space...`
+/// is empty, or Kokkos::Serial when nested, so the zero-fill does not nest either.
+template <class... Space>
+void grow(Ctx& c, int npts, const Space&... space) {
   const int nspec = c.cfg.nspec();
   // Release before allocating: on a GPU the old and the new buffers are the same
   // order of magnitude, and holding both would double the peak footprint.
@@ -146,11 +168,11 @@ void grow(Ctx& c, int npts) {
   c.d_d = snl1::RealView2D();
   c.capacity = 0;
 
-  c.kdmean_d = snl1::RealView1D("ww_snl1.kdmean", npts);
-  c.a_d = snl1::RealView2D("ww_snl1.a", nspec, npts);
-  c.cg_d = snl1::RealView2D("ww_snl1.cg", c.cfg.nk, npts);
-  c.s_d = snl1::RealView2D("ww_snl1.s", nspec, npts);
-  c.d_d = snl1::RealView2D("ww_snl1.d", nspec, npts);
+  c.kdmean_d = snl1::RealView1D(Kokkos::view_alloc(space..., std::string("ww_snl1.kdmean")), npts);
+  c.a_d = snl1::RealView2D(Kokkos::view_alloc(space..., std::string("ww_snl1.a")), nspec, npts);
+  c.cg_d = snl1::RealView2D(Kokkos::view_alloc(space..., std::string("ww_snl1.cg")), c.cfg.nk, npts);
+  c.s_d = snl1::RealView2D(Kokkos::view_alloc(space..., std::string("ww_snl1.s")), nspec, npts);
+  c.d_d = snl1::RealView2D(Kokkos::view_alloc(space..., std::string("ww_snl1.d")), nspec, npts);
   c.capacity = npts;
 }
 
@@ -180,6 +202,10 @@ int ww_kokkos_init(int comm_f) {
       g_hook_pushed = true;
     }
     g_enabled = env_is_one("WW_KOKKOS_SNL1");
+    if (g_enabled && !g_count_registered && env_is_one("WW_KOKKOS_SNL1_COUNT")) {
+      std::atexit(print_count);
+      g_count_registered = true;
+    }
     g_runtime_ready = true;
     g_last_error.store(WW_KOKKOS_OK, std::memory_order_relaxed);
     return WW_KOKKOS_OK;
@@ -207,15 +233,14 @@ void ww_kokkos_finalize(void) {
   }
 }
 
-int ww_snl1_init(int nk, int nth, float xfr, float dth, float lam, float snlc1,
+int ww_snl1_init(int igrid, int nk, int nth, float xfr, float dth, float lam, float snlc1,
                  float kdcon, float kdmn, float snls1, float snls2, float snls3,
                  float fachfe, const float* sig) {
-  Ctx& c = ctx();
   try {
-    // Anything that goes wrong below leaves the shim unconfigured rather than
+    // Anything that goes wrong below leaves this grid unconfigured rather than
     // half-configured: a later ww_snl1() must say NOT_INITIALISED, not crash.
     // Inside the try, because nothing at all may escape this function.
-    release();
+    contexts().erase(igrid);
     if (!g_runtime_ready || !Kokkos::is_initialized()) {
       set_error(WW_KOKKOS_ERR_NOT_INITIALISED, "ww_snl1_init before ww_kokkos_init");
       return WW_KOKKOS_ERR_NOT_INITIALISED;
@@ -240,6 +265,7 @@ int ww_snl1_init(int nk, int nth, float xfr, float dth, float lam, float snlc1,
     snl1::RealView1D sig_d("ww_snl1.sig", nk);
     Kokkos::deep_copy(sig_d, h_sig);
 
+    Ctx& c = contexts()[igrid];
     c.cfg = cfg;
     c.tables = std::move(tables);
     c.sig_d = sig_d;
@@ -247,28 +273,30 @@ int ww_snl1_init(int nk, int nth, float xfr, float dth, float lam, float snlc1,
     g_last_error.store(WW_KOKKOS_OK, std::memory_order_relaxed);
     return WW_KOKKOS_OK;
   } catch (const std::bad_alloc& e) {
-    release();
+    contexts().erase(igrid);
     set_error(WW_KOKKOS_ERR_RUNTIME, e.what());
     return WW_KOKKOS_ERR_RUNTIME;
   } catch (const std::exception& e) {
-    release();
+    contexts().erase(igrid);
     set_error(WW_KOKKOS_ERR_KERNEL, e.what());
     return WW_KOKKOS_ERR_KERNEL;
   } catch (...) {
-    release();
+    contexts().erase(igrid);
     set_error(WW_KOKKOS_ERR_KERNEL, "ww_snl1_init: unknown exception");
     return WW_KOKKOS_ERR_KERNEL;
   }
 }
 
-void ww_snl1(int npts, const float* a, const float* cg, const float* kdmean, float* s,
-             float* d) {
-  Ctx& c = ctx();
+void ww_snl1(int igrid, int npts, const float* a, const float* cg, const float* kdmean,
+             float* s, float* d) {
   try {
-    if (!c.ready || !g_runtime_ready || !Kokkos::is_initialized()) {
-      set_error(WW_KOKKOS_ERR_NOT_INITIALISED, "ww_snl1 before ww_snl1_init");
+    const auto it = contexts().find(igrid);
+    if (it == contexts().end() || !it->second.ready || !g_runtime_ready ||
+        !Kokkos::is_initialized()) {
+      set_error(WW_KOKKOS_ERR_NOT_INITIALISED, "ww_snl1 before ww_snl1_init for this grid");
       return;
     }
+    Ctx& c = it->second;
     if (npts < 0) {
       set_error(WW_KOKKOS_ERR_BAD_SHAPE, "ww_snl1: npts is negative");
       return;
@@ -291,7 +319,18 @@ void ww_snl1(int npts, const float* a, const float* cg, const float* kdmean, flo
 
     const int nk = c.cfg.nk;
     const int nspec = c.cfg.nspec();
-    if (npts > c.capacity) grow(c, npts);
+    const bool nested = nested_in_openmp();
+    if (npts > c.capacity) {
+#if defined(WW_SNL1_SERIAL_NESTED)
+      if (nested) {
+        grow(c, npts, Kokkos::Serial());
+      } else {
+        grow(c, npts);
+      }
+#else
+      grow(c, npts);
+#endif
+    }
 
     const Borrowed2D<const Real> h_a(a, nspec, npts);
     const Borrowed2D<const Real> h_cg(cg, nk, npts);
@@ -308,6 +347,22 @@ void ww_snl1(int npts, const float* a, const float* cg, const float* kdmean, flo
     auto s_d = Kokkos::subview(c.s_d, Kokkos::ALL, cols);
     auto d_d = Kokkos::subview(c.d_d, Kokkos::ALL, cols);
 
+#if defined(WW_SNL1_SERIAL_NESTED)
+    if (nested) {
+      const Kokkos::Serial host;
+      Kokkos::deep_copy(host, a_d, h_a);
+      Kokkos::deep_copy(host, cg_d, h_cg);
+      Kokkos::deep_copy(host, kd_d, h_kd);
+      snl1::snl1_serial(c.cfg, c.tables, c.sig_d, a_d, cg_d, kd_d, s_d, d_d);
+      Kokkos::deep_copy(host, h_s, s_d);
+      Kokkos::deep_copy(host, h_d, d_d);
+      host.fence();
+      g_points.fetch_add(npts, std::memory_order_relaxed);
+      g_last_error.store(WW_KOKKOS_OK, std::memory_order_relaxed);
+      return;
+    }
+#endif
+
     Kokkos::deep_copy(a_d, h_a);
     Kokkos::deep_copy(cg_d, h_cg);
     Kokkos::deep_copy(kd_d, h_kd);
@@ -317,6 +372,7 @@ void ww_snl1(int npts, const float* a, const float* cg, const float* kdmean, flo
 
     Kokkos::deep_copy(h_s, s_d);
     Kokkos::deep_copy(h_d, d_d);
+    g_points.fetch_add(npts, std::memory_order_relaxed);
     g_last_error.store(WW_KOKKOS_OK, std::memory_order_relaxed);
   } catch (const std::bad_alloc& e) {
     set_error(WW_KOKKOS_ERR_RUNTIME, e.what());

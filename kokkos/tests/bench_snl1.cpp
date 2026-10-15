@@ -82,10 +82,10 @@ void report(const char* what, double seconds, int calls) {
 /// Time ww_snl1(): the whole phase-1 path a Fortran caller sees.
 double time_shim(Host& h) {
   for (int i = 0; i < kWarmup; ++i)
-    ww_snl1(kPoints, h.a.data(), h.cg.data(), h.kdmean.data(), h.s.data(), h.d.data());
+    ww_snl1(1, kPoints, h.a.data(), h.cg.data(), h.kdmean.data(), h.s.data(), h.d.data());
   const Clock::time_point t0 = Clock::now();
   for (int i = 0; i < kCalls; ++i)
-    ww_snl1(kPoints, h.a.data(), h.cg.data(), h.kdmean.data(), h.s.data(), h.d.data());
+    ww_snl1(1, kPoints, h.a.data(), h.cg.data(), h.kdmean.data(), h.s.data(), h.d.data());
   return std::chrono::duration<double>(Clock::now() - t0).count();
 }
 
@@ -135,7 +135,7 @@ int run(const std::string& path) {
               h.f.nk, h.f.nth, h.f.nspec, kPoints, kCalls,
               Kokkos::DefaultExecutionSpace::name());
 
-  if (ww_snl1_init(h.f.nk, h.f.nth, h.f.xfr, h.f.dth, h.f.lam, h.f.snlc1, h.f.kdcon,
+  if (ww_snl1_init(1, h.f.nk, h.f.nth, h.f.xfr, h.f.dth, h.f.lam, h.f.snlc1, h.f.kdcon,
                    h.f.kdmn, h.f.snls1, h.f.snls2, h.f.snls3, h.f.fachfe,
                    h.f.sig.data()) != WW_KOKKOS_OK) {
     std::fprintf(stderr, "ww_bench_snl1: ww_snl1_init failed\n");

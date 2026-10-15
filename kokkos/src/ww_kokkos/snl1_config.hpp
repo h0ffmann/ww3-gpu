@@ -15,6 +15,14 @@
 
 #include "real.hpp"
 
+// The Kokkos::Serial path for a caller already inside an OpenMP parallel region
+// (snl1_dia.hpp, snl1_shim.cpp): only in a host build. A CUDA build has OpenMP and
+// Serial too, but its Views live in CudaSpace, which Serial cannot touch.
+#if defined(KOKKOS_ENABLE_OPENMP) && defined(KOKKOS_ENABLE_SERIAL) && \
+    !defined(KOKKOS_ENABLE_CUDA) && !defined(KOKKOS_ENABLE_HIP) && !defined(KOKKOS_ENABLE_SYCL)
+#define WW_SNL1_SERIAL_NESTED 1
+#endif
+
 namespace ww::snl1 {
 
 /// The lab's device memory space, spelled out once. Every View below names it:

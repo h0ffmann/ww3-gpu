@@ -17,14 +17,11 @@
 // so the signature does not have to change in phase 2, and picks the device from
 // the environment. See the comment on ww_kokkos_init().
 //
-// Three limits of phase 1, all of them consequences of the shim holding exactly
-// one set of tables and one set of device buffers in a file-static context:
+// The shim keeps one context (tables and device buffers) per grid index
+// `igrid`: W3INIT passes its IMOD, W3SRCE the IGRID that W3SETG selected, so each
+// grid of a ww3_multi run is computed with its own NK, NTH and tables. Two limits
+// of phase 1 follow from those contexts being file-static and unlocked:
 //
-//  * **One spectral grid per process.** ww_snl1_init() *replaces* the previous
-//    grid's tables; it does not add a second grid. A ww3_multi run with two grids
-//    of different NK/NTH would compute the second grid's spectra with the first
-//    grid's nspec, which is an out-of-bounds read, not a wrong number. The caller
-//    must refuse that configuration -- see PATCH.md, the W3INIT hunk.
 //  * **One caller at a time.** Nothing here is locked. Two threads inside
 //    ww_snl1() share the context, and one of them may be reallocating the device
 //    buffers while the other copies into them. Concurrent calls are undefined
@@ -69,6 +66,8 @@ enum WwKokkosStatus {
 /// argument stays in the signature so phase 2 can honour it without an ABI break.
 ///
 /// Also reads `WW_KOKKOS_SNL1`: "1" makes ww_snl1_enabled() return 1.
+/// With it, `WW_KOKKOS_SNL1_COUNT=1` prints the number of spectra ww_snl1()
+/// computed to stderr at process exit (one line per process).
 int ww_kokkos_init(int comm_f);
 
 /// Release the shim's device buffers and tables, and shut Kokkos down **only if
@@ -77,8 +76,9 @@ int ww_kokkos_init(int comm_f);
 /// WW_KOKKOS_ERR_NOT_INITIALISED until ww_snl1_init() runs again.
 void ww_kokkos_finalize(void);
 
-/// Build the INSNL1 quadruplet tables for one spectral grid. Call once, after
-/// ww_kokkos_init(). The arguments are W3GDATMD's, under WW3's own names.
+/// Build the INSNL1 quadruplet tables for grid `igrid` (WW3's IMOD). Call once
+/// per grid, after ww_kokkos_init(), never concurrently with ww_snl1(). The other
+/// arguments are W3GDATMD's for that grid, under WW3's own names.
 ///
 /// `sig` is **SIG(1:nk)**: the pointer must address the *first* frequency bin and
 /// the shim reads `nk` floats from it. This matters because W3GDATMD allocates
@@ -87,21 +87,20 @@ void ww_kokkos_finalize(void);
 /// is then built one bin low. WW3's own idiom is to pass `SIG(1)`. The array is
 /// copied, not borrowed.
 ///
-/// **Phase 1 keeps one grid per process.** A second call replaces the first
-/// grid's tables rather than adding to them, so a multi-grid run (`ww3_multi`)
-/// must not call this once per grid; see the header comment and PATCH.md.
+/// A second call for the same `igrid` replaces that grid's tables; other grids
+/// are untouched.
 ///
 /// Returns WW_KOKKOS_OK, or WW_KOKKOS_ERR_BAD_SHAPE (nk <= 0, nth <= 0, null
 /// sig), WW_KOKKOS_ERR_NOT_INITIALISED (no live runtime) or WW_KOKKOS_ERR_RUNTIME.
-/// On any failure the shim is left unconfigured rather than half-configured.
-int ww_snl1_init(int nk, int nth, float xfr, float dth, float lam, float snlc1,
+/// On any failure that grid is left unconfigured rather than half-configured.
+int ww_snl1_init(int igrid, int nk, int nth, float xfr, float dth, float lam, float snlc1,
                  float kdcon, float kdmn, float snls1, float snls2, float snls3,
                  float fachfe, const float* sig);
 
-/// W3SNL1 for `npts` sea points in one launch. Phase 1: copy-in, kernel, copy-out.
+/// W3SNL1 for `npts` sea points of grid `igrid` in one launch. Phase 1: copy-in, kernel, copy-out.
 ///
 /// `a`, `s` and `d` are (nspec, npts) and `cg` is (nk, npts), column-major, with
-/// nspec = nk*nth from ww_snl1_init(); `kdmean` is (npts). `s` and `d` are
+/// nspec = nk*nth from ww_snl1_init() of the same grid; `kdmean` is (npts). `s` and `d` are
 /// overwritten, not accumulated, exactly as in the Fortran.
 ///
 /// It is `void` because a Fortran CALL cannot inspect a return value; the outcome
@@ -112,8 +111,8 @@ int ww_snl1_init(int nk, int nth, float xfr, float dth, float lam, float snlc1,
 /// **Not thread-safe.** It reads and may reallocate one shared, unlocked context,
 /// so two concurrent calls are undefined behaviour. Batch the points into one
 /// call, or serialise the calls at the caller.
-void ww_snl1(int npts, const float* a, const float* cg, const float* kdmean, float* s,
-             float* d);
+void ww_snl1(int igrid, int npts, const float* a, const float* cg, const float* kdmean,
+             float* s, float* d);
 
 /// 1 if `WW_KOKKOS_SNL1=1` was in the environment at ww_kokkos_init(), else 0.
 /// This is the run-time switch W3KOKKOSMD turns into `LOGICAL :: KOKKOS_SNL1`;
