@@ -196,7 +196,7 @@ flag per routine lets the ST4 checkpoint test one routine at a time.
 ### 4.5 Arithmetic
 
 The reference is the object code that WW3's CMake build produces (`-O3`,
-`model/src/CMakeLists.txt:74`), not the source read by eye (`docs/log/2026-10-14-snl1-bitwise-af11.md`).
+`model/src/CMakeLists.txt:87-89`, the GNU block), not the source read by eye (`docs/log/2026-10-14-snl1-bitwise-af11.md`).
 
 | Fortran (`REAL`) | C++ (`float`) | Note |
 |---|---|---|

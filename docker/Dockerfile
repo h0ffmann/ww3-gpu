@@ -11,21 +11,27 @@
 # DIA of the same program here, so the verdict holds for this image's compiler too. Its numbers
 # are not the Nix toolchain's numbers: gfortran differs (Ubuntu's 15.2 against Nix's 16.2).
 
-# Ubuntu 26.04 LTS, by digest (2026-10-15): the same base for both stages, so the runtime has
+# Ubuntu 26.04 LTS, by digest (2026-10-15): the same base for every stage, so the runtime has
 # exactly the libraries the programs were linked against.
 ARG UBUNTU=ubuntu:26.04@sha256:f144425ff09be612d6d9ad965196e9cdc23dae1f42110a8a11a3e9a8198759f7
+# Kokkos 5.2.2, the version picasso's labs/pratico pins. Ubuntu packages 5.0.2, so it is built
+# from the release tarball, checked by SHA-256.
+ARG KOKKOS_VERSION=5.2.2
+ARG KOKKOS_SHA256=d6557aaef39302282a15f9c770433d1fcdf4e961dfd6d9ed726b9d0d0f546b9f
 
-FROM ${UBUNTU} AS build
+# Stages: toolchain (compilers, netCDF, Kokkos), build (compiles the programs from it), dev (the
+# toolchain plus the gate tools and Nix, for .devcontainer/), and the runtime image, which stays
+# last so a plain `docker build` still produces it.
+FROM ${UBUNTU} AS toolchain
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
       gfortran g++ cmake ninja-build make pkg-config perl python3 ca-certificates curl \
       libnetcdf-dev libnetcdff-dev libgtest-dev \
  && rm -rf /var/lib/apt/lists/*
 
-# Kokkos 5.2.2, the version picasso's labs/pratico pins, Serial + OpenMP, as pratico builds it.
-# Ubuntu packages 5.0.2, so it is built from the release tarball, checked by SHA-256.
-ARG KOKKOS_VERSION=5.2.2
-ARG KOKKOS_SHA256=d6557aaef39302282a15f9c770433d1fcdf4e961dfd6d9ed726b9d0d0f546b9f
+# Kokkos Serial + OpenMP, as pratico builds it.
+ARG KOKKOS_VERSION
+ARG KOKKOS_SHA256
 RUN curl -fsSL -o /tmp/kokkos.tgz \
       "https://github.com/kokkos/kokkos/releases/download/${KOKKOS_VERSION}/kokkos-${KOKKOS_VERSION}.tar.gz" \
  && echo "${KOKKOS_SHA256}  /tmp/kokkos.tgz" | sha256sum -c - \
@@ -36,6 +42,10 @@ RUN curl -fsSL -o /tmp/kokkos.tgz \
  && cmake --build /tmp/kokkos-build && cmake --install /tmp/kokkos-build \
  && rm -rf /tmp/kokkos*
 
+FROM toolchain AS build
+ARG DEBIAN_FRONTEND=noninteractive
+ARG KOKKOS_VERSION
+ARG KOKKOS_SHA256
 # The sources, in the repository's layout (kokkos/ finds WW3's w3kokkosmd.F90 at ../WW3).
 WORKDIR /src
 # Each source is copied just before the step that needs it, so a change to a later one does not
@@ -98,6 +108,26 @@ ARG WW3_REV=?
 RUN { echo "ww3-gpu ${WW3_GPU_REV}"; echo "WW3 ${WW3_REV} (h0ffmann/WW3 hoff/kokkos-snl1)"; \
       echo "WW4 ${WW4_REV}"; echo "kokkos ${KOKKOS_VERSION}"; gfortran --version | head -1; \
       cmake --version | head -1; } > /opt/ww3-gpu/BUILD_INFO
+
+# The dev container (.devcontainer/devcontainer.json): the toolchain stage, no sources (the
+# workspace is mounted), plus the gate tools of AGENTS.md. Nix is Ubuntu's nix-bin, single-user,
+# /nix owned by the dev user, for the reference toolchain (`just ww3`, `just dev`), whose gfortran
+# is not this stage's. Without /nix/var/nix, Nix falls back to a chroot store that needs a mount
+# namespace an unprivileged container does not get; no build users and no sandbox for the same
+# reason. CMAKE_PREFIX_PATH is left unset so this Kokkos (/opt/kokkos, Ubuntu's gfortran) cannot
+# leak into a `nix develop` build; pass -DCMAKE_PREFIX_PATH=/opt/kokkos outside Nix, as the build
+# stage does. User ubuntu (uid 1000, already in Ubuntu's image) gets sudo without a password, as a
+# dev container's user does; the runtime image has no sudo.
+FROM toolchain AS dev
+ARG DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      git openssh-client sudo just shellcheck python3-yaml nix-bin xz-utils less \
+ && rm -rf /var/lib/apt/lists/* \
+ && echo 'ubuntu ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/ubuntu && chmod 440 /etc/sudoers.d/ubuntu \
+ && mkdir -p /etc/nix /nix/store /nix/var/nix && chown -R ubuntu:ubuntu /nix \
+ && printf '%s\n' 'experimental-features = nix-command flakes' 'build-users-group =' 'sandbox = false' \
+      > /etc/nix/nix.conf
+USER ubuntu
 
 FROM ${UBUNTU}
 ARG DEBIAN_FRONTEND=noninteractive

@@ -171,6 +171,7 @@ presets are in [`docs/TOOLCHAIN.md`](docs/TOOLCHAIN.md). For coastal cases, add 
 | C++ kernels | Kokkos (Serial, OpenMP, CUDA), GoogleTest |
 | Publications | picasso's `labs/publisher` through `flake.nix` |
 | Host alternative | `just prereqs` on Debian/Ubuntu |
+| Every pinned version | [`VERSIONS.md`](VERSIONS.md) |
 
 </details>
 
@@ -237,6 +238,7 @@ just ww3-gpu-matrix     # WW3's regtest matrix, CPU only
 ```
 
 The recipes without a `d` in front run on picasso; the same recipes with a `d` run in the image.
+[`VERSIONS.md`](VERSIONS.md) lists every pinned version of both builds, and of the CMake files.
 
 The submodule directory was `nix-config/` until 2026-10-15. In a clone made before that date,
 run this once after `git pull`:
