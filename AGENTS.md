@@ -51,13 +51,15 @@ is made in the other (content must match, length need not; see `CONTRIBUTING.md`
 
 Lab code is C++, Fortran and shell. Python appears only in the publishing and repo tooling
 (`scripts/*.py`, `tests/`), never in lab code or kernels. `just` is the task runner and every
-recipe is a thin wrapper over a script in `scripts/`; `just` lists them.
+recipe is a thin wrapper over a script in `scripts/`, except the `hoff-matrix*` recipes, which
+configure and run the CMake/CTest driver in `regtests/`; `just` lists them.
 
 ## Where a change belongs
 
 | Change | Where | Its own rules |
 |---|---|---|
 | A kernel, its tests, its shim | `kokkos/` | [`kokkos/README.md`](kokkos/README.md), the ledger [`kokkos/PORT_STATUS.md`](kokkos/PORT_STATUS.md), the rules [`docs/AGENTS_KOKKOS_202609.md`](docs/AGENTS_KOKKOS_202609.md) §1 and §3 |
+| The WW3 regtest matrix driver | `regtests/` (`CMakeLists.txt`, `cmake/*.cmake`), one CTest test per `matrix.base` entry | [WFIP-0003](docs/WFIPs/WFIP-0003-kokkos-regtest-matrix.md); it runs WW3's own regtests, the Fortran routine against the Kokkos routine, and is not a test of the port's own (ADR-0010); never writes `WW3/` |
 | A measurement | a record in `bench/results/`, the table that quotes it (`just results table`), the issue the number answers | [`bench/README.md`](bench/README.md): a row may only claim what a command in the repo reproduces; `scripts/results.py check` refuses a timing without a passed WW3 regtest replay (`regtest`; a record before 2026-10-14 keeps its `l1`) |
 | Something tried, including a negative result | a dated entry in `docs/log/` | [`docs/log/README.md`](docs/log/README.md): append, never rewrite |
 | A plan, an evaluation, a survey | `docs/` as `NAME_YYYYMM.md`, dated in the name | this file; the `(v)`/`⚠` convention; `docs/GLOSSARY.md` for every new abbreviation |
@@ -105,8 +107,9 @@ Run the gates of what you changed before calling it done. CI (`.github/workflows
 |---|---|
 | any `*.sh` or `justfile` recipe | `bash -n <script>` and `shellcheck <script>`; a hook also has `--self-test` (`.claude/hooks/proposal-review.sh --self-test`) |
 | `kokkos/` | `just kokkos-test serial-debug` (sanitizers, bounds checks) and `just kokkos-test openmp-release`, which build the port and run the tests of the intro programs and the tools (the port has none, ADR-0010); `just smoke-hoff` for the port itself |
-| a kernel WW3 calls, or the `WW3/` pin | `just smoke` (CPU); `just full-hoff` and `just hoff-matrix` (the WW3 regtest matrix, WFIP-0003) before a status in `kokkos/ports.tsv` moves to L2. Never `--gpu` without the owner (hard rule) |
+| a kernel WW3 calls, or the `WW3/` pin | `just smoke` (CPU); `just full-hoff` and `just hoff-matrix` (the WW3 regtest matrix, WFIP-0003, serial entries by default, `omp` for the OpenMP ones) before a status in `kokkos/ports.tsv` moves to L2. Never `--gpu` without the owner (hard rule) |
 | `scripts/hoff.sh` or `scripts/ww4_parts.py` | `bash scripts/hoff.sh --self-test`, `python3 scripts/ww4_parts.py --self-test`, shellcheck; `just smoke-hoff` (CPU, pair to pair with `--ww3`) |
+| `regtests/` | `just hoff-matrix-selftest` (the selection, the argument lists and the verdict on fixtures) and `just hoff-matrix-list` (the entry count at the pin) |
 | `kokkos/ports.tsv` or `docs/data/ww3_full_gprof.tsv` | `python3 scripts/port_score.py --write`, then `--check` (CI runs `--self-test` and `--check`) |
 | Fortran in `gpu/`, `examples/`, `exercises/` | they must compile with gfortran with directives ignored; the exercise parity test must pass |
 | a Mermaid fence or its page | `python3 scripts/figures.py check`, then `just figures` to re-render and `python3 -m unittest tests/test_figures.py` |
@@ -175,8 +178,11 @@ broken most often:
 - **The port has no tests of its own** ([ADR-0010](docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md),
   the owner, 14 October 2026): no L1 test, GoogleTest or captured fixture of a ported routine. Its
   tests are WW3's regtests: `just smoke-hoff` and `just full-hoff` (`--hoff --cpu` pair to pair with
-  `--ww3`) and `just hoff-matrix`, the serial `NL1` entries of WW3's `matrix.base` compared by
-  `test.comp` and `nccmp-tol` (WFIP-0003).
+  `--ww3`) and `just hoff-matrix`, the `NL1` entries of WW3's `matrix.base` (serial by default,
+  the shared-memory OpenMP ones with `omp`) compared by `test.comp` and `nccmp-tol` (WFIP-0003).
+  `just hoff-matrix` is a CMake/CTest driver in `regtests/`, one CTest test per entry; CTest there
+  runs WW3's own regtests, the Fortran routine against the Kokkos routine, and is not a test of
+  the port's own.
 - **Ask before** changing the order of a reduction, a limiter or the integration order. The change
   is its own PR, with L2 evidence.
 - **Never widen a tolerance.** Report and stop.

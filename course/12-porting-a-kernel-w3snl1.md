@@ -157,7 +157,7 @@ so the patch lives on a branch the pin can point at, and upstream stays untouche
 ```bash
 just smoke-hoff        # scripts/hoff.sh --hoff smoke --cpu: regtest ww3_ts1
 just full-hoff         # scripts/hoff.sh --hoff full --cpu: bench_small, 9 520 sea points
-just hoff-matrix       # scripts/hoff_matrix.sh: every serial NL1 entry of matrix.base (WFIP-0003)
+just hoff-matrix       # regtests/ (CMake/CTest): one test per serial NL1 entry of matrix.base (WFIP-0003)
 ```
 
 This is the port's only test (ADR-0010). `scripts/hoff.sh --hoff` builds WW3 from the `WW3/`
@@ -173,7 +173,12 @@ of `x**11`; with the `-O3` chain, on 2026-10-15, both runs became byte-identical
 (v, `kokkos/port_report/W3SNL1_KOKKOS.md`, "How it was regtested").
 `just hoff-matrix` takes the same comparison to WW3's own harness, `run_cmake_test`, with WW3's
 `test.comp` beside `nccmp-tol`: after the fix, 0 differing files on all 100 serial `NL1` entries
-(v, `docs/data/hoff_matrix_2026-10-15.tsv`).
+(v, `docs/data/hoff_matrix_2026-10-15.tsv`), and on all 25 shared-memory OpenMP entries with
+`OMP_MAX_ACTIVE_LEVELS=2` (v, `docs/data/hoff_matrix_omp_2026-10-15.tsv`). Both tables were
+written by the shell script that preceded the driver; since 2026-10-15 `just hoff-matrix` is a
+CMake/CTest project in `regtests/`, one CTest test per `matrix.base` entry, labelled `serial` or
+`omp`. CTest there is only the runner: each test is WW3's own regtest, run with the Fortran DIA and
+with the Kokkos DIA, so the port still has no tests of its own (ADR-0010).
 
 The older harness, `just l2 ww3_ts1` (`kokkos/tests/L2_replay.sh`), does the same pairing on a run
 prepared by `just rt`, in `work_a` and `work_b`, and appends the table to `kokkos/PORT_STATUS.md`

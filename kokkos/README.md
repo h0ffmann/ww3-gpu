@@ -250,8 +250,11 @@ suites left in CTest test the lessons and the tools, not the port:
 The DIA and its shim are validated by WW3's regtests: `scripts/hoff.sh --hoff --cpu`
 runs a WW3 case with the Kokkos DIA and compares it with the Fortran DIA of the same
 executable and pair to pair with `--ww3` (WW3 built without the KOKKOS switch), and
-the regtest matrix of WFIP-0003 (`scripts/hoff_matrix.sh`) extends that to more of
-WW3's regtests ⚠ (being written in parallel on 2026-10-14; not run from here).
+the regtest matrix of WFIP-0003 (`just hoff-matrix`, a CMake/CTest driver in `regtests/`, one
+CTest test per `matrix.base` entry) extends that to WW3's own regtests: the 100 serial `NL1` entries
+and the 25 shared-memory OpenMP ones, byte-identical (v, `docs/data/hoff_matrix_2026-10-15.tsv`,
+`docs/data/hoff_matrix_omp_2026-10-15.tsv`, both written by the shell script the driver replaced).
+That CTest project runs WW3's regtests, Fortran against Kokkos; it is not a test of the port's own.
 
 Removed on 2026-10-14 under that rule: `L1_test_snl1_tables`, `L1_test_snl1_dia`,
 `L1_test_snl1_shim`, the Fortran `shim_roundtrip` CTest case, and the standalone

@@ -47,3 +47,4 @@ Date, author, issue/PR/WFIP.
 | 2026-10-15 | [Matrix entries 6 and 10 (`ww3_tp2.15`, 5 km grid and ST6): the same amplification as entry 16](2026-10-15-hoff-matrix-entries6-10.md) | WFIP-0003 |
 | 2026-10-14 | [The Kokkos DIA byte-identical inside WW3: `AF11` used the `-O0` chain of `x**11`](2026-10-14-snl1-bitwise-af11.md) | WFIP-0003, PR #120 |
 | 2026-10-14 | [The first published ai-memory page, and `memory/`](2026-10-14-memory-publish.md) | ADR-0009 |
+| 2026-10-15 | [The OpenMP entries of the regtest matrix: 25 of 25 byte-identical, with nesting allowed](2026-10-15-hoff-matrix-omp.md) | WFIP-0003, PR #120 |

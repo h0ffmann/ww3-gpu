@@ -154,7 +154,8 @@ just kokkos-test serial-debug   # build and test the C++/Kokkos kernels
 ```
 
 Then start at [`course/00-orientation.md`](course/00-orientation.md). `just` lists every task; each
-recipe is a thin wrapper over a script in `scripts/`. The toolchain, the WW3 fork and the Kokkos
+recipe is a thin wrapper over a script in `scripts/`, except `just hoff-matrix*`, which drive WW3's
+regtest matrix through CMake/CTest in `regtests/`. The toolchain, the WW3 fork and the Kokkos
 presets are in [`docs/TOOLCHAIN.md`](docs/TOOLCHAIN.md). For coastal cases, add SWAN with
 `just swan`.
 

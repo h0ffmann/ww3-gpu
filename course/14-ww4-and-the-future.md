@@ -206,7 +206,7 @@ GoogleTest suites that compared the Kokkos kernel against captured Fortran fixtu
 then ruled that the port has no tests of its own
 ([ADR-0010](../docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md)): what is left is what
 this repo calls L2, in WW4's terms closer to L4: WW3's regtests rerun with the kernel on and off (`scripts/hoff.sh --hoff --cpu`,
-`kokkos/tests/L2_replay.sh`, the matrix of `scripts/hoff_matrix.sh`) and the netCDF output judged
+`kokkos/tests/L2_replay.sh`, the regtest matrix of `regtests/`, run by CTest) and the netCDF output judged
 with `nccmp-tol`. So an L1 suite for a kernel
 handed to WW4 would have to be written on WW4's side.
 PR #72 already reserves the slot: `src/ww4_core/source_terms/ww4_NL1/` and

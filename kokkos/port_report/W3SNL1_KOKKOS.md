@@ -56,14 +56,27 @@ What they say, read with care:
 | L2, full | `--hoff --cpu` on `bench_small` (9 520 points, 12 h) | `hs` max rel 1.832e-7 over 119 652 values, PASS; not byte-identical, before the `AF11` fix | `just full-hoff`, 2026-10-14 |
 | L2, matrix (before the fix) | `just hoff-matrix`: the 100 serial `NL1` entries of WW3's `matrix.base` through `run_cmake_test`, the Kokkos DIA against the Fortran DIA of one executable (WFIP-0003) | all 100 built and ran with the Kokkos DIA logged; `nccmp-tol` 66 PASS, 29 n/a (no judged field), 5 FAIL (entries 6, 10, 16, 51, 54); `test.comp` byte-identical on 9 entries (`ww3_tp2.6`, `ww3_ts1`, `ww3_tc1`, `ww3_tnc1`) (v) | [`docs/data/hoff_matrix_2026-10-14.tsv`](../../docs/data/hoff_matrix_2026-10-14.tsv), 2026-10-15; the failures: [entry 16](../../docs/log/2026-10-14-hoff-matrix-entry16.md), [51 and 54](../../docs/log/2026-10-15-hoff-matrix-entries51-54.md): round-off amplified by WW3 itself, reproduced by FMA on the Fortran alone |
 | L2, matrix after the `AF11` fix | `just hoff-matrix --jobs 8` with `pow11()` following gfortran's `-O3` chain (below) | all 100 built and ran with the Kokkos DIA logged; `test.comp` **0 differing files on all 100 entries**; `nccmp-tol` 71 PASS, 29 n/a, 0 FAIL (v) | [`docs/data/hoff_matrix_2026-10-15.tsv`](../../docs/data/hoff_matrix_2026-10-15.tsv), 2026-10-15; [`docs/log/2026-10-14-snl1-bitwise-af11.md`](../../docs/log/2026-10-14-snl1-bitwise-af11.md) |
+| L2, OpenMP matrix | the 25 shared-memory `NL1` entries with `OMPG` (all `ww3_ts3`, `ST1` to `ST6`), each with `-f -O -n 8`, so WW3 calls the shim from inside `W3WAVE`'s `!$OMP PARALLEL` region (`w3wavemd.F90:2240-2243`; the call at `w3srcemd.F90:1276`, under `!$OMP CRITICAL`); `OMP_MAX_ACTIVE_LEVELS=2` exported for both runs | all 25 built and ran with the Kokkos DIA logged; `test.comp` **0 of 20 files differing on all 25**; `nccmp-tol` 25 PASS on `hs` (v). Without the variable every Kokkos run aborted at the first DIA call, "Nested parallelism requires the maximum active levels to be larger than 1" (v) | [`docs/data/hoff_matrix_omp_2026-10-15.tsv`](../../docs/data/hoff_matrix_omp_2026-10-15.tsv), 2026-10-15, `OMP_MAX_ACTIVE_LEVELS=2 just hoff-matrix --omp --jobs 4` with the script of `f32640c`; [`docs/log/2026-10-15-hoff-matrix-omp.md`](../../docs/log/2026-10-15-hoff-matrix-omp.md) |
 | L2, smoke after the fix | `just smoke-hoff` (`ww3_ts1`) | byte-identical outputs; `hs` max rel 0 against the Fortran DIA and pair to pair against `--ww3` (v) | 2026-10-15 |
 | L2, full after the fix | `just full-hoff` (`bench_small`) | byte-identical outputs; `hs` max rel 0 over 119 652 values, both comparisons (v) | 2026-10-15 |
 | GPU in WW3 | `--hoff --gpu` | not run: the workstation's driver was not loaded on 2026-10-14, and the run needs the owner | `just smoke-hoff gpu` |
 
 The port has no tests of its own since 2026-10-14 (the owner: "kokkos code should NOT have its
 own tests, hard rule. All tests should come [from] WW3 regtests."). Its validation is the L2 rows:
-`scripts/hoff.sh --hoff --cpu` pair to pair with `--ww3`, and the WW3 regtest matrix of WFIP-0003
-(`scripts/hoff_matrix.sh`).
+`scripts/hoff.sh --hoff --cpu` pair to pair with `--ww3`, and the WW3 regtest matrix of WFIP-0003.
+The matrix rows above were run by `scripts/hoff_matrix.sh`; since 2026-10-15 the same matrix is a
+CMake/CTest driver in [`regtests/`](../../regtests/CMakeLists.txt) (`just hoff-matrix`), one CTest test per
+`matrix.base` entry. CTest there runs WW3's own regtests, the Fortran DIA against the Kokkos DIA;
+it is not a test of the port's own.
+
+**Open issue: the shim needs nesting set by its caller.** Under `OMPG` the shim is called inside an
+active OpenMP parallel region, and Kokkos's OpenMP backend refuses to open its own unless the
+runtime allows two active levels (the OpenMP matrix row). Today the caller provides that,
+`OMP_MAX_ACTIVE_LEVELS=2` in the environment, which the `omp` selection of `regtests/` exports for
+both runs; a WW3 user who sets `OMPG` and `WW_KOKKOS_SNL1=1`
+without it gets an abort. Two fixes, both a change to the shim and both awaiting the owner: the
+shim calls `omp_set_max_active_levels(2)` when it initialises, or it runs the kernel on
+`Kokkos::Serial` when `omp_in_parallel()` is true. Neither is chosen or written ⚠.
 
 Why L2 was not byte-identical while L1 was, until 2026-10-15: `AF11 = (SIG(IFR)*TPIINV)**11`
 (`w3snl1md.F90:741`, `:750` at `6d1bcdfe`). gfortran computes `x**11` with libgcc's `__powisf2`
@@ -86,6 +99,6 @@ program, end to end) under `tests/`, run by CTest.
 - **L1 is gone.** `L1_test_snl1_dia.cpp` and `L1_test_snl1_shim.cpp` were GoogleTests that CTest
   ran on every preset, as WW4 does; they were removed on 2026-10-14 under the owner's rule above.
 - **L2 is not GoogleTest.** The replay inside WW3 is a shell script, `scripts/hoff.sh`, with `nccmp-tol` as
-  the judge, and the WW3 regtest matrix (`scripts/hoff_matrix.sh`, WFIP-0003) runs WW3's own harness.
+  the judge, and the WW3 regtest matrix (`regtests/`, a CTest driver since 2026-10-15, WFIP-0003) runs WW3's own harness.
   Wrapping them in an `L2_test_snl1_replay.cpp` would be a test of the port's own, which
   [ADR-0010](../../docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md) rules out.

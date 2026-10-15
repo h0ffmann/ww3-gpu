@@ -161,7 +161,8 @@ just kokkos-test serial-debug   # compila e testa os kernels C++/Kokkos
 ```
 
 Depois disso, comece por [`course/00-orientation.md`](course/00-orientation.md). `just` lista todas
-as tarefas, e cada uma chama um script em `scripts/`. O toolchain, o fork do WW3 e os presets do
+as tarefas, e cada uma chama um script em `scripts/`, exceto `just hoff-matrix*`, que roda a matriz
+de regtests do WW3 por CMake/CTest em `regtests/`. O toolchain, o fork do WW3 e os presets do
 Kokkos estão em [`docs/TOOLCHAIN.md`](docs/TOOLCHAIN.md). Para casos costeiros, `just swan` instala
 o SWAN.
 

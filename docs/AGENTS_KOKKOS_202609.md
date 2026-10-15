@@ -112,7 +112,8 @@ using SpecView  = Kokkos::View<Real****, Kokkos::LayoutLeft, DeviceMem>;
 > and WW3's regtests validate it ([ADR-0010](ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md),
 > [WFIP-0003](WFIPs/WFIP-0003-kokkos-regtest-matrix.md)). Item 4 is `scripts/hoff.sh --hoff --cpu`
 > pair to pair with `--ww3` (`just smoke-hoff`, `just full-hoff`) and the regtest matrix
-> (`just hoff-matrix`), not a `tests/L2_test_X` file, and it runs on the CPU only; item 6 is checked
+> (`just hoff-matrix`, CTest in `regtests/` running WW3's own regtests, Fortran against Kokkos, since
+> 2026-10-15), not a `tests/L2_test_X` file, and it runs on the CPU only; item 6 is checked
 > inside a regtest run. The list is kept as written in 2026-09.
 
 A PR that ports routine `X` is complete only when the agent has produced **all** of:

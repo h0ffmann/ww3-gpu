@@ -21,7 +21,7 @@
 | **Manually reviewed** | no |
 | **Written by** | M. Hoffmann, with an agent |
 | **Tasks** | none needed: one script, one recipe and one run; §7 is the task list |
-| **Tests** | `scripts/hoff_matrix.sh --self-test` (the selection, the staging and the verdict logic on fixtures) |
+| **Tests** | `just hoff-matrix-selftest` (the selection, the argument lists and the verdict logic on fixtures); until 2026-10-15, `scripts/hoff_matrix.sh --self-test` |
 | **Spec-kit** | none |
 | **Issues** | not filed: Draft |
 
@@ -64,9 +64,9 @@ Their spectral grids reach NK=40 NTH=36 (`ww3_tp2.15`) and NK=32 NTH=36 (`ww3_tc
 Before: `just smoke-hoff`, one case, one verdict. After:
 
 ```text
-$ just hoff-matrix --list | head -2
-ww3_ta1  -s ST4 -i input_UPD0F_O ...
-ww3_ta1  -s ST4 -i input_UPD0F_U ...
+$ just hoff-matrix-list | head -2
+  Test   #5: 001:ww3_ta1:ST4
+  Test   #6: 002:ww3_ta1:ST4
 $ just hoff-matrix
 regtest      switch       built  ran   test.comp(F,K)   nccmp-tol(F,K)   judged
 ww3_ts1      ST4          ok     ok    23 differ        PASS             hs
@@ -144,6 +144,28 @@ regtest table cites it.
 Deterministic: the selection at a given pin; the runs, up to the OpenMP backend's thread order
 (the build keeps `-ffp-contract=off`; see §6).
 
+*Update, 2026-10-15:* at the owner's request the driver moved from `scripts/hoff_matrix.sh` to a
+CMake/CTest project, [`regtests/CMakeLists.txt`](../../regtests/CMakeLists.txt) with the scripts in
+`regtests/cmake/`, and `scripts/hoff_matrix.sh` was removed. Configure reads `matrix.base` with the
+selection of step 1 and registers one CTest test per entry, `NNN:<test>:<switch>`, labelled `entry`
+and `serial` or `omp`, around the fixtures `setup:kokkos` and `setup:stage` (steps 2 and 3) and
+`record:summary` (step 6, `<build>/summary.tsv`); `selection:count` fails when a WW3 pin changes the
+number of entries (100 serial, 25 `omp` at `WW3@6d1bcdfe`). Each entry test is steps 4 and 5 for one
+entry. The configure options are `HOFF_SELECTION` (`serial`, the default, or `omp`), `HOFF_WW3`,
+`HOFF_DATA` (WW3's ftp data), `HOFF_STRICT` (default `ON`: a file `test.comp` finds different
+fails the entry, the answer to the first question of §11 now that the DIA is byte-identical) and
+`HOFF_OMP_THREADS` (`OMP_NUM_THREADS` of each run and `matrix.base`'s `$np`; the recipe sets it to
+`nproc --all` divided by the jobs). The `omp` selection exports `OMP_MAX_ACTIVE_LEVELS=2` for both
+runs (`regtests/cmake/run_entry.cmake`). The recipes are `just hoff-matrix [jobs] [serial|omp]
+[ctest args]` (`jobs=N` and `selection=S` are accepted too; the record is
+`build/hoff-matrix-<selection>/summary.tsv`), `just hoff-matrix-list [serial|omp]`,
+`just hoff-matrix-fetch` (the old `--fetch-data`) and `just hoff-matrix-selftest` (the old
+`--self-test`); `--only`, `--dry-run` and `--omp` became `ctest -R`, `ctest -N` and the `omp`
+selection, as in `just hoff-matrix 8 serial -R ww3_ts1` (v) (`justfile`, read 2026-10-15). CTest is only the
+runner: every test it runs is one of WW3's regtests, with the Fortran DIA and with the Kokkos DIA,
+so this is not a test of the port's own and ADR-0010 holds. The tables of 2026-10-14 and 2026-10-15
+were written by the shell script; no table from the CTest driver is committed yet ⚠.
+
 ## 6. Parity and physics impact
 
 None on the model: no kernel, Fortran or tolerance changes. The tolerances stay those of
@@ -164,8 +186,14 @@ byte-identical on all 100 entries (`docs/data/hoff_matrix_2026-10-15.tsv`,
 - [x] A dry run printed every command and wrote nothing under `WW3/`: `just hoff-matrix --dry-run && git -C WW3 status --porcelain`
 - [x] One entry ran end to end on the CPU with both verdicts: `just hoff-matrix --only ww3_ts1:ST4`
 - [x] The full matrix ran on the owner's workstation and its table was committed with its header: `just hoff-matrix` → `docs/data/hoff_matrix_<date>.tsv`
-- [ ] A dated log entry recorded the wall time, the failures and what they mean: `docs/log/<date>-hoff-matrix.md`
+- [x] A dated log entry recorded the wall time, the failures and what they mean: [`docs/log/2026-10-14-snl1-bitwise-af11.md`](../log/2026-10-14-snl1-bitwise-af11.md) (serial, with the failure entries it links) and [`docs/log/2026-10-15-hoff-matrix-omp.md`](../log/2026-10-15-hoff-matrix-omp.md) (OpenMP)
 - [x] The W3SNL1 port report and the `regtested` cell of `kokkos/ports.tsv` cited the table: `python3 scripts/port_score.py --check`
+
+*Update, 2026-10-15:* the commands of the boxes above are those of `scripts/hoff_matrix.sh`, which
+ticked them; the script is gone (§5). Their equivalents now are `just hoff-matrix-list`,
+`just hoff-matrix-selftest`, `just hoff-matrix 8 serial -N` for the dry run,
+`just hoff-matrix 8 serial -R ww3_ts1` for one test, and `just hoff-matrix` for the whole
+selection; none of them is ticked again here ⚠ (not run on this driver by this update).
 
 ## 8. Risks, limitations, and honest caveats
 

@@ -5,6 +5,7 @@
 #   ww3-gpu commit: 7fd6bb2 (dirty: the pow11() change of this commit)
 #   WW3 commit: 6d1bcdfe (origin/hoff/kokkos-snl1)
 #   machine: Intel(R) Core(TM) i9-14900, 4 threads, OMP_NUM_THREADS=4
+#   correction, 2026-10-15: the machine has 32 hardware threads (nproc --all); "4 threads" above is plain nproc, which honours OMP_NUM_THREADS (docs/log/2026-10-15-hoff-matrix-omp.md)
 #   command: just hoff-matrix --jobs 8
 # test_comp: files differing/compared (WW3 test.comp, bytes); nccmp_tol: kokkos/tools/nccmp-tol/tolerances.txt, unchanged
 # every entry 0 differing files; the previous run, before the fix: docs/data/hoff_matrix_2026-10-14.tsv

@@ -195,5 +195,6 @@ output field by field with `kokkos/tools/nccmp-tol`, then compares the Kokkos ru
 pair to pair with `--ww3` (WW3 built without the KOKKOS switch). The caller patch
 lives on the h0ffmann/WW3 branch `hoff/kokkos-snl1` (`src/fortran_iface/PATCH.md`);
 nothing in this repository modifies `WW3/`. The WW3 regtest matrix of WFIP-0003
-(`scripts/hoff_matrix.sh`) extends the replay to more of WW3's regtests ⚠ (being
-written on 2026-10-14; no result from it is quoted here).
+(`just hoff-matrix`, CTest in `regtests/` since 2026-10-15) extends the replay to WW3's own
+regtests: byte-identical on the 100 serial and the 25 shared-memory OpenMP `NL1` entries (v,
+`kokkos/port_report/W3SNL1_KOKKOS.md`, "How it was regtested").
