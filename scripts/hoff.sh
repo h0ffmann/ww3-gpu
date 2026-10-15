@@ -43,9 +43,8 @@
 # Builds go to build/<ww3|hoff-BACKEND>/, runs to build/runs/<mode>-<case>[-BACKEND]/.
 #
 # WW3 is built with its own Release flags in both modes. The two runs of --hoff agree to the
-# tolerances of kokkos/tools/nccmp-tol/tolerances.txt; on 2026-10-14 they were not byte-identical
-# (ww3_ts1: hs within 1e-7 relative), and compiling the Fortran with -ffp-contract=off changed
-# nothing (docs/PORT_ASSESSMENT_202610.md).
+# tolerances of kokkos/tools/nccmp-tol/tolerances.txt; since 2026-10-15 they are byte-identical
+# (docs/log/2026-10-14-snl1-bitwise-af11.md), and the script says so when they are.
 set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

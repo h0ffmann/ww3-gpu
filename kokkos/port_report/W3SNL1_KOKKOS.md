@@ -1,6 +1,6 @@
 # W3SNL1_KOKKOS
 
-**Status:** L2 (inside WW3, on the CPU). Not run on a GPU inside WW3 yet.
+**Status:** L2 (inside WW3, on the CPU), byte-identical to the Fortran DIA on all 100 serial `NL1` entries of WW3's regtest matrix (2026-10-15). Not run on a GPU inside WW3 yet.
 
 The discrete interaction approximation (DIA) of the nonlinear four-wave interactions, `W3SNL1`,
 ported to Kokkos.
@@ -52,9 +52,12 @@ What they say, read with care:
 | Level | What | Result | Where |
 |---|---|---|---|
 | L1 (history) | one call against the Fortran fixture, NK=25 NTH=24, three presets (serial-debug, openmp-release, cuda-release) | bit-identical (max relative error 0.0), 2026-09-15; the CPU presets re-run 2026-10-14 | `L1_test_snl1_dia`, `L1_test_snl1_shim`, `shim_roundtrip`: removed with the tests, 2026-10-14 |
-| L2, smoke | `--hoff --cpu` on regtest `ww3_ts1` (NK=36 NTH=24, 10 days): the Kokkos DIA against the Fortran DIA of the same executable, then pair to pair against `--ww3` | `hs` max rel 9.879e-8, PASS, both comparisons (tolerance 1e-4); not byte-identical | `just smoke-hoff`, 2026-10-14; CI health check h1 |
-| L2, full | `--hoff --cpu` on `bench_small` (9 520 points, 12 h) | `hs` max rel 1.832e-7 over 119 652 values, PASS; not byte-identical | `just full-hoff`, 2026-10-14 |
-| L2, matrix | `just hoff-matrix`: the 100 serial `NL1` entries of WW3's `matrix.base` through `run_cmake_test`, the Kokkos DIA against the Fortran DIA of one executable (WFIP-0003) | all 100 built and ran with the Kokkos DIA logged; `nccmp-tol` 66 PASS, 29 n/a (no judged field), 5 FAIL (entries 6, 10, 16, 51, 54); `test.comp` byte-identical on 9 entries (`ww3_tp2.6`, `ww3_ts1`, `ww3_tc1`, `ww3_tnc1`) (v) | [`docs/data/hoff_matrix_2026-10-14.tsv`](../../docs/data/hoff_matrix_2026-10-14.tsv), 2026-10-15; the failures: [entry 16](../../docs/log/2026-10-14-hoff-matrix-entry16.md), [51 and 54](../../docs/log/2026-10-15-hoff-matrix-entries51-54.md): round-off amplified by WW3 itself, reproduced by FMA on the Fortran alone |
+| L2, smoke | `--hoff --cpu` on regtest `ww3_ts1` (NK=36 NTH=24, 10 days): the Kokkos DIA against the Fortran DIA of the same executable, then pair to pair against `--ww3` | `hs` max rel 9.879e-8, PASS, both comparisons (tolerance 1e-4); not byte-identical, before the `AF11` fix | `just smoke-hoff`, 2026-10-14; CI health check h1 |
+| L2, full | `--hoff --cpu` on `bench_small` (9 520 points, 12 h) | `hs` max rel 1.832e-7 over 119 652 values, PASS; not byte-identical, before the `AF11` fix | `just full-hoff`, 2026-10-14 |
+| L2, matrix (before the fix) | `just hoff-matrix`: the 100 serial `NL1` entries of WW3's `matrix.base` through `run_cmake_test`, the Kokkos DIA against the Fortran DIA of one executable (WFIP-0003) | all 100 built and ran with the Kokkos DIA logged; `nccmp-tol` 66 PASS, 29 n/a (no judged field), 5 FAIL (entries 6, 10, 16, 51, 54); `test.comp` byte-identical on 9 entries (`ww3_tp2.6`, `ww3_ts1`, `ww3_tc1`, `ww3_tnc1`) (v) | [`docs/data/hoff_matrix_2026-10-14.tsv`](../../docs/data/hoff_matrix_2026-10-14.tsv), 2026-10-15; the failures: [entry 16](../../docs/log/2026-10-14-hoff-matrix-entry16.md), [51 and 54](../../docs/log/2026-10-15-hoff-matrix-entries51-54.md): round-off amplified by WW3 itself, reproduced by FMA on the Fortran alone |
+| L2, matrix after the `AF11` fix | `just hoff-matrix --jobs 8` with `pow11()` following gfortran's `-O3` chain (below) | all 100 built and ran with the Kokkos DIA logged; `test.comp` **0 differing files on all 100 entries**; `nccmp-tol` 71 PASS, 29 n/a, 0 FAIL (v) | [`docs/data/hoff_matrix_2026-10-15.tsv`](../../docs/data/hoff_matrix_2026-10-15.tsv), 2026-10-15; [`docs/log/2026-10-14-snl1-bitwise-af11.md`](../../docs/log/2026-10-14-snl1-bitwise-af11.md) |
+| L2, smoke after the fix | `just smoke-hoff` (`ww3_ts1`) | byte-identical outputs; `hs` max rel 0 against the Fortran DIA and pair to pair against `--ww3` (v) | 2026-10-15 |
+| L2, full after the fix | `just full-hoff` (`bench_small`) | byte-identical outputs; `hs` max rel 0 over 119 652 values, both comparisons (v) | 2026-10-15 |
 | GPU in WW3 | `--hoff --gpu` | not run: the workstation's driver was not loaded on 2026-10-14, and the run needs the owner | `just smoke-hoff gpu` |
 
 The port has no tests of its own since 2026-10-14 (the owner: "kokkos code should NOT have its
@@ -62,9 +65,18 @@ own tests, hard rule. All tests should come [from] WW3 regtests."). Its validati
 `scripts/hoff.sh --hoff --cpu` pair to pair with `--ww3`, and the WW3 regtest matrix of WFIP-0003
 (`scripts/hoff_matrix.sh`).
 
-Why L2 was not byte-identical while L1 was: the L1 fixture comes from gfortran at `-g`, and WW3 runs
-at `-O3`; `-ffp-contract=off` on the Fortran changed nothing. The cause is open
-([`../../docs/PORT_ASSESSMENT_202610.md`](../../docs/PORT_ASSESSMENT_202610.md) §4).
+Why L2 was not byte-identical while L1 was, until 2026-10-15: `AF11 = (SIG(IFR)*TPIINV)**11`
+(`w3snl1md.F90:741`, `:750` at `6d1bcdfe`). gfortran computes `x**11` with libgcc's `__powisf2`
+at `-O0`, whose chain ends `x^3*x^8`, and with GCC's power tree at `-O3`, ending `x^5*x^6`
+(`x^2 = x*x`, `x^3 = x^2*x`, `x^5 = x^2*x^3`, `x^6 = x^3*x^3`) (v) (`-fdump-tree-optimized` of
+`w3snl1md.F90` at WW3's flags). The two differ in the last bit for 643 427 of 1 000 000 inputs
+(v). `pow11()` had the `-O0` chain, which the `-g` fixture confirmed and the `-O3` WW3 did not;
+it now has the `-O3` chain. No other line of `INSNL1` or `W3SNL1` differs in the dump: runtime
+exponents (`XFR**IFRP`) stay `__powisf2` calls at `-O3`, which `powi()` reproduces. This restores
+the Fortran's arithmetic; nothing was reordered relative to the Fortran, and no tolerance, flag or
+WW3 file changed. The 1e-7 differences of the earlier rows, and the five `nccmp-tol` failures of
+the 2026-10-14 matrix, came from this one table. ⚠ The chain is GCC's: a WW3 built with another
+compiler or at `-O0` would need the matching chain.
 
 ## GoogleTest, the WW4 way
 

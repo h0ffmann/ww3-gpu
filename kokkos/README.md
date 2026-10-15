@@ -107,9 +107,9 @@ instructions for whichever kitchen is there.
 **Why it matters here.** The `W3SNL1` port is one source that gave the Fortran's numbers bit for
 bit on Serial, OpenMP and CUDA (L1 tests, 2026-09-15, removed on 2026-10-14 by
 [ADR-0010](../docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md)), and the OpenMP build
-passes the WW3 regtest replay inside WW3 on the CPU, `hs` within 1.8e-7 relative and not
-byte-identical (L2; `just smoke-hoff`, `just full-hoff`) (v, [`PORT_STATUS.md`](PORT_STATUS.md),
-read 2026-10-14). Same source did not mean same numbers for free: it took turning off
+is byte-identical to the Fortran DIA inside WW3 on the CPU (L2; `just smoke-hoff`,
+`just full-hoff`, and `test.comp` on all 100 entries of `just hoff-matrix`) (v,
+[`PORT_STATUS.md`](PORT_STATUS.md), 2026-10-15). Same source did not mean same numbers for free: it took turning off
 contraction and copying gfortran's `x**n` ([The W3SNL1 port](#the-w3snl1-port)).
 
 **Where the analogy breaks.** Fortran is not stuck in 1957 or 1991. Modern Fortran has coarrays
@@ -283,6 +283,12 @@ Two consequences worth knowing before touching them:
   binary-exponent chain of multiplications; `powf` does something else, to within
   a ULP. `snl1_tables.cpp` has a `powi()` that reproduces the chain, and that is
   what made the L1 parity of the removed tests exact rather than merely close.
+  The chain depends on the optimisation level: a literal exponent such as
+  `**11` is a call of `__powisf2` at `-O0` (ending `x^3*x^8`) and GCC's power tree
+  at `-O3` (ending `x^5*x^6`), and the two differ in the last bit for about 64 %
+  of inputs. `pow11()` follows `-O3`, the level WW3 is built at; with it the
+  Kokkos DIA inside WW3 is byte-identical to the Fortran
+  ([`../docs/log/2026-10-14-snl1-bitwise-af11.md`](../docs/log/2026-10-14-snl1-bitwise-af11.md)).
 
 The DIA has no reduction, so `WW_DETERMINISTIC` changes nothing here: every output
 element is written by one thread from inputs no thread modifies.

@@ -44,4 +44,6 @@ Date, author, issue/PR/WFIP.
 | 2026-10-14 | [A one-session exception to the Kokkos account rule, and what the hooks still refused](2026-10-14-kokkos-account-exception.md) | AGENTS.md hard rule, WFIP-0003 |
 | 2026-10-14 | [Matrix entry 16 (`ww3_ts1 -g ST4_T500`): the Kokkos DIA fails `nccmp-tol`, and the Fortran alone does too](2026-10-14-hoff-matrix-entry16.md) | WFIP-0003 |
 | 2026-10-15 | [Matrix entries 51 and 54 (`ww3_ts3`, ST1): the same amplification as entry 16](2026-10-15-hoff-matrix-entries51-54.md) | WFIP-0003 |
+| 2026-10-15 | [Matrix entries 6 and 10 (`ww3_tp2.15`, 5 km grid and ST6): the same amplification as entry 16](2026-10-15-hoff-matrix-entries6-10.md) | WFIP-0003 |
+| 2026-10-14 | [The Kokkos DIA byte-identical inside WW3: `AF11` used the `-O0` chain of `x**11`](2026-10-14-snl1-bitwise-af11.md) | WFIP-0003, PR #120 |
 | 2026-10-14 | [The first published ai-memory page, and `memory/`](2026-10-14-memory-publish.md) | ADR-0009 |

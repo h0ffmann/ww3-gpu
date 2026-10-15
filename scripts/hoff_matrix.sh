@@ -29,7 +29,7 @@
 # entry's matrix.base options, which tell apart entries of one test and switch).
 # nccmp_tol is n/a when the test has no ww3_ounf input, and MISSING (a failure) when it has one
 # and either run wrote no ww3.*.nc.
-# test.comp differences are recorded, not fatal: L2 is not byte-identical (W3SNL1_KOKKOS.md).
+# test.comp differences are recorded, not fatal; since 2026-10-15 every entry has 0 (W3SNL1_KOKKOS.md).
 #
 # Exit codes: 0 no nccmp-tol FAIL, and every entry that ran with the Fortran DIA also ran with
 # the Kokkos DIA and logged "Kokkos DIA (W3SNL1) enabled."; 1 otherwise, or WW3/ was written;

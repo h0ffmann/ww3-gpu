@@ -62,7 +62,10 @@ Two build facts decide whether "bit-identical" is true (v, `kokkos/src/ww_kokkos
 bit-identical; with contraction off all three presets reproduced the Fortran bit for bit in the
 L1 tests of the day, and
 removing that line is a physics change, not an optimisation. And **`x**n` is not `std::pow`**:
-`powi()` and `pow11()` reproduce gfortran's multiplication chains.
+`powi()` and `pow11()` reproduce gfortran's multiplication chains, and they have to be the
+chains of the optimisation level WW3 is built at: `AF11 = (SIG*TPIINV)**11` is `x^3*x^8` at `-O0`
+and `x^5*x^6` at `-O3`, which is why a fixture built at `-g` matched while WW3 differed by 1e-7
+until `pow11()` followed `-O3` (v) (`docs/log/2026-10-14-snl1-bitwise-af11.md`).
 
 ## The shim and `W3KOKKOSMD`
 
@@ -165,9 +168,12 @@ run is then compared pair to pair with `--ww3`, WW3 built from the same source w
 (v, `scripts/hoff.sh` header). It runs on the CPU, Kokkos on OpenMP: a GPU run of WW3 is the
 owner's, supervised, and no agent starts one. Measured on 2026-10-14: `hs` within 9.879e-8
 relative on `ww3_ts1` and within 1.832e-7 on `bench_small`, both PASS at the 1e-4 tolerance, not
-byte-identical (v, `kokkos/port_report/W3SNL1_KOKKOS.md`, "How it was regtested").
+byte-identical. The cause was one table, `AF11 = (SIG*TPIINV)**11`, computed with the `-O0` chain
+of `x**11`; with the `-O3` chain, on 2026-10-15, both runs became byte-identical, `hs` max rel 0
+(v, `kokkos/port_report/W3SNL1_KOKKOS.md`, "How it was regtested").
 `just hoff-matrix` takes the same comparison to WW3's own harness, `run_cmake_test`, with WW3's
-`test.comp` beside `nccmp-tol` ⚠ (written on 2026-10-14; no result from it is quoted yet).
+`test.comp` beside `nccmp-tol`: after the fix, 0 differing files on all 100 serial `NL1` entries
+(v, `docs/data/hoff_matrix_2026-10-15.tsv`).
 
 The older harness, `just l2 ww3_ts1` (`kokkos/tests/L2_replay.sh`), does the same pairing on a run
 prepared by `just rt`, in `work_a` and `work_b`, and appends the table to `kokkos/PORT_STATUS.md`

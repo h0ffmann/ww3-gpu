@@ -16,9 +16,10 @@ the CPU and compared within `kokkos/tools/nccmp-tol/tolerances.txt` (ADR-0010: "
 is validated only by WW3's regression tests") `(v)`. The port has no tests of its own.
 
 `W3SNL1` was "bit-identical on all three presets" (Serial, OpenMP, CUDA) in the unit tests that
-ADR-0010 removed, a historical result in `kokkos/PORT_STATUS.md` `(v)`. Inside WW3 it is not
-byte-identical: `hs` agrees within 1.8e-7 relative on the CPU (`just full-hoff`, 2026-10-14,
-`kokkos/port_report/W3SNL1_KOKKOS.md`) `(v)`. A bit-for-bit claim is settled by mechanised checks,
+ADR-0010 removed, a historical result in `kokkos/PORT_STATUS.md` `(v)`. Inside WW3 it was not
+byte-identical until 2026-10-15, when `AF11` took gfortran's `-O3` chain for `x**11`; since then
+WW3's `test.comp` finds 0 differing files on all 100 entries of `just hoff-matrix` on the CPU
+(`kokkos/port_report/W3SNL1_KOKKOS.md`) `(v)`. A bit-for-bit claim is settled by mechanised checks,
 not by a proof language: ADR-0001 decides "No proof assistant or dependently typed language is
 adopted" `(v)`.
 
