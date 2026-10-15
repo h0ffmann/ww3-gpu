@@ -1,0 +1,54 @@
+# docker-scan — builds docker/Dockerfile, the image this repository distributes, and scans it with
+# Trivy (free, open source): the job fails on any HIGH or CRITICAL vulnerability that has a fix,
+# in an Ubuntu package or in a binary of the image. Unfixed ones are reported, not fatal: there
+# is nothing to upgrade to. Weekly too, since new CVEs land without any change here.
+name: docker-scan
+
+on:
+  pull_request:
+    paths: [docker/**, .dockerignore, scripts/ww3-gpu.sh, scripts/docker.sh, kokkos/**, WW3, WW4, .github/workflows/docker-scan.yml]
+  push:
+    branches: [main]
+    paths: [docker/**, .dockerignore, scripts/ww3-gpu.sh, scripts/docker.sh, kokkos/**, WW3, WW4, .github/workflows/docker-scan.yml]
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: false
+
+      # .gitmodules uses ssh URLs a runner cannot clone, hence https; a pinned commit on a topic
+      # branch may not be fetched by `submodule update`, so the fallback fetches the SHA itself.
+      - name: Fetch WW3 and WW4 at their pinned commits
+        run: |
+          git config --global url.https://github.com/.insteadOf git@github.com:
+          for sm in WW3 WW4; do
+            git submodule update --init --depth 1 "$sm" || {
+              sha=$(git ls-tree HEAD "$sm" | awk '{print $3}')
+              git -C "$sm" fetch --depth 1 origin "$sha" && git -C "$sm" checkout -q "$sha"
+            }
+          done
+          git -C WW4 submodule update --init --depth 1 externals/yaml-cpp externals/googletest
+
+      - name: Build the image (just dbuild)
+        run: bash scripts/docker.sh build ci
+
+      - name: Scan with Trivy
+        run: |
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:0.76.0 \
+            image --scanners vuln --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 ww3-gpu:ci
+
+      - name: Every finding, for the record (not fatal)
+        if: always()
+        run: |
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:0.76.0 \
+            image --scanners vuln --exit-code 0 ww3-gpu:ci

@@ -149,6 +149,10 @@ dbuild tag="local":
 drun *args:
     bash scripts/docker.sh run {{args}}
 
+# Scan the image for HIGH/CRITICAL vulnerabilities with a fix, as CI does (docker-scan.yml)
+dscan tag="local":
+    docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:0.76.0 image --scanners vuln --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 ww3-gpu:{{tag}}
+
 # `just smoke` in the image: WW3 as written, then WW3 with the Kokkos DIA.
 dsmoke: dsmoke-ww3 dsmoke-ww3-gpu
 

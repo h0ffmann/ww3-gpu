@@ -193,6 +193,8 @@ become `dsmoke`, `dsmoke-ww3`, and so on. The image needs no Nix and no picasso:
 installs Ubuntu's compilers and libraries, compiles Kokkos 5.2.2 from its release tarball (Ubuntu
 packages an older one), and the final stage copies only the compiled programs.
 
+CI scans the image with Trivy on every change to it and weekly (`.github/workflows/docker-scan.yml`): a HIGH or CRITICAL vulnerability with a fix fails the job. `just dscan` runs the same scan here.
+
 Without just, the same with plain Docker:
 
 ```console

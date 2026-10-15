@@ -189,6 +189,8 @@ Cada receita que roda o `scripts/ww3-gpu.sh` no host tem seu par na imagem, com 
 build instala os compiladores e as bibliotecas do Ubuntu, compila o Kokkos 5.2.2 a partir do tarball
 da versão (o Ubuntu empacota uma mais antiga), e o estágio final copia só os programas compilados.
 
+O CI varre a imagem com o Trivy a cada mudança nela e toda semana (`.github/workflows/docker-scan.yml`): uma vulnerabilidade HIGH ou CRITICAL com correção reprova o job. `just dscan` roda a mesma varredura aqui.
+
 Sem o just, o mesmo com Docker puro:
 
 ```console

@@ -102,9 +102,12 @@ RUN { echo "ww3-gpu ${WW3_GPU_REV}"; echo "WW3 ${WW3_REV} (h0ffmann/WW3 hoff/kok
 FROM ${UBUNTU}
 ARG DEBIAN_FRONTEND=noninteractive
 COPY --from=build /opt/ww3-gpu /opt/ww3-gpu
-RUN apt-get update \
+# Security fixes released since the base image, then the runtime packages. /usr/bin/pebble ships
+# in Ubuntu's base image outside any package, is not used here, and its Go runtime is what the
+# CI scan (.github/workflows/docker-scan.yml) flags, so it goes.
+RUN apt-get update && apt-get upgrade -y \
  && xargs -a /opt/ww3-gpu/runtime-packages.txt apt-get install -y --no-install-recommends \
- && rm -rf /var/lib/apt/lists/*
+ && rm -rf /var/lib/apt/lists/* /usr/bin/pebble
 # Not root. Ubuntu's image already has uid 1000 (ubuntu), so the user takes the next free one.
 RUN useradd --create-home --shell /bin/bash wave
 # The entry point: the same scripts/ww3-gpu.sh the host runs, with WW3GPU_PREBUILT set.
