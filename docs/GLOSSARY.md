@@ -320,6 +320,13 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | ULP | ⚠ unit in the last place (not expanded in the repo) | The granularity of float rounding; the budget of a bit-parity test. | [kokkos/src/ww_kokkos/snl1_config.hpp](../kokkos/src/ww_kokkos/snl1_config.hpp) |
 | `powi()` / `pow11()` | integer-power helpers that reproduce gfortran's multiplication chain for `x**n` `(v)` [kokkos/README.md](../kokkos/README.md) | Why the port is bit-for-bit rather than "close": `x**n` is not `std::pow`. | [course/12-porting-a-kernel-w3snl1.md](../course/12-porting-a-kernel-w3snl1.md) |
 | Kokkos | ⚠ the Sandia-led C++ performance-portability library (not expanded; 5.2.0 pinned `(v)` [kokkos/README.md](../kokkos/README.md)) | One kernel source runs on Serial, OpenMP or CUDA backends chosen at build time; the abstraction WW4 proposes too. | [course/11-kokkos-and-modern-cpp.md](../course/11-kokkos-and-modern-cpp.md) |
+| performance portability / backend | one source that runs, and runs well, on different hardware; a *backend* is the programming model one build of that source targets `(v)` [kokkos/kokkos README](https://github.com/kokkos/kokkos), 2026-10-14 | Kokkos' stated purpose; this repository builds the Serial, OpenMP and CUDA backends, one per preset. | [kokkos/README.md](../kokkos/README.md#why-kokkos-not-fortran-90-in-plain-words) |
+| HIP / SYCL / HPX | AMD's GPU programming interface / the Khronos C++ standard for heterogeneous devices / a C++ task-parallel runtime, each a Kokkos backend (HPX experimental) `(v)` [Kokkos configuration guide](https://kokkos.org/kokkos-core-wiki/get-started/configuration-guide.html), 2026-10-14; expansions ⚠ | Backends this repository does not build; SYCL was weighed against Kokkos and kept as an escape hatch. | [docs/KOKKOS_H100_PLAN_202609.md](KOKKOS_H100_PLAN_202609.md), [kokkos/README.md](../kokkos/README.md#why-kokkos-not-fortran-90-in-plain-words) |
+| FORTRAN / IBM 704 | ⚠ FORmula TRANslation (Reid's gloss, below); the language IBM released in 1957, whose first compiler was for the IBM 704 `(v)` [IBM history](https://www.ibm.com/history/fortran), 2026-10-14 | The origin of the language WW3 is written in. | [kokkos/README.md](../kokkos/README.md#why-kokkos-not-fortran-90-in-plain-words) |
+| Fortran 90 / ISO/IEC 1539:1991 | ⚠ the 1991 ISO Fortran standard (ISO's catalogue page refused the fetch; IBM lists it as ISO/IEC 1539-1:1991 `(v)`); published August 1991 `(v)` Reid, [*The advantages of Fortran 90*](https://numerical.rl.ac.uk/media/reports/rRAL92017.pdf) | Added whole-array statements, modules and dynamic allocation; WW3's `.F90` files are free-form Fortran of this lineage. | [kokkos/README.md](../kokkos/README.md#why-kokkos-not-fortran-90-in-plain-words) |
+| SIMD / ICL DAP | ⚠ single instruction, multiple data; the ICL Distributed Array Processor, "a SIMD machine consisting of a 64x64 array of bit processors" `(v)` Reid, [*The advantages of Fortran 90*](https://numerical.rl.ac.uk/media/reports/rRAL92017.pdf), 2026-10-14 | The machine whose experience shaped Fortran 90's array features, per Reid. | [kokkos/README.md](../kokkos/README.md#why-kokkos-not-fortran-90-in-plain-words) |
+| coarray | ⚠ Fortran's built-in distributed-memory arrays (Fortran 2008, not checked against the standard) | Named as evidence that modern Fortran has its own parallel features. | [kokkos/README.md](../kokkos/README.md#why-kokkos-not-fortran-90-in-plain-words) |
+| i9-14900 | Intel Core i9-14900: 24 cores (8 performance, 16 efficient), 32 threads `(v)` [Intel ARK](https://www.intel.com/content/www/us/en/products/sku/236793/intel-core-i9-processor-14900-36m-cache-up-to-5-80-ghz/specifications.html), 2026-10-14 | The owner's workstation CPU, on which the OpenMP column of `PORT_STATUS.md` was timed with 32 threads. | [bench/results/snl1-i9-14900-rtx4090-2026-09-15.json](../bench/results/snl1-i9-14900-rtx4090-2026-09-15.json) |
 | View | `Kokkos::View<T*, Layout, MemorySpace>`, a reference-counted multidimensional array handle with a label `(v)` [course/11-kokkos-and-modern-cpp.md](../course/11-kokkos-and-modern-cpp.md) | The Kokkos equivalent of `REAL, ALLOCATABLE :: A(:,:)`; an *unmanaged* View wraps caller-owned memory. | [kokkos/intro/01_views.cpp](../kokkos/intro/01_views.cpp) |
 | LayoutLeft / LayoutRight | column-major (Fortran) / row-major (C) index order as part of the View type `(v)` [course/11-kokkos-and-modern-cpp.md](../course/11-kokkos-and-modern-cpp.md) | `LayoutLeft` at the Fortran boundary; `deep_copy` between layouts is a silent transpose. | [kokkos/intro/04_layouts_and_mirrors.cpp](../kokkos/intro/04_layouts_and_mirrors.cpp) |
 | execution space / memory space | where a kernel runs (Serial, OpenMP, CUDA) / where memory lives (`HostSpace`, `CudaSpace`) `(v)` [course/11-kokkos-and-modern-cpp.md](../course/11-kokkos-and-modern-cpp.md) | `DeviceSpace = DefaultExecutionSpace::memory_space` is spelled out on every View. | [kokkos/src/ww_kokkos/snl1_config.hpp](../kokkos/src/ww_kokkos/snl1_config.hpp) |
@@ -518,6 +525,7 @@ Every term above, alphabetically, with the section it lives in.
 - AWESOME-WW3: [This repository's own names](#this-repositorys-own-names)
 - B4B: [WW3 switches](#ww3-switches)
 - b4b: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- backend: [HPC and software](#hpc-and-software)
 - `bench/`: [This repository's own names](#this-repositorys-own-names)
 - `bench/results/`: [This repository's own names](#this-repositorys-own-names)
 - `bench_snl1.cpp`: [This repository's own names](#this-repositorys-own-names)
@@ -544,6 +552,7 @@ Every term above, alphabetically, with the section it lives in.
 - CDS: [HPC and software](#hpc-and-software)
 - CFF / `CITATION.cff`: [Citation and licensing](#citation-and-licensing)
 - Claude Tag: [HPC and software](#hpc-and-software)
+- coarray: [HPC and software](#hpc-and-software)
 - codemeta / `codemeta.json`: [Citation and licensing](#citation-and-licensing)
 - CFL: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - CG: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
@@ -687,6 +696,10 @@ Every term above, alphabetically, with the section it lives in.
 - FMA: [HPC and software](#hpc-and-software)
 - FMA / `-ffp-contract` / `--fmad`: [HPC and software](#hpc-and-software)
 - `--fmad`: [HPC and software](#hpc-and-software)
+- Fortran 90: [HPC and software](#hpc-and-software)
+- Fortran 90 / ISO/IEC 1539:1991: [HPC and software](#hpc-and-software)
+- FORTRAN: [HPC and software](#hpc-and-software)
+- FORTRAN / IBM 704: [HPC and software](#hpc-and-software)
 - fp (FP): [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - FP32: [HPC and software](#hpc-and-software)
 - FP32 / FP64 / float32: [HPC and software](#hpc-and-software)
@@ -712,6 +725,13 @@ Every term above, alphabetically, with the section it lives in.
 - gprof: [HPC and software](#hpc-and-software)
 - `gprof_table.sh`: [This repository's own names](#this-repositorys-own-names)
 - `gprof_table.sh` / `perf_table.sh` / `just profile`: [This repository's own names](#this-repositorys-own-names)
+- HIP: [HPC and software](#hpc-and-software)
+- HIP / SYCL / HPX: [HPC and software](#hpc-and-software)
+- HPX: [HPC and software](#hpc-and-software)
+- i9-14900: [HPC and software](#hpc-and-software)
+- IBM 704: [HPC and software](#hpc-and-software)
+- ICL DAP: [HPC and software](#hpc-and-software)
+- ISO/IEC 1539:1991: [HPC and software](#hpc-and-software)
 - `kokkos/PORT_RANKING.md` / `/port-next`: [This repository's own names](#this-repositorys-own-names)
 - `gpu/`: [This repository's own names](#this-repositorys-own-names)
 - GQM: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
@@ -988,6 +1008,8 @@ Every term above, alphabetically, with the section it lives in.
 - `perf_table.sh`: [This repository's own names](#this-repositorys-own-names)
 - `-pg`: [HPC and software](#hpc-and-software)
 - `-pg` / gprof: [HPC and software](#hpc-and-software)
+- performance portability: [HPC and software](#hpc-and-software)
+- performance portability / backend: [HPC and software](#hpc-and-software)
 - phase 1: [This repository's own names](#this-repositorys-own-names)
 - phase 1 / phase 2 (port phases): [This repository's own names](#this-repositorys-own-names)
 - phase 2 (port phases): [This repository's own names](#this-repositorys-own-names)
@@ -1047,6 +1069,8 @@ Every term above, alphabetically, with the section it lives in.
 - ScopeGuard: [HPC and software](#hpc-and-software)
 - ScopeGuard / `Kokkos::initialize` / `finalize` / `push_finalize_hook`: [HPC and software](#hpc-and-software)
 - `sharingan`: [HPC and software](#hpc-and-software)
+- SIMD: [HPC and software](#hpc-and-software)
+- SIMD / ICL DAP: [HPC and software](#hpc-and-software)
 - Spec Kit / `specify`: [HPC and software](#hpc-and-software)
 - spike / SPIKE-NNN: [This repository's own names](#this-repositorys-own-names)
 - SCOTCH: [WW3 switches](#ww3-switches)
@@ -1076,6 +1100,7 @@ Every term above, alphabetically, with the section it lives in.
 - shuffle: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - shuffle / card deck: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - Sice: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
+- SYCL: [HPC and software](#hpc-and-software)
 - the book / *Without Changing the Answer*: [This repository's own names](#this-repositorys-own-names)
 - TIN: [HPC and software](#hpc-and-software)
 - tree-sitter: [HPC and software](#hpc-and-software)

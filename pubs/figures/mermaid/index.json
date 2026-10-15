@@ -24,6 +24,11 @@
       "title": "How do the original Fortran routine and its Kokkos kernel coexist in one WW3 binary?",
       "sha256": "6261d3f0afbabd85ec225dc5c077fa942900ead2347f1bb38dfd080f949d05ab"
     },
+    "kokkos-one-source-backends": {
+      "file": "kokkos/README.md",
+      "title": "How does one Kokkos source reach the CPU and the GPU of the lab's workstation?",
+      "sha256": "9179f59dd8b28f5afe0a293a165c69b8f1960246281410030fa6292d71dc86b0"
+    },
     "optimisation-ladder-gates": {
       "file": "course/13-bulk-porting-with-agents.md",
       "title": "Which gate must each optimisation step pass before the next step starts?",

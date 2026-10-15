@@ -43,4 +43,5 @@ Date, author, issue/PR/WFIP.
 | 2026-10-14 | [First login to the Claude Team account, and the Kokkos account guard](2026-10-14-kokkos-account-team.md) | AGENTS.md hard rule |
 | 2026-10-14 | [A one-session exception to the Kokkos account rule, and what the hooks still refused](2026-10-14-kokkos-account-exception.md) | AGENTS.md hard rule, WFIP-0003 |
 | 2026-10-14 | [Matrix entry 16 (`ww3_ts1 -g ST4_T500`): the Kokkos DIA fails `nccmp-tol`, and the Fortran alone does too](2026-10-14-hoff-matrix-entry16.md) | WFIP-0003 |
+| 2026-10-15 | [Matrix entries 51 and 54 (`ww3_ts3`, ST1): the same amplification as entry 16](2026-10-15-hoff-matrix-entries51-54.md) | WFIP-0003 |
 | 2026-10-14 | [The first published ai-memory page, and `memory/`](2026-10-14-memory-publish.md) | ADR-0009 |

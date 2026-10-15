@@ -9,6 +9,7 @@
 #   scripts/hoff_matrix.sh [--only <sel>]... [--jobs N] [--dry-run]
 #   scripts/hoff_matrix.sh --list         the selected entries, "n test options", one per line
 #   scripts/hoff_matrix.sh --self-test    the selection parser and the verdict, on fixtures
+#   scripts/hoff_matrix.sh --fetch-data   download WW3's regtest data once into build/ww3-data/
 #
 # <sel> is an entry number from --list, a test (ww3_ts1) or a test and switch (ww3_ts1:ST4);
 # --only is repeatable and takes a comma list. --jobs N runs N entries at once (default 1) and
@@ -17,7 +18,12 @@
 #
 # WW3/ is never written: the regtest inputs are staged in build/hoff-matrix/regtests/, and the
 # run fails if `git -C WW3 status --porcelain` is not empty at the end. -o netcdf is added to an
-# entry with no -o when its input directory has a ww3_ounf input. The record is
+# entry with no -o when its input directory has a ww3_ounf input. Data WW3 keeps off git (wind.nc
+# of ww3_tp2.15, ...) comes from the tarball $WW3/model/bin/ww3_from_ftp.sh names: --fetch-data
+# downloads it from that URL into build/ww3-data/<version>/, refuses an archive with a member
+# outside data_regtests/ or a link, and extracts it there; staging then copies what that script's
+# `cp -r data_regtests/... regtests/...` lines copy, for the staged tests only, and warns when a
+# staged test needs the data and the cache is missing. The record is
 # build/hoff-matrix/summary.tsv: one row per entry run (n, test, switch, built, ran, kokkos_log,
 # test_comp as differing/compared files, nccmp_tol PASS/FAIL/n/a, judged variables, wall s, and the
 # entry's matrix.base options, which tell apart entries of one test and switch).
@@ -88,12 +94,32 @@ matrix_verdict() {
 # judged_vars <nccmp-tol output>: the variables it judged, comma-separated.
 judged_vars() { awk 'p && $1 != "nccmp-tol:" && $NF != "unlisted" {print $1} /^-+$/ {p=1}' "$1" | paste -sd, -; }
 
+# ftp_copies <ww3_from_ftp.sh>: "src<TAB>dst" for each `cp -r data_regtests/<src> regtests/<dst>`.
+ftp_copies() { sed -nE 's|^[[:space:]]*cp -r data_regtests/([^[:space:]]+)[[:space:]]+regtests/([^[:space:]]+)[[:space:]]*$|\1\t\2|p' "$1"; }
+
+# tar_unsafe <tar -tvzf listing>: the members that are links or fall outside data_regtests/.
+tar_unsafe() { awk '$1 !~ /^[-d]/ {print; next} {m=$6; for (i = 7; i <= NF; i++) m = m " " $i}
+                    m !~ /^(\.\/)?data_regtests(\/|$)/ || m ~ /(^|\/)\.\.(\/|$)/ {print}' "$1"; }
+
+# stage_data <cache> <stage> <test>: what ww3_from_ftp.sh copies into regtests/<test>/.
+stage_data() {
+  local cache="$1" st="$2" test="$3" src dst f n=0
+  while IFS=$'\t' read -r src dst; do
+    [ "${dst%%/*}" = "$test" ] || continue
+    [ -d "$cache" ] || { echo "hoff_matrix: $test needs WW3's ftp data (ww3_from_ftp.sh); run --fetch-data" >&2; return 0; }
+    case "$dst" in */) mkdir -p "$st/$dst" ;; *) mkdir -p "$st/$(dirname "$dst")" ;; esac
+    for f in "$cache"/$src; do [ -e "$f" ] && cp -r "$f" "$st/$dst" && n=$((n + 1)); done
+  done < <(ftp_copies "$ww3/model/bin/ww3_from_ftp.sh")
+  [ "$n" = 0 ] || echo ">> $test: $n file(s) of WW3's ftp data staged"
+}
+
 # --- arguments -----------------------------------------------------------------------------
 orig_args=("$@")
 mode=run only=() dry="" jobs=1
 while [ $# -gt 0 ]; do
   case "$1" in
     --list) mode=list ;;
+    --fetch-data) mode=fetch ;;
     --self-test) mode=self-test ;;
     --dry-run) dry=1 ;;
     --only) [ $# -ge 2 ] || usage; IFS=, read -r -a sel <<<"$2"; only+=("${sel[@]}"); shift ;;
@@ -151,6 +177,22 @@ EOF
   printf '%s\n' "variable   n  dropped  max|d|  rms  max rel  verdict" "-----------" \
     "hs 1 0 0 0 0  PASS" "fp 1 0 0 0 0  FAIL" "lat 1 0 0 0 0  unlisted" "nccmp-tol: FAIL (2 judged, 1 unlisted)" > "$t/n.out"
   [ "$(judged_vars "$t/n.out")" = "hs,fp" ] || { echo "hoff_matrix: judged_vars wrong: $(judged_vars "$t/n.out")" >&2; exit 1; }
+  printf '%s\n' 'cp -r data_regtests/a/input/*.nc  regtests/a/input/' \
+    'cp -r data_regtests/a/input/w.nc regtests/a/input2/r.nc' 'cp -r data_regtests/z/input/* regtests/z/input/' \
+    '# cp -r data_regtests/a/x regtests/a/' > "$t/ftp.sh"
+  ww3="$t" && mkdir -p "$t/model/bin" && cp "$t/ftp.sh" "$t/model/bin/ww3_from_ftp.sh"
+  [ "$(ftp_copies "$t/ftp.sh" | wc -l)" = 3 ] || { echo "hoff_matrix: ftp_copies wrong" >&2; exit 1; }
+  mkdir -p "$t/cache/a/input" && touch "$t/cache/a/input/w.nc" "$t/cache/a/input/v.nc"
+  stage_data "$t/cache" "$t/rt" a >/dev/null
+  [ -f "$t/rt/a/input/v.nc" ] && [ -f "$t/rt/a/input/w.nc" ] && [ -f "$t/rt/a/input2/r.nc" ] \
+    || { echo "hoff_matrix: stage_data wrong" >&2; exit 1; }
+  [ -n "$(stage_data "$t/nocache" "$t/rt" a 2>&1 >/dev/null)" ] || { echo "hoff_matrix: stage_data did not warn" >&2; exit 1; }
+  [ -z "$(stage_data "$t/nocache" "$t/rt" b 2>&1)" ] || { echo "hoff_matrix: stage_data warned for a test with no data" >&2; exit 1; }
+  ww3="$root/WW3"
+  printf '%s\n' 'drwxr-xr-x u/g 0 2026-01-01 00:00 data_regtests/' '-rw-r--r-- u/g 9 2026-01-01 00:00 data_regtests/a b.nc' \
+    'lrwxrwxrwx u/g 0 2026-01-01 00:00 data_regtests/l -> /etc' '-rw-r--r-- u/g 9 2026-01-01 00:00 data_regtests/../x' \
+    '-rw-r--r-- u/g 9 2026-01-01 00:00 /etc/x' > "$t/tv.txt"
+  [ "$(tar_unsafe "$t/tv.txt" | wc -l)" = 3 ] || { echo "hoff_matrix: tar_unsafe wrong: $(tar_unsafe "$t/tv.txt")" >&2; exit 1; }
   for bad in --gpu "--jobs 0" --bogus; do
     # shellcheck disable=SC2086
     bash "${BASH_SOURCE[0]}" $bad >/dev/null 2>&1 && rc=0 || rc=$?
@@ -166,6 +208,29 @@ EOF
 fi
 
 [ -f "$ww3/regtests/bin/matrix.base" ] || { echo "hoff_matrix: WW3/ is empty: git submodule update --init WW3" >&2; exit 3; }
+ftpver="$(sed -n 's/^ww3ver=//p' "$ww3/model/bin/ww3_from_ftp.sh")"
+ftpurl="$(grep -o 'https://ftp\.emc\.ncep\.noaa\.gov/[^[:space:]]*' "$ww3/model/bin/ww3_from_ftp.sh" | head -1)"
+ftpurl="${ftpurl//\$\{ww3ver\}/$ftpver}"
+datacache="$root/build/ww3-data/$ftpver/data_regtests"
+
+if [ "$mode" = fetch ]; then
+  case "$ftpurl" in https://ftp.emc.ncep.noaa.gov/static_files/public/WW3/ww3_from_ftp.v*.tar.gz) ;;
+    *) echo "hoff_matrix: unexpected URL in ww3_from_ftp.sh: '$ftpurl'" >&2; exit 1 ;; esac
+  [ -d "$datacache" ] && { echo ">> $datacache already there"; exit 0; }
+  dl="$root/build/ww3-data/$ftpver/download" tgz="$root/build/ww3-data/$ftpver/download/${ftpurl##*/}"
+  if [ -n "$dry" ]; then echo "curl -fL -o $tgz $ftpurl; tar -xzf $tgz -C ${datacache%/*} data_regtests"; exit 0; fi
+  mkdir -p "$dl"
+  [ -f "$tgz" ] || { curl -fL --retry 3 -o "$tgz.part" "$ftpurl" && mv "$tgz.part" "$tgz"; }
+  echo ">> $ftpurl: $(stat -c %s "$tgz") bytes, sha256 $(sha256sum "$tgz" | cut -d' ' -f1)"
+  tar -tvzf "$tgz" > "$dl/listing.txt"
+  bad="$(tar_unsafe "$dl/listing.txt")"
+  [ -z "$bad" ] || { printf 'hoff_matrix: refusing %s, unsafe members:\n%s\n' "$tgz" "$bad" >&2; exit 1; }
+  echo ">> $(wc -l < "$dl/listing.txt") members, all regular files or directories under data_regtests/"
+  tar -xzf "$tgz" -C "${datacache%/*}" --no-same-owner --no-same-permissions data_regtests
+  echo ">> extracted into $datacache ($(du -sh "$datacache" | cut -f1)); $dl/ can be deleted"
+  exit 0
+fi
+
 mapfile -t entries < <(select_entries "$ww3/regtests/bin/matrix.base" "$ww3/regtests")
 
 if [ "$mode" = list ]; then
@@ -246,6 +311,7 @@ for n in "${picked[@]}"; do
   read -r -a o <<<"${entries[n - 1]#*$'\t'}"
   if [ -z "${staged[$test]:-}" ]; then
     mkdir -p "$stage/$test" && cp -a "$ww3/regtests/$test/." "$stage/$test/"
+    stage_data "$datacache" "$stage" "$test"
     staged[$test]=1
   fi
   inp="$(opt_of -i "${o[@]}")"; sw="$(opt_of -s "${o[@]}")"
@@ -290,7 +356,7 @@ run_entry() {
       j="$(judged_vars "$log.nccmp.$f.out")"
       if [ "$r" = FAIL ]; then nv=FAIL
       elif [ -n "$j" ] && [ "$nv" != FAIL ]; then nv=PASS; fi
-      [ -z "$j" ] || judged="$(printf '%s\n' "${judged#-}" "${j//,/$'\n'}" | sed '/^$/d' | sort -u | paste -sd, -)"
+      [ -z "$j" ] || judged="$(printf '%s\n' "${judged#-}" "$j" | tr , '\n' | sed '/^$/d' | sort -u | paste -sd, -)"
     done < <(find "$wf" -maxdepth 1 -name 'ww3.*.nc' -printf '%f\n' | sort)
     j="$(opt_of -i "${o[@]}")"
     if [ "$nc" = 0 ] && has_ounf "$ww3/regtests/$test/${j:-input}" \

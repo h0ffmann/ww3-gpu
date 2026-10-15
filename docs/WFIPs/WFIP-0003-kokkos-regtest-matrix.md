@@ -122,7 +122,10 @@ regtest table cites it.
 2. **Kokkos package.** Build and install `kokkos/` with the `openmp-release` preset into
    `kokkos/build/openmp-release/install`, the step `hoff.sh` already does (`hoff.sh:183-191`).
 3. **Stage.** Copy `WW3/regtests/<test>/` to `build/hoff-matrix/regtests/<test>/`, and write
-   beside the original switch a `switch_<s>_KOKKOS` with the token `KOKKOS` appended. `WW3/` is
+   beside the original switch a `switch_<s>_KOKKOS` with the token `KOKKOS` appended. Inputs WW3
+   keeps off git (`ww3_tp2.15`'s `wind.nc`, `density.nc`, `momentum.nc`) are copied in as
+   `$WW3/model/bin/ww3_from_ftp.sh` copies them, from the tarball it names, fetched once into
+   `build/ww3-data/<version>/` by `scripts/hoff_matrix.sh --fetch-data`. `WW3/` is
    never written: the run ends with `git -C WW3 status --porcelain` and fails if it is not empty.
 4. **Run.** From `build/hoff-matrix/regtests/`, per entry, with `path_build_root` shared, the
    entry's own options kept and only `-s` and `-w` replaced (`$WW3/model` is the source argument,
@@ -151,13 +154,13 @@ never widens a tolerance.
 
 ## 7. Verification plan and definition of done
 
-- [ ] The selection matched the grep in the Appendix (100 entries at `WW3@6d1bcdfe`): `just hoff-matrix --list | wc -l`
-- [ ] The script passed its self-test and shellcheck: `bash scripts/hoff_matrix.sh --self-test && shellcheck scripts/hoff_matrix.sh`
-- [ ] A dry run printed every command and wrote nothing under `WW3/`: `just hoff-matrix --dry-run && git -C WW3 status --porcelain`
-- [ ] One entry ran end to end on the CPU with both verdicts: `just hoff-matrix --only ww3_ts1:ST4`
-- [ ] The full matrix ran on the owner's workstation and its table was committed with its header: `just hoff-matrix` → `docs/data/hoff_matrix_<date>.tsv`
+- [x] The selection matched the grep in the Appendix (100 entries at `WW3@6d1bcdfe`): `just hoff-matrix --list | wc -l`
+- [x] The script passed its self-test and shellcheck: `bash scripts/hoff_matrix.sh --self-test && shellcheck scripts/hoff_matrix.sh`
+- [x] A dry run printed every command and wrote nothing under `WW3/`: `just hoff-matrix --dry-run && git -C WW3 status --porcelain`
+- [x] One entry ran end to end on the CPU with both verdicts: `just hoff-matrix --only ww3_ts1:ST4`
+- [x] The full matrix ran on the owner's workstation and its table was committed with its header: `just hoff-matrix` → `docs/data/hoff_matrix_<date>.tsv`
 - [ ] A dated log entry recorded the wall time, the failures and what they mean: `docs/log/<date>-hoff-matrix.md`
-- [ ] The W3SNL1 port report and the `regtested` cell of `kokkos/ports.tsv` cited the table: `python3 scripts/port_score.py --check`
+- [x] The W3SNL1 port report and the `regtested` cell of `kokkos/ports.tsv` cited the table: `python3 scripts/port_score.py --check`
 
 ## 8. Risks, limitations, and honest caveats
 

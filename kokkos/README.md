@@ -17,6 +17,137 @@ what put Kokkos, GoogleTest, CMake, Ninja and NetCDF on the search path:
 
 Pins: Kokkos 5.2.0, GoogleTest 1.18.0, CMake 4.4.2, gfortran 15.3.
 
+## Why Kokkos, not Fortran 90, in plain words
+
+**The short answer.** The port writes the expensive part of the wave model once, in a form
+that can be built for one processor thread, for every core of the processor, or for the
+graphics card, and each build must give the same numbers.
+
+```mermaid
+%% figure: kokkos-one-source-backends
+%% title: How does one Kokkos source reach the CPU and the GPU of the lab's workstation?
+flowchart LR
+    subgraph ww3["1 · WW3 as written"]
+        F["Fortran source<br/>(.F90 files)"]
+        C["CPU<br/>OpenMP threads, MPI ranks"]
+    end
+    subgraph port["2 · the Kokkos port of W3SNL1"]
+        K["one C++/Kokkos source"]
+        S["Serial<br/>one CPU thread"]
+        O["OpenMP<br/>i9-14900, 32 threads"]
+        G["CUDA<br/>RTX 4090<br/>16 384 CUDA cores"]
+    end
+    F -- "gfortran +<br/>switches OMPG, MPI" --> C
+    F -- "DIA routine<br/>translated line by line" --> K
+    K -- "build choice" --> S
+    K -- "build choice" --> O
+    K -- "build choice" --> G
+    O -. "compared pair to pair<br/>in WW3's regtests" .-> C
+```
+
+<details open>
+<summary>How to read this figure</summary>
+
+**Takeaway.** WW3's own code is built for the processor only; the ported piece is written once and turned into a program for one thread, for the whole processor or for the graphics card, depending on how it is built.
+
+**How to read.** Left to right. Box 1 is WW3 as NOAA ships it, compiled with its parallel switches. Box 2 is this repository's port of one routine: one source, three builds, chosen when the code is compiled, not when it runs. The dashed arrow is the check: the OpenMP build runs inside WW3 and its output is compared with WW3 as written.
+
+**Not shown.** HIP, SYCL and the other Kokkos backends (not built here); the `bind(C)` shim between WW3 and the port; the copies between processor and graphics-card memory; the other WW3 routines, which stay in Fortran. The CUDA build has not yet been run inside WW3 (that run is the owner's, supervised).
+
+**Evidence.** The three presets and the two shells in [Toolchain](#toolchain) and [Presets](#presets) (v, this file); the regtest comparison in [`PORT_STATUS.md`](PORT_STATUS.md), ledger row `W3SNL1` (v, 2026-10-14); hardware as in the text below.
+
+</details>
+
+**A story in three machines.**
+
+- FORTRAN came out in 1957, and IBM's first Fortran compiler was for the IBM 704 (v, [IBM
+  history, "Fortran"](https://www.ibm.com/history/fortran), read 2026-10-14). The language was
+  shaped by the computers it had to drive.
+- Fortran 90 (ISO/IEC 1539:1991 ⚠: ISO's own catalogue page refused the fetch; IBM's XL Fortran
+  manual lists it as "ISO/IEC 1539-1:1991 ... informal name, Fortran 90" (v, [IBM
+  docs](https://www.ibm.com/docs/en/SSAT4T_16.1.0/com.ibm.xlf161.lelinux.doc/language_ref/standards.html),
+  2026-10-14)) added whole-array statements. John Reid wrote that
+  arrays belonged in the language "the more so in an era when an increasing number of computers
+  have the hardware capability to perform operations on vectors or arrays of operands", and that
+  the design "was much influenced by" the ICL DAP, a SIMD machine (v, Reid, *The advantages of
+  Fortran 90*, [RAL report](https://numerical.rl.ac.uk/media/reports/rRAL92017.pdf), §§4–5, read
+  2026-10-14).
+- WW3 is that kind of code: free-form `.F90` files in which parallelism comes from preprocessor
+  switches on the CPU, OpenMP threads (`W3_OMPG`, an `!$OMP PARALLEL DO` over sea points at
+  `WW3/model/src/w3wavemd.F90:1696-1697`) and MPI ranks (`W3_MPI`, `:193`) (v, WW3@6d1bcdfe). It
+  has no GPU path upstream ([README.md](../README.md), "can WW3 use my GPU?").
+
+**The analogy.** Think of the routine as a recipe. WW3's Fortran is a recipe written for one
+kind of kitchen, a row of cooks at a counter (CPU cores). To use a factory line with thousands
+of workers (a GPU) you would add a second set of instructions to the same card, or write a second
+card. Kokkos is a way of writing the recipe once, in C++, and letting the build turn it into
+instructions for whichever kitchen is there.
+
+**The words the field uses.**
+
+- *Kokkos* is "a programming model in C++ for writing performance portable applications
+  targeting all major HPC platforms" (v, [kokkos/kokkos README](https://github.com/kokkos/kokkos),
+  read 2026-10-14). *Performance portability* means one source that runs well on different
+  hardware, not just runs.
+- A *backend* is what one source is compiled for. Kokkos has a Serial backend for CPUs, which is
+  enabled when no other is; OpenMP, C++ threads and HPX (experimental) on the host; CUDA, HIP, SYCL
+  and OpenACC (experimental) on devices (v, [Kokkos configuration
+  guide](https://kokkos.org/kokkos-core-wiki/get-started/configuration-guide.html), read
+  2026-10-14). Only one device backend can be enabled per build (the H100 plan, §2 ⚠). This
+  repository builds Serial, OpenMP and CUDA, nothing else ([Toolchain](#toolchain)).
+- *This workstation*: an Intel Core i9-14900, 24 cores (8 performance, 16 efficient), 32 threads
+  (v, [Intel ARK](https://www.intel.com/content/www/us/en/products/sku/236793/intel-core-i9-processor-14900-36m-cache-up-to-5-80-ghz/specifications.html),
+  2026-10-14), and an NVIDIA GeForce RTX 4090, 16 384 CUDA cores (v, [NVIDIA's 40-series
+  comparison](https://www.nvidia.com/en-us/geforce/graphics-cards/compare/), 2026-10-14). The
+  pairing is the one in
+  [`bench/results/snl1-i9-14900-rtx4090-2026-09-15.json`](../bench/results/snl1-i9-14900-rtx4090-2026-09-15.json)
+  ("Intel Core i9-14900 (32 hardware threads) + NVIDIA GeForce RTX 4090"). A CUDA core is a far
+  simpler unit than a CPU core, so the two counts are not comparable ⚠.
+
+**Why it matters here.** The `W3SNL1` port is one source that gave the Fortran's numbers bit for
+bit on Serial, OpenMP and CUDA (L1 tests, 2026-09-15, removed on 2026-10-14 by
+[ADR-0010](../docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md)), and the OpenMP build
+passes the WW3 regtest replay inside WW3 on the CPU, `hs` within 1.8e-7 relative and not
+byte-identical (L2; `just smoke-hoff`, `just full-hoff`) (v, [`PORT_STATUS.md`](PORT_STATUS.md),
+read 2026-10-14). Same source did not mean same numbers for free: it took turning off
+contraction and copying gfortran's `x**n` ([The W3SNL1 port](#the-w3snl1-port)).
+
+**Where the analogy breaks.** Fortran is not stuck in 1957 or 1991. Modern Fortran has coarrays
+(Fortran 2008 ⚠) and `do concurrent`, and `nvfortran` offloads `do concurrent`, OpenACC and OpenMP
+target regions to an NVIDIA GPU ([README.md](../README.md), "can WW3 use my GPU?"). Lesson 10
+builds one `do concurrent` file for the GPU, for multicore and for plain `gfortran`
+([course/10](../course/10-modern-fortran-refactoring.md#do-concurrent)). So the choice is not
+"old language, new language". The reasons this repository gives are in
+[`docs/KOKKOS_H100_PLAN_202609.md`](../docs/KOKKOS_H100_PLAN_202609.md) (no ADR records the choice
+of Kokkos itself):
+
+- §1 and §2: Kokkos over SYCL, chiefly because the Serial backend runs the same kernels on the CPU
+  as a deterministic reference, `View` layouts express the column-major question directly, and
+  Earth-system models (E3SM's EAMxx and Omega, LICOM3, FESOM2) already went this way.
+- §5, conclusion 4: "Directive ports are fast to start and slow to finish; Kokkos rewrites are
+  slow to start and then portable"; the LICOM3 row reads "Portability layer ends the 'N variants'
+  maintenance problem".
+- §7: Route A (Fortran + OpenACC) leaves "a fork with directives"; Route B (C++/Kokkos) a "clean
+  C++ product; Serial backend runs anywhere".
+- Lesson 11 adds that memory spaces are written on every `View`, so host code cannot quietly read
+  device memory ([course/11](../course/11-kokkos-and-modern-cpp.md#execution-and-memory-spaces));
+  `nvfortran -stdpar=gpu` instead moves data through managed memory implicitly (lesson 10), which
+  [AGENTS.md](../AGENTS.md) forbids as a way to avoid thinking about transfers.
+
+The plan's projections (months, stall risk, speed ceilings) are estimates, not measurements.
+
+**Where to read more.** Lesson 11, [Kokkos and modern C++ for Fortran
+people](../course/11-kokkos-and-modern-cpp.md); lesson 12, [porting
+`W3SNL1`](../course/12-porting-a-kernel-w3snl1.md); lesson 10, [modern
+Fortran](../course/10-modern-fortran-refactoring.md). Papers: Edwards, Trott and Sunderland,
+"Kokkos: Enabling manycore performance portability through polymorphic memory access patterns",
+*J. Parallel Distrib. Comput.* 74(12), 3202–3216, 2014,
+[doi:10.1016/j.jpdc.2014.07.003](https://doi.org/10.1016/j.jpdc.2014.07.003) (v, Crossref,
+2026-10-14); Trott et al., "Kokkos 3: Programming model extensions for the exascale era", *IEEE
+Trans. Parallel Distrib. Syst.* 33(4), 805–817, 2022,
+[doi:10.1109/TPDS.2021.3097283](https://doi.org/10.1109/TPDS.2021.3097283) (v, Crossref,
+2026-10-14; `trott2022` in [`refs.bib`](../pubs/proposal/refs.bib)).
+
 ## Layout
 
 ```
