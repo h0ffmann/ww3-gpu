@@ -1,10 +1,12 @@
 # ST4 on Kokkos: an 8-hour port plan (phase 1, translation only)
 
-Status: **Proposed**, 2026-10-15. Nothing in this plan has been executed. It answers the owner's
+Status: **Proposed**, 2026-10-15, under [ADR-0011](ADRs/ADR-0011-port-in-units-regtest-at-checkpoints.md). No task of this plan has run yet. It answers the owner's
 request of 2026-10-15: port all of ST4 to Kokkos in one disciplined session, with subagents, and
 without the regtests. Issue [#45](https://github.com/h0ffmann/ww3-gpu/issues/45) is the issue it
-answers; [ADR-0002](ADRs/ADR-0002-port-order-wall-time.md) sets its order and
-[ADR-0010](ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md) sets what "tested" means.
+answers; [ADR-0002](ADRs/ADR-0002-port-order-wall-time.md) sets its order,
+[ADR-0010](ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md) sets what "tested" means, and
+[ADR-0011](ADRs/ADR-0011-port-in-units-regtest-at-checkpoints.md) makes ST4 one unit with its
+regtests at a checkpoint after this plan.
 
 > **For agentic workers:** execute this plan task by task. Use
 > `superpowers:subagent-driven-development` for Tasks 3 to 6 and run the other tasks in the
@@ -65,12 +67,13 @@ What this scope means under the hard rules:
 
 1. No ST4 routine moves past status `ported` in `kokkos/ports.tsv`. None is L2. None is done
    (§1.5 needs the L2 replay and the matrix).
-2. Each new `ports.tsv` row has `regtested` = `no: regtests are out of scope of the ST4
-   translation plan (docs/ST4_KOKKOS_PLAN_202610.md)`.
+2. Each new `ports.tsv` row has `regtested` = `no: waiting for the checkpoint of ST4
+   (ADR-0011)`.
 3. Each run-time flag defaults to `0`, so the Fortran runs unless a person turns a flag on. An
    unvalidated port must never be the default.
-4. "Bit for bit with the Fortran" is the design target of every step, but this plan cannot claim
-   it. Every claim of parity in the port reports stays ⚠ until the regtest plan runs.
+4. "Bit for bit with the Fortran" is the design target of every step. This plan argues it
+   statically, by the GIMPLE comparison of ADR-0011 (Task 6, Step 2). Every claim of parity in
+   the port reports stays ⚠ until the checkpoint runs.
 
 ## 2. Global constraints
 
@@ -176,7 +179,7 @@ shim allocates at init. `W3SIN4`'s `ALLOCATE(W(JTOT))` at `w3src4md.F90:863` bec
 | `WW_KOKKOS_ST4_TABLES` | 0 | build the tables in C++ (Task 8) instead of copying them |
 
 Each flag is read once, in `ww_kokkos_init`, as `WW_KOKKOS_SNL1` is (`snl1_shim.cpp:204`). One
-flag per routine lets the regtest plan test one routine at a time.
+flag per routine lets the ST4 checkpoint test one routine at a time.
 
 ### 4.4 The argument contract
 
@@ -449,13 +452,20 @@ nothing.
   section 4 of this plan and Task 1's inventory. Ask for a report of every line where the C++
   does a different operation, a different order, a different type or a different power
   expansion, with both `file:line`.
-- [ ] **Step 2: The main session fixes each confirmed finding.** A finding that needs a change of
+- [ ] **Step 2: Static parity (ADR-0011, ADR-0001's GIMPLE diff).** For each routine, compare
+  the optimised GIMPLE of the Fortran (Task 1's dump) with that of the C++ kernel, built with the
+  `openmp-release` flags plus `-fdump-tree-optimized` on its source file. Match, in order: every
+  `float` operation, every call (`expf`, `logf`, `powf`, `__powisf2`, `tanhf`, `atan2f`), every
+  folded constant; and check that no `.FMA` appears. Write the result into the port report,
+  section "Static parity", ⚠ until the checkpoint. A mismatch is a defect: fix it, or ask.
+- [ ] **Step 3: The main session fixes each confirmed finding.** A finding that needs a change of
   order goes to the owner as a question (section 9), not into the code.
-- [ ] **Step 3: Merge the three launchers into `st4_shim.cpp` and build.**
+- [ ] **Step 4: Merge the three launchers into `st4_shim.cpp` and build.**
   Run: `just kokkos-build serial-debug && just kokkos-build openmp-release`
-- [ ] **Step 4: Commit in rank order**, one commit per routine: `W3SDS4`, then `W3SIN4`, then
+- [ ] **Step 5: Commit in rank order**, one commit per routine: `W3SDS4`, then `W3SIN4`, then
   `W3SPR4` with `CALC_USTAR`. Each has `Tested: just kokkos-build serial-debug and
-  openmp-release (passed); not regtested (out of scope, docs/ST4_KOKKOS_PLAN_202610.md)`.
+  openmp-release (passed); GIMPLE comparison (<result>); not regtested, waiting for the ST4
+  checkpoint (ADR-0011)`.
 
 ### Task 7: Fortran wiring in the fork (4:45-6:00)
 
@@ -531,10 +541,10 @@ port has none (ADR-0010).
 ### Task 10: Ledger, reports, log, PR (7:20-8:00)
 
 - [ ] **Step 1: Five rows in `kokkos/ports.tsv`**, for example
-  `w3src4md:w3sds4	model/src/w3src4md.F90:2043-2659	617	ported	translated 2026-10-15, not regtested	no: regtests are out of scope of the ST4 translation plan (docs/ST4_KOKKOS_PLAN_202610.md)	st4_sds4.cpp,st4_shim.cpp`.
+  `w3src4md:w3sds4	model/src/w3src4md.F90:2043-2659	617	ported	translated 2026-10-15, static parity by GIMPLE comparison	no: waiting for the checkpoint of ST4 (ADR-0011)	st4_sds4.cpp,st4_shim.cpp`.
   Check the column order against the header first.
 - [ ] **Step 2: One port report per row** with: what was ported; the argument table; the
-  arithmetic table from Task 1; the quirks kept; "Benchmarks: none, no timing without parity";
+  arithmetic table from Task 1; the static parity of Task 6; the quirks kept; "Benchmarks: none, no timing without parity";
   "How it was regtested: not yet". Every parity statement carries ⚠.
 - [ ] **Step 3: Regenerate the global numbers.**
   Run: `python3 scripts/port_score.py --write && python3 scripts/port_score.py --check`
@@ -555,7 +565,7 @@ The five failure modes most likely to bite, with the place that catches each:
    (`WHITECAP`, early return at `:2581`). Caught by the copy-in rule of section 4.4 and by
    reviewer E.
 2. **An integer power expanded differently from gfortran `-O3`.** This is the AF11 failure again.
-   Caught by Task 1 and the review; the regtest plan is the proof.
+   Caught by Task 1, the review and the GIMPLE comparison of Task 6; the checkpoint is the proof.
 3. **A table copied under a different condition from the Fortran's** (`TAUHFT2` only when
    `TTAUWSHELTER > 0`). Caught by Task 2, Step 2, which checks sizes, and by the init log line.
 4. **The `IK` scan of `W3SIN4` made parallel.** Caught by quirk 3 and reviewer F.
@@ -580,7 +590,7 @@ bit-for-bit rule stops and asks the owner.
 ## 10. CMake changes after the implementation
 
 The owner asked for this list on 2026-10-15. Section 10.1 is done inside the plan. Sections 10.2
-and 10.3 are needed before the regtest plan can run; 10.3 belongs to that plan.
+and 10.3 are needed before the ST4 checkpoint can run; 10.3 belongs to that checkpoint.
 
 ### 10.1 `kokkos/` (done in Tasks 2 to 8)
 
@@ -612,7 +622,7 @@ and 10.3 are needed before the regtest plan can run; 10.3 belongs to that plan.
   and `ST4` is too: "the Kokkos ST4 path does not support FLX5". This moves error code `5` from run
   time to configure time.
 
-### 10.3 `regtests/` (the matrix driver; part of the regtest plan, not run here)
+### 10.3 `regtests/` (the matrix driver; part of the ST4 checkpoint, not run here)
 
 - `regtests/cmake/ww3gpu_common.cmake:88`: the selection word `NL1` is hard-coded. Make it a cache
   variable `WW3GPU_PHYSICS` (`NL1`, `ST4`, or `NL1;ST4`), and keep `NL1` as the default so the
@@ -643,7 +653,7 @@ and 10.3 are needed before the regtest plan can run; 10.3 belongs to that plan.
   tool.
 - **`docker/Dockerfile`**: no change in this plan. It copies `kokkos/` and builds the
   `openmp-release` preset (`docker/Dockerfile:43-53`), so the new sources build with it. When the
-  regtest plan moves the `WW3/` pin, the same PR changes the branch label at
+  ST4 checkpoint moves the `WW3/` pin, the same PR changes the branch label at
   `docker/Dockerfile:98` (`hoff/kokkos-snl1`) and the comments that say "Kokkos DIA"
   (`:3`, `:10`), and `scripts/docker.sh` passes the new `WW_KOKKOS_*` flags into the container.
   `env/Dockerfile` builds upstream WW3 without `KOKKOS` (`env/Dockerfile:26-34`) and does not
@@ -656,9 +666,9 @@ and 10.3 are needed before the regtest plan can run; 10.3 belongs to that plan.
 - Whether the Triton arms of #45 follow ADR-0010 ⚠ (open question for the owner).
 - The `W3SRCE` team kernel. ADR-0002 keeps `W3SRCE` after `W3SDS4` and `W3SIN4`.
 
-## 12. Next: the regtest plan
+## 12. Next: the ST4 checkpoint
 
-The port is not usable until a second plan does, in this order: the CMake changes of 10.2 and
+The port is not usable until the checkpoint of ADR-0011 does, in this order: the CMake changes of 10.2 and
 10.3; the pin bump with `just smoke`; `just smoke-ww3-gpu` and `just full-ww3-gpu` with one
 routine flag at a time, then all three; `just ww3-gpu-matrix <jobs> all` with
 `WW3GPU_PHYSICS=ST4` and `WW3GPU_STRICT=ON`; status L2 in `ports.tsv` only after that; then the
