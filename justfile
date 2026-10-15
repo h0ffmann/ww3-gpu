@@ -390,6 +390,10 @@ kokkos-configure preset="serial-debug":
 kokkos-build preset="serial-debug": (kokkos-configure preset)
     nix develop "{{pratico}}#ww3" --command cmake --build "{{kokkos_dir}}/build/{{preset}}"
 
+# Line and function coverage of each port's Kokkos files under CTest -> docs/data/kokkos_coverage.tsv.
+kokkos-coverage *args:
+    python3 scripts/kokkos_coverage.py {{args}}
+
 # Build and run ctest for a preset.
 kokkos-test preset="serial-debug": (kokkos-build preset)
     nix develop "{{pratico}}#ww3" --command ctest --test-dir "{{kokkos_dir}}/build/{{preset}}" --output-on-failure

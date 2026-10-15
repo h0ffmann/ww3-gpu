@@ -103,7 +103,7 @@ Run the gates of what you changed before calling it done. CI (`.github/workflows
 | `kokkos/` | `just kokkos-test serial-debug` (sanitizers, bounds checks) and `just kokkos-test openmp-release`; `just kokkos-cuda-test` where a GPU exists |
 | a kernel WW3 calls, or the `WW3/` pin | `just smoke` (CPU); `just full-hoff` before a status in `kokkos/ports.tsv` moves to L2. Never `--gpu` without the owner (hard rule) |
 | `scripts/hoff.sh` or `scripts/ww4_parts.py` | `bash scripts/hoff.sh --self-test`, `python3 scripts/ww4_parts.py --self-test`, shellcheck; `just smoke-hoff` (CPU, pair to pair with `--ww3`) |
-| `kokkos/ports.tsv` or `docs/data/ww3_full_gprof.tsv` | `python3 scripts/port_score.py --write`, then `--check` (CI runs `--self-test` and `--check`) |
+| `kokkos/ports.tsv`, `docs/data/ww3_full_gprof.tsv` or `docs/data/kokkos_coverage.tsv` | `python3 scripts/port_score.py --write`, then `--check` (CI runs `--self-test` and `--check`); `just kokkos-coverage` first when a port's Kokkos files or tests changed, and `python3 scripts/kokkos_coverage.py --self-test` |
 | Fortran in `gpu/`, `examples/`, `exercises/` | they must compile with gfortran with directives ignored; the exercise parity test must pass |
 | a Mermaid fence or its page | `python3 scripts/figures.py check`, then `just figures` to re-render and `python3 -m unittest tests/test_figures.py` |
 | `pubs/proposal/` | `just proposal-lint`, the `revisor-proposta` review, `just proposal-review-record <parecer>`, `just proposal-review-check` |
@@ -183,7 +183,9 @@ broken most often:
   (the owner, 14 October 2026). `--check` refuses a row without both; the website shows them.
 - **The global numbers** (share of the run time, of the lines of code, of the files, of the
   routines, and the size of the Kokkos code) are written by `scripts/port_score.py --write` into
-  `kokkos/PORT_STATUS.md` and `site/data/port_score.tsv`, which the website reads; `--check` fails
+  `kokkos/PORT_STATUS.md` and `site/data/port_score.tsv`, which the website reads, and the ranking of
+  what is still in Fortran with each port's test coverage into `kokkos/PORT_RANKING.md`; `/port-next`
+  starts the next port from it. `--check` fails
   when either is stale.
 - **CI keeps h1 alive**: `--hoff --cpu` on `ww3_ts1`, pair to pair with `--ww3`
   ([`health.yml`](.github/workflows/health.yml)). It is the only combination in CI for now.

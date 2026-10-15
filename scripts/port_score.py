@@ -2,9 +2,11 @@
 """port_score: how much of WW3 runs on the Kokkos backend, and which routines are next.
 
     scripts/port_score.py                     print the ranking and the port score
-    scripts/port_score.py --write             write them into kokkos/PORT_STATUS.md (between markers)
-    scripts/port_score.py --check             exit 1 if PORT_STATUS.md's block is stale, or a ported
-                                              routine has no kokkos/port_report/<ROUTINE>_KOKKOS.md (CI)
+    scripts/port_score.py --write             write them into kokkos/PORT_STATUS.md (between markers),
+                                              and write kokkos/PORT_RANKING.md
+    scripts/port_score.py --check             exit 1 if PORT_STATUS.md's block or PORT_RANKING.md is
+                                              stale, or a ported routine has no
+                                              kokkos/port_report/<ROUTINE>_KOKKOS.md (CI)
     scripts/port_score.py --from-gprof GPROF OUT.tsv
                                               reduce a `gprof -b` text to the profile TSV this reads
     scripts/port_score.py --measure           count WW3's Fortran lines and routines at ports.tsv's
@@ -21,7 +23,10 @@ Three scores, each with what it counts:
   files     WW3 files with a ported routine over every .F90 file in model/src
   lines     the ported routines' lines over every Fortran line in model/src
 and, beside them, the size of the port itself: the C++ files and lines under kokkos/src.
---write also writes site/data/port_score.tsv, which the website reads (site/content).
+--write also writes site/data/port_score.tsv, which the website reads (site/content), and
+kokkos/PORT_RANKING.md: the routines still in Fortran by self time, up to RANK_TOP, and for each
+ported routine the coverage of its Kokkos files from docs/data/kokkos_coverage.tsv
+(`just kokkos-coverage`).
 The profile is one case on one machine: the time score is that case's, not every model's.
 """
 
@@ -38,10 +43,13 @@ PROFILE = ROOT / "docs" / "data" / "ww3_full_gprof.tsv"
 STATUS_MD = ROOT / "kokkos" / "PORT_STATUS.md"
 REPORTS = ROOT / "kokkos" / "port_report"
 SITE_TSV = ROOT / "site" / "data" / "port_score.tsv"
+RANKING_MD = ROOT / "kokkos" / "PORT_RANKING.md"
+COVERAGE = ROOT / "docs" / "data" / "kokkos_coverage.tsv"
 KOKKOS_SRC = ROOT / "kokkos" / "src"
 START, END = "<!-- port-score:start -->", "<!-- port-score:end -->"
 STEPS = ["ported", "L1", "L2", "gpu"]
 TOP = 15
+RANK_TOP = 100
 
 
 def meta_and_rows(path):
@@ -180,6 +188,99 @@ def render(meta_p, prof, meta_w, ports):
     return "\n".join(lines)
 
 
+def ww3_file(routine):
+    """w3src4md:w3sds4 -> model/src/w3src4md.F90; a name without a module has no file here."""
+    mod = routine.split(":")[0] if ":" in routine else ""
+    return f"model/src/{mod}.F90" if mod else "—"
+
+
+def coverage_of(files, cov):
+    """(lines, run, functions, run, ["file: ranges"]) summed over a port's files."""
+    rows = [cov[f] for f in files if f in cov]
+    tot = [sum(int(r[k]) for r in rows) for k in ("lines", "lines_run", "functions", "functions_run")]
+    gaps = [f"`{Path(r['file']).name}` {r['lines_not_run']}" for r in rows if r.get("lines_not_run")]
+    return (*tot, gaps, len(rows) == len(files))
+
+
+def ranking(meta_p, prof, meta_w, ports, meta_c, cov_rows):
+    by_name = {p["routine"]: p for p in ports}
+    cov = {r["file"]: r for r in cov_rows}
+    total = sum(float(r["self_s"]) for r in prof) or 1.0
+    todo = [r for r in prof if r["routine"] not in by_name][:RANK_TOP]
+    timed = sum(1 for r in todo if float(r["self_s"]) > 0)
+    out = [
+        "# PORT_RANKING",
+        "",
+        "The WW3 routines still in Fortran, the most expensive first, and how much of each ported",
+        "routine's Kokkos code the tests run. Written by `scripts/port_score.py --write` from",
+        "`docs/data/ww3_full_gprof.tsv`, `kokkos/ports.tsv` and `docs/data/kokkos_coverage.tsv`; do not",
+        "edit. Port order is wall time ([ADR-0002](../docs/ADRs/ADR-0002-port-order-wall-time.md)):",
+        "the next port is row 1, and `/port-next` starts it.",
+        "",
+        "## Still in Fortran, by self time",
+        "",
+        f"Profile: {meta_p.get('case', '?')}, {meta_p.get('build', '?')}, WW3@{meta_p.get('ww3_rev', '?')}, "
+        f"{meta_p.get('date', '?')} (`{meta_p.get('command', '?')}`). Self time, so a routine's callees and",
+        "what the compiler inlined into it are in the caller's row; the shares are this case's and this",
+        "switch's, not every model's.",
+        "",
+        f"The profile names {len(prof)} routines, {len(prof) - len(todo)} of them ported, so this table has "
+        f"{len(todo)} rows, not {RANK_TOP}. Rows {timed + 1} to {len(todo)} took less than one gprof sample "
+        "(10 ms): their order is gprof's, not a cost order, and a longer case or `perf` is needed to rank them. "
+        "A routine this case never calls (another switch, another grid) is not in the profile and not here.",
+        "",
+        "| # | routine | WW3 file | self s | self % | cumulative % |",
+        "|---|---|---|---|---|---|",
+    ]
+    cum = sum(float(r["self_s"]) for r in prof if r["routine"] in by_name)
+    for i, r in enumerate(todo, 1):
+        sec = float(r["self_s"])
+        cum += sec
+        shown = f"{sec:.2f}" if sec > 0 else "< 0.01"
+        out.append(f"| {i} | `{r['routine']}` | `{ww3_file(r['routine'])}` | {shown} | {100 * sec / total:.2f} | {100 * cum / total:.1f} |")
+    out += [
+        "",
+        "The cumulative column starts from the ported routines' share, so it reads as the share of the run",
+        "that would be in Kokkos once every row down to it is ported.",
+        "",
+        "## Tested, per port",
+        "",
+        f"Coverage: {meta_c.get('build', '?')}; {meta_c.get('ctest', '?')}; commit {meta_c.get('commit', '?')}, "
+        f"{meta_c.get('date', '?')} (`{meta_c.get('command', '?')}`).",
+        "",
+        "| routine | status | Kokkos files | lines run | functions run | lines not run | regtested |",
+        "|---|---|---|---|---|---|---|",
+    ]
+    for p in ports:
+        files = [f.strip() for f in p.get("kokkos", "").split(",") if f.strip()]
+        n, hit, nf, nfh, gaps, complete = coverage_of(files, cov)
+        lines_cell = f"{hit} of {n} ({pct(hit, n)})" if n else "not measured"
+        if n and not complete:
+            lines_cell += ", some files not measured"
+        out.append(f"| `{p['routine']}` | {p['status']} | {', '.join(f'`{Path(f).name}`' for f in files) or '—'} | "
+                   f"{lines_cell} | {f'{nfh} of {nf}' if nf else '—'} | {'; '.join(gaps) or 'none'} | "
+                   f"{p.get('regtested', '').split(':')[0] or '?'} |")
+    out += [
+        "",
+        "What these numbers are not:",
+        "",
+        "- A line that ran is not a line that was checked: a test can run a line and never compare its result.",
+        "- They are the L1 level only (CTest, Serial and OpenMP). The CUDA build and the L2 replay inside WW3",
+        "  are not instrumented, so a path only those take, such as level-1 team scratch, counts only if CTest",
+        "  takes it too.",
+        "- A shim file shared by two routines is counted in full for each, so the rows do not add up.",
+        "",
+    ]
+    return "\n".join(out)
+
+
+def ranking_text():
+    meta_p, prof = meta_and_rows(PROFILE)
+    meta_w, ports = meta_and_rows(PORTS)
+    meta_c, cov = meta_and_rows(COVERAGE) if COVERAGE.exists() else ({}, [])
+    return ranking(meta_p, prof, meta_w, ports, meta_c, cov)
+
+
 def block():
     meta_p, prof = meta_and_rows(PROFILE)
     meta_w, ports = meta_and_rows(PORTS)
@@ -226,15 +327,18 @@ def write_or_check(check):
     meta_w, _ = meta_and_rows(PORTS)
     tsv = site_tsv(summary(meta_p, prof, meta_w, ports, kokkos_size()))
     old_tsv = SITE_TSV.read_text(encoding="utf-8") if SITE_TSV.exists() else ""
-    if new == text and tsv == old_tsv:
-        print("port_score: PORT_STATUS.md and site/data/port_score.tsv are current")
+    rank = ranking_text()
+    old_rank = RANKING_MD.read_text(encoding="utf-8") if RANKING_MD.exists() else ""
+    if new == text and tsv == old_tsv and rank == old_rank:
+        print("port_score: PORT_STATUS.md, PORT_RANKING.md and site/data/port_score.tsv are current")
         return 0
     if check:
-        print("port_score: the port score is stale (PORT_STATUS.md or site/data/port_score.tsv): run scripts/port_score.py --write", file=sys.stderr)
+        print("port_score: the port score is stale (PORT_STATUS.md, PORT_RANKING.md or site/data/port_score.tsv): run scripts/port_score.py --write", file=sys.stderr)
         return 1
     STATUS_MD.write_text(new, encoding="utf-8")
     SITE_TSV.write_text(tsv, encoding="utf-8")
-    print("port_score: wrote PORT_STATUS.md and site/data/port_score.tsv")
+    RANKING_MD.write_text(rank, encoding="utf-8")
+    print("port_score: wrote PORT_STATUS.md, PORT_RANKING.md and site/data/port_score.tsv")
     return 0
 
 
@@ -323,6 +427,17 @@ Each sample counts as 0.01 seconds.
     with tempfile.TemporaryDirectory() as tmp:
         (Path(tmp) / "W3SNL1_KOKKOS.md").write_text("x", encoding="utf-8")
         ok(missing_reports(ports, Path(tmp)) == ["INSNL1_KOKKOS.md"], "a ported routine without a report is named")
+    ok(ww3_file("w3src4md:w3sds4") == "model/src/w3src4md.F90" and ww3_file("init") == "—",
+       "a module's routine maps to its file; a bare name has none")
+    rk = ranking({"case": "t"}, rows, {"ww3_rev": "abc"},
+                 [dict(ports[0], kokkos="kokkos/src/a.cpp, kokkos/src/s.cpp", regtested="yes: L2")],
+                 {"build": "b", "ctest": "ok"},
+                 [{"file": "kokkos/src/a.cpp", "lines": "10", "lines_run": "9", "functions": "2", "functions_run": "2", "lines_not_run": "7"},
+                  {"file": "kokkos/src/s.cpp", "lines": "10", "lines_run": "5", "functions": "1", "functions_run": "1", "lines_not_run": "1-5"}])
+    ok("| 1 | `w3src4md:w3sds4` | `model/src/w3src4md.F90` | 2.01 | 67.45 | 81.5 |" in rk,
+       "the ranking skips the ported routine and its cumulative share starts from the port's")
+    ok("this table has 3 rows, not 100" in rk, "the ranking says how many rows the profile allows")
+    ok("| 14 of 20 (70.00 %) | 3 of 3 | `a.cpp` 7; `s.cpp` 1-5 | yes |" in rk, "a port's coverage sums its files")
     print("port_score self-test: " + ("ok" if not fails else f"{fails} failure(s)"))
     return 1 if fails else 0
 
