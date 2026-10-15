@@ -155,27 +155,27 @@ so the patch lives on a branch the pin can point at, and upstream stays untouche
 ## L2: replay a regtest through both paths
 
 ```bash
-just smoke-hoff        # scripts/hoff.sh --hoff smoke --cpu: regtest ww3_ts1
-just full-hoff         # scripts/hoff.sh --hoff full --cpu: bench_small, 9 520 sea points
-just hoff-matrix       # regtests/ (CMake/CTest): one test per serial NL1 entry of matrix.base (WFIP-0003)
+just smoke-ww3-gpu        # scripts/ww3-gpu.sh --ww3-gpu smoke --cpu: regtest ww3_ts1
+just full-ww3-gpu         # scripts/ww3-gpu.sh --ww3-gpu full --cpu: bench_small, 9 520 sea points
+just ww3-gpu-matrix       # regtests/ (CMake/CTest): one test per serial NL1 entry of matrix.base (WFIP-0003)
 ```
 
-This is the port's only test (ADR-0010). `scripts/hoff.sh --hoff` builds WW3 from the `WW3/`
+This is the port's only test (ADR-0010). `scripts/ww3-gpu.sh --ww3-gpu` builds WW3 from the `WW3/`
 submodule, the h0ffmann/WW3 branch `hoff/kokkos-snl1` where the patch below is applied, with the
 `KOKKOS` switch, and runs the case twice from the same executable, `WW_KOKKOS_SNL1=0` (the Fortran
 DIA) and `=1` (the Kokkos DIA); `nccmp-tol` compares the gridded output field by field. The Kokkos
 run is then compared pair to pair with `--ww3`, WW3 built from the same source without the switch
-(v, `scripts/hoff.sh` header). It runs on the CPU, Kokkos on OpenMP: a GPU run of WW3 is the
+(v, `scripts/ww3-gpu.sh` header). It runs on the CPU, Kokkos on OpenMP: a GPU run of WW3 is the
 owner's, supervised, and no agent starts one. Measured on 2026-10-14: `hs` within 9.879e-8
 relative on `ww3_ts1` and within 1.832e-7 on `bench_small`, both PASS at the 1e-4 tolerance, not
 byte-identical. The cause was one table, `AF11 = (SIG*TPIINV)**11`, computed with the `-O0` chain
 of `x**11`; with the `-O3` chain, on 2026-10-15, both runs became byte-identical, `hs` max rel 0
 (v, `kokkos/port_report/W3SNL1_KOKKOS.md`, "How it was regtested").
-`just hoff-matrix` takes the same comparison to WW3's own harness, `run_cmake_test`, with WW3's
+`just ww3-gpu-matrix` takes the same comparison to WW3's own harness, `run_cmake_test`, with WW3's
 `test.comp` beside `nccmp-tol`: after the fix, 0 differing files on all 100 serial `NL1` entries
 (v, `docs/data/hoff_matrix_2026-10-15.tsv`), and on all 25 shared-memory OpenMP entries with
 `OMP_MAX_ACTIVE_LEVELS=2` (v, `docs/data/hoff_matrix_omp_2026-10-15.tsv`). Both tables were
-written by the shell script that preceded the driver; since 2026-10-15 `just hoff-matrix` is a
+written by the shell script that preceded the driver; since 2026-10-15 `just ww3-gpu-matrix` is a
 CMake/CTest project in `regtests/`, one CTest test per `matrix.base` entry, labelled `serial` or
 `omp`. CTest there is only the runner: each test is WW3's own regtest, run with the Fortran DIA and
 with the Kokkos DIA, so the port still has no tests of its own (ADR-0010).

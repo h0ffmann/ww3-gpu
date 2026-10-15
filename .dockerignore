@@ -4,7 +4,7 @@
 !WW3/
 !WW4/
 !switches/switch_lab_shrd
-!scripts/hoff.sh
+!scripts/ww3-gpu.sh
 !scripts/ww4_parts.py
 !scripts/ww4_status.py
 kokkos/build/

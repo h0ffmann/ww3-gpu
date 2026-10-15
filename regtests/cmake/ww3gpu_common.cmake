@@ -4,15 +4,15 @@
 # selftest.cmake.
 include_guard(GLOBAL)
 
-# hoff_words(<out> <string>): the whitespace-separated tokens of <string>.
-function(hoff_words out s)
+# ww3gpu_words(<out> <string>): the whitespace-separated tokens of <string>.
+function(ww3gpu_words out s)
   string(REGEX MATCHALL "[^ \t\r\n]+" w "${s}")
   set(${out} "${w}" PARENT_SCOPE)
 endfunction()
 
-# hoff_opt_of(<out> <flag> <token>...): the value following the last <flag>, empty when absent.
+# ww3gpu_opt_of(<out> <flag> <token>...): the value following the last <flag>, empty when absent.
 # The last, as run_cmake_test's option loop keeps it: `-s MPI -s PDLIB` builds switch_PDLIB.
-function(hoff_opt_of out flag)
+function(ww3gpu_opt_of out flag)
   set(prev "")
   set(v "")
   foreach(f IN LISTS ARGN)
@@ -24,9 +24,9 @@ function(hoff_opt_of out flag)
   set(${out} "${v}" PARENT_SCOPE)
 endfunction()
 
-# hoff_expand(<out> <options> <np> <nr> <nth>): matrix.base's shell variables in an entry's
+# ww3gpu_expand(<out> <options> <np> <nr> <nth>): matrix.base's shell variables in an entry's
 # options, as the matrix would expand them: $mpi -> mpirun, $np, $nr, $nth, then $(( a - b )).
-function(hoff_expand out s np nr nth)
+function(ww3gpu_expand out s np nr nth)
   string(REPLACE "$mpi" "mpirun" s "${s}")
   string(REPLACE "$np" "${np}" s "${s}")
   string(REPLACE "$nr" "${nr}" s "${s}")
@@ -38,8 +38,8 @@ function(hoff_expand out s np nr nth)
   set(${out} "${s}" PARENT_SCOPE)
 endfunction()
 
-# hoff_has_word(<out> <file> <regex alternation>): grep -qwE on a file (word = [A-Za-z0-9_]).
-function(hoff_has_word out file alt)
+# ww3gpu_has_word(<out> <file> <regex alternation>): grep -qwE on a file (word = [A-Za-z0-9_]).
+function(ww3gpu_has_word out file alt)
   file(READ "${file}" s)
   if(s MATCHES "(^|[^A-Za-z0-9_])(${alt})([^A-Za-z0-9_]|$)")
     set(${out} TRUE PARENT_SCOPE)
@@ -48,12 +48,12 @@ function(hoff_has_word out file alt)
   endif()
 endfunction()
 
-# hoff_select_entries(<prefix> <matrix.base> <regtests dir> <serial|omp|mpi|all>): every kept
+# ww3gpu_select_entries(<prefix> <matrix.base> <regtests dir> <serial|omp|mpi|all>): every kept
 # entry, in order, as two parallel lists <prefix>_TESTS and <prefix>_OPTS (the entry's options,
 # $ww3 and the test dropped, space-joined). Every entry whose switch has NL1 is in exactly one of
 # serial (none of MPI, OMPG, OMPH), omp (OMPG or OMPH, no MPI) and mpi (MPI); all is the three.
 # A line whose switch file is missing is dropped.
-function(hoff_select_entries prefix base rt kind)
+function(ww3gpu_select_entries prefix base rt kind)
   file(STRINGS "${base}" lines REGEX "echo \"\\$rtst .*\" *>> *matrix\\.body")
   set(tests "")
   set(optl "")
@@ -63,7 +63,7 @@ function(hoff_select_entries prefix base rt kind)
     endif()
     string(REGEX REPLACE ".*echo \"\\$rtst " "" s "${line}")
     string(REGEX REPLACE "\".*" "" s "${s}")
-    hoff_words(tok "${s}")
+    ww3gpu_words(tok "${s}")
     list(LENGTH tok len)
     if(len LESS 2)
       continue()
@@ -73,8 +73,8 @@ function(hoff_select_entries prefix base rt kind)
     if("${last}" STREQUAL "$ww3")
       list(POP_BACK tok)
     endif()
-    hoff_opt_of(inp -i ${tok})
-    hoff_opt_of(sw -s ${tok})
+    ww3gpu_opt_of(inp -i ${tok})
+    ww3gpu_opt_of(sw -s ${tok})
     if(inp STREQUAL "")
       set(inp input)
     endif()
@@ -85,9 +85,9 @@ function(hoff_select_entries prefix base rt kind)
     if(NOT EXISTS "${f}" OR IS_DIRECTORY "${f}")
       continue()
     endif()
-    hoff_has_word(nl1 "${f}" "NL1")
-    hoff_has_word(mpi "${f}" "MPI")
-    hoff_has_word(omp "${f}" "OMPG|OMPH")
+    ww3gpu_has_word(nl1 "${f}" "NL1")
+    ww3gpu_has_word(mpi "${f}" "MPI")
+    ww3gpu_has_word(omp "${f}" "OMPG|OMPH")
     if(NOT nl1)
       continue()
     endif()
@@ -109,12 +109,12 @@ function(hoff_select_entries prefix base rt kind)
   set(${prefix}_OPTS "${optl}" PARENT_SCOPE)
 endfunction()
 
-# hoff_sel_desc(<out> <serial|omp|mpi|all>): the selection rule, for the record's header.
-function(hoff_sel_desc out kind)
+# ww3gpu_sel_desc(<out> <serial|omp|mpi|all>): the selection rule, for the record's header.
+function(ww3gpu_sel_desc out kind)
   if(kind STREQUAL "omp")
-    set(${out} "switch with NL1 and OMPG or OMPH, no MPI; $np = HOFF_OMP_THREADS" PARENT_SCOPE)
+    set(${out} "switch with NL1 and OMPG or OMPH, no MPI; $np = WW3GPU_OMP_THREADS" PARENT_SCOPE)
   elseif(kind STREQUAL "mpi")
-    set(${out} "switch with NL1 and MPI; $mpi = mpirun, $np = $nr = HOFF_MPI_RANKS, $nth = HOFF_OMP_THREADS" PARENT_SCOPE)
+    set(${out} "switch with NL1 and MPI; $mpi = mpirun, $np = $nr = WW3GPU_MPI_RANKS, $nth = WW3GPU_OMP_THREADS" PARENT_SCOPE)
   elseif(kind STREQUAL "all")
     set(${out} "every entry whose switch has NL1" PARENT_SCOPE)
   else()
@@ -122,8 +122,8 @@ function(hoff_sel_desc out kind)
   endif()
 endfunction()
 
-# hoff_has_ounf(<out> <input dir>): the test post-processes to NetCDF (a ww3_ounf input).
-function(hoff_has_ounf out dir)
+# ww3gpu_has_ounf(<out> <input dir>): the test post-processes to NetCDF (a ww3_ounf input).
+function(ww3gpu_has_ounf out dir)
   file(GLOB g "${dir}/ww3_ounf*")
   if(g)
     set(${out} TRUE PARENT_SCOPE)
@@ -132,26 +132,26 @@ function(hoff_has_ounf out dir)
   endif()
 endfunction()
 
-# hoff_entry_args(<out> <n> <F|K> <test> <opts> <ww3> <threads> [<ranks>]): the run_cmake_test
-# argument list of entry <n>'s run: its options without -s and -w, expanded by hoff_expand ($np is
+# ww3gpu_entry_args(<out> <n> <F|K> <test> <opts> <ww3> <threads> [<ranks>]): the run_cmake_test
+# argument list of entry <n>'s run: its options without -s and -w, expanded by ww3gpu_expand ($np is
 # <ranks> on an MPI line (-p), <threads> otherwise), -o netcdf when it has no -o and its input
 # directory has a ww3_ounf input, then -s <sw>_KOKKOS -w work_<F|K>_<n> <ww3>/model <test>.
-function(hoff_entry_args out n kind test opts ww3 threads)
+function(ww3gpu_entry_args out n kind test opts ww3 threads)
   set(ranks "${ARGV7}")
   if(ranks STREQUAL "")
     set(ranks 4)
   endif()
-  hoff_words(o "${opts}")
+  ww3gpu_words(o "${opts}")
   if("-p" IN_LIST o)
     set(np "${ranks}")
   else()
     set(np "${threads}")
   endif()
-  hoff_expand(opts "${opts}" "${np}" "${ranks}" "${threads}")
-  hoff_words(o "${opts}")
-  hoff_opt_of(sw -s ${o})
-  hoff_opt_of(inp -i ${o})
-  hoff_opt_of(oo -o ${o})
+  ww3gpu_expand(opts "${opts}" "${np}" "${ranks}" "${threads}")
+  ww3gpu_words(o "${opts}")
+  ww3gpu_opt_of(sw -s ${o})
+  ww3gpu_opt_of(inp -i ${o})
+  ww3gpu_opt_of(oo -o ${o})
   set(keep "")
   set(prev "")
   foreach(f IN LISTS o)
@@ -168,7 +168,7 @@ function(hoff_entry_args out n kind test opts ww3 threads)
     set(inp input)
   endif()
   if(oo STREQUAL "")
-    hoff_has_ounf(ounf "${ww3}/regtests/${test}/${inp}")
+    ww3gpu_has_ounf(ounf "${ww3}/regtests/${test}/${inp}")
     if(ounf)
       list(APPEND keep -o netcdf)
     endif()
@@ -182,13 +182,13 @@ function(hoff_entry_args out n kind test opts ww3 threads)
   set(${out} "${keep}" PARENT_SCOPE)
 endfunction()
 
-# hoff_row_verdict(<out> <row> <strict>): the failures of one summary row, empty when it passes.
+# ww3gpu_row_verdict(<out> <row> <strict>): the failures of one summary row, empty when it passes.
 # A failure: nccmp-tol FAIL or MISSING; either run did not finish, so nothing was compared; the
 # Kokkos run without "Kokkos DIA (W3SNL1) enabled."; under <strict>, a file test.comp found
 # different Fortran/Kokkos and identical Fortran/Fortran (run_entry.cmake). A row whose Kokkos
 # run computed no spectrum (kokkos_spectra 0: the grid calls GQM, IQTYPE <= 0) passes, and the
 # record says it did not exercise the port.
-function(hoff_row_verdict out row strict)
+function(ww3gpu_row_verdict out row strict)
   string(REPLACE "\t" ";" c "${row}")
   list(GET c 4 ran)
   list(GET c 5 klog)
@@ -209,21 +209,21 @@ function(hoff_row_verdict out row strict)
     list(APPEND why "no 'Kokkos DIA (W3SNL1) enabled.' in the Kokkos run")
   endif()
   if(strict AND tc MATCHES "^([0-9]+)/" AND NOT CMAKE_MATCH_1 EQUAL 0)
-    list(APPEND why "test.comp: ${tc} files differ (HOFF_STRICT)")
+    list(APPEND why "test.comp: ${tc} files differ (WW3GPU_STRICT)")
   endif()
   list(JOIN why "; " why)
   set(${out} "${why}" PARENT_SCOPE)
 endfunction()
 
-# hoff_judged_vars(<out> <nccmp-tol output>): the variables it judged, comma-separated.
-function(hoff_judged_vars out text)
+# ww3gpu_judged_vars(<out> <nccmp-tol output>): the variables it judged, comma-separated.
+function(ww3gpu_judged_vars out text)
   string(REPLACE ";" "," text "${text}")
   string(REPLACE "\n" ";" lines "${text}")
   set(p FALSE)
   set(v "")
   foreach(l IN LISTS lines)
     if(p)
-      hoff_words(w "${l}")
+      ww3gpu_words(w "${l}")
       if(w)
         list(GET w 0 first)
         list(GET w -1 lastw)
@@ -240,8 +240,8 @@ function(hoff_judged_vars out text)
   set(${out} "${v}" PARENT_SCOPE)
 endfunction()
 
-# hoff_ftp_version(<ver> <url> <ww3_from_ftp.sh>): the data version and the tarball URL it names.
-function(hoff_ftp_version ver url script)
+# ww3gpu_ftp_version(<ver> <url> <ww3_from_ftp.sh>): the data version and the tarball URL it names.
+function(ww3gpu_ftp_version ver url script)
   file(STRINGS "${script}" vl REGEX "^ww3ver=")
   list(GET vl 0 vl)
   string(REGEX REPLACE "^ww3ver=" "" v "${vl}")
@@ -256,9 +256,9 @@ function(hoff_ftp_version ver url script)
   set(${url} "${u}" PARENT_SCOPE)
 endfunction()
 
-# hoff_ftp_copies(<prefix> <ww3_from_ftp.sh>): <prefix>_SRC and <prefix>_DST, the parallel lists
+# ww3gpu_ftp_copies(<prefix> <ww3_from_ftp.sh>): <prefix>_SRC and <prefix>_DST, the parallel lists
 # of every `cp -r data_regtests/<src> regtests/<dst>` line (commented lines excluded).
-function(hoff_ftp_copies prefix script)
+function(ww3gpu_ftp_copies prefix script)
   file(STRINGS "${script}" lines REGEX "^[ \t]*cp -r data_regtests/")
   set(src "")
   set(dst "")
@@ -272,11 +272,11 @@ function(hoff_ftp_copies prefix script)
   set(${prefix}_DST "${dst}" PARENT_SCOPE)
 endfunction()
 
-# hoff_stage_data(<out count> <cache data_regtests> <stage> <test> <ww3_from_ftp.sh>): copy what
+# ww3gpu_stage_data(<out count> <cache data_regtests> <stage> <test> <ww3_from_ftp.sh>): copy what
 # the script's cp lines copy into regtests/<test>/, for that test only; <out> is the number of
 # sources copied, or -1 (nothing copied) when the test needs the data and the cache is missing.
-function(hoff_stage_data out cache st test script)
-  hoff_ftp_copies(cp "${script}")
+function(ww3gpu_stage_data out cache st test script)
+  ww3gpu_ftp_copies(cp "${script}")
   set(n 0)
   set(i 0)
   foreach(src IN LISTS cp_SRC)

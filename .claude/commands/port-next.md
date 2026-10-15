@@ -59,11 +59,11 @@ The WW3 caller patch is not written here: it goes on the `h0ffmann/WW3` fork bra
 openmp-release` (the port builds with sanitizers and bounds checks; their tests are the lessons'
 and the tools', not the port's), then `python3 scripts/port_score.py --write` and `--check`, so
 `kokkos/PORT_RANKING.md` shows the new row. The validation is WW3's regtests, pair to pair with
-the same WW3 without the port: `just smoke-hoff`, `just full-hoff` and `just hoff-matrix` (CTest in
+the same WW3 without the port: `just smoke-ww3-gpu`, `just full-ww3-gpu` and `just ww3-gpu-matrix` (CTest in
 `regtests/`, which runs WW3's regtests and is not a test of the port's own), all on
 the CPU, once the caller patch exists; same results within `kokkos/tools/nccmp-tol/tolerances.txt`
 means ported, and only then does `regtested` say `yes: <how>` and `status` move to `L2`. A timing
-enters the report only after that regtest replay passed on the same commit. Never `--hoff --gpu`.
+enters the report only after that regtest replay passed on the same commit. Never `--ww3-gpu --gpu`.
 
 **6. Stop and ask** before changing a reduction order, a limiter or the integration order, before
 turning contraction on, and when a regtest fails at its stated tolerance. Report it; never widen it.

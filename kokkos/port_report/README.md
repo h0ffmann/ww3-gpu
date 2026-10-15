@@ -12,7 +12,7 @@ A report says, for one routine:
    `<!-- bench:end -->`. The website reads that table (`site/content`) and draws each step as a
    bar: the speed-up over the step's own baseline, in shades of the `--proof` light, deeper as the
    speed-up grows; a step slower than its baseline is drawn grey and says so.
-3. **How it was regtested:** WW3's own regtests (inside WW3: `--hoff --cpu` against the Fortran
+3. **How it was regtested:** WW3's own regtests (inside WW3: `--ww3-gpu --cpu` against the Fortran
    DIA and pair to pair against `--ww3`; the WFIP-0003 regtest matrix), the GPU, and CI. The port
    has no tests of its own (the owner, 2026-10-14: "kokkos code should NOT have its own tests,
    hard rule. All tests should come [from] WW3 regtests."); an L1 result from before that date

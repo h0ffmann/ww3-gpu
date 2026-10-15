@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" width="960" height="600" role="img" aria-labelledby="title desc" font-family="'Source Sans 3', 'Segoe UI', system-ui, sans-serif">
   <title id="title">ww3-gpu: three ways to run WAVEWATCH</title>
-  <desc id="desc">Three columns. --ww3 builds WW3's Fortran from the h0ffmann/WW3 fork and runs it as written. --hoff builds the same fork with the KOKKOS switch and links this repository's Kokkos rewrite, runs W3SNL1 on OpenMP or CUDA, and compares the output with the Fortran run. --ww4 builds WAVEWATCH IV from the h0ffmann/WW4 fork, after checking that every part the case needs is ported; if one is not, it stops with exit code 5.</desc>
+  <desc id="desc">Three columns. --ww3 builds WW3's Fortran from the h0ffmann/WW3 fork and runs it as written. --ww3-gpu builds the same fork with the KOKKOS switch and links this repository's Kokkos rewrite, runs W3SNL1 on OpenMP or CUDA, and compares the output with the Fortran run. --ww4 builds WAVEWATCH IV from the h0ffmann/WW4 fork, after checking that every part the case needs is ported; if one is not, it stops with exit code 5.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M1 1 L9 5 L1 9" fill="none" stroke="#1682D4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
@@ -24,7 +24,7 @@
 
   <rect x="0" y="0" width="960" height="600" rx="24" fill="#FFFFFF"/>
   <text x="40" y="52" class="h">ww3-gpu: three ways to run WAVEWATCH</text>
-  <text x="40" y="78" class="sub">scripts/hoff.sh · each way has a cheap smoke and an expensive full case · no model source lives in this repository</text>
+  <text x="40" y="78" class="sub">scripts/ww3-gpu.sh · each way has a cheap smoke and an expensive full case · no model source lives in this repository</text>
 
   <!-- column 1: ww3 -->
   <rect x="30" y="100" width="284" height="400" rx="18" class="card"/>
@@ -44,9 +44,9 @@
   <text x="52" y="446" class="m">just smoke-ww3</text>
   <text x="52" y="468" class="m">just full-ww3</text>
 
-  <!-- column 2: hoff -->
+  <!-- column 2: ww3-gpu -->
   <rect x="338" y="100" width="284" height="400" rx="18" class="card"/>
-  <text x="360" y="138" class="flag">--hoff</text>
+  <text x="360" y="138" class="flag">--ww3-gpu</text>
   <text x="360" y="160" class="sub">WW3 + the Kokkos rewrite</text>
   <rect x="360" y="178" width="116" height="64" rx="12" class="fork"/>
   <text x="372" y="203" class="b">WW3 src</text>
@@ -63,8 +63,8 @@
   <rect x="360" y="354" width="240" height="52" rx="12" class="step"/>
   <text x="374" y="377" class="t">W3SNL1 on OpenMP or CUDA</text>
   <text x="374" y="396" class="m">then nccmp-tol vs Fortran</text>
-  <text x="360" y="446" class="m">just smoke-hoff [openmp|cuda]</text>
-  <text x="360" y="468" class="m">just full-hoff  [openmp|cuda]</text>
+  <text x="360" y="446" class="m">just smoke-ww3-gpu [openmp|cuda]</text>
+  <text x="360" y="468" class="m">just full-ww3-gpu  [openmp|cuda]</text>
 
   <!-- column 3: ww4 -->
   <rect x="646" y="100" width="284" height="400" rx="18" class="card"/>

@@ -46,11 +46,11 @@ jobs:
       - name: Result records are valid, every timing has a passed WW3 regtest replay, quoted tables are current
         run: python3 scripts/results.py check
 
-      - name: The port score in kokkos/PORT_STATUS.md is current; hoff.sh and ww4_parts.py pass their self-tests
+      - name: The port score in kokkos/PORT_STATUS.md is current; ww3-gpu.sh and ww4_parts.py pass their self-tests
         run: |
           python3 scripts/port_score.py --self-test
           python3 scripts/port_score.py --check
-          bash scripts/hoff.sh --self-test
+          bash scripts/ww3-gpu.sh --self-test
           python3 scripts/ww4_parts.py --self-test
           bash .claude/hooks/kokkos-account.sh --self-test
 

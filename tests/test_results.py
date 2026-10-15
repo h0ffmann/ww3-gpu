@@ -5,7 +5,7 @@ spec = importlib.util.spec_from_file_location("results", ROOT / "scripts" / "res
 results = importlib.util.module_from_spec(spec); spec.loader.exec_module(results)
 
 RECORD = {"study": "s", "date": "2026-01-01", "routine": "R", "what": "w", "machine": "m",
-          "toolchain": "t", "commit": "abc1234", "regtest": "passed: just smoke-hoff", "statistic": "median of three",
+          "toolchain": "t", "commit": "abc1234", "regtest": "passed: just smoke-ww3-gpu", "statistic": "median of three",
           "runs": [{"backend": "Serial", "command": "cmd", "shim_ms": 2.5, "kernel_ms": 2.0}]}
 
 

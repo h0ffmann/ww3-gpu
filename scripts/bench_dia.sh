@@ -16,7 +16,7 @@
 # BENCH_CALLS timed calls; columns fortran (W3SNL1 per point, !$OMP over points), v2 batch (one
 # shim call for all points), v2 per point (as W3SRCE calls it, in a critical section), v1.
 # Model (ww3_shel of one executable with the OMPG and KOKKOS switches, WW_KOKKOS_SNL1=0 and 1,
-# median of BENCH_RUNS): ww3_ts1 and bench_small, as scripts/hoff.sh prepares them.
+# median of BENCH_RUNS): ww3_ts1 and bench_small, as scripts/ww3-gpu.sh prepares them.
 # Builds go to build/bench-dia/; each run's output to build/bench-dia/runs/.
 set -euo pipefail
 
@@ -71,7 +71,7 @@ cmake --build "$out/driver" -j"$jobs" > "$out/driver.build.log" 2>&1 || { tail -
 bin="$wb/bin" drv="$out/driver/bench_dia"
 echo ">> built: WW3 ($switch_now) in $wb, the driver $drv"
 
-prepare() { # <case> <dir>: the case's inputs, as scripts/hoff.sh prepares them
+prepare() { # <case> <dir>: the case's inputs, as scripts/ww3-gpu.sh prepares them
   rm -rf -- "$2" && mkdir -p "$2"
   if [ "$1" = ww3_ts1 ]; then
     cp "$root"/WW3/regtests/ww3_ts1/input/* "$2"/

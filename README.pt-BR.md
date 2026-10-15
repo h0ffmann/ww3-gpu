@@ -162,7 +162,7 @@ just kokkos-test serial-debug   # compila e testa os kernels C++/Kokkos
 ```
 
 Depois disso, comece por [`course/00-orientation.md`](course/00-orientation.md). `just` lista todas
-as tarefas, e cada uma chama um script em `scripts/`, exceto `just hoff-matrix*`, que roda a matriz
+as tarefas, e cada uma chama um script em `scripts/`, exceto `just ww3-gpu-matrix*`, que roda a matriz
 de regtests do WW3 por CMake/CTest em `regtests/`. O toolchain, o fork do WW3 e os presets do
 Kokkos estão em [`docs/TOOLCHAIN.md`](docs/TOOLCHAIN.md). Para casos costeiros, `just swan` instala
 o SWAN.
@@ -176,24 +176,32 @@ as entradas dos casos, não o código-fonte. Só CPU.
 
 ```console
 git clone --recurse-submodules git@github.com:h0ffmann/ww3-gpu.git && cd ww3-gpu
-just docker-build               # constrói a imagem ww3-gpu:local a partir deste clone
-just docker-run --ww3 smoke     # o WW3 como escrito: regtest ww3_ts1, segundos
-just docker-run --hoff smoke    # o DIA em Kokkos contra o DIA em Fortran, mesmo executável
-just docker-run --hoff full     # o mesmo no bench_small (9 520 pontos de mar, 12 horas)
-just docker-run --ww4 smoke     # o WAVEWATCH IV; sai com 5 enquanto faltar uma parte do caso
+just dbuild         # constrói a imagem ww3-gpu:local a partir deste clone
+just dsmoke         # o WW3 como escrito, depois o DIA em Kokkos contra o DIA em Fortran (ww3_ts1, segundos)
+just dfull-ww3-gpu     # o DIA em Kokkos no bench_small (9 520 pontos de mar, 12 horas)
+just dsmoke-ww4     # o WAVEWATCH IV; sai com 5 enquanto faltar uma parte do caso
+just drun --help    # qualquer outra opção do scripts/ww3-gpu.sh
 ```
+
+Cada receita que roda o `scripts/ww3-gpu.sh` no host tem seu par na imagem, com um `d` na frente:
+`smoke`, `smoke-ww3`, `smoke-ww3-gpu`, `full-ww3`, `full-ww3-gpu`, `smoke-ww4` e `full-ww4` viram
+`dsmoke`, `dsmoke-ww3` e assim por diante. A imagem não precisa de Nix nem do picasso: o estágio de
+build instala os compiladores e as bibliotecas do Ubuntu, compila o Kokkos 5.2.2 a partir do tarball
+da versão (o Ubuntu empacota uma mais antiga), e o estágio final copia só os programas compilados.
+
+O CI varre a imagem com o Trivy a cada mudança nela e toda semana (`.github/workflows/docker-scan.yml`): uma vulnerabilidade HIGH ou CRITICAL com correção reprova o job. `just dscan` roda a mesma varredura aqui.
 
 Sem o just, o mesmo com Docker puro:
 
 ```console
 docker build -f docker/Dockerfile -t ww3-gpu:local .
-docker run --rm --user "$(id -u):$(id -g)" -v "$PWD/build/docker-runs:/work/runs" ww3-gpu:local --hoff smoke
+docker run --rm --user "$(id -u):$(id -g)" -v "$PWD/build/docker-runs:/work/runs" ww3-gpu:local --ww3-gpu smoke
 ```
 
 Cada rodada fica em `build/docker-runs/`. Dentro da imagem, o ponto de entrada é o
-`scripts/hoff.sh`, o mesmo script do host, então as opções, as verificações e os códigos de saída
+`scripts/ww3-gpu.sh`, o mesmo script do host, então as opções, as verificações e os códigos de saída
 são os mesmos ([`docker/Dockerfile`](docker/Dockerfile) diz o que cada estágio compila). Os
-compiladores são os do Ubuntu: o `--hoff` continua comparando o DIA em Kokkos e o DIA em Fortran
+compiladores são os do Ubuntu: o `--ww3-gpu` continua comparando o DIA em Kokkos e o DIA em Fortran
 dentro de um mesmo executável, então o veredito bit a bit vale na imagem; um número medido na
 imagem não é um número do toolchain fixado de [`docs/TOOLCHAIN.md`](docs/TOOLCHAIN.md), que usa
 outro gfortran.
@@ -218,26 +226,26 @@ segue outro caminho: kernels em Kokkos que mantêm os dados na GPU e concordam c
 das tolerâncias pelas quais os regtests do WW3 são julgados,
 portados na ordem do tempo de parede medido ([lição 09](course/09-benchmark-profile-compile-run.md)).
 
-Há três jeitos de rodar o WAVEWATCH aqui (`scripts/hoff.sh`). O código dos modelos vem só de forks
+Há três jeitos de rodar o WAVEWATCH aqui (`scripts/ww3-gpu.sh`). O código dos modelos vem só de forks
 pessoais: o Fortran do WW3 pelo submódulo `WW3/` (h0ffmann/WW3, branch `hoff/kokkos-snl1`) e o C++
 do WW4 pelo submódulo `WW4/` (h0ffmann/WW4, `develop`). Este repositório guarda só a reescrita em
 Kokkos.
 
-![ww3-gpu: três jeitos de rodar o WAVEWATCH. --ww3 roda o Fortran do WW3 do fork; --hoff liga o mesmo fork à reescrita em Kokkos deste repositório e compara os dois; --ww4 compila o WAVEWATCH IV do seu fork e para com código 5 quando falta portar uma parte que o caso usa](docs/figures/three-ways.svg)
+![ww3-gpu: três jeitos de rodar o WAVEWATCH. --ww3 roda o Fortran do WW3 do fork; --ww3-gpu liga o mesmo fork à reescrita em Kokkos deste repositório e compara os dois; --ww4 compila o WAVEWATCH IV do seu fork e para com código 5 quando falta portar uma parte que o caso usa](docs/figures/three-ways.svg)
 
 ```bash
-just smoke             # smoke-ww3, depois smoke-hoff: regtest ww3_ts1, segundos
+just smoke             # smoke-ww3, depois smoke-ww3-gpu: regtest ww3_ts1, segundos
 just smoke-ww3         # --ww3: o WW3 como está
-just smoke-hoff        # --hoff: o WW3 com o DIA em Kokkos (W3SNL1), comparado com o Fortran
+just smoke-ww3-gpu        # --ww3-gpu: o WW3 com o DIA em Kokkos (W3SNL1), comparado com o Fortran
 just full-ww3          # o caso caro: bench_small, 9 520 pontos de mar, minutos
-just full-hoff         # o mesmo com o DIA em Kokkos
+just full-ww3-gpu         # o mesmo com o DIA em Kokkos
 just smoke-ww4         # --ww4: o WAVEWATCH IV; código 5 enquanto faltar portar uma parte do caso
 just full-ww4          # o mesmo no bench_small; `just ww4-parts full` lista as partes
 just port-score        # quanto do WW3 roda em Kokkos, e as rotinas em ordem de tempo
 ```
 
-O `--hoff` roda na CPU (Kokkos OpenMP) por padrão, e é comparado par a par com o `--ww3`. O
-`just smoke-hoff gpu` roda em CUDA, só com uma pessoa supervisionando: ele pergunta no terminal
+O `--ww3-gpu` roda na CPU (Kokkos OpenMP) por padrão, e é comparado par a par com o `--ww3`. O
+`just smoke-ww3-gpu gpu` roda em CUDA, só com uma pessoa supervisionando: ele pergunta no terminal
 (regra rígida do AGENTS.md). Uma GPU NVIDIA cujo driver não responde para a execução com código 4
 e a causa. Em 14 de outubro de
 2026 os dois casos passaram em OpenMP; a rodada na GPU ainda não foi feita. Hoje o `--ww4` para

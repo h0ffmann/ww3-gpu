@@ -6,7 +6,7 @@
 | **Author** | M. Hoffmann (asked 2026-10-14 in the project thread: "how to use Kokkos code + ww3 regtest tooling, in a automated way, using the WW3 fork") |
 | **Created** | 2026-10-14 |
 | **Deliverable** | D4, D5 |
-| **Related** | [`kokkos/port_report/W3SNL1_KOKKOS.md`](../../kokkos/port_report/W3SNL1_KOKKOS.md) ("How it was regtested"); [`scripts/hoff.sh`](../../scripts/hoff.sh) (the L2 replay it generalises); [`kokkos/tests/L2_replay.sh`](../../kokkos/tests/L2_replay.sh) (the `work_a`/`work_b` pairing); [`docs/AGENTS_KOKKOS_202609.md`](../AGENTS_KOKKOS_202609.md) §1.5 item 4 and §3.3; [ADR-0002](../ADRs/ADR-0002-port-order-wall-time.md); [ADR-0010](../ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md) (since 2026-10-14 this matrix and `hoff.sh` are the port's only tests) |
+| **Related** | [`kokkos/port_report/W3SNL1_KOKKOS.md`](../../kokkos/port_report/W3SNL1_KOKKOS.md) ("How it was regtested"); [`scripts/ww3-gpu.sh`](../../scripts/ww3-gpu.sh) (the L2 replay it generalises); [`kokkos/tests/L2_replay.sh`](../../kokkos/tests/L2_replay.sh) (the `work_a`/`work_b` pairing); [`docs/AGENTS_KOKKOS_202609.md`](../AGENTS_KOKKOS_202609.md) §1.5 item 4 and §3.3; [ADR-0002](../ADRs/ADR-0002-port-order-wall-time.md); [ADR-0010](../ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md) (since 2026-10-14 this matrix and `ww3-gpu.sh` are the port's only tests) |
 | **Effort** | M: one shell script and one recipe; no kernel, no Fortran, no WW3 edit; most of the work is the first full run and reading its failures |
 | **Gain** | `proposal` (D4: WW3's own comparison, `test.comp`, beside the lab's comparator; D5: the Kokkos DIA validated against the Fortran on 100 WW3 configurations instead of 1); `lab/dev-loop` (every later port reuses the matrix) |
 | **Effort vs Gain** | do next: L2 rests on one regtest today, and the next port (`W3SDS4`, row 1 of `kokkos/PORT_RANKING.md`, #118) would inherit the same thin check |
@@ -21,7 +21,7 @@
 | **Manually reviewed** | no |
 | **Written by** | M. Hoffmann, with an agent |
 | **Tasks** | none needed: one script, one recipe and one run; §7 is the task list |
-| **Tests** | `just hoff-matrix-selftest` (the selection, the argument lists and the verdict logic on fixtures); until 2026-10-15, `scripts/hoff_matrix.sh --self-test` |
+| **Tests** | `just ww3-gpu-matrix-selftest` (the selection, the argument lists and the verdict logic on fixtures); until 2026-10-15, `scripts/hoff_matrix.sh --self-test` |
 | **Spec-kit** | none |
 | **Issues** | not filed: Draft |
 
@@ -39,8 +39,8 @@ NOAA itself runs.
 The Kokkos DIA's L2 evidence is two cases: `ww3_ts1` (37 values of `hs`) and the lab's own
 `bench_small` `(v)` (`W3SNL1_KOKKOS.md`, "How it was regtested"; CI health h1 log, 2026-10-15).
 `nccmp-tol` judged one variable of 26 in each, since `fp`, `dir`, `dp` and `t0m1` are not in those
-outputs `(v)` (h1 log: "1 judged, 25 unlisted"). `hoff.sh` copies `ww3_ts1`'s input but does not
-use WW3's harness `(v)` (`scripts/hoff.sh:224`).
+outputs `(v)` (h1 log: "1 judged, 25 unlisted"). `ww3-gpu.sh` copies `ww3_ts1`'s input but does not
+use WW3's harness `(v)` (`scripts/ww3-gpu.sh:224`).
 
 WW3's matrix (`regtests/bin/matrix.base`) has 758 entries; 100 of them run a switch with `NL1` and
 without `MPI`, `OMPG` or `OMPH`, in 10 regtests `(v)` (Appendix, the selection command, at
@@ -61,13 +61,13 @@ Their spectral grids reach NK=40 NTH=36 (`ww3_tp2.15`) and NK=32 NTH=36 (`ww3_tc
 
 ## 3. What changes for the reader
 
-Before: `just smoke-hoff`, one case, one verdict. After:
+Before: `just smoke-ww3-gpu`, one case, one verdict. After:
 
 ```text
-$ just hoff-matrix-list | head -2
+$ just ww3-gpu-matrix-list | head -2
   Test   #5: 001:ww3_ta1:ST4
   Test   #6: 002:ww3_ta1:ST4
-$ just hoff-matrix
+$ just ww3-gpu-matrix
 regtest      switch       built  ran   test.comp(F,K)   nccmp-tol(F,K)   judged
 ww3_ts1      ST4          ok     ok    23 differ        PASS             hs
 ww3_ts2      ST1_PR2_UQ   ok     ok    4 differ         n/a: no ounf     -
@@ -101,7 +101,7 @@ regtest table cites it.
 ### The lab's comparator
 
 `nccmp-tol` compares the `ww3.*.nc` that `ww3_ounf` writes, field by field, against
-`kokkos/tools/nccmp-tol/tolerances.txt` `(v)` (`scripts/hoff.sh:268-280`). `ww3_ts2` and
+`kokkos/tools/nccmp-tol/tolerances.txt` `(v)` (`scripts/ww3-gpu.sh:268-280`). `ww3_ts2` and
 `ww3_tr1` have no `ww3_ounf` input `(v)` (`ls regtests/<test>/input*/ww3_ounf*`), so for them only
 `test.comp` judges, on native output.
 
@@ -110,8 +110,8 @@ regtest table cites it.
 ## 5. Design
 
 `scripts/hoff_matrix.sh` (shell, `set -euo pipefail`, shellcheck clean, `--self-test`,
-`--dry-run`, `--list`, `--only <test>[:<switch>]`), behind `just hoff-matrix`, entering
-`nix-config/labs/pratico#ww3` itself as `hoff.sh` does. CPU only: Kokkos on OpenMP. It refuses
+`--dry-run`, `--list`, `--only <test>[:<switch>]`), behind `just ww3-gpu-matrix`, entering
+`nix-config/labs/pratico#ww3` itself as `ww3-gpu.sh` does. CPU only: Kokkos on OpenMP. It refuses
 `--gpu` (exit 64): GPU runs stay the owner's, supervised (`AGENTS.md`).
 
 1. **Select.** Read `$WW3/regtests/bin/matrix.base` at the pin; keep an entry when its switch
@@ -120,15 +120,15 @@ regtest table cites it.
    `-g`, `-o` or `-w` (`ww3_ts1` has four on `input_10ms`), and each is its own case. `--list`
    prints them, one per line.
 2. **Kokkos package.** Build and install `kokkos/` with the `openmp-release` preset into
-   `kokkos/build/openmp-release/install`, the step `hoff.sh` already does (`hoff.sh:183-191`).
-3. **Stage.** Copy `WW3/regtests/<test>/` to `build/hoff-matrix/regtests/<test>/`, and write
+   `kokkos/build/openmp-release/install`, the step `ww3-gpu.sh` already does (`ww3-gpu.sh:183-191`).
+3. **Stage.** Copy `WW3/regtests/<test>/` to `build/ww3-gpu-matrix/regtests/<test>/`, and write
    beside the original switch a `switch_<s>_KOKKOS` with the token `KOKKOS` appended. Inputs WW3
    keeps off git (`ww3_tp2.15`'s `wind.nc`, `density.nc`, `momentum.nc`) are copied in as
    `$WW3/model/bin/ww3_from_ftp.sh` copies them, from the tarball it names: pratico's
    `ww3-regtest-data` package, a fixed-output derivation with the tarball's SHA-256
-   (`just hoff-matrix-fetch`, update of 2026-10-15). `WW3/` is
+   (`just ww3-gpu-matrix-fetch`, update of 2026-10-15). `WW3/` is
    never written: the run ends with `git -C WW3 status --porcelain` and fails if it is not empty.
-4. **Run.** From `build/hoff-matrix/regtests/`, per entry, with `path_build_root` shared, the
+4. **Run.** From `build/ww3-gpu-matrix/regtests/`, per entry, with `path_build_root` shared, the
    entry's own options kept and only `-s` and `-w` replaced (`$WW3/model` is the source argument,
    as `matrix.base` passes `ww3='../model'`, `:270`):
    - `CMAKE_OPTIONS="-DWW_KOKKOS=ON -DCMAKE_PREFIX_PATH=<prefix>" WW_KOKKOS_SNL1=0 run_cmake_test <options> -s <s>_KOKKOS -w work_F_<n> $WW3/model <test>`;
@@ -138,9 +138,9 @@ regtest table cites it.
    when `ww3.*.nc` exists, `nccmp-tol work_F/... work_K/...` (tolerance verdict and the variables
    judged). An entry that does not build or does not run is recorded as such and the matrix goes
    on.
-6. **Record.** `build/hoff-matrix/summary.tsv`, one row per entry; the committed copy is
+6. **Record.** `build/ww3-gpu-matrix/summary.tsv`, one row per entry; the committed copy is
    `docs/data/hoff_matrix_<date>.tsv` with a header naming the date, the commit of each repository,
-   the machine and `just hoff-matrix`. Exit 0 when no tolerance verdict fails, 1 otherwise.
+   the machine and `just ww3-gpu-matrix`. Exit 0 when no tolerance verdict fails, 1 otherwise.
 
 Deterministic: the selection at a given pin; the runs, up to the OpenMP backend's thread order
 (the build keeps `-ffp-contract=off`; see §6).
@@ -152,17 +152,17 @@ selection of step 1 and registers one CTest test per entry, `NNN:<test>:<switch>
 and `serial` or `omp`, around the fixtures `setup:kokkos` and `setup:stage` (steps 2 and 3) and
 `record:summary` (step 6, `<build>/summary.tsv`); `selection:count` fails when a WW3 pin changes the
 number of entries (100 serial, 25 `omp` at `WW3@6d1bcdfe`). Each entry test is steps 4 and 5 for one
-entry. The configure options are `HOFF_SELECTION` (`serial`, the default, or `omp`), `HOFF_WW3`,
-`HOFF_DATA` (WW3's ftp data), `HOFF_STRICT` (default `ON`: a file `test.comp` finds different
+entry. The configure options are `WW3GPU_SELECTION` (`serial`, the default, or `omp`), `WW3GPU_WW3`,
+`WW3GPU_DATA` (WW3's ftp data), `WW3GPU_STRICT` (default `ON`: a file `test.comp` finds different
 fails the entry, the answer to the first question of §11 now that the DIA is byte-identical) and
-`HOFF_OMP_THREADS` (`OMP_NUM_THREADS` of each run and `matrix.base`'s `$np`; the recipe sets it to
+`WW3GPU_OMP_THREADS` (`OMP_NUM_THREADS` of each run and `matrix.base`'s `$np`; the recipe sets it to
 `nproc --all` divided by the jobs). The `omp` selection exports `OMP_MAX_ACTIVE_LEVELS=2` for both
-runs (`regtests/cmake/run_entry.cmake`). The recipes are `just hoff-matrix [jobs] [serial|omp]
+runs (`regtests/cmake/run_entry.cmake`). The recipes are `just ww3-gpu-matrix [jobs] [serial|omp]
 [ctest args]` (`jobs=N` and `selection=S` are accepted too; the record is
-`build/hoff-matrix-<selection>/summary.tsv`), `just hoff-matrix-list [serial|omp]`,
-`just hoff-matrix-fetch` (the old `--fetch-data`) and `just hoff-matrix-selftest` (the old
+`build/ww3-gpu-matrix-<selection>/summary.tsv`), `just ww3-gpu-matrix-list [serial|omp]`,
+`just ww3-gpu-matrix-fetch` (the old `--fetch-data`) and `just ww3-gpu-matrix-selftest` (the old
 `--self-test`); `--only`, `--dry-run` and `--omp` became `ctest -R`, `ctest -N` and the `omp`
-selection, as in `just hoff-matrix 8 serial -R ww3_ts1` (v) (`justfile`, read 2026-10-15). CTest is only the
+selection, as in `just ww3-gpu-matrix 8 serial -R ww3_ts1` (v) (`justfile`, read 2026-10-15). CTest is only the
 runner: every test it runs is one of WW3's regtests, with the Fortran DIA and with the Kokkos DIA,
 so this is not a test of the port's own and ADR-0010 holds. The tables of 2026-10-14 and 2026-10-15
 were written by the shell script; no table from the CTest driver is committed yet ⚠.
@@ -182,18 +182,18 @@ byte-identical on all 100 entries (`docs/data/hoff_matrix_2026-10-15.tsv`,
 
 ## 7. Verification plan and definition of done
 
-- [x] The selection matched the grep in the Appendix (100 entries at `WW3@6d1bcdfe`): `just hoff-matrix --list | wc -l`
+- [x] The selection matched the grep in the Appendix (100 entries at `WW3@6d1bcdfe`): `just ww3-gpu-matrix --list | wc -l`
 - [x] The script passed its self-test and shellcheck: `bash scripts/hoff_matrix.sh --self-test && shellcheck scripts/hoff_matrix.sh`
-- [x] A dry run printed every command and wrote nothing under `WW3/`: `just hoff-matrix --dry-run && git -C WW3 status --porcelain`
-- [x] One entry ran end to end on the CPU with both verdicts: `just hoff-matrix --only ww3_ts1:ST4`
-- [x] The full matrix ran on the owner's workstation and its table was committed with its header: `just hoff-matrix` → `docs/data/hoff_matrix_<date>.tsv`
+- [x] A dry run printed every command and wrote nothing under `WW3/`: `just ww3-gpu-matrix --dry-run && git -C WW3 status --porcelain`
+- [x] One entry ran end to end on the CPU with both verdicts: `just ww3-gpu-matrix --only ww3_ts1:ST4`
+- [x] The full matrix ran on the owner's workstation and its table was committed with its header: `just ww3-gpu-matrix` → `docs/data/hoff_matrix_<date>.tsv`
 - [x] A dated log entry recorded the wall time, the failures and what they mean: [`docs/log/2026-10-14-snl1-bitwise-af11.md`](../log/2026-10-14-snl1-bitwise-af11.md) (serial, with the failure entries it links) and [`docs/log/2026-10-15-hoff-matrix-omp.md`](../log/2026-10-15-hoff-matrix-omp.md) (OpenMP)
 - [x] The W3SNL1 port report and the `regtested` cell of `kokkos/ports.tsv` cited the table: `python3 scripts/port_score.py --check`
 
 *Update, 2026-10-15:* the commands of the boxes above are those of `scripts/hoff_matrix.sh`, which
-ticked them; the script is gone (§5). Their equivalents now are `just hoff-matrix-list`,
-`just hoff-matrix-selftest`, `just hoff-matrix 8 serial -N` for the dry run,
-`just hoff-matrix 8 serial -R ww3_ts1` for one test, and `just hoff-matrix` for the whole
+ticked them; the script is gone (§5). Their equivalents now are `just ww3-gpu-matrix-list`,
+`just ww3-gpu-matrix-selftest`, `just ww3-gpu-matrix 8 serial -N` for the dry run,
+`just ww3-gpu-matrix 8 serial -R ww3_ts1` for one test, and `just ww3-gpu-matrix` for the whole
 selection; none of them is ticked again here ⚠ (not run on this driver by this update).
 
 ## 8. Risks, limitations, and honest caveats
@@ -207,7 +207,7 @@ selection; none of them is ticked again here ⚠ (not run on this driver by this
   *Update, 2026-10-15:* the owner opened the shared-memory OpenMP entries, CPU only (§11).
   `scripts/hoff_matrix.sh --omp` keeps an entry when its switch has `NL1` and `OMPG` or `OMPH`,
   no `MPI`, and the line has no `-p` and no `-m`: 25 entries, all `ww3_ts3` with `OMPG`, `ST1` to
-  `ST6` × `PR1`/`PR2`/`PR3` × `UQ`/`UNO` `(v)` (`just hoff-matrix --list --omp`, `WW3@6d1bcdfe`).
+  `ST6` × `PR1`/`PR2`/`PR3` × `UQ`/`UNO` `(v)` (`just ww3-gpu-matrix --list --omp`, `WW3@6d1bcdfe`).
   Their 25 `mww3_test_05` twins (`-m grdset_a`) are left out: `ww3_multi` runs three grids in one
   process and the port refuses `IMOD > 1` `(v)` (`model/src/w3initmd.F90:754-759`). Each entry keeps
   `-f -O -n $np`; `matrix.base` leaves `$np` to the site's matrix script, so `hoff_matrix.sh` puts
@@ -218,7 +218,7 @@ selection; none of them is ticked again here ⚠ (not run on this driver by this
   (`model/src/w3wavemd.F90:2240-2243`, the shim at `w3srcemd.F90:1275`) `(v)` (entries 1 to 4,
   `ran=fortran-only`). With `OMP_MAX_ACTIVE_LEVELS=2` exported for both runs, all 25 entries ran
   and are byte-identical, `test.comp` 0 of 20 files and `nccmp-tol` PASS on `hs` `(v)`
-  (`OMP_MAX_ACTIVE_LEVELS=2 just hoff-matrix --omp --jobs 4`, 19 min on an i9-14900 at 8 threads
+  (`OMP_MAX_ACTIVE_LEVELS=2 just ww3-gpu-matrix --omp --jobs 4`, 19 min on an i9-14900 at 8 threads
   per entry; `docs/data/hoff_matrix_omp_2026-10-15.tsv`). The `!$OMP CRITICAL` still serialises the
   calls, so this shows the answer does not change under OpenMP, not that the DIA runs in parallel.
   Whether a nested Kokkos team inside the critical section costs or gains time is not measured ⚠.
@@ -233,7 +233,7 @@ selection; none of them is ticked again here ⚠ (not run on this driver by this
 ## 9. Alternatives considered
 
 - **Do nothing**: L2 stays one regtest, and the next port starts from the same thin evidence.
-- **Extend `hoff.sh` with more cases by hand**: copies each test's inputs into the lab's own
+- **Extend `ww3-gpu.sh` with more cases by hand**: copies each test's inputs into the lab's own
   driver, drifting from WW3's harness; the matrix and `test.comp` are what NOAA runs.
 - **Write the `KOKKOS` switches into `WW3/regtests/` on the fork branch**: works, but edits the
   read-only tree for test plumbing; staging leaves the fork as it is.

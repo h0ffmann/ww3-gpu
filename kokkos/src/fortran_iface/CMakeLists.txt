@@ -9,7 +9,7 @@
 # (tests/bench_snl1.cpp) calls the same entry points WW3 does, with no Fortran
 # compiler in the loop. Only the Fortran module needs WW_ENABLE_FORTRAN. The shim
 # has no tests of its own (the owner, 2026-10-14): WW3's regtests, through
-# scripts/hoff.sh --hoff --cpu, exercise it.
+# scripts/ww3-gpu.sh --ww3-gpu --cpu, exercise it.
 #
 # SPDX-License-Identifier: MIT
 target_sources(ww_kokkos PRIVATE

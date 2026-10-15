@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# profile_case — where WW3's time goes on one of scripts/hoff.sh's cases, measured with gprof, as
+# profile_case — where WW3's time goes on one of scripts/ww3-gpu.sh's cases, measured with gprof, as
 # the profile TSV that scripts/port_score.py ranks (`just port-score`).
 #
 #   scripts/profile_case.sh smoke|full     (default full)

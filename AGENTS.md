@@ -55,7 +55,7 @@ is made in the other (content must match, length need not; see `CONTRIBUTING.md`
 
 Lab code is C++, Fortran and shell. Python appears only in the publishing and repo tooling
 (`scripts/*.py`, `tests/`), never in lab code or kernels. `just` is the task runner and every
-recipe is a thin wrapper over a script in `scripts/`, except the `hoff-matrix*` recipes, which
+recipe is a thin wrapper over a script in `scripts/`, except the `ww3-gpu-matrix*` recipes, which
 configure and run the CMake/CTest driver in `regtests/`; `just` lists them.
 
 ## Where a change belongs
@@ -100,7 +100,7 @@ just get                     # upstream NOAA-EMC/WW3 develop into ~/src/WW3 (or 
 just rt                      # build with ww3_tp1.1's switch and run that regtest
 just build                   # the lab switch (switches/switch_lab_shrd, ST4)
 just kokkos-test serial-debug
-just smoke                   # WW3 as written (--ww3), then WW3 with the Kokkos DIA (--hoff)
+just smoke                   # WW3 as written (--ww3), then WW3 with the Kokkos DIA (--ww3-gpu)
 just smoke-ww4               # WAVEWATCH IV from the WW4/ fork; exit 5 while a part is not ported
 ```
 
@@ -110,10 +110,10 @@ Run the gates of what you changed before calling it done. CI (`.github/workflows
 | You changed | Run |
 |---|---|
 | any `*.sh` or `justfile` recipe | `bash -n <script>` and `shellcheck <script>`; a hook also has `--self-test` (`.claude/hooks/proposal-review.sh --self-test`) |
-| `kokkos/` | `just kokkos-test serial-debug` (sanitizers, bounds checks) and `just kokkos-test openmp-release`, which build the port and run the tests of the intro programs and the tools (the port has none, ADR-0010); `just smoke-hoff` for the port itself |
-| a kernel WW3 calls, or the `WW3/` pin | `just smoke` (CPU); `just full-hoff` and `just hoff-matrix` (the WW3 regtest matrix, WFIP-0003, serial entries by default, `omp` for the OpenMP ones) before a status in `kokkos/ports.tsv` moves to L2. Never `--gpu` without the owner (hard rule) |
-| `scripts/hoff.sh` or `scripts/ww4_parts.py` | `bash scripts/hoff.sh --self-test`, `python3 scripts/ww4_parts.py --self-test`, shellcheck; `just smoke-hoff` (CPU, pair to pair with `--ww3`) |
-| `regtests/` | `just hoff-matrix-selftest` (the selection, the argument lists and the verdict on fixtures) and `just hoff-matrix-list` (the entry count at the pin) |
+| `kokkos/` | `just kokkos-test serial-debug` (sanitizers, bounds checks) and `just kokkos-test openmp-release`, which build the port and run the tests of the intro programs and the tools (the port has none, ADR-0010); `just smoke-ww3-gpu` for the port itself |
+| a kernel WW3 calls, or the `WW3/` pin | `just smoke` (CPU); `just full-ww3-gpu` and `just ww3-gpu-matrix` (the WW3 regtest matrix, WFIP-0003, serial entries by default, `omp` for the OpenMP ones) before a status in `kokkos/ports.tsv` moves to L2. Never `--gpu` without the owner (hard rule) |
+| `scripts/ww3-gpu.sh` or `scripts/ww4_parts.py` | `bash scripts/ww3-gpu.sh --self-test`, `python3 scripts/ww4_parts.py --self-test`, shellcheck; `just smoke-ww3-gpu` (CPU, pair to pair with `--ww3`) |
+| `regtests/` | `just ww3-gpu-matrix-selftest` (the selection, the argument lists and the verdict on fixtures) and `just ww3-gpu-matrix-list` (the entry count at the pin) |
 | `kokkos/ports.tsv` or `docs/data/ww3_full_gprof.tsv` | `python3 scripts/port_score.py --write`, then `--check` (CI runs `--self-test` and `--check`) |
 | Fortran in `gpu/`, `examples/`, `exercises/` | they must compile with gfortran with directives ignored; the exercise parity test must pass |
 | a Mermaid fence or its page | `python3 scripts/figures.py check`, then `just figures` to re-render and `python3 -m unittest tests/test_figures.py` |
@@ -181,10 +181,10 @@ broken most often:
   a tuning knob, and it invalidates every regtest verdict (`kokkos/PORT_STATUS.md`).
 - **The port has no tests of its own** ([ADR-0010](docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md),
   the owner, 14 October 2026): no L1 test, GoogleTest or captured fixture of a ported routine. Its
-  tests are WW3's regtests: `just smoke-hoff` and `just full-hoff` (`--hoff --cpu` pair to pair with
-  `--ww3`) and `just hoff-matrix`, the `NL1` entries of WW3's `matrix.base` (serial by default,
+  tests are WW3's regtests: `just smoke-ww3-gpu` and `just full-ww3-gpu` (`--ww3-gpu --cpu` pair to pair with
+  `--ww3`) and `just ww3-gpu-matrix`, the `NL1` entries of WW3's `matrix.base` (serial by default,
   the shared-memory OpenMP ones with `omp`) compared by `test.comp` and `nccmp-tol` (WFIP-0003).
-  `just hoff-matrix` is a CMake/CTest driver in `regtests/`, one CTest test per entry; CTest there
+  `just ww3-gpu-matrix` is a CMake/CTest driver in `regtests/`, one CTest test per entry; CTest there
   runs WW3's own regtests, the Fortran routine against the Kokkos routine, and is not a test of
   the port's own.
 - **Ask before** changing the order of a reduction, a limiter or the integration order. The change
@@ -206,7 +206,7 @@ broken most often:
   what is still in Fortran with each port's regtest record into `kokkos/PORT_RANKING.md`; `/port-next`
   starts the next port from it. `--check` fails
   when either is stale.
-- **CI keeps h1 alive**: `--hoff --cpu` on `ww3_ts1`, pair to pair with `--ww3`
+- **CI keeps h1 alive**: `--ww3-gpu --cpu` on `ww3_ts1`, pair to pair with `--ww3`
   ([`health.yml`](.github/workflows/health.yml)). It is the only combination in CI for now.
 - **Done means all of §1.5:** the kernel with its heritage header, the shim with its argument
   table, the L2 regtest replay and the regtest matrix passed within `tolerances.txt`, a timing line
@@ -230,8 +230,8 @@ Fortran.
   (`WW_KOKKOS_SNL1=0` against `=1`). The reference is that build, not the source read by eye:
   gfortran expands `x**11` differently at `-O0` and `-O3` (v)
   ([`docs/log/2026-10-14-snl1-bitwise-af11.md`](docs/log/2026-10-14-snl1-bitwise-af11.md)).
-- **How it is checked.** `just hoff-matrix <jobs> all`, every `matrix.base` entry whose switch
-  has the routine's switch, with `HOFF_STRICT=ON`: an entry fails when `test.comp` finds a file
+- **How it is checked.** `just ww3-gpu-matrix <jobs> all`, every `matrix.base` entry whose switch
+  has the routine's switch, with `WW3GPU_STRICT=ON`: an entry fails when `test.comp` finds a file
   different. `nccmp-tol` and its tolerances say how large a difference is; they never turn one
   into a pass. A row with `kokkos_spectra` 0 did not exercise the port and is reported as such.
 - **What is excused.** Only a file that two runs of the Fortran itself write differently. The
@@ -267,18 +267,18 @@ Is WW3 deterministic enough for this rule? Measured on the owner's workstation, 
 
 ## Running on the GPU (hard rule)
 
-The owner, 14 October 2026: "never run --hoff --gpu without supervision, only --hoff --cpu must
+The owner, 14 October 2026: "never run --ww3-gpu --gpu without supervision, only --ww3-gpu --cpu must
 be regtested pair to pair to existing ww3 src."
 
-- **Never run `--hoff --gpu` without the owner supervising that run.** That is
-  `scripts/hoff.sh --hoff <case> --gpu`, `just smoke-hoff gpu` and `just full-hoff gpu`.
-  `hoff.sh` asks for a "yes" typed at a terminal and exits 7 without one. Never work around it:
-  no faked terminal, no `HOFF_IN_SHELL`, no piped answer. `--build-only` compiles for the GPU
+- **Never run `--ww3-gpu --gpu` without the owner supervising that run.** That is
+  `scripts/ww3-gpu.sh --ww3-gpu <case> --gpu`, `just smoke-ww3-gpu gpu` and `just full-ww3-gpu gpu`.
+  `ww3-gpu.sh` asks for a "yes" typed at a terminal and exits 7 without one. Never work around it:
+  no faked terminal, no `WW3GPU_IN_SHELL`, no piped answer. `--build-only` compiles for the GPU
   without running it and is allowed.
-- **The agents' regtest is `--hoff --cpu`** (the default; Kokkos on OpenMP). Its Kokkos run is
+- **The agents' regtest is `--ww3-gpu --cpu`** (the default; Kokkos on OpenMP). Its Kokkos run is
   compared pair to pair with `--ww3`, WW3 from the existing source built without the KOKKOS
   switch, by `nccmp-tol`, after the comparison with the Fortran DIA of the same executable. Run
-  `just smoke-hoff` for every change to a kernel WW3 calls, and `just full-hoff` before a status
+  `just smoke-ww3-gpu` for every change to a kernel WW3 calls, and `just full-ww3-gpu` before a status
   in `kokkos/ports.tsv` moves to L2.
 - `--ww3 --gpu` and `--ww4 --gpu` are refused (exit 64): neither has a GPU path here.
 

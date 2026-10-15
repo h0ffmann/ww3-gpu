@@ -2,7 +2,7 @@
 
 Two inputs live here, both frozen: `snl1_nk25_nth24.bin`, the sea state
 `ww_bench_snl1` times the DIA on (and `proof/snl1_cons` reads), and `bench_small/`,
-the small benchmark case `scripts/hoff.sh` runs and `L1_test_bench_case` compares
+the small benchmark case `scripts/ww3-gpu.sh` runs and `L1_test_bench_case` compares
 against.
 
 | file | what it is |
@@ -18,7 +18,7 @@ reference and tests were removed on 2026-10-14 under the owner's rule that the
 port has no tests of its own and all its tests come from WW3's regtests. The file
 is kept, unchanged, as the benchmark's input. Nothing in this repository can
 regenerate it any more, so it is not edited: a new benchmark input is a new file.
-The port is validated by `scripts/hoff.sh --hoff --cpu` against WW3 itself, not
+The port is validated by `scripts/ww3-gpu.sh --ww3-gpu --cpu` against WW3 itself, not
 against this file.
 
 ## What is in the fixture

@@ -5,8 +5,8 @@
 > there, not here. Two things changed on the way: `SIG(1)` in hunk 2 became
 > `SIG(1:NK)`, because `SIG` is a POINTER and gfortran rejects an element of a
 > pointer array as an assumed-size actual; and hunk 4 enables C++ before
-> `find_package(ww_kokkos)`, which the Kokkos package needs. `just smoke-hoff`
-> builds and runs it (`scripts/hoff.sh`). The text below is the original recipe,
+> `find_package(ww_kokkos)`, which the Kokkos package needs. `just smoke-ww3-gpu`
+> builds and runs it (`scripts/ww3-gpu.sh`). The text below is the original recipe,
 > kept as the account of why each hunk is there. Everything below was read off the tree at
 > `WW3/model/src` (WAVEWATCH III 7.14, `develop`). The line numbers are real and
 > were produced with the `grep` commands quoted next to each hunk.

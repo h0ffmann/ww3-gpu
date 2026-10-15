@@ -11,7 +11,7 @@ just ww3         # enter the toolchain-only shell  (== nix develop ./nix-config/
 just ww3-run …   # run one command inside that shell, e.g. just ww3-run gfortran --version
 just toolchain   # exact pinned versions
 just toolchain-smoke  # Fortran 2008 + MPI + NetCDF-4 build-and-run in the Nix sandbox
-just smoke       # WW3 as written, then WW3 with the Kokkos DIA (scripts/hoff.sh)
+just smoke       # WW3 as written, then WW3 with the Kokkos DIA (scripts/ww3-gpu.sh)
 ```
 
 Build and run WW3 itself in that shell. The source tree is `$WW3`, else `~/src/WW3`, the
@@ -66,7 +66,7 @@ directory keeps the old name). What the regtests need besides the compilers is b
 here: `ww3-regtest-data` (NOAA's `ww3_from_ftp` tarball, SHA-256 pinned), `ptscotch-static`
 (`SCOTCH_PATH`) and `ww3-metis` (`METIS_PATH`), so this repository only runs them. A WW3 or
 Kokkos build directory remembers the toolchain it was configured with and is rebuilt from
-scratch when a pin bump changes it (`scripts/hoff.sh`, `regtests/cmake/run_entry.cmake`).
+scratch when a pin bump changes it (`scripts/ww3-gpu.sh`, `regtests/cmake/run_entry.cmake`).
 
 Nix prints `warning: Git tree '…/nix-config' has uncommitted changes` because of the sparse
 checkout. There are no real edits, and `git -C nix-config status` is clean.

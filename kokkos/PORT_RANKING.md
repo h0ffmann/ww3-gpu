@@ -109,10 +109,10 @@ that would be in Kokkos once every row down to it is ported.
 
 The port has no tests of its own ([ADR-0010](../docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md)):
 a ported routine is tested only by WW3's regtests, run inside WW3 with the routine on Kokkos and
-compared pair to pair with the same WW3 without it (`scripts/hoff.sh --hoff --cpu`, `just hoff-matrix`).
+compared pair to pair with the same WW3 without it (`scripts/ww3-gpu.sh --ww3-gpu --cpu`, `just ww3-gpu-matrix`).
 The record is the `regtested` column of `kokkos/ports.tsv`.
 
 | routine | status | Kokkos files | regtested |
 |---|---|---|---|
 | `w3snl1md:w3snl1` | L2 | `snl1_dia.cpp`, `snl1_shim.cpp` | yes: L2 on the CPU, ww3_ts1 and bench_small, against the Fortran DIA and pair to pair against --ww3; ww3_ts1 in CI (health h1); WW3 regtest matrix of 100 entries, byte-identical on all 100 (test.comp), nccmp-tol 71 PASS, 29 n/a, 0 FAIL, after AF11 took gfortran's -O3 chain for x**11 (docs/data/hoff_matrix_2026-10-15.tsv); the 25 shared-memory OpenMP (OMPG) NL1 entries, byte-identical on all 25 (test.comp), nccmp-tol 25 PASS, with OMP_MAX_ACTIVE_LEVELS=2, without which Kokkos aborts inside W3WAVE's parallel region (docs/data/hoff_matrix_omp_2026-10-15.tsv) |
-| `w3snl1md:insnl1` | L2 | `snl1_tables.cpp`, `snl1_shim.cpp` | yes: through the DIA's L2, which reads these tables in every --hoff run (health h1); byte-identical on the 100-entry matrix (docs/data/hoff_matrix_2026-10-15.tsv) |
+| `w3snl1md:insnl1` | L2 | `snl1_tables.cpp`, `snl1_shim.cpp` | yes: through the DIA's L2, which reads these tables in every --ww3-gpu run (health h1); byte-identical on the 100-entry matrix (docs/data/hoff_matrix_2026-10-15.tsv) |

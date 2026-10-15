@@ -28,12 +28,12 @@ profile of `bench_small` does not list it among the routines that take time
 | Level | What | Result | Where |
 |---|---|---|---|
 | L1 (history) | the tables against `INSNL1`'s, three presets | all 32 address tables exactly; the weights and `AF11` within 1e-6 relative | `L1_test_snl1_tables`: removed with the tests, 2026-10-14 |
-| L2 | every `--hoff --cpu` run builds the tables through `WW_SNL1_INIT`; the DIA that reads them passes | PASS, as in [`W3SNL1_KOKKOS.md`](W3SNL1_KOKKOS.md) | `just smoke-hoff`, `just full-hoff`, 2026-10-14 |
-| L2, matrix | `just hoff-matrix`, after `pow11()` was given the chain gfortran uses at `-O3` for `AF11 = (SIG*TPIINV)**11` (`w3snl1md.F90:741`, `:750`): `x^5*x^6`, not the `-O0` `x^3*x^8` the `-g` fixture had validated | `test.comp` 0 differing files on all 100 entries; `nccmp-tol` 71 PASS, 29 n/a, 0 FAIL (v) | [`docs/data/hoff_matrix_2026-10-15.tsv`](../../docs/data/hoff_matrix_2026-10-15.tsv), [`docs/log/2026-10-14-snl1-bitwise-af11.md`](../../docs/log/2026-10-14-snl1-bitwise-af11.md) |
+| L2 | every `--ww3-gpu --cpu` run builds the tables through `WW_SNL1_INIT`; the DIA that reads them passes | PASS, as in [`W3SNL1_KOKKOS.md`](W3SNL1_KOKKOS.md) | `just smoke-ww3-gpu`, `just full-ww3-gpu`, 2026-10-14 |
+| L2, matrix | `just ww3-gpu-matrix`, after `pow11()` was given the chain gfortran uses at `-O3` for `AF11 = (SIG*TPIINV)**11` (`w3snl1md.F90:741`, `:750`): `x^5*x^6`, not the `-O0` `x^3*x^8` the `-g` fixture had validated | `test.comp` 0 differing files on all 100 entries; `nccmp-tol` 71 PASS, 29 n/a, 0 FAIL (v) | [`docs/data/hoff_matrix_2026-10-15.tsv`](../../docs/data/hoff_matrix_2026-10-15.tsv), [`docs/log/2026-10-14-snl1-bitwise-af11.md`](../../docs/log/2026-10-14-snl1-bitwise-af11.md) |
 
 ## GoogleTest, the WW4 way
 
 None. `L1_test_snl1_tables.cpp` was a GoogleTest, run by CTest on every preset, until it was
 removed on 2026-10-14 under the owner's rule: "kokkos code should NOT have its own tests, hard
 rule. All tests should come [from] WW3 regtests." The tables are judged through the DIA's WW3
-regtest replay (`scripts/hoff.sh --hoff --cpu`, pair to pair with `--ww3`).
+regtest replay (`scripts/ww3-gpu.sh --ww3-gpu --cpu`, pair to pair with `--ww3`).

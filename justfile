@@ -6,11 +6,16 @@
 set shell := ["bash", "-euo", "pipefail", "-c"]
 set positional-arguments
 
+# The old names, as the dated records in docs/log and docs/data cite them.
+alias smoke-hoff := smoke-ww3-gpu
+alias full-hoff := full-ww3-gpu
+alias hoff-matrix := ww3-gpu-matrix
+
 ww3_src  := env_var_or_default("WW3",   env_var("HOME") + "/src/WW3")
 swan_src := env_var_or_default("SWAN",  env_var("HOME") + "/src/swan")
 pratico  := justfile_directory() + "/nix-config/labs/pratico"
 ww3_shell := 'nix develop "' + pratico + '#ww3" --command'
-hoff_build := justfile_directory() + "/build/hoff-matrix-"
+ww3gpu_build := justfile_directory() + "/build/ww3-gpu-matrix-"
 
 default:
     @just --list --unsorted
@@ -56,41 +61,41 @@ toolchain-smoke:
     just -f {{pratico}}/justfile smoke
 
 # ---------------------------------------------------------------------
-# WW3 two ways (scripts/hoff.sh): --ww3, the Fortran as NOAA writes it; --hoff, WW3 built
+# WW3 two ways (scripts/ww3-gpu.sh): --ww3, the Fortran as NOAA writes it; --ww3-gpu, WW3 built
 # with the KOKKOS switch from the h0ffmann/WW3 branch hoff/kokkos-snl1 and linked to kokkos/.
-# --hoff runs on the CPU (Kokkos OpenMP) unless asked: `just smoke-hoff gpu` runs CUDA, and only
+# --ww3-gpu runs on the CPU (Kokkos OpenMP) unless asked: `just smoke-ww3-gpu gpu` runs CUDA, and only
 # with a human supervising (AGENTS.md hard rule; it asks at the terminal).
 # ---------------------------------------------------------------------
 
 # Both smoke tests: WW3 as written, then WW3 with the Kokkos port (ww3_ts1, seconds on a CPU).
-smoke: smoke-ww3 smoke-hoff
+smoke: smoke-ww3 smoke-ww3-gpu
 
 # WW3 as written: regtest ww3_ts1 (one point, ST4 + NL1, 10 model days) must finish.
 smoke-ww3:
-    bash scripts/hoff.sh --ww3 smoke
+    bash scripts/ww3-gpu.sh --ww3 smoke
 
 # WW3 with the Kokkos DIA: ww3_ts1 with the Fortran and the Kokkos W3SNL1, compared by nccmp-tol.
-smoke-hoff device="cpu":
-    bash scripts/hoff.sh --hoff smoke --{{device}}
+smoke-ww3-gpu device="cpu":
+    bash scripts/ww3-gpu.sh --ww3-gpu smoke --{{device}}
 
 # The expensive case, as written: bench_small (120 x 80, 9 520 sea points, 12 hours).
 full-ww3:
-    bash scripts/hoff.sh --ww3 full
+    bash scripts/ww3-gpu.sh --ww3 full
 
 # The expensive case with the Kokkos DIA, compared with the Fortran by nccmp-tol.
-full-hoff device="cpu":
-    bash scripts/hoff.sh --hoff full --{{device}}
+full-ww3-gpu device="cpu":
+    bash scripts/ww3-gpu.sh --ww3-gpu full --{{device}}
 
 # The Kokkos DIA through WW3's own regtest harness (WFIP-0003), as CTest (regtests/CMakeLists.txt):
 # one test per NL1 entry of matrix.base, the Fortran and the Kokkos DIA of one executable, compared
 # by test.comp and nccmp-tol. CPU only. <selection> is serial (100 entries), omp (50 shared-memory
-# OpenMP entries), mpi (161, mpirun with $HOFF_MPI_RANKS ranks, default 4) or all (311); each entry
-# gets (nproc --all)/<jobs> threads ($HOFF_OMP_THREADS overrides), shared among its ranks. The
-# rest goes to ctest: `just hoff-matrix 8 serial -R ww3_ts1`, `-L entry`, `-N`. jobs=N and
-# selection=S are accepted too. HOFF_OMP_NESTED=ON in the environment exports
+# OpenMP entries), mpi (161, mpirun with $WW3GPU_MPI_RANKS ranks, default 4) or all (311); each entry
+# gets (nproc --all)/<jobs> threads ($WW3GPU_OMP_THREADS overrides), shared among its ranks. The
+# rest goes to ctest: `just ww3-gpu-matrix 8 serial -R ww3_ts1`, `-L entry`, `-N`. jobs=N and
+# selection=S are accepted too. WW3GPU_OMP_NESTED=ON in the environment exports
 # OMP_MAX_ACTIVE_LEVELS=2 to every run (no longer needed: inside W3WAVE's parallel region the shim
-# runs the kernel on Kokkos::Serial). Record: build/hoff-matrix-<selection>/summary.tsv.
-hoff-matrix jobs="8" selection="serial" *ctest_args:
+# runs the kernel on Kokkos::Serial). Record: build/ww3-gpu-matrix-<selection>/summary.tsv.
+ww3-gpu-matrix jobs="8" selection="serial" *ctest_args:
     #!/usr/bin/env bash
     set -euo pipefail
     jobs=8 sel=serial rest=() i=0
@@ -104,22 +109,22 @@ hoff-matrix jobs="8" selection="serial" *ctest_args:
            else rest+=("$a"); fi ;;
       esac
     done
-    [[ "$jobs" =~ ^[1-9][0-9]*$ ]] || { echo "hoff-matrix: jobs is a positive integer, not '$jobs'" >&2; exit 64; }
-    t=$(( $(nproc --all) / jobs )); t=${HOFF_OMP_THREADS:-$(( t > 0 ? t : 1 ))}
+    [[ "$jobs" =~ ^[1-9][0-9]*$ ]] || { echo "ww3-gpu-matrix: jobs is a positive integer, not '$jobs'" >&2; exit 64; }
+    t=$(( $(nproc --all) / jobs )); t=${WW3GPU_OMP_THREADS:-$(( t > 0 ? t : 1 ))}
     data=$(nix build --no-link --print-out-paths "{{pratico}}#ww3-regtest-data")
-    {{ww3_shell}} cmake -S regtests -B "{{hoff_build}}$sel" -DHOFF_SELECTION="$sel" -DHOFF_OMP_THREADS="$t" \
-      -DHOFF_MPI_RANKS="${HOFF_MPI_RANKS:-4}" -DHOFF_DATA="$data" \
-      -DHOFF_OMP_NESTED="${HOFF_OMP_NESTED:-OFF}" >/dev/null
-    HOFF_COMMAND="${HOFF_OMP_NESTED:+HOFF_OMP_NESTED=$HOFF_OMP_NESTED }just hoff-matrix $*" {{ww3_shell}} ctest --test-dir "{{hoff_build}}$sel" -j "$jobs" --output-on-failure "${rest[@]}"
+    {{ww3_shell}} cmake -S regtests -B "{{ww3gpu_build}}$sel" -DWW3GPU_SELECTION="$sel" -DWW3GPU_OMP_THREADS="$t" \
+      -DWW3GPU_MPI_RANKS="${WW3GPU_MPI_RANKS:-4}" -DWW3GPU_DATA="$data" \
+      -DWW3GPU_OMP_NESTED="${WW3GPU_OMP_NESTED:-OFF}" >/dev/null
+    WW3GPU_COMMAND="${WW3GPU_OMP_NESTED:+WW3GPU_OMP_NESTED=$WW3GPU_OMP_NESTED }just ww3-gpu-matrix $*" {{ww3_shell}} ctest --test-dir "{{ww3gpu_build}}$sel" -j "$jobs" --output-on-failure "${rest[@]}"
 
 # The entries of a selection, as CTest test names (NNN:<test>:<switch>), without running them.
-hoff-matrix-list selection="serial":
-    {{ww3_shell}} cmake -S regtests -B "{{hoff_build}}{{selection}}" -DHOFF_SELECTION="{{selection}}" >/dev/null
-    {{ww3_shell}} ctest --test-dir "{{hoff_build}}{{selection}}" -N -L entry -FA ".*"
+ww3-gpu-matrix-list selection="serial":
+    {{ww3_shell}} cmake -S regtests -B "{{ww3gpu_build}}{{selection}}" -DWW3GPU_SELECTION="{{selection}}" >/dev/null
+    {{ww3_shell}} ctest --test-dir "{{ww3gpu_build}}{{selection}}" -N -L entry -FA ".*"
 
 # WW3's regtest data kept on NOAA's ftp (ww3_tp2.15's wind.nc, ...), SHA-256 pinned: pratico's
 # ww3-regtest-data package (nix-config/labs/pratico/flake.nix). Prints its store path.
-hoff-matrix-fetch:
+ww3-gpu-matrix-fetch:
     nix build --no-link --print-out-paths "{{pratico}}#ww3-regtest-data"
 
 # The DIA on the CPU, Serial and OpenMP: WW3's Fortran, the Kokkos port and ww3-dia-gpu's kernel,
@@ -128,28 +133,64 @@ hoff-matrix-fetch:
 bench-dia *args:
     bash scripts/bench_dia.sh {{args}}
 
-# docker/Dockerfile: WW3, WW3 with the Kokkos DIA and WW4 compiled in Ubuntu, no sources, no Nix.
-# Build the Ubuntu runtime image ww3-gpu:<tag> (CPU only)
-docker-build tag="local":
+# ---------------------------------------------------------------------
+# The same runs in Docker (docker/Dockerfile): Ubuntu 26.04, no Nix, no picasso. The build stage
+# compiles Kokkos 5.2.2, the port, nccmp-tol, WW3 with and without KOKKOS, and WW4; the image keeps
+# only the compiled programs, their runtime libraries and the case inputs. CPU only. Every recipe
+# that runs scripts/ww3-gpu.sh has its pair here, `d` in front: smoke-ww3-gpu -> dsmoke-ww3-gpu. Runs land
+# in build/docker-runs/; DOCKER_IMAGE picks another image than ww3-gpu:local.
+# ---------------------------------------------------------------------
+
+# Build the Ubuntu image ww3-gpu:<tag> from this checkout (CPU only, compiled code only)
+dbuild tag="local":
     bash scripts/docker.sh build {{tag}}
 
-# Every scripts/hoff.sh option passes through (--ww3|--hoff|--ww4, smoke|full, --cpu, --build-only,
-# --help, --self-test); runs land in build/docker-runs/; DOCKER_IMAGE picks another image.
-# Run scripts/hoff.sh in the image: `just docker-run --hoff smoke`
-docker-run *args:
+# Run scripts/ww3-gpu.sh in the image, any of its options: `just drun --ww3-gpu full`
+drun *args:
     bash scripts/docker.sh run {{args}}
 
+# Scan the image for HIGH/CRITICAL vulnerabilities with a fix, as CI does (docker-scan.yml)
+dscan tag="local":
+    docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:0.76.0 image --scanners vuln --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 ww3-gpu:{{tag}}
+
+# `just smoke` in the image: WW3 as written, then WW3 with the Kokkos DIA.
+dsmoke: dsmoke-ww3 dsmoke-ww3-gpu
+
+# `just smoke-ww3` in the image.
+dsmoke-ww3:
+    bash scripts/docker.sh run --ww3 smoke
+
+# `just smoke-ww3-gpu` in the image (CPU only: the image has no CUDA build).
+dsmoke-ww3-gpu:
+    bash scripts/docker.sh run --ww3-gpu smoke
+
+# `just full-ww3` in the image.
+dfull-ww3:
+    bash scripts/docker.sh run --ww3 full
+
+# `just full-ww3-gpu` in the image (CPU only).
+dfull-ww3-gpu:
+    bash scripts/docker.sh run --ww3-gpu full
+
+# `just smoke-ww4` in the image; exit 5 while a part the case needs is not ported.
+dsmoke-ww4:
+    bash scripts/docker.sh run --ww4 smoke
+
+# `just full-ww4` in the image.
+dfull-ww4:
+    bash scripts/docker.sh run --ww4 full
+
 # The matrix's parsers and verdict on fixtures, and the entry counts at the WW3 pin.
-hoff-matrix-selftest:
+ww3-gpu-matrix-selftest:
     {{ww3_shell}} cmake -P regtests/cmake/selftest.cmake
 
 # The same cases on WAVEWATCH IV, built from the WW4/ submodule (h0ffmann/WW4). Exit 5, before
 # any build, when a part the case needs is not ported to WW4 yet (scripts/ww4_parts.py).
 smoke-ww4:
-    bash scripts/hoff.sh --ww4 smoke
+    bash scripts/ww3-gpu.sh --ww4 smoke
 
 full-ww4:
-    bash scripts/hoff.sh --ww4 full
+    bash scripts/ww3-gpu.sh --ww4 full
 
 # Which parts of a case WW4 has, and which it does not (exit 5 if one is missing).
 ww4-parts case="smoke":

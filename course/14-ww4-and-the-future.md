@@ -205,7 +205,7 @@ with WW4; build artefacts in the shape WW4 can use.* Until 14 October 2026 the `
 GoogleTest suites that compared the Kokkos kernel against captured Fortran fixtures. The owner
 then ruled that the port has no tests of its own
 ([ADR-0010](../docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md)): what is left is what
-this repo calls L2, in WW4's terms closer to L4: WW3's regtests rerun with the kernel on and off (`scripts/hoff.sh --hoff --cpu`,
+this repo calls L2, in WW4's terms closer to L4: WW3's regtests rerun with the kernel on and off (`scripts/ww3-gpu.sh --ww3-gpu --cpu`,
 `kokkos/tests/L2_replay.sh`, the regtest matrix of `regtests/`, run by CTest) and the netCDF output judged
 with `nccmp-tol`. So an L1 suite for a kernel
 handed to WW4 would have to be written on WW4's side.

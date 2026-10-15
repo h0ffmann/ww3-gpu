@@ -110,9 +110,9 @@ using SpecView  = Kokkos::View<Real****, Kokkos::LayoutLeft, DeviceMem>;
 
 > **2026-10-14:** item 3 is withdrawn and item 4 is the only test: the port has no tests of its own,
 > and WW3's regtests validate it ([ADR-0010](ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md),
-> [WFIP-0003](WFIPs/WFIP-0003-kokkos-regtest-matrix.md)). Item 4 is `scripts/hoff.sh --hoff --cpu`
-> pair to pair with `--ww3` (`just smoke-hoff`, `just full-hoff`) and the regtest matrix
-> (`just hoff-matrix`, CTest in `regtests/` running WW3's own regtests, Fortran against Kokkos, since
+> [WFIP-0003](WFIPs/WFIP-0003-kokkos-regtest-matrix.md)). Item 4 is `scripts/ww3-gpu.sh --ww3-gpu --cpu`
+> pair to pair with `--ww3` (`just smoke-ww3-gpu`, `just full-ww3-gpu`) and the regtest matrix
+> (`just ww3-gpu-matrix`, CTest in `regtests/` running WW3's own regtests, Fortran against Kokkos, since
 > 2026-10-15), not a `tests/L2_test_X` file, and it runs on the CPU only; item 6 is checked
 > inside a regtest run. The list is kept as written in 2026-09.
 
@@ -355,7 +355,7 @@ Step 2 is where the E3SM OpenACC effort got stuck (data structures in Fortran mo
 - You are porting WW3 kernels to Kokkos in phases. Phase 1 = translate faithfully; no numerics changes.
 - Kokkos rules: explicit memory spaces; `LayoutLeft` at the Fortran boundary; no host containers or allocation in kernels; scratch via `TeamPolicy`; `parallel_reduce` not atomics; float32 default; fence before host reads and MPI.
 - Every kernel is labelled with the WW3 routine it replaces (`"srce.snl1.dia"`).
-- A port PR contains: kernel + Doxygen heritage header, `bind(C)` shim + Fortran interface, the WW3 regtest replay and the regtest matrix on the CPU (`--hoff --cpu` vs `--ww3`) within `tolerances.txt`, timing table in `PORT_STATUS.md`, property check inside a regtest run where applicable. No test of its own: no L1, GoogleTest or captured fixture (ADR-0010).
+- A port PR contains: kernel + Doxygen heritage header, `bind(C)` shim + Fortran interface, the WW3 regtest replay and the regtest matrix on the CPU (`--ww3-gpu --cpu` vs `--ww3`) within `tolerances.txt`, timing table in `PORT_STATUS.md`, property check inside a regtest run where applicable. No test of its own: no L1, GoogleTest or captured fixture (ADR-0010).
 - Never edit WW3 physics Fortran except to add shims behind the `KOKKOS` switch.
 - Never report a speed-up without the measurement attached; never introduce Unified Memory to avoid data-movement design.
 - Ask before: changing loop order that affects reduction order, changing precision, changing a limiter or integration scheme.

@@ -6,7 +6,7 @@ expensive test each. `(v)` marks a claim checked by a command run for this docum
 owner's workstation (RTX 4090) while its NVIDIA driver was not loaded (§7), with
 the pratico toolchain (gfortran 15.3.0, Kokkos 5.2.0 OpenMP); `⚠` marks one that was not.
 
-> **Later the same day, [ADR-0010](ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md).** The L1 fixture, `snl1_ref.F90`, `gen_snl1_ww3lib` and the other test drivers this assessment discusses were removed: the Kokkos port has no tests of its own, and WW3's regtests on the CPU (`just smoke-hoff`, `just full-hoff`, `just hoff-matrix`) are its only tests. The frozen fixture stays as the benchmark's input. Where §4 proposes a fixture from a WW3 build to settle why L2 is not byte-identical, that is now a question for the regtests. The assessment is otherwise kept as written.
+> **Later the same day, [ADR-0010](ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md).** The L1 fixture, `snl1_ref.F90`, `gen_snl1_ww3lib` and the other test drivers this assessment discusses were removed: the Kokkos port has no tests of its own, and WW3's regtests on the CPU (`just smoke-ww3-gpu`, `just full-ww3-gpu`, `just ww3-gpu-matrix`) are its only tests. The frozen fixture stays as the benchmark's input. Where §4 proposes a fixture from a WW3 build to settle why L2 is not byte-identical, that is now a question for the regtests. The assessment is otherwise kept as written.
 
 ## 1. Summary
 
@@ -17,10 +17,10 @@ been applied or compiled, and WW3 had never run with the kernel.
 
 Today WW3 runs with it on the OpenMP backend, end to end `(v)`:
 
-| | `--ww3` (WW3 as written) | `--hoff` (WW3 with the Kokkos DIA) |
+| | `--ww3` (WW3 as written) | `--ww3-gpu` (WW3 with the Kokkos DIA) |
 |---|---|---|
-| smoke: `ww3_ts1`, one point, 10 days | `just smoke-ww3`: ww3_shel 2.67 s | `just smoke-hoff` (CPU): 2.70 s Fortran DIA, 2.85 s Kokkos DIA; `hs` within 9.9e-8 relative, PASS |
-| full: `bench_small`, 9 520 points, 12 h | `just full-ww3` | `just full-hoff` (CPU): 152.7 s Fortran DIA, 217.9 s Kokkos DIA; `hs` within 1.8e-7 relative over 119 652 values, PASS |
+| smoke: `ww3_ts1`, one point, 10 days | `just smoke-ww3`: ww3_shel 2.67 s | `just smoke-ww3-gpu` (CPU): 2.70 s Fortran DIA, 2.85 s Kokkos DIA; `hs` within 9.9e-8 relative, PASS |
+| full: `bench_small`, 9 520 points, 12 h | `just full-ww3` | `just full-ww3-gpu` (CPU): 152.7 s Fortran DIA, 217.9 s Kokkos DIA; `hs` within 1.8e-7 relative over 119 652 values, PASS |
 
 The Fortran comes only from WW3: the h0ffmann/WW3 branch `hoff/kokkos-snl1` (commit `6d1bcdfe`),
 which the `WW3/` submodule pins. The CUDA build compiles and links `(v)`; the CUDA run on the owner's
@@ -28,19 +28,19 @@ RTX 4090 is the step that remains `⚠`.
 
 ## 2. How the two ways run
 
-`scripts/hoff.sh` (`just smoke`, `smoke-ww3`, `smoke-hoff`, `full-ww3`, `full-hoff`):
+`scripts/ww3-gpu.sh` (`just smoke`, `smoke-ww3`, `smoke-ww3-gpu`, `full-ww3`, `full-ww3-gpu`):
 
 - `--ww3` builds the `WW3/` tree with `switches/switch_lab_shrd` and runs the case once.
-- `--hoff` builds and installs `kokkos/` as the `ww_kokkos` CMake package (preset
+- `--ww3-gpu` builds and installs `kokkos/` as the `ww_kokkos` CMake package (preset
   `openmp-release` or `cuda-release`), builds the same tree with the switch plus `KOKKOS` and
   `-DWW_KOKKOS=ON`, runs the case twice with the same executable (`WW_KOKKOS_SNL1=0` and `1`),
   checks that the second log says "Kokkos DIA (W3SNL1) enabled.", and compares the gridded output
   with `nccmp-tol` (the L2 replay).
 - `--cpu`, the default, runs Kokkos on OpenMP; `--gpu` runs it on CUDA and configures WW3 with
-  `CMAKE_CXX_COMPILER=nvcc_wrapper`. `--hoff --gpu` runs only under the owner's supervision, a
+  `CMAKE_CXX_COMPILER=nvcc_wrapper`. `--ww3-gpu --gpu` runs only under the owner's supervision, a
   hard rule of AGENTS.md: it asks for a "yes" at a terminal and exits 7 without one. An NVIDIA GPU
   whose driver does not answer stops it with exit 4 and the cause.
-- `--hoff --cpu` also builds and runs `--ww3` and compares the Kokkos run with it pair to pair:
+- `--ww3-gpu --cpu` also builds and runs `--ww3` and compares the Kokkos run with it pair to pair:
   on `ww3_ts1` the result is the same as against the Fortran DIA of the KOKKOS build, `hs` within
   9.879e-8 relative, PASS `(v)`.
 
@@ -64,7 +64,7 @@ Each was fixed in this change, and each is a claim the recipe or the tests had n
 5. **The `bench_small` fixture wrote no field and a key WW3 does not read** `(v)`. Its field
    stride was 0 (it was made for timing), and its `ww3_ounf.nml` used `FIELD%TIMESTOP`, which
    WW3's `FIELD_NML` does not have (`FIELD%TIMECOUNT` it does). The generator
-   (`kokkos/tools/bench_case`) and the fixture are fixed; `hoff.sh` turns hourly HS output on.
+   (`kokkos/tools/bench_case`) and the fixture are fixed; `ww3-gpu.sh` turns hourly HS output on.
 
 ## 4. Agreement, not identity
 
@@ -103,19 +103,19 @@ Phase 1 calls the shim once per sea point, inside an `!$OMP CRITICAL` section, a
 spectrum in and out at each call (`PATCH.md`, "Threading"). On one CPU thread that overhead takes
 more time than the kernel saves: 217.9 s against 152.7 s on `bench_small` `(v)`. This is the
 correctness step. Phase 2 hands the shim all points of a step at once and keeps the spectrum on
-the device; until then no speed claim is made for `--hoff`, on the CPU or the GPU.
+the device; until then no speed claim is made for `--ww3-gpu`, on the CPU or the GPU.
 
 ## 7. What was not checked
 
-- **The CUDA run** `⚠`. The CUDA build is checked: `scripts/hoff.sh --hoff smoke --gpu
+- **The CUDA run** `⚠`. The CUDA build is checked: `scripts/ww3-gpu.sh --ww3-gpu smoke --gpu
   --build-only` builds `ww_kokkos` with the `cuda-release` preset, configures WW3 with
   `nvcc_wrapper` (Kokkos 5.2.0 CUDA, Ada 8.9), and links `ww3_shel` to `libcudart.so.12` `(v)`.
   Running it stopped at Kokkos' start, "no CUDA-capable device is detected" `(v)`, in both runs:
   with the `KOKKOS` switch, `W3INIT` starts Kokkos even when `WW_KOKKOS_SNL1=0`. The cause was
   the workstation, not the port: it had booted kernel 7.0.0-38, and the NVIDIA 595 module package
-  was installed for 7.0.0-31 only, so no `nvidia` module could load `(v)`. `hoff.sh` now says so
+  was installed for 7.0.0-31 only, so no `nvidia` module could load `(v)`. `ww3-gpu.sh` now says so
   and stops, instead of falling back to the CPU when a GPU is present (`gpu_doctor`).
-  `just smoke-hoff` on the RTX 4090 is the owner's test; the level-1 scratch on the GPU is
+  `just smoke-ww3-gpu` on the RTX 4090 is the owner's test; the level-1 scratch on the GPU is
   untested.
 - **MPI and threaded switches** `⚠`. The lab switch is SHRD (no MPI); the `!$OMP CRITICAL` path
   was not run with threads.
@@ -145,7 +145,7 @@ Today only the time loop is there (148 lines), so `just smoke-ww4` and `just ful
 exit 5 before any build `(v)`. Against the tree of NOAA-EMC/WW4 pull request #72, whose files are
 placeholders, the same check reports each of them as a stub, 7 and 29 lines `(v)`.
 
-`hoff.sh --ww4 smoke --build-only` builds WW4 from the fork in the pinned toolchain `(v)`. It needs
+`ww3-gpu.sh --ww4 smoke --build-only` builds WW4 from the fork in the pinned toolchain `(v)`. It needs
 one flag: yaml-cpp 0.8.0, which WW4 pins, asks for a CMake older than 3.5, and CMake 4 refuses it
 unless `CMAKE_POLICY_VERSION_MINIMUM=3.5` is given. No WW4 file is changed. The run itself, and its
 input for each case (`kokkos/tests/fixtures/ww4/<case>/`, exit 6 while it is missing), wait for

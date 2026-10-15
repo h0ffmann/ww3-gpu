@@ -155,7 +155,7 @@ just kokkos-test serial-debug   # build and test the C++/Kokkos kernels
 ```
 
 Then start at [`course/00-orientation.md`](course/00-orientation.md). `just` lists every task; each
-recipe is a thin wrapper over a script in `scripts/`, except `just hoff-matrix*`, which drive WW3's
+recipe is a thin wrapper over a script in `scripts/`, except `just ww3-gpu-matrix*`, which drive WW3's
 regtest matrix through CMake/CTest in `regtests/`. The toolchain, the WW3 fork and the Kokkos
 presets are in [`docs/TOOLCHAIN.md`](docs/TOOLCHAIN.md). For coastal cases, add SWAN with
 `just swan`.
@@ -180,24 +180,32 @@ the sources. CPU only.
 
 ```console
 git clone --recurse-submodules git@github.com:h0ffmann/ww3-gpu.git && cd ww3-gpu
-just docker-build               # build the image ww3-gpu:local from this checkout
-just docker-run --ww3 smoke     # WW3 as written: regtest ww3_ts1, seconds
-just docker-run --hoff smoke    # the Kokkos DIA against the Fortran DIA, same executable
-just docker-run --hoff full     # the same on bench_small (9 520 sea points, 12 hours)
-just docker-run --ww4 smoke     # WAVEWATCH IV; exit 5 while a part the case needs is not ported
+just dbuild         # build the image ww3-gpu:local from this checkout
+just dsmoke         # WW3 as written, then the Kokkos DIA against the Fortran DIA (ww3_ts1, seconds)
+just dfull-ww3-gpu     # the Kokkos DIA on bench_small (9 520 sea points, 12 hours)
+just dsmoke-ww4     # WAVEWATCH IV; exit 5 while a part the case needs is not ported
+just drun --help    # any other scripts/ww3-gpu.sh option
 ```
+
+Every recipe that runs `scripts/ww3-gpu.sh` on the host has its pair in the image, with a `d` in
+front: `smoke`, `smoke-ww3`, `smoke-ww3-gpu`, `full-ww3`, `full-ww3-gpu`, `smoke-ww4` and `full-ww4`
+become `dsmoke`, `dsmoke-ww3`, and so on. The image needs no Nix and no picasso: its build stage
+installs Ubuntu's compilers and libraries, compiles Kokkos 5.2.2 from its release tarball (Ubuntu
+packages an older one), and the final stage copies only the compiled programs.
+
+CI scans the image with Trivy on every change to it and weekly (`.github/workflows/docker-scan.yml`): a HIGH or CRITICAL vulnerability with a fix fails the job. `just dscan` runs the same scan here.
 
 Without just, the same with plain Docker:
 
 ```console
 docker build -f docker/Dockerfile -t ww3-gpu:local .
-docker run --rm --user "$(id -u):$(id -g)" -v "$PWD/build/docker-runs:/work/runs" ww3-gpu:local --hoff smoke
+docker run --rm --user "$(id -u):$(id -g)" -v "$PWD/build/docker-runs:/work/runs" ww3-gpu:local --ww3-gpu smoke
 ```
 
-Every run lands in `build/docker-runs/`. Inside, the entry point is `scripts/hoff.sh`, the same
+Every run lands in `build/docker-runs/`. Inside, the entry point is `scripts/ww3-gpu.sh`, the same
 script the host uses, so the options, the checks and the exit codes are the same
 ([`docker/Dockerfile`](docker/Dockerfile) says what each stage builds). The compilers are
-Ubuntu's: `--hoff` still compares the Kokkos and the Fortran DIA inside one executable, so its
+Ubuntu's: `--ww3-gpu` still compares the Kokkos and the Fortran DIA inside one executable, so its
 bit-for-bit verdict holds in the image; a number from the image is not a number from the pinned
 toolchain of [`docs/TOOLCHAIN.md`](docs/TOOLCHAIN.md), which uses another gfortran.
 
@@ -235,19 +243,19 @@ anyone's table, including the ones here. The Kokkos port takes the other route: 
 their data on the device and match the Fortran within the tolerances WW3's regtests are judged by
 ([`course/09-benchmark-profile-compile-run.md`](course/09-benchmark-profile-compile-run.md)).
 
-There are three ways to run WAVEWATCH here (`scripts/hoff.sh`). The model sources come only from
+There are three ways to run WAVEWATCH here (`scripts/ww3-gpu.sh`). The model sources come only from
 personal forks: WW3's Fortran from the `WW3/` submodule (h0ffmann/WW3, branch `hoff/kokkos-snl1`)
 and WW4's C++ from the `WW4/` submodule (h0ffmann/WW4, `develop`). This repository holds only the
 Kokkos rewrite.
 
-![ww3-gpu: three ways to run WAVEWATCH. --ww3 runs WW3's Fortran from the fork; --hoff links the same fork to this repository's Kokkos rewrite and compares the two; --ww4 builds WAVEWATCH IV from its fork, and stops with exit 5 when a part the case needs is not ported](docs/figures/three-ways.svg)
+![ww3-gpu: three ways to run WAVEWATCH. --ww3 runs WW3's Fortran from the fork; --ww3-gpu links the same fork to this repository's Kokkos rewrite and compares the two; --ww4 builds WAVEWATCH IV from its fork, and stops with exit 5 when a part the case needs is not ported](docs/figures/three-ways.svg)
 
 ```bash
-just smoke             # smoke-ww3, then smoke-hoff: regtest ww3_ts1, seconds
+just smoke             # smoke-ww3, then smoke-ww3-gpu: regtest ww3_ts1, seconds
 just smoke-ww3         # --ww3: WW3 as written
-just smoke-hoff        # --hoff --cpu: WW3 with the Kokkos DIA (W3SNL1), compared with the Fortran and --ww3
+just smoke-ww3-gpu        # --ww3-gpu --cpu: WW3 with the Kokkos DIA (W3SNL1), compared with the Fortran and --ww3
 just full-ww3          # the expensive case: bench_small, 9 520 sea points, minutes
-just full-hoff         # the same with the Kokkos DIA
+just full-ww3-gpu         # the same with the Kokkos DIA
 just smoke-ww4         # --ww4: WAVEWATCH IV; exit 5 while a part the case needs is not ported
 just full-ww4          # the same on bench_small; `just ww4-parts full` lists the parts
 just port-score        # how much of WW3 runs on Kokkos, and the routines ranked by time
@@ -259,8 +267,8 @@ just port-score        # how much of WW3 runs on Kokkos, and the routines ranked
 
 | id | combination | what it runs | in CI |
 |---|---|---|---|
-| h1 | `--hoff --cpu` | WW3 with the Kokkos DIA on OpenMP, against the Fortran DIA and pair to pair against `--ww3` (`ww3_ts1`) | **yes**: [`health.yml`](.github/workflows/health.yml), on every pull request and on `main` |
-| h2 | `--hoff --gpu` | the same on CUDA | no: it needs a GPU and the owner supervising (AGENTS.md hard rule) |
+| h1 | `--ww3-gpu --cpu` | WW3 with the Kokkos DIA on OpenMP, against the Fortran DIA and pair to pair against `--ww3` (`ww3_ts1`) | **yes**: [`health.yml`](.github/workflows/health.yml), on every pull request and on `main` |
+| h2 | `--ww3-gpu --gpu` | the same on CUDA | no: it needs a GPU and the owner supervising (AGENTS.md hard rule) |
 | w3 | `--ww3 --cpu` | WW3 as written | inside h1, as its pair |
 | w4 | `--ww4 --cpu` | WAVEWATCH IV | no: it exits 5 until WW4 has the parts |
 
@@ -269,8 +277,8 @@ Only h1 is in CI, by the owner's word of 14 October 2026. Each ported routine ha
 was regtested. The port has no tests of its own; WW3's regtests are its tests
 ([ADR-0010](docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md)). The website draws its benchmarks.
 
-`--hoff` runs on the CPU (Kokkos OpenMP) by default, and is then compared pair to pair with
-`--ww3`. `just smoke-hoff gpu` runs CUDA, only with a human supervising: it asks at the terminal
+`--ww3-gpu` runs on the CPU (Kokkos OpenMP) by default, and is then compared pair to pair with
+`--ww3`. `just smoke-ww3-gpu gpu` runs CUDA, only with a human supervising: it asks at the terminal
 (AGENTS.md hard rule). An NVIDIA GPU whose driver does not answer stops it with exit 4 and the
 cause. On
 14 October 2026 both cases passed on OpenMP; the GPU run was not made yet. `--ww4` stops with

@@ -117,7 +117,7 @@ const report =
 | step | date | what | backend | value | baseline | unit | source |
 |---|---|---|---|---|---|---|---|
 | 1 | 2026-09-15 | the shim | Serial | 25.88 | 25.88 | ms | bench/x.json |
-| 2 | 2026-10-14 | ww3_shel | OpenMP | 217.9 | 152.7 | s | just full-hoff |
+| 2 | 2026-10-14 | ww3_shel | OpenMP | 217.9 | 152.7 | s | just full-ww3-gpu |
 | 3 | too | few | cells |
 <!-- bench:end -->
 
@@ -155,7 +155,7 @@ pub fn benches_test() {
         "217.9",
         "152.7",
         "s",
-        "just full-hoff",
+        "just full-ww3-gpu",
       ),
     ]
   assert c.benches("x", "no table") == []
