@@ -1,7 +1,7 @@
 {
   "renderer": {
     "mermaid-cli": "11.17.0",
-    "nixpkgs": "6510408d147d8c5e6d76043e899e9251756f6a75, eaad089433ca2bb662274377d33df3d0e51ef28b",
+    "nixpkgs": "6510408d147d8c5e6d76043e899e9251756f6a75",
     "fonts": [
       "share",
       "share"
@@ -113,6 +113,16 @@
       "file": "docs/W3SDS4_TRITON_202610.md",
       "title": "How does WeatherNext 3 enter the benchmark, and what are the waves compared with?",
       "sha256": "007b04d16adf55c27f5807a191022eef7972183c23f460e2b27516c500597961"
+    },
+    "ww3-gpu-at-a-glance": {
+      "file": "README.md",
+      "title": "What does ww3-gpu build, from which sources, and on which runtime does each run mode run?",
+      "sha256": "8cc238cc103867cb13ea85510203fa0f66372ea92dba2179e36ce01c7c8265ef"
+    },
+    "ww3-gpu-at-a-glance-pt": {
+      "file": "README.pt-BR.md",
+      "title": "O que o ww3-gpu compila, de quais fontes, e em qual ambiente roda cada modo?",
+      "sha256": "04bec6c5a285918cdd63d9c3dcf0cf59b574108dc35df2ae51a0a5dffb5da052"
     }
   }
 }

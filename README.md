@@ -142,10 +142,29 @@ or issues, linked so you can follow them.
 [`docs/AWESOME-WW3_202609.md`](docs/AWESOME-WW3_202609.md) is a curated link list, and
 [`docs/GLOSSARY.md`](docs/GLOSSARY.md) expands every abbreviation, switch, routine and tool name.
 
-## quickstart
+## three runtimes
 
-You need [Nix](https://nixos.org) and [just](https://github.com/casey/just). The compilers come from
-the pinned flake, so there is nothing else to install.
+ww3-gpu runs in three places. All three run the same `scripts/ww3-gpu.sh`, with the same options,
+checks and exit codes; they differ in their compilers and in what they can run. picasso is the
+reference: the bit-for-bit verdicts, the regtest matrix and every timing come from it.
+[`VERSIONS.md`](VERSIONS.md) lists every pinned version of each, and the figure in "can WW3 use
+my GPU?" shows how they fit with the sources and the run modes.
+
+| | 1 · picasso (Nix) | 2 · Docker image | 3 · dev container |
+|---|---|---|---|
+| You need | Nix and just | Docker (just is optional) | Docker, and VS Code or the Dev Containers CLI 0.89.0 or later; a full clone |
+| What it is | the submodule `picasso/` (`labs/pratico`): one locked nixpkgs | `docker/Dockerfile`, final stage: the compiled programs and the case inputs, no sources | `docker/Dockerfile`, stage `dev`: Ubuntu's compilers, the gate tools and Nix, which enters picasso |
+| Compilers | gfortran 16.2.0, CMake 4.4.3, Kokkos 5.2.2 | Ubuntu 26.04: gfortran 15.2.0, Kokkos 5.2.2 from its release tarball | picasso's, inside `nix develop`; Ubuntu's outside it |
+| MPI, PDLIB | Open MPI 5.0.11, PT-Scotch, METIS and ParMETIS | none | picasso's |
+| CUDA | the `#cuda` shell (Kokkos for `ADA89`) | none | none |
+| WW3's regtests | all of them: `just ww3-gpu-matrix`, NOAA's data pinned by SHA-256 | `ww3_ts1` and `bench_small` only | picasso's, CPU only |
+| Bit for bit | the reference toolchain | holds inside one executable of the image; the image is not the reference | picasso's |
+| Commands | `just smoke`, `just full-ww3-gpu`, ... | the same with a `d` in front: `just dsmoke`, ... | picasso's, inside the container |
+
+### 1 · picasso: the reference
+
+[picasso](https://github.com/h0ffmann/picasso) is the Nix toolchain of this lab. The compilers come
+from its pinned flake, so there is nothing else to install.
 
 ```console
 git clone --recurse-submodules git@github.com:h0ffmann/ww3-gpu.git && cd ww3-gpu
@@ -155,6 +174,15 @@ just rt                         # build with ww3_tp1.1's own switch and run that
 just build                      # rebuild with the lab switch (switches/switch_lab_shrd, ST4 physics)
 just example01                  # first course example: fetch-limited growth (~1 min)
 just kokkos-test serial-debug   # build and test the C++/Kokkos kernels
+```
+
+More recipes on the same toolchain:
+
+```console
+just ww3                # enter the toolchain shell
+just smoke              # WW3 as written, then the Kokkos DIA against the Fortran DIA (ww3_ts1)
+just full-ww3-gpu       # the Kokkos DIA on bench_small
+just ww3-gpu-matrix     # WW3's regtest matrix, CPU only
 ```
 
 Then start at [`course/00-orientation.md`](course/00-orientation.md). `just` lists every task; each
@@ -175,12 +203,18 @@ presets are in [`docs/TOOLCHAIN.md`](docs/TOOLCHAIN.md). For coastal cases, add 
 
 </details>
 
-## run it in Docker
+The submodule directory was `nix-config/` until 2026-10-15. In a clone made before that date,
+run this once after `git pull`:
 
-You need [Docker](https://docs.docker.com/engine/install/) and, for the short commands,
-[just](https://github.com/casey/just). The image is Ubuntu 26.04 with WW3, WW3 with the Kokkos DIA
-and WW4 already compiled: it holds the programs, their runtime libraries and the case inputs, not
-the sources. CPU only.
+```console
+git submodule sync && just submodule-init
+[ -z "$(git -C nix-config status --short)" ] && rm -rf nix-config   # only when it holds no edits
+```
+
+### 2 · the Docker image
+
+The image is Ubuntu 26.04 with WW3, WW3 with the Kokkos DIA and WW4 already compiled: it holds the
+programs, their runtime libraries and the case inputs, not the sources. CPU only.
 
 ```console
 git clone --recurse-submodules git@github.com:h0ffmann/ww3-gpu.git && cd ww3-gpu
@@ -213,40 +247,29 @@ Ubuntu's: `--ww3-gpu` still compares the Kokkos and the Fortran DIA inside one e
 bit-for-bit verdict holds in the image; a number from the image is not a number from the pinned
 toolchain of [`docs/TOOLCHAIN.md`](docs/TOOLCHAIN.md), which uses another gfortran.
 
-## build with picasso instead of Docker
+### 3 · the dev container
 
-[picasso](https://github.com/h0ffmann/picasso) is the Nix toolchain of this lab. Here it is the
-submodule `picasso/`, with only `labs/pratico` checked out. It is the alternative to the Docker
-image, and it is the reference: the bit-for-bit verdicts, the regtest matrix and the timings
-come from it, not from the image.
-
-| | picasso (`nix develop ./picasso/labs/pratico#ww3`) | Docker (`just dbuild`) |
-|---|---|---|
-| You need | Nix and just | Docker (just is optional) |
-| Compilers | one locked nixpkgs: gfortran 16.2.0, CMake 4.4.3, Kokkos 5.2.2 ([`docs/TOOLCHAIN.md`](docs/TOOLCHAIN.md)) | Ubuntu 26.04 packages, Kokkos 5.2.2 from its release tarball |
-| MPI, PDLIB | Open MPI 5.0.11, PT-Scotch, METIS and ParMETIS | none |
-| CUDA | the `#cuda` shell (Kokkos for `ADA89`) | none |
-| WW3's regtests | all of them: `just ww3-gpu-matrix`, with NOAA's regtest data pinned by SHA-256 | `ww3_ts1` and `bench_small` only |
-| Bit for bit | the reference toolchain | holds inside one executable of the image, but the image is not the reference |
+`.devcontainer/devcontainer.json` builds the `dev` stage of `docker/Dockerfile`: Ubuntu 26.04 with
+the image's compilers, the gate tools and Nix, as the user `ubuntu`. When the container is created,
+`scripts/agent_env.sh` fetches `picasso/` over https; from then on the `just` recipes enter
+picasso's shells, so a result inside the container is a picasso result. It is the way to work on
+this repository on a machine without Nix, from VS Code, Codespaces or the CLI:
 
 ```console
-just submodule-init     # once per clone: picasso/, sparse (labs/pratico)
-just ww3                # enter the toolchain shell
-just smoke              # WW3 as written, then the Kokkos DIA against the Fortran DIA (ww3_ts1)
-just full-ww3-gpu       # the Kokkos DIA on bench_small
-just ww3-gpu-matrix     # WW3's regtest matrix, CPU only
+npx --yes @devcontainers/cli@0.89.0 up --workspace-folder .
+npx --yes @devcontainers/cli@0.89.0 exec --workspace-folder . just smoke-ww3-gpu
 ```
 
-The recipes without a `d` in front run on picasso; the same recipes with a `d` run in the image.
-[`VERSIONS.md`](VERSIONS.md) lists every pinned version of both builds, and of the CMake files.
+- Open a full clone, not a git worktree. A worktree's `.git` points into the main repository,
+  which the container does not mount, and `agent_env.sh` stops with "not a git repository".
+- Use the Dev Containers CLI 0.89.0 or later: 0.80.0 waits forever after "Container started" with
+  Docker 29.
+- `/nix` lives in the container, so a rebuilt container downloads picasso's toolchain again
+  (about 3.1 GB, about a minute on the lab's link).
 
-The submodule directory was `nix-config/` until 2026-10-15. In a clone made before that date,
-run this once after `git pull`:
-
-```console
-git submodule sync && just submodule-init
-[ -z "$(git -C nix-config status --short)" ] && rm -rf nix-config   # only when it holds no edits
-```
+(v) 2026-10-15, CLI 0.89.0, Docker 29.9.1, `main` at `78e5a33`, full clone: `devcontainer up`
+passed, `just kokkos-test serial-debug` passed 10 of 10, `just smoke-ww3-gpu` gave byte-identical
+Fortran and Kokkos outputs, and every file the runs wrote belongs to the host user.
 
 ## two things worth knowing before you invest
 
@@ -297,6 +320,70 @@ call behind the `KOKKOS` switch and leaves the Fortran routine selectable. Befor
 `scripts/ww3-gpu.sh` compares the two trees and stops (exit 3) when the fork differs from
 `WW3-noaa/` outside the KOKKOS patch. So `--ww3` is pure NOAA WW3, and `--ww3-gpu --cpu` compares
 the Kokkos port with it.
+
+The whole system on one page: where the model sources come from, what this repository adds, the
+run modes, and the three runtimes they run on.
+
+```mermaid
+%% figure: ww3-gpu-at-a-glance
+%% title: What does ww3-gpu build, from which sources, and on which runtime does each run mode run?
+flowchart TD
+    subgraph RT["Runtimes"]
+        C["3 · dev container<br/>Dockerfile dev stage + Nix"]
+        P["1 · picasso/, Nix<br/>gfortran 16.2 · Open MPI · CUDA 12.9<br/>the reference toolchain"]
+        D["2 · Docker image<br/>Ubuntu, gfortran 15.2 · CPU only"]
+    end
+    H["scripts/ww3-gpu.sh, justfile, regtests/<br/>Bash · Python · CMake, CTest"]
+    subgraph RUN["Run modes"]
+        M1["--ww3<br/>the reference"]
+        M2["--ww3-gpu<br/>Fortran and Kokkos DIA,<br/>one executable"]
+        M4["just ww3-gpu-matrix<br/>WW3's regtests"]
+        M3["--ww4"]
+    end
+    subgraph SRC["Model sources: submodules, never edited here"]
+        N["WW3-noaa/<br/>pure NOAA WW3 · Fortran"]
+        F["WW3/<br/>h0ffmann fork · Fortran<br/>+ KOKKOS switch, shim call"]
+        W4["WW4/<br/>h0ffmann fork · C++"]
+    end
+    subgraph OWN["ww3-gpu's own code"]
+        B["course/, pubs/, site/<br/>Markdown to PDF · Gleam site"]
+        K["kokkos/<br/>the port · C++20, Kokkos"]
+    end
+    C -- "enters" --> P
+    P -- "every mode;<br/>GPU only with the owner" --> H
+    D -- "CPU only:<br/>the just d… recipes" --> H
+    H --> M1 & M2 & M4 & M3
+    M2 -. "compared with" .-> M1
+    M1 -- "built from" --> N
+    M2 -- "built from" --> F & K
+    M4 -- "built from" --> F & K
+    M3 -- "built from" --> W4
+```
+
+<details open>
+<summary>How to read this figure</summary>
+
+**Takeaway.** Two copies of WW3 come in from outside, pure NOAA WW3 and the owner's fork; this
+repository adds only the C++ rewrite and its tools, and every way of running the model works on
+the Nix toolchain, while the Docker image covers the CPU runs without Nix.
+
+**How to read.** Top to bottom. A runtime runs the one script, `scripts/ww3-gpu.sh` with its
+recipes; the script offers the run modes; each run mode is built from the sources below it.
+Solid arrows say what enters, runs or is built from what; the dashed arrow is the comparison of
+the Kokkos run with pure NOAA WW3. The runtimes are numbered from the reference (1) to the most
+derived (3); the dev container reaches the modes only through picasso.
+
+**Not shown.** The book and the site (`course/`, `pubs/`, `site/`) build in CI, not on these runtimes. The fork's branch and the five files of its KOKKOS patch (the table above), the
+CUDA build and its supervision rule (`AGENTS.md`, "Running on the GPU"), CI, and the versions of
+each runtime ([`VERSIONS.md`](VERSIONS.md)).
+
+**Evidence.** (v) read 2026-10-15: the table and paragraph above; `scripts/ww3-gpu.sh` (header);
+`docker/Dockerfile` (stages `toolchain`, `build`, `dev`, runtime); `.devcontainer/devcontainer.json`;
+[`VERSIONS.md`](VERSIONS.md) for the compiler versions. The dev container ran `just kokkos-test
+serial-debug` and `just smoke-ww3-gpu` through picasso on 2026-10-15 (Dev Containers CLI 0.89.0,
+full clone).
+
+</details>
 
 ![ww3-gpu: three ways to run WAVEWATCH. --ww3 runs pure NOAA WW3 from WW3-noaa/; --ww3-gpu links the same fork to this repository's Kokkos rewrite and compares the two; --ww4 builds WAVEWATCH IV from its fork, and stops with exit 5 when a part the case needs is not ported](docs/figures/three-ways.svg)
 
@@ -350,7 +437,7 @@ solver yet
 | `site/` | The Gleam front page ([`DESIGN.md`](DESIGN.md)) |
 | `pubs/` | The book's build and the UFRJ/DEL project proposal; built files land in `pdf/` |
 | `scripts/`, `switches/`, `env/` | Get, build and run WW3 and SWAN; annotated switch files; conda and an untested build-environment Dockerfile |
-| `docker/`, `.dockerignore` | The Ubuntu runtime image: WW3, WW3 with the Kokkos DIA and WW4 compiled, no sources ([run it in Docker](#run-it-in-docker)) |
+| `docker/`, `.dockerignore` | The Ubuntu runtime image: WW3, WW3 with the Kokkos DIA and WW4 compiled, no sources ([the Docker image](#2--the-docker-image)) |
 | `picasso/`, `WW3-noaa/`, `WW3/`, `WW4/` | Submodules: the pinned toolchain, pure [NOAA-EMC/WW3](https://github.com/NOAA-EMC/WW3), the [h0ffmann/WW3](https://github.com/h0ffmann/WW3) fork, the [h0ffmann/WW4](https://github.com/h0ffmann/WW4) fork |
 
 Lab code is C++, Fortran and shell. Python appears only in the publishing pipeline and the repo's

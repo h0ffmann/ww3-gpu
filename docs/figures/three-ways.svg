@@ -24,7 +24,7 @@
 
   <rect x="0" y="0" width="960" height="600" rx="24" fill="#FFFFFF"/>
   <text x="40" y="52" class="h">ww3-gpu: three ways to run WAVEWATCH</text>
-  <text x="40" y="78" class="sub">scripts/ww3-gpu.sh · each way has a cheap smoke and an expensive full case · no model source lives in this repository</text>
+  <text x="40" y="78" class="sub">scripts/ww3-gpu.sh · a cheap smoke and an expensive full case each · on picasso, in the Docker image (CPU) or the dev container</text>
 
   <!-- column 1: ww3 -->
   <rect x="30" y="100" width="284" height="400" rx="18" class="card"/>
@@ -63,8 +63,8 @@
   <rect x="360" y="354" width="240" height="52" rx="12" class="step"/>
   <text x="374" y="377" class="t">W3SNL1 on OpenMP or CUDA</text>
   <text x="374" y="396" class="m">then nccmp-tol vs Fortran</text>
-  <text x="360" y="446" class="m">just smoke-ww3-gpu [openmp|cuda]</text>
-  <text x="360" y="468" class="m">just full-ww3-gpu  [openmp|cuda]</text>
+  <text x="360" y="446" class="m">just smoke-ww3-gpu [cpu|gpu]</text>
+  <text x="360" y="468" class="m">just full-ww3-gpu  [cpu|gpu]</text>
 
   <!-- column 3: ww4 -->
   <rect x="646" y="100" width="284" height="400" rx="18" class="card"/>

@@ -54,22 +54,25 @@ All from the one nixpkgs lock above, so no version is chosen one by one.
 | Component | Version | Stage | Pinned in |
 |---|---|---|---|
 | Base | Ubuntu 26.04.1 LTS, `ubuntu:26.04@sha256:f144425ff09be612d6d9ad965196e9cdc23dae1f42110a8a11a3e9a8198759f7` | all | `docker/Dockerfile:16` |
-| gfortran, g++ | 15.2.0 (`15.2.0-16ubuntu1`) | `toolchain`, `build`, `dev` | the base digest (apt) |
-| CMake | 4.2.3 | `toolchain` | the base digest (apt) |
-| Ninja | 1.13.2 | `toolchain` | the base digest (apt) |
-| netCDF-C / netCDF-Fortran | 4.9.3 (`1:4.9.3-1build2`) / 4.6.2 (`4.6.2+ds-1`) | `toolchain` | the base digest (apt) |
-| HDF5 | 1.14.6 (`1.14.6+repack-2`) | `toolchain` | the base digest (apt) |
-| GoogleTest | 1.17.0 | `toolchain` | the base digest (apt) |
+| gfortran, g++ | 15.2.0 (`15.2.0-16ubuntu1`) | `toolchain`, `build`, `dev` | not pinned: the apt archive on the day of the build |
+| CMake | 4.2.3 | `toolchain` | not pinned: the apt archive on the day of the build |
+| Ninja | 1.13.2 | `toolchain` | not pinned: the apt archive on the day of the build |
+| netCDF-C / netCDF-Fortran | 4.9.3 (`1:4.9.3-1build2`) / 4.6.2 (`4.6.2+ds-1`) | `toolchain` | not pinned: the apt archive on the day of the build |
+| HDF5 | 1.14.6 (`1.14.6+repack-2`) | `toolchain` | not pinned: the apt archive on the day of the build |
+| GoogleTest | 1.17.0 | `toolchain` | not pinned: the apt archive on the day of the build |
 | Kokkos | 5.2.2, Serial and OpenMP, C++20, built from the release tarball with SHA-256 `d6557aae…46b9f` | `toolchain` | `docker/Dockerfile:19-20` |
 | MPI, CUDA | none | | |
-| Nix | 2.34.3 (`nix-bin 2.34.3+dfsg-1`), single-user | `dev` | the base digest (apt) |
-| just, ShellCheck, Python | 1.45.0, 0.11.0, 3.14.3 | `dev` | the base digest (apt) |
+| Nix | 2.34.3 (`nix-bin 2.34.3+dfsg-1`), single-user | `dev` | not pinned: the apt archive on the day of the build |
+| just, ShellCheck, Python | 1.45.0, 0.11.0, 3.14.4 (`python3.14 3.14.4-1ubuntu0.2`, from `-updates`) | `dev` | not pinned: the apt archive on the day of the build |
 | Trivy (the scan, not the image) | 0.76.0 | CI | `.github/workflows/docker-scan.yml:47` |
 
 Read with: `docker run --rm --entrypoint bash ww3-gpu:dev -c 'gfortran --version; cmake --version;
 dpkg-query -W libnetcdf-dev libnetcdff-dev libhdf5-dev libgtest-dev nix-bin'` after
-`docker build -f docker/Dockerfile --target dev -t ww3-gpu:dev .`. The apt versions follow the base
-digest: a new digest can change every row with "the base digest" in it.
+`docker build -f docker/Dockerfile --target dev -t ww3-gpu:dev .`. The base image is pinned by digest, but
+the apt packages are not: `apt-get update` in each stage installs what Ubuntu's archive serves on
+the day of the build, so a rebuild can change every row marked "not pinned". Python shows it: this
+table first said 3.14.3, and a dev container built later the same day had 3.14.4 from `-updates` (v, Dev Containers CLI test, 2026-10-15). Pinning them would take a dated
+`snapshot.ubuntu.com` source ⚠ (not tried).
 
 ## CMake
 
