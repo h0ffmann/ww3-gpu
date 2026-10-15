@@ -64,7 +64,7 @@ python       Python 3.14.7 numpy 2.5.2 xarray 2026.7.0
 
 The `picasso/` submodule is `h0ffmann/picasso` (renamed from `nix-config` on 2026-10-12). The
 submodule directory was `nix-config/` until 2026-10-15 and is `picasso/` since; a clone made
-before then moves it with the steps in `README.md`, "build with picasso instead of Docker". What the regtests need besides the compilers is built there, not
+before then moves it with the steps in `README.md`, "three runtimes". What the regtests need besides the compilers is built there, not
 here: `ww3-regtest-data` (NOAA's `ww3_from_ftp` tarball, SHA-256 pinned), `ptscotch-static`
 (`SCOTCH_PATH`) and `ww3-metis` (`METIS_PATH`), so this repository only runs them. A WW3 or
 Kokkos build directory remembers the toolchain it was configured with and is rebuilt from

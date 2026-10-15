@@ -59,6 +59,10 @@ class Figures(unittest.TestCase):
         _, errors = self.parse(GOOD, "mapas.pt.md")
         self.assertTrue(any("Como ler esta figura" in e for e in errors), errors)
 
+    def test_pt_br_page_is_portuguese(self):
+        _, errors = self.parse(GOOD, "README.pt-BR.md")
+        self.assertTrue(any("Como ler esta figura" in e for e in errors), errors)
+
     def test_gantt_needs_today_marker_off(self):
         _, errors = self.parse(GOOD.replace("flowchart LR\n    A --> B", "gantt\n    dateFormat YYYY-MM-DD"))
         self.assertTrue(any("todayMarker off" in e for e in errors), errors)

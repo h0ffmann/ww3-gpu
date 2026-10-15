@@ -3,7 +3,8 @@
 // with, the gate tools, and Nix (flakes on) for the pinned toolchain (`just ww3`,
 // `just kokkos-test serial-debug`). scripts/agent_env.sh then fetches the picasso submodule
 // over https. CPU only; a GPU gate (`just kokkos-cuda-test`) needs a host with a driver. The
-// first `nix develop` downloads the toolchain; later ones hit the store.
+// first `nix develop` downloads the toolchain; later ones hit the store. Open a full clone, not a
+// git worktree: a worktree's .git points into a repository the container does not mount.
 {
   "name": "ww3-gpu",
   "build": {

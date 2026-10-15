@@ -58,7 +58,7 @@ CARD_LABELS = {
 
 
 def lang_of(rel: str) -> str:
-    return "pt" if ".pt." in rel or "/pt/" in rel else "en"
+    return "pt" if ".pt." in rel or ".pt-BR." in rel or "/pt/" in rel else "en"
 
 
 def markdown_files() -> list[pathlib.Path]:

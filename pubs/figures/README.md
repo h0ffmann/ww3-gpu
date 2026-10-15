@@ -11,6 +11,28 @@ re-renders and CI fails when a render no longer matches its source.
 
 Found something wrong in a figure? Each entry has a link that opens an issue for it.
 
+## [`README.md`](../../README.md)
+
+### What does ww3-gpu build, from which sources, and on which runtime does each run mode run?
+
+Two copies of WW3 come in from outside, pure NOAA WW3 and the owner's fork; this
+
+<img src="mermaid/ww3-gpu-at-a-glance.png" alt="Two copies of WW3 come in from outside, pure NOAA WW3 and the owner's fork; this" width="560" />
+
+`ww3-gpu-at-a-glance` · [source](../../README.md) · [PDF](mermaid/ww3-gpu-at-a-glance.pdf) · [report a mistake](https://github.com/h0ffmann/ww3-gpu/issues/new?title=Figure%20ww3-gpu-at-a-glance%3A%20)
+
+
+## [`README.pt-BR.md`](../../README.pt-BR.md)
+
+### O que o ww3-gpu compila, de quais fontes, e em qual ambiente roda cada modo?
+
+Duas cópias do WW3 vêm de fora, o WW3 puro da NOAA e o fork do dono; este
+
+<img src="mermaid/ww3-gpu-at-a-glance-pt.png" alt="Duas cópias do WW3 vêm de fora, o WW3 puro da NOAA e o fork do dono; este" width="560" />
+
+`ww3-gpu-at-a-glance-pt` · [source](../../README.pt-BR.md) · [PDF](mermaid/ww3-gpu-at-a-glance-pt.pdf) · [report a mistake](https://github.com/h0ffmann/ww3-gpu/issues/new?title=Figure%20ww3-gpu-at-a-glance-pt%3A%20)
+
+
 ## [`course/13-bulk-porting-with-agents.md`](../../course/13-bulk-porting-with-agents.md)
 
 ### How is each translated version of a kernel checked against the one before it?
