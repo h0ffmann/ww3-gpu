@@ -6,7 +6,9 @@ before they are built, each tied to a deliverable the project proposal promised
 the process is the [`wfip` skill](../../.claude/skills/wfip/SKILL.md); `scripts/wfip.py` generates
 every table below from the WFIP files and CI fails when they are stale (`just wfip check`).
 
-Statuses: Draft → Accepted → Implemented (or Rejected / Superseded). A WFIP built in stages
+Statuses: Draft → Accepted → Implemented (or Rejected / Superseded). Postponed stops the work
+without rejecting it; the Status row names the date and the reason, and the WFIP returns to Draft
+when the reason no longer holds. A WFIP built in stages
 carries `Partially implemented (tasks a–b of N — #PR)` in its own Status row. The **DoD** column is
 the ticked share of the checklist in each WFIP's §7, so "Implemented" and "6/6" say the same
 thing from two sources.
@@ -36,9 +38,9 @@ The six specific objectives of the proposal and the schedule rows that deliver t
 <!-- wfip-index:start -->
 | WFIP | Title | Status | Created | Deliverable | Effort | Verdict | DoD |
 |---|---|---|---|---|---|---|---|
-| [WFIP-0001](WFIP-0001-weathernext3-wind-rtx4090.md) | WW3 samples driven by WeatherNext 3 wind on an RTX 4090 box | Draft | 2026-10-08 | D1, D6 | M | do next | 0/6 |
-| [WFIP-0002](WFIP-0002-lab-as-a-book.md) | The lab as a book: compiled from the repository, built in CI, released with each version | Draft | 2026-10-08 | D6 | L | do next, in slices | 0/7 |
-| [WFIP-0003](WFIP-0003-kokkos-regtest-matrix.md) | The Kokkos DIA through WW3's own regtest harness, on the h0ffmann/WW3 fork | Draft | 2026-10-14 | D4, D5 | M | do next | 7/7 |
+| [WFIP-0001](WFIP-0001-weathernext3-wind-rtx4090.md) | WW3 samples driven by WeatherNext 3 wind on an RTX 4090 box | Postponed (2026-10-15, ADR-0011) | 2026-10-08 | D1, D6 | M | do next | 0/6 |
+| [WFIP-0002](WFIP-0002-lab-as-a-book.md) | The lab as a book: compiled from the repository, built in CI, released with each version | Postponed (2026-10-15, ADR-0011) | 2026-10-08 | D6 | L | do next, in slices | 0/7 |
+| [WFIP-0003](WFIP-0003-kokkos-regtest-matrix.md) | The Kokkos DIA through WW3's own regtest harness, on the h0ffmann/WW3 fork | Postponed (2026-10-15, ADR-0011) | 2026-10-14 | D4, D5 | M | do next | 7/7 |
 <!-- wfip-index:end -->
 
 ## Coverage

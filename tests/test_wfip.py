@@ -1,4 +1,4 @@
-import importlib.util, pathlib, tempfile, unittest
+import importlib.util, pathlib, re, tempfile, unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 spec = importlib.util.spec_from_file_location("wfip", ROOT / "scripts" / "wfip.py")
@@ -44,7 +44,7 @@ class WfipTooling(unittest.TestCase):
     def test_implemented_needs_a_full_dod(self):
         p = self.new()
         p.write_text(p.read_text(encoding="utf-8").replace(
-            "| **Status** | Draft / Accepted / Implemented / Rejected / Superseded by WFIP-NNNN |",
+            "| **Status** | Draft / Accepted / Implemented / Rejected / Superseded by WFIP-NNNN / Postponed (date, reason) |",
             "| **Status** | Implemented (PR #1) |"), encoding="utf-8")
         errs = wfip.problems(wfip.load(self.dir), README)
         self.assertTrue(any("DoD 0/2" in e for e in errs), errs)
@@ -66,6 +66,14 @@ class WfipTooling(unittest.TestCase):
         g = wfip.render_graph(wfip.load(self.dir))
         self.assertIn("W0001 --> W0002", g)
         self.assertNotIn("Depends", g)
+
+    def test_postponed_is_its_own_status_class(self):
+        p = self.new()
+        text = re.sub(r"^\| \*\*Status\*\* \|.*$", "| **Status** | Postponed (2026-10-15, ADR-0011) |",
+                      p.read_text(encoding="utf-8"), count=1, flags=re.M)
+        p.write_text(text, encoding="utf-8")
+        w = wfip.load(self.dir)[1]
+        self.assertEqual(w.status_class(), "postponed")
 
     def test_status_names_created_and_revised(self):
         self.new()

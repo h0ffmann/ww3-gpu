@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Draft |
+| **Status** | Postponed (2026-10-15, ADR-0011) |
 | **Author** | M. Hoffmann (asked 2026-10-08 in the project thread: shift the repository, incrementally, into a compiled book on agentic coding and agentic research, in the tradition of Volpe's and Maguire's self-published books) |
 | **Created** | 2026-10-08 |
 | **Deliverable** | D6 |
@@ -13,6 +13,8 @@
 | **Depends on** | the publisher toolchain in `picasso/labs/publisher` (exists `(v)` [`flake.nix`](../../flake.nix)); a person's decision on the title, the prose licence and the distribution (§11) |
 | **Blocked by** | none |
 | **Risk** | the chapters drift from the code they describe: a `file:line` or a pasted listing that no longer exists; MIP-0014 §5.3 names this as the central risk of a book about a moving repository, and this repository already quotes `WW3/model/src/<file>.F90:<line>` by hand in dozens of places |
+
+> **Postponed on 2026-10-15.** [ADR-0011](../ADRs/ADR-0011-port-in-units-regtest-at-checkpoints.md) puts the port of ST4 first; the book builds already run in CI, and the rest of this WFIP waits. Returns to Draft after the ST4 checkpoint.
 
 ### Readiness
 
