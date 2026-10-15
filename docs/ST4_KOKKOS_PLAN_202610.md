@@ -8,9 +8,8 @@ answers; [ADR-0002](ADRs/ADR-0002-port-order-wall-time.md) sets its order,
 [ADR-0011](ADRs/ADR-0011-port-in-units-regtest-at-checkpoints.md) makes ST4 one unit with its
 regtests at a checkpoint after this plan.
 
-> **For agentic workers:** execute this plan task by task. Use
-> `superpowers:subagent-driven-development` for Tasks 3 to 6 and run the other tasks in the
-> main session. Steps use checkbox (`- [ ]`) syntax for tracking. Read `AGENTS.md`, the
+> **For agentic workers:** execute this plan task by task. Run Tasks 1, 3, 4, 5, 6 and 8 in
+> subagents as section 6 says, and the other tasks in the main session. Steps use checkbox (`- [ ]`) syntax for tracking. Read `AGENTS.md`, the
 > `ww3-port` skill and `.claude/commands/port-next.md` before Task 0.
 
 **Goal.** Translate the ST4 source-term package of WAVEWATCH III (`model/src/w3src4md.F90`) to
