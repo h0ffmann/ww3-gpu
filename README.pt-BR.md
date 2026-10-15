@@ -76,7 +76,10 @@ capítulos, as decisões, os desenhos, as notas, o DOI e as pessoas. Os capítul
 [`/book/`](https://h0ffmann.github.io/ww3-gpu/book/), ao lado do
 [PDF](https://h0ffmann.github.io/ww3-gpu/ww3-lab-course.pdf), da página de andamento (`/andamento/`)
 e das decisões (`/adrs/`). O visual está em [`DESIGN.md`](DESIGN.md): um mar à noite, com três
-luzes.
+luzes. A mesma página sai em português em [`/pt-BR/`](https://h0ffmann.github.io/ww3-gpu/pt-BR/),
+de uma fonte só e de uma tabela de traduções,
+[`site/data/translations/pt-BR.tsv`](site/data/translations/pt-BR.tsv): o build falha quando uma
+frase fica sem tradução.
 
 ```console
 just site          # os capítulos, depois a página inicial, em build/site/

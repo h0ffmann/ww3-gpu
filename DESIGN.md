@@ -68,6 +68,20 @@ from `course/`, the decisions from `docs/ADRs/`, the designs from `docs/WFIPs/`,
 `site/data/related.tsv`, with its source. Never type a title, a status, a date, a count or a DOI
 into `site/src`.
 
+## Two languages
+
+The page is written once, in English, and built twice: at `/` in English and at `/pt-BR/` in
+Brazilian Portuguese, as h0ffmann/h0ffmann does since its PR #86. Each sentence of `site/src` goes
+through `t(l, "…")`, and its Portuguese is a row of `site/data/translations/pt-BR.tsv`, keyed by
+the English sentence itself: source, translation, status (`draft` until a native reader reads it,
+then `reviewed`; an agent never writes `reviewed`), and a note when the translation is not the
+literal one. `site/content` stops the build when a sentence has no row, or a row no sentence, so a
+translation never stays beside a sentence it no longer translates. The words come from
+`README.pt-BR.md` first, and `humanizar` is the filter. A fact read from a file (a chapter's title,
+an ADR's decision, a status) keeps its own language. Each page links to the other, named in that
+other language: "português" and "english". The language is the address, so the page still loads
+no JavaScript.
+
 ## Logos and pictures
 
 No logo is stored as a file, and none is drawn. The favicon is an original drawing of two waves.
