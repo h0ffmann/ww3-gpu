@@ -16,6 +16,7 @@ target_sources(ww_kokkos PRIVATE
     fixture_io.cpp
     st4_params.hpp
     st4_arrays.hpp
+    st4_libmvec.hpp
     st4_calc_ustar.hpp
     st4_spr4.hpp
     st4_sin4.hpp
@@ -41,4 +42,10 @@ target_compile_options(ww_kokkos PRIVATE
 # *host* half of the compile only; the device half needs nvcc's own switch.
 if(Kokkos_ENABLE_CUDA)
   target_compile_options(ww_kokkos PRIVATE $<$<COMPILE_LANGUAGE:CXX>:--fmad=false>)
+endif()
+
+# ST4 calls glibc's libmvec where gfortran -O3 does (st4_libmvec.hpp), so the
+# host port computes the Fortran's bits at those five loops.
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64")
+  target_link_libraries(ww_kokkos PUBLIC mvec)
 endif()
