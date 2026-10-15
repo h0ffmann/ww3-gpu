@@ -260,6 +260,24 @@ and link-checks the Markdown. It does not build WW3, which needs the NOAA FTP da
 - A commit carries a `Tested:` trailer and no cost record
   ([ADR-0009](docs/ADRs/ADR-0009-ww3-gpu-adopts-ai-memory-from-fabio-akita.md)).
 
+## ponytail, off by default
+
+[ponytail](https://github.com/DietrichGebert/ponytail) is a Claude Code plugin (MIT) whose rules
+push an agent towards the smallest change that works. It is enabled here, pinned to `v5.2.0`, and
+**off** by default (`PONYTAIL_DEFAULT_MODE=off` in [`.claude/settings.json`](.claude/settings.json)):
+its rules cover a whole session and cannot be limited to some files or languages, and they pull
+against "Translate, don't improve", the rule of the ported kernels ([`AGENTS.md`](AGENTS.md)).
+
+- Turn it on for one session when you work on C++ around the port (tests, the benchmark harness,
+  CMake): `/ponytail` (or `/ponytail lite`, `/ponytail ultra`). Turn it off with `/ponytail off`
+  or "stop ponytail".
+- In `kokkos/src/` a ported routine reproduces the Fortran's arithmetic. ponytail's "the smallest
+  change" never licenses a refactor, a vectorisation or a simplification there.
+- Its codebase map is off (`PONYTAIL_MAP=0`). It lists Python and JS files only, never C++, CUDA,
+  Fortran or Markdown, so here it would point at the tooling instead of the code.
+- One-shot commands work in any mode: `/ponytail:ponytail-review` (a change),
+  `/ponytail:ponytail-audit` (the repository), `/ponytail:ponytail-debt`, `/ponytail:ponytail-help`.
+
 ## related authors
 
 - **Guimarães P.V.** ([ORCID 0000-0002-1686-4722](https://orcid.org/0000-0002-1686-4722)),

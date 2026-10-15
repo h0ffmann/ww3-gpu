@@ -211,6 +211,24 @@ página inicial em Gleam) e `pubs/` (o livro e a proposta).
 - Um commit traz o trailer `Tested:` e nenhum registro de custo
   ([ADR-0009](docs/ADRs/ADR-0009-ww3-gpu-adopts-ai-memory-from-fabio-akita.md)).
 
+## ponytail, desligado por padrão
+
+O [ponytail](https://github.com/DietrichGebert/ponytail) é um plugin do Claude Code (MIT) cujas
+regras levam o agente à menor mudança que funciona. Ele está habilitado aqui, fixado em `v5.2.0`, e
+**desligado** por padrão (`PONYTAIL_DEFAULT_MODE=off` no [`.claude/settings.json`](.claude/settings.json)):
+as regras valem para a sessão inteira, não podem ser limitadas a alguns arquivos ou linguagens, e
+puxam contra "traduzir, não melhorar", a regra dos kernels portados ([`AGENTS.md`](AGENTS.md)).
+
+- Ligue para uma sessão quando for trabalhar em C++ ao redor do porte (testes, o harness de
+  benchmark, CMake): `/ponytail` (ou `/ponytail lite`, `/ponytail ultra`). Desligue com
+  `/ponytail off` ou "stop ponytail".
+- Em `kokkos/src/` uma rotina portada reproduz a aritmética do Fortran. O "menor mudança" do
+  ponytail nunca autoriza ali uma refatoração, uma vetorização ou uma simplificação.
+- O mapa do código dele está desligado (`PONYTAIL_MAP=0`). Ele lista só arquivos Python e JS, nunca
+  C++, CUDA, Fortran ou Markdown, então aqui apontaria para as ferramentas em vez do código.
+- Os comandos avulsos funcionam em qualquer modo: `/ponytail:ponytail-review` (uma mudança),
+  `/ponytail:ponytail-audit` (o repositório), `/ponytail:ponytail-debt`, `/ponytail:ponytail-help`.
+
 ## autores relacionados
 
 - **Guimarães P.V.** ([ORCID 0000-0002-1686-4722](https://orcid.org/0000-0002-1686-4722)),

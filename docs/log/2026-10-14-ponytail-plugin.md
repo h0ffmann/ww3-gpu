@@ -70,3 +70,15 @@ trigger on the same request; to look at after a restart.
   run gave 3534; ⚠ why the count moved by 2 was not checked).
 - AGENTS.md now says the mode is on and that its rules give way to this repository's, the porting
   rules first.
+
+## Update, 2026-10-14, off again
+
+- The owner asked whether ponytail could apply only to source files, not to notes or non-C++
+  code. It cannot: its rules are injected once per session, and its only settings are the mode,
+  `PONYTAIL_MAP`, `PONYTAIL_MAP_CHARS` and `PONYTAIL_SUBAGENT_MATCHER`, a regex on the subagent
+  type, not on a file (v) (`hooks/ponytail-config.js`, `ponytail-activate.js:65`,
+  `ponytail-subagent.js:35` at 5.2.0). Its codebase map takes `.py`, `.js`, `.ts`, `.go`, `.rs`,
+  `.rb`, `.java`, `.kt`, `.php`, `.swift`, `.cs` only (v) (`hooks/ponytail-map.js:17`); run on this
+  repository it listed `.claude/hooks/`, `scripts/` and `site/content/src/`, and no C++.
+- The owner chose: off by default, turned on per session with `/ponytail`, and the guide in
+  README.md. `.claude/settings.json` now sets `PONYTAIL_DEFAULT_MODE=off` and `PONYTAIL_MAP=0`.
