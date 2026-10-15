@@ -450,6 +450,8 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | `ww_kokkos_init` / `ww_kokkos_finalize` / `ww_snl1_init` / `ww_snl1` / `ww_snl1_enabled` / `ww_snl1_last_error` | the six C entry points: start the runtime (idempotent) / release buffers / build tables once per grid / run `W3SNL1` for `npts` points / report the env switch / status of the last call `(v)` [kokkos/src/fortran_iface/ww_kokkos_c.hpp](../kokkos/src/fortran_iface/ww_kokkos_c.hpp) | `ww_snl1` is `void` because a Fortran `CALL` cannot read a return value. | [course/12-porting-a-kernel-w3snl1.md](../course/12-porting-a-kernel-w3snl1.md) |
 | `WW_KOKKOS_OK` … `WW_KOKKOS_ERR_RUNTIME` | the `WwKokkosStatus` codes 0–4: ok / not initialised / bad shape / kernel threw / Kokkos failed `(v)` [kokkos/src/fortran_iface/ww_kokkos_c.hpp](../kokkos/src/fortran_iface/ww_kokkos_c.hpp) | What `ww_snl1_last_error()` returns. | [kokkos/README.md](../kokkos/README.md) |
 | `WW_KOKKOS_SNL1` | environment variable, `=1` makes `ww_snl1_enabled()` return 1 so the patched `W3SRCE` calls the port `(v)` [kokkos/README.md](../kokkos/README.md) | The runtime switch; `L2_replay.sh` flips it between the two runs. | [course/12-porting-a-kernel-w3snl1.md](../course/12-porting-a-kernel-w3snl1.md) |
+| `WW_KOKKOS_SDS4` / `WW_KOKKOS_SIN4` / `WW_KOKKOS_SPR4` / `WW_KOKKOS_ST4_TABLES` / `WW_KOKKOS_ST4_COUNT` (proposed) | environment variables of the ST4 port, read once at `ww_kokkos_init`, all default 0 or unset `(v)` [docs/ST4_KOKKOS_PLAN_202610.md](ST4_KOKKOS_PLAN_202610.md) §4.3 | One flag per routine (`W3SDS4`, `W3SIN4`, `W3SPR4` with `CALC_USTAR`), so the regtests can switch on one routine at a time; `WW_KOKKOS_ST4_TABLES=1` builds the ST4 tables in C++ instead of copying them from the Fortran; `WW_KOKKOS_ST4_COUNT` prints the spectra each routine computed. Not implemented yet. | [docs/ST4_KOKKOS_PLAN_202610.md](ST4_KOKKOS_PLAN_202610.md) |
+| `RPAR` / `IPAR` (proposed) | real and integer parameter arrays `(v)` [docs/ST4_KOKKOS_PLAN_202610.md](ST4_KOKKOS_PLAN_202610.md) §4.2 | The ST4 scalars of WW3's `SRCP` derived type, packed by the Fortran into a `REAL(C_FLOAT)` and an `INTEGER(C_INT)` array, because no derived type crosses the `bind(C)` boundary; each index is a named constant on both sides. Not implemented yet. | [docs/ST4_KOKKOS_PLAN_202610.md](ST4_KOKKOS_PLAN_202610.md) |
 | `WW_KOKKOS_DEVICE_ID` | environment variable selecting the GPU (default 0), read instead of `MPI_Comm_rank()` because phase 1 links no MPI `(v)` [kokkos/README.md](../kokkos/README.md) | Set per rank by the launcher in an MPI job. | [kokkos/src/fortran_iface/ww_kokkos_c.hpp](../kokkos/src/fortran_iface/ww_kokkos_c.hpp) |
 | `WW_DETERMINISTIC` | CMake option: "force serial reductions for bit-reproducible validation builds" `(v)` [kokkos/CMakeLists.txt](../kokkos/CMakeLists.txt) | On in `serial-debug`; changes nothing for the DIA, which has no reduction. | [course/11-kokkos-and-modern-cpp.md](../course/11-kokkos-and-modern-cpp.md) |
 | `WW_ENABLE_FORTRAN` / `WW_WW3_BUILD_DIR` | build the Fortran module, reference and drivers (default ON) / a configured WW3 build (`libww3.a` + `mod/`) that enables the `ww3_lib` cross-check `(v)` [kokkos/README.md](../kokkos/README.md) | The second is what `just l1-crosscheck` sets. | [kokkos/README.md](../kokkos/README.md) |
@@ -1070,6 +1072,7 @@ Every term above, alphabetically, with the section it lives in.
 - regtests/: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - `regtests/` / `just ww3-gpu-matrix` (this repository's driver): [This repository's own names](#this-repositorys-own-names)
 - regtests/unittests: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- `RPAR` / `IPAR`: [This repository's own names](#this-repositorys-own-names)
 - ReNOMO: [Models, projects and institutions](#models-projects-and-institutions)
 - restart.ww3: [WW3 programs and files](#ww3-programs-and-files)
 - rompy: [HPC and software](#hpc-and-software)
@@ -1473,6 +1476,7 @@ Every term above, alphabetically, with the section it lives in.
 - `ww_kokkos_init` / `ww_kokkos_finalize` / `ww_snl1_init` / `ww_snl1` / `ww_snl1_enabled` / `ww_snl1_last_error`: [This repository's own names](#this-repositorys-own-names)
 - `WW_KOKKOS_OK`: [This repository's own names](#this-repositorys-own-names)
 - `WW_KOKKOS_OK` … `WW_KOKKOS_ERR_RUNTIME`: [This repository's own names](#this-repositorys-own-names)
+- `WW_KOKKOS_SDS4` / `WW_KOKKOS_SIN4` / `WW_KOKKOS_SPR4` / `WW_KOKKOS_ST4_TABLES` / `WW_KOKKOS_ST4_COUNT`: [This repository's own names](#this-repositorys-own-names)
 - `WW_KOKKOS_SNL1`: [This repository's own names](#this-repositorys-own-names)
 - `ww_snl1`: [This repository's own names](#this-repositorys-own-names)
 - `ww_snl1_enabled`: [This repository's own names](#this-repositorys-own-names)

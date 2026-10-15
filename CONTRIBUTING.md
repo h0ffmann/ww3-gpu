@@ -122,7 +122,9 @@ A mistake in a figure is as welcome as one in the text: the gallery links an iss
   (ADR-0010), or the `l1: passed` of a record made before 2026-10-14.
 - The Kokkos port has no tests of its own (ADR-0010): no L1 test, GoogleTest or fixture of a ported
   routine. Its tests are WW3's regtests, `just smoke-ww3-gpu`, `just full-ww3-gpu` and `just ww3-gpu-matrix`,
-  on the CPU. `just ww3-gpu-matrix` is a CMake/CTest driver in `regtests/` (WFIP-0003), the one set of
+  on the CPU. They run at checkpoints, not after each routine: a port moves in units such as all
+  of ST4, and between checkpoints bit parity is argued from the `-O3` GIMPLE of the Fortran and
+  the C++ (ADR-0011). `just ww3-gpu-matrix` is a CMake/CTest driver in `regtests/` (WFIP-0003), the one set of
   recipes that does not wrap a script in `scripts/`: one CTest test per `matrix.base` entry, each
   WW3's own regtest run with the Fortran routine and with the Kokkos routine; CTest is the runner,
   not a test of the port's own. A change to `regtests/` runs `just ww3-gpu-matrix-selftest` and
