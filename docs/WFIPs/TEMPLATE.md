@@ -30,7 +30,7 @@ the appendix. Every external fact carries `(v)` with the URL and date, or `⚠`.
 
 | | |
 |---|---|
-| **Status** | Draft / Accepted / Implemented / Rejected / Superseded by WFIP-NNNN |
+| **Status** | Draft / Accepted / Implemented / Rejected / Superseded by WFIP-NNNN / Postponed (date, reason) |
 | **Author** | <the person who asked for it and owns it> |
 | **Created** | YYYY-MM-DD |
 | **Deliverable** | `D1`..`D6` from `README.md`, comma-separated, or `none: <why>` (read by `wfip.py`) |

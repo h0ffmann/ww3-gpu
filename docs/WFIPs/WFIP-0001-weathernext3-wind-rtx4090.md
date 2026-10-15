@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Draft |
+| **Status** | Postponed (2026-10-15, ADR-0011) |
 | **Author** | M. Hoffmann (asked 2026-10-08 in the project thread; "WF-001") |
 | **Created** | 2026-10-08 |
 | **Deliverable** | D1, D6 |
@@ -13,6 +13,8 @@
 | **Depends on** | access to WeatherNext 3 data (form, 5–7 working days `(v)` plan §5); GEBCO and GFS downloads of example 02; a working CUDA driver on the box; nothing from other WFIPs |
 | **Blocked by** | none |
 | **Risk** | the access form is refused or the Zarr v3 store cannot be read without Python, which the lab rule forbids in `examples/`; then the conversion runs outside the repo and only the NetCDF enters, as a documented step |
+
+> **Postponed on 2026-10-15.** [ADR-0011](../ADRs/ADR-0011-port-in-units-regtest-at-checkpoints.md) puts the port of ST4 first; WeatherNext 3 wind is not port work. Returns to Draft after the ST4 checkpoint.
 
 ### Readiness
 

@@ -34,7 +34,7 @@ SECTIONS = ["## 1. Summary", "## 2. Motivation", "## 3. What changes for the rea
             "## 6. Parity and physics impact", "## 7. Verification plan and definition of done",
             "## 8. Risks, limitations, and honest caveats", "## 9. Alternatives considered",
             "## 11. Open questions", "### Readiness"]
-STATUS_CLASS = ["implemented", "accepted", "rejected", "superseded", "draft"]
+STATUS_CLASS = ["implemented", "accepted", "rejected", "superseded", "postponed", "draft"]
 
 
 class Wfip:
@@ -126,7 +126,7 @@ def render_graph(wfips):
     out += [f"  W{a:04d} --> W{b:04d}" for a, b in edges]
     out += ["  classDef draft stroke-dasharray:3 3;", "  classDef implemented stroke-width:3px;",
             "  classDef accepted stroke-width:2px;", "  classDef rejected color:#999;",
-            "  classDef superseded color:#999;", "```"]
+            "  classDef superseded color:#999;", "  classDef postponed color:#999,stroke-dasharray:3 3;", "```"]
     return "\n".join(out)
 
 
