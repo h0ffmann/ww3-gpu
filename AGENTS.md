@@ -286,6 +286,17 @@ re-points at this repository's homes, is the `.claude/skills/<name>.patch` the l
 re-applied on every update. **Edit the patch, not the copy.** `.github/workflows/skills.yml` opens a weekly update PR
 with marola-devkit's `skills-vendor`; `skills-vendor update <name>` does it by hand.
 
+ponytail is also enabled as a Claude Code plugin (`ponytail@ponytail`, `.claude/settings.json`,
+pinned to `v5.2.0`) for its commands (`/ponytail:ponytail-debt`, `-gain`, `-help`) and the
+statusline. `PONYTAIL_DEFAULT_MODE=full` in the same file switches its mode on in every session,
+at the owner's request in the review of #112 (14 October 2026); its SessionStart hook then injects
+its rules (v) (3536 characters with `full` and with `on`, nothing with `off`;
+`docs/log/2026-10-14-ponytail-plugin.md`). Those rules are a default, not a hard rule: where they
+meet this file, this file wins. In particular, "the smallest change" never licenses a refactor,
+a vectorisation or a "simplification" of a ported routine ("Translate, don't improve"), and
+"stop ponytail" or `/ponytail off` turns it off for a session. The vendored skills above stay the
+ones that carry this repository's audience paragraph.
+
 ## Messages between Claude projects
 
 Hoffmann's two Claude projects, Marola Agent and Wave Forecaster Agent, cannot reach each other

@@ -1,4 +1,7 @@
 {
+  "env": {
+    "PONYTAIL_DEFAULT_MODE": "full"
+  },
   "hooks": {
     "PostToolUse": [
       {
@@ -44,7 +47,8 @@
     ]
   },
   "enabledPlugins": {
-    "ai-memory@ai-memory": true
+    "ai-memory@ai-memory": true,
+    "ponytail@ponytail": true
   },
   "extraKnownMarketplaces": {
     "ai-memory": {
@@ -52,6 +56,13 @@
         "source": "github",
         "repo": "akitaonrails/ai-memory",
         "ref": "v3.0.0"
+      }
+    },
+    "ponytail": {
+      "source": {
+        "source": "github",
+        "repo": "DietrichGebert/ponytail",
+        "ref": "v5.2.0"
       }
     }
   }
