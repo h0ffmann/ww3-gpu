@@ -14,7 +14,8 @@
 # SPDX-License-Identifier: MIT
 target_sources(ww_kokkos PRIVATE
     ww_kokkos_c.hpp
-    snl1_shim.cpp)
+    snl1_shim.cpp
+    st4_shim.cpp)
 
 set(WW_W3KOKKOSMD "${CMAKE_CURRENT_SOURCE_DIR}/../../../WW3/model/src/w3kokkosmd.F90"
     CACHE FILEPATH "WW3's w3kokkosmd.F90 (the WW3/ submodule, branch hoff/kokkos-snl1)")

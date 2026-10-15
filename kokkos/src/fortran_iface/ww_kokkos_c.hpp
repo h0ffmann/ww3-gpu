@@ -44,7 +44,9 @@ enum WwKokkosStatus {
   WW_KOKKOS_ERR_NOT_INITIALISED = 1, ///< ww_kokkos_init/ww_snl1_init not done, or undone
   WW_KOKKOS_ERR_BAD_SHAPE = 2,       ///< negative extent, null pointer, nspec != nk*nth
   WW_KOKKOS_ERR_KERNEL = 3,          ///< the kernel threw (e.g. team scratch exhausted)
-  WW_KOKKOS_ERR_RUNTIME = 4          ///< Kokkos itself failed to start or allocate
+  WW_KOKKOS_ERR_RUNTIME = 4,         ///< Kokkos itself failed to start or allocate
+  WW_KOKKOS_ERR_UNSUPPORTED = 5,     ///< a switch the port does not support (W3_FLX5 with ST4)
+  WW_KOKKOS_ERR_TABLE = 6            ///< an ST4 array missing, or of another rank, LBOUND or shape
 };
 
 /// Start the Kokkos runtime, if nobody else has. Returns WW_KOKKOS_OK or
@@ -129,5 +131,75 @@ int ww_snl1_enabled(void);
 /// behaviour whatever this returns. With a single caller -- the contract of
 /// phase 1 -- a non-zero code identifies the call that just failed.
 int ww_snl1_last_error(void);
+
+// ---------------------------------------------------------------------------
+// ST4 (w3src4md.F90 at WW3@bb08623a): W3SDS4, W3SIN4, W3SPR4 with CALC_USTAR,
+// and INSIN4 with the TABU_* tables. st4_shim.cpp implements it.
+//
+// A grid is configured in three steps, after W3IOGR has read mod_def.ww3:
+// ww_st4_init() with the scalars, one ww_st4_set_real/int() per array of
+// ww_kokkos/st4_arrays.hpp (its ArrayId, rank, LBOUND and SHAPE as the Fortran
+// has them), then ww_st4_commit(), which checks every array the configuration
+// needs and copies them to the device. TAUT, TAUHFT, TAUHFT2, FWTABLE and the
+// DEL* scalars are module variables in the Fortran: the shim keeps one copy per
+// process, and the last grid to register them wins, as in the Fortran.
+//
+// The compute entry points take `npts` points; every per-point scalar is an
+// array of npts (a Fortran scalar actual argument is an array of 1). Every OUT
+// argument is copied in as well as out, because the Fortran leaves some of them
+// unassigned on some paths (WHITECAP after the early return at :2581). LOGICAL
+// LLWS crosses as int 0/1. Like ww_snl1(), they are void, not thread-safe, and
+// report through ww_st4_last_error().
+
+/// Start (or restart) the configuration of grid `igrid` (W3INIT's IMOD).
+/// `rpar`/`ipar` are packed at the indices of st4_params.hpp; `nrpar`/`nipar`
+/// must equal NRPAR/NIPAR. Returns WW_KOKKOS_OK, NOT_INITIALISED, BAD_SHAPE, or
+/// UNSUPPORTED when ipar[I_FLX5] is set.
+int ww_st4_init(int igrid, const float* rpar, int nrpar, const int* ipar, int nipar);
+
+/// Register one REAL (or INTEGER) array of grid `igrid` under ArrayId `id`,
+/// copied, not borrowed. `lbound` and `extent` have `rank` entries each, as
+/// LBOUND() and SHAPE() give them. Returns WW_KOKKOS_OK, NOT_INITIALISED or TABLE.
+int ww_st4_set_real(int igrid, int id, const float* data, int rank, const int* lbound,
+                    const int* extent);
+int ww_st4_set_int(int igrid, int id, const int* data, int rank, const int* lbound,
+                   const int* extent);
+
+/// Check grid `igrid`'s arrays against its scalars and copy them to the device.
+/// With WW_KOKKOS_ST4_TABLES=1 the tables are rebuilt by the C++ INSIN4 and
+/// TABU_* first, and one line on stderr says how many values differ from the
+/// Fortran's. Returns WW_KOKKOS_OK, NOT_INITIALISED, TABLE or RUNTIME.
+int ww_st4_commit(int igrid);
+
+/// W3SDS4. a, srhs, ddiag, brlambda (nspec, npts); k, cg (nk, npts);
+/// whitecap (4, npts); ustar, usdir, depth, dair, dlwmean (npts).
+/// flogrd57, flogrd58: FLOGRD(5,7), FLOGRD(5,8) as 0/1.
+void ww_sds4(int igrid, int npts, const float* a, const float* k, const float* cg,
+             const float* ustar, const float* usdir, const float* depth, const float* dair,
+             const float* dlwmean, int flogrd57, int flogrd58, float* srhs, float* ddiag,
+             float* brlambda, float* whitecap);
+
+/// W3SIN4, argument order of the call at w3srcemd.F90:1250. a, k, s, d, llws
+/// (nspec, npts); cg (nk, npts); the scalars (npts).
+void ww_sin4(int igrid, int npts, const float* a, const float* cg, const float* k,
+             const float* u, const float* ustar, const float* drat, const float* as,
+             const float* usdir, const float* z0, const float* cd, float* tauwx, float* tauwy,
+             float* tauwnx, float* tauwny, float* s, float* d, int* llws);
+
+/// W3SPR4 (and CALC_USTAR, which it calls). a, llws (nspec, npts); cg, wn
+/// (nk, npts); ustar, usdir INOUT; the other scalars (npts).
+void ww_spr4(int igrid, int npts, const float* a, const float* cg, const float* wn,
+             const float* u, const float* udir, const float* tauwx, const float* tauwy,
+             const int* llws, float* ustar, float* usdir, float* emean, float* fmean,
+             float* fmean1, float* wnmean, float* amax, float* cd, float* z0, float* charn,
+             float* fmeanws, float* dlwmean);
+
+/// 1 if the run-time flag is "1" in the environment, else 0: which = 1
+/// WW_KOKKOS_SDS4, 2 WW_KOKKOS_SIN4, 3 WW_KOKKOS_SPR4, 4 WW_KOKKOS_ST4_TABLES.
+/// Every flag defaults to 0, so the Fortran runs unless a person asks otherwise.
+int ww_st4_enabled(int which);
+
+/// The status of the most recent ww_st4_* or ww_sds4/sin4/spr4 call.
+int ww_st4_last_error(void);
 
 }  // extern "C"
