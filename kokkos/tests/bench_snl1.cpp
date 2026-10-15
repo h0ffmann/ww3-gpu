@@ -11,13 +11,14 @@
 //          backend the two are nearly the same; on CUDA the gap between them *is*
 //          the phase-1 transfer cost, which is the argument for phase 2.
 //
-// The spectrum is the fixture's three sea points tiled to 1 000, so the arithmetic
-// is the same work the parity tests validate rather than a synthetic load.
+// The spectrum is the fixture's three sea points tiled to 1 000, a captured WW3
+// sea state rather than a synthetic load (the parity tests that also read it were
+// removed on 2026-10-14; the fixture stays as this benchmark's frozen input).
 //
 // Timing caveat: ww_kokkos is built with -ffp-contract=off (and --fmad=false on
 // CUDA) to hold bit parity with the Fortran. These numbers are therefore the cost
 // of the *parity* build; an FMA-fused build would be faster and would not match
-// the fixture. See kokkos/README.md.
+// the Fortran bit for bit. See kokkos/README.md.
 //
 // SPDX-License-Identifier: MIT
 

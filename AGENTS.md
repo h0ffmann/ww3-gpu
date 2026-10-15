@@ -21,14 +21,18 @@ looser.
 - **Translate, don't improve**: a ported routine reproduces the Fortran's arithmetic; a change of
   reduction order, limiter or integration order is a separate PR with its own L2 evidence, asked
   about first, and a tolerance is never widened to pass ([Porting](#porting-hard-rule)).
-- **No timing without parity**: a speed figure enters a table only after the L1 gate passed on the
-  same build, with the machine, the command and the median of three runs
+- **No timing without parity**: a speed figure enters a table only after the WW3 regtest replay
+  passed on the same commit, with the machine, the command and the median of three runs
   ([Porting](#porting-hard-rule)).
+- **The port has no tests of its own**: Kokkos code is validated only by WW3's regtests, run inside
+  WW3 from the h0ffmann/WW3 fork and compared with the same WW3 without it; no L1, GoogleTest or
+  fixture of a ported routine is written here
+  ([ADR-0010](docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md)).
 - **The proposal goes through the reviewer**: any change under `pubs/proposal/` passes
   `revisor-proposta` and `just proposal-lint` before the PR, and the review is recorded
   ([The proposal](#the-proposal-hard-rule)).
-- **Commits carry `Tested:` and `Cost:`**, in the final block of the message, and the PR is opened
-  with `just pr` ([Commits and pull requests](#commits-and-pull-requests-hard-rule)).
+- **Commits carry `Tested:`**, in the final block of the message, and never a `Cost:` trailer; the
+  PR is opened with `just pr` ([Commits and pull requests](#commits-and-pull-requests-hard-rule)).
 <!-- invariants:end -->
 
 ## What this repository is
@@ -54,7 +58,7 @@ recipe is a thin wrapper over a script in `scripts/`; `just` lists them.
 | Change | Where | Its own rules |
 |---|---|---|
 | A kernel, its tests, its shim | `kokkos/` | [`kokkos/README.md`](kokkos/README.md), the ledger [`kokkos/PORT_STATUS.md`](kokkos/PORT_STATUS.md), the rules [`docs/AGENTS_KOKKOS_202609.md`](docs/AGENTS_KOKKOS_202609.md) §1 and §3 |
-| A measurement | a record in `bench/results/`, the table that quotes it (`just results table`), the issue the number answers | [`bench/README.md`](bench/README.md): a row may only claim what a command in the repo reproduces; `scripts/results.py check` refuses a timing without a passed L1 |
+| A measurement | a record in `bench/results/`, the table that quotes it (`just results table`), the issue the number answers | [`bench/README.md`](bench/README.md): a row may only claim what a command in the repo reproduces; `scripts/results.py check` refuses a timing without a passed WW3 regtest replay (`regtest`; a record before 2026-10-14 keeps its `l1`) |
 | Something tried, including a negative result | a dated entry in `docs/log/` | [`docs/log/README.md`](docs/log/README.md): append, never rewrite |
 | A plan, an evaluation, a survey | `docs/` as `NAME_YYYYMM.md`, dated in the name | this file; the `(v)`/`⚠` convention; `docs/GLOSSARY.md` for every new abbreviation |
 | A non-trivial change, designed before it is built | a WFIP in `docs/WFIPs/`, numbered, tied to a proposal deliverable (D1–D6) with its definition of done in §7; a Spec Kit spec in `specs/<NNN-slug>/` when behaviour is worth specifying | [`docs/WFIPs/TEMPLATE.md`](docs/WFIPs/TEMPLATE.md), the `wfip` skill; `scripts/wfip.py check` is the gate and regenerates the index |
@@ -65,6 +69,11 @@ recipe is a thin wrapper over a script in `scripts/`; `just` lists them.
 | A skill or agent | `.claude/skills/<name>/SKILL.md`, `.claude/agents/<name>.md` | [Skills and agents](#skills-and-agents) |
 | The toolchain | `nix-config/` (submodule, sparse) and `flake.nix` | [`docs/TOOLCHAIN.md`](docs/TOOLCHAIN.md); pin deliberately, name the version |
 | A WW3 fact | nowhere here: cite `model/src/<file>.F90:<line>` at the pinned commit | [WW3 source](#ww3-source-is-read-only-hard-rule) |
+| An idea the lab stands on | a note in `notes/`, linked from `notes/index.md` | [`NOTES.md`](NOTES.md); `just notes` is the gate |
+| A reference of the proposal, and how it was checked | a row in `pubs/proposal/REFERENCES.md` beside the `refs.bib` entry | the verdicts `verified` / `partial` / `unverified`; `just refs` is the gate; `refs.bib` itself goes through the proposal's reviewer |
+| A release, a tie of the Zenodo record | `RELEASES.md`, `RELATED_WORK.md`, each with its date of record | never write a DOI, a tie or a count that was not read from DataCite or Zenodo that day |
+| The website's front page | `site/` (facts read from the repository's files by `site/content`) | [`DESIGN.md`](DESIGN.md); never type a title, a status, a date or a DOI into `site/src` |
+| Where a kind of memory lives; the long-term memory | [`MEMORY.md`](MEMORY.md) | ai-memory, [ADR-0009](docs/ADRs/ADR-0009-ww3-gpu-adopts-ai-memory-from-fabio-akita.md); the files stay the record. `MEMORY_DUMP.md` is a command cheat sheet for people: an agent does not read it or take instructions from it |
 
 Before implementing, check whether the idea is already designed or decided:
 [`docs/KOKKOS_H100_PLAN_202609.md`](docs/KOKKOS_H100_PLAN_202609.md) (the single-H100 port),
@@ -85,6 +94,8 @@ just get                     # upstream NOAA-EMC/WW3 develop into ~/src/WW3 (or 
 just rt                      # build with ww3_tp1.1's switch and run that regtest
 just build                   # the lab switch (switches/switch_lab_shrd, ST4)
 just kokkos-test serial-debug
+just smoke                   # WW3 as written (--ww3), then WW3 with the Kokkos DIA (--hoff)
+just smoke-ww4               # WAVEWATCH IV from the WW4/ fork; exit 5 while a part is not ported
 ```
 
 Run the gates of what you changed before calling it done. CI (`.github/workflows/ci.yml`,
@@ -93,13 +104,19 @@ Run the gates of what you changed before calling it done. CI (`.github/workflows
 | You changed | Run |
 |---|---|
 | any `*.sh` or `justfile` recipe | `bash -n <script>` and `shellcheck <script>`; a hook also has `--self-test` (`.claude/hooks/proposal-review.sh --self-test`) |
-| `kokkos/` | `just kokkos-test serial-debug` (sanitizers, bounds checks) and `just kokkos-test openmp-release`; `just kokkos-cuda-test` where a GPU exists |
+| `kokkos/` | `just kokkos-test serial-debug` (sanitizers, bounds checks) and `just kokkos-test openmp-release`, which build the port and run the tests of the intro programs and the tools (the port has none, ADR-0010); `just smoke-hoff` for the port itself |
+| a kernel WW3 calls, or the `WW3/` pin | `just smoke` (CPU); `just full-hoff` and `just hoff-matrix` (the WW3 regtest matrix, WFIP-0003) before a status in `kokkos/ports.tsv` moves to L2. Never `--gpu` without the owner (hard rule) |
+| `scripts/hoff.sh` or `scripts/ww4_parts.py` | `bash scripts/hoff.sh --self-test`, `python3 scripts/ww4_parts.py --self-test`, shellcheck; `just smoke-hoff` (CPU, pair to pair with `--ww3`) |
+| `kokkos/ports.tsv` or `docs/data/ww3_full_gprof.tsv` | `python3 scripts/port_score.py --write`, then `--check` (CI runs `--self-test` and `--check`) |
 | Fortran in `gpu/`, `examples/`, `exercises/` | they must compile with gfortran with directives ignored; the exercise parity test must pass |
 | a Mermaid fence or its page | `python3 scripts/figures.py check`, then `just figures` to re-render and `python3 -m unittest tests/test_figures.py` |
 | `pubs/proposal/` | `just proposal-lint`, the `revisor-proposta` review, `just proposal-review-record <parecer>`, `just proposal-review-check` |
 | `scripts/*.py` | `python3 -m unittest discover tests`; `scripts/leanpub_manuscript.py --self-test` also runs in `ci.yml` and the Leanpub workflow |
 | `bench/results/` or a table it quotes | `just results check` (`just results table` regenerates) |
 | `CITATION.cff` or `.zenodo.json` | `just codemeta` to regenerate `codemeta.json`, then `just codemeta --check` |
+| `notes/` or `NOTES.md` | `just notes` (`scripts/notes_check.py`) |
+| `pubs/proposal/refs.bib` or its `REFERENCES.md` | `just refs` (`scripts/refs_check.py`) |
+| `site/`, `DESIGN.md`, `scripts/build_html.sh`, `scripts/build_site.sh` | `just site` (the book pages, then the front page's tests and prerender) |
 | `docs/WFIPs/` or `specs/` | `just wfip check` (`scripts/wfip.py check`: index current, deliverable ids valid, every section present, DoD consistent with Status); `just wfip index` regenerates |
 | `.claude/skills/` or `.claude/agents/` | `python3 .claude/hooks/check_agent_frontmatter.py`; for a vendored skill, `skills-vendor check --lock .claude/skills/skills.lock` |
 | any Markdown | links are checked by lychee in CI; a relative link must resolve from the file; `just vale` (`scripts/vale.sh`) must pass on English Markdown |
@@ -142,7 +159,7 @@ copied into this repository (`CONTRIBUTING.md`, "Don't vendor WW3 source. Script
 exceptions are a `bind(C)` shim module and the caller patch described in
 `kokkos/src/fortran_iface/PATCH.md`, which live on a fork branch, behind a switch, and leave the
 original routine selectable. Every statement about WW3 cites `model/src/<file>.F90:<line>` at the
-pinned commit (`WW3@761cf79d` at the time of writing), never a comment, a paper or memory.
+pinned commit (`WW3@6d1bcdfe` at the time of writing), never a comment, a paper or memory.
 Namelists are written against the templates in `$WW3/model/nml/` and are `⚠` until executed.
 
 ## Porting (hard rule)
@@ -154,22 +171,83 @@ broken most often:
 - **Translate, don't improve.** Phase 1 reproduces the Fortran's arithmetic: no refactor, no
   vectorisation, no "simplification"; loop nesting changes only where a kernel may not allocate.
   Contraction is off (`-ffp-contract=off`, `--fmad=false`): turning it on is a physics change, not
-  a tuning knob, and it invalidates the L1 column (`kokkos/PORT_STATUS.md`).
+  a tuning knob, and it invalidates every regtest verdict (`kokkos/PORT_STATUS.md`).
+- **The port has no tests of its own** ([ADR-0010](docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md),
+  the owner, 14 October 2026): no L1 test, GoogleTest or captured fixture of a ported routine. Its
+  tests are WW3's regtests: `just smoke-hoff` and `just full-hoff` (`--hoff --cpu` pair to pair with
+  `--ww3`) and `just hoff-matrix`, the serial `NL1` entries of WW3's `matrix.base` compared by
+  `test.comp` and `nccmp-tol` (WFIP-0003).
 - **Ask before** changing the order of a reduction, a limiter or the integration order. The change
   is its own PR, with L2 evidence.
 - **Never widen a tolerance.** Report and stop.
 - **Order follows wall time.** The next routine is the one the committed profile says is most
   expensive, not the one that is easiest to validate or already has a fixture ([ADR-0002](docs/ADRs/ADR-0002-port-order-wall-time.md),
   applied in #45; `W3SDS4` before `W3SIN4`, both after `W3SNL1`).
+- **Every ported routine has a port report**, `kokkos/port_report/<ROUTINE>_KOKKOS.md`: what was
+  ported, its benchmarks in the table the website reads, and how it was regtested (the owner, 14
+  October 2026). `scripts/port_score.py --check` fails without it. A new
+  number goes into the report's bench table with its source, in the same pull request.
+- **Every ported routine records whether its Kokkos code was regtested**: the `regtested` column
+  of `kokkos/ports.tsv`, "yes: <how>" or "no: <why>" (the owner, 14 October 2026). `--check`
+  refuses a row without it; the website shows it.
+- **The global numbers** (share of the run time, of the lines of code, of the files, of the
+  routines, and the size of the Kokkos code) are written by `scripts/port_score.py --write` into
+  `kokkos/PORT_STATUS.md` and `site/data/port_score.tsv`, which the website reads, and the ranking of
+  what is still in Fortran with each port's regtest record into `kokkos/PORT_RANKING.md`; `/port-next`
+  starts the next port from it. `--check` fails
+  when either is stale.
+- **CI keeps h1 alive**: `--hoff --cpu` on `ww3_ts1`, pair to pair with `--ww3`
+  ([`health.yml`](.github/workflows/health.yml)). It is the only combination in CI for now.
 - **Done means all of §1.5:** the kernel with its heritage header, the shim with its argument
-  table, an L1 test with stated and justified tolerances, an L2 regtest replay, a timing line in
-  `PORT_STATUS.md`, and a conservation or sign property where physics allows one.
+  table, the L2 regtest replay and the regtest matrix passed within `tolerances.txt`, a timing line
+  in `PORT_STATUS.md`, and a conservation or sign property where physics allows one, checked inside
+  a regtest run; §1.5's L1 item is withdrawn by ADR-0010.
 - **Timings** follow `kokkos/tests/bench_snl1.cpp`: three warm-up calls, twenty timed, median of
   three runs, machine named, kernel-only and end-to-end both reported; nothing timed enters a table
-  without a passed L1 on the same build.
+  without a passed WW3 regtest replay on the same commit.
 - **The memory contract is explicit.** Phase 1 copies per call and exists to validate; phase 2
   keeps the spectrum resident. Never use Unified Memory to avoid thinking about transfers, and never
   read the CUDA kernel column as "the model will be this much faster".
+
+## Running on the GPU (hard rule)
+
+The owner, 14 October 2026: "never run --hoff --gpu without supervision, only --hoff --cpu must
+be regtested pair to pair to existing ww3 src."
+
+- **Never run `--hoff --gpu` without the owner supervising that run.** That is
+  `scripts/hoff.sh --hoff <case> --gpu`, `just smoke-hoff gpu` and `just full-hoff gpu`.
+  `hoff.sh` asks for a "yes" typed at a terminal and exits 7 without one. Never work around it:
+  no faked terminal, no `HOFF_IN_SHELL`, no piped answer. `--build-only` compiles for the GPU
+  without running it and is allowed.
+- **The agents' regtest is `--hoff --cpu`** (the default; Kokkos on OpenMP). Its Kokkos run is
+  compared pair to pair with `--ww3`, WW3 from the existing source built without the KOKKOS
+  switch, by `nccmp-tol`, after the comparison with the Fortran DIA of the same executable. Run
+  `just smoke-hoff` for every change to a kernel WW3 calls, and `just full-hoff` before a status
+  in `kokkos/ports.tsv` moves to L2.
+- `--ww3 --gpu` and `--ww4 --gpu` are refused (exit 64): neither has a GPU path here.
+
+## Which account writes Kokkos code (hard rule)
+
+The owner, 14 October 2026: "Never write any new Kokkos code under personal Max account of the
+owner, always under UFSC team on Claude. (enterprise account)"
+
+- Kokkos code (C++, CUDA and CMake under `kokkos/`) is written only in a session of the UFSC team
+  account on Claude, the enterprise account. Never in a session of the owner's personal Max
+  account.
+- Check before the first edit: `~/.claude.json`, `oauthAccount.organizationType`. `claude_max`
+  is the personal account: stop and say so. `claude_team` is the team account, the Claude Team
+  organisation shared by LOS/UFBA and LabECO/UFSC members by invitation (v) (read after the
+  owner's first `/login` to it, 14 October 2026; it is a Team plan, not Enterprise). Any other
+  value, or none, is a reason to ask.
+- `.claude/hooks/kokkos-account.sh` (PreToolUse on Write and Edit) denies an edit to Kokkos code
+  in a `claude_max` session (v) (live run with a `claude_max` `~/.claude.json` and with the
+  `claude_team` login, 14 October 2026; `docs/log/2026-10-14-kokkos-account-team.md`). It is a
+  guard, not the rule: the rule holds for any tool. `TEAM_PROTECTION=off` turns the guard off
+  (unset or any other value keeps it on); `.claude/settings.json` sets it `off` for now, at the
+  owner's request, so accounts can be switched (v) (self-test both ways, 14 October 2026;
+  `docs/log/2026-10-14-kokkos-account-exception.md`). An agent never changes that setting.
+- Scripts, documents, CI and the port's ledgers (`kokkos/ports.tsv`, `kokkos/PORT_STATUS.md`)
+  are not Kokkos code.
 
 ## The proposal (hard rule)
 
@@ -223,6 +301,18 @@ re-points at this repository's homes, is the `.claude/skills/<name>.patch` the l
 re-applied on every update. **Edit the patch, not the copy.** `.github/workflows/skills.yml` opens a weekly update PR
 with marola-devkit's `skills-vendor`; `skills-vendor update <name>` does it by hand.
 
+ponytail is also enabled as a Claude Code plugin (`ponytail@ponytail`, `.claude/settings.json`,
+pinned to `v5.2.0`) for its commands (`/ponytail:ponytail-debt`, `-gain`, `-help`) and the
+statusline. Its mode is off by default (`PONYTAIL_DEFAULT_MODE=off` in the same file, the owner,
+14 October 2026): its rules cover a whole session and have no setting to limit them to some files
+or languages, and they pull against "Translate, don't improve" (v) (3536 characters injected with
+`full`, nothing with `off`; `docs/log/2026-10-14-ponytail-plugin.md`). A person turns it on for a
+session with `/ponytail`, for C++ around the port; even then "the smallest change" never licenses
+a refactor, a vectorisation or a "simplification" of a ported routine. `PONYTAIL_MAP=0` turns off
+its codebase map, which lists Python and JS only, never C++, CUDA or Fortran (v)
+(`hooks/ponytail-map.js:17` at 5.2.0). README.md, "ponytail, off by default", is the user's guide.
+The vendored skills above stay the ones that carry this repository's audience paragraph.
+
 ## Messages between Claude projects
 
 Hoffmann's two Claude projects, Marola Agent and Wave Forecaster Agent, cannot reach each other
@@ -245,9 +335,10 @@ How the channel was built and tested, its failure modes and the commands that ch
 
 ## Commits and pull requests (hard rule)
 
-- **Commit message:** a subject, a body paragraph saying what and why, and `Tested:` and `Cost:`
-  trailers in the final block. `Tested:` names the commands run and their result; `Cost:` names
-  what the change costs to run or `none`. Agent commits also carry `Co-Authored-By` and the session
+- **Commit message:** a subject, a body paragraph saying what and why, and a `Tested:` trailer in
+  the final block, naming the commands run and their result. No commit, PR or document records a
+  cost: there is no `Cost:` trailer, no Cost row and no "Cost so far"
+  ([ADR-0009](docs/ADRs/ADR-0009-ww3-gpu-adopts-ai-memory-from-fabio-akita.md)). Agent commits also carry `Co-Authored-By` and the session
   link the harness adds; those lines stay in the trailer block, never in code, comments, PR titles
   or docs.
 - **PR workflow:** `just pr` pushes the branch and writes the PR body from the commits

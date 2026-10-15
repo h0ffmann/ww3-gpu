@@ -49,9 +49,63 @@ ww3-run *cmd:
 toolchain:
     just -f {{pratico}}/justfile toolchain
 
-# Fortran + MPI + NetCDF smoke test in the Nix sandbox (what pratico's CI runs).
-smoke:
+# Fortran + MPI + NetCDF smoke test of the toolchain in the Nix sandbox (what pratico's CI runs).
+toolchain-smoke:
     just -f {{pratico}}/justfile smoke
+
+# ---------------------------------------------------------------------
+# WW3 two ways (scripts/hoff.sh): --ww3, the Fortran as NOAA writes it; --hoff, WW3 built
+# with the KOKKOS switch from the h0ffmann/WW3 branch hoff/kokkos-snl1 and linked to kokkos/.
+# --hoff runs on the CPU (Kokkos OpenMP) unless asked: `just smoke-hoff gpu` runs CUDA, and only
+# with a human supervising (AGENTS.md hard rule; it asks at the terminal).
+# ---------------------------------------------------------------------
+
+# Both smoke tests: WW3 as written, then WW3 with the Kokkos port (ww3_ts1, seconds on a CPU).
+smoke: smoke-ww3 smoke-hoff
+
+# WW3 as written: regtest ww3_ts1 (one point, ST4 + NL1, 10 model days) must finish.
+smoke-ww3:
+    bash scripts/hoff.sh --ww3 smoke
+
+# WW3 with the Kokkos DIA: ww3_ts1 with the Fortran and the Kokkos W3SNL1, compared by nccmp-tol.
+smoke-hoff device="cpu":
+    bash scripts/hoff.sh --hoff smoke --{{device}}
+
+# The expensive case, as written: bench_small (120 x 80, 9 520 sea points, 12 hours).
+full-ww3:
+    bash scripts/hoff.sh --ww3 full
+
+# The expensive case with the Kokkos DIA, compared with the Fortran by nccmp-tol.
+full-hoff device="cpu":
+    bash scripts/hoff.sh --hoff full --{{device}}
+
+# The Kokkos DIA through WW3's own regtest harness (WFIP-0003): every serial NL1 entry of
+# matrix.base, Fortran and Kokkos DIA from one executable, test.comp and nccmp-tol. CPU only.
+# `just hoff-matrix --list`, `--dry-run`, `--only ww3_ts1:ST4`, `--jobs N`; `--fetch-data` once
+# for the inputs WW3 keeps on NOAA's ftp (ww3_tp2.15's wind.nc), cached in build/ww3-data/.
+hoff-matrix *args:
+    bash scripts/hoff_matrix.sh {{args}}
+
+# The same cases on WAVEWATCH IV, built from the WW4/ submodule (h0ffmann/WW4). Exit 5, before
+# any build, when a part the case needs is not ported to WW4 yet (scripts/ww4_parts.py).
+smoke-ww4:
+    bash scripts/hoff.sh --ww4 smoke
+
+full-ww4:
+    bash scripts/hoff.sh --ww4 full
+
+# Which parts of a case WW4 has, and which it does not (exit 5 if one is missing).
+ww4-parts case="smoke":
+    python3 scripts/ww4_parts.py {{case}}
+
+# Profile WW3 as written on a case (smoke: ww3_ts1; full: bench_small) with gprof -> docs/data/ww3_<case>_gprof.tsv.
+profile-case case="full":
+    bash scripts/profile_case.sh {{case}}
+
+# How much of WW3 runs on the Kokkos backend: the ranking of the routines by measured time, each
+# with its port status, and the port score (kokkos/ports.tsv, docs/data/ww3_profile_full.tsv).
+port-score *args:
+    python3 scripts/port_score.py "$@"
 
 # ---------------------------------------------------------------------
 # WW3: get, build, regtest, examples, bench
@@ -127,6 +181,18 @@ adrs *args:
 # Measured results as data (bench/results/*.json): `just results table` regenerates the tables that quote them; `check` is the CI gate.
 results *args:
     python3 scripts/results.py "$@"
+
+# Every entry of pubs/proposal/refs.bib has a row and a verdict in pubs/proposal/REFERENCES.md; --strict fails on unverified.
+refs *args:
+    python3 scripts/refs_check.py "$@"
+
+# The slip box (NOTES.md): front matter, ids, links, the index.
+notes *args:
+    python3 scripts/notes_check.py "$@"
+
+# The ai-memory pages tagged `publish`, in memory/ (MEMORY.md): export (owner), import (reader), check (CI).
+memory *args:
+    python3 scripts/memory.py "$@"
 
 # Regenerate codemeta.json from CITATION.cff and .zenodo.json; `just codemeta --check` is the CI gate.
 codemeta *args:
@@ -248,6 +314,16 @@ book-docx:
 book-html:
     scripts/build_html.sh
 
+# The Gleam front page (site/, DESIGN.md) reads its facts from the repository; CI deploys build/site.
+# The whole website -> build/site: the chapters at /book/, then the Gleam front page at /.
+site:
+    scripts/build_html.sh
+    nix develop "{{justfile_directory()}}#site" --command scripts/build_site.sh --check
+
+# Serve build/site on http://localhost:8000 (after `just site`).
+site-serve:
+    python3 -m http.server 8000 --directory build/site
+
 # The book as a Leanpub manuscript (Markua) -> build/leanpub/manuscript; CI pushes it to the `leanpub` branch.
 leanpub *args:
     python3 scripts/leanpub_manuscript.py {{args}}
@@ -308,7 +384,7 @@ translate *args:
 pubs: book (proposal "pt") (proposal "en")
 
 # ---------------------------------------------------------------------
-# Kokkos (kokkos/): C++ kernels, intro programs and GoogleTest suites
+# Kokkos (kokkos/): C++ kernels; GoogleTest suites of the intro programs and tools (the port has none, ADR-0010)
 # ---------------------------------------------------------------------
 
 kokkos_dir := justfile_directory() + "/kokkos"
@@ -330,21 +406,6 @@ kokkos-cuda-test:
     nix develop "{{pratico}}#cuda" --command cmake -S "{{kokkos_dir}}" --preset cuda-release
     nix develop "{{pratico}}#cuda" --command cmake --build "{{kokkos_dir}}/build/cuda-release"
     nix develop "{{pratico}}#cuda" --command ctest --test-dir "{{kokkos_dir}}/build/cuda-release" --output-on-failure
-
-# Regenerate the committed W3SNL1 parity fixture from the Fortran reference.
-snl1-fixtures: (kokkos-configure "serial-debug")
-    nix develop "{{pratico}}#ww3" --command cmake --build "{{kokkos_dir}}/build/serial-debug" --target snl1-fixtures
-    git -C "{{justfile_directory()}}" diff --stat -- kokkos/tests/fixtures
-
-# UNTESTED (see kokkos/README.md): cross-check snl1_ref.F90 against the real W3SNL1 in <ww3>'s build.
-l1-crosscheck ww3=ww3_src:
-    nix develop "{{pratico}}#ww3" --command cmake -S "{{kokkos_dir}}" -B "{{kokkos_dir}}/build/crosscheck" \
-        -DCMAKE_BUILD_TYPE=Release -DWW_WW3_BUILD_DIR="{{ww3}}/build"
-    nix develop "{{pratico}}#ww3" --command cmake --build "{{kokkos_dir}}/build/crosscheck" \
-        --target gen_snl1_fixture gen_snl1_ww3lib
-    nix develop "{{pratico}}#ww3" --command "{{kokkos_dir}}/build/crosscheck/tests/fixtures/gen_snl1_fixture" /tmp/snl1_ref.bin
-    nix develop "{{pratico}}#ww3" --command "{{kokkos_dir}}/build/crosscheck/tests/fixtures/gen_snl1_ww3lib" /tmp/snl1_ww3lib.bin
-    cmp /tmp/snl1_ref.bin /tmp/snl1_ww3lib.bin && echo "snl1_ref.F90 is byte-identical to WW3's own W3SNL1"
 
 # Remove kokkos/build.
 kokkos-clean:

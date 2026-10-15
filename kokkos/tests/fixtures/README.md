@@ -1,26 +1,25 @@
-# `kokkos/tests/fixtures/`: captured Fortran answers
+# `kokkos/tests/fixtures/`: the benchmark's inputs
 
-The L1 tests do not compare the C++ port against numbers a human typed. They
-compare it against what WAVEWATCH III's own Fortran produced, captured once into
-a committed binary file.
+Two inputs live here, both frozen: `snl1_nk25_nth24.bin`, the sea state
+`ww_bench_snl1` times the DIA on (and `proof/snl1_cons` reads), and `bench_small/`,
+the small benchmark case `scripts/hoff.sh` runs and `L1_test_bench_case` compares
+against.
 
 | file | what it is |
 |---|---|
-| `snl1_ref.F90` | standalone, **verbatim** copy of `W3SNL1`/`INSNL1` from `WW3/model/src/w3snl1md.F90` (WW3 7.14). LGPL-3.0-or-later, like its source. |
-| `gen_snl1_fixture.F90` | the driver: builds three sea states, runs the reference, streams the record out. |
-| `gen_snl1_ww3lib.F90` | optional cross-check driver, linked against a real `libww3.a` (see `kokkos/README.md`). |
-| `snl1_nk25_nth24.bin` | the committed fixture: `NK=25`, `NTH=24`, `NPTS=3`, 107 892 bytes. |
+| `snl1_nk25_nth24.bin` | `NK=25`, `NTH=24`, `NPTS=3`, 107 892 bytes: a sea state and the Fortran `W3SNL1`/`INSNL1` answers for it. |
+| `bench_small/` | the six files of the small benchmark case plus `ww3_ounf.nml` (below). |
 
-## Regenerating
+## The `.bin` is frozen
 
-```bash
-just snl1-fixtures        # builds gen_snl1_fixture in serial-debug and runs it
-git diff --stat kokkos/tests/fixtures/snl1_nk25_nth24.bin
-```
-
-The generator is deterministic: no random numbers, nothing read from the
-environment. So a byte-level diff means the reference or the sea state changed,
-and that change needs a reason in the commit message.
+The `.bin` was written by a standalone copy of `W3SNL1`/`INSNL1` and a Fortran
+generator, and the L1 parity tests compared the C++ port against it. Generator,
+reference and tests were removed on 2026-10-14 under the owner's rule that the
+port has no tests of its own and all its tests come from WW3's regtests. The file
+is kept, unchanged, as the benchmark's input. Nothing in this repository can
+regenerate it any more, so it is not edited: a new benchmark input is a new file.
+The port is validated by `scripts/hoff.sh --hoff --cpu` against WW3 itself, not
+against this file.
 
 ## What is in the fixture
 
@@ -68,7 +67,7 @@ kernel then reads them at scratch slot `index + nth`.
 Reader: `kokkos/src/ww_kokkos/fixture_io.{hpp,cpp}`, the one place that knows
 this layout.
 
-## `bench_small/`: the benchmark-case generator's byte-equality fixture
+## `bench_small/`: the small benchmark case
 
 `kokkos/tools/bench_case/` replaced `bench/make_bench_case.py`. Before the Python
 was deleted it was run once, `python3 bench/make_bench_case.py --size small -o

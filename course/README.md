@@ -22,7 +22,7 @@ them in, and the three chapters still to write on agentic coding and agentic res
 | 09 | [Measure first: benchmark, profile, compile and run configuration](09-benchmark-profile-compile-run.md) | Freeze a reference run, measure seconds per forecast hour, profile by phase, and exhaust the compile-option and namelist knobs with WW3's matrix as the bit-for-bit gate. |
 | 10 | [Modern Fortran refactoring](10-modern-fortran-refactoring.md) | Rewrite a profile-top routine in standard Fortran without changing its arithmetic, keep both paths in one binary, and prove parity per routine. |
 | 11 | [Kokkos and modern C++ for Fortran people](11-kokkos-and-modern-cpp.md) | Read and write a Kokkos kernel: Views, `LayoutLeft`, mirrors, `parallel_for`/`reduce`, team scratch, `bind(C)`; build the presets and run on the 4090. |
-| 12 | [Porting a kernel: `W3SNL1`](12-porting-a-kernel-w3snl1.md) | Follow the DIA port line by line from `w3snl1md.F90` to `snl1_dia.cpp`, run the L1 parity tests, replay a regtest through both paths, and say what "done" means. |
+| 12 | [Porting a kernel: `W3SNL1`](12-porting-a-kernel-w3snl1.md) | Follow the DIA port line by line from `w3snl1md.F90` to `snl1_dia.cpp`, replay WW3's regtests through both paths (the port's only tests, ADR-0010), and say what "done" means. |
 | 13 | [Bulk porting with agents](13-bulk-porting-with-agents.md) | Run the FESOM2 recipe on the next forty routines with a coding agent: the ranked list, the residency ladder, the PR contents, and the decision that puts a kernel into operation. |
 | 14 | [WW4 and the future](14-ww4-and-the-future.md) | Judge how mature WW4 is, what's changing, and what of WW3 is worth learning anyway. |
 | 15 | [SWAN](15-swan.md) | Recognise the coastal problems WW3 is wrong for, and build the model that isn't. |
@@ -35,7 +35,7 @@ says where it comes from.
 Lessons 09 to 13 are the proposal's ladder (`pubs/proposal/pt/04-scope.md`), in order:
 compile options, run configuration, modern Fortran, C++/Kokkos kernels, bulk porting.
 Each is gated by parity with the one before. Do them with `kokkos/` open beside you:
-the intro programs, the `W3SNL1` port, its fixtures and tests are the material, and
+the intro programs, the `W3SNL1` port and the WW3 regtests that validate it are the material, and
 `exercises/` has one sheet per lesson.
 
 Lessons 14 and 15 stand alone and can be read first. They answer two separate "should I

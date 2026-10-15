@@ -10,7 +10,7 @@
 #   BRANCH=x just uprd        # another branch than the checked-out one
 #
 # The generated body follows .github/PULL_REQUEST_TEMPLATE.md: a Summary (the first commit's
-# body paragraph, ~2 sentences), Tested and Cost rows (the commits' `Tested:`/`Cost:` trailers), and one
+# body paragraph, ~2 sentences), a Tested row (the commits' `Tested:` trailers), and one
 # "What changed" bullet per commit. Its first line is a marker that lets pr-body.yml regenerate
 # the body on every push; delete that line to hand-edit the description and keep it.
 set -euo pipefail
@@ -85,6 +85,7 @@ lines = []
 for line in body.splitlines():
     if line.strip() == "":
         break
+    # A legacy `Cost:` trailer in an old commit is dropped too: no PR shows a cost (ADR-0009).
     if re.match(r"^(Co-Authored-By|Claude-Session|Tested|Cost|Signed-off-by):", line):
         continue
     lines.append(line)
@@ -113,21 +114,6 @@ generate_tested() {
   if [ "$n" -gt 1 ]; then echo "$first (+$((n - 1)) earlier notes in the commits)"; else echo "$first"; fi
 }
 
-generate_cost() {
-  # One entry per commit, oldest first, joined with `<br>` (a table cell can't hold a newline):
-  # the commit's own `Cost:` trailer, else "not recorded".
-  local sha short line text out="" sep=""
-  while IFS= read -r sha; do
-    [ -n "$sha" ] || continue
-    short="$(git rev-parse --short "$sha")"
-    line="$(git log -1 --format='%(trailers:key=Cost,valueonly,unfold)' "$sha" | sed '/^[[:space:]]*$/d' | head -1 || true)"
-    text="${line:-not recorded — add a \`Cost:\` trailer}"
-    out="${out}${sep}${text} (\`${short}\`)"
-    sep="<br>"
-  done < <(git log --reverse --format=%H "$range" 2>/dev/null)
-  printf '%s\n' "$out"
-}
-
 generate_body() {
   echo "<!-- uprd: generated from the branch's commits — delete this line to stop pr-body.yml from regenerating it -->"
   echo "**Summary** — $(generate_summary)"
@@ -135,7 +121,6 @@ generate_body() {
   echo "| | |"
   echo "|---|---|"
   echo "| **Tested** | $(generate_tested) |"
-  echo "| **Cost** | $(generate_cost) |"
   echo
   echo "**What changed**"
   # shellcheck disable=SC2016 # literal markdown backticks

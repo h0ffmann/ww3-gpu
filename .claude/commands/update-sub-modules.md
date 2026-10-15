@@ -44,7 +44,7 @@ For each moved pin, with `old..new` from `git diff --cached --submodule=short`:
   If not, the toolchain this repo builds with is unchanged; say so.
 - `WW3`: list each upstream PR in the range; flag any touching `model/src/w3snl1md.F90`,
   `w3srcemd`, other source terms, the switches in `switches/`, or the build (`CMakeLists.txt`,
-  `cmake/`), since those move the Kokkos parity harness and its fixtures.
+  `cmake/`), since those move what WW3's regtests compare the Kokkos port against.
 - `WW4`: run `just ww4-status` (the `/ww4-status` skill) and quote what it reports; if the new pin
   is past `docs/ww4-status.json`'s `develop.sha`, say so and suggest `/ww4-status` to refresh
   lesson 14.

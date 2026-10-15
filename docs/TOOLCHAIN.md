@@ -10,7 +10,8 @@ just up          # bump the submodule pin to origin/main and stage it  (just st 
 just ww3         # enter the toolchain-only shell  (== nix develop ./nix-config/labs/pratico#ww3)
 just ww3-run …   # run one command inside that shell, e.g. just ww3-run gfortran --version
 just toolchain   # exact pinned versions
-just smoke       # Fortran 2008 + MPI + NetCDF-4 build-and-run in the Nix sandbox
+just toolchain-smoke  # Fortran 2008 + MPI + NetCDF-4 build-and-run in the Nix sandbox
+just smoke       # WW3 as written, then WW3 with the Kokkos DIA (scripts/hoff.sh)
 ```
 
 Build and run WW3 itself in that shell. The source tree is `$WW3`, else `~/src/WW3`, the

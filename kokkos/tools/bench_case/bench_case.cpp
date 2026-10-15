@@ -150,7 +150,9 @@ std::string ounf_nml(const Params& p) {
        "&FIELD_NML\n"
        "  FIELD%TIMESTART  = '" << ww3_date(0) << "'\n"
        "  FIELD%TIMESTRIDE = '3600'\n"
-       "  FIELD%TIMESTOP   = '" << ww3_date(p.hours) << "'\n"
+       // WW3's FIELD_NML counts output times (TIMECOUNT); it has no TIMESTOP key, and
+       // ww3_ounf stops on a namelist read error if one is given. Hours 0..p.hours, hourly.
+       "  FIELD%TIMECOUNT  = '" << (p.hours + 1) << "'\n"
        "  FIELD%TIMESPLIT  = 0\n"
        "  FIELD%LIST       = 'HS'\n"
        "  FIELD%PARTITION  = '0'\n"

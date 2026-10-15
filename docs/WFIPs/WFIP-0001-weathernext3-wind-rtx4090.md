@@ -13,7 +13,6 @@
 | **Depends on** | access to WeatherNext 3 data (form, 5–7 working days `(v)` plan §5); GEBCO and GFS downloads of example 02; a working CUDA driver on the box; nothing from other WFIPs |
 | **Blocked by** | none |
 | **Risk** | the access form is refused or the Zarr v3 store cannot be read without Python, which the lab rule forbids in `examples/`; then the conversion runs outside the repo and only the NetCDF enters, as a documented step |
-| **Cost so far** | — |
 
 ### Readiness
 
@@ -113,8 +112,9 @@ Everything is deterministic; no LLM in the loop.
 ## 6. Parity and physics impact
 
 None: no kernel changes. The two runs differ only in the wind file, so the `Hs` difference is the
-forcing's. The CUDA timing enters `PORT_STATUS.md` only with a passed L1 on the same build
-(`AGENTS.md`, "No timing without parity").
+forcing's. The CUDA timing enters `PORT_STATUS.md` only with a passed WW3 regtest replay on the same
+commit (`AGENTS.md`, "No timing without parity"; before ADR-0010, 2026-10-14, a passed L1 on the
+same build).
 
 ## 7. Verification plan and definition of done
 

@@ -1,6 +1,7 @@
 # kokkos/tests/CMakeLists.txt
-# GoogleTest suites. Naming convention: L1_* are unit tests against analytic or
-# captured-Fortran fixtures; L2_* replay a whole WW3 regtest.
+# GoogleTest suites of the lessons and the tools, not of the port: the port has
+# no tests of its own (the owner, 2026-10-14). The DIA is validated by WW3's own
+# regtests, replayed by scripts/hoff.sh --hoff --cpu pair to pair with --ww3.
 #
 # SPDX-License-Identifier: MIT
 
@@ -18,9 +19,6 @@ function(ww_add_test name)
 endfunction()
 
 ww_add_test(L1_test_intro)
-ww_add_test(L1_test_snl1_tables)
-ww_add_test(L1_test_snl1_dia)
-ww_add_test(L1_test_snl1_shim)
 
 # Not a test: the timing harness behind the ms/call numbers in kokkos/PORT_STATUS.md.
 # It runs the same shim entry point WW3 would, so what it measures is the phase-1
@@ -30,12 +28,6 @@ target_link_libraries(ww_bench_snl1 PRIVATE ww_kokkos)
 target_compile_definitions(ww_bench_snl1 PRIVATE
     WW_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures")
 ww_apply_warnings(ww_bench_snl1)
-
-# The Fortran reference and the fixture generator. Not needed to run the tests --
-# the fixture they produce is committed -- only to regenerate it.
-if(WW_ENABLE_FORTRAN)
-  add_subdirectory(fixtures)
-endif()
 
 ww_add_test(L1_test_nccmp_tol)
 target_link_libraries(L1_test_nccmp_tol PRIVATE nccmp_tol_lib)

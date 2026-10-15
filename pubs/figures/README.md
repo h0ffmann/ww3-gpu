@@ -111,6 +111,17 @@ Três meses divididos em quatro blocos: preparar as ferramentas, construir a res
 `triton-g-doze-semanas` · [source](../../docs/W3SDS4_TRITON_PLANO_202610.pt.md) · [PDF](mermaid/triton-g-doze-semanas.pdf) · [report a mistake](https://github.com/h0ffmann/ww3-gpu/issues/new?title=Figure%20triton-g-doze-semanas%3A%20)
 
 
+## [`kokkos/README.md`](../../kokkos/README.md)
+
+### How does one Kokkos source reach the CPU and the GPU of the lab's workstation?
+
+WW3's own code is built for the processor only; the ported piece is written once and turned into a program for one thread, for the whole processor or for the graphics card, depending on how it is built.
+
+<img src="mermaid/kokkos-one-source-backends.png" alt="WW3's own code is built for the processor only; the ported piece is written once and turned into a program for one thread, for the whole processor or for the graphics card, depending on how it is built." width="560" />
+
+`kokkos-one-source-backends` · [source](../../kokkos/README.md) · [PDF](mermaid/kokkos-one-source-backends.pdf) · [report a mistake](https://github.com/h0ffmann/ww3-gpu/issues/new?title=Figure%20kokkos-one-source-backends%3A%20)
+
+
 ## [`pubs/proposal/mapas-mentais.pt.md`](../../pubs/proposal/mapas-mentais.pt.md)
 
 ### Do que trata a proposta, em um único mapa?

@@ -1,20 +1,71 @@
 {
+  "env": {
+    "PONYTAIL_DEFAULT_MODE": "off",
+    "PONYTAIL_MAP": "0",
+    "TEAM_PROTECTION": "off"
+  },
   "hooks": {
     "PostToolUse": [
       {
         "matcher": "Write|Edit",
-        "hooks": [{ "type": "command", "command": "bash .claude/hooks/proposal-review.sh" }]
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/proposal-review.sh"
+          }
+        ]
       }
     ],
     "Stop": [
       {
-        "hooks": [{ "type": "command", "command": "bash .claude/hooks/proposal-review-stop.sh" }]
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/proposal-review-stop.sh"
+          }
+        ]
       }
     ],
     "SessionStart": [
       {
-        "hooks": [{ "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/session-start.sh" }]
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/session-start.sh"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/kokkos-account.sh"
+          }
+        ]
       }
     ]
+  },
+  "enabledPlugins": {
+    "ai-memory@ai-memory": true,
+    "ponytail@ponytail": true
+  },
+  "extraKnownMarketplaces": {
+    "ai-memory": {
+      "source": {
+        "source": "github",
+        "repo": "akitaonrails/ai-memory",
+        "ref": "v3.0.0"
+      }
+    },
+    "ponytail": {
+      "source": {
+        "source": "github",
+        "repo": "DietrichGebert/ponytail",
+        "ref": "v5.2.0"
+      }
+    }
   }
 }

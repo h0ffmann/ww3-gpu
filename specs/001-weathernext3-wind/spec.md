@@ -89,8 +89,9 @@ against a buoy or altimeter, with the commands that reproduce them.
 - **FR-005**: `verify.sh` MUST compute bias and RMSE per point with `cdo`/`nco` and print the §3
   table.
 - **FR-006**: Every number published MUST carry the command that reproduces it and `(v)`/`⚠`.
-- **FR-007**: The CUDA timing MUST enter `kokkos/PORT_STATUS.md` only with a passed L1 on the same
-  build, naming the machine and the H100 caveat.
+- **FR-007**: The CUDA timing MUST enter `kokkos/PORT_STATUS.md` only with a passed WW3 regtest replay
+  on the same commit (ADR-0010; a passed L1 on the same build before 2026-10-14), naming the
+  machine and the H100 caveat.
 
 ### Key Entities
 

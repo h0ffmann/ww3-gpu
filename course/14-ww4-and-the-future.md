@@ -199,12 +199,16 @@ interfaces (`L2_test_*`), **L3** functional tests of physics cases as a black bo
 **L4** regression tests of the full model. L1 and L2 exist, in GoogleTest, at full coverage
 of the code that exists; L3 and L4 do not yet, because there is no physics to test.
 
-This repo copies that structure on purpose, and the proposal says why: *do not compete
-with WW4; build artefacts in the shape WW4 can use.* So the `W3SNL1` port in
-[`12-porting-a-kernel-w3snl1.md`](12-porting-a-kernel-w3snl1.md) comes with `L1_test_*`
-GoogleTest suites that compare the Kokkos kernel against captured Fortran fixtures, and an
-`L2_replay.sh` that reruns a whole WW3 regtest with the kernel on and off and judges the
-netCDF output with `nccmp-tol`. Same prefixes, same framework, same meaning of the levels.
+This repo copied that structure on purpose, and the proposal says why: *do not compete
+with WW4; build artefacts in the shape WW4 can use.* Until 14 October 2026 the `W3SNL1` port in
+[`12-porting-a-kernel-w3snl1.md`](12-porting-a-kernel-w3snl1.md) came with `L1_test_*`
+GoogleTest suites that compared the Kokkos kernel against captured Fortran fixtures. The owner
+then ruled that the port has no tests of its own
+([ADR-0010](../docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md)): what is left is what
+this repo calls L2, in WW4's terms closer to L4: WW3's regtests rerun with the kernel on and off (`scripts/hoff.sh --hoff --cpu`,
+`kokkos/tests/L2_replay.sh`, the matrix of `scripts/hoff_matrix.sh`) and the netCDF output judged
+with `nccmp-tol`. So an L1 suite for a kernel
+handed to WW4 would have to be written on WW4's side.
 PR #72 already reserves the slot: `src/ww4_core/source_terms/ww4_NL1/` and
 `tests/ww4_core/L1_test_ww4_NL1.cpp`, behind a `calculate(std::span<double>)` that has no notion
 yet of a batch of points, a device memory space or the precomputed tables `ww_snl1_init`
@@ -213,7 +217,7 @@ can be handed over without a copy. Its default spectral grid (36 directions, 50 
 XFR 1.07) is also larger than the grids this repo has validated on, and the DIA kernel's
 level-0 scratch does not fit it on every GPU (`kokkos/PORT_STATUS.md`). When WW4 reaches the
 point of needing a DIA kernel and a way to prove it matches WW3, the
-fixtures, the tolerances file and the parity report are the deliverables it can pick up,
+regtest replays, the tolerances file and the parity report are the deliverables it can pick up,
 and if it never does, they are still the evidence the lab needs to put the kernel into
 operation. Either way the work is not wasted, which is the whole point of choosing the
 shape before choosing the kernel.

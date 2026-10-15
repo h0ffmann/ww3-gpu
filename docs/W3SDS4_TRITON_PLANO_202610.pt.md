@@ -7,6 +7,8 @@ pequenos, quanto do WW3 vale levar à GPU e a partir de quando o estado inteiro 
 o que esperar do Triton C em acurácia, o que muda ao trocar o vento do IFS pelo do WeatherNext 3, e
 se alguma dessas respostas altera a proposta de graduação.
 
+> **2026-10-14, [ADR-0010](ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md).** No braço Kokkos deste plano, a L1 contra a fixture deixa de valer: o port em Kokkos não tem testes próprios, e os regtests do WW3, rotina Fortran contra rotina Kokkos na CPU, são os seus únicos testes. Se os braços Triton seguem a mesma regra ainda não foi decidido ⚠ (pergunta em aberto para o dono); o plano fica como foi escrito.
+
 Escrito em 2026-10-08. `(v)` marca o que foi conferido nessa data, com arquivo e linha ou URL; `⚠`
 marca o que não foi. Nenhum kernel Triton foi executado neste repositório. Todo número de GPU
 abaixo vem do port Kokkos da DIA (`kokkos/PORT_STATUS.md`) ou é uma projeção, identificada como tal.

@@ -88,6 +88,7 @@ result-*
 
 # repo media (social card, screenshots) is tracked despite the *.png rule above
 !docs/media/*.png
+!human/*.png
 
 # Spec Kit (github/spec-kit): `just specify init` regenerates these; only the constitution and
 # specs/ are ours and tracked
@@ -100,3 +101,13 @@ result-*
 # Vale packages, fetched by `vale sync` (scripts/vale.sh)
 .vale/styles/*
 !.vale/styles/ww3gpu/
+
+# graphify output from an in-tree run; the graph lives in ~/.cache/ww3-gpu-graph/ (ADR-0007)
+graphify-out/
+
+# the site (site/, `just site`): Gleam's build output, and the content module site/content writes
+site/build/
+site/content/build/
+site/src/ww3_gpu_site/content.gleam
+# ...except the screenshots a pull request shows
+!site/preview/*.png

@@ -6,7 +6,7 @@ body:
     attributes:
       value: >-
         A number enters a table only with the command that reproduces it (`bench/README.md`), and a
-        timing only after the L1 parity gate passed on the same build (`AGENTS.md`, "Porting").
+        timing only after a WW3 regtest replay passed on the same commit (`AGENTS.md`, "Porting").
         Fill in what you know; leave a field `⚠ unknown` rather than guessing.
   - type: textarea
     id: question
@@ -34,9 +34,9 @@ body:
       placeholder: "CPU, GPU, driver, compiler and version"
     validations: { required: true }
   - type: dropdown
-    id: l1
+    id: regtest
     attributes:
-      label: L1 parity on the same build
+      label: WW3 regtest replay on the same commit (`just smoke-hoff`, `just full-hoff` or `just hoff-matrix`, CPU)
       options: ["passed", "failed", "not run", "not applicable (no ported kernel involved)"]
     validations: { required: true }
   - type: textarea

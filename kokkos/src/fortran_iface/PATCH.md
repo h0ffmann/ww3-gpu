@@ -1,9 +1,13 @@
 # `PATCH.md`: wiring the Kokkos DIA into WAVEWATCH III
 
-> **Not applied in this repository.** `WW3/` here is an unmodified upstream
-> checkout and stays that way; this file is the recipe for the fork branch
-> (`just src-pr` / a `WW3` fork), written so that it can be applied and reviewed
-> hunk by hunk. Everything below was read off the tree at
+> **Applied on 2026-10-14** as the h0ffmann/WW3 branch `hoff/kokkos-snl1`
+> (commit `6d1bcdfe`), which the `WW3/` submodule now pins; `w3kokkosmd.F90` lives
+> there, not here. Two things changed on the way: `SIG(1)` in hunk 2 became
+> `SIG(1:NK)`, because `SIG` is a POINTER and gfortran rejects an element of a
+> pointer array as an assumed-size actual; and hunk 4 enables C++ before
+> `find_package(ww_kokkos)`, which the Kokkos package needs. `just smoke-hoff`
+> builds and runs it (`scripts/hoff.sh`). The text below is the original recipe,
+> kept as the account of why each hunk is there. Everything below was read off the tree at
 > `WW3/model/src` (WAVEWATCH III 7.14, `develop`). The line numbers are real and
 > were produced with the `grep` commands quoted next to each hunk.
 >
@@ -288,9 +292,11 @@ frequency bin low, every `AF11` scaled by the wrong `f**11`, and a source term
 that is smooth, plausible and wrong. `SIG(1)` is WW3's own sequence-association
 idiom for exactly this and costs nothing.
 
-The lab's reference cannot catch this: `snl1_ref.F90:86` allocates `SIG(NK)`, so
-`shim_roundtrip` passes either way. The check belongs on the fork branch, in the
-`WW_KOKKOS_SNL1=0` vs `=1` comparison of section 5.
+The lab's standalone reference could not catch this: it allocated `SIG(NK)`, so
+its `shim_roundtrip` test passed either way (both were removed on 2026-10-14 under
+the owner's rule that the port has no tests of its own). The check belongs on the
+fork branch, in the `WW_KOKKOS_SNL1=0` vs `=1` comparison of section 5, which is a
+WW3 regtest replay.
 
 ### Multi-grid
 
@@ -364,8 +370,8 @@ also needs the C++ runtime. CMake handles this by itself when the imported
 target carries `IMPORTED_LINK_INTERFACE_LANGUAGES CXX`; if the Kokkos tree is
 pulled in with `add_subdirectory()` instead of `find_package()`, CMake gets it
 from the target's own linker language and nothing extra is needed. This is the
-same mechanism that lets `kokkos/tests/fixtures/shim_driver` (a Fortran
-program linking `ww_kokkos_f`) link here today.
+same mechanism that let `kokkos/tests/fixtures/shim_driver` (a Fortran
+program linking `ww_kokkos_f`, removed on 2026-10-14) link here.
 
 `ww_kokkos` does **not** export a CMake package config yet; that is the one
 piece of this section that is speculative, and the fork branch will either add
@@ -391,6 +397,6 @@ WW_KOKKOS_SNL1=1 ./build/bin/ww3_shel     # Kokkos DIA
 ```
 
 That last pair is the point of the whole design: one executable, one switch,
-two answers that must agree to the tolerance the L1 tests already hold the
-kernel to. It is the L2 row of `kokkos/PORT_STATUS.md`, and it is what this
-patch is for.
+two answers that must agree within `kokkos/tools/nccmp-tol/tolerances.txt`.
+It is the L2 row of `kokkos/PORT_STATUS.md`, the port's only test since
+ADR-0010 (2026-10-14), and it is what this patch is for.

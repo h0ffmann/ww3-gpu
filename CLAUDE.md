@@ -2,7 +2,7 @@
 
 Read `AGENTS.md` before doing anything here: it holds the repo invariants (write for scientists
 with `(v)`/`⚠` evidence, WW3 is read-only, translate don't improve, no timing without parity, the
-proposal goes through its reviewer, `Tested:`/`Cost:` trailers), where a change belongs, the gates
+proposal goes through its reviewer, `Tested:` trailers, no cost record), where a change belongs, the gates
 CI runs, and the skills and agents. The line above imports it for Claude Code; a tool that reads
 this file as plain text must open `AGENTS.md` itself. `CONTRIBUTING.md` is the longer form.
 
@@ -13,7 +13,9 @@ this file as plain text must open `AGENTS.md` itself. `CONTRIBUTING.md` is the l
   to end a session that changed the proposal without a recorded review
   (`python3 scripts/proposal_review_gate.py --record <parecer.md>`). Both have `--self-test`.
   A `SessionStart` hook runs `scripts/agent_env.sh` in cloud sessions only, so the gates' tools
-  and `nix-config` exist before the first command.
+  and `nix-config` exist before the first command. A `PreToolUse` hook,
+  `.claude/hooks/kokkos-account.sh`, denies Write/Edit on Kokkos code under a `claude_max`
+  account unless `TEAM_PROTECTION=off`, which the `env` of `settings.json` sets for now.
 - **The reviewer is a subagent**: run it with the Agent tool, `subagent_type: "revisor-proposta"`,
   on the files you changed; `just proposal-review` does the same from a terminal in plan mode. It
   reports; you fix; it does not rewrite.

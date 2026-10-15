@@ -20,8 +20,9 @@ A ported routine reproduces the Fortran's arithmetic. A change of reduction orde
 integration order is its own PR with L2 evidence, asked about first. A tolerance is never widened.
 
 ### IV. No timing without parity
-A speed figure enters a table only after the L1 gate passed on the same build, with the machine,
-the command and the median of three runs.
+A speed figure enters a table only after the WW3 regtest replay passed on the same commit, with
+the machine, the command and the median of three runs. The Kokkos port has no tests of its own:
+WW3's regtests, Fortran routine against Kokkos routine on the CPU, are its only tests (ADR-0010).
 
 ### V. Lab code is Fortran, C++ and shell
 Python appears only in publishing and repo tooling (`scripts/`, `tests/`), never in `examples/`,
@@ -34,7 +35,7 @@ not work yet; filing is a person's act.
 
 ## Workflow and gates
 
-Commits carry `Tested:` and `Cost:` trailers; the PR is opened with `just pr` from a branch named
+Commits carry a `Tested:` trailer and no `Cost:` trailer; the PR is opened with `just pr` from a branch named
 after the work. Gates: `just kokkos-test`, `python3 scripts/figures.py check`,
 `python3 -m unittest discover tests`, `python3 scripts/wfip.py check`, `just proposal-lint` and
 the `revisor-proposta` review for `pubs/proposal/`. A Spec Kit spec lives in

@@ -9,6 +9,8 @@ The port plan that answers the issue's open questions (incremental phases, the C
 H100, Triton C accuracy, IFS against WeatherNext 3 wind) is
 [`W3SDS4_TRITON_PLANO_202610.pt.md`](W3SDS4_TRITON_PLANO_202610.pt.md), in Portuguese.
 
+> **2026-10-14, [ADR-0010](ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md).** For the Kokkos arm of these figures, the L1 gates on a `W3SDS4` fixture no longer apply: the Kokkos port has no tests of its own, and WW3's regtests, Fortran routine against Kokkos routine on the CPU, are its only tests. Whether the Triton arms follow the same rule is not decided ⚠ (an open question for the owner); the figures are kept as drawn on 2026-10-07.
+
 ## Where the source-term time goes
 
 ```mermaid

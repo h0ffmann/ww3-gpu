@@ -15,10 +15,13 @@ So this directory measures three separate, honest things:
 | **CPU and GPU at the same time** | `hetero_split.f90` | Sweeps the work split from all-GPU to all-CPU and finds your optimum. This is the direct answer to "can I use both together?" |
 
 A measurement that a table quotes is kept as data in [`results/`](results/), one JSON record per
-study: machine, toolchain, build commit, L1 status, statistic, and each run's command and numbers.
+study: machine, toolchain, build commit, parity status, statistic, and each run's command and numbers.
 The table on the page is generated between `<!-- results:<study>:start -->` and `:end -->` markers
 by `python3 scripts/results.py table`; CI (`results.py check`) fails when a record lacks a command
-or a passed L1, or a quoted table no longer matches its record.
+or a passed parity check, or a quoted table no longer matches its record. Parity is a passed WW3
+regtest replay on the same commit (`regtest: passed: <command>`,
+[ADR-0010](../docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md)); a record made before
+2026-10-14 keeps the `l1: passed` of its day as history.
 
 ```bash
 make run                                   # the kernel benchmarks

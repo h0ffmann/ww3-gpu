@@ -108,6 +108,13 @@ using SpecView  = Kokkos::View<Real****, Kokkos::LayoutLeft, DeviceMem>;
 
 ### 1.5 Validation contract (what "done" means for one ported routine)
 
+> **2026-10-14:** item 3 is withdrawn and item 4 is the only test: the port has no tests of its own,
+> and WW3's regtests validate it ([ADR-0010](ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md),
+> [WFIP-0003](WFIPs/WFIP-0003-kokkos-regtest-matrix.md)). Item 4 is `scripts/hoff.sh --hoff --cpu`
+> pair to pair with `--ww3` (`just smoke-hoff`, `just full-hoff`) and the regtest matrix
+> (`just hoff-matrix`), not a `tests/L2_test_X` file, and it runs on the CPU only; item 6 is checked
+> inside a regtest run. The list is kept as written in 2026-09.
+
 A PR that ports routine `X` is complete only when the agent has produced **all** of:
 
 1. `src/ww_kokkos/X.hpp/.cpp` with Doxygen and heritage header naming the WW3 module.
@@ -121,7 +128,8 @@ A PR that ports routine `X` is complete only when the agent has produced **all**
 
 ### 1.6 How to task the agent (prompt patterns that work)
 
-Give the agent, in every task:
+Give the agent, in every task (since 2026-10-14 without the L1 line of the first example, which
+asked for a test ADR-0010 forbids):
 
 - The **exact** Fortran routine(s) with file path and version/commit of WW3.
 - The **regtest** that exercises it and the reference output file.
@@ -332,7 +340,7 @@ Step 2 is where the E3SM OpenACC effort got stuck (data structures in Fortran mo
 | GPU | No (E3SM OpenACC fork of `W3SRCEMD`, ~1.3–1.4× per node) | No | Yes, target of the port |
 | Ensemble support | None inside model; run N jobs | None yet | Member dimension in kernels, shared invariant data, batched output |
 | Precision | REAL(4) state, some REAL(8) | Not defined yet | Template `Real`, float32 default, parity-tested |
-| Testing | `regtests/` (integration, `matrix` scripts), no unit tests | GTest L1 (unit) / L2 (integration) | L1 per kernel (synthetic spectra) + L2 regtest replays + shadow mode |
+| Testing | `regtests/` (integration, `matrix` scripts), no unit tests | GTest L1 (unit) / L2 (integration) | WW3's regtests only, Fortran routine vs Kokkos routine on the CPU (ADR-0010, 2026-10-14; it replaced the L1 per-kernel tests on synthetic spectra) + shadow mode |
 | Docs | Manual + `guide.pdf` style rules | Doxygen mandatory, `@author/@date`, GenAI disclosure | Same as WW4 + heritage tags naming WW3 routines |
 | Agent guidance | none | `AGENTS.md` (persona "Aldgisl", Jules/Copilot used) | This file; overrides WW4 rules that conflict with Kokkos (§1.1) |
 | Memory model | Global module arrays (`W3GDATMD`, `W3ADATMD`, `W3WDATMD`) | RAII, no raw ownership | Device-resident `State` owned by C++, unmanaged host views over Fortran arrays at the boundary |
@@ -346,7 +354,7 @@ Step 2 is where the E3SM OpenACC effort got stuck (data structures in Fortran mo
 - You are porting WW3 kernels to Kokkos in phases. Phase 1 = translate faithfully; no numerics changes.
 - Kokkos rules: explicit memory spaces; `LayoutLeft` at the Fortran boundary; no host containers or allocation in kernels; scratch via `TeamPolicy`; `parallel_reduce` not atomics; float32 default; fence before host reads and MPI.
 - Every kernel is labelled with the WW3 routine it replaces (`"srce.snl1.dia"`).
-- A port PR contains: kernel + Doxygen heritage header, `bind(C)` shim + Fortran interface, L1 unit test with stated tolerances, L2 regtest replay, timing table in `PORT_STATUS.md`, property test where applicable.
+- A port PR contains: kernel + Doxygen heritage header, `bind(C)` shim + Fortran interface, the WW3 regtest replay and the regtest matrix on the CPU (`--hoff --cpu` vs `--ww3`) within `tolerances.txt`, timing table in `PORT_STATUS.md`, property check inside a regtest run where applicable. No test of its own: no L1, GoogleTest or captured fixture (ADR-0010).
 - Never edit WW3 physics Fortran except to add shims behind the `KOKKOS` switch.
 - Never report a speed-up without the measurement attached; never introduce Unified Memory to avoid data-movement design.
 - Ask before: changing loop order that affects reduction order, changing precision, changing a limiter or integration scheme.

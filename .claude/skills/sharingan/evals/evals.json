@@ -30,10 +30,10 @@
     {
       "id": 2,
       "prompt": "copy the 'git commit helper' skill from https://github.com/example/dotfiles/tree/main/skills/commit — it writes commit messages with a Generated-by footer",
-      "expected_output": "Maps the concept to AGENTS.md's commit rule (Tested: and Cost: trailers, the harness's own attribution lines, no model name in the repository), finds the footer conflicts with it, and either drops that part or reports that no skill is the right port.",
+      "expected_output": "Maps the concept to AGENTS.md's commit rule (a Tested: trailer and never a Cost: trailer, the harness's own attribution lines, no model name in the repository), finds the footer conflicts with it, and either drops that part or reports that no skill is the right port.",
       "files": [],
       "assertions": [
-        {"id": "agents_wins", "description": "Does not keep a Generated-by footer; cites AGENTS.md's Tested:/Cost: trailer rule"},
+        {"id": "agents_wins", "description": "Does not keep a Generated-by footer; cites AGENTS.md's Tested: trailer rule (no Cost:)"},
         {"id": "no_blind_write", "description": "Does not write a SKILL.md before stating vendor/adapt/rewrite/none"}
       ]
     }
