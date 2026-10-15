@@ -10,6 +10,7 @@
 [![versão](https://img.shields.io/github/v/tag/h0ffmann/ww3-gpu?style=flat-square&label=vers%C3%A3o&color=FF4F00)](RELEASES.md)
 [![CI](https://github.com/h0ffmann/ww3-gpu/actions/workflows/ci.yml/badge.svg)](https://github.com/h0ffmann/ww3-gpu/actions/workflows/ci.yml)
 [![site](https://img.shields.io/badge/site-no%20ar-3FB950?style=flat-square)](https://h0ffmann.github.io/ww3-gpu/)
+[![entregável: ww3-dia-gpu-v2](https://img.shields.io/badge/entreg%C3%A1vel-ww3--dia--gpu--v2-181717?style=flat-square&logo=github)](https://github.com/h0ffmann/ww3-dia-gpu-v2)
 [![licença](https://img.shields.io/badge/licen%C3%A7a-MIT%20%2B%20kernels%20LGPL--3.0-1682D4?style=flat-square)](#licença)
 [![read in english](https://img.shields.io/badge/read%20in-english-3FB950?style=flat-square)](README.md)
 
@@ -166,6 +167,37 @@ de regtests do WW3 por CMake/CTest em `regtests/`. O toolchain, o fork do WW3 e 
 Kokkos estão em [`docs/TOOLCHAIN.md`](docs/TOOLCHAIN.md). Para casos costeiros, `just swan` instala
 o SWAN.
 
+## rodar no Docker
+
+É preciso ter [Docker](https://docs.docker.com/engine/install/) e, para os comandos curtos,
+[just](https://github.com/casey/just). A imagem é Ubuntu 26.04 com o WW3, o WW3 com o DIA em
+Kokkos e o WW4 já compilados: ela traz os programas, as bibliotecas de que precisam para rodar e
+as entradas dos casos, não o código-fonte. Só CPU.
+
+```console
+git clone --recurse-submodules git@github.com:h0ffmann/ww3-gpu.git && cd ww3-gpu
+just docker-build               # constrói a imagem ww3-gpu:local a partir deste clone
+just docker-run --ww3 smoke     # o WW3 como escrito: regtest ww3_ts1, segundos
+just docker-run --hoff smoke    # o DIA em Kokkos contra o DIA em Fortran, mesmo executável
+just docker-run --hoff full     # o mesmo no bench_small (9 520 pontos de mar, 12 horas)
+just docker-run --ww4 smoke     # o WAVEWATCH IV; sai com 5 enquanto faltar uma parte do caso
+```
+
+Sem o just, o mesmo com Docker puro:
+
+```console
+docker build -f docker/Dockerfile -t ww3-gpu:local .
+docker run --rm --user "$(id -u):$(id -g)" -v "$PWD/build/docker-runs:/work/runs" ww3-gpu:local --hoff smoke
+```
+
+Cada rodada fica em `build/docker-runs/`. Dentro da imagem, o ponto de entrada é o
+`scripts/hoff.sh`, o mesmo script do host, então as opções, as verificações e os códigos de saída
+são os mesmos ([`docker/Dockerfile`](docker/Dockerfile) diz o que cada estágio compila). Os
+compiladores são os do Ubuntu: o `--hoff` continua comparando o DIA em Kokkos e o DIA em Fortran
+dentro de um mesmo executável, então o veredito bit a bit vale na imagem; um número medido na
+imagem não é um número do toolchain fixado de [`docs/TOOLCHAIN.md`](docs/TOOLCHAIN.md), que usa
+outro gfortran.
+
 ## duas coisas para saber antes de investir
 
 O WAVEWATCH IV™ (WW4) existe, e o WW3 tem fim programado. O
@@ -218,7 +250,8 @@ solver de propagação
 A tabela completa está na seção [structure](README.md#structure) do README em inglês. Em resumo:
 `course/` (os capítulos), `kokkos/` (os kernels), `bench/` e `gpu/` (as medições), `proof/` (a
 prova), `docs/` (planos, decisões, desenhos, o diário), `notes/` (o segundo cérebro), `site/` (a
-página inicial em Gleam) e `pubs/` (o livro e a proposta).
+página inicial em Gleam), `pubs/` (o livro e a proposta) e `docker/` (a imagem Ubuntu com os programas
+compilados, [rodar no Docker](#rodar-no-docker)).
 
 ## convenções
 

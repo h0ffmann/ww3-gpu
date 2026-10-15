@@ -124,8 +124,9 @@ regtest table cites it.
 3. **Stage.** Copy `WW3/regtests/<test>/` to `build/hoff-matrix/regtests/<test>/`, and write
    beside the original switch a `switch_<s>_KOKKOS` with the token `KOKKOS` appended. Inputs WW3
    keeps off git (`ww3_tp2.15`'s `wind.nc`, `density.nc`, `momentum.nc`) are copied in as
-   `$WW3/model/bin/ww3_from_ftp.sh` copies them, from the tarball it names, fetched once into
-   `build/ww3-data/<version>/` by `scripts/hoff_matrix.sh --fetch-data`. `WW3/` is
+   `$WW3/model/bin/ww3_from_ftp.sh` copies them, from the tarball it names: pratico's
+   `ww3-regtest-data` package, a fixed-output derivation with the tarball's SHA-256
+   (`just hoff-matrix-fetch`, update of 2026-10-15). `WW3/` is
    never written: the run ends with `git -C WW3 status --porcelain` and fails if it is not empty.
 4. **Run.** From `build/hoff-matrix/regtests/`, per entry, with `path_build_root` shared, the
    entry's own options kept and only `-s` and `-w` replaced (`$WW3/model` is the source argument,

@@ -50,5 +50,18 @@ class Results(unittest.TestCase):
         self.assertIn("(../bench/results/s.json)", new)
         self.assertNotIn("old", new)
 
+    def test_a_record_with_columns_renders_them_and_needs_their_keys(self):
+        rec = dict(RECORD, columns=[["backend", "backend"], ["Fortran ms", "fortran_ms"], ["ratio", "r"]],
+                   runs=[{"backend": "Serial", "command": "cmd", "fortran_ms": 1.5, "r": "2.00x"}])
+        records = self.write(rec)
+        self.assertEqual(results.problems(records), [])
+        page = self.root / "p.md"
+        page.write_text("<!-- results:s:start -->\n<!-- results:s:end -->\n", encoding="utf-8")
+        new, _ = results.render(page, records, self.root)
+        self.assertIn("| backend | Fortran ms | ratio |", new)
+        self.assertIn("| Serial | 1.5 | 2.00x |", new)
+        bad = dict(rec, runs=[{"backend": "Serial", "command": "cmd", "fortran_ms": 1.5}])
+        self.assertIn("s.json: run 0 missing 'r'", results.problems(self.write(bad)))
+
     def test_checked_in_tables_are_current(self):
         self.assertEqual(results.main(["check"]), 0)

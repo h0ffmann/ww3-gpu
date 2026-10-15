@@ -9,6 +9,8 @@ set positional-arguments
 ww3_src  := env_var_or_default("WW3",   env_var("HOME") + "/src/WW3")
 swan_src := env_var_or_default("SWAN",  env_var("HOME") + "/src/swan")
 pratico  := justfile_directory() + "/nix-config/labs/pratico"
+ww3_shell := 'nix develop "' + pratico + '#ww3" --command'
+hoff_build := justfile_directory() + "/build/hoff-matrix-"
 
 default:
     @just --list --unsorted
@@ -79,13 +81,67 @@ full-ww3:
 full-hoff device="cpu":
     bash scripts/hoff.sh --hoff full --{{device}}
 
-# The Kokkos DIA through WW3's own regtest harness (WFIP-0003): every serial NL1 entry of
-# matrix.base, Fortran and Kokkos DIA from one executable, test.comp and nccmp-tol. CPU only.
-# `just hoff-matrix --list`, `--dry-run`, `--only ww3_ts1:ST4`, `--jobs N`; `--omp` for the shared-
-# memory OpenMP entries instead (build/hoff-matrix-omp/), `--out DIR`; `--fetch-data` once
-# for the inputs WW3 keeps on NOAA's ftp (ww3_tp2.15's wind.nc), cached in build/ww3-data/.
-hoff-matrix *args:
-    bash scripts/hoff_matrix.sh {{args}}
+# The Kokkos DIA through WW3's own regtest harness (WFIP-0003), as CTest (regtests/CMakeLists.txt):
+# one test per NL1 entry of matrix.base, the Fortran and the Kokkos DIA of one executable, compared
+# by test.comp and nccmp-tol. CPU only. <selection> is serial (100 entries), omp (50 shared-memory
+# OpenMP entries), mpi (161, mpirun with $HOFF_MPI_RANKS ranks, default 4) or all (311); each entry
+# gets (nproc --all)/<jobs> threads ($HOFF_OMP_THREADS overrides), shared among its ranks. The
+# rest goes to ctest: `just hoff-matrix 8 serial -R ww3_ts1`, `-L entry`, `-N`. jobs=N and
+# selection=S are accepted too. HOFF_OMP_NESTED=ON in the environment exports
+# OMP_MAX_ACTIVE_LEVELS=2 to every run (no longer needed: inside W3WAVE's parallel region the shim
+# runs the kernel on Kokkos::Serial). Record: build/hoff-matrix-<selection>/summary.tsv.
+hoff-matrix jobs="8" selection="serial" *ctest_args:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    jobs=8 sel=serial rest=() i=0
+    for a in "$@"; do
+      i=$((i + 1))
+      case "$a" in
+        jobs=*) jobs="${a#jobs=}" ;;
+        selection=*) sel="${a#selection=}" ;;
+        *) if [ "$i" = 1 ] && [[ "$a" =~ ^[0-9]+$ ]]; then jobs="$a"
+           elif [ "$i" -le 2 ] && [[ "$a" =~ ^(serial|omp|mpi|all)$ ]]; then sel="$a"
+           else rest+=("$a"); fi ;;
+      esac
+    done
+    [[ "$jobs" =~ ^[1-9][0-9]*$ ]] || { echo "hoff-matrix: jobs is a positive integer, not '$jobs'" >&2; exit 64; }
+    t=$(( $(nproc --all) / jobs )); t=${HOFF_OMP_THREADS:-$(( t > 0 ? t : 1 ))}
+    data=$(nix build --no-link --print-out-paths "{{pratico}}#ww3-regtest-data")
+    {{ww3_shell}} cmake -S regtests -B "{{hoff_build}}$sel" -DHOFF_SELECTION="$sel" -DHOFF_OMP_THREADS="$t" \
+      -DHOFF_MPI_RANKS="${HOFF_MPI_RANKS:-4}" -DHOFF_DATA="$data" \
+      -DHOFF_OMP_NESTED="${HOFF_OMP_NESTED:-OFF}" >/dev/null
+    HOFF_COMMAND="${HOFF_OMP_NESTED:+HOFF_OMP_NESTED=$HOFF_OMP_NESTED }just hoff-matrix $*" {{ww3_shell}} ctest --test-dir "{{hoff_build}}$sel" -j "$jobs" --output-on-failure "${rest[@]}"
+
+# The entries of a selection, as CTest test names (NNN:<test>:<switch>), without running them.
+hoff-matrix-list selection="serial":
+    {{ww3_shell}} cmake -S regtests -B "{{hoff_build}}{{selection}}" -DHOFF_SELECTION="{{selection}}" >/dev/null
+    {{ww3_shell}} ctest --test-dir "{{hoff_build}}{{selection}}" -N -L entry -FA ".*"
+
+# WW3's regtest data kept on NOAA's ftp (ww3_tp2.15's wind.nc, ...), SHA-256 pinned: pratico's
+# ww3-regtest-data package (nix-config/labs/pratico/flake.nix). Prints its store path.
+hoff-matrix-fetch:
+    nix build --no-link --print-out-paths "{{pratico}}#ww3-regtest-data"
+
+# The DIA on the CPU, Serial and OpenMP: WW3's Fortran, the Kokkos port and ww3-dia-gpu's kernel,
+# alone and in ww3_shel (scripts/bench_dia.sh). BENCH_REGTEST="passed: <command>" writes the record.
+# Benchmark the DIA three ways on the CPU (`--kernel-only` for minutes, not an hour)
+bench-dia *args:
+    bash scripts/bench_dia.sh {{args}}
+
+# docker/Dockerfile: WW3, WW3 with the Kokkos DIA and WW4 compiled in Ubuntu, no sources, no Nix.
+# Build the Ubuntu runtime image ww3-gpu:<tag> (CPU only)
+docker-build tag="local":
+    bash scripts/docker.sh build {{tag}}
+
+# Every scripts/hoff.sh option passes through (--ww3|--hoff|--ww4, smoke|full, --cpu, --build-only,
+# --help, --self-test); runs land in build/docker-runs/; DOCKER_IMAGE picks another image.
+# Run scripts/hoff.sh in the image: `just docker-run --hoff smoke`
+docker-run *args:
+    bash scripts/docker.sh run {{args}}
+
+# The matrix's parsers and verdict on fixtures, and the entry counts at the WW3 pin.
+hoff-matrix-selftest:
+    {{ww3_shell}} cmake -P regtests/cmake/selftest.cmake
 
 # The same cases on WAVEWATCH IV, built from the WW4/ submodule (h0ffmann/WW4). Exit 5, before
 # any build, when a part the case needs is not ported to WW4 yet (scripts/ww4_parts.py).

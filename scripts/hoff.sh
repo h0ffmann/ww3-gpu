@@ -40,7 +40,12 @@
 #
 # --cpu is Kokkos' OpenMP backend, --gpu its CUDA backend. The script enters the pinned toolchain
 # itself (nix-config/labs/pratico: #ww3, or #cuda for --gpu).
-# Builds go to build/<ww3|hoff-BACKEND>/, runs to build/runs/<mode>-<case>[-BACKEND]/.
+# Builds go to build/<ww3|hoff-BACKEND>/, runs to build/runs/<mode>-<case>[-BACKEND]/ ($HOFF_RUNS).
+#
+# HOFF_PREBUILT=<prefix> runs programs built beforehand and builds nothing, with no Nix: the
+# Docker image (docker/Dockerfile) sets it. <prefix> holds ww3/bin and hoff-openmp/bin (WW3's
+# programs), bin/nccmp-tol, cases/ (ww3_ts1, bench_small, ww4/<case>), and ww4/ (ww4_standalone
+# and the parts report of each case, recorded when the image was built). CPU only.
 #
 # WW3 is built with its own Release flags in both modes. The two runs of --hoff agree to the
 # tolerances of kokkos/tools/nccmp-tol/tolerances.txt; since 2026-10-15 they are byte-identical
@@ -49,6 +54,8 @@ set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 pratico="$root/nix-config/labs/pratico"
+pre="${HOFF_PREBUILT:-}"
+tols=()
 
 usage() { sed -n '2,/^set -euo/{/^set -euo/!p}' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 64; }
 
@@ -76,9 +83,11 @@ if [ "$mode" = self-test ]; then
     "${BASH_SOURCE[0]}" $bad </dev/null >/dev/null 2>&1 && rc=0 || rc=$?
     [ "$rc" = 64 ] || { echo "hoff: '$bad' gave exit $rc, not 64" >&2; exit 1; }
   done
-  # Without a terminal --hoff --gpu never runs: 7 (no supervisor) or 4 (no driver), before any build.
+  # Without a terminal --hoff --gpu never runs: 7 (no supervisor) or 4 (no driver), before any
+  # build; with prebuilt programs (the Docker image, CPU only) it is refused outright, 64.
   "${BASH_SOURCE[0]}" --hoff smoke --gpu </dev/null >/dev/null 2>&1 && rc=0 || rc=$?
-  case "$rc" in 4|7) ;; *) echo "hoff: --hoff --gpu without a terminal gave exit $rc" >&2; exit 1 ;; esac
+  ok="4|7"; [ -z "${HOFF_PREBUILT:-}" ] || ok="64"
+  [[ "$rc" =~ ^($ok)$ ]] || { echo "hoff: --hoff --gpu without a terminal gave exit $rc" >&2; exit 1; }
   echo "hoff self-test: ok"
   exit 0
 fi
@@ -113,9 +122,17 @@ if [ "$device" = gpu ] && [ "$mode" != hoff ]; then
   exit 64
 fi
 if [ "$device" = gpu ]; then backend=cuda; else backend=openmp; fi
+if [ -n "$pre" ] && [ "$device" = gpu ]; then
+  echo "hoff: the prebuilt programs ($pre) are CPU only; there is no CUDA build in them" >&2
+  exit 64
+fi
 
 # --ww4: what WW4 has decides whether there is anything to build. Checked before the toolchain.
-if [ "$mode" = ww4 ] && [ -z "${HOFF_IN_SHELL:-}" ] && [ -z "$build_only" ]; then
+if [ "$mode" = ww4 ] && [ -n "$pre" ]; then
+  cat "$pre/ww4/parts-$case_name.txt"
+  rc="$(cat "$pre/ww4/parts-$case_name.rc")"
+  [ "$rc" = 0 ] || exit "$rc"
+elif [ "$mode" = ww4 ] && [ -z "${HOFF_IN_SHELL:-}" ] && [ -z "$build_only" ]; then
   python3 "$root/scripts/ww4_parts.py" "$case_name" || exit $?
 fi
 
@@ -132,14 +149,32 @@ if [ "$device" = gpu ] && [ -z "$build_only" ] && [ -z "${HOFF_IN_SHELL:-}" ]; t
   [ "$answer" = yes ] || { echo "hoff: not confirmed; nothing ran" >&2; exit 7; }
 fi
 
-# Enter the pinned toolchain once, then continue inside it.
-if [ -z "${HOFF_IN_SHELL:-}" ]; then
+# Enter the pinned toolchain once, then continue inside it (not with prebuilt programs).
+if [ -z "${HOFF_IN_SHELL:-}" ] && [ -z "$pre" ]; then
   shell="ww3"; [ "$mode" = hoff ] && [ "$backend" = cuda ] && shell="cuda"
   exec env HOFF_IN_SHELL=1 \
     nix develop "$pratico#$shell" --command bash "${BASH_SOURCE[0]}" "--$mode" "$case_name" "--$device" $build_only
 fi
 
+runs="${HOFF_RUNS:-$root/build/runs}"
+if [ -n "$pre" ]; then
+  smoke_in="$pre/cases/ww3_ts1/input" full_in="$pre/cases/bench_small" ww4_in="$pre/cases/ww4"
+else
+  smoke_in="$root/WW3/regtests/ww3_ts1/input" full_in="$root/kokkos/tests/fixtures/bench_small"
+  ww4_in="$root/kokkos/tests/fixtures/ww4"
+fi
+
 # --- WW4 (--ww4) -----------------------------------------------------------------------------
+if [ "$mode" = ww4 ] && [ -n "$pre" ]; then
+  exe="$pre/ww4/ww4_standalone"
+  [ -x "$exe" ] || { echo "hoff: this image has no ww4_standalone (WW4 did not build)" >&2; exit 1; }
+  [ -d "$ww4_in/$case_name" ] || { echo "hoff: no WW4 input for --ww4 $case_name in $ww4_in" >&2; exit 6; }
+  d="$runs/ww4-$case_name"
+  rm -rf -- "$d" && mkdir -p "$d" && cp -r "$ww4_in/$case_name"/. "$d"/
+  (cd "$d" && "$exe" > ww4_standalone.out 2>&1) || { tail -20 "$d/ww4_standalone.out" >&2; exit 1; }
+  echo ">> --ww4 $case_name: ww4_standalone finished; output in $d"
+  exit 0
+fi
 if [ "$mode" = ww4 ]; then
   ww4="$root/WW4"
   [ -d "$ww4/src/ww4_core" ] || { echo "hoff: WW4/ is empty: git submodule update --init WW4" >&2; exit 3; }
@@ -158,73 +193,97 @@ if [ "$mode" = ww4 ]; then
   echo ">> WW4 ($(git -C "$ww4" rev-parse --short HEAD)) built: $exe"
   [ -z "$build_only" ] || exit 0
   # Reached only when scripts/ww4_parts.py found every part ported.
-  if [ ! -d "$root/kokkos/tests/fixtures/ww4/$case_name" ]; then
+  if [ ! -d "$ww4_in/$case_name" ]; then
     echo "hoff: WW4 has every part --ww4 $case_name needs, but there is no WW4 input for it yet (kokkos/tests/fixtures/ww4/$case_name/)" >&2
     exit 6
   fi
-  d="$root/build/runs/ww4-$case_name"
-  [[ "$d" == "$root/build/runs/"* ]] && rm -rf -- "$d"
-  mkdir -p "$d" && cp -r "$root/kokkos/tests/fixtures/ww4/$case_name"/. "$d"/
+  d="$runs/ww4-$case_name"
+  [[ "$d" == "$runs/"* ]] && rm -rf -- "$d"
+  mkdir -p "$d" && cp -r "$ww4_in/$case_name"/. "$d"/
   (cd "$d" && "$exe" > ww4_standalone.out 2>&1) || { tail -20 "$d/ww4_standalone.out" >&2; exit 1; }
   echo ">> --ww4 $case_name: ww4_standalone finished; output in $d"
   exit 0
 fi
 
-ww3="$root/WW3"
-[ -f "$ww3/model/src/CMakeLists.txt" ] || { echo "hoff: WW3/ is empty: git submodule update --init WW3" >&2; exit 3; }
-if [ "$mode" = hoff ] && [ ! -f "$ww3/model/src/w3kokkosmd.F90" ]; then
-  echo "hoff: WW3/ is not the hoff/kokkos-snl1 branch of h0ffmann/WW3 (no model/src/w3kokkosmd.F90):" >&2
-  echo "      git -C WW3 fetch origin hoff/kokkos-snl1 && git -C WW3 switch hoff/kokkos-snl1" >&2
-  exit 3
-fi
-jobs="${JOBS:-$(nproc)}"
-
-# --- the Kokkos package (--hoff), and nccmp-tol, which every --hoff verdict needs ----------
-preset="${backend}-release"
-kbuild="$root/kokkos/build/$preset"
-kprefix="$kbuild/install"
-if [ "$mode" = hoff ]; then
-  [ -f "$kbuild/CMakeCache.txt" ] || cmake -S "$root/kokkos" --preset "$preset" >/dev/null
-  cmake --build "$kbuild" -j"$jobs" >/dev/null
-  cmake --install "$kbuild" --prefix "$kprefix" >/dev/null
-  echo ">> ww_kokkos ($preset) installed in $kprefix"
-fi
-
-# --- WW3 ------------------------------------------------------------------------------------
-if [ "$mode" = ww3 ]; then bdir="$root/build/ww3"; else bdir="$root/build/hoff-$backend"; fi
-mkdir -p "$bdir"
-switch_file="$bdir/switch"
-switch_now="$(cat "$root/switches/switch_lab_shrd")"
-[ "$mode" = hoff ] && switch_now="$switch_now KOKKOS"
-# A changed switch needs a fresh configure: WW3 bakes it into the preprocessed sources.
-if [ ! -f "$switch_file" ] || [ "$(cat "$switch_file")" != "$switch_now" ]; then
-  printf '%s\n' "$switch_now" > "$switch_file"
-  [ -d "$bdir/ww3" ] && [[ "$bdir/ww3" == "$root/build/"* ]] && rm -rf -- "$bdir/ww3"
-fi
-if [ ! -f "$bdir/ww3/CMakeCache.txt" ]; then
-  args=(-S "$ww3" -B "$bdir/ww3" -DSWITCH="$switch_file" -DCMAKE_BUILD_TYPE=Release)
-  if [ "$mode" = hoff ]; then
-    args+=(-DWW_KOKKOS=ON -DCMAKE_PREFIX_PATH="$kprefix;${CMAKE_PREFIX_PATH:-}")
-    # Kokkos' CUDA package wants the compiler it was built with.
-    [ "$backend" = cuda ] && args+=(-DCMAKE_CXX_COMPILER=nvcc_wrapper)
+if [ -n "$pre" ]; then
+  if [ "$mode" = ww3 ]; then bin="$pre/ww3/bin"; else bin="$pre/hoff-openmp/bin"; fi
+  nccmp="$pre/bin/nccmp-tol"
+  # nccmp-tol's default tolerance file is a path in the source tree, which the image does not have.
+  tols=("$pre/share/tolerances.txt")
+  [ -x "$bin/ww3_shel" ] && [ -x "$nccmp" ] || { echo "hoff: $pre has no $bin/ww3_shel or bin/nccmp-tol" >&2; exit 3; }
+  echo ">> WW3 --$mode prebuilt: $bin"
+  [ -z "$build_only" ] || exit 0
+else
+  ww3="$root/WW3"
+  [ -f "$ww3/model/src/CMakeLists.txt" ] || { echo "hoff: WW3/ is empty: git submodule update --init WW3" >&2; exit 3; }
+  if [ "$mode" = hoff ] && [ ! -f "$ww3/model/src/w3kokkosmd.F90" ]; then
+    echo "hoff: WW3/ is not the hoff/kokkos-snl1 branch of h0ffmann/WW3 (no model/src/w3kokkosmd.F90):" >&2
+    echo "      git -C WW3 fetch origin hoff/kokkos-snl1 && git -C WW3 switch hoff/kokkos-snl1" >&2
+    exit 3
   fi
-  cmake "${args[@]}" > "$bdir/configure.log" 2>&1 || { tail -30 "$bdir/configure.log"; exit 1; }
+  jobs="${JOBS:-$(nproc)}"
+
+  # A nix-config bump changes the compilers and libraries a CMake cache has baked in, and a stale
+  # cache links the new libraries against the old glibc. Each build directory keeps the toolchain
+  # it was configured with and is rebuilt from scratch when that changes.
+  toolchain="$(readlink -f "$(command -v gfortran)") $(readlink -f "$(command -v c++)") ${CMAKE_PREFIX_PATH:-}"
+  fresh_for_toolchain() { # <dir under build/ or kokkos/build/>
+    if [ -d "$1" ] && [ "$(cat "$1/toolchain" 2>/dev/null)" != "$toolchain" ]; then
+      [[ "$1" == "$root/build/"* || "$1" == "$root/kokkos/build/"* ]] && rm -rf -- "$1"
+    fi
+    mkdir -p "$1"
+    printf '%s\n' "$toolchain" > "$1/toolchain"
+  }
+
+  # --- the Kokkos package (--hoff), and nccmp-tol, which every --hoff verdict needs ----------
+  preset="${backend}-release"
+  kbuild="$root/kokkos/build/$preset"
+  kprefix="$kbuild/install"
+  if [ "$mode" = hoff ]; then
+    fresh_for_toolchain "$kbuild"
+    [ -f "$kbuild/CMakeCache.txt" ] || cmake -S "$root/kokkos" --preset "$preset" >/dev/null
+    cmake --build "$kbuild" -j"$jobs" >/dev/null
+    cmake --install "$kbuild" --prefix "$kprefix" >/dev/null
+    echo ">> ww_kokkos ($preset) installed in $kprefix"
+  fi
+
+  # --- WW3 ------------------------------------------------------------------------------------
+  if [ "$mode" = ww3 ]; then bdir="$root/build/ww3"; else bdir="$root/build/hoff-$backend"; fi
+  fresh_for_toolchain "$bdir"
+  switch_file="$bdir/switch"
+  switch_now="$(cat "$root/switches/switch_lab_shrd")"
+  [ "$mode" = hoff ] && switch_now="$switch_now KOKKOS"
+  # A changed switch needs a fresh configure: WW3 bakes it into the preprocessed sources.
+  if [ ! -f "$switch_file" ] || [ "$(cat "$switch_file")" != "$switch_now" ]; then
+    printf '%s\n' "$switch_now" > "$switch_file"
+    [ -d "$bdir/ww3" ] && [[ "$bdir/ww3" == "$root/build/"* ]] && rm -rf -- "$bdir/ww3"
+  fi
+  if [ ! -f "$bdir/ww3/CMakeCache.txt" ]; then
+    args=(-S "$ww3" -B "$bdir/ww3" -DSWITCH="$switch_file" -DCMAKE_BUILD_TYPE=Release)
+    if [ "$mode" = hoff ]; then
+      args+=(-DWW_KOKKOS=ON -DCMAKE_PREFIX_PATH="$kprefix;${CMAKE_PREFIX_PATH:-}")
+      # Kokkos' CUDA package wants the compiler it was built with.
+      [ "$backend" = cuda ] && args+=(-DCMAKE_CXX_COMPILER=nvcc_wrapper)
+    fi
+    cmake "${args[@]}" > "$bdir/configure.log" 2>&1 || { tail -30 "$bdir/configure.log"; exit 1; }
+  fi
+  cmake --build "$bdir/ww3" -j"$jobs" > "$bdir/build.log" 2>&1 || { grep -E -A8 "Error|error:" "$bdir/build.log" | head -60; exit 1; }
+  bin="$bdir/ww3/bin"
+  nccmp="$kbuild/tools/nccmp-tol/nccmp-tol"
+  echo ">> WW3 --$mode built in $bdir/ww3"
+  [ -z "$build_only" ] || exit 0
 fi
-cmake --build "$bdir/ww3" -j"$jobs" > "$bdir/build.log" 2>&1 || { grep -E -A8 "Error|error:" "$bdir/build.log" | head -60; exit 1; }
-bin="$bdir/ww3/bin"
-echo ">> WW3 --$mode built in $bdir/ww3"
-[ -z "$build_only" ] || exit 0
 
 # --- the case ---------------------------------------------------------------------------------
 prepare() { # <dir>: copy the case's inputs into <dir> and make their paths local
   local d="$1"
   mkdir -p "$d"
   if [ "$case_name" = smoke ]; then
-    cp "$ww3"/regtests/ww3_ts1/input/* "$d"/
+    cp "$smoke_in"/* "$d"/
     cp "$d/ww3_grid_ST4_T475.nml" "$d/ww3_grid.nml"   # the setup docs/data's profile used
     sed -i 's#\.\./input/#./#g' "$d"/*.nml "$d"/*.inp
   else
-    cp "$root"/kokkos/tests/fixtures/bench_small/* "$d"/
+    cp "$full_in"/* "$d"/
     # The fixture writes no field (stride 0: it was made for timing); write HS every hour, so
     # ww3_ounf has a file to compare.
     sed -i "s#^  DATE%FIELD = .*#  DATE%FIELD = '20200101 000000' '3600' '20200101 120000'#" "$d/ww3_shel.nml"
@@ -243,10 +302,9 @@ run_model() { # <dir> <WW_KOKKOS_SNL1>: grid, strt, shel, ounf; prints ww3_shel'
   t1="$(date +%s.%N)"
   grep -q "End of program" "$d/ww3_shel.out" || { echo "hoff: ww3_shel did not finish in $d" >&2; return 1; }
   (cd "$d" && "$bin/ww3_ounf" > ww3_ounf.out 2>&1) || { echo "hoff: ww3_ounf failed in $d:" >&2; tail -20 "$d/ww3_ounf.out" >&2; return 1; }
-  python3 -c "print(f'{$t1 - $t0:.2f}')"
+  awk -v a="$t0" -v b="$t1" 'BEGIN { printf "%.2f\n", b - a }'
 }
 
-runs="$root/build/runs"
 if [ "$mode" = ww3 ]; then
   d="$runs/ww3-$case_name"
   [[ "$d" == "$runs/"* ]] && rm -rf -- "$d"
@@ -268,7 +326,7 @@ nc0="$(cd "$d0" && find . -maxdepth 1 -name 'ww3.*.nc' -printf '%f\n' | sort | h
 echo ">> --hoff $case_name ($backend): ww3_shel ${w0} s with the Fortran DIA, ${w1} s with the Kokkos DIA"
 if cmp -s "$d0/$nc0" "$d1/$nc0"; then echo ">> the two outputs are byte-identical"; fi
 echo ">> the Kokkos DIA against the Fortran DIA, same executable:"
-"$kbuild/tools/nccmp-tol/nccmp-tol" "$d0/$nc0" "$d1/$nc0"
+"$nccmp" "$d0/$nc0" "$d1/$nc0" "${tols[@]}"
 # --hoff --cpu is the agents' regtest: pair to pair with --ww3, WW3 from the same source built
 # without the KOKKOS switch.
 if [ "$device" = cpu ]; then
@@ -276,5 +334,5 @@ if [ "$device" = cpu ]; then
   ref="$runs/ww3-$case_name/$nc0"
   [ -f "$ref" ] || { echo "hoff: the --ww3 run wrote no $nc0" >&2; exit 1; }
   echo ">> the Kokkos DIA against --ww3 (WW3 as written), pair to pair:"
-  "$kbuild/tools/nccmp-tol/nccmp-tol" "$ref" "$d1/$nc0"
+  "$nccmp" "$ref" "$d1/$nc0" "${tols[@]}"
 fi
