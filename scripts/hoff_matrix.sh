@@ -6,7 +6,16 @@
 # DIA) into work_K_<n>. The pair is compared with WW3's test.comp (bytes) and with nccmp-tol
 # (kokkos/tools/nccmp-tol/tolerances.txt) on every ww3.*.nc both runs wrote.
 #
-#   scripts/hoff_matrix.sh [--only <sel>]... [--jobs N] [--dry-run]
+# --omp selects instead the shared-memory OpenMP entries: switch with NL1 and OMPG or OMPH, no
+# MPI, no -p, no -m (the port refuses more than one grid per process, model/src/w3initmd.F90:754-759,
+# so a ww3_multi entry cannot run with WW_KOKKOS_SNL1=1). Their own options are kept, -f -O -n $np
+# among them; $np, which matrix.base leaves to the site's matrix script, becomes OMP_NUM_THREADS,
+# and run_cmake_test exports OMP_NUM_THREADS=<n> for the run. Its record is build/hoff-matrix-omp/.
+# Run it with OMP_MAX_ACTIVE_LEVELS=2: the shim is called inside W3WAVE's !$OMP PARALLEL region,
+# and Kokkos::OpenMP aborts there ("Nested parallelism requires the maximum active levels to be
+# larger than 1") when the limit is 1. The header records the value; both runs inherit it.
+#
+#   scripts/hoff_matrix.sh [--omp] [--only <sel>]... [--jobs N] [--out DIR] [--dry-run]
 #   scripts/hoff_matrix.sh --list         the selected entries, "n test options", one per line
 #   scripts/hoff_matrix.sh --self-test    the selection parser and the verdict, on fixtures
 #   scripts/hoff_matrix.sh --fetch-data   download WW3's regtest data once into build/ww3-data/
@@ -14,9 +23,10 @@
 # <sel> is an entry number from --list, a test (ww3_ts1) or a test and switch (ww3_ts1:ST4);
 # --only is repeatable and takes a comma list. --jobs N runs N entries at once (default 1) and
 # gives each OMP_NUM_THREADS=nproc/N unless OMP_NUM_THREADS is set. --dry-run prints the commands.
+# --out DIR replaces build/hoff-matrix (build/hoff-matrix-omp with --omp) as the work and record directory.
 # CPU only (Kokkos on OpenMP): --gpu is refused (exit 64); GPU runs are the owner's (AGENTS.md).
 #
-# WW3/ is never written: the regtest inputs are staged in build/hoff-matrix/regtests/, and the
+# WW3/ is never written: the regtest inputs are staged in <out>/regtests/, and the
 # run fails if `git -C WW3 status --porcelain` is not empty at the end. -o netcdf is added to an
 # entry with no -o when its input directory has a ww3_ounf input. Data WW3 keeps off git (wind.nc
 # of ww3_tp2.15, ...) comes from the tarball $WW3/model/bin/ww3_from_ftp.sh names: --fetch-data
@@ -24,7 +34,7 @@
 # outside data_regtests/ or a link, and extracts it there; staging then copies what that script's
 # `cp -r data_regtests/... regtests/...` lines copy, for the staged tests only, and warns when a
 # staged test needs the data and the cache is missing. The record is
-# build/hoff-matrix/summary.tsv: one row per entry run (n, test, switch, built, ran, kokkos_log,
+# <out>/summary.tsv: one row per entry run (n, test, switch, built, ran, kokkos_log,
 # test_comp as differing/compared files, nccmp_tol PASS/FAIL/n/a, judged variables, wall s, and the
 # entry's matrix.base options, which tell apart entries of one test and switch).
 # nccmp_tol is n/a when the test has no ww3_ounf input, and MISSING (a failure) when it has one
@@ -39,14 +49,13 @@ set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 pratico="$root/nix-config/labs/pratico"
 ww3="$root/WW3"
-out="$root/build/hoff-matrix"
-stage="$out/regtests"
 
 usage() { sed -n '2,/^set -euo/{/^set -euo/!p}' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 64; }
 
-# select_entries <matrix.base> <regtests dir>: "test<TAB>options" for every kept entry, in order.
+# select_entries <matrix.base> <regtests dir> [serial|omp]: "test<TAB>options" for every kept
+# entry, in order. serial: NL1 and none of MPI, OMPG, OMPH; omp: NL1, OMPG or OMPH, and no MPI.
 select_entries() {
-  local base="$1" rt="$2" line test opts inp sw f prev
+  local base="$1" rt="$2" kind="${3:-serial}" line test opts inp sw f prev
   local -a tok
   while IFS= read -r line; do
     tok=()
@@ -65,7 +74,9 @@ select_entries() {
     f="$rt/$test/$inp/switch${sw:+_$sw}"
     [ -f "$f" ] || continue
     grep -qw NL1 "$f" || continue
-    grep -qwE 'MPI|OMPG|OMPH' "$f" && continue
+    grep -qw MPI "$f" && continue
+    if [ "$kind" = omp ]; then grep -qwE 'OMPG|OMPH' "$f" || continue
+    else grep -qwE 'OMPG|OMPH' "$f" && continue; fi
     opts="${tok[*]}"
     printf '%s\t%s\n' "$test" "$opts"
   done < <(awk '/^[[:space:]]*#/ {next}
@@ -113,15 +124,47 @@ stage_data() {
   [ "$n" = 0 ] || echo ">> $test: $n file(s) of WW3's ftp data staged"
 }
 
+# entry_cmd <n> <F|K>: the run_cmake_test argument list of entry <n>'s run, one per line.
+entry_cmd() {
+  local n="$1" kind="$2" test prev="" f sw inp
+  local -a o keep=()
+  test="${entries[n - 1]%%$'\t'*}"
+  read -r -a o <<<"${entries[n - 1]#*$'\t'}"
+  sw="$(opt_of -s "${o[@]}")"
+  for f in "${o[@]}"; do
+    if [ "$f" = -s ] || [ "$f" = -w ]; then prev="$f"; continue; fi
+    # shellcheck disable=SC2016 # the literal token matrix.base writes
+    [ "$f" = '$np' ] && f="$OMP_NUM_THREADS"
+    [ "$prev" = -s ] || [ "$prev" = -w ] || keep+=("$f")
+    prev="$f"
+  done
+  inp="$(opt_of -i "${o[@]}")"
+  if [ -z "$(opt_of -o "${o[@]}")" ] && has_ounf "$ww3/regtests/$test/${inp:-input}"; then
+    keep+=(-o netcdf)
+  fi
+  printf '%s\n' "${keep[@]}" -s "${sw:+${sw}_}KOKKOS" -w "work_${kind}_$n" "$ww3/model" "$test"
+}
+
+# sel_desc <serial|omp>: the selection rule, for the record's header.
+sel_desc() {
+  # shellcheck disable=SC2016 # the literal token matrix.base writes
+  case "$1" in
+    omp) echo 'switch with NL1 and OMPG or OMPH, no MPI; no -p, no -m; $np = OMP_NUM_THREADS' ;;
+    *) echo 'switch with NL1, none of MPI, OMPG, OMPH; no -p, no -m' ;;
+  esac
+}
+
 # --- arguments -----------------------------------------------------------------------------
 orig_args=("$@")
-mode=run only=() dry="" jobs=1
+mode=run only=() dry="" jobs=1 kind=serial out=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --list) mode=list ;;
     --fetch-data) mode=fetch ;;
     --self-test) mode=self-test ;;
     --dry-run) dry=1 ;;
+    --omp) kind=omp ;;
+    --out) [ -n "${2:-}" ] || usage; out="$2"; shift ;;
     --only) [ $# -ge 2 ] || usage; IFS=, read -r -a sel <<<"$2"; only+=("${sel[@]}"); shift ;;
     --jobs) [[ "${2:-}" =~ ^[1-9][0-9]*$ ]] || { echo "hoff_matrix: --jobs takes a positive integer" >&2; exit 64; }
             jobs="$2"; shift ;;
@@ -143,6 +186,9 @@ if [ "$mode" = self-test ]; then
   echo "F90 SHRD ST4 NL1X"     > "$t/rt/a/input/switch_NX"
   echo "F90 SHRD ST4 NL1"      > "$t/rt/a/input2/switch"
   echo "F90 SHRD ST4 NL1"      > "$t/rt/b/input/switch_K1"
+  echo "F90 SHRD OMPG ST4 NL1" > "$t/rt/b/input/switch_OG"
+  echo "F90 SHRD OMPG ST4 NL3" > "$t/rt/b/input/switch_O3"
+  echo "F90 DIST MPI OMPH ST4 NL1" > "$t/rt/b/input/switch_MH"
   cat > "$t/rt/bin/matrix.base" <<'EOF'
     echo "$rtst -s K1 -w work_K1 $ww3 a" >> matrix.body
     echo "$rtst -s K1 -w work_K1g -g G2 -N -o both $ww3 a" >> matrix.body
@@ -156,10 +202,23 @@ if [ "$mode" = self-test ]; then
     echo "$rtst -s MISSING -w work_X $ww3 a" >> matrix.body
 #   echo "$rtst -s K1 -w work_C $ww3 b" >> matrix.body
     echo "$rtst -s K1 -w work_B $ww3 b" >> matrix.body
+    echo "$rtst -s OG -w work_OG -f -O -n $np $ww3 b" >> matrix.body
+    echo "$rtst -s OG -w work_OGm -m grdset_a -f -O -n $np $ww3 b" >> matrix.body
+    echo "$rtst -s O3 -w work_O3 -f -O -n $np $ww3 b" >> matrix.body
+    echo "$rtst -s MH -w work_MH -f -p $mpi -n $nr -t $nth $ww3 b" >> matrix.body
 EOF
   got="$(select_entries "$t/rt/bin/matrix.base" "$t/rt")"
   want="$(printf 'a\t-s K1 -w work_K1\na\t-s K1 -w work_K1g -g G2 -N -o both\na\t-i input2 -w work_I\nb\t-s K1 -w work_B')"
   [ "$got" = "$want" ] || { printf 'hoff_matrix: selection wrong; got:\n%s\nwant:\n%s\n' "$got" "$want" >&2; exit 1; }
+  got="$(select_entries "$t/rt/bin/matrix.base" "$t/rt" omp)"
+  # shellcheck disable=SC2016 # the literal token matrix.base writes
+  want="$(printf 'a\t-s OH -w work_OH\nb\t-s OG -w work_OG -f -O -n $np')"
+  [ "$got" = "$want" ] || { printf 'hoff_matrix: omp selection wrong; got:\n%s\nwant:\n%s\n' "$got" "$want" >&2; exit 1; }
+  # shellcheck disable=SC2016
+  entries=($'b\t-s OG -w work_OG -f -O -n $np') OMP_NUM_THREADS=3 ww3="$t"
+  [ "$(entry_cmd 1 K | paste -sd' ' -)" = "-f -O -n 3 -s OG_KOKKOS -w work_K_1 $t/model b" ] \
+    || { echo "hoff_matrix: entry_cmd wrong: $(entry_cmd 1 K | paste -sd' ' -)" >&2; exit 1; }
+  ww3="$root/WW3"; unset OMP_NUM_THREADS
   touch "$t/rt/a/input/ww3_ounf.nml"
   if ! has_ounf "$t/rt/a/input" || has_ounf "$t/rt/b/input"; then echo "hoff_matrix: has_ounf wrong" >&2; exit 1; fi
   [ "$(opt_of -w -s K1 -w work_Z -g G)" = work_Z ] && [ -z "$(opt_of -o -s K1)" ] || { echo "hoff_matrix: opt_of wrong" >&2; exit 1; }
@@ -193,7 +252,7 @@ EOF
     'lrwxrwxrwx u/g 0 2026-01-01 00:00 data_regtests/l -> /etc' '-rw-r--r-- u/g 9 2026-01-01 00:00 data_regtests/../x' \
     '-rw-r--r-- u/g 9 2026-01-01 00:00 /etc/x' > "$t/tv.txt"
   [ "$(tar_unsafe "$t/tv.txt" | wc -l)" = 3 ] || { echo "hoff_matrix: tar_unsafe wrong: $(tar_unsafe "$t/tv.txt")" >&2; exit 1; }
-  for bad in --gpu "--jobs 0" --bogus; do
+  for bad in --gpu "--jobs 0" --bogus --out; do
     # shellcheck disable=SC2086
     bash "${BASH_SOURCE[0]}" $bad >/dev/null 2>&1 && rc=0 || rc=$?
     [ "$rc" = 64 ] || { echo "hoff_matrix: '$bad' gave exit $rc, not 64" >&2; exit 1; }
@@ -202,6 +261,9 @@ EOF
     n="$(select_entries "$ww3/regtests/bin/matrix.base" "$ww3/regtests" | wc -l)"
     [ "$n" = 100 ] || { echo "hoff_matrix: WW3@$(git -C "$ww3" rev-parse --short HEAD) matrix.base gives $n entries, not 100" >&2; exit 1; }
     echo "hoff_matrix: WW3@$(git -C "$ww3" rev-parse --short HEAD) matrix.base: 100 entries"
+    n="$(select_entries "$ww3/regtests/bin/matrix.base" "$ww3/regtests" omp | wc -l)"
+    [ "$n" = 25 ] || { echo "hoff_matrix: WW3@$(git -C "$ww3" rev-parse --short HEAD) matrix.base gives $n OpenMP entries, not 25" >&2; exit 1; }
+    echo "hoff_matrix: WW3@$(git -C "$ww3" rev-parse --short HEAD) matrix.base: 25 OpenMP entries (--omp)"
   fi
   echo "hoff_matrix self-test: ok"
   exit 0
@@ -231,7 +293,11 @@ if [ "$mode" = fetch ]; then
   exit 0
 fi
 
-mapfile -t entries < <(select_entries "$ww3/regtests/bin/matrix.base" "$ww3/regtests")
+mapfile -t entries < <(select_entries "$ww3/regtests/bin/matrix.base" "$ww3/regtests" "$kind")
+if [ -z "$out" ]; then out="$root/build/hoff-matrix"; [ "$kind" = serial ] || out="$out-$kind"; fi
+case "$out" in /*) ;; *) out="$PWD/$out" ;; esac
+stage="$out/regtests"
+[ -n "${OMP_NUM_THREADS:-}" ] || { t=$(( $(nproc) / jobs )); export OMP_NUM_THREADS=$(( t > 0 ? t : 1 )); }
 
 if [ "$mode" = list ]; then
   for i in "${!entries[@]}"; do printf '%d %s %s\n' "$((i + 1))" "${entries[i]%%$'\t'*}" "${entries[i]#*$'\t'}"; done
@@ -258,25 +324,6 @@ kbuild="$root/kokkos/build/openmp-release"
 kprefix="$kbuild/install"
 nccmp="$kbuild/tools/nccmp-tol/nccmp-tol"
 tols="$root/kokkos/tools/nccmp-tol/tolerances.txt"
-
-# entry_cmd <n> <F|K>: the run_cmake_test argument list of entry <n>'s run, one per line.
-entry_cmd() {
-  local n="$1" kind="$2" test prev="" f sw inp
-  local -a o keep=()
-  test="${entries[n - 1]%%$'\t'*}"
-  read -r -a o <<<"${entries[n - 1]#*$'\t'}"
-  sw="$(opt_of -s "${o[@]}")"
-  for f in "${o[@]}"; do
-    if [ "$f" = -s ] || [ "$f" = -w ]; then prev="$f"; continue; fi
-    [ "$prev" = -s ] || [ "$prev" = -w ] || keep+=("$f")
-    prev="$f"
-  done
-  inp="$(opt_of -i "${o[@]}")"
-  if [ -z "$(opt_of -o "${o[@]}")" ] && has_ounf "$ww3/regtests/$test/${inp:-input}"; then
-    keep+=(-o netcdf)
-  fi
-  printf '%s\n' "${keep[@]}" -s "${sw:+${sw}_}KOKKOS" -w "work_${kind}_$n" "$ww3/model" "$test"
-}
 
 if [ -n "$dry" ]; then
   echo "# cd $stage"
@@ -367,7 +414,6 @@ run_entry() {
   echo ">> entry $n $test ${sw:-default}: built=$built ran=$ran kokkos_log=$klog test.comp=$tc nccmp-tol=$nv"
 }
 
-[ -n "${OMP_NUM_THREADS:-}" ] || { t=$(( $(nproc) / jobs )); export OMP_NUM_THREADS=$(( t > 0 ? t : 1 )); }
 for n in "${picked[@]}"; do
   while [ "$(jobs -rp | wc -l)" -ge "$jobs" ]; do wait -n || true; done
   run_entry "$n" &
@@ -380,8 +426,9 @@ summary="$out/summary.tsv"
   echo "# date: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
   echo "# ww3-gpu commit: $(git -C "$root" rev-parse --short HEAD)$(git -C "$root" diff --quiet HEAD -- . ':!WW3' 2>/dev/null || echo ' (dirty)')"
   echo "# WW3 commit: $(git -C "$ww3" rev-parse --short HEAD) ($(git -C "$ww3" branch -r --contains HEAD | sed 's/^ *//' | paste -sd, -))"
-  echo "# machine: $(lscpu | sed -n 's/^Model name: *//p' | head -1), $(nproc) threads, OMP_NUM_THREADS=$OMP_NUM_THREADS"
+  echo "# machine: $(lscpu | sed -n 's/^Model name: *//p' | head -1), $(nproc --all) threads, OMP_NUM_THREADS=$OMP_NUM_THREADS${OMP_MAX_ACTIVE_LEVELS:+, OMP_MAX_ACTIVE_LEVELS=$OMP_MAX_ACTIVE_LEVELS}"
   echo "# command: just hoff-matrix ${orig_args[*]}"
+  echo "# selection: $kind, $(sel_desc "$kind")"
   printf 'n\ttest\tswitch\tbuilt\tran\tkokkos_log\ttest_comp\tnccmp_tol\tjudged\twall_s\toptions\n'
   for n in "${picked[@]}"; do
     if [ -f "$out/rows/$n.tsv" ]; then cat "$out/rows/$n.tsv"

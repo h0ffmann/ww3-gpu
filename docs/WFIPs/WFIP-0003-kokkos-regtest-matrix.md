@@ -174,6 +174,26 @@ byte-identical on all 100 entries (`docs/data/hoff_matrix_2026-10-15.tsv`,
   build of each entry, not the first.
 - **Serial only.** Phase 1 calls the shim inside `!$OMP CRITICAL` and has never run under MPI
   ⚠. The 658 other entries, MPI and OpenMP among them, are out of scope here.
+
+  *Update, 2026-10-15:* the owner opened the shared-memory OpenMP entries, CPU only (§11).
+  `scripts/hoff_matrix.sh --omp` keeps an entry when its switch has `NL1` and `OMPG` or `OMPH`,
+  no `MPI`, and the line has no `-p` and no `-m`: 25 entries, all `ww3_ts3` with `OMPG`, `ST1` to
+  `ST6` × `PR1`/`PR2`/`PR3` × `UQ`/`UNO` `(v)` (`just hoff-matrix --list --omp`, `WW3@6d1bcdfe`).
+  Their 25 `mww3_test_05` twins (`-m grdset_a`) are left out: `ww3_multi` runs three grids in one
+  process and the port refuses `IMOD > 1` `(v)` (`model/src/w3initmd.F90:754-759`). Each entry keeps
+  `-f -O -n $np`; `matrix.base` leaves `$np` to the site's matrix script, so `hoff_matrix.sh` puts
+  `OMP_NUM_THREADS` there, and `run_cmake_test` exports `OMP_NUM_THREADS=<n>` for the run `(v)`
+  (`regtests/bin/run_cmake_test:1515-1520`). The first try aborted every Kokkos run at the first
+  DIA call, `Kokkos::OpenMP: Nested parallelism requires the maximum active levels to be larger
+  than 1`, because `W3SRCE` runs inside `W3WAVE`'s `!$OMP PARALLEL` region
+  (`model/src/w3wavemd.F90:2240-2243`, the shim at `w3srcemd.F90:1275`) `(v)` (entries 1 to 4,
+  `ran=fortran-only`). With `OMP_MAX_ACTIVE_LEVELS=2` exported for both runs, all 25 entries ran
+  and are byte-identical, `test.comp` 0 of 20 files and `nccmp-tol` PASS on `hs` `(v)`
+  (`OMP_MAX_ACTIVE_LEVELS=2 just hoff-matrix --omp --jobs 4`, 19 min on an i9-14900 at 8 threads
+  per entry; `docs/data/hoff_matrix_omp_2026-10-15.tsv`). The `!$OMP CRITICAL` still serialises the
+  calls, so this shows the answer does not change under OpenMP, not that the DIA runs in parallel.
+  Whether a nested Kokkos team inside the critical section costs or gains time is not measured ⚠.
+  The 161 `NL1` entries with `MPI` are still out of scope and were not run.
 - **Two regtests have no gridded output** (`ww3_ts2`, `ww3_tr1`): only the byte verdict, which is
   expected to say "differ"; a tolerance check on point output (`ww3_ounp`) is a later step.
 - **What `nccmp-tol` judges** is what each test's `ww3_ounf` writes; fields beyond `hs` appear only
@@ -201,7 +221,10 @@ byte-identical on all 100 entries (`docs/data/hoff_matrix_2026-10-15.tsv`,
   the test's own output only, so the comparison stays WW3's case as written; the owner decides
   after the first table.
 - Include the MPI and OpenMP entries? **Default:** no, serial only, until phase 1 leaves the
-  critical section. The owner decides.
+  critical section. The owner decides. *Update, 2026-10-15:* the owner decided yes for the
+  shared-memory OpenMP entries, CPU only; MPI stays out. `--omp` runs them (§8); they need
+  `OMP_MAX_ACTIVE_LEVELS=2`, and whether the shim should set nesting itself instead of the caller's
+  environment is a question for the port, not for this script.
 - A weekly run on a schedule? **Default:** no; by hand on the owner's workstation.
 
 ## Appendix
@@ -216,6 +239,11 @@ byte-identical on all 100 entries (`docs/data/hoff_matrix_2026-10-15.tsv`,
 - `SPECTRUM%NK`/`%NTH` of each candidate's `ww3_grid*.nml`, and the presence of `ww3_ounf*`, read
   2026-10-14.
 - CI health h1 on `main` at `6b7003b`, 2026-10-15: `hs ... 9.879e-08 PASS`, "1 judged, 25 unlisted".
+
+- `matrix.base` at `6d1bcdfe`, 2026-10-15: of the `NL1` entries, 100 serial, 50 with `OMPG` and no
+  `MPI` (25 `ww3_ts3`, 25 `mww3_test_05` with `-m`), 161 with `MPI`; `run_cmake_test:86,154,157,1515-1520`
+  (`-O`, `-n`, the `OMP_NUM_THREADS` export), `w3initmd.F90:754-759`, `w3wavemd.F90:2240-2243`,
+  `w3srcemd.F90:1270-1278` read the same day.
 
 ### Not checked
 
