@@ -1,6 +1,11 @@
 //// The page. Every fact it shows comes from `content`, which site/content writes from the files of
 //// this repository; the sentences that tell the story are written here, in lower case
 //// (DESIGN.md). The page is prerendered and needs no JavaScript.
+////
+//// It is written once, in English, and built twice: at / in English and at /pt-BR/ in Brazilian
+//// Portuguese. Each sentence goes through `t(l, "…")`, which looks it up by its English in
+//// site/data/translations/pt-BR.tsv; site/content fails the build when a sentence has no row, or a
+//// row no sentence. The pattern is h0ffmann/h0ffmann#86.
 
 import gleam/float
 import gleam/int
@@ -18,28 +23,56 @@ pub const repo = "https://github.com/h0ffmann/ww3-gpu"
 
 const blob = "https://github.com/h0ffmann/ww3-gpu/blob/main/"
 
-pub fn view() -> Element(msg) {
+/// A sentence of the page in language `l`, "en" or "pt-BR". The key is the English sentence
+/// itself; a sentence with no row is shown in English, and the build has already failed for it.
+pub fn t(l: String, source: String) -> String {
+  case l {
+    "pt-BR" ->
+      case list.key_find(content.pt_br, source) {
+        Ok(target) -> target
+        Error(_) -> source
+      }
+    _ -> source
+  }
+}
+
+/// The way from the page to the root of the site: the book, the PDF and the style sit next to the
+/// English page, one level up from /pt-BR/.
+pub fn up(l: String) -> String {
+  case l {
+    "pt-BR" -> "../"
+    _ -> ""
+  }
+}
+
+pub fn view(l: String) -> Element(msg) {
   html.main([], [
-    cover(),
-    book(),
-    chapters(),
+    cover(l),
+    book(l),
+    chapters(l),
     records(
       "decisions",
-      "the decisions",
-      "each one a choice the lab made, the context that forced it and what follows. an accepted record is never edited; a new one supersedes it.",
+      t(l, "the decisions"),
+      t(
+        l,
+        "each one a choice the lab made, the context that forced it and what follows. an accepted record is never edited; a new one supersedes it.",
+      ),
       content.adrs,
     ),
     records(
       "designs",
-      "the designs",
-      "a change is designed before it is built, tied to a deliverable of the project proposal, with its definition of done.",
+      t(l, "the designs"),
+      t(
+        l,
+        "a change is designed before it is built, tied to a deliverable of the project proposal, with its definition of done.",
+      ),
       content.wfips,
     ),
-    port(),
-    brain(),
-    cite(),
-    related(),
-    footer(),
+    port(l),
+    brain(l),
+    cite(l),
+    related(l),
+    footer(l),
   ])
 }
 
@@ -107,7 +140,7 @@ fn bar_width(x: Float, top: Float) -> String {
   float.to_string(float.to_precision(w, 1)) <> "%"
 }
 
-fn step(b: Bench, top: Float) -> Element(msg) {
+fn step(l: String, b: Bench, top: Float) -> Element(msg) {
   let x = speedup(b)
   html.li([attribute.class("step")], [
     html.span([attribute.class("num")], [html.text(b.step)]),
@@ -126,7 +159,7 @@ fn step(b: Bench, top: Float) -> Element(msg) {
     ]),
     html.span([attribute.class("speed " <> shade(x))], [
       html.text(case x <. 1.0 {
-        True -> times(x) <> " · slower"
+        True -> times(x) <> " · " <> t(l, "slower")
         False -> times(x)
       }),
     ]),
@@ -135,7 +168,9 @@ fn step(b: Bench, top: Float) -> Element(msg) {
         b.value
         <> " "
         <> b.unit
-        <> " against "
+        <> " "
+        <> t(l, "against")
+        <> " "
         <> b.baseline
         <> " "
         <> b.unit
@@ -147,13 +182,13 @@ fn step(b: Bench, top: Float) -> Element(msg) {
 }
 
 /// A record of kokkos/ports.tsv ("yes: …" or "no: …"): proof when yes, warn when no or missing.
-fn record_line(label: String, value: String) -> Element(msg) {
+fn record_line(l: String, label: String, value: String) -> Element(msg) {
   let class = case string.starts_with(value, "yes") {
     True -> "chip proof"
     False -> "chip warn"
   }
   let shown = case value {
-    "" -> "no record"
+    "" -> t(l, "no record")
     v -> v
   }
   html.p([attribute.class("record")], [
@@ -172,7 +207,7 @@ fn stat(s: Stat) -> Element(msg) {
   ])
 }
 
-fn report(r: Report) -> Element(msg) {
+fn report(l: String, r: Report) -> Element(msg) {
   let rows = list.filter(content.benches, fn(b) { b.report == r.name })
   let top = list.fold(rows, 1.0, fn(acc, b) { float.max(acc, speedup(b)) })
   html.div([attribute.class("report")], [
@@ -181,28 +216,29 @@ fn report(r: Report) -> Element(msg) {
       html.text(" "),
       html.span([attribute.class("chip code")], [html.text(r.status)]),
     ]),
-    record_line("regtested", r.regtested),
+    record_line(l, t(l, "regtested"), r.regtested),
     case rows {
       [] ->
         html.p([attribute.class("empty")], [
-          html.text("no benchmark: the report says why."),
+          html.text(t(l, "no benchmark: the report says why.")),
         ])
       _ ->
         html.ol(
           [attribute.class("steps")],
-          list.map(rows, fn(b) { step(b, top) }),
+          list.map(rows, fn(b) { step(l, b, top) }),
         )
     },
   ])
 }
 
-fn port() -> Element(msg) {
-  section("port", "the port, measured", [
-    lede(
+fn port(l: String) -> Element(msg) {
+  section("port", t(l, "the port, measured"), [
+    lede(t(
+      l,
       "how much of WW3 runs on Kokkos, then every number of every port report, step by step. a bar is the speed-up over its own baseline, on a log scale; the deeper the green, the larger it is. a step slower than its baseline is grey, and says so.",
-    ),
+    )),
     html.ul([attribute.class("stats")], list.map(content.stats, stat)),
-    ..list.map(content.reports, report)
+    ..list.map(content.reports, report(l, _))
   ])
 }
 
@@ -225,7 +261,7 @@ fn light(name: String) -> Attribute(msg) {
   attribute.class("light " <> name)
 }
 
-fn cover() -> Element(msg) {
+fn cover(l: String) -> Element(msg) {
   html.header([attribute.class("cover wrap")], [
     html.p([attribute.class("kicker")], [
       html.text("h0ffmann / ww3-gpu"),
@@ -235,63 +271,88 @@ fn cover() -> Element(msg) {
       html.text(string.lowercase(content.book_title)),
     ]),
     html.p([attribute.class("lede")], [
-      html.text(
+      html.text(t(
+        l,
         "a book in progress on agentic coding and agentic research, compiled from its own repository, around one problem: moving the expensive kernels of WAVEWATCH III to GPUs without changing the answer.",
-      ),
+      )),
     ]),
     html.p([attribute.class("actions")], [
-      html.a([attribute.class("button"), attribute.href("book/")], [
-        html.text("read the chapters"),
+      html.a([attribute.class("button"), attribute.href(up(l) <> "book/")], [
+        html.text(t(l, "read the chapters")),
       ]),
       html.a(
-        [attribute.class("button quiet"), attribute.href("ww3-lab-course.pdf")],
-        [html.text("the book (PDF)")],
+        [
+          attribute.class("button quiet"),
+          attribute.href(up(l) <> "ww3-lab-course.pdf"),
+        ],
+        [html.text(t(l, "the book (PDF)"))],
       ),
       html.a([attribute.class("button quiet"), attribute.href(repo)], [
-        html.text("the repository"),
+        html.text(t(l, "the repository")),
       ]),
     ]),
     html.nav([attribute.class("jump")], [
-      a("#book", "the book"),
-      a("#chapters", "chapters"),
-      a("#decisions", "decisions"),
-      a("#designs", "designs"),
-      a("#brain", "second brain"),
-      a("#cite", "cite"),
-      a("#related", "related"),
+      a("#book", t(l, "the book")),
+      a("#chapters", t(l, "chapters")),
+      a("#decisions", t(l, "decisions")),
+      a("#designs", t(l, "designs")),
+      a("#brain", t(l, "second brain")),
+      a("#cite", t(l, "cite")),
+      a("#related", t(l, "related")),
+      other_language(l),
     ]),
   ])
 }
 
-fn book() -> Element(msg) {
-  section("book", "the book", [
+/// The link to the page in the other language, named in that language.
+fn other_language(l: String) -> Element(msg) {
+  let #(href, lang, name) = case l {
+    "pt-BR" -> #("../", "en", "english")
+    _ -> #("pt-BR/", "pt-BR", "português")
+  }
+  html.a(
+    [
+      attribute.href(href),
+      attribute.attribute("hreflang", lang),
+      attribute.attribute("lang", lang),
+    ],
+    [html.text(name)],
+  )
+}
+
+fn book(l: String) -> Element(msg) {
+  section("book", t(l, "the book"), [
     html.p([attribute.class("title")], [html.text(content.book_title)]),
     lede(content.book_subtitle),
     html.p([], [
-      html.text("the repository is the book's source and its evidence: "),
-      html.text(int.to_string(list.length(content.chapters))),
-      html.text(
-        " chapters, built into a PDF on every merge, and the code they describe next to them. every claim carries ",
-      ),
+      html.text(t(l, "the repository is the book's source and its evidence:")),
+      html.text(" " <> int.to_string(list.length(content.chapters)) <> " "),
+      html.text(t(
+        l,
+        "chapters, built into a PDF on every merge, and the code they describe next to them. every claim carries",
+      )),
+      html.text(" "),
       html.span([light("proof")], [html.text("(v)")]),
-      html.text(" when it was checked and "),
+      html.text(" " <> t(l, "when it was checked and") <> " "),
       html.span([light("warn")], [html.text("⚠")]),
-      html.text(" when it was not, and every number comes with its command."),
+      html.text(
+        " " <> t(l, "when it was not, and every number comes with its command."),
+      ),
     ]),
     html.p([attribute.class("links")], [
-      a("book/", "the chapters on the web"),
+      a(up(l) <> "book/", t(l, "the chapters on the web")),
       html.text(" · "),
-      a("ww3-lab-course.pdf", "the PDF"),
+      a(up(l) <> "ww3-lab-course.pdf", t(l, "the PDF")),
       html.text(" · "),
-      a("andamento/", "progress (pt-BR)"),
+      a(up(l) <> "andamento/", t(l, "progress (pt-BR)")),
       html.text(" · "),
-      a("adrs/", "decision records (pt-BR)"),
+      a(up(l) <> "adrs/", t(l, "decision records (pt-BR)")),
     ]),
   ])
 }
 
-fn chapters() -> Element(msg) {
-  section("chapters", "the chapters", [
+fn chapters(l: String) -> Element(msg) {
+  section("chapters", t(l, "the chapters"), [
     html.ol(
       [attribute.class("chapters")],
       list.map(content.chapters, fn(c) {
@@ -339,17 +400,20 @@ fn records(
   ])
 }
 
-fn brain() -> Element(msg) {
+fn brain(l: String) -> Element(msg) {
   let notes = case content.notes {
-    [] -> [html.p([attribute.class("empty")], [html.text("no note yet.")])]
+    [] -> [
+      html.p([attribute.class("empty")], [html.text(t(l, "no note yet."))]),
+    ]
     notes -> [
       html.ul([attribute.class("records")], list.map(notes, note)),
     ]
   }
-  section("brain", "the second brain", [
-    lede(
+  section("brain", t(l, "the second brain"), [
+    lede(t(
+      l,
       "one idea in one note, with a permanent id, links between notes, and a status that stays unverified until a source is cited. the notes are what the chapters are written from.",
-    ),
+    )),
     ..notes
   ])
 }
@@ -399,15 +463,16 @@ fn person(p: Person) -> Element(msg) {
   ])
 }
 
-fn cite() -> Element(msg) {
+fn cite(l: String) -> Element(msg) {
   let release = case content.latest_release {
     "" -> []
-    r -> [html.p([], [html.text("latest release: " <> r)])]
+    r -> [html.p([], [html.text(t(l, "latest release:") <> " " <> r)])]
   }
-  section("cite", "how to cite", [
-    lede(
+  section("cite", t(l, "how to cite"), [
+    lede(t(
+      l,
       "cite the concept DOI for the work as a whole: it always resolves to the latest edition. to pin the exact code you ran, cite that release's own DOI.",
-    ),
+    )),
     html.p([attribute.class("doi")], [
       html.a([attribute.href("https://doi.org/" <> content.doi)], [
         html.text(content.doi),
@@ -427,7 +492,7 @@ fn link_item(l: Link) -> Element(msg) {
   ])
 }
 
-fn related() -> Element(msg) {
+fn related(l: String) -> Element(msg) {
   let authors =
     content.people
     |> list.filter(fn(p) { p.role == "contributor" })
@@ -436,33 +501,43 @@ fn related() -> Element(msg) {
         html.span([attribute.class("name")], [html.text(p.name)]),
         html.span([attribute.class("aff")], [
           html.text(
-            string.lowercase(p.kind) <> " of this work · " <> p.affiliation,
+            string.lowercase(p.kind)
+            <> " "
+            <> t(l, "of this work")
+            <> " · "
+            <> p.affiliation,
           ),
           ..orcid(p)
         ]),
       ])
     })
   let kind = fn(k) { list.filter(content.links, fn(l: Link) { l.kind == k }) }
-  section("related", "related authors and works", [
-    html.h3([], [html.text("authors")]),
+  section("related", t(l, "related authors and works"), [
+    html.h3([], [html.text(t(l, "authors"))]),
     html.ul(
       [attribute.class("people")],
       list.append(authors, list.map(kind("author"), link_item)),
     ),
-    html.h3([], [html.text("sister works, by the same author")]),
+    html.h3([], [html.text(t(l, "sister works, by the same author"))]),
     html.ul([attribute.class("people")], list.map(kind("work"), link_item)),
   ])
 }
 
-fn footer() -> Element(msg) {
+fn footer(l: String) -> Element(msg) {
   html.footer([attribute.class("wrap foot")], [
     html.p([], [
-      html.text("every fact on this page was read from the repository at "),
+      html.text(
+        t(l, "every fact on this page was read from the repository at") <> " ",
+      ),
       html.a([attribute.href(repo <> "/commit/" <> content.revision)], [
         html.text(content.revision),
       ]),
       html.text(
-        ". WAVEWATCH III is a registered trademark of NOAA's National Weather Service; this project is independent and not endorsed by NOAA.",
+        ". "
+        <> t(
+          l,
+          "WAVEWATCH III is a registered trademark of NOAA's National Weather Service; this project is independent and not endorsed by NOAA.",
+        ),
       ),
     ]),
   ])

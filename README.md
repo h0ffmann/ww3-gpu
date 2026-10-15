@@ -72,7 +72,10 @@ decisions, the designs, the notes, the DOI and the people. The chapters are at
 [`/book/`](https://h0ffmann.github.io/ww3-gpu/book/), next to the
 [PDF](https://h0ffmann.github.io/ww3-gpu/ww3-lab-course.pdf), the progress page
 (`/andamento/`) and the decisions (`/adrs/`). [`DESIGN.md`](DESIGN.md) has its look: a sea at night,
-and three lights on it.
+and three lights on it. The same page is built in Brazilian Portuguese at
+[`/pt-BR/`](https://h0ffmann.github.io/ww3-gpu/pt-BR/), from one source and a table of
+translations, [`site/data/translations/pt-BR.tsv`](site/data/translations/pt-BR.tsv): the build
+fails when a sentence has no row.
 
 ```console
 just site          # the chapters, then the front page, into build/site/

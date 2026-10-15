@@ -1,3 +1,4 @@
+import gleam/list
 import gleam/string
 import gleeunit
 import ww3_gpu_content as c
@@ -100,8 +101,84 @@ pub fn lit_test() {
 
 pub fn empty_list_test() {
   let text =
-    c.render(#("t", "s"), "d", "r", "", "x", [], [], [], [], [], [], [], [], [])
+    c.render(
+      #("t", "s"),
+      "d",
+      "r",
+      "",
+      "x",
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      [
+        #("the book", "o livro"),
+      ],
+    )
   assert text |> contains("pub const notes: List(Note) = []")
+  assert text |> contains("#(\"the book\", \"o livro\")")
+}
+
+// One source and a table: a sentence is the English literal of `t(l, "…")`, in any layout the
+// formatter gives the call, and never one in a comment.
+pub fn sentences_test() {
+  let code =
+    "// t(l, \"in a comment\")
+  html.text(t(l, \"the book\"))
+  lede(t(
+    l,
+    \"a \\\"quoted\\\" word\",
+  ))
+  app.t(l, \"the PDF\")
+  at(l, \"not a sentence\")"
+  assert c.sentences(code) == ["the book", "a \"quoted\" word", "the PDF"]
+}
+
+pub fn a_whole_table_passes_test() {
+  let table =
+    "# source\tpt-BR\tstatus\tnote (optional)
+the book\to livro\tdraft
+the PDF\to PDF\treviewed\ta note"
+  assert c.translation_errors(table, ["the book", "the PDF", "the book"]) == []
+  assert c.translations(table)
+    == [#("the book", "o livro"), #("the PDF", "o PDF")]
+}
+
+// The judge is judged: a table with one fault of each kind is refused for each.
+pub fn a_bad_table_is_refused_test() {
+  let table =
+    "the book\to livro\tdraft
+the book\to livro\tdraft
+the PDF\t\tdraft
+an old sentence\tuma frase velha\tdraft
+the repository\to repositório\tdone
+three cells\tonly"
+  let errors =
+    c.translation_errors(table, [
+      "the book",
+      "the PDF",
+      "the repository",
+      "a new sentence",
+    ])
+    |> string.join("\n")
+  list.each(
+    [
+      "\"the book\" is there twice",
+      "\"the PDF\" has no translation",
+      "\"an old sentence\" is an orphan",
+      "status is \"done\"",
+      "a row has 2 cells",
+      "the sentence \"a new sentence\" has no translation",
+    ],
+    fn(fault) {
+      assert contains(errors, fault)
+    },
+  )
 }
 
 fn contains(haystack: String, needle: String) -> Bool {

@@ -484,6 +484,7 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | `nix-config/` submodule / `just submodule-*` | the sparse checkout of `h0ffmann/picasso` (only `labs/pratico`) and its pin-management recipes `(v)` [docs/TOOLCHAIN.md](TOOLCHAIN.md) | `just submodule-init` after a fresh clone. | [course/01-build.md](../course/01-build.md) |
 | `pubs/` | the course book and the UFRJ/DEL proposal (`proposal/en/` source, `proposal/pt/` hand-revised reference, `mapas-mentais.pt.md`, `refs.bib`, `template.tex`) `(v)` [pubs/README.md](../pubs/README.md) | PDFs land in `pdf/` on `main`. | [pubs/README.md](../pubs/README.md) |
 | course book / the book / *Without Changing the Answer* | `course/*.md` assembled by `scripts/book_prep.py` into one PDF `(v)` [justfile](../justfile); *Without Changing the Answer* is its working title `(v)` [pubs/book/defaults.yaml](../pubs/book/defaults.yaml) | `just book [abnt|ieee]`. The repository's public form since ADR-0003: a book in progress on agentic coding and agentic research, whose parts, listings gate and new chapters WFIP-0002 plans. | [README.md](../README.md), [pubs/README.md](../pubs/README.md) |
+| pt-BR / `site/data/translations/pt-BR.tsv` | Brazilian Portuguese, as a language tag; the table of the website's sentences in it `(v)` [DESIGN.md](../DESIGN.md), "Two languages" | The front page is written once in English and built a second time at `/pt-BR/`, each sentence looked up by its English in the table; `site/content` stops `just site` when a sentence has no row or a row no sentence. The pattern is h0ffmann/h0ffmann#86. `README.pt-BR.md` is the README's Portuguese mirror. | [site/data/translations/pt-BR.tsv](../site/data/translations/pt-BR.tsv), [README.pt-BR.md](../README.pt-BR.md) |
 
 ## Citation and licensing
 
@@ -1045,6 +1046,7 @@ Every term above, alphabetically, with the section it lives in.
 - PR3: [WW3 switches](#ww3-switches)
 - pratico: [HPC and software](#hpc-and-software)
 - Projects (Claude Code): [HPC and software](#hpc-and-software)
+- pt-BR: [This repository's own names](#this-repositorys-own-names)
 - PTP: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - publisher: [HPC and software](#hpc-and-software)
 - `proof/`: [This repository's own names](#this-repositorys-own-names)

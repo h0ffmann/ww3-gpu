@@ -30,6 +30,22 @@ export function zenodo_people(path) {
   ].join("\n");
 }
 
+// The sentences a source file of the page translates: the English literal of each `t(l, "...")`,
+// unescaped. Comment lines are skipped, so a doc comment that shows the call is not a sentence.
+export function sentences(code) {
+  const live = code.replace(/^\s*\/\/.*$/gm, "");
+  return toList(
+    [...live.matchAll(/\bt\(\s*l,\s*"((?:[^"\\]|\\.)*)"/g)].map((m) =>
+      m[1].replace(/\\(.)/g, "$1"),
+    ),
+  );
+}
+
+// Stop the generator with an exit code, so that `just site` and CI fail.
+export function exit(code) {
+  process.exit(code);
+}
+
 // The short hash of the commit that is built, or "unversioned" outside a Git checkout.
 export function revision() {
   try {

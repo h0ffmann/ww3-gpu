@@ -4,6 +4,7 @@
 //// The pattern is h0ffmann/h0ffmann's `site/content`, itself from marola-research's `tools/content`.
 
 import gleam/int
+import gleam/io
 import gleam/list
 import gleam/string
 
@@ -79,6 +80,81 @@ fn zenodo_people(path: String) -> String
 
 @external(javascript, "./ww3_gpu_content_ffi.mjs", "revision")
 fn revision() -> String
+
+@external(javascript, "./ww3_gpu_content_ffi.mjs", "sentences")
+pub fn sentences(code: String) -> List(String)
+
+@external(javascript, "./ww3_gpu_content_ffi.mjs", "exit")
+fn exit(code: Int) -> Nil
+
+// ---- the translations --------------------------------------------------------------------------
+// One source, the English sentences of site/src, and a table for each other language,
+// site/data/translations/<lang>.tsv, keyed by the English sentence itself (h0ffmann/h0ffmann#86).
+
+/// What is wrong with a translation table, given the sentences the page translates: a row that
+/// is not `source, translation, status[, note]`, a status other than draft or reviewed, a source
+/// twice, a row whose sentence the page no longer has (an orphan), and a sentence with no row.
+/// The page is not built while this is not empty.
+pub fn translation_errors(
+  table: String,
+  sentences: List(String),
+) -> List(String) {
+  let rows = tsv_rows(table, "source")
+  let row_errors =
+    list.flat_map(rows, fn(cells) {
+      case cells {
+        [source, target, status] | [source, target, status, _] -> {
+          let where = "the row " <> lit(source)
+          list.flatten([
+            case string.trim(target) {
+              "" -> [where <> " has no translation"]
+              _ -> []
+            },
+            case status {
+              "draft" | "reviewed" -> []
+              _ -> [where <> ": status is " <> lit(status)]
+            },
+            case list.contains(sentences, source) {
+              True -> []
+              False -> [
+                where
+                <> " is an orphan: the page has no such sentence now. Translate the new sentence and delete this row",
+              ]
+            },
+          ])
+        }
+        _ -> [
+          "a row has "
+          <> int.to_string(list.length(cells))
+          <> " cells, and it needs source, translation, status and an optional note: "
+          <> string.join(cells, " | "),
+        ]
+      }
+    })
+  let sources = list.filter_map(rows, list.first)
+  let twice =
+    sources
+    |> list.unique
+    |> list.filter(fn(s) { list.count(sources, fn(x) { x == s }) > 1 })
+    |> list.map(fn(s) { "the row " <> lit(s) <> " is there twice" })
+  let missing =
+    sentences
+    |> list.unique
+    |> list.filter(fn(s) { !list.contains(sources, s) })
+    |> list.map(fn(s) { "the sentence " <> lit(s) <> " has no translation" })
+  list.flatten([row_errors, twice, missing])
+}
+
+/// The pairs `#(source, translation)` of a table that passed `translation_errors`.
+pub fn translations(table: String) -> List(#(String, String)) {
+  tsv_rows(table, "source")
+  |> list.filter_map(fn(cells) {
+    case cells {
+      [source, target, ..] -> Ok(#(source, target))
+      _ -> Error(Nil)
+    }
+  })
+}
 
 // ---- parsing, pure and tested ------------------------------------------------------------------
 
@@ -377,6 +453,7 @@ pub fn render(
   reports: List(Report),
   bench_rows: List(Bench),
   stats: List(Stat),
+  pt_br: List(#(String, String)),
 ) -> String {
   let record = fn(r: Record) {
     call("Record", [r.id, r.title, r.status, r.date, r.file])
@@ -391,6 +468,12 @@ pub fn render(
       "pub const record_title = " <> lit(record_title) <> "\n",
       "pub const latest_release = " <> lit(release) <> "\n",
       "pub const revision = " <> lit(rev) <> "\n",
+      "/// The page in Brazilian Portuguese: each English sentence with its translation\n/// (site/data/translations/pt-BR.tsv).\n"
+        <> items(
+        "pt_br",
+        "#(String, String)",
+        list.map(pt_br, fn(p) { "#(" <> lit(p.0) <> ", " <> lit(p.1) <> ")" }),
+      ),
       items(
         "chapters",
         "Chapter",
@@ -490,6 +573,21 @@ fn is_number(s: String) -> Bool {
 }
 
 pub fn main() -> Nil {
+  let site = "../src/ww3_gpu_site/"
+  let page_sentences =
+    list_dir(site)
+    |> list.filter(fn(name) {
+      string.ends_with(name, ".gleam") && name != "content.gleam"
+    })
+    |> list.flat_map(fn(name) { sentences(read(site <> name)) })
+  let table = read("../data/translations/pt-BR.tsv")
+  case translation_errors(table, page_sentences) {
+    [] -> Nil
+    errors -> {
+      list.each(errors, fn(e) { io.println_error("pt-BR.tsv: " <> e) })
+      exit(1)
+    }
+  }
   let chapters =
     list_dir(root <> "course")
     |> list.filter(fn(name) {
@@ -566,6 +664,7 @@ pub fn main() -> Nil {
       reports,
       bench_rows,
       stats,
+      translations(table),
     )
   write("../src/ww3_gpu_site/content.gleam", text)
 }
