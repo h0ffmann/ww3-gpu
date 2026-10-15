@@ -18,7 +18,7 @@ term and the first thing the lab ported. Its interface is already good:
 ```
 
 Its workspace is not. Every call declares, sized at run time from module variables (v,
-`kokkos/tests/fixtures/snl1_ref.F90` lines 335–339, verbatim from WW3 lines 324–328):
+`WW3/model/src/w3snl1md.F90:324-328` at `WW3@6d1bcdfe`):
 
 ```fortran
     REAL               ::  UE  (1-NTH:NSPECY), SA1 (1-NTH:NSPECX),  &
@@ -48,7 +48,7 @@ Everything in this lesson is about making those properties *visible in the inter
 | `CONTIGUOUS` on assumed-shape dummies | no copy-in on the call, a pointer that C can take | not used; WW3 passes explicit-shape `A(NSPEC)` (v), which is contiguous anyway |
 | `PURE` | no hidden I/O or global writes; required for `DO CONCURRENT` bodies | blocked by the `#ifdef W3_T` `WRITE` (v) |
 | Workspace by argument or per-grid allocation | no automatic arrays, no per-call stack traffic | the ten arrays above |
-| Tables passed in, not `USE`d | the routine can be called from a test with captured inputs | `snl1_ref.F90` does this for the reference copy (v) |
+| Tables passed in, not `USE`d | the routine can be called from a test with captured inputs | the lab's standalone copy did this until ADR-0010 removed it (2026-10-14; `git show f721736:kokkos/tests/fixtures/snl1_ref.F90`) (v) |
 
 Do them in that order. The first two cost nothing in WW3 because the code is already
 modular; the last two are the work.
@@ -74,7 +74,7 @@ ends up thrashing PCIe without noticing ⚠ (the file says so; not measured here
 The construct is honest about one thing the directives are not: the loop body must be
 independent per iteration and free of side effects. Writing `W3SNL1`'s section 3 as a
 `DO CONCURRENT` over `ISP` is legal; writing its section 2 tail loop that way is not,
-because row `IFR` reads row `IFR-1` (v, `snl1_ref.F90` `UE(ISP) = UE(ISP-NTH) * FACHFE`).
+because row `IFR` reads row `IFR-1` (v, `WW3/model/src/w3snl1md.F90:362` `UE(ISP) = UE(ISP-NTH) * FACHFE`).
 The port in lesson 12 keeps that loop sequential for the same reason.
 
 ## Killing automatic arrays
@@ -82,8 +82,8 @@ The port in lesson 12 keeps that loop sequential for the same reason.
 Three ways, in increasing distance from the original:
 
 1. **Allocate once per grid.** WW3 already does this for the tables: `INSNL1` section 6
-   calls `W3DMNL`, which allocates `IP11..AF11` in `W3ADATMD` once (v, `snl1_ref.F90`
-   comment on section 6). Do the same for `UE`, `SA1`…: module-level `ALLOCATABLE`
+   calls `W3DMNL`, which allocates `IP11..AF11` in `W3ADATMD` once (v,
+   `WW3/model/src/w3snl1md.F90:654`). Do the same for `UE`, `SA1`…: module-level `ALLOCATABLE`
    workspace sized `1-NTH:NSPECY` at grid setup. Cost: thread-private copies under OpenMP.
 2. **Pass workspace in.** Add a `WORK` derived type or explicit dummies. The routine
    becomes testable in isolation and the caller decides who owns the memory.
@@ -127,14 +127,16 @@ array, implicit interface) and its modern twin; `exercises/solutions/ex11_refact
 drives both on random input and stops with a non-zero status above 1e-6, built with plain
 `gfortran`. That is the small version.
 
-The full-size version is the fixture generator the port uses (v,
-`kokkos/tests/fixtures/gen_snl1_fixture.F90`): call the verbatim reference on a
-deterministic sea state, stream inputs, tables and outputs into a little-endian file with
-`ACCESS='STREAM'`, refuse to write if the default `REAL` is not 32-bit, commit the file.
-Any rewrite, Fortran or C++, is then tested against the same bytes. Same arithmetic
-should give the same bits; 1e-6 relative is the room you leave for a compiler that
-reassociates a sum. If you need more room than that, you changed the algorithm, and that
-is a separate change with its own evidence.
+The full-size version was the fixture generator the Kokkos port used until 2026-10-14
+(`git show f721736:kokkos/tests/fixtures/gen_snl1_fixture.F90`): call the verbatim reference on
+a deterministic sea state, stream inputs, tables and outputs into a little-endian file with
+`ACCESS='STREAM'`, refuse to write if the default `REAL` is not 32-bit, commit the file. Same
+arithmetic should give the same bits; 1e-6 relative is the room you leave for a compiler that
+reassociates a sum. If you need more room than that, you changed the algorithm, and that is a
+separate change with its own evidence. The C++/Kokkos port no longer does this: its only test
+is WW3's regtests, run with the Fortran routine and with the Kokkos routine (lesson 12,
+[ADR-0010](../docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md)). A Fortran rewrite
+in this lesson can still be checked on captured inputs, as `ex11` does, and then by the matrix.
 
 ## The contrast: directives
 
@@ -155,7 +157,8 @@ residency ladder in lesson 13 is the plan for moving the state, one array at a t
 ## Checklist for one routine
 
 1. Profile says it matters (lesson 09). If not, stop.
-2. Capture its inputs and outputs with a generator like `gen_snl1_fixture.F90`.
+2. Capture its inputs and outputs for a Fortran rewrite (the `ex11` driver is the pattern; a
+   Kokkos port skips this step and goes to the regtests, ADR-0010).
 3. Explicit interface, `INTENT`, tables as arguments, workspace out of the body.
 4. Runtime switch, both paths in the binary.
 5. Parity test on the capture; then the matrix on the closest regtest; then `nccmp-tol`

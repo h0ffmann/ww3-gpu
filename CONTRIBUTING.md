@@ -44,7 +44,7 @@ Corrections are very welcome, especially the following, in order of usefulness:
    shows what changed since the last snapshot.
 
 The issue forms (*New issue* on GitHub) ask for what each kind of report needs: a **Measurement**
-asks for the command, commit, machine and L1 status; a **Spike** for one question, a time box and
+asks for the command, commit, machine and parity status; a **Spike** for one question, a time box and
 its output; a **WFIP idea** for the proposal deliverable it moves.
 
 ## The proposal (`pubs/proposal/`)
@@ -117,9 +117,12 @@ A mistake in a figure is as welcome as one in the text: the gallery links an iss
   `.github/workflows/skills.yml` opens a weekly update PR, and `skills-vendor update <name>` does
   the same by hand.
 - A number a table quotes lives as a JSON record in `bench/results/` (machine, toolchain, commit,
-  L1 status, each run's command); the table is generated from it with `just results table`, and
-  `just results check` (CI) refuses a timing whose L1 did not pass. Anything tried that did not
-  become a number in a table, failures included, goes in a dated entry in `docs/log/`.
+  parity status, each run's command); the table is generated from it with `just results table`, and
+  `just results check` (CI) refuses a timing without a passed parity check: `regtest: passed`
+  (ADR-0010), or the `l1: passed` of a record made before 2026-10-14.
+- The Kokkos port has no tests of its own (ADR-0010): no L1 test, GoogleTest or fixture of a ported
+  routine. Its tests are WW3's regtests, `just smoke-hoff`, `just full-hoff` and `just hoff-matrix`,
+  on the CPU. Anything tried that did not become a number in a table, failures included, goes in a dated entry in `docs/log/`.
 - `codemeta.json` is generated from `CITATION.cff` and `.zenodo.json` (`just codemeta`); never
   edit it by hand.
 - Run `just kokkos-test serial-debug` after touching `kokkos/`, and `bash -n` plus
@@ -136,8 +139,8 @@ A mistake in a figure is as welcome as one in the text: the gallery links an iss
 - Code comments are of three kinds, and only these: a *why* (a rejected alternative, an external
   constraint), a *trap* (what breaks if the line changes), or a *pointer* (an issue, a plan, a
   `file:line`). A comment that restates the code or narrates the history of a fix is deleted in
-  review. Verbatim upstream text (`kokkos/tests/fixtures/snl1_ref.F90`) keeps its comments as
-  provenance.
+  review. Verbatim upstream text (the WW3 section comments `snl1_dia.cpp` keeps) keeps its comments
+  as provenance.
 - Length is not a measure of a research doc (the proposal, the course, `docs/`). A Portuguese
   and an English version, or a revision and the text it replaces, may differ in length, and
   that is not a defect: do not pad or trim a text to match another one. What must match across

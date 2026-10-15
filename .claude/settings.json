@@ -1,7 +1,8 @@
 {
   "env": {
     "PONYTAIL_DEFAULT_MODE": "off",
-    "PONYTAIL_MAP": "0"
+    "PONYTAIL_MAP": "0",
+    "TEAM_PROTECTION": "off"
   },
   "hooks": {
     "PostToolUse": [

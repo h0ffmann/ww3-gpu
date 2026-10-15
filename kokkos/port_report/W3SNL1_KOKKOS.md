@@ -51,12 +51,17 @@ What they say, read with care:
 
 | Level | What | Result | Where |
 |---|---|---|---|
-| L1 | one call against the Fortran fixture, NK=25 NTH=24, three presets (serial-debug, openmp-release, cuda-release) | bit-identical (max relative error 0.0) | `L1_test_snl1_dia`, `L1_test_snl1_shim` ([`../tests/`](../tests/)), `shim_roundtrip` ([`../tests/fixtures/`](../tests/fixtures/)), CI job `kokkos` |
+| L1 (history) | one call against the Fortran fixture, NK=25 NTH=24, three presets (serial-debug, openmp-release, cuda-release) | bit-identical (max relative error 0.0), 2026-09-15; the CPU presets re-run 2026-10-14 | `L1_test_snl1_dia`, `L1_test_snl1_shim`, `shim_roundtrip`: removed with the tests, 2026-10-14 |
 | L2, smoke | `--hoff --cpu` on regtest `ww3_ts1` (NK=36 NTH=24, 10 days): the Kokkos DIA against the Fortran DIA of the same executable, then pair to pair against `--ww3` | `hs` max rel 9.879e-8, PASS, both comparisons (tolerance 1e-4); not byte-identical | `just smoke-hoff`, 2026-10-14; CI health check h1 |
 | L2, full | `--hoff --cpu` on `bench_small` (9 520 points, 12 h) | `hs` max rel 1.832e-7 over 119 652 values, PASS; not byte-identical | `just full-hoff`, 2026-10-14 |
 | GPU in WW3 | `--hoff --gpu` | not run: the workstation's driver was not loaded on 2026-10-14, and the run needs the owner | `just smoke-hoff gpu` |
 
-Why L2 is not byte-identical while L1 is: the L1 fixture comes from gfortran at `-g`, and WW3 runs
+The port has no tests of its own since 2026-10-14 (the owner: "kokkos code should NOT have its
+own tests, hard rule. All tests should come [from] WW3 regtests."). Its validation is the L2 rows:
+`scripts/hoff.sh --hoff --cpu` pair to pair with `--ww3`, and the WW3 regtest matrix of WFIP-0003
+(`scripts/hoff_matrix.sh`) ⚠ (being written on 2026-10-14; no result from it here yet).
+
+Why L2 was not byte-identical while L1 was: the L1 fixture comes from gfortran at `-g`, and WW3 runs
 at `-O3`; `-ffp-contract=off` on the Fortran changed nothing. The cause is open
 ([`../../docs/PORT_ASSESSMENT_202610.md`](../../docs/PORT_ASSESSMENT_202610.md) §4).
 
@@ -65,9 +70,9 @@ at `-O3`; `-ffp-contract=off` on the Fortran changed nothing. The cause is open
 WW4 tests its C++ with GoogleTest, in files named `L1_test_*` (one unit) and `L2_test_*` (the
 program, end to end) under `tests/`, run by CTest.
 
-- **L1 already is GoogleTest.** `L1_test_snl1_dia.cpp` and `L1_test_snl1_shim.cpp` use `gtest`, and
-  CTest runs them on every preset, as WW4 does.
-- **L2 is not.** The replay inside WW3 is a shell script, `scripts/hoff.sh`, with `nccmp-tol` as
-  the judge. It can become a GoogleTest the WW4 way: an `L2_test_snl1_replay.cpp` that runs the two
-  `ww3_shel` builds of the smoke case and asserts on `nccmp-tol`'s verdict. That needs the WW3
-  build inside the CTest tree, and it is not done.
+- **L1 is gone.** `L1_test_snl1_dia.cpp` and `L1_test_snl1_shim.cpp` were GoogleTests that CTest
+  ran on every preset, as WW4 does; they were removed on 2026-10-14 under the owner's rule above.
+- **L2 is not GoogleTest.** The replay inside WW3 is a shell script, `scripts/hoff.sh`, with `nccmp-tol` as
+  the judge, and the WW3 regtest matrix (`scripts/hoff_matrix.sh`, WFIP-0003) runs WW3's own harness.
+  Wrapping them in an `L2_test_snl1_replay.cpp` would be a test of the port's own, which
+  [ADR-0010](../../docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md) rules out.

@@ -164,8 +164,8 @@ pub fn benches_test() {
 const ports =
   "# a comment
 # ww3_rev\tabc
-routine\tfile\tlines\tstatus\tevidence\tregtested\tgoogletest
-w3snl1md:w3snl1\tf:1-2\t2\tL2\te\tyes: L2\tyes: L1_test_snl1_dia
+routine\tfile\tlines\tstatus\tevidence\tregtested\tkokkos
+w3snl1md:w3snl1\tf:1-2\t2\tL2\te\tyes: L2\tkokkos/src/a.cpp
 "
 
 pub fn report_name_test() {
@@ -174,7 +174,6 @@ pub fn report_name_test() {
 }
 
 pub fn port_record_test() {
-  assert c.port_record(ports, "W3SNL1_KOKKOS")
-    == #("yes: L2", "yes: L1_test_snl1_dia")
-  assert c.port_record(ports, "W3SDS4_KOKKOS") == #("", "")
+  assert c.port_record(ports, "W3SNL1_KOKKOS") == "yes: L2"
+  assert c.port_record(ports, "W3SDS4_KOKKOS") == ""
 }

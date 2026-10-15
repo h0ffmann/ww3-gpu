@@ -6,6 +6,8 @@ expensive test each. `(v)` marks a claim checked by a command run for this docum
 owner's workstation (RTX 4090) while its NVIDIA driver was not loaded (§7), with
 the pratico toolchain (gfortran 15.3.0, Kokkos 5.2.0 OpenMP); `⚠` marks one that was not.
 
+> **Later the same day, [ADR-0010](ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md).** The L1 fixture, `snl1_ref.F90`, `gen_snl1_ww3lib` and the other test drivers this assessment discusses were removed: the Kokkos port has no tests of its own, and WW3's regtests on the CPU (`just smoke-hoff`, `just full-hoff`, `just hoff-matrix`) are its only tests. The frozen fixture stays as the benchmark's input. Where §4 proposes a fixture from a WW3 build to settle why L2 is not byte-identical, that is now a question for the regtests. The assessment is otherwise kept as written.
+
 ## 1. Summary
 
 Before today, the port was a kernel and a recipe. `W3SNL1` (the DIA) and its `INSNL1` tables

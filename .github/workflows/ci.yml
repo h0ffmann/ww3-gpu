@@ -43,7 +43,7 @@ jobs:
       - name: memory/ holds only published ai-memory pages, and its index is current (MEMORY.md)
         run: python3 scripts/memory.py --self-test && python3 scripts/memory.py check
 
-      - name: Result records are valid, every timing has a passed L1, quoted tables are current
+      - name: Result records are valid, every timing has a passed WW3 regtest replay, quoted tables are current
         run: python3 scripts/results.py check
 
       - name: The port score in kokkos/PORT_STATUS.md is current; hoff.sh and ww4_parts.py pass their self-tests

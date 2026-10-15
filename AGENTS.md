@@ -21,9 +21,13 @@ looser.
 - **Translate, don't improve**: a ported routine reproduces the Fortran's arithmetic; a change of
   reduction order, limiter or integration order is a separate PR with its own L2 evidence, asked
   about first, and a tolerance is never widened to pass ([Porting](#porting-hard-rule)).
-- **No timing without parity**: a speed figure enters a table only after the L1 gate passed on the
-  same build, with the machine, the command and the median of three runs
+- **No timing without parity**: a speed figure enters a table only after the WW3 regtest replay
+  passed on the same commit, with the machine, the command and the median of three runs
   ([Porting](#porting-hard-rule)).
+- **The port has no tests of its own**: Kokkos code is validated only by WW3's regtests, run inside
+  WW3 from the h0ffmann/WW3 fork and compared with the same WW3 without it; no L1, GoogleTest or
+  fixture of a ported routine is written here
+  ([ADR-0010](docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md)).
 - **The proposal goes through the reviewer**: any change under `pubs/proposal/` passes
   `revisor-proposta` and `just proposal-lint` before the PR, and the review is recorded
   ([The proposal](#the-proposal-hard-rule)).
@@ -54,7 +58,7 @@ recipe is a thin wrapper over a script in `scripts/`; `just` lists them.
 | Change | Where | Its own rules |
 |---|---|---|
 | A kernel, its tests, its shim | `kokkos/` | [`kokkos/README.md`](kokkos/README.md), the ledger [`kokkos/PORT_STATUS.md`](kokkos/PORT_STATUS.md), the rules [`docs/AGENTS_KOKKOS_202609.md`](docs/AGENTS_KOKKOS_202609.md) §1 and §3 |
-| A measurement | a record in `bench/results/`, the table that quotes it (`just results table`), the issue the number answers | [`bench/README.md`](bench/README.md): a row may only claim what a command in the repo reproduces; `scripts/results.py check` refuses a timing without a passed L1 |
+| A measurement | a record in `bench/results/`, the table that quotes it (`just results table`), the issue the number answers | [`bench/README.md`](bench/README.md): a row may only claim what a command in the repo reproduces; `scripts/results.py check` refuses a timing without a passed WW3 regtest replay (`regtest`; a record before 2026-10-14 keeps its `l1`) |
 | Something tried, including a negative result | a dated entry in `docs/log/` | [`docs/log/README.md`](docs/log/README.md): append, never rewrite |
 | A plan, an evaluation, a survey | `docs/` as `NAME_YYYYMM.md`, dated in the name | this file; the `(v)`/`⚠` convention; `docs/GLOSSARY.md` for every new abbreviation |
 | A non-trivial change, designed before it is built | a WFIP in `docs/WFIPs/`, numbered, tied to a proposal deliverable (D1–D6) with its definition of done in §7; a Spec Kit spec in `specs/<NNN-slug>/` when behaviour is worth specifying | [`docs/WFIPs/TEMPLATE.md`](docs/WFIPs/TEMPLATE.md), the `wfip` skill; `scripts/wfip.py check` is the gate and regenerates the index |
@@ -100,10 +104,10 @@ Run the gates of what you changed before calling it done. CI (`.github/workflows
 | You changed | Run |
 |---|---|
 | any `*.sh` or `justfile` recipe | `bash -n <script>` and `shellcheck <script>`; a hook also has `--self-test` (`.claude/hooks/proposal-review.sh --self-test`) |
-| `kokkos/` | `just kokkos-test serial-debug` (sanitizers, bounds checks) and `just kokkos-test openmp-release`; `just kokkos-cuda-test` where a GPU exists |
-| a kernel WW3 calls, or the `WW3/` pin | `just smoke` (CPU); `just full-hoff` before a status in `kokkos/ports.tsv` moves to L2. Never `--gpu` without the owner (hard rule) |
+| `kokkos/` | `just kokkos-test serial-debug` (sanitizers, bounds checks) and `just kokkos-test openmp-release`, which build the port and run the tests of the intro programs and the tools (the port has none, ADR-0010); `just smoke-hoff` for the port itself |
+| a kernel WW3 calls, or the `WW3/` pin | `just smoke` (CPU); `just full-hoff` and `just hoff-matrix` (the WW3 regtest matrix, WFIP-0003) before a status in `kokkos/ports.tsv` moves to L2. Never `--gpu` without the owner (hard rule) |
 | `scripts/hoff.sh` or `scripts/ww4_parts.py` | `bash scripts/hoff.sh --self-test`, `python3 scripts/ww4_parts.py --self-test`, shellcheck; `just smoke-hoff` (CPU, pair to pair with `--ww3`) |
-| `kokkos/ports.tsv`, `docs/data/ww3_full_gprof.tsv` or `docs/data/kokkos_coverage.tsv` | `python3 scripts/port_score.py --write`, then `--check` (CI runs `--self-test` and `--check`); `just kokkos-coverage` first when a port's Kokkos files or tests changed, and `python3 scripts/kokkos_coverage.py --self-test` |
+| `kokkos/ports.tsv` or `docs/data/ww3_full_gprof.tsv` | `python3 scripts/port_score.py --write`, then `--check` (CI runs `--self-test` and `--check`) |
 | Fortran in `gpu/`, `examples/`, `exercises/` | they must compile with gfortran with directives ignored; the exercise parity test must pass |
 | a Mermaid fence or its page | `python3 scripts/figures.py check`, then `just figures` to re-render and `python3 -m unittest tests/test_figures.py` |
 | `pubs/proposal/` | `just proposal-lint`, the `revisor-proposta` review, `just proposal-review-record <parecer>`, `just proposal-review-check` |
@@ -155,7 +159,7 @@ copied into this repository (`CONTRIBUTING.md`, "Don't vendor WW3 source. Script
 exceptions are a `bind(C)` shim module and the caller patch described in
 `kokkos/src/fortran_iface/PATCH.md`, which live on a fork branch, behind a switch, and leave the
 original routine selectable. Every statement about WW3 cites `model/src/<file>.F90:<line>` at the
-pinned commit (`WW3@761cf79d` at the time of writing), never a comment, a paper or memory.
+pinned commit (`WW3@6d1bcdfe` at the time of writing), never a comment, a paper or memory.
 Namelists are written against the templates in `$WW3/model/nml/` and are `⚠` until executed.
 
 ## Porting (hard rule)
@@ -167,7 +171,12 @@ broken most often:
 - **Translate, don't improve.** Phase 1 reproduces the Fortran's arithmetic: no refactor, no
   vectorisation, no "simplification"; loop nesting changes only where a kernel may not allocate.
   Contraction is off (`-ffp-contract=off`, `--fmad=false`): turning it on is a physics change, not
-  a tuning knob, and it invalidates the L1 column (`kokkos/PORT_STATUS.md`).
+  a tuning knob, and it invalidates every regtest verdict (`kokkos/PORT_STATUS.md`).
+- **The port has no tests of its own** ([ADR-0010](docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md),
+  the owner, 14 October 2026): no L1 test, GoogleTest or captured fixture of a ported routine. Its
+  tests are WW3's regtests: `just smoke-hoff` and `just full-hoff` (`--hoff --cpu` pair to pair with
+  `--ww3`) and `just hoff-matrix`, the serial `NL1` entries of WW3's `matrix.base` compared by
+  `test.comp` and `nccmp-tol` (WFIP-0003).
 - **Ask before** changing the order of a reduction, a limiter or the integration order. The change
   is its own PR, with L2 evidence.
 - **Never widen a tolerance.** Report and stop.
@@ -175,26 +184,27 @@ broken most often:
   expensive, not the one that is easiest to validate or already has a fixture ([ADR-0002](docs/ADRs/ADR-0002-port-order-wall-time.md),
   applied in #45; `W3SDS4` before `W3SIN4`, both after `W3SNL1`).
 - **Every ported routine has a port report**, `kokkos/port_report/<ROUTINE>_KOKKOS.md`: what was
-  ported, its benchmarks in the table the website reads, how it was regtested, and what GoogleTest
-  covers (the owner, 14 October 2026). `scripts/port_score.py --check` fails without it. A new
+  ported, its benchmarks in the table the website reads, and how it was regtested (the owner, 14
+  October 2026). `scripts/port_score.py --check` fails without it. A new
   number goes into the report's bench table with its source, in the same pull request.
-- **Every ported routine records whether its Kokkos code was regtested and GoogleTested**: the
-  `regtested` and `googletest` columns of `kokkos/ports.tsv`, each "yes: <how>" or "no: <why>"
-  (the owner, 14 October 2026). `--check` refuses a row without both; the website shows them.
+- **Every ported routine records whether its Kokkos code was regtested**: the `regtested` column
+  of `kokkos/ports.tsv`, "yes: <how>" or "no: <why>" (the owner, 14 October 2026). `--check`
+  refuses a row without it; the website shows it.
 - **The global numbers** (share of the run time, of the lines of code, of the files, of the
   routines, and the size of the Kokkos code) are written by `scripts/port_score.py --write` into
   `kokkos/PORT_STATUS.md` and `site/data/port_score.tsv`, which the website reads, and the ranking of
-  what is still in Fortran with each port's test coverage into `kokkos/PORT_RANKING.md`; `/port-next`
+  what is still in Fortran with each port's regtest record into `kokkos/PORT_RANKING.md`; `/port-next`
   starts the next port from it. `--check` fails
   when either is stale.
 - **CI keeps h1 alive**: `--hoff --cpu` on `ww3_ts1`, pair to pair with `--ww3`
   ([`health.yml`](.github/workflows/health.yml)). It is the only combination in CI for now.
 - **Done means all of §1.5:** the kernel with its heritage header, the shim with its argument
-  table, an L1 test with stated and justified tolerances, an L2 regtest replay, a timing line in
-  `PORT_STATUS.md`, and a conservation or sign property where physics allows one.
+  table, the L2 regtest replay and the regtest matrix passed within `tolerances.txt`, a timing line
+  in `PORT_STATUS.md`, and a conservation or sign property where physics allows one, checked inside
+  a regtest run; §1.5's L1 item is withdrawn by ADR-0010.
 - **Timings** follow `kokkos/tests/bench_snl1.cpp`: three warm-up calls, twenty timed, median of
   three runs, machine named, kernel-only and end-to-end both reported; nothing timed enters a table
-  without a passed L1 on the same build.
+  without a passed WW3 regtest replay on the same commit.
 - **The memory contract is explicit.** Phase 1 copies per call and exists to validate; phase 2
   keeps the spectrum resident. Never use Unified Memory to avoid thinking about transfers, and never
   read the CUDA kernel column as "the model will be this much faster".
@@ -232,7 +242,10 @@ owner, always under UFSC team on Claude. (enterprise account)"
 - `.claude/hooks/kokkos-account.sh` (PreToolUse on Write and Edit) denies an edit to Kokkos code
   in a `claude_max` session (v) (live run with a `claude_max` `~/.claude.json` and with the
   `claude_team` login, 14 October 2026; `docs/log/2026-10-14-kokkos-account-team.md`). It is a
-  guard, not the rule: the rule holds for any tool.
+  guard, not the rule: the rule holds for any tool. `TEAM_PROTECTION=off` turns the guard off
+  (unset or any other value keeps it on); `.claude/settings.json` sets it `off` for now, at the
+  owner's request, so accounts can be switched (v) (self-test both ways, 14 October 2026;
+  `docs/log/2026-10-14-kokkos-account-exception.md`). An agent never changes that setting.
 - Scripts, documents, CI and the port's ledgers (`kokkos/ports.tsv`, `kokkos/PORT_STATUS.md`)
   are not Kokkos code.
 

@@ -3,11 +3,13 @@
 # (ww_kokkos_c.hpp + snl1_shim.cpp) here, and the Fortran module that binds it
 # (w3kokkosmd.F90), which lives in WW3 itself: the h0ffmann/WW3 branch
 # hoff/kokkos-snl1, at the commit the WW3/ submodule pins. This repository keeps
-# no WW3 Fortran; the tests compile the module from WW3/model/src.
+# no WW3 Fortran; this build compiles the module from WW3/model/src.
 #
-# The C++ half goes into ww_kokkos itself, so it is always built and always
-# testable -- a GoogleTest binary calls the same entry points WW3 does, with no
-# Fortran compiler in the loop. Only the Fortran module needs WW_ENABLE_FORTRAN.
+# The C++ half goes into ww_kokkos itself, so it is always built; the benchmark
+# (tests/bench_snl1.cpp) calls the same entry points WW3 does, with no Fortran
+# compiler in the loop. Only the Fortran module needs WW_ENABLE_FORTRAN. The shim
+# has no tests of its own (the owner, 2026-10-14): WW3's regtests, through
+# scripts/hoff.sh --hoff --cpu, exercise it.
 #
 # SPDX-License-Identifier: MIT
 target_sources(ww_kokkos PRIVATE
@@ -18,7 +20,8 @@ set(WW_W3KOKKOSMD "${CMAKE_CURRENT_SOURCE_DIR}/../../../WW3/model/src/w3kokkosmd
     CACHE FILEPATH "WW3's w3kokkosmd.F90 (the WW3/ submodule, branch hoff/kokkos-snl1)")
 
 if(WW_ENABLE_FORTRAN)
-  # Loud, not skipped: without the module the shim round-trip test would vanish.
+  # Loud, not skipped: a missing module means the WW3/ pin and this C ABI can drift
+  # apart unseen.
   if(NOT EXISTS "${WW_W3KOKKOSMD}")
     message(FATAL_ERROR "No ${WW_W3KOKKOSMD}: run `git submodule update --init WW3` "
         "(the hoff/kokkos-snl1 branch of h0ffmann/WW3), or set WW_W3KOKKOSMD, "

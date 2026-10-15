@@ -1,6 +1,6 @@
 // kokkos/src/ww_kokkos/fixture_io.hpp
-// Reader for the binary W3SNL1 parity fixture written by
-// kokkos/tests/fixtures/gen_snl1_fixture.F90.
+// Reader for the binary W3SNL1 fixture, the benchmark's frozen input. Its
+// generator was removed on 2026-10-14 with the port's own tests.
 //
 // The file is a raw little-endian stream (Fortran ACCESS='STREAM'), so it has no
 // record markers and no padding; kokkos/tests/fixtures/README.md documents the

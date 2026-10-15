@@ -1,8 +1,8 @@
 # `kokkos/`: the C++/Kokkos half of the lab
 
 One CMake tree, one backend per configure preset. It holds the portable kernel
-library (`ww_kokkos`), the lesson-11 intro programs, the GoogleTest suites and the
-C++ tools. The first ported source term, `W3SNL1`/`INSNL1` (the DIA nonlinear
+library (`ww_kokkos`), the lesson-11 intro programs, the GoogleTest suites of the
+lessons and the tools, and the C++ tools. The first ported source term, `W3SNL1`/`INSNL1` (the DIA nonlinear
 interactions), lives in `src/ww_kokkos/snl1_*`.
 
 ## Toolchain
@@ -28,9 +28,9 @@ src/ww_kokkos/        real.hpp (float32 + helpers), spectrum_fixtures.hpp (JONSW
 src/fortran_iface/    ww_kokkos_c.hpp + snl1_shim.cpp (the C ABI, built into ww_kokkos),
                       w3kokkosmd.F90 (the Fortran module), PATCH.md (the WW3 caller)
 intro/                01..06, one Kokkos concept each, each a CTest case
-tests/                kokkos_env.hpp (runtime lifetime), L1_* GoogleTest suites, bench_snl1.cpp
-tests/fixtures/       the verbatim Fortran reference, the shared sea state, the committed
-                      binary fixtures and shim_driver.F90 (the shim_roundtrip CTest case)
+tests/                kokkos_env.hpp (runtime lifetime), L1_* suites of the lessons and tools,
+                      bench_snl1.cpp, L2_replay.sh
+tests/fixtures/       the benchmark's inputs: snl1_nk25_nth24.bin (frozen) and bench_small/
 PORT_STATUS.md        the port ledger: phase, parity and ms/call per routine
 PORT_RANKING.md       what is still in Fortran, by self time, and each port's test coverage
 tools/nccmp-tol/      per-field NetCDF comparator                (Task 5)
@@ -47,7 +47,6 @@ just kokkos-test serial-debug     # configure + build + ctest
 just kokkos-test openmp-release
 just kokkos-cuda-test             # cuda-release, inside the #cuda shell
 just kokkos-clean                 # rm -rf kokkos/build
-just snl1-fixtures                # regenerate the committed W3SNL1 fixture
 ```
 
 Or directly, from this directory inside a pratico shell:
@@ -82,9 +81,8 @@ Two things the names do *not* promise:
 
 | option | default | meaning |
 |---|---|---|
-| `WW_ENABLE_FORTRAN` | `ON` | build the Fortran interface module, reference and drivers (incl. `intro_06`) |
+| `WW_ENABLE_FORTRAN` | `ON` | build the Fortran interface module `W3KOKKOSMD` and `intro_06` |
 | `WW_DETERMINISTIC` | `OFF` | pin reductions to a fixed summation order for bit-reproducible validation runs |
-| `WW_WW3_BUILD_DIR` | *(empty)* | a configured WW3 build (`libww3.a` + `mod/`); empty skips the WW3-linked targets |
 
 ## Intro programs
 
@@ -107,16 +105,29 @@ concept it demonstrates does not hold, so CI runs the lesson material too.
 `tests/CMakeLists.txt` builds `<name>.cpp`, hands it `WW_FIXTURE_DIR` and registers
 it with CTest.
 
-Naming: `L1_*` are unit tests against analytic or captured-Fortran fixtures; `L2_*`
-replay a whole WW3 regtest.
+The port has no tests of its own. The owner's rule (2026-10-14): "kokkos code should
+NOT have its own tests, hard rule. All tests should come [from] WW3 regtests." The
+suites left in CTest test the lessons and the tools, not the port:
 
 | suite | what it pins down |
 |---|---|
-| `L1_test_intro` | the lesson material's invariants |
-| `L1_test_snl1_tables` | `make_tables` against `INSNL1`: all 32 address tables exactly, the weights and `AF11` to 1e-6 relative |
-| `L1_test_snl1_dia` | `snl1` against `W3SNL1` to 1e-5 relative; plus zero-in/zero-out, the cubic scaling of `Snl`, and launch-to-launch bit-reproducibility |
-| `L1_test_snl1_shim` | the same parity through the raw C ABI, plus the error paths: call before init, negative `npts`, null pointers, buffer growth, idempotent init |
-| `shim_roundtrip` | a Fortran program (`tests/fixtures/shim_driver.F90`) calling `W3KOKKOSMD` → shim → kernel and comparing with `W3SNL1_REF` in the same process |
+| `L1_test_intro`, `intro_01`..`intro_06` | the lesson material's invariants |
+| `L1_test_nccmp_tol` | the per-field NetCDF comparator |
+| `L1_test_bench_case` | the benchmark-case generator |
+| `L1_test_fetch_analyse` | the fetch-growth analyser |
+
+The DIA and its shim are validated by WW3's regtests: `scripts/hoff.sh --hoff --cpu`
+runs a WW3 case with the Kokkos DIA and compares it with the Fortran DIA of the same
+executable and pair to pair with `--ww3` (WW3 built without the KOKKOS switch), and
+the regtest matrix of WFIP-0003 (`scripts/hoff_matrix.sh`) extends that to more of
+WW3's regtests ⚠ (being written in parallel on 2026-10-14; not run from here).
+
+Removed on 2026-10-14 under that rule: `L1_test_snl1_tables`, `L1_test_snl1_dia`,
+`L1_test_snl1_shim`, the Fortran `shim_roundtrip` CTest case, and the standalone
+Fortran reference and fixture generator they were built on. Before removal they
+showed the port bit-identical to the Fortran (max relative error 0.0) on
+serial-debug, openmp-release and cuda-release (2026-09-15; the two CPU presets
+re-run 2026-10-14). That result is history now, with no test left to reproduce it.
 
 Kernels live in free functions rather than in `TEST()` bodies: nvcc rejects an
 extended lambda inside a private member function, and a `TEST()` body is one.
@@ -135,26 +146,15 @@ Two consequences worth knowing before touching them:
   `-O3 -march=x86-64-v3` fuses `AWG1*UE(..) + AWG2*UE(..)` into an FMA (one
   rounding where the Fortran does two), and `openmp-release` drifted 1.1e-5
   relative from the fixture while `serial-debug` was bit-identical. With
-  contraction off all three presets reproduce the Fortran **bit for bit**.
+  contraction off all three presets reproduced the Fortran **bit for bit** in the L1 tests
+  removed on 2026-10-14.
 - **`x**n` is not `std::pow`.** gfortran lowers a real raised to an integer to a
   binary-exponent chain of multiplications; `powf` does something else, to within
   a ULP. `snl1_tables.cpp` has a `powi()` that reproduces the chain, and that is
-  what makes the parity exact rather than merely close.
+  what made the L1 parity of the removed tests exact rather than merely close.
 
 The DIA has no reduction, so `WW_DETERMINISTIC` changes nothing here: every output
 element is written by one thread from inputs no thread modifies.
-
-### The `ww3_lib` cross-check -- untested
-
-`tests/fixtures/gen_snl1_ww3lib.F90` and `just l1-crosscheck` exist to prove that
-`snl1_ref.F90` really is a verbatim copy, by running the genuine `W3SNL1` out of a
-configured WW3 build and `cmp`-ing the two fixture files. **Neither has ever been
-run.** The WW3 build available on this host (`~/src/WW3/build`) was configured with
-switch `NL0`, so `w3snl1md` is not compiled into its `libww3.a` and `w3snl1md.mod`
-does not exist; the CMake guard detects exactly that and skips the target with a
-warning. Running it needs a WW3 built with an `NL1` switch, e.g.
-`just build switches/switch_lab_shrd`. Until then the committed fixture, generated
-from the standalone reference, is the sole source of truth.
 
 ## The bind(C) boundary
 
@@ -167,8 +167,8 @@ rule each:
 | `snl1_shim.cpp` | ownership (finalize only a Kokkos *we* started), lifetime (a `push_finalize_hook` drops the Views before `Kokkos::finalize`), and errors (every entry point is a `try`/`catch` that records a code) |
 | `w3kokkosmd.F90` | `MODULE W3KOKKOSMD`: one `ISO_C_BINDING` interface block per C declaration, plus `LOGICAL :: KOKKOS_SNL1` |
 
-The C++ half is compiled into `ww_kokkos` unconditionally, so the shim is testable
-with no Fortran compiler in the loop; only `w3kokkosmd.F90` needs
+The C++ half is compiled into `ww_kokkos` unconditionally, so the benchmark calls
+the shim with no Fortran compiler in the loop; only `w3kokkosmd.F90` needs
 `WW_ENABLE_FORTRAN`, and it is built as its own target (`ww_kokkos_f`) because it
 is meant to be *copied into* `WW3/model/src`. That is what
 `src/fortran_iface/PATCH.md` describes, hunk by hunk, with real line numbers.

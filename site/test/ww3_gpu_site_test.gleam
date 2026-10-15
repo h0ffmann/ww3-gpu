@@ -107,8 +107,7 @@ pub fn the_global_numbers_and_each_record_are_on_the_page_test() {
     assert string.contains(page, ">" <> s.count <> "<")
   })
   list.each(content.reports, fn(r) {
-    assert r.regtested != "" && r.googletest != ""
+    assert r.regtested != ""
     assert string.contains(page, string.replace(r.regtested, "'", "&#39;"))
-    assert string.contains(page, string.replace(r.googletest, "'", "&#39;"))
   })
 }

@@ -15,7 +15,9 @@ experts (`pubs/proposal/pt/05-justification.md` (v); details beyond that summary
 1. **Two stages.** Fortran → a clean, single-threaded C reference → C++/Kokkos. The C stage
    pins the configuration (dead `#ifdef`s disappear) and is what the Kokkos serial backend is compared against.
 2. **Literal translation.** Same expressions, order and precision; optimisation is a later, separate change.
-3. **A validation ladder.** Each rung compares against the rung below on captured inputs.
+3. **A validation ladder.** Each rung compares against the rung below on captured inputs. This
+   repository keeps the ladder's rungs but not its captured inputs for the Kokkos code: since
+   ADR-0010 (2026-10-14) a Kokkos kernel is checked only inside WW3's regtests.
 
 ```mermaid
 %% figure: porting-validation-ladder
@@ -27,9 +29,9 @@ flowchart LR
     B -. checked against,<br/>captured inputs .-> A
     C -. bit-identical to .-> B
     D -. statistical comparison,<br/>timing on the H100 .-> C
-    subgraph T[Tests every kernel must pass]
-        L1[L1 · synthetic JONSWAP spectrum<br/>declared tolerances]
-        L2[L2 · nearest regression case<br/>and the operational case]
+    subgraph T[The only tests a Kokkos kernel has here, ADR-0010]
+        L2[WW3 regtests, Fortran routine<br/>against Kokkos routine, on the CPU]
+        L3[the operational case]
     end
     C -- must pass --> T
     D -- must pass --> T
@@ -40,24 +42,26 @@ flowchart LR
 
 **Takeaway.** Fortran is translated into GPU-ready C++ in small steps, and each version is checked against the one before it: Kokkos serial must be bit-identical to the C, and the GPU version is compared statistically with the CPU one.
 
-**How to read.** The numbered boxes are four versions of the same routine, made in that order. A solid arrow says how the next version is written; a dashed arrow points back to the version it is checked against, and its label says how strict the check is. Both Kokkos versions must also pass the L1 and L2 tests in the group on the right, which follows WW4's test levels.
+**How to read.** The numbered boxes are four versions of the same routine, made in that order. A solid arrow says how the next version is written; a dashed arrow points back to the version it is checked against, and its label says how strict the check is. Both Kokkos versions must also pass the tests in the group on the right: WW3's own regtests, run with the Fortran routine and with the Kokkos routine, and then the operational case. The proposal's recipe also has an L1 rung, unit tests on a synthetic JONSWAP spectrum; this repository removed it for the Kokkos code (ADR-0010).
 
-**Not shown.** The tolerances, declared and justified per kernel (lesson 12), and the shortcut taken for `W3SNL1`, where the C stage was skipped and Kokkos serial was compared with the Fortran fixture directly (text below).
+**Not shown.** The tolerances (`kokkos/tools/nccmp-tol/tolerances.txt`, lesson 12), and the shortcut taken for `W3SNL1`, where the C stage was skipped and Kokkos serial was compared with the Fortran fixture directly until that test was removed (text below).
 
-**Evidence.** The recipe of Koldunov et al. (2026) as summarised in `pubs/proposal/pt/05-justification.md` and applied in `pubs/proposal/pt/07-methodology.md`, paragraph *Interoperabilidade e testes dos kernels* (v).
+**Evidence.** The recipe of Koldunov et al. (2026) as summarised in `pubs/proposal/pt/05-justification.md` and applied in `pubs/proposal/pt/07-methodology.md`, paragraph *Interoperabilidade e testes dos kernels* (v); the test group as amended by [ADR-0010](../docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md) (v).
 
 </details>
 
 The lab collapsed the C stage for `W3SNL1` (100 lines, already CPP-preprocessed `.F90`):
 the "bit-identical to the C" rung became "bit-identical to the Fortran fixture on every
-preset" (lesson 12). For `W3SRCE` and its 239 preprocessor guards ⚠, keep the C stage.
+preset" (lesson 12), and since 2026-10-14 "agrees with the Fortran in WW3's regtests on the CPU",
+because the fixture tests were removed (ADR-0010). For `W3SRCE` and its 239 preprocessor guards ⚠, keep the C stage.
 
 ## What a port PR contains
 
 The six items of lesson 12's definition of done (`AGENTS_KOKKOS` §1.5, §5): kernel with
-heritage header; `bind(C)` shim plus Fortran interface; L1 test with justified tolerances;
-L2 replay of the smallest regtest; a `PORT_STATUS.md` timing line; a property test where
-physics allows. Any algorithmic change is a separate PR with its own L2 evidence (v).
+heritage header; `bind(C)` shim plus Fortran interface; the L1 test is withdrawn (ADR-0010:
+the port has no tests of its own); the WW3 regtest replay and the regtest matrix on the CPU
+(`just smoke-hoff`, `just full-hoff`, `just hoff-matrix`); a `PORT_STATUS.md` timing line; a
+property checked inside a regtest run where physics allows. Any algorithmic change is a separate PR with its own L2 evidence (v).
 
 ## The ranked list and the phases
 
@@ -183,7 +187,7 @@ flowchart TD
 
 </details>
 
-Lessons 09, 10 and 12 are rungs; the gates are the matrix, `nccmp-tol` and the fixture tests. An agent may work on any rung; it may not skip one.
+Lessons 09, 10 and 12 are rungs; the gates are the matrix and `nccmp-tol` (the fixture tests of the Kokkos port were removed by ADR-0010). An agent may work on any rung; it may not skip one.
 
 ## The operation decision
 
@@ -225,7 +229,8 @@ commit; the regtest that exercises it and the reference output; the interface co
 optimisations are off limits. The document's own example is the prompt behind lesson 12:
 "Port `W3SNL1` (DIA) from `model/src/w3snl1md.F90` @ WW3 7.14 … Phase 1: translate only …
 Write L1 test against a JONSWAP fixture … Do not touch the Fortran caller except to add
-the `bind(C)` interface behind the `WW_KOKKOS_SNL1` switch."
+the `bind(C)` interface behind the `WW_KOKKOS_SNL1` switch." Since ADR-0010 the "Write L1 test"
+line is dropped: the prompt asks for the regtest replay on the CPU instead.
 
 Forbid explicitly (v): optimising while translating; replacing preprocessor switches with
 runtime `if`s inside kernels; claiming a speed-up without an attached timing table;
@@ -235,7 +240,8 @@ affects reduction order, a precision, a limiter or an integration scheme (§5).
 
 Two lab-specific lessons from the first port (`kokkos/README.md` (v)): an agent reaches
 for `std::pow` where gfortran multiplies, and for a fused multiply-add where the Fortran
-rounds twice. Neither is wrong C++; both fail a 1e-5 parity test. Build the fixture first.
+rounds twice. Neither is wrong C++; both failed the 1e-5 parity test the port had then. Run
+`just smoke-hoff` first: the regtest is the only place that catches them now (ADR-0010).
 
 ## WW4: do not compete, build in its shape
 
@@ -245,8 +251,8 @@ C++ core with no physics, L1 and L2 tests in GoogleTest of four planned levels, 
 CPU–GPU architecture question with Kokkos proposed as the abstraction layer
 (`pubs/proposal/pt/05-justification.md` (v); [lesson 14](14-ww4-and-the-future.md)). ON 525
 retires WW3 only once WW4 matures, so WW3 stays operational for years. The project's
-artefacts are shaped to be reusable there (L1 per-kernel tests on synthetic spectra, L2
-replays, GoogleTest, heritage headers) without contributing to WW4 or depending on it
+artefacts are shaped to be reusable there (L2 replays of WW3's regtests, heritage headers; the
+L1 per-kernel GoogleTests on synthetic spectra were removed by ADR-0010) without contributing to WW4 or depending on it
 (`pubs/proposal/pt/04-scope.md` (v)). Licence (`AGENTS_KOKKOS` §4): the translated kernels
 derive from WW3, so `snl1_dia.cpp`, `snl1_tables.cpp` and the Fortran module that patches
 into the model, `w3kokkosmd.F90`, carry `LGPL-3.0-or-later`; the C++ tooling around them,

@@ -5,7 +5,7 @@ spec = importlib.util.spec_from_file_location("results", ROOT / "scripts" / "res
 results = importlib.util.module_from_spec(spec); spec.loader.exec_module(results)
 
 RECORD = {"study": "s", "date": "2026-01-01", "routine": "R", "what": "w", "machine": "m",
-          "toolchain": "t", "commit": "abc1234", "l1": "passed: L1_x", "statistic": "median of three",
+          "toolchain": "t", "commit": "abc1234", "regtest": "passed: just smoke-hoff", "statistic": "median of three",
           "runs": [{"backend": "Serial", "command": "cmd", "shim_ms": 2.5, "kernel_ms": 2.0}]}
 
 
@@ -22,9 +22,18 @@ class Results(unittest.TestCase):
     def test_a_valid_record_has_no_problems(self):
         self.assertEqual(results.problems(self.write(RECORD)), [])
 
-    def test_a_timing_without_passed_l1_is_rejected(self):
-        errs = results.problems(self.write(dict(RECORD, l1="not run")))
+    def test_a_timing_without_passed_regtest_is_rejected(self):
+        errs = results.problems(self.write(dict(RECORD, regtest="not run")))
         self.assertTrue(any("without parity" in e for e in errs))
+
+    def test_a_new_record_with_only_l1_is_rejected(self):
+        rec = {k: v for k, v in RECORD.items() if k != "regtest"}
+        errs = results.problems(self.write(dict(rec, date="2026-10-14", l1="passed: L1_x")))
+        self.assertTrue(any("without parity" in e for e in errs))
+
+    def test_an_older_record_keeps_its_l1_as_history(self):
+        rec = {k: v for k, v in RECORD.items() if k != "regtest"}
+        self.assertEqual(results.problems(self.write(dict(rec, date="2026-09-15", l1="passed: L1_x"))), [])
 
     def test_a_run_without_its_command_is_rejected(self):
         bad = dict(RECORD, runs=[{"backend": "Serial", "shim_ms": 1, "kernel_ms": 1}])

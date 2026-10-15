@@ -38,15 +38,10 @@ pub type Link {
 }
 
 /// A port report of kokkos/port_report/: its name, its status line, its file, and the record of
-/// kokkos/ports.tsv: was the Kokkos code regtested inside WW3, and is it under a GoogleTest.
+/// kokkos/ports.tsv: was the Kokkos code regtested inside WW3. The port has no tests of its own;
+/// WW3's regtests are its tests (ADR-0010).
 pub type Report {
-  Report(
-    name: String,
-    status: String,
-    file: String,
-    regtested: String,
-    googletest: String,
-  )
+  Report(name: String, status: String, file: String, regtested: String)
 }
 
 /// One global number of the port, a row of site/data/port_score.tsv (scripts/port_score.py):
@@ -240,8 +235,8 @@ pub fn report_name(routine: String) -> String {
   string.uppercase(name) <> "_KOKKOS"
 }
 
-/// The regtested and googletest cells of kokkos/ports.tsv for a report, or "" for each.
-pub fn port_record(ports_tsv: String, report: String) -> #(String, String) {
+/// The regtested cell of kokkos/ports.tsv for a report, or "".
+pub fn port_record(ports_tsv: String, report: String) -> String {
   let found =
     tsv_rows(ports_tsv, "routine")
     |> list.find(fn(cells) {
@@ -251,8 +246,8 @@ pub fn port_record(ports_tsv: String, report: String) -> #(String, String) {
       }
     })
   case found {
-    Ok([_, _, _, _, _, regtested, googletest, ..]) -> #(regtested, googletest)
-    _ -> #("", "")
+    Ok([_, _, _, _, _, regtested, ..]) -> regtested
+    _ -> ""
   }
 }
 
@@ -355,7 +350,7 @@ pub type Link {
 }
 
 pub type Report {
-  Report(name: String, status: String, file: String, regtested: String, googletest: String)
+  Report(name: String, status: String, file: String, regtested: String)
 }
 
 pub type Stat {
@@ -430,7 +425,7 @@ pub fn render(
         "reports",
         "Report",
         list.map(reports, fn(r) {
-          call("Report", [r.name, r.status, r.file, r.regtested, r.googletest])
+          call("Report", [r.name, r.status, r.file, r.regtested])
         }),
       ),
       items(
@@ -535,13 +530,11 @@ pub fn main() -> Nil {
   let reports =
     list.map(report_files, fn(name) {
       let text = read(root <> "kokkos/port_report/" <> name)
-      let #(regtested, googletest) = port_record(ports_tsv, heading(text))
       Report(
         heading(text),
         bold_line(text, "Status"),
         "kokkos/port_report/" <> name,
-        regtested,
-        googletest,
+        port_record(ports_tsv, heading(text)),
       )
     })
   let stats =

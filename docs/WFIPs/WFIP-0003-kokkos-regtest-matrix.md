@@ -6,7 +6,7 @@
 | **Author** | M. Hoffmann (asked 2026-10-14 in the project thread: "how to use Kokkos code + ww3 regtest tooling, in a automated way, using the WW3 fork") |
 | **Created** | 2026-10-14 |
 | **Deliverable** | D4, D5 |
-| **Related** | [`kokkos/port_report/W3SNL1_KOKKOS.md`](../../kokkos/port_report/W3SNL1_KOKKOS.md) ("How it was regtested"); [`scripts/hoff.sh`](../../scripts/hoff.sh) (the L2 replay it generalises); [`kokkos/tests/L2_replay.sh`](../../kokkos/tests/L2_replay.sh) (the `work_a`/`work_b` pairing); [`docs/AGENTS_KOKKOS_202609.md`](../AGENTS_KOKKOS_202609.md) §1.5 item 4 and §3.3; [ADR-0002](../ADRs/ADR-0002-port-order-wall-time.md) |
+| **Related** | [`kokkos/port_report/W3SNL1_KOKKOS.md`](../../kokkos/port_report/W3SNL1_KOKKOS.md) ("How it was regtested"); [`scripts/hoff.sh`](../../scripts/hoff.sh) (the L2 replay it generalises); [`kokkos/tests/L2_replay.sh`](../../kokkos/tests/L2_replay.sh) (the `work_a`/`work_b` pairing); [`docs/AGENTS_KOKKOS_202609.md`](../AGENTS_KOKKOS_202609.md) §1.5 item 4 and §3.3; [ADR-0002](../ADRs/ADR-0002-port-order-wall-time.md); [ADR-0010](../ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md) (since 2026-10-14 this matrix and `hoff.sh` are the port's only tests) |
 | **Effort** | M: one shell script and one recipe; no kernel, no Fortran, no WW3 edit; most of the work is the first full run and reading its failures |
 | **Gain** | `proposal` (D4: WW3's own comparison, `test.comp`, beside the lab's comparator; D5: the Kokkos DIA validated against the Fortran on 100 WW3 configurations instead of 1); `lab/dev-loop` (every later port reuses the matrix) |
 | **Effort vs Gain** | do next: L2 rests on one regtest today, and the next port (`W3SDS4`, row 1 of `kokkos/PORT_RANKING.md`, #118) would inherit the same thin check |
@@ -57,7 +57,7 @@ without `MPI`, `OMPG` or `OMPH`, in 10 regtests `(v)` (Appendix, the selection c
 Their spectral grids reach NK=40 NTH=36 (`ww3_tp2.15`) and NK=32 NTH=36 (`ww3_tc1`) `(v)`
 (`SPECTRUM%NK`, `%NTH` in each `ww3_grid*.nml`), beyond `ww3_ts1`'s NK=36 NTH=24; and they cover
 `ST0` to `ST6`, not only `ST4`. The kernel's level-1 scratch fallback, which CTest never takes
-(`kokkos/PORT_RANKING.md`, "Tested, per port", #118), is likely exercised by them ⚠.
+(`kokkos/PORT_RANKING.md`, "Regtested, per port", #118), is likely exercised by them ⚠.
 
 ## 3. What changes for the reader
 
@@ -180,8 +180,9 @@ never widens a tolerance.
   driver, drifting from WW3's harness; the matrix and `test.comp` are what NOAA runs.
 - **Write the `KOKKOS` switches into `WW3/regtests/` on the fork branch**: works, but edits the
   read-only tree for test plumbing; staging leaves the fork as it is.
-- **An `L2_test_snl1_replay` GoogleTest** (`W3SNL1_KOKKOS.md`, "GoogleTest, the WW4 way"): still
-  wanted, but it would wrap one case in CTest; it can call this script for one entry later.
+- **An `L2_test_snl1_replay` GoogleTest** (`W3SNL1_KOKKOS.md`, "GoogleTest, the WW4 way"): it
+  would wrap one case in CTest, and ADR-0010 (2026-10-14) rules out a test of the port's own; the
+  regtests run by this script are the test.
 - **Run it in CI**: the runner has no time budget for hours of builds; h1 stays the CI check.
 
 ## 11. Open questions

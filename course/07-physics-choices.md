@@ -138,8 +138,9 @@ Kokkos kernel must reproduce the Fortran to round-off before anyone is allowed t
 physics, and a routine with an exact, cheap, per-point reference is the easiest one to
 prove that claim on. `NL2` and `NL3` would inherit the same kernel structure later.
 [`12-porting-a-kernel-w3snl1.md`](12-porting-a-kernel-w3snl1.md) walks through the port
-line by line; the code is in `kokkos/src/ww_kokkos/snl1_*` with the verbatim Fortran
-reference beside it in `kokkos/tests/fixtures/snl1_ref.F90`.
+line by line; the code is in `kokkos/src/ww_kokkos/snl1_*`, and its reference is WW3's own
+`W3SNL1`, through WW3's regtests (a verbatim standalone copy kept beside the port was removed on
+2026-10-14 with the port's tests, ADR-0010).
 
 → [`08-python.md`](08-python.md): the Python ecosystem, and why this repo does not depend
 on it.

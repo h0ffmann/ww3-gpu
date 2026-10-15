@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """Measured results as data: bench/results/*.json -> the tables that quote them.
 
-A record holds one study's runs with the machine, toolchain, statistic, L1 status and the command
-of every run (bench/README.md: a row may only claim what a command reproduces). A Markdown page
+A record holds one study's runs with the machine, toolchain, statistic, the WW3 regtest replay that
+passed on the same commit (`regtest`) and the command of every run (bench/README.md: a row may only claim what a command reproduces). A Markdown page
 quotes a study between `<!-- results:<study>:start -->` and `<!-- results:<study>:end -->`; the
 table there is generated, so it cannot drift from the record.
 
     scripts/results.py table   # rewrite every marked table from the records
-    scripts/results.py check   # CI: records valid, every timing has a passed L1, tables current
+    scripts/results.py check   # CI: records valid, every timing has a passed regtest, tables current
 """
 import json
 import pathlib
@@ -17,7 +17,10 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 RESULTS = ROOT / "bench" / "results"
 SKIP = {"WW3", "WW4", "nix-config", ".git", "build"}
-REQUIRED = ("study", "date", "routine", "what", "machine", "toolchain", "l1", "statistic", "runs")
+REQUIRED = ("study", "date", "routine", "what", "machine", "toolchain", "statistic", "runs")
+# ADR-0010: from this date parity is a passed WW3 regtest replay; a record dated before it kept
+# the L1 test of its day (`l1`) and stays valid as history.
+REGTEST_SINCE = "2026-10-14"
 RUN_REQUIRED = ("backend", "command", "shim_ms", "kernel_ms")
 HEADER = ["backend", "shim ms/call", "kernel ms/call", "points/s (shim)", "speed-up vs. Serial"]
 BLOCK = re.compile(r"(<!-- results:([\w.-]+):start -->\n).*?(<!-- results:\2:end -->)", re.S)
@@ -34,9 +37,13 @@ def problems(records):
         errs += [f"{name}: missing '{k}'" for k in REQUIRED if k not in r]
         for i, run in enumerate(r.get("runs", [])):
             errs += [f"{name}: run {i} missing '{k}'" for k in RUN_REQUIRED if k not in run]
-        # AGENTS.md, "No timing without parity": a timing enters only after L1 passed on its build.
-        if not str(r.get("l1", "")).startswith("passed"):
-            errs.append(f"{name}: l1 is not 'passed: ...'; a timing without parity cannot be recorded")
+        # AGENTS.md, "No timing without parity": a timing enters only after a WW3 regtest replay
+        # passed on the same commit.
+        parity = r.get("regtest")
+        if parity is None and str(r.get("date", "")) < REGTEST_SINCE:
+            parity = r.get("l1")
+        if not str(parity or "").startswith("passed"):
+            errs.append(f"{name}: regtest is not 'passed: <command>'; a timing without parity cannot be recorded")
         if r.get("commit") is None and not r.get("commit_note"):
             errs.append(f"{name}: no commit and no commit_note saying why")
         if r.get("study") in studies:

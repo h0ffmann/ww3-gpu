@@ -1,7 +1,7 @@
 {
   "renderer": {
     "mermaid-cli": "11.17.0",
-    "nixpkgs": "eaad089433ca2bb662274377d33df3d0e51ef28b",
+    "nixpkgs": "6510408d147d8c5e6d76043e899e9251756f6a75, eaad089433ca2bb662274377d33df3d0e51ef28b",
     "fonts": [
       "share",
       "share"
@@ -32,7 +32,7 @@
     "porting-validation-ladder": {
       "file": "course/13-bulk-porting-with-agents.md",
       "title": "How is each translated version of a kernel checked against the one before it?",
-      "sha256": "2ad02c79d961c347b0d2f4f278a5f13cbba0e675831779183afce08ce171ad14"
+      "sha256": "b5b40d9f043114063d1a8c6153da5c6df82613f75c870d5fc6de34b46638c153"
     },
     "proposal-schedule": {
       "file": "pubs/proposal/schedule.en.md",

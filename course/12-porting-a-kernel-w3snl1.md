@@ -8,7 +8,7 @@ only thing that changes is who executes them (v, `kokkos/src/ww_kokkos/snl1_dia.
 ## Source map
 
 Source of truth: `WW3/model/src/w3snl1md.F90` at 7.14 `develop`; line numbers (v, checked in
-`~/src/WW3` and in `snl1_ref.F90`'s header). The C++ keeps the Fortran's numbered section comments:
+`~/src/WW3`, and in the header of the lab's standalone copy before ADR-0010 removed it). The C++ keeps the Fortran's numbered section comments:
 
 | Fortran | Lines | Sections | Port |
 |---|---|---|---|
@@ -32,7 +32,7 @@ handle, so the whole struct is captured by value into the kernel (v).
 | Fortran | Port | Why |
 |---|---|---|
 | `ISP = ITH + (IFR-1)*NTH`, all 1-based | `isp = ith + ifr*nth`, all 0-based | every table entry is the Fortran value minus one (v) |
-| `IF3..IF6` clamped to 0 → addresses down to `1-NTH` | entries as low as `-NTH` are legal; `L1_test_snl1_tables` checks the window `[-nth, nspecy)` explicitly | `INSNL1` section 7 (v) |
+| `IF3..IF6` clamped to 0 → addresses down to `1-NTH` | entries as low as `-NTH` are legal; the removed `L1_test_snl1_tables` checked the window `[-nth, nspecy)` explicitly | `INSNL1` section 7 (v) |
 | `UE(1-NTH:NSPECY)`, `SA1(1-NTH:NSPECX)` … | scratch of length `upper + NTH`; Fortran index `J` at slot `J-1+NTH`; a table entry `j` read at slot `j+NTH` | the `1-NTH` lower bound becomes slot 0 (v) |
 | `A(NSPEC)` one point per call | `a(nspec, npts)` `LayoutLeft`, column `ip` is one contiguous spectrum | a batch of points per launch, memory a Fortran caller owns (v, `snl1_dia.hpp`) |
 
@@ -59,7 +59,8 @@ Two build facts decide whether "bit-identical" is true (v, `kokkos/src/ww_kokkos
 `-ffp-contract=off`, and `--fmad=false` for the device half under nvcc. GCC's default fuses
 `AWG1*UE(..) + AWG2*UE(..)` into an FMA (one rounding where the Fortran does two), and
 `openmp-release` drifted 1.1e-5 relative from the fixture while `serial-debug` was
-bit-identical; with contraction off all three presets reproduce the Fortran bit for bit, and
+bit-identical; with contraction off all three presets reproduced the Fortran bit for bit in the
+L1 tests of the day, and
 removing that line is a physics change, not an optimisation. And **`x**n` is not `std::pow`**:
 `powi()` and `pow11()` reproduce gfortran's multiplication chains.
 
@@ -82,44 +83,39 @@ Three things a naive `extern "C"` wrapper gets wrong and this one does not (v,
 `push_finalize_hook` drops the Views inside `finalize`, never at process exit); errors
 (nothing throws across the boundary: every entry is a `try`/`catch` that records a
 code). `W3KOKKOS_SETUP` turns `ww_snl1_enabled()` into `LOGICAL :: KOKKOS_SNL1` once, so
-the inner loop reads a logical; every `REAL` is `REAL(C_FLOAT)` (v). `L1_test_snl1_shim.cpp`
-drives the raw C API on the fixture with poisoned output buffers, so a forgotten copy-out
-fails loudly; `shim_roundtrip` (`fixtures/shim_driver.F90`) is the same call from Fortran (v, `PORT_STATUS.md`).
+the inner loop reads a logical; every `REAL` is `REAL(C_FLOAT)` (v). Until 2026-10-14
+`L1_test_snl1_shim.cpp` drove the raw C API on the fixture with poisoned output buffers, so a
+forgotten copy-out failed loudly, and `shim_roundtrip` made the same call from Fortran (v,
+`PORT_STATUS.md`, "L1 / L2"); both were removed with the port's other tests (next section). The
+shim is now checked only by the WW3 run that calls it.
 
-## Fixtures
+## The port has no tests of its own
 
-The L1 tests do not compare against numbers a human typed (v, `kokkos/tests/fixtures/README.md`):
+Since 14 October 2026 the Kokkos code is validated only by WW3's regression tests, run inside WW3
+with the Fortran routine and with the Kokkos routine, on the CPU, and compared within
+`kokkos/tools/nccmp-tol/tolerances.txt` ([ADR-0010](../docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md);
+the owner: "kokkos code should NOT have its own tests, hard rule") (v). If WW3's regtests agree for
+the Fortran `W3SNL1` and the Kokkos `snl1`, the routine is ported; nothing else is asked of it. The
+reason is that one reference is enough: the Fortran WW3 ships, through the harness NOAA runs. A
+second copy of the reference kept next to it can drift away unseen (ADR-0010, *Alternatives*).
 
-| File | What |
-|---|---|
-| `snl1_ref.F90` | verbatim `W3SNL1`/`INSNL1` bodies; the only edits are the `USE` lines replaced by module variables with the same names, `CALL W3DMNL` replaced by the `ALLOCATE` it performs, and the `#ifdef W3_T*` output removed (v) |
-| `gen_snl1_fixture.F90` | `SETUP_REF(25, 24, 1.1, 0.04118)` with ST4/NL1 defaults, a JONSWAP (10 m/s, 100 km, γ = 3.3) × cos² sea state in action form at 1000 m, 50 m and 10 m; streams header, tables and per-point `kdmean, cg, a, s, d` (v) |
-| `snl1_nk25_nth24.bin` | the committed result, 107 892 bytes, little-endian, no record markers, tables stored 1-based exactly as Fortran holds them (v) |
+Earlier versions of this lesson taught the L1 tests the port had until that day. They are history
+now, kept here because the numbers they produced are still quoted:
 
-The three depths exercise the `KDMEAN` branch: deep water where `EXP(X2)` underflows, and
-a 7 % correction at 10 m (v). `just snl1-fixtures` regenerates the file, and a byte-level
-diff then needs a reason in the commit message (v). `fixture_io.{hpp,cpp}` is the one reader (v).
-
-## L1 tests and their tolerances
-
-| Suite | Checks | Tolerance and why |
+| Removed on 2026-10-14 | What it was | What it showed |
 |---|---|---|
-| `L1_test_snl1_tables` | all 32 address tables | exact: an address is an integer (v) |
-| | `dal1..3`, `awg`, `swg`, `af11` | 1e-6 relative: they come out of `acosf`/`asinf`/`powf`, a ULP apart (v) |
-| `L1_test_snl1_dia` | `S` and `D` on three points | 1e-5 relative with a 1e-30 absolute floor for denormal bins (v) |
-| | zero spectrum → zero source; `A×2` → `S×8`, `D×4` | properties of the DIA, not of the fixture (v) |
-| | four relaunches | bit-identical: a difference is a race, not rounding (v) |
+| `snl1_ref.F90`, `gen_snl1_fixture.F90`, `snl1_sea_state.F90` | a verbatim standalone copy of `W3SNL1`/`INSNL1`, and the generator that wrote a JONSWAP (10 m/s, 100 km, γ = 3.3) × cos² sea state at 1000, 50 and 10 m with the Fortran's answers into `snl1_nk25_nth24.bin` | the fixture, 107 892 bytes (v, `kokkos/tests/fixtures/README.md`) |
+| `L1_test_snl1_tables` | all 32 address tables exactly; `dal1..3`, `awg`, `swg`, `af11` to 1e-6 relative | exact |
+| `L1_test_snl1_dia` | `S` and `D` on three points to 1e-5 relative; zero in, zero out; `A×2` → `S×8`, `D×4`; four relaunches bit-identical | max relative error 0.0 on all three presets, 2026-09-15 (v, `kokkos/PORT_STATUS.md`) |
+| `L1_test_snl1_shim`, `shim_roundtrip` | the same parity through the C ABI and from Fortran, plus the error paths | 0.0 |
+| `gen_snl1_ww3lib.F90`, `just l1-crosscheck` | a cross-check against the real `W3SNL1` from a WW3 library | never run |
 
-Why 1e-5 for float32: the state has 24 bits, about 6e-8 relative, and section 3 forms
-products of four-term interpolations scaled by `AF11` over ten decades, so a handful of
-ULPs is the honest floor. 1e-5 is two orders above that and *tight enough that one fused
-multiply-add fails it* (the FMA drift measured 1.1e-5). Measured: 0.0 on all three presets (v, `PORT_STATUS.md`).
-
-## The optional `ww3_lib` cross-check
-
-`gen_snl1_ww3lib.F90` and `just l1-crosscheck` would prove `snl1_ref.F90` verbatim by running
-the *real* `W3SNL1` from a configured WW3 build and `cmp`-ing the fixtures. **Neither has been
-run**: the owner's WW3 build used `NL0`; it needs an `NL1` build such as `just build switches/switch_lab_shrd` (v, `kokkos/README.md`).
+The tests and their sources are in git history (`git show f721736:kokkos/tests/L1_test_snl1_dia.cpp`).
+The fixture stays, frozen and no longer regenerable, as the input of the kernel benchmark
+`ww_bench_snl1` and of `proof/snl1_cons`; `fixture_io.{hpp,cpp}` is still its one reader (v,
+`kokkos/tests/fixtures/README.md`). What the change costs is said in the ADR: a defect now shows up
+in a model run, minutes long, instead of in one call; and the CUDA kernel has no check until a
+regtest runs on the GPU, which only the owner may supervise.
 
 ## `PATCH.md`: what changes in the WW3 caller
 
@@ -156,21 +152,32 @@ so the patch lives on a branch the pin can point at, and upstream stays untouche
 ## L2: replay a regtest through both paths
 
 ```bash
-just l2 ww3_ts1        # kokkos/tests/L2_replay.sh <ww3-dir> <regtest>
+just smoke-hoff        # scripts/hoff.sh --hoff smoke --cpu: regtest ww3_ts1
+just full-hoff         # scripts/hoff.sh --hoff full --cpu: bench_small, 9 520 sea points
+just hoff-matrix       # scripts/hoff_matrix.sh: every serial NL1 entry of matrix.base (WFIP-0003)
 ```
 
-Requires `just rt <regtest>` done. The script copies `work_lab` to `work_a` and `work_b`,
-runs `ww3_shel` with `WW_KOKKOS_SNL1=0` and `=1`, runs `ww3_ounf` in each, then
-`nccmp-tol work_a/ww3.nc work_b/ww3.nc` with the default tolerances, and appends the table
-to `kokkos/PORT_STATUS.md` under a `## L2 replays` heading it creates (the ledger's own
-section is `## L1 / L2`). Until the patch is applied on a fork branch both runs are the
-Fortran path and the table shows zeros: that proves the harness, not the kernel, and the
-ledger's L2 column reads "pending fork branch" (v).
+This is the port's only test (ADR-0010). `scripts/hoff.sh --hoff` builds WW3 from the `WW3/`
+submodule, the h0ffmann/WW3 branch `hoff/kokkos-snl1` where the patch below is applied, with the
+`KOKKOS` switch, and runs the case twice from the same executable, `WW_KOKKOS_SNL1=0` (the Fortran
+DIA) and `=1` (the Kokkos DIA); `nccmp-tol` compares the gridded output field by field. The Kokkos
+run is then compared pair to pair with `--ww3`, WW3 built from the same source without the switch
+(v, `scripts/hoff.sh` header). It runs on the CPU, Kokkos on OpenMP: a GPU run of WW3 is the
+owner's, supervised, and no agent starts one. Measured on 2026-10-14: `hs` within 9.879e-8
+relative on `ww3_ts1` and within 1.832e-7 on `bench_small`, both PASS at the 1e-4 tolerance, not
+byte-identical (v, `kokkos/port_report/W3SNL1_KOKKOS.md`, "How it was regtested").
+`just hoff-matrix` takes the same comparison to WW3's own harness, `run_cmake_test`, with WW3's
+`test.comp` beside `nccmp-tol` ⚠ (written on 2026-10-14; no result from it is quoted yet).
+
+The older harness, `just l2 ww3_ts1` (`kokkos/tests/L2_replay.sh`), does the same pairing on a run
+prepared by `just rt`, in `work_a` and `work_b`, and appends the table to `kokkos/PORT_STATUS.md`
+(v). It needs a WW3 build with the patch; on an upstream build both runs take the Fortran path and
+the table shows zeros, which proves the harness and not the kernel.
 
 ## The timing line
 
 `kokkos/PORT_STATUS.md` is the ledger, one row per routine: WW3 file and lines, phase,
-shim, L1 parity, L2 replay, Serial / OpenMP / CUDA ms per call, notes (v). The `W3SNL1`
+shim, L1 parity (history), L2 replay, Serial / OpenMP / CUDA ms per call, notes (v). The `W3SNL1`
 row comes from `ww_bench_snl1` (`kokkos/tests/bench_snl1.cpp`, not a test: 1 000 sea
 points, 20 timed calls after 3 warm-ups, median of three runs), on an Intel i9-14900 +
 RTX 4090, Kokkos 5.2.0, GCC 15.3 (the owner's workstation, not the CI runner) (v):
@@ -182,19 +189,23 @@ RTX 4090, Kokkos 5.2.0, GCC 15.3 (the owner's workstation, not the CI runner) (v
 | CUDA, RTX 4090 | 0.75 | 0.047 | 34x |
 
 Two things these numbers are not (v). Not the fastest the kernel can go: every row is the
-`-ffp-contract=off` parity build, and turning contraction on would invalidate the L1
-column. And not what WW3 would see today: the phase-1 call site passes `NPTS = 1`, and on
+`-ffp-contract=off` parity build, and turning contraction on would invalidate every regtest
+verdict. These timings were taken on 2026-09-15, when the parity that licensed them was the L1
+test of the same build (v, `bench/results/snl1-i9-14900-rtx4090-2026-09-15.json`); a new timing
+needs a passed WW3 regtest replay on the same commit. And not what WW3 would see today: the phase-1 call site passes `NPTS = 1`, and on
 CUDA 94 % of the 0.75 ms call is host↔device copy: the entire argument for phase 2, and
 why "34x" is not the model's speed-up.
 
 ## What "done" means
 
-`docs/AGENTS_KOKKOS_202609.md` §1.5, which the course spec adopts: (1) the kernel with a
-heritage header naming the WW3 routine, (2) the `bind(C)` shim and Fortran interface with
-the argument table, (3) an L1 test with tolerances stated and justified, (4) an L2 replay
-of the smallest regtest that exercises it, (5) a timing line in `PORT_STATUS.md`, (6) a
-property test where physics allows: for `Snl`, cubic scaling and zero-in/zero-out stand in
-until an action-conservation test exists ⚠. Items 1–3 and 5 are in the tree (v); 4 waits on
-the fork branch. Sheet: `exercises/ex13_port.md`, solution `exercises/solutions/ex13_compare.sh`.
+`docs/AGENTS_KOKKOS_202609.md` §1.5, as amended by ADR-0010: (1) the kernel with a heritage
+header naming the WW3 routine, (2) the `bind(C)` shim and Fortran interface with the argument
+table, (3) withdrawn: it was an L1 test with tolerances stated and justified, and the port no
+longer has tests of its own, (4) the WW3 regtest replay and the regtest matrix on the CPU within
+`tolerances.txt`, (5) a timing line in `PORT_STATUS.md`, (6) a property checked inside a regtest
+run where physics allows: for `Snl`, action conservation ⚠ (not yet checked in a run; the
+zero-in/zero-out and cubic-scaling checks that stood in for it went with the L1 tests). Items 1, 2
+and 5 are in the tree, and 4 passed on `ww3_ts1` and `bench_small` (v); the matrix has not run ⚠.
+Sheet: `exercises/ex13_port.md`, solution `exercises/solutions/ex13_compare.sh`.
 
 → [`13-bulk-porting-with-agents.md`](13-bulk-porting-with-agents.md)

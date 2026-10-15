@@ -20,8 +20,9 @@ A ported routine reproduces the Fortran's arithmetic. A change of reduction orde
 integration order is its own PR with L2 evidence, asked about first. A tolerance is never widened.
 
 ### IV. No timing without parity
-A speed figure enters a table only after the L1 gate passed on the same build, with the machine,
-the command and the median of three runs.
+A speed figure enters a table only after the WW3 regtest replay passed on the same commit, with
+the machine, the command and the median of three runs. The Kokkos port has no tests of its own:
+WW3's regtests, Fortran routine against Kokkos routine on the CPU, are its only tests (ADR-0010).
 
 ### V. Lab code is Fortran, C++ and shell
 Python appears only in publishing and repo tooling (`scripts/`, `tests/`), never in `examples/`,
