@@ -56,6 +56,12 @@ GIMPLE and disassembly of both read operation by operation.
   element. Never reached in a valid grid.
 - ⚠ On a device there is no libmvec: `mvec_powf` falls back to `powf` per element, which is not
   bit for bit with the Fortran's grouping. CUDA not compiled.
+- (v) Fresh review 2026-10-16: no defect. `w3snl5md.F90` recompiled from `build_nl5` (identical to the
+  CMake object); GIMPLE and assembly of `calc_wbtv2` read against a new C++ unit's: the operand
+  order of every product and sum, the in-order lane folds of the three `SUM`s, the vector-loop entry
+  (`NK >= 4`) and the scalar tail of each `powf` loop, the destination of every `maxss`/`minss`, the
+  ten `REAL` constants' bits, `sincosf` and the out-of-line `WAVNU1`. Nothing changed. The device
+  path also uses CUDA's `sin`, `cos`, `pow`, not shown to return glibc's bits (⚠, as above).
 
 ## Benchmarks
 

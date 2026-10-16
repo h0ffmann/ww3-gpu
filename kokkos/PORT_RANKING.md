@@ -350,3 +350,9 @@ The record is the `regtested` column of `kokkos/ports.tsv`.
 | `w3sic3md:cmplx_root_muller_v1` | ported | `ic3_cmplx_root_muller_v1.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
 | `w3sic5md:polyroots` | ported | `ic5_polyroots.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
 | `w3pro3md:w3cflxy` | ported | `prop_cflxy.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3sic3md:wn_cmplx_v1` | ported | `ic3_wn_cmplx_v1.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3sic3md:drfun_dble_cheng` | ported | `ic3_drfun_dble_cheng.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3sic5md:nr_root` | ported | `ic5_nr_root.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3iogomd:skewness` | ported | `iogo_skewness.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3sic3md:cmplx_root_muller_cheng` | ported | `ic3_cmplx_root_muller_cheng.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3sic3md:w3ic3wncg_cheng` | ported | `ic3_w3ic3wncg_cheng.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |

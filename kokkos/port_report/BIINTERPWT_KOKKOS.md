@@ -72,6 +72,14 @@ openmp-release flags (warning-free), read operation by operation, 2026-10-16.
 - ⚠ CUDA compiled (`nvcc_wrapper`, sm_89, `--fmad=false`), compile only, never run. The SASS
   contains `FFMA`, which comes from CUDA's `atan2f`, `powf` and division sequences (libdevice),
   not from the C++; CUDA's math library is not shown to return glibc's bits.
+- (v) Fresh review 2026-10-16: no defect in the header. `w3gkemd.F90` recompiled under the
+  `build_nl5` flags (object identical to the CMake one) and a new C++ unit (warning-free) read
+  side by side in GIMPLE and assembly: `memset`s and the `qr_bdry` fill, `MINVAL`/`MAXVAL` scans
+  and NaN constant (`0x7fc00000` in both), `k4R` sum order, `atan2f`/`powf(., -4.5)` calls,
+  `minss`/`maxss` operands of `:1536`, `FLOOR`, `MOD` and index arithmetic, the `jkU` search,
+  `r_jk`'s first operands, the `iq` bound. The weight-product ⚠ above was confirmed in the
+  assembly: in GIMPLE both compilers have the same operand order, and the difference comes from
+  register allocation (two-operand `mulss` against `vmulss`). Nothing was changed.
 
 ## Benchmarks
 

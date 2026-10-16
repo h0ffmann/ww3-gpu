@@ -5,9 +5,3 @@
 # file: model/src/<file>.F90:<first>-<last> at NOAA-EMC/WW3 03adda91
 # claim: the branch (and agent) that owns it; plan: the plan that names it
 routine	file	claim	plan
-w3sic3md:wn_cmplx_v1	model/src/w3sic3md.F90:839-981	goal/42-port-batch-3-shims	docs/BATCH3_SHIMS_KOKKOS_PLAN_202610.md
-w3sic3md:drfun_dble_cheng	model/src/w3sic3md.F90:2812-2962	goal/42-port-batch-3-shims	docs/BATCH3_SHIMS_KOKKOS_PLAN_202610.md
-w3sic3md:w3ic3wncg_cheng	model/src/w3sic3md.F90:1800-1959	goal/42-port-batch-3-shims	docs/BATCH3_SHIMS_KOKKOS_PLAN_202610.md
-w3sic5md:nr_root	model/src/w3sic5md.F90:1765-1924	goal/42-port-batch-3-shims	docs/BATCH3_SHIMS_KOKKOS_PLAN_202610.md
-w3sic3md:cmplx_root_muller_cheng	model/src/w3sic3md.F90:2540-2710	goal/42-port-batch-3-shims	docs/BATCH3_SHIMS_KOKKOS_PLAN_202610.md
-w3iogomd:skewness	model/src/w3iogomd.F90:4883-5054	goal/42-port-batch-3-shims	docs/BATCH3_SHIMS_KOKKOS_PLAN_202610.md

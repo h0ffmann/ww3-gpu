@@ -62,6 +62,15 @@ compared with that of a throwaway C++ unit compiled with the `openmp-release` fl
 - Op count: Fortran object 177 `mulsd`, 74 `addsd`, 69 `subsd`, 33 `divsd`; C++ object 173, 75,
   70, 33. The difference is block duplication (the Fortran duplicates the `TH*WN` products into
   both arms of the `TH` quotient), not arithmetic: every path's tree is identical.
+- (v) Fresh review 2026-10-16: no defect. The Fortran object was recompiled from `build_mixa`'s
+  flags and found identical to the CMake object; the Fortran GIMPLE was read statement by
+  statement against the header in source order, and every `-`, `/`, `x + 0.0`, `0.0 - x`, Smith
+  branch (`|re| < |im|`, NaN to the else arm) and `REAL(WN*DEPTH) < 18` test matches, operands in
+  the same order; the per-path trees are identical again (40 paths, commutative operands sorted).
+  With operands not sorted, the trees differ only in the order of the operands of `+` and `*`,
+  which changes no bit except a NaN payload. The folded `DBLE(GRAV)**2.` is the same double in both
+  dumps; both objects call `cpow` 8 times, `cexp` 3, `csqrt` 1, with no FMA, `__muldc3`,
+  `__divdc3` or libquadmath call. Nothing changed.
 
 ## Benchmarks
 

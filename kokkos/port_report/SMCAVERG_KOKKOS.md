@@ -56,6 +56,12 @@ warning-free), 2026-10-16.
 - (v) No FMA, no libm call in either object; the C++ face loops stay scalar.
 - (v) `CNST0 = CVQ(NSEA)` is read before any write and restored after the cell loop only when
   `ARCTC`.
+- (v) Fresh review 2026-10-16: no defect. Recompiled `w3psmcmd.F90` from the CMake flags.make of the
+  `switch_SMCMlt` build (identical to the CMake object), plus `-DW3_OMPG -fopenmp` and
+  `-DW3_OMPG -DW3_B4B -fopenmp`, and the C++ unit with the openmp-release flags; compared the
+  GIMPLE and assembly of the face sums, the guarded updates, `INT(CNST6*1E6)` against `fint`, the
+  `/1.0E6` passes, the cell divisions and sum, the `CNST0` restore, and the array layouts against
+  the allocations at `w3gdatmd.F90:1770-1784`. The two NaN-payload operand-order items above stay ⚠.
 
 ## WW3 itself
 

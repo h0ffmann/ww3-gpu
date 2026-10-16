@@ -18,7 +18,7 @@ update does not use it.
 
 | | |
 |---|---|
-| WW3 routine | `FUNC1_ZHAO`, `model/src/w3sic3md.F90:1465-1608` at NOAA-EMC/WW3 `03adda91`; compiled under switch `IC3`, by 47 regtest switch files (`ww3_tic1.1`, `ww3_tic1.2`, `ww3_tic1.3`, `ww3_ts1`; `git grep -lw IC3 -- '*switch*'`), by no NOAA operational switch (`model/bin/switch_NCEP_*`, `switch_NWS_*`); exercised only by regtest namelists with `IC3CHENG = F`. Its only caller is `F_ZHAO_V1` (`:1366`). No `#ifdef` inside the routine |
+| WW3 routine | `FUNC1_ZHAO`, `model/src/w3sic3md.F90:1465-1608` at NOAA-EMC/WW3 `03adda91`; compiled under switch `IC3`, by 46 regtest switch files (`ww3_tic1.1`, `ww3_tic1.2`, `ww3_tic1.3`, `ww3_ts1`; `git grep -lw IC3 -- '*switch*'` lists them and `model/src/cmake/switches.json`), by no NOAA operational switch (`model/bin/switch_NCEP_*`, `switch_NWS_*`); exercised only by regtest namelists with `IC3CHENG = F`. Its only caller is `F_ZHAO_V1` (`:1366`). No `#ifdef` inside the routine |
 | Kokkos code | [`../src/ww_kokkos/ic3_func1_zhao.hpp`](../src/ww_kokkos/ic3_func1_zhao.hpp), `ww::ic3::func1_zhao(const Kokkos::complex<double>& wn, double sigma, double es, double nu, double dice, double hice, double depth) -> Kokkos::complex<double>`, and the functor `ww::ic3::Func1Zhao`, the `func1` callable that `f_zhao_v1` (`ic3_f_zhao_v1.hpp`) takes. It calls `bsdet` (`ic3_bsdet.hpp`) and reuses the `cexp`, `csqrt`, `cpow` wrappers of `ic3_drfun_quad_cheng.hpp`. The Fortran's `AA(4,4)` and `BSDET`'s automatic `MAT(4,4)` are fixed-size local arrays (no allocation) |
 | C shim | none yet; its caller `F_ZHAO_V1` is translated but not wired |
 | Plan | issue #42, batch 3 |
@@ -46,7 +46,9 @@ and `-ffp-contract=off`, 2026-10-16. The C++ unit compiles warning-free.
   the same eight `cpow`, one `csqrt` and six `cexp` relocations, on the same arguments.
   `SIGMA**2.` and `SIGMA**2` fold to `SIGMA*SIGMA` in both.
 - (v) `VE = CMPLX(NU, ES/DICE/SIGMA)` (`:1556`) has no `KIND=`, so both parts are rounded to
-  `REAL` (float) and widened back: two `vcvtsd2ss`/`vcvtpd2ps` in each object. The header writes
+  `REAL` (float) and widened back: one narrowing per part on every path (the Fortran object
+  duplicates the pair over three paths, `cvtpd2ps` or two `cvtsd2ss`; the C++ object has two
+  `vcvtsd2ss`). The header writes
   `static_cast<double>(static_cast<float>(...))`. This loses the double precision of `NU` and
   `ES/DICE/SIGMA` in WW3 itself; the port reproduces it.
 - (v) `THH` (`:1568-1569`, `:1572`) is never read; the Fortran object computes no `THH` (its four
@@ -74,6 +76,17 @@ and `-ffp-contract=off`, 2026-10-16. The C++ unit compiles warning-free.
 - No reduction, no MIN/MAX, no `INT`/`NINT`, no libmvec call.
 - ⚠ On the device the `cexp`, `csqrt`, `cpow` wrappers use Kokkos's algorithms, not glibc's, and
   `bsdet`'s `cabs` is `Kokkos::abs`: not bit-checked. CUDA not compiled.
+- (v) Fresh review 2026-10-16: no defect in the arithmetic. The Fortran object was recompiled and
+  checked identical to `build_mixa`'s; both units were compiled again without SLP and loop
+  vectorisation (`-fno-tree-slp-vectorize -fno-tree-vectorize`, which do not reorder an IEEE
+  operation) and their optimised GIMPLE rebuilt as expression DAGs from the inputs, with each
+  Smith branch and the jump-threaded `TH`/`M` paths tied to their conditions. The result and all
+  32 parts of `AA` are equal operation by operation, constants and `cpow`/`cexp`/`csqrt`
+  arguments included, once the operands of `+` and `*` are sorted; no subtraction, division,
+  negation or association differs (a swapped subtraction planted in the C++ dump is caught). The
+  `-O3` objects call the same eight `cpow`, six `cexp`, one `csqrt` (the C++ also four `cabs`, from
+  the inlined `bsdet`); no FMA. `BSDET` itself is checked in [BSDET_KOKKOS.md](BSDET_KOKKOS.md).
+  Fixed in this report: the switch-file count (46, not 47) and the conversion count.
 
 ## Benchmarks
 

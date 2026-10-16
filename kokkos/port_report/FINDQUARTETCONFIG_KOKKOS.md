@@ -67,6 +67,15 @@ openmp-release flags, read statement by statement, 2026-10-16.
   the loops does `:860` compare. A count that exceeds `nnz` writes past the end in the Fortran
   and in the C++ alike. `FindQuartetNumber` (`:522-728`) applies the same criteria, so the counts
   agree when both are compiled the same way; nothing guards it.
+- (v) Fresh review 2026-10-16: no defect in the header. `w3gkemd.F90` recompiled under the
+  `build_nl5` flags (object identical to the CMake one) and a new C++ unit (warning-free) read
+  side by side in GIMPLE and assembly: `k4xT`/`k4yT`/`k4T` first operands, the two range
+  compares, the inlined `QFunc` (`tanhf`, `* 9.806`), the three `minss` of `:824` with the same
+  operands in both, `dom`, both `MINLOC` loops (`dx2 + dy2`, then `dy2 + dx2`, and `minss` with
+  the new value first), the stores and the `s`/`nnz` compare. On the sum of `:789` the
+  vectorised bodies of both add `ky*ky + kx*kx`; one unrolled scalar tail of the C++ adds
+  `kx*kx + ky*ky`, a NaN payload that never leaves `k` (MINVAL/MAXVAL skip NaN, all NaN gives
+  the `0x7fc00000` constant in both). Nothing was changed.
 
 ## Benchmarks
 

@@ -44,7 +44,22 @@ The C++ unit was compiled with the `openmp-release` flags and `-ffp-contract=off
   `:1386`). WW3 reads outside the array's bounds; the C++ reads the same linear element.
 - ⚠ Under `LPDLIB` the `DDDX..DCYDY` arrays are `(1,NSEAL)` (`w3adatmd.F90:1384-1392`) while the
   routine indexes them `(IY,IX)` from `MAPSF`, which reads past them when `IX > NSEAL`. Reproduced.
+- ⚠ NaN payloads: four products are commuted between the objects, exact for every input that
+  is not a pair of NaNs. The Fortran (SSE2, two-operand forms) multiplies `DSDD*FACTH` (`:390`,
+  every path), `CG*FDG` in its vector bodies (`:392`; `FDG*CG` in its scalar tail),
+  `EDCYDX*FACTH` (`:418`) and, under `W3_REFRX`, `CG*FACTH` (`:404`); the C++ (AVX, the load
+  folded as the second source) has `FACTH` or `FDG` first everywhere. When both operands are NaN
+  with different payloads, x86 returns the first one's, so the NaN stored in `CAD` can differ.
+  It needs `DTG`, `DTH` or `CTHG0S` to be NaN. Not pinned in the C++.
 - ⚠ CUDA not compiled for this routine.
+- (v) Fresh review 2026-10-16: no defect in the arithmetic of a non-NaN input. Recompiled
+  `w3parall.F90` from the flags of the lab, PR1/FLD1 and PDLIB/SETUP reference builds (each
+  identical to its CMake object; the routine's disassembly identical in all three) and with
+  `-DW3_REFRX`; compared the C++ unit's `<false>` and `<true>` objects operation by operation
+  with them: order of every sum and product, `maxss` operands at `:377` and `:380`, `comiss` NaN
+  branch at `:379`, the current terms and the vectorised bodies, the `DCDX`/`DCDY` linear index
+  and the array bases against `w3adatmd.F90` and `w3gdatmd.F90`. Found only the NaN-payload
+  operand order above, added as ⚠; nothing changed in the header.
 
 ## Benchmarks
 

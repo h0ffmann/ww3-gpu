@@ -48,6 +48,14 @@ flags (g++ 16.2.0), 2026-10-16.
 - (v) The C++ sets `ifi`, `ifj` to 0 before the `W3FLDTOIJ` callable; `W3FLDTOIJ` sets both to
   `-1` first (`:803-804`), so nothing reads the initial value.
 - CUDA not compiled (host-only function).
+- (v) Fresh review 2026-10-16: no defect. Recompiled `w3iogomd.F90` with `build_lab`'s flags
+  (whole object identical to the CMake one) and the C++ unit warning-free; compared the two
+  disassemblies call by call (`memset` of `FLG2D`, `FLG1D` zeroed, `OUT_NAMES` blank-filled,
+  `STRSPLIT`, the blank test, `STR_TO_UPPER`, the 100-byte copy into `TESTSTR`, `W3FLDTOIJ`, the
+  store at word `IFI + 10 IFJ - 11`, the `ANY` loop of stride 40 bytes). In the object
+  `OUT_NAMES` spans 10000 bytes ending where `TESTSTR` starts, so `OUT_NAMES(101)` is `TESTSTR`
+  as stated above; for 99 names or fewer the C++ bound `iout < 100` is never what ends the loop
+  (it ends on the blank `OUT_NAMES(IOUT+1)`, `IOUT+1 <= 100`), so the calls and flags are the same.
 
 ## Benchmarks
 

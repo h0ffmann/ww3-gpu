@@ -45,6 +45,15 @@ warning, 2026-10-16.
   (`:1886`), so `J` can exceed `PDLIB_NNZ` and write `PDLIB_JA` past its end, or stop short.
 - (v) No loop is vectorised in either object; the Fortran's only vector code fills array descriptors at the `ALLOCATE`s (`:1853`, `:1893`, `:1912-1914`).
 - ⚠ CUDA not compiled: the functions are host-only (`inline`), run once at initialisation.
+- (v) Fresh review 2026-10-16: no defect for a grid whose reads stay inside `STAT_SeaLand`.
+  Recompiled `w3wavset.F90` from `ref3/build_setup`'s flags (identical to the CMake object) and
+  compared its GIMPLE with a new C++ unit's, loop by loop: the same index arithmetic, the same
+  increment order of `nbEdge`, `PDLIB_NNZ`, `idx` and `J`, and the same stores. One difference
+  matters only on the out-of-bounds grids above. The Fortran object hoists the four
+  `STAT_SeaLand` loads of the CSR loop (`:1921`) out of the `ISEA` loop, because allocatables
+  cannot alias. The C++ reloads them on every row, because `stat_sealand` and `pdlib_ja` are
+  plain `int*`. When a read lands in memory that the loop writes, such as `PDLIB_JA`, the two can
+  read different values ⚠. Nothing was changed.
 
 ## Benchmarks
 

@@ -38,11 +38,14 @@ pinned `ww3` shell), read as GIMPLE and assembly, 2026-10-16.
 - (v) `SMC`: with `FSWND`, `RH0` is `RH0(NSEA,1)` (`w3idatmd.F90:726-728`) and `IX = ISEA`,
   `IY = 1` (`w3updtmd.F90:2731-2733`): the `fswnd` argument. The `switch_SMCMlt` object has the
   same arithmetic as the lab's.
-- `WNT0` (`RD = 0`), `WNT2` (same expression as `WNT1`) and `OASACM` (`RD = 1`, set after the
-  `WNT` line, so it wins) are the template argument `UrhoTime`. Not compared against an object
-  built with them ⚠; with a runtime `RD` of 0 or 1 the multiply and add give the same bits as
-  the Fortran's constant, except that gfortran may fold `RAI*1.` to `RAI`, which differs only
-  for a signalling NaN ⚠.
+- (v) `WNT0` (`RD = 0`), `WNT2` (same expression as `WNT1`) and `OASACM` (`RD = 1`, set after
+  the `WNT` line, so it wins) are the template argument `UrhoTime`. Compared at the GIMPLE of
+  objects built with the lab's flags and `-DW3_WNT1` replaced by `-DW3_WNT0`, `-DW3_WNT2` and
+  `-DW3_WNT0 -DW3_OASACM` (not WW3 CMake builds): `WNT2` gives the `WNT1` sequence; `WNT0` keeps
+  `RAI*0.0` then `RA0 + product`; `OASACM` folds `RAI*1.` away and adds `RA0 + RAI`. The C++
+  multiplies by a runtime 0 or 1, which gives the same bits for every `RAI` (a signalling NaN is
+  quieted by the add in both), except the payload when `RA0` and `RAI` are both NaN, the case
+  noted above ⚠.
 - `OMPG` is not translated: `!$OMP PARALLEL DO PRIVATE (ISEA,RA0,RAI)` (`w3updtmd.F90:2772`)
   privatises the module pointers `RA0`, `RAI`, whose association is undefined in each thread,
   so the loop reads undefined pointers ⚠ (a WW3 defect). The C++ runs the serial semantics.
@@ -50,6 +53,12 @@ pinned `ww3` shell), read as GIMPLE and assembly, 2026-10-16.
   `DT0N` and `DT0T` as the `REAL`s the Fortran stores (`w3updtmd.F90:2749-2750`).
 - (v) A throwaway unit with the `openmp-release` flags compiled the header with no warning and
   no FMA. Not compiled for CUDA.
+- (v) Fresh review 2026-10-16: no defect. `w3updtmd.F90` recompiled byte-identical to the
+  `switch_lab_shrd` and `switch_SMCMlt` CMake objects; `subss`, `maxss` (constant bits
+  `0x33d6bf95`), `divss`, `mulss`, `addss` and their operands read against the throwaway unit's
+  assembly; the `WNT0`, `WNT2` and `OASACM` variants read in objects built with those defines;
+  `MAPSF`, `RH0(NX,NY)`/`RH0(NSEA,1)` indexing and the cited lines and `matrix.base` entries
+  checked at `03adda91`. Only the `RD` variants bullet changed, from ⚠ to (v).
 
 ## Benchmarks
 

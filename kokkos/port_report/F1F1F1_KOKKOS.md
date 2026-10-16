@@ -56,6 +56,11 @@ object; compared with a throwaway C++ unit under the `openmp-release` flags, 202
   14, 26, 11, 40, 20 (`:1601-1607`), so the Fortran then reads an undefined variable and `F1SF`
   stays uninitialised; the C++ takes `iq_om1` as given.
 - CUDA: not compiled; the function is host only.
+- (v) Fresh review 2026-10-16: no defect. `w3snl1md.F90` recompiled from `build_lab` (identical to the
+  CMake object); the GIMPLE of `f1f1f1` read against a new C++ unit's: every stored constant of the
+  seven layouts, the folded `RAISON` of layout 4, the ten quotients of its downward loop recomputed
+  by correctly rounded double division (equal to gfortran's folded constants), the glibc `pow` of
+  layout 5, the folded `3-1/3` of layout 6, and `NF1` written back as 40. Nothing changed.
 
 ## Benchmarks
 
