@@ -375,6 +375,11 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | FLOLOC / FLPART | `W3OUTG`'s local output flags and the partitioned-output argument `(v)` `w3iogomd.F90:1201-2380` | Select which output groups `W3OUTG` computes. | [kokkos/port_report/W3OUTG_KOKKOS.md](../kokkos/port_report/W3OUTG_KOKKOS.md) |
 | STEXU / STEYU / STEDU | Space-time extremes: the space and time extents and the duration of the window `(v)` `w3iogomd.F90:1694-1931` | Inputs to the space-time extreme wave heights in `W3OUTG`. | [kokkos/port_report/W3OUTG_KOKKOS.md](../kokkos/port_report/W3OUTG_KOKKOS.md) |
 | GTYPE | grid type: `RLGTYPE` 1 rectilinear, `CLGTYPE` 2 curvilinear, `UNGTYPE` 3 unstructured, `SMCTYPE` 4 SMC `(v)` `w3gdatmd.F90:627` | Selects the grid branch in `W3IOGR` and `W3WAVE`. | [kokkos/port_report/W3IOGR_KOKKOS.md](../kokkos/port_report/W3IOGR_KOKKOS.md) |
+| MAPST2 / MAPWN | "Second grid status map" / "Spectral maps" (MAPxx) `(v)` `w3gdatmd.F90:176`, `:262` | `W3ULEV` rebuilds `MAPST2` when points fall dry or wet, through its local `MAPDRY`. | [kokkos/port_report/W3ULEV_KOKKOS.md](../kokkos/port_report/W3ULEV_KOKKOS.md) |
+| DSIP / FACHFA | "Frequency bandwidths (prop.) (rad)" / "Factor for tail" (FACHFx) `(v)` `w3gdatmd.F90:282`, `:273` | The band widths and the tail factor of the spectrum `W3ULEV` re-interpolates in wavenumber. | [kokkos/port_report/W3ULEV_KOKKOS.md](../kokkos/port_report/W3ULEV_KOKKOS.md) |
+| TLEV / TLN | "Valid time for water levels" / "Time for water level field" `(v)` `w3wdatmd.F90:73`, `w3idatmd.F90:61` | The water-level times `W3ULEV` advances. | [kokkos/port_report/W3ULEV_KOKKOS.md](../kokkos/port_report/W3ULEV_KOKKOS.md) |
+| KDMAX / RDKMIN | "Deep water cut-off for kd" and the band-width fraction the lowest wavenumber change must exceed `(v)` `w3updtmd.F90:2106`, `:2136`, values `4.` and `0.05` at `:2207` | `W3ULEV` updates a point's wavenumber grid only when both thresholds are passed. | [kokkos/port_report/W3ULEV_KOKKOS.md](../kokkos/port_report/W3ULEV_KOKKOS.md) |
+| GET_JSEA_IBELONG | "Set belongings of jsea in context of pdlib" `(v)` `w3parall.F90:1265` | Maps a global sea point to the local index and whether this process owns it; already translated, called by the Kokkos `W3ULEV`. | [kokkos/port_report/W3ULEV_KOKKOS.md](../kokkos/port_report/W3ULEV_KOKKOS.md) |
 
 ## HPC and software
 
@@ -765,6 +770,7 @@ Every term above, alphabetically, with the section it lives in.
 - DRFUN_DBLE_CHENG: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - DRFUN_QUAD_CHENG: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - DSEC21 / TICK21: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- DSIP / FACHFA: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - DSVBKSB: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - D (VS: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - data-residency ladder: [This repository's own names](#this-repositorys-own-names)
@@ -914,6 +920,7 @@ Every term above, alphabetically, with the section it lives in.
 - `gen_snl1_ww3lib` / `just l1-crosscheck`: [This repository's own names](#this-repositorys-own-names)
 - genes_gmd: [HPC and software](#hpc-and-software)
 - `_gfortran_pow_c8_i4`: [This repository's own names](#this-repositorys-own-names)
+- GET_JSEA_IBELONG: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - GFS: [HPC and software](#hpc-and-software)
 - GFS / GEFS: [HPC and software](#hpc-and-software)
 - GH200: [HPC and software](#hpc-and-software)
@@ -966,6 +973,7 @@ Every term above, alphabetically, with the section it lives in.
 - IS2DISP: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - ISO/IEC 1539:1991: [HPC and software](#hpc-and-software)
 - JAD: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- KDMAX / RDKMIN: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - KDPC: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - `kokkos/PORT_RANKING.md` / `/port-next`: [This repository's own names](#this-repositorys-own-names)
 - `gpu/`: [This repository's own names](#this-repositorys-own-names)
@@ -1003,6 +1011,7 @@ Every term above, alphabetically, with the section it lives in.
 - LUSOL: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - LUTSOL: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - MAPSMC: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- MAPST2 / MAPWN: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - MAPSTA_SMC: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - MSC: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - MSR: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1074,6 +1083,7 @@ Every term above, alphabetically, with the section it lives in.
 - TIDE_PREDICT_ONLY: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - TIDE_SET_INDICES: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - TIDYCG: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- TLEV / TLN: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - UDSOL: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - UDSOLC: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - UFunc: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)

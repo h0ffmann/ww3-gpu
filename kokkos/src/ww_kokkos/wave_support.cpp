@@ -221,6 +221,7 @@
 #include "updt_uwnd.hpp"
 #include "updt_w3uic1.hpp"
 #include "updt_w3uic5.hpp"
+#include "updt_w3ulev.hpp"
 #include "updt_w3urho.hpp"
 #include "wave_gath_scat.hpp"
 #include "wave_w3wave.hpp"
@@ -264,4 +265,5 @@ void ww_support_instantiate() {
   (void)&ww::iogr::iogr_mapsf3<E>;
   (void)&ww::iogr::w3iogr;
   (void)&ww::wave::w3wave::w3wave<E>;
+  (void)&ww::updt::w3ulev<E>;
 }
