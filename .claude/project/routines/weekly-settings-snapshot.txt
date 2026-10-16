@@ -1,6 +1,6 @@
 Rotina semanal do snapshot das configurações do projeto Wave Forecaster (ADR-0005, `.claude/project/README.md`, seção "Keeping it current"). Este prompt está gravado em `.claude/project/routines/weekly-settings-snapshot.txt`.
 
-1. Em h0ffmann/ww3-gpu: `git fetch origin main` e crie a partir de `origin/main` o branch `claude/claude-project-snapshot-AAAAMMDD` (data de hoje). Se `.claude/project/project.json` ainda não existir em `origin/main` (o PR do ADR-0005 não foi mergeado), encerre com no_reply_needed.
+1. Em h0ffmann/ww3-gpu: `git fetch origin main` e crie a partir de `origin/main` o branch `goal/Woryd7mq-<4 dígitos aleatórios>-project-snapshot-AAAAMMDD` (data de hoje; nunca `claude/`: `scripts/branch_name.sh` recusa). Se `.claude/project/project.json` ainda não existir em `origin/main` (o PR do ADR-0005 não foi mergeado), encerre com no_reply_needed.
 2. Releia o que esta sessão consegue ler e compare com `.claude/project/project.json` e `routines/*.txt`:
    - `list_triggers` (com `include_completed: false`): só as rotinas deste projeto, as que trazem `hearth_channel_id` = `chan_017D9Khj8joWFwBwfu6q6in8` (hoje a A2A, o atualizador diário de dependências e esta própria rotina); nunca as do Marola nem lembretes de uso único. Para cada uma, `get_trigger` e grave o prompt literal em `routines/<nome-curto>.txt` e nome, cron e trigger id no `project.json`; uma rotina nova ganha arquivo e entrada, uma apagada sai dos dois.
    - `get_session` (sem id): modelo, effort e permission mode em `thread_sessions`.
