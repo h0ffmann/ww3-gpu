@@ -53,6 +53,7 @@ target_sources(ww_kokkos PRIVATE
     pdlib_fsn2.hpp
     pdlib_fspsi2.hpp
     pdlib_boundary_va.hpp
+    prop_parall.hpp
     wave_support.cpp
     srce_kernel.hpp
     srce_ln1.hpp
