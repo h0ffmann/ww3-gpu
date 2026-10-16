@@ -311,7 +311,7 @@ Rules for every subagent prompt:
   Run: `git status --short && git -C WW3 rev-parse --short HEAD`
   Expected: a clean tree and `bb08623a`.
 - [ ] **Step 3: Branch from `main`.**
-  Run: `git fetch origin && git switch -c claude/45-port-st4 origin/main && git branch --unset-upstream`
+  Run: `git fetch origin && git switch -c goal/45-port-st4 origin/main && git branch --unset-upstream`
 - [ ] **Step 4: Get the owner's go for the fork branch.** `port-next` puts the caller patch on the
   fork only when the owner asks. Write the question. Do not start Task 7 without the answer.
 - [ ] **Step 5: Clone the fork outside this repository.**

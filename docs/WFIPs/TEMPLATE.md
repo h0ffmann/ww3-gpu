@@ -13,7 +13,7 @@ Before the first push:
 
 - **Number**: one more than the highest WFIP in `README.md` *and* in every open PR that adds a
   `docs/WFIPs/WFIP-NNNN-*.md`. Two drafts never share one.
-- **Branch**: `claude/<issue>-wfip-NNNN-<slug>` for an agent, `wfip-NNNN-<slug>` for a person.
+- **Branch**: `goal/<issue>-wfip-NNNN-<slug>` for an agent, `wfip-NNNN-<slug>` for a person.
 - **Index**: `just wfip index` regenerates the tables in `README.md` from the WFIP files; CI
   runs `scripts/wfip.py check` and fails on a stale index, an unknown deliverable or a missing
   section. The index is never edited by hand.
