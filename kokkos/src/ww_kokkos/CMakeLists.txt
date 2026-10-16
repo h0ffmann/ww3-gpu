@@ -46,6 +46,7 @@ target_sources(ww_kokkos PRIVATE
     disp_distab.hpp
     prop_map3.hpp
     prop_mapt.hpp
+    srce_ref1.hpp
     wave_support.cpp
     srce_kernel.hpp
     srce_ln1.hpp

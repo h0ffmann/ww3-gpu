@@ -10,15 +10,15 @@ priority	routine	ww3_file	self_pct	profile	state	claim	translated	wired	checkpoi
 2	pdlib_w3profsmd:calcarray_jacobi_vec	model/src/w3profsmd_pdlib.F90:3531-3787	20.37	pdlib	claimed	goal/42-port-noaa-ops (Claude Code, batch A)	no	no	—	no	—	—	none: ADR-0010	—
 3	w3sbt4md:w3sbt4	model/src/w3sbt4md.F90:340-636	1.31	pdlib	claimed	Kimi Code, batch B	no	no	—	no	—	—	none: ADR-0010	—
 4	init	—	0.65	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-5	pdlib_w3profsmd:calcarray_jacobi_spectral_1	model/src/w3profsmd_pdlib.F90	0.23	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-6	w3parall:prop_freq_shift_m2	model/src/w3parall.F90	0.16	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-7	w3parall:prop_refraction_pr3	model/src/w3parall.F90	0.15	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+5	pdlib_w3profsmd:calcarray_jacobi_spectral_1	model/src/w3profsmd_pdlib.F90:4413-4557	0.23	pdlib	claimed	goal/42-port-noaa-ops (Claude Code, batch A)	no	no	—	no	—	—	none: ADR-0010	—
+6	w3parall:prop_freq_shift_m2	model/src/w3parall.F90:754-894	0.16	pdlib	claimed	goal/42-port-noaa-ops (Claude Code, batch A)	no	no	—	no	—	—	none: ADR-0010	—
+7	w3parall:prop_refraction_pr3	model/src/w3parall.F90:447-589	0.15	pdlib	claimed	goal/42-port-noaa-ops (Claude Code, batch A)	no	no	—	no	—	—	none: ADR-0010	—
 8	w3wavemd:w3wave	model/src/w3wavemd.F90	0.15	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
 9	w3partmd:pt_fld	model/src/w3partmd.F90	0.05	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
 10	w3iogomd:w3outg	model/src/w3iogomd.F90	0.04	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
 11	w3partmd:ptmean	model/src/w3partmd.F90	0.02	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
 12	w3partmd:ptsort	model/src/w3partmd.F90	0.02	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-13	pdlib_w3profsmd:apply_boundary_condition_va	model/src/w3profsmd_pdlib.F90	0.01	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+13	pdlib_w3profsmd:apply_boundary_condition_va	model/src/w3profsmd_pdlib.F90:5037-5148	0.01	pdlib	claimed	goal/42-port-noaa-ops (Claude Code, batch A)	no	no	—	no	—	—	none: ADR-0010	—
 14	w3adatmd:w3dima	model/src/w3adatmd.F90	0.01	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
 15	w3gdatmd:w3dims	model/src/w3gdatmd.F90	0.01	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
 16	w3parall:init_get_isea	model/src/w3parall.F90	0.01	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
@@ -162,11 +162,10 @@ priority	routine	ww3_file	self_pct	profile	state	claim	translated	wired	checkpoi
 154	pdlib_w3profsmd:pdlib_w3xypfspsi2	model/src/w3profsmd_pdlib.F90:1202-1502	—	—	claimed	goal/42-port-noaa-ops (Claude Code, batch A)	no	no	—	no	—	—	none: ADR-0010	—
 155	pdlib_w3profsmd:pdlib_w3xypug	model/src/w3profsmd_pdlib.F90:626-866	—	—	claimed	goal/42-port-noaa-ops (Claude Code, batch A)	no	no	—	no	—	—	none: ADR-0010	—
 156	w3dispmd:wavnu_local	model/src/w3dispmd.F90:456-547	—	—	claimed	Kimi Code, batch B	no	no	—	no	—	—	none: ADR-0010	—
-157	w3ref1md:w3sref	model/src/w3ref1md.F90:111-670	—	—	claimed	goal/42-port-noaa-ops (Claude Code, batch A)	no	no	—	no	—	—	none: ADR-0010	—
-158	w3sic1md:w3sic1	model/src/w3sic1md.F90:93-369	—	—	claimed	Kimi Code, batch B	no	no	—	no	—	—	none: ADR-0010	—
-159	w3sic4md:w3sic4	model/src/w3sic4md.F90:121-803	—	—	claimed	goal/42-port-noaa-ops (Claude Code, batch A)	no	no	—	no	—	—	none: ADR-0010	—
-160	w3sis1md:w3sis1	model/src/w3sis1md.F90:74-227	—	—	claimed	Kimi Code, batch B	no	no	—	no	—	—	none: ADR-0010	—
-161	w3str1md:w3str1	model/src/w3str1md.F90:183-543	—	—	claimed	Kimi Code, batch B	no	no	—	no	—	—	none: ADR-0010	—
+157	w3sic1md:w3sic1	model/src/w3sic1md.F90:93-369	—	—	claimed	Kimi Code, batch B	no	no	—	no	—	—	none: ADR-0010	—
+158	w3sic4md:w3sic4	model/src/w3sic4md.F90:121-803	—	—	claimed	goal/42-port-noaa-ops (Claude Code, batch A)	no	no	—	no	—	—	none: ADR-0010	—
+159	w3sis1md:w3sis1	model/src/w3sis1md.F90:74-227	—	—	claimed	Kimi Code, batch B	no	no	—	no	—	—	none: ADR-0010	—
+160	w3str1md:w3str1	model/src/w3str1md.F90:183-543	—	—	claimed	Kimi Code, batch B	no	no	—	no	—	—	none: ADR-0010	—
 —	w3snl1md:w3snl1	model/src/w3snl1md.F90:115-473	48.35	full	regtested	—	yes: kokkos/src/ww_kokkos/snl1_dia.cpp, kokkos/src/fortran_iface/snl1_shim.cpp	yes: WW3@c9a6a0c6 (h0ffmann/WW3 ww3-gpu/kokkos-st4, which carries the hoff/kokkos-snl1 hunks) calls it under WW_KOKKOS_SNL1=1	passed	yes	byte-identical on all 100 (test.comp); byte-identical on all 25 (test.comp)	nccmp-tol 71 PASS, 29 n/a, 0 FAIL; nccmp-tol 25 PASS	none: ADR-0010	kokkos/port_report/W3SNL1_KOKKOS.md
 —	w3src4md:w3sds4	model/src/w3src4md.F90:2043-2659	23.23	full	wired	—	yes: kokkos/src/ww_kokkos/st4_sds4.hpp,kokkos/src/ww_kokkos/st4_libmvec.hpp,kokkos/src/fortran_iface/st4_shim.cpp	yes: WW3@c9a6a0c6 (h0ffmann/WW3 ww3-gpu/kokkos-st4) calls it under WW_KOKKOS_SDS4/SIN4/SPR4=1	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3SDS4_KOKKOS.md
 —	w3src4md:w3sin4	model/src/w3src4md.F90:423-1003	12.66	full	wired	—	yes: kokkos/src/ww_kokkos/st4_sin4.hpp,kokkos/src/fortran_iface/st4_shim.cpp	yes: WW3@c9a6a0c6 (h0ffmann/WW3 ww3-gpu/kokkos-st4) calls it under WW_KOKKOS_SDS4/SIN4/SPR4=1	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3SIN4_KOKKOS.md
@@ -192,6 +191,7 @@ priority	routine	ww3_file	self_pct	profile	state	claim	translated	wired	checkpoi
 —	w3src4md:insin4	model/src/w3src4md.F90:1014-1288	0.00	full	wired	—	yes: kokkos/src/ww_kokkos/st4_insin4.cpp,kokkos/src/ww_kokkos/st4_arrays.hpp	yes: WW3@c9a6a0c6 (h0ffmann/WW3 ww3-gpu/kokkos-st4) calls it under WW_KOKKOS_SDS4/SIN4/SPR4=1	pending	no	—	—	none: ADR-0010	kokkos/port_report/INSIN4_KOKKOS.md
 —	w3updtmd:w3dzxy	model/src/w3updtmd.F90:3211-3529	0.00	full	translated	—	yes: kokkos/src/ww_kokkos/updt_dzxy.hpp	no: header-only device function; no shim and no W3WAVE hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3DZXY_KOKKOS.md
 —	w3updtmd:w3utrn	model/src/w3updtmd.F90:2809-3194	0.00	full	translated	—	yes: kokkos/src/ww_kokkos/updt_utrn.hpp	no: header-only device function; no shim and no W3WAVE hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3UTRN_KOKKOS.md
+—	w3ref1md:w3sref	model/src/w3ref1md.F90:111-670	—	—	translated	—	yes: kokkos/src/ww_kokkos/srce_ref1.hpp	no: header-only device function; no shim and no W3SRCE hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3SREF_KOKKOS.md
 —	w3src4md:tabu_stress	model/src/w3src4md.F90:1290-1425	—	—	wired	—	yes: kokkos/src/ww_kokkos/st4_tabu_stress.cpp	yes: WW3@c9a6a0c6 (h0ffmann/WW3 ww3-gpu/kokkos-st4) calls it under WW_KOKKOS_SDS4/SIN4/SPR4=1	pending	no	—	—	none: ADR-0010	kokkos/port_report/TABU_STRESS_KOKKOS.md
 —	w3src4md:tabu_tauhf	model/src/w3src4md.F90:1427-1596	—	—	wired	—	yes: kokkos/src/ww_kokkos/st4_tabu_tauhf.cpp	yes: WW3@c9a6a0c6 (h0ffmann/WW3 ww3-gpu/kokkos-st4) calls it under WW_KOKKOS_SDS4/SIN4/SPR4=1	pending	no	—	—	none: ADR-0010	kokkos/port_report/TABU_TAUHF_KOKKOS.md
 —	w3src4md:tabu_tauhf2	model/src/w3src4md.F90:1598-1831	—	—	wired	—	yes: kokkos/src/ww_kokkos/st4_tabu_tauhf2.cpp	yes: WW3@c9a6a0c6 (h0ffmann/WW3 ww3-gpu/kokkos-st4) calls it under WW_KOKKOS_SDS4/SIN4/SPR4=1	pending	no	—	—	none: ADR-0010	kokkos/port_report/TABU_TAUHF2_KOKKOS.md
