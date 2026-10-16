@@ -48,15 +48,45 @@ function(ww3gpu_has_word out file alt)
   endif()
 endfunction()
 
+# Every routine WW3GPU_ROUTINES may name: the R of a WW_KOKKOS_<R> flag of the fork's W3KOKKOSMD.
+set(WW3GPU_ALL_ROUTINES SNL1 SDS4 SIN4 SPR4 SPR0 SPR1 SIN1 SDS1 SPR2 SIN2 SDS2 SPR3 SIN3 SDS3
+    SPR6 SIN6 SDS6 SWL6 FLX1 FLX2 FLX3 FLX4 FLX5)
+# The WW_KOKKOS_<U>_COUNT flags: each shim prints its routines' counts at exit when its flag is 1.
+set(WW3GPU_COUNT_FLAGS SNL1 ST4 ST0 ST1 ST2 ST3 ST6 SWL FLX)
+
 # ww3gpu_routine_word(<out> <routine>): the physics switch a routine of WW3GPU_ROUTINES needs,
-# NL1 for SNL1 and ST4 for SDS4, SIN4 and SPR4; empty for any other name.
+# NL1 for SNL1, STn for SPRn, SINn and SDSn, ST6 for SWL6 (W3SWLDMD exists only with ST6), FLXn
+# for FLXn; empty for any other name.
 function(ww3gpu_routine_word out r)
   if(r STREQUAL "SNL1")
     set(${out} NL1 PARENT_SCOPE)
-  elseif(r MATCHES "^(SDS4|SIN4|SPR4)$")
-    set(${out} ST4 PARENT_SCOPE)
+  elseif(r STREQUAL "SPR0")
+    set(${out} ST0 PARENT_SCOPE)
+  elseif(r MATCHES "^(SDS|SIN|SPR)([12346])$")
+    set(${out} "ST${CMAKE_MATCH_2}" PARENT_SCOPE)
+  elseif(r STREQUAL "SWL6")
+    set(${out} ST6 PARENT_SCOPE)
+  elseif(r MATCHES "^FLX[1-5]$")
+    set(${out} "${r}" PARENT_SCOPE)
   else()
     set(${out} "" PARENT_SCOPE)
+  endif()
+endfunction()
+
+# ww3gpu_routine_log(<out> <routine>): the regex of the line W3INIT writes when the routine's
+# Kokkos path is on (the fork's w3initmd.F90 and W3KOKKOS_FLX_SETUP).
+function(ww3gpu_routine_log out r)
+  if(r STREQUAL "SNL1")
+    set(${out} "Kokkos DIA \\(W3SNL1\\) enabled" PARENT_SCOPE)
+  elseif(r MATCHES "^(SDS|SIN|SPR)4$")
+    set(${out} "Kokkos ST4 \\(W3SDS4 W3SIN4 W3SPR4\\) enabled:.* ${r}=T" PARENT_SCOPE)
+  elseif(r STREQUAL "SPR0")
+    set(${out} "Kokkos ST0 \\(W3SPR0\\) enabled" PARENT_SCOPE)
+  elseif(r MATCHES "^(SDS|SIN|SPR)([1236])$")
+    set(n "${CMAKE_MATCH_2}")
+    set(${out} "Kokkos ST${n} \\(W3SPR${n} W3SIN${n} W3SDS${n}\\) enabled:.* ${r}=T" PARENT_SCOPE)
+  else()
+    set(${out} "Kokkos W3${r} enabled" PARENT_SCOPE)
   endif()
 endfunction()
 

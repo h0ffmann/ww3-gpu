@@ -202,7 +202,79 @@ target_sources(ww_kokkos PRIVATE
     uost_uost_setgrid.hpp
     uost_uost_sourceterm_compute.hpp
     uost_uost_sourceterm_setgrid.hpp
-    uost_uost_srctrmcompute.hpp)
+    uost_uost_srctrmcompute.hpp
+    bt9_ng.hpp
+    fld1_wnd2z0m.hpp
+    gke_biinterpwt.hpp
+    gke_coocsrind.hpp
+    gke_findquartetconfig.hpp
+    gke_prepkgrid.hpp
+    gke_tfunc.hpp
+    ic3_bsdet.hpp
+    ic3_cmplx_root_muller_v1.hpp
+    ic3_drfun_quad_cheng.hpp
+    ic3_func1_zhao.hpp
+    ic3_ic3precalc_cheng.hpp
+    ic3_wn_cmplx_hf.hpp
+    ic5_balancing_matrix.hpp
+    ic5_nr_corr.hpp
+    ic5_polyroots.hpp
+    ic5_w3ic5wncg.hpp
+    iogo_w3flgrdflag.hpp
+    iogo_w3flgrdupdt.hpp
+    is2_w3fsd_dave.hpp
+    parall_get_jsea_ibelong.hpp
+    parall_init_get_isea.hpp
+    parall_init_get_jsea_isproc.hpp
+    parall_prop_refraction_pr1.hpp
+    parall_set_up_nseal_nsealm.hpp
+    profs_mgsro.hpp
+    prop_cflxy.hpp
+    psmc_smcaverg.hpp
+    psmc_smcdcxy.hpp
+    psmc_smcdhxy.hpp
+    psmc_smcxuno2.hpp
+    psmc_smcxuno3.hpp
+    psmc_smcxuno3r.hpp
+    psmc_smcyuno2.hpp
+    psmc_smcyuno3.hpp
+    psmc_smcyuno3r.hpp
+    psmc_w3smcell.hpp
+    psmc_w3smcgmp.hpp
+    snl1_couple.hpp
+    snl1_f1f1f1.hpp
+    snl5_calc_wbtv2.hpp
+    snl5_insnl5.hpp
+    srce_calc_fpi.hpp
+    tide_juldayt.hpp
+    tide_setvuf.hpp
+    tide_setvuf_fast.hpp
+    tide_svd.hpp
+    tide_tide_find_indices_analysis.hpp
+    tide_tide_find_indices_prediction.hpp
+    tide_vuf.hpp
+    uost_uost_sourceterm_compute_ld.hpp
+    uost_uost_sourceterm_compute_se.hpp
+    updt_w3uic1.hpp
+    updt_w3uic5.hpp
+    updt_w3urho.hpp
+    wavset_compute_active_node.hpp
+    wavset_differentiate_xydir.hpp
+    wavset_differentiate_xydir_mapsta.hpp
+    wavset_differentiate_xydir_native.hpp
+    wavset_fd_compute_diff.hpp
+    wavset_fd_compute_lh_stress.hpp
+    wavset_fd_set_meanvalue_to_zero.hpp
+    wavset_fd_wave_setup_apply_fct.hpp
+    wavset_fd_wave_setup_apply_precond.hpp
+    wavset_fd_wave_setup_compute_system.hpp
+    wavset_fd_wave_setup_scalar_prod.hpp
+    wavset_fd_wave_setup_solve_poisson_neumann_dir.hpp
+    wavset_preparation_fd_scheme.hpp
+    wavset_trig_compute_diff.hpp
+    wavset_trig_compute_lh_stress.hpp
+    wavset_trig_wave_setup_apply_fct.hpp
+    wavset_trig_wave_setup_apply_precond.hpp)
 
 # No floating-point contraction in the ported kernels.
 #
@@ -222,7 +294,8 @@ if(Kokkos_ENABLE_CUDA)
 endif()
 
 # ST4 calls glibc's libmvec where gfortran -O3 does (st4_libmvec.hpp), so the
-# host port computes the Fortran's bits at those five loops.
+# host port computes the Fortran's bits at those five loops; ST3 and ST6 reuse
+# it, and W3SIN6 adds _ZGVbN4v_tanhf (srce_st6_sin6.hpp).
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64")
   target_link_libraries(ww_kokkos PUBLIC mvec)
 endif()

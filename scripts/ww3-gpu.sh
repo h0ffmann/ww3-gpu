@@ -239,7 +239,7 @@ else
   # nothing else: a fork rebased onto a newer NOAA commit, with WW3-noaa/ left behind, would
   # compare two versions of WW3's physics.
   kokkos_patch=(model/src/CMakeLists.txt model/src/cmake/switches.json model/src/w3initmd.F90
-                model/src/w3kokkosmd.F90 model/src/w3srcemd.F90)
+                model/src/w3kokkosmd.F90 model/src/w3srcemd.F90 model/src/w3wavemd.F90)
   if [ "$mode" = ww3 ] && [ -f "$fork/model/src/w3kokkosmd.F90" ]; then
     # The trees, not the histories: CI clones the fork one commit deep. model/ holds every source
     # file WW3 compiles, and nothing a build or a regtest writes.

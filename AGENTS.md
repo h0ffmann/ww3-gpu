@@ -286,6 +286,9 @@ Fortran.
 - **A difference is a defect of the port** until a Fortran/Fortran run shows WW3 does it too.
   Read the optimised code WW3's build produces before suspecting the physics (`ww3-port` skill).
   Never widen a tolerance, never mark an entry expected-to-fail, never change the Fortran.
+- **Never cheat a regtest tool.** `nccmp-tol`, `test.comp`, the matrix driver and every other
+  comparison or gate are evidence, never worked around. Any modification to a comparison script,
+  tolerance file, gate or their invocation is reviewed by a human before it merges.
 - **Reductions** keep the Fortran's order per point. A parallel tree reduction, a fused
   multiply-add or an atomic that reorders a sum breaks this rule: ask the owner first, and it is
   its own PR.

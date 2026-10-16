@@ -74,6 +74,34 @@ KOKKOS_INLINE_FUNCTION void expnd2(const Snl3Tables& t, Real* arr, Real* temp) {
 }
 }  // namespace snl3_detail
 
+/// EXPAND (:644-703), contained in W3SNL3 and called as EXPAND(UE) (:406). spec is UE, declared
+/// (NSPMIN:NSPMAX), spec[ith + (ifr-1)*NTHEXP - nspmin] is SPEC(ith,ifr); a is W3SNL3's A(NTH,NFR)
+/// and xcg its XCG(NFRMAX), both 0-based, read by host association. Every element of spec is
+/// written. w3snl3_point keeps its own inline copy (1.b). Evidence:
+/// kokkos/port_report/W3SNL3MD_EXPAND_KOKKOS.md.
+KOKKOS_INLINE_FUNCTION void expand(Real* spec, const Snl3Tables& t, Real fachfe, const Real* a,
+                                   const Real* xcg) {
+  const Real zero = static_cast<Real>(0.);
+  const int nfr = t.nfr, nth = t.nth, nthexp = t.nthexp, nspmin = t.nspmin;
+  const int nfrmax = t.nfrmax, nthmax = t.nthmax;
+  auto ux = [&](int ith, int ifr) -> Real& { return spec[ith + (ifr - 1) * nthexp - nspmin]; };
+  for (int ifr = t.nfrmin; ifr <= 0; ++ifr)  // :682
+    for (int ith = 1 - nthmax; ith <= nth + nthmax; ++ith) ux(ith, ifr) = zero;
+  for (int ifr = 1; ifr <= nfr; ++ifr)  // :684
+    for (int ith = 1; ith <= nth; ++ith)
+      ux(ith, ifr) = a[(ifr - 1) * nth + ith - 1] * snl3_detail::kTpi;
+  for (int ifr = 1; ifr <= nfr; ++ifr)  // :686-688
+    for (int ith = 1; ith <= nth; ++ith)
+      ux(ith, ifr) = ux(ith, ifr) * t.xsi(ifr - 1) / xcg[ifr - 1];
+  for (int ifr = nfr + 1; ifr <= nfrmax; ++ifr)  // :690-692
+    for (int ith = 1; ith <= nth; ++ith) ux(ith, ifr) = ux(ith, ifr - 1) * fachfe;
+  // :694-697 in this order: with NTHMAX > NTH a row reads one written earlier in the loop.
+  for (int ith = 1; ith <= nthmax; ++ith) {
+    for (int ifr = 1; ifr <= nfrmax; ++ifr) ux(nth + ith, ifr) = ux(ith, ifr);
+    for (int ifr = 1; ifr <= nfrmax; ++ifr) ux(1 - ith, ifr) = ux(nth + 1 - ith, ifr);
+  }
+}
+
 /// W3SNL3(A, CG, WN, DEPTH, S, D) for one point. a, s, d are (NTH,NK) column-major,
 /// a[(ik-1)*nth + ith-1]; cg, wn are (NK). s and d are overwritten.
 KOKKOS_INLINE_FUNCTION void w3snl3_point(const Snl3Tables& t, const Snl3Params& p,

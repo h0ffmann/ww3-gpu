@@ -17,8 +17,10 @@
 #                     (MPI); all is the three. ww3_multi entries (-m) are in: the shims keep one
 #                     context per grid.
 #   WW3GPU_ROUTINES     the routines whose WW_KOKKOS_<R> flag the Kokkos run sets to 1, a list of SNL1
-#                     (selects NL1 switches), SDS4, SIN4, SPR4 (select ST4); SNL1 by default. The
-#                     Fortran runs set every flag to 0. ADR-0011's ST4 checkpoint runs one at a time.
+#                     (selects NL1 switches), SDS4, SIN4, SPR4 (select ST4), SPR0 (ST0), SPRn, SINn,
+#                     SDSn for n = 1, 2, 3, 6 (STn), SWL6 (ST6), FLX1..FLX5 (FLXn); SNL1 by default
+#                     (WW3GPU_ALL_ROUTINES, cmake/ww3gpu_common.cmake). The Fortran runs set every
+#                     flag to 0. ADR-0011's ST4 checkpoint runs one at a time.
 #   WW3GPU_WW3          the h0ffmann/WW3 ww3-gpu/kokkos-st4 tree; never written (the inputs are staged
 #                     in <build>/regtests/, and record:summary fails when `git status` shows a change)
 #   WW3GPU_DATA         WW3's ftp data, <WW3GPU_DATA>/data_regtests: the store path of
@@ -48,7 +50,7 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/ww3gpu_common.cmake")
 
 set(WW3GPU_SELECTION serial CACHE STRING "Which matrix.base entries: serial, omp, mpi or all")
 set_property(CACHE WW3GPU_SELECTION PROPERTY STRINGS serial omp mpi all)
-set(WW3GPU_ROUTINES SNL1 CACHE STRING "The routines the Kokkos run turns on: a list of SNL1, SDS4, SIN4, SPR4")
+set(WW3GPU_ROUTINES SNL1 CACHE STRING "The routines the Kokkos run turns on: a list of WW3GPU_ALL_ROUTINES")
 set(WW3GPU_WW3 "${WW3GPU_ROOT}/WW3" CACHE PATH "The WW3 tree (h0ffmann/WW3, ww3-gpu/kokkos-st4), read-only")
 option(WW3GPU_STRICT "A test.comp difference fails the entry" ON)
 option(WW3GPU_OMP_NESTED "Export OMP_MAX_ACTIVE_LEVELS=2 for both runs of an entry" OFF)
@@ -69,8 +71,9 @@ if(WW3GPU_ROUTINES STREQUAL "")
 endif()
 foreach(_r IN LISTS WW3GPU_ROUTINES)
   ww3gpu_routine_word(_w "${_r}")
-  if(_w STREQUAL "")
-    message(FATAL_ERROR "WW3GPU_ROUTINES: '${_r}' is not one of SNL1, SDS4, SIN4, SPR4")
+  if(_w STREQUAL "" OR NOT _r IN_LIST WW3GPU_ALL_ROUTINES)
+    list(JOIN WW3GPU_ALL_ROUTINES ", " _all)
+    message(FATAL_ERROR "WW3GPU_ROUTINES: '${_r}' is not one of ${_all}")
   endif()
 endforeach()
 ww3gpu_physics(WW3GPU_PHYSICS ${WW3GPU_ROUTINES})
