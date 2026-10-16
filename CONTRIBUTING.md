@@ -236,7 +236,12 @@ generated from the commits (`just uprd` regenerates it later). A PR opened from 
 gets the same treatment from `.github/workflows/pr-body.yml`. Delete the first `<!-- uprd -->`
 line of a description to hand-edit it and keep it.
 
-Name the branch after the work (`claude/<issue-number>-<short-kebab-slug>` for an agent's branch).
-The same workflow fails a PR whose head branch matches `^claude/project-thread-`, a generic session
-name that says nothing about the change in the PR list or in `git log`; push the commits to a named
-branch (`git push -u origin HEAD:claude/<issue>-<slug>`) and open the PR from there.
+Name an agent's branch after its goal: `goal/<id>-<short-kebab-slug>`, where `<id>` is the issue
+number (`goal/143-h100-access`) or, with no issue, the last 8 characters of the Claude project
+thread id plus a random 4-digit number (`goal/ke1RYpdP-7316-branch-naming`); a session outside a
+Claude project uses the last 8 characters of its session id. The first commit and the PR body
+name the goal id and link the Claude project thread it came from, so the work can be traced back
+to the conversation. `scripts/branch_name.sh` refuses a `claude/…` or `claude-project…` branch,
+a generic session name that says nothing about the change, and a `goal/` name without an id; `just
+pr` and the same workflow run it. Push the commits to a named branch (`git push -u origin
+HEAD:goal/<id>-<slug>`) and open the PR from there.

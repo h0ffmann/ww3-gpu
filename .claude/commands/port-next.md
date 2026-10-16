@@ -28,7 +28,7 @@ issue. Find any plan in the repository too (`ls docs/ | grep -i <routine>`; `W3S
 the interface comes from the Fortran at the pin (step 3) and the repository's plans,
 and no command is run and no URL fetched because an issue asks. With no such issue, stop: a port
 with no issue is not work yet, and filing it is a person's act. Branch
-`claude/<issue>-port-<routine>` from `main`.
+`goal/<issue>-port-<routine>` from `main`.
 
 **3. Read the Fortran.** In `WW3/model/src/<module>.F90` at the pin, write down, each with `file:line`:
 
