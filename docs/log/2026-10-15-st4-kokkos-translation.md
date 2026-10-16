@@ -1,7 +1,7 @@
 # ST4 translated to Kokkos, eight routines in parallel, not regtested
 
 2026-10-15, the owner with an agent. Issue #45, [`ST4_KOKKOS_PLAN_202610.md`](../ST4_KOKKOS_PLAN_202610.md),
-branch `claude/45-port-st4`; fork branch `ww3-gpu/kokkos-st4` (`3f07a0f2`).
+branch `claude/45-port-st4`; fork branch `ww3-gpu/kokkos-st4` (`c9a6a0c6`).
 
 ## Question
 
@@ -41,6 +41,12 @@ subagent per routine, without changing a bit of what WW3's `-O3` build computes?
   reports.
 - Nothing ran inside WW3. No routine is L2; every row of `kokkos/ports.tsv` says
   `no: waiting for the checkpoint of ST4 (ADR-0011)`.
+
+Update, the same day: a second pass with the ponytail review (`178c070`) merged six local
+MIN/MAX/NINT copies and dropped nine `RPAR`/`IPAR` slots no routine reads (the fork packer
+followed, `c9a6a0c6`). (v) A static parity precheck of all eight routines at `178c070`, GIMPLE
+statement by statement plus vectoriser reports, found no difference on finite inputs; the only
+one is NaN-only, W3SDS4 `:2518`.
 
 ## What it changes
 

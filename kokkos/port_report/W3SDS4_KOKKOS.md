@@ -12,7 +12,7 @@ ST4 whitecapping dissipation: saturation-based breaking (`SELECT CASE` 1-3), the
 | WW3 routine | `W3SDS4`, `model/src/w3src4md.F90:2043-2659` at `WW3@bb08623a` (the same lines at NOAA-EMC/WW3 `03adda91`) |
 | Kokkos code | [`../src/ww_kokkos/st4_sds4.hpp`](../src/ww_kokkos/st4_sds4.hpp), a per-point device function `w3sds4_point`, launched by `ww_sds4` |
 | C shim | [`../src/fortran_iface/st4_shim.cpp`](../src/fortran_iface/st4_shim.cpp); parameters and arrays in [`st4_params.hpp`](../src/ww_kokkos/st4_params.hpp), [`st4_arrays.hpp`](../src/ww_kokkos/st4_arrays.hpp) |
-| WW3 side | `w3kokkosmd.F90`, `w3initmd.F90`, `w3srcemd.F90` on the h0ffmann/WW3 branch `ww3-gpu/kokkos-st4` (`3f07a0f2`); the `WW3/` pin is not moved yet |
+| WW3 side | `w3kokkosmd.F90`, `w3initmd.F90`, `w3srcemd.F90` on the h0ffmann/WW3 branch `ww3-gpu/kokkos-st4` (`c9a6a0c6`); the `WW3/` pin is not moved yet |
 | Phase | 1: copy in, kernel, copy out, one point per call, inside `!$OMP CRITICAL (WW_KOKKOS_ST4)`; Kokkos::Serial inside an OpenMP region |
 | Plan | [`ST4_KOKKOS_PLAN_202610.md`](../../docs/ST4_KOKKOS_PLAN_202610.md), issue #45 |
 
@@ -30,6 +30,12 @@ The reference is the `-O3` GIMPLE inventory of `w3src4md.F90` (WW3 CMake Release
 ## Static parity
 
 A fresh reviewer compared the C++ with the dump and the assembly site by site, and compiled the kernel with the `openmp-release` flags: 0 FMA, the same 2 `_ZGVbN4vv_powf` and 1 `_ZGVbN4v_expf` sites, `sincosf` where the Fortran has it. No difference on finite inputs. Not a full statement-by-statement GIMPLE diff ⚠.
+
+Precheck before the regtests, 2026-10-15, at `178c070` (v): a statement-by-statement diff of the
+optimised GIMPLE of the C++ as `openmp-release` builds it (g++ 16.2, `-O3 -march=x86-64-v3
+-ffp-contract=off`, the object identical to the CMake build's) against the Fortran's, plus both
+compilers' vectoriser reports and the assembly: PASS on finite inputs; one NaN-only difference at `:2518` (the scalar remainder of an odd NTH uses `maxss` with the other operand order). Every reduction is an in-order fold or
+scalar on both sides, no FMA on either. Static parity is still ⚠: only the regtests prove it.
 
 Edge cases, not on finite valid inputs:
 
@@ -52,5 +58,5 @@ its checkpoint runs `just smoke-ww3-gpu`, `just full-ww3-gpu` and `just ww3-gpu-
 to `ww3-gpu/kokkos-st4`. Until then every parity statement above is ⚠. What did run, 2026-10-15
 (v): `just kokkos-test serial-debug` and `openmp-release` (10/10 each; those tests are the intro
 programs' and tools', the port has none, ADR-0010), the `cuda-release` preset compiled (never run),
-and the fork branch `ww3-gpu/kokkos-st4` (`3f07a0f2`) building and linking `ww3_shel` and
+and the fork branch `ww3-gpu/kokkos-st4` (`c9a6a0c6`) building and linking `ww3_shel` and
 `ww3_grid` with `KOKKOS`, not run.
