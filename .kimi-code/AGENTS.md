@@ -36,6 +36,8 @@ and where to look first. `CONTRIBUTING.md`, "Working with Kimi Code", has the ev
 
 - Start in the repository root. `WW3/`, `WW3-noaa/`, `WW4/` and `picasso/` are submodules you
   read, never edit.
+- Looking for a fact, a number, a decision or a past session: [RETRIEVAL.md](RETRIEVAL.md) maps
+  the question to its one file or command.
 - Enter the toolchain before building (`just dev` or `just ww3`); a missing tool means enter the
   shell, not skip the gate.
 - Run builds and regtests through their `just` recipes and read the verdict, not the compiler
