@@ -1,7 +1,7 @@
 // kokkos/src/ww_kokkos/wave_support.cpp
 // W3WAVE's support headers (W3GATH, W3SCAT, W3DZXY, W3UWND, W3UTRN, DISTAB with WAVNU2, and the
 // PR3 maps W3MAP3, W3MAPT) are header-only device functions with no caller yet, and the host-side
-// W3IOGR, W3DIMA and W3DIMS have none either: the shims, their hook tables
+// W3WAVE driver, W3IOGR, W3DIMA and W3DIMS have none either: the shims, their hook tables
 // and the W3WAVE and W3IOGR wiring come with the unit's checkpoint
 // (docs/W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md). This translation unit instantiates every launcher
 // on the default execution space, so each preset generates their code (device code on CUDA) until
@@ -222,6 +222,7 @@
 #include "updt_w3uic5.hpp"
 #include "updt_w3urho.hpp"
 #include "wave_gath_scat.hpp"
+#include "wave_w3wave.hpp"
 #include "wavset_compute_active_node.hpp"
 #include "wavset_differentiate_xydir.hpp"
 #include "wavset_differentiate_xydir_mapsta.hpp"
@@ -260,4 +261,5 @@ void ww_support_instantiate() {
   (void)&ww::iogr::iogr_encode_maptmp<E>;
   (void)&ww::iogr::iogr_mapsf3<E>;
   (void)&ww::iogr::w3iogr;
+  (void)&ww::wave::w3wave::w3wave<E>;
 }
