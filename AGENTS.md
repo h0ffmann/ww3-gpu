@@ -430,8 +430,8 @@ How the channel was built and tested, its failure modes and the commands that ch
   `scripts/branch_name.sh` refuses those and a `goal/` name without an id, in `just pr` and in the
   `branch` job of `.github/workflows/pr-body.yml`; push the same commits to a named branch and
   open the PR from it. The first commit and the PR body name the goal id and link the Claude
-  project thread (`https://claude.ai/code/project/chan_017D9Khj8joWFwBwfu6q6in8?thread=<thread
-  id>`) or, outside a project, the session; an issue-numbered goal links its issue too.
+  project thread it came from (the link the harness gives) or, outside a project, the session; an
+  issue-numbered goal links its issue too.
 - **Never** rewrite history on someone else's branch, skip or quarantine a test to get green, or
   push an empty commit to kick CI.
 - **Releases** go through `just release X.Y.Z` and the `release` skill; a release needs a change
