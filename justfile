@@ -304,6 +304,10 @@ worktrees *args:
 route *args:
     python3 scripts/route.py "$@"
 
+# Reconcile the repo's GitHub labels with .github/labels.yml (ISSUE_LABELS.md): `--dry-run`, `--prune`.
+labels-sync *args:
+    scripts/labels_sync.sh {{args}}
+
 # One line per ADR (docs/ADRs): number, status, date, decision; `just adrs --status accepted`.
 adrs *args:
     python3 scripts/adrs.py "$@"

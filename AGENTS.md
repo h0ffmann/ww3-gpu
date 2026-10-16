@@ -85,6 +85,7 @@ configure and run the CMake/CTest driver in `regtests/`; `just` lists them.
 | A diagram | a Mermaid fence in the page it illustrates | [Figures](#figures-hard-rule) |
 | A skill or agent | `.claude/skills/<name>/SKILL.md`, `.claude/agents/<name>.md` | [Skills and agents](#skills-and-agents) |
 | The toolchain | `picasso/` (submodule, sparse) and `flake.nix` | [`docs/TOOLCHAIN.md`](docs/TOOLCHAIN.md); pin deliberately, name the version |
+| An issue label | `.github/labels.yml`, never GitHub's settings page | [`ISSUE_LABELS.md`](ISSUE_LABELS.md): every issue carries an `area/*`; a rename is done on GitHub first; `just labels-sync` and `.github/workflows/labels.yml` apply the manifest |
 | A WW3 fact | nowhere here: cite `model/src/<file>.F90:<line>` at the pinned commit | [WW3 source](#ww3-source-is-read-only-hard-rule) |
 | An idea the lab stands on | a note in `notes/`, linked from `notes/index.md` | [`NOTES.md`](NOTES.md); `just notes` is the gate |
 | A reference of the proposal, and how it was checked | a row in `pubs/proposal/REFERENCES.md` beside the `refs.bib` entry | the verdicts `verified` / `partial` / `unverified`; `just refs` is the gate; `refs.bib` itself goes through the proposal's reviewer |
@@ -137,6 +138,7 @@ Run the gates of what you changed before calling it done. CI (`.github/workflows
 | `site/`, `DESIGN.md`, `scripts/build_html.sh`, `scripts/build_site.sh` | `just site` (the book pages, then the front page's tests and prerender) |
 | `docs/WFIPs/` or `specs/` | `just wfip check` (`scripts/wfip.py check`: index current, deliverable ids valid, every section present, DoD consistent with Status); `just wfip index` regenerates |
 | `.claude/skills/` or `.claude/agents/` | `python3 .claude/hooks/check_agent_frontmatter.py`; for a vendored skill, `skills-vendor check --lock .claude/skills/skills.lock` |
+| `.github/labels.yml` | `just labels-sync --dry-run` (the manifest parses, and the plan is what you meant) |
 | any Markdown | links are checked by lychee in CI; a relative link must resolve from the file; `just vale` (`scripts/vale.sh`) must pass on English Markdown |
 
 The toolchain is the pinned `picasso/labs/pratico` shell (`just ww3`, `just dev`); `just prereqs`

@@ -1,6 +1,7 @@
 name: Measurement
 description: A number to take or a number that looks wrong (timing, profile, parity).
 title: "measure: "
+labels: ["area/bench"]
 body:
   - type: markdown
     attributes:
