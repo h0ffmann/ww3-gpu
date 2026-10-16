@@ -77,7 +77,7 @@ endfunction()
 # options, $ww3 and the test dropped, space-joined). <physics> is a list of switch words, NL1 by
 # default; every entry whose switch has one of them is in exactly one of serial (none of MPI,
 # OMPG, OMPH), omp (OMPG or OMPH, no MPI) and mpi (MPI); all is the three. A line whose switch
-# file is missing is dropped.
+# file is missing is dropped, and so is a switch with both ST4 and FLX5, which KOKKOS refuses.
 function(ww3gpu_select_entries prefix base rt kind)
   set(phys "${ARGV4}")
   if(phys STREQUAL "")
@@ -113,6 +113,14 @@ function(ww3gpu_select_entries prefix base rt kind)
       string(APPEND f "_${sw}")
     endif()
     if(NOT EXISTS "${f}" OR IS_DIRECTORY "${f}")
+      continue()
+    endif()
+    # KOKKOS with ST4 and FLX5 is refused at configure time by the fork (the Kokkos ST4 path does
+    # not support FLX5, model/src/CMakeLists.txt at WW3@c9a6a0c6): neither run of such an entry
+    # can build, whatever the routines.
+    ww3gpu_has_word(st4 "${f}" "ST4")
+    ww3gpu_has_word(flx5 "${f}" "FLX5")
+    if(st4 AND flx5)
       continue()
     endif()
     ww3gpu_has_word(nl1 "${f}" "${phys}")

@@ -34,6 +34,7 @@ file(WRITE "${t}/rt/a/input/switch_N3" "F90 SHRD ST4 NL3 FLX0\n")
 file(WRITE "${t}/rt/a/input/switch_MP" "F90 DIST MPI ST4 NL1\n")
 file(WRITE "${t}/rt/a/input/switch_OH" "F90 SHRD OMPH ST4 NL1\n")
 file(WRITE "${t}/rt/a/input/switch_NX" "F90 SHRD ST4 NL1X\n")
+file(WRITE "${t}/rt/a/input/switch_F5" "F90 SHRD ST4 NL1 FLX5\n")
 file(WRITE "${t}/rt/a/input2/switch" "F90 SHRD ST4 NL1\n")
 file(WRITE "${t}/rt/b/input/switch_K1" "F90 SHRD ST4 NL1\n")
 file(WRITE "${t}/rt/b/input/switch_OG" "F90 SHRD OMPG ST4 NL1\n")
@@ -47,6 +48,7 @@ file(WRITE "${t}/rt/bin/matrix.base" [=[
     echo "$rtst -s MP -w work_MP $ww3 a" >> matrix.body
     echo "$rtst -s OH -w work_OH $ww3 a" >> matrix.body
     echo "$rtst -s NX -w work_NX $ww3 a" >> matrix.body
+    echo "$rtst -s F5 -w work_F5 $ww3 a" >> matrix.body
     echo "$rtst -s K1 -p $mpi -n $np -w work_P $ww3 b" >> matrix.body
     echo "$rtst -s K1 -m grdset -w work_M $ww3 b" >> matrix.body
     echo "$rtst -i input2 -w work_I $ww3 a" >> matrix.body
@@ -175,7 +177,7 @@ expect("${n}" "0" "stage_data for a test that needs no data")
 get_filename_component(ww3 "${CMAKE_CURRENT_LIST_DIR}/../../WW3" ABSOLUTE)
 if(EXISTS "${ww3}/regtests/bin/matrix.base")
   execute_process(COMMAND git -C "${ww3}" rev-parse --short HEAD OUTPUT_VARIABLE rev OUTPUT_STRIP_TRAILING_WHITESPACE)
-  foreach(kv "serial;100" "omp;50" "mpi;161" "all;311")
+  foreach(kv "serial;99" "omp;50" "mpi;161" "all;310")
     list(GET kv 0 k)
     list(GET kv 1 want)
     ww3gpu_select_entries(P "${ww3}/regtests/bin/matrix.base" "${ww3}/regtests" ${k})

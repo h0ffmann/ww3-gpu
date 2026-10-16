@@ -88,8 +88,8 @@ full-ww3-gpu device="cpu":
 
 # The Kokkos DIA through WW3's own regtest harness (WFIP-0003), as CTest (regtests/CMakeLists.txt):
 # one test per NL1 entry of matrix.base, the Fortran and the Kokkos DIA of one executable, compared
-# by test.comp and nccmp-tol. CPU only. <selection> is serial (100 entries), omp (50 shared-memory
-# OpenMP entries), mpi (161, mpirun with $WW3GPU_MPI_RANKS ranks, default 4) or all (311); each entry
+# by test.comp and nccmp-tol. CPU only. <selection> is serial (99 entries), omp (50 shared-memory
+# OpenMP entries), mpi (161, mpirun with $WW3GPU_MPI_RANKS ranks, default 4) or all (310); each entry
 # gets (nproc --all)/<jobs> threads ($WW3GPU_OMP_THREADS overrides), shared among its ranks. The
 # rest goes to ctest: `just ww3-gpu-matrix 8 serial -R ww3_ts1`, `-L entry`, `-N`. jobs=N and
 # selection=S are accepted too. WW3GPU_OMP_NESTED=ON in the environment exports
