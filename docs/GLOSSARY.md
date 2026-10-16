@@ -358,6 +358,14 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | rstrt_b4b / nth_b4b / npl_b4b | "Restart Reproducibility" / "Thread Reproducibility" / "MPI task Reproducibility" `(v)` `WW3/regtests/bin/matrix.base` | Matrix variants that run a case twice (restarted, different thread count, different rank count) and demand identical output. | [course/09-benchmark-profile-compile-run.md](../course/09-benchmark-profile-compile-run.md) |
 | b4b | bit-for-bit `(v)` `WW3/regtests/bin/test.comp` | The reproducibility criterion of steps 1–2 of the ladder; "bit-identical" in the historical L1 column of `PORT_STATUS.md` means the same thing. | [course/09-benchmark-profile-compile-run.md](../course/09-benchmark-profile-compile-run.md), [kokkos/PORT_STATUS.md](../kokkos/PORT_STATUS.md) |
 | develop / 7.14 | WW3's development branch and the version string of the pinned `WW3/` submodule `(v)` [docs/AGENTS_KOKKOS_202609.md](AGENTS_KOKKOS_202609.md) | Where real work happens; the 6.07.1 release tarball is from 2019. | [course/01-build.md](../course/01-build.md) |
+| W3DIMX / W3DIMUG | "Initialize an individual spatial grid at the proper dimensions" `(v)` `w3gdatmd.F90:1585`, `:3123` | Allocate the spatial arrays of a grid (`MAPSTA`, `XGRD`, ...) and of an unstructured mesh (`TRIGP`, `IEN`, ...); hooks of the Kokkos `W3IOGR`. | [kokkos/port_report/W3IOGR_KOKKOS.md](../kokkos/port_report/W3IOGR_KOKKOS.md) |
+| W3DMO5 | "Initialize an individual data storage for boundary data" `(v)` `w3odatmd.F90:1339` | Allocates the boundary-point arrays of output type 5; a hook of the Kokkos `W3IOGR`. | [kokkos/port_report/W3IOGR_KOKKOS.md](../kokkos/port_report/W3IOGR_KOKKOS.md) |
+| W3GNTX | "Construct required spatial grid quantities for curvilinear grids" `(v)` `w3gdatmd.F90:2895` | Grid derivatives and metrics from `XGRD`/`YGRD`; a hook of the Kokkos `W3IOGR`. | [kokkos/port_report/W3IOGR_KOKKOS.md](../kokkos/port_report/W3IOGR_KOKKOS.md) |
+| W3SETW / W3SETI / W3XETA | "Select one of the WAVEWATCH III grids / models" `(v)` `w3wdatmd.F90:654`, `w3idatmd.F90:820`; W3XETA "Reduced version of W3SETA" `(v)` `w3adatmd.F90:3112` | The `W3SETG` pointer swap for the wave and input modules, and a reduced `W3SETA`. | [kokkos/port_report/W3DIMA_KOKKOS.md](../kokkos/port_report/W3DIMA_KOKKOS.md) |
+| WADAT / FL_ALL / D_ONLY / NSEALM | `W3ADATMD`'s per-model derived type, its "all arrays allocated" flag, `W3DIMA`'s data-only argument, and the largest number of sea points stored on one process `(v)` `w3adatmd.F90:384-570`, `:847` | `FL_ALL` is stored before `W3SETA` selects the model, a WW3 quirk the port keeps. | [kokkos/port_report/W3DIMA_KOKKOS.md](../kokkos/port_report/W3DIMA_KOKKOS.md) |
+| SGRD / MPAR / SRCP | `W3GDATMD`'s spectral-grid type, per-model parameter type and its source-term parameter component `(v)` `w3gdatmd.F90:795-804`, `:1069-1087`, `:879-924` | The spectral arrays `W3DIMS` allocates, and the ST4 tables (`IKTAB`, `DCKI`, `QBI`, `SATINDICES`, `SATWEIGHTS`, `CUMULW`) sized by `NKHS`, `NKD`, `NDTAB` and `SDSNTH`. | [kokkos/port_report/W3DIMS_KOKKOS.md](../kokkos/port_report/W3DIMS_KOKKOS.md) |
+| EXTIOF / EXTOPN | "Perform a program stop with an exit code when there are errors reading or writing a file" / "... opening a file" `(v)` `w3servmd.F90:822`, `:974` | WW3's I/O error exits, which call `EXTCDE`; the Kokkos translations return the exit code instead of stopping. | [kokkos/port_report/W3IOGR_KOKKOS.md](../kokkos/port_report/W3IOGR_KOKKOS.md), [kokkos/port_report/W3DIMS_KOKKOS.md](../kokkos/port_report/W3DIMS_KOKKOS.md) |
+| GTYPE | grid type: `RLGTYPE` 1 rectilinear, `CLGTYPE` 2 curvilinear, `UNGTYPE` 3 unstructured, `SMCTYPE` 4 SMC `(v)` `w3gdatmd.F90:627` | Selects the grid branch in `W3IOGR` and `W3WAVE`. | [kokkos/port_report/W3IOGR_KOKKOS.md](../kokkos/port_report/W3IOGR_KOKKOS.md) |
 
 ## HPC and software
 
@@ -568,6 +576,8 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | `pubs/` | the course book and the UFRJ/DEL proposal (`proposal/en/` source, `proposal/pt/` hand-revised reference, `mapas-mentais.pt.md`, `refs.bib`, `template.tex`) `(v)` [pubs/README.md](../pubs/README.md) | PDFs land in `pdf/` on `main`. | [pubs/README.md](../pubs/README.md) |
 | course book / the book / *Without Changing the Answer* | `course/*.md` assembled by `scripts/book_prep.py` into one PDF `(v)` [justfile](../justfile); *Without Changing the Answer* is its working title `(v)` [pubs/book/defaults.yaml](../pubs/book/defaults.yaml) | `just book [abnt|ieee]`. The repository's public form since ADR-0003: a book in progress on agentic coding and agentic research, whose parts, listings gate and new chapters WFIP-0002 plans. | [README.md](../README.md), [pubs/README.md](../pubs/README.md) |
 | pt-BR / `site/data/translations/pt-BR.tsv` | Brazilian Portuguese, as a language tag; the table of the website's sentences in it `(v)` [DESIGN.md](../DESIGN.md), "Two languages" | The front page is written once in English and built a second time at `/pt-BR/`, each sentence looked up by its English in the table; `site/content` stops `just site` when a sentence has no row or a row no sentence. The pattern is h0ffmann/h0ffmann#86. `README.pt-BR.md` is the README's Portuguese mirror. | [site/data/translations/pt-BR.tsv](../site/data/translations/pt-BR.tsv), [README.pt-BR.md](../README.pt-BR.md) |
+| Record marker | the 4-byte length gfortran writes before and after each record of a sequential unformatted file ⚠ gfortran manual | `mod_def.ww3` is written that way, big-endian; checked on two files WW3 wrote. | [kokkos/port_report/W3IOGR_KOKKOS.md](../kokkos/port_report/W3IOGR_KOKKOS.md) |
+| WithoutInitializing | Kokkos allocation property `(v)` Kokkos 5.2.2 headers | Creates a View without filling it, as a Fortran `ALLOCATE` leaves memory unset. | [kokkos/port_report/W3DIMA_KOKKOS.md](../kokkos/port_report/W3DIMA_KOKKOS.md) |
 
 ## Citation and licensing
 
@@ -819,6 +829,7 @@ Every term above, alphabetically, with the section it lives in.
 - EXPND2: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - EXTCDE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - `extern "C"`: [HPC and software](#hpc-and-software)
+- EXTIOF / EXTOPN: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - F, E: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - F90: [WW3 switches](#ww3-switches)
 - FBI (NL4): [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
@@ -906,6 +917,7 @@ Every term above, alphabetically, with the section it lives in.
 - gprof: [HPC and software](#hpc-and-software)
 - `gprof_table.sh`: [This repository's own names](#this-repositorys-own-names)
 - `gprof_table.sh` / `perf_table.sh` / `just profile`: [This repository's own names](#this-repositorys-own-names)
+- GTYPE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - HasNaN: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - HIP: [HPC and software](#hpc-and-software)
 - HIP / SYCL / HPX: [HPC and software](#hpc-and-software)
@@ -995,6 +1007,7 @@ Every term above, alphabetically, with the section it lives in.
 - QFunc / VpFunc / VmFunc / UFunc / TFunc / ASymSmatTimVec: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - QFunc: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - QSPLIT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- Record marker: [This repository's own names](#this-repositorys-own-names)
 - RRANGE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - RUNRC: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - SECONDHH / VMIN_D / VPLUS_D: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1002,6 +1015,7 @@ Every term above, alphabetically, with the section it lives in.
 - SETDEPTH / IOBDP: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - SETDEPTH: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - SETVUF_FAST: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- SGRD / MPAR / SRCP: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - shloxr: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - SIG10Hz: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - SIG2WN: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1065,6 +1079,8 @@ Every term above, alphabetically, with the section it lives in.
 - VUF: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3ADDIG: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3BETA: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3DIMX / W3DIMUG: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3DMO5: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3FLX1: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3FLX1MD / W3FLX1: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3FLX1MD: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1077,6 +1093,7 @@ Every term above, alphabetically, with the section it lives in.
 - W3FLX5: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3FLX5MD / W3FLX5: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3FLX5MD: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3GNTX: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3KRTN / SMCkUNO2 / SMCGtCrfr / CTMAX: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3KRTN: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3LLTOEQ / SMCGradn: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1092,6 +1109,7 @@ Every term above, alphabetically, with the section it lives in.
 - W3SDS1: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3SDS2: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3SDS3: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3SETW / W3SETI / W3XETA: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3SIN1: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3SIN2: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3SIN3: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1119,6 +1137,8 @@ Every term above, alphabetically, with the section it lives in.
 - W3SWLDMD (SWL): W3SWL4 / W3SWL6: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3XYPFSNIMP / FSNIMP / IMPFSN: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3XYPFSNIMP: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- WADAT / FL_ALL / D_ONLY / NSEALM: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- WithoutInitializing: [This repository's own names](#this-repositorys-own-names)
 - wkfnc / cgfnc / INSNL4 / shloxr: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - wkfnc: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - WND2SAT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)

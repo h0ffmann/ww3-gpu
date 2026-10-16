@@ -1,12 +1,14 @@
 // kokkos/src/ww_kokkos/wave_support.cpp
 // W3WAVE's support headers (W3GATH, W3SCAT, W3DZXY, W3UWND, W3UTRN, DISTAB with WAVNU2, and the
-// PR3 maps W3MAP3, W3MAPT) are header-only device functions with no caller yet: the shims and the
-// W3WAVE and W3IOGR wiring come with the unit's checkpoint
+// PR3 maps W3MAP3, W3MAPT) are header-only device functions with no caller yet, and the host-side
+// W3IOGR, W3DIMA and W3DIMS have none either: the shims, their hook tables
+// and the W3WAVE and W3IOGR wiring come with the unit's checkpoint
 // (docs/W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md). This translation unit instantiates every launcher
 // on the default execution space, so each preset generates their code (device code on CUDA) until
 // a shim calls them. Nothing calls ww_support_instantiate. The headers of the source-term packages
 // and of the easy batch (docs/EASY_BATCH_KOKKOS_PLAN_202610.md) are included so every preset
 // compiles them together.
+#include "adat_w3dima.hpp"
 #include "bt8_ccosh.hpp"
 #include "bt8_csinh.hpp"
 #include "bt9_calc_nd.hpp"
@@ -18,6 +20,7 @@
 #include "fld1_wnd2sat.hpp"
 #include "fld1_wnd2z0m.hpp"
 #include "fld2_wnd2sat.hpp"
+#include "gdat_w3dims.hpp"
 #include "gig1_df1f2theta.hpp"
 #include "gke_asymsmattimvec.hpp"
 #include "gke_biinterpwt.hpp"
@@ -59,6 +62,7 @@
 #include "iogo_skewness.hpp"
 #include "iogo_w3flgrdflag.hpp"
 #include "iogo_w3flgrdupdt.hpp"
+#include "iogr_w3iogr.hpp"
 #include "is2_funcd_fderiv.hpp"
 #include "is2_funcd_fval.hpp"
 #include "is2_w3fsd_dave.hpp"
@@ -249,4 +253,11 @@ void ww_support_instantiate() {
   (void)&ww::prop::w3mapt<E>;
   (void)&ww::srce::st3::w3sin3_point<false>;
   (void)&ww::srce::st3::w3sin3_point<true>;
+  (void)&ww::adat::w3dima<E>;
+  (void)&ww::gdat::w3dims<E>;
+  (void)&ww::iogr::iogr_rect_xy<E>;
+  (void)&ww::iogr::iogr_decode_maptmp<E>;
+  (void)&ww::iogr::iogr_encode_maptmp<E>;
+  (void)&ww::iogr::iogr_mapsf3<E>;
+  (void)&ww::iogr::w3iogr;
 }
