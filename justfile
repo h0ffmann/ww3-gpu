@@ -304,6 +304,22 @@ worktrees *args:
 route *args:
     python3 scripts/route.py "$@"
 
+# Pack the context an agent sends to Claude Code or Kimi Code (scripts/context.py): `just context-pack --goal <id> --files f1,f2 [--gate-results <file>]`.
+context-pack *args:
+    python3 scripts/context.py pack "$@"
+
+# Ask a bounded question over docs/notes/port reports instead of grepping (scripts/context.py).
+context-query *args:
+    python3 scripts/context.py query "$@"
+
+# Validate a handoff card written by `just context-pack`.
+context-check pack:
+    python3 scripts/context.py check {{pack}}
+
+# Self-test of the context tool.
+context-selftest:
+    python3 scripts/context.py --self-test
+
 # Reconcile the repo's GitHub labels with .github/labels.yml (ISSUE_LABELS.md): `--dry-run`, `--prune`.
 labels-sync *args:
     scripts/labels_sync.sh {{args}}
