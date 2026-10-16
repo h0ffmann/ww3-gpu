@@ -88,6 +88,7 @@
 #include "pdlib_jacobi_spectral.hpp"
 #include "pdlib_jacobi_vec.hpp"
 #include "pdlib_jgs_block.hpp"
+#include "pdlib_pdlib_iobp_init.hpp"
 #include "pdlib_w3xypug.hpp"
 #include "profs_amux.hpp"
 #include "profs_amuxd.hpp"
@@ -276,4 +277,5 @@ void ww_support_instantiate() {
   (void)&ww::pdlib::block_solver_init<E>;
   (void)&ww::pdlib::deallocate_pdlib_global<E::memory_space>;
   (void)&ww::pdlib::jacobi_init<E>;
+  (void)&ww::pdlib::pdlib_iobp_init<E>;
 }

@@ -397,6 +397,11 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | ASPAR_JAC / B_JAC / CAD_THE / CAS_SIG / CWNB_SIG_M2 / U_JAC / ASPAR_DIAG_ALL | the `REAL, ALLOCATABLE` work arrays of the PDLIB Jacobi solver `(v)` `w3profsmd_pdlib.F90:114-117` | Allocated by `JACOBI_INIT`; `ASPAR_DIAG_ALL` only when `IMEM = 2`. | [kokkos/port_report/JACOBI_INIT_KOKKOS.md](../kokkos/port_report/JACOBI_INIT_KOKKOS.md) |
 | FreqShiftMethod / IMEM | `INTEGER :: FreqShiftMethod = 2` and `INTEGER, PARAMETER :: IMEM = 1` `(v)` `w3profsmd_pdlib.F90:125`, `w3parall.F90:90` | Select which Jacobi arrays `JACOBI_INIT` allocates; with `IMEM = 1` gfortran removes the `ASPAR_DIAG_ALL` branch. | [kokkos/port_report/JACOBI_INIT_KOKKOS.md](../kokkos/port_report/JACOBI_INIT_KOKKOS.md) |
 | PDLIB_NNZ / B_JGS_BLOCK_GAUSS_SEIDEL | the PDLIB matrix's non-zero count, and the block Gauss-Seidel choice of the solver (namelist `JGS_BLOCK_GAUSS_SEIDEL`) `(v)` `PDLIB/yownodepool.F90:90`, `w3gdatmd.F90:1057` | Extents and conditions of `JACOBI_INIT`'s allocations. | [kokkos/port_report/JACOBI_INIT_KOKKOS.md](../kokkos/port_report/JACOBI_INIT_KOKKOS.md) |
+| PDLIB_IOBP_INIT | builds each process's boundary flags from the global ones `(v)` `w3profsmd_pdlib.F90:514-624`; its header's "Init mapsta part for pdlib" is copied from `PDLIB_MAPSTA_INIT` and does not describe it | Called by `W3INIT` (`w3initmd.F90:923`); the port returns `PDLIB_ABORT`'s istat (7, 8, 9) or gfortran's exit 2. | [kokkos/port_report/PDLIB_IOBP_INIT_KOKKOS.md](../kokkos/port_report/PDLIB_IOBP_INIT_KOKKOS.md) |
+| IOBP / IOBPD / IOBPA (and their `_LOC` copies) | `INTEGER*2` boundary-node type and the `INTEGER*1` per-direction and active-boundary flags, global and per local PDLIB node `(v)` `w3gdatmd.F90:774-775`, `:759-762` | The unstructured-grid boundary flags `PDLIB_IOBP_INIT` copies to the local nodes. | [kokkos/port_report/PDLIB_IOBP_INIT_KOKKOS.md](../kokkos/port_report/PDLIB_IOBP_INIT_KOKKOS.md) |
+| IOBDP_LOC | `INTEGER*1` wet/dry depth flag per local PDLIB node `(v)` `w3gdatmd.F90:761` | The per-process copy of `IOBDP`. | [kokkos/port_report/PDLIB_IOBP_INIT_KOKKOS.md](../kokkos/port_report/PDLIB_IOBP_INIT_KOKKOS.md) |
+| npa / iplg | the number of local plus ghost nodes of a process and the local-to-global node map `(v)` `PDLIB/yownodepool.F90:99`, `:116` | PDLIB's decomposition, read by every per-process loop. | [kokkos/port_report/PDLIB_IOBP_INIT_KOKKOS.md](../kokkos/port_report/PDLIB_IOBP_INIT_KOKKOS.md) |
+| SET_IOBPA_PDLIB | sets `IOBPA_LOC` at active boundary nodes `(v)` `w3profsmd_pdlib.F90:6978-7061`; its header's "Set depth pointer" is copied from `SET_IOBDP_PDLIB` | Called at the end of `PDLIB_IOBP_INIT` and again by `W3INIT` (`w3initmd.F90:924`); a hook of the port. | [kokkos/port_report/PDLIB_IOBP_INIT_KOKKOS.md](../kokkos/port_report/PDLIB_IOBP_INIT_KOKKOS.md) |
 
 ## HPC and software
 
@@ -994,6 +999,8 @@ Every term above, alphabetically, with the section it lives in.
 - INSNL4: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - INSNLGQM: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - IOBDP: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- IOBDP_LOC: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- IOBP / IOBPD / IOBPA (and their `_LOC` copies): [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - IRANGE / RRANGE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - IRANGE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - IS2DISP: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1051,11 +1058,13 @@ Every term above, alphabetically, with the section it lives in.
 - NNIDX: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - NOGRP / NGRPP / NOEXTR: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - NOVAL: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- npa / iplg: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - NR_CORR: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - NRLv: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - optionCall: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - PDLIB_ABORT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - PDLIB_FIELD_VEC / DO_OUTPUT_EXCHANGES / GET_ARRAY_SIZE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- PDLIB_IOBP_INIT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - PDLIB_NNZ / B_JGS_BLOCK_GAUSS_SEIDEL: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - PGMRES: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - `__powisf2`: [This repository's own names](#this-repositorys-own-names)
@@ -1069,6 +1078,7 @@ Every term above, alphabetically, with the section it lives in.
 - RUNRC: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - SECONDHH / VMIN_D / VPLUS_D: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - SECONDHH: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- SET_IOBPA_PDLIB: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - SETDEPTH / IOBDP: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - SETDEPTH: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - SETVUF_FAST: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
