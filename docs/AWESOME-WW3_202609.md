@@ -236,8 +236,8 @@ the GitHub mirrors; they're stale snapshots.
     It's a thin, honest layer. That's exactly what makes it good for learning: you can
     always print the namelist it generated and read it.
   - [PyPI](https://pypi.org/project/pyww3/) `(v)` · [docs](https://pyww3.readthedocs.io/) `(v)`
-    · [announcement thread](https://github.com/NOAA-EMC/WW3/discussions/470) `(v)` (includes a
-    Colab notebook with a fuller example)
+    · an announcement in NOAA-EMC/WW3's GitHub Discussions `(v)` (includes a Colab notebook
+    with a fuller example)
   - Deliberately does **not** support ASCII-input programs like `ww3_outf`. `(v)`
 - **[NOAA-EMC/WW3-tools](https://github.com/NOAA-EMC/WW3-tools)** `(v)`: official post-
   processing and validation toolkit. Satellite altimeter collocation, NDBC buoy matching,

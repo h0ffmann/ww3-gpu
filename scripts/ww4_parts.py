@@ -13,7 +13,7 @@ ported yet, and the table says which. The parts come from the WW3 switch the cas
     by `full` only: `smoke` is one point (regtest ww3_ts1), where nothing propagates;
   - the time loop is src/ww4_core/w4core_wave.cpp.
 A file counts as ported when it has more than STUB_LOC lines of code, the threshold of
-scripts/ww4_status.py: the placeholders of NOAA-EMC/WW4 PR #72 have 7 (source terms) and 29
+scripts/ww4_status.py: the placeholders of WW4's factory branch (at afc40c2) have 7 (source terms) and 29
 (solvers). It is a heuristic; the table prints the counts so a reader can judge.
 """
 import argparse

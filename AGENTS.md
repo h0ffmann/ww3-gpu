@@ -18,6 +18,11 @@ looser.
 - **WW3 is read-only**: never vendor WW3 source or edit the Fortran physics; the `WW3/` and `WW3-noaa/` submodules
   and `$WW3` are references, and the only Fortran this repo adds is a shim behind a switch
   ([WW3 source](#ww3-source-is-read-only-hard-rule)).
+- **No citation of a third party's issues**: an issue, pull request or discussion of a repository
+  this project does not own (NOAA-EMC/WW3, NOAA-EMC/WW4, Kokkos, any other) is never cited,
+  linked or named by its number in a file, commit, issue or pull request of this repository; a
+  fact learned there is cited by what it describes, the code at a commit, a release or a published
+  source ([Third-party issues](#third-party-issues-and-pull-requests-hard-rule)).
 - **Translate, don't improve**: a ported routine reproduces the Fortran's arithmetic; a change of
   reduction order, limiter or integration order is a separate PR with its own L2 evidence, asked
   about first, and a tolerance is never widened to pass ([Porting](#porting-hard-rule)).
@@ -174,6 +179,31 @@ exceptions are a `bind(C)` shim module and the caller patch described in
 original routine selectable. Every statement about WW3 cites `model/src/<file>.F90:<line>` at the
 pinned commit (`WW3@6d1bcdfe` at the time of writing), never a comment, a paper or memory.
 Namelists are written against the templates in `$WW3/model/nml/` and are `⚠` until executed.
+
+## Third-party issues and pull requests (hard rule)
+
+The owner, 15 October 2026: no third-party repository's issue is cited here, WW3's or WW4's
+included.
+
+- **What it covers.** An issue, pull request or discussion of a repository that is not
+  `h0ffmann/*` or `marola-dev/*` (NOAA-EMC/WW3, NOAA-EMC/WW4, kokkos/kokkos, any other). It is
+  not written as `owner/repo#N`, as its URL, or as "WW4 PR #72", "issue #1583" in any file of this
+  repository (code comments, docs, lessons, the proposal, data a person reads), in a commit
+  message, or in an issue, comment or pull request of this repository.
+- **Why it is outward-facing.** GitHub links `owner/repo#N` and the URL of an issue or pull
+  request, and "by default, references generate a backlink" on the item referenced, which its
+  maintainers see (v, GitHub Docs, "Autolinked references and URLs", read 2026-10-15). Whether a
+  backlink survives an edit of the text that made it is not stated there ⚠.
+- **What to write instead.** What the item contains, at a fixed point: the code at a commit
+  (`model/src/<file>.F90:<line>` at the pin, or a short SHA of the upstream branch), the date it
+  was merged or opened, a release tag, a paper by DOI. "A GPU DIA kernel proposed upstream" is
+  enough to say it exists; the evidence is the code, not the thread.
+- **What is allowed.** Reading upstream issues and pull requests to learn (the `ww4-status` skill
+  does), and a tool's machine state that tracks upstream heads (`docs/ww4-status.json`
+  `pr_heads`), which no person reads as a reference. The repositories themselves, their commits,
+  tags and files may be cited.
+- A first-party issue or pull request (`h0ffmann/ww3-gpu#N`, `marola-dev/marola#N`) is cited as
+  before.
 
 ## Porting (hard rule)
 

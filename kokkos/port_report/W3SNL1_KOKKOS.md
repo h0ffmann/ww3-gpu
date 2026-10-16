@@ -47,7 +47,7 @@ What they say, read with care:
   kernel saves. No speed claim is made for WW3 with the Kokkos DIA until phase 2.
 - No step is a GPU run inside WW3: that run is the owner's, supervised (AGENTS.md hard rule).
 
-A GPU DIA kernel proposed upstream, [NOAA-EMC/WW3#1583](https://github.com/NOAA-EMC/WW3/issues/1583),
+A GPU DIA kernel proposed upstream, `consigcody94/ww3-dia-gpu@38919d2`,
 models part of section 3 on synthetic tables; what it computes and measures against this port is
 in [`../../docs/W3SNL1_GPU_COMPARISON_202610.md`](../../docs/W3SNL1_GPU_COMPARISON_202610.md).
 

@@ -126,7 +126,7 @@ code snippet in a lesson refers to a file that exists in the repo.
 | 11 | Kokkos and modern C++ for Fortran people | New: Views, layouts, execution/memory spaces, `parallel_for/reduce`, `TeamPolicy` scratch, RAII/`const`, `bind(C)` interop; `kokkos/intro/`. |
 | 12 | Porting a kernel: `W3SNL1` | New: the §4 walk-through, fixtures, L1/L2, `PORT_STATUS.md`, timing table, what "done" means. |
 | 13 | Bulk porting with agents | New: FESOM2 two-stage recipe and validation ladder, `docs/AGENTS_KOKKOS` phases, residency ladder, operation decision (gain + parity), what goes in a port PR. Mirrors the proposal's mind maps 2, 3, 5, 6. |
-| 14 | WW4 and the future | Updated with the 2026-09-15 status (36 commits, no release, L1/L2 GoogleTest, L3/L4 absent, CMake-only PR, CPU–GPU issue #43) and the "January 2027 expected" note with its caveat. |
+| 14 | WW4 and the future | Updated with the 2026-09-15 status (36 commits, no release, L1/L2 GoogleTest, L3/L4 absent, CMake-only build change, the "CPU - GPU architecture" issue) and the "January 2027 expected" note with its caveat. |
 | 15 | SWAN | Keep (renumbered). |
 
 `course/README.md` table rewritten. The book (`just book`) must build with pandoc

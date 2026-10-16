@@ -11,7 +11,7 @@ What git cannot see (issue state, PR open/merged state, review comments, the wik
 is left to the /ww4-status skill, which reads those pages by hand.
 
 A source term or solver counts as "implemented" when its .cpp has more than STUB_LOC code lines
-(non-blank, non-comment); the PR #72 placeholders are 7 (source terms) and 29 (solvers, with a
+(non-blank, non-comment); the factory-branch placeholders (afc40c2) are 7 (source terms) and 29 (solvers, with a
 "Mock propagation" loop). That threshold is a heuristic: the report prints the line counts so a
 reader can judge. Standard library only.
 """
