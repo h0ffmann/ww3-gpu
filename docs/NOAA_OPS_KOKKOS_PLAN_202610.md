@@ -1,6 +1,6 @@
 # NOAA's operational switches on Kokkos: the next translation batch (phase 1)
 
-Status: **claimed, not started**, 2026-10-16. Issue [#42](https://github.com/h0ffmann/ww3-gpu/issues/42),
+Status: **in progress**, 2026-10-16; `kokkos/PORT_TABLE.tsv` has each routine's state. Issue [#42](https://github.com/h0ffmann/ww3-gpu/issues/42),
 the port planner. Translation only, bit for bit, no test run, under
 [ADR-0011](ADRs/ADR-0011-port-in-units-regtest-at-checkpoints.md); the port has no tests of its own
 ([ADR-0010](ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md)).
@@ -43,10 +43,11 @@ The PDLIB routines exchange data between MPI ranks: phase 1 translates the per-r
 and keeps every exchange and the Gauss-Seidel order as the Fortran has them. The profile may move
 rows in or out of this batch.
 
-## Batch B: Kimi Code (simple, self-contained)
+## Batch B: this branch too (simple, self-contained)
 
 Small routines that read their inputs, compute, and return, with a model already in
-`kokkos/src/ww_kokkos/` to copy the style from. None is in Batch A.
+`kokkos/src/ww_kokkos/` to copy the style from. None is in Batch A. First split off for Kimi Code;
+the owner moved it to this branch on 2026-10-16, before any work on it had started.
 
 | Routine | Lines | Size | Switch | Model to follow |
 |---|---|---|---|---|

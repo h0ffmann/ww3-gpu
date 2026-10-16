@@ -10,11 +10,11 @@ pdlib_w3profsmd:pdlib_w3xypfsfct2	model/src/w3profsmd_pdlib.F90:1504-1877	goal/4
 pdlib_w3profsmd:apply_boundary_condition	model/src/w3profsmd_pdlib.F90:5150-5336	goal/42-port-noaa-ops (Claude Code, batch A)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
 pdlib_w3profsmd:pdlib_jacobi_gauss_seidel_block	model/src/w3profsmd_pdlib.F90:5463-6406	goal/42-port-noaa-ops (Claude Code, batch A)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
 pdlib_w3profsmd:pdlib_explicit_block	model/src/w3profsmd_pdlib.F90:6408-6685	goal/42-port-noaa-ops (Claude Code, batch A)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
-w3dispmd:wavnu3	model/src/w3dispmd.F90:348-454	Kimi Code, batch B	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
-w3dispmd:wavnu_local	model/src/w3dispmd.F90:456-547	Kimi Code, batch B	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
-w3sbt4md:tabu_erf	model/src/w3sbt4md.F90:242-312	Kimi Code, batch B	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
-w3sbt4md:insbt4	model/src/w3sbt4md.F90:145-231	Kimi Code, batch B	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
-w3sbt4md:w3sbt4	model/src/w3sbt4md.F90:340-636	Kimi Code, batch B	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
-w3sis1md:w3sis1	model/src/w3sis1md.F90:74-227	Kimi Code, batch B	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
-w3sic1md:w3sic1	model/src/w3sic1md.F90:93-369	Kimi Code, batch B	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
-w3str1md:w3str1	model/src/w3str1md.F90:183-543	Kimi Code, batch B	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
+w3dispmd:wavnu3	model/src/w3dispmd.F90:348-454	goal/42-port-noaa-ops (Claude Code, batch B; reassigned from Kimi Code 2026-10-16)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
+w3dispmd:wavnu_local	model/src/w3dispmd.F90:456-547	goal/42-port-noaa-ops (Claude Code, batch B; reassigned from Kimi Code 2026-10-16)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
+w3sbt4md:tabu_erf	model/src/w3sbt4md.F90:242-312	goal/42-port-noaa-ops (Claude Code, batch B; reassigned from Kimi Code 2026-10-16)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
+w3sbt4md:insbt4	model/src/w3sbt4md.F90:145-231	goal/42-port-noaa-ops (Claude Code, batch B; reassigned from Kimi Code 2026-10-16)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
+w3sbt4md:w3sbt4	model/src/w3sbt4md.F90:340-636	goal/42-port-noaa-ops (Claude Code, batch B; reassigned from Kimi Code 2026-10-16)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
+w3sis1md:w3sis1	model/src/w3sis1md.F90:74-227	goal/42-port-noaa-ops (Claude Code, batch B; reassigned from Kimi Code 2026-10-16)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
+w3sic1md:w3sic1	model/src/w3sic1md.F90:93-369	goal/42-port-noaa-ops (Claude Code, batch B; reassigned from Kimi Code 2026-10-16)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
+w3str1md:w3str1	model/src/w3str1md.F90:183-543	goal/42-port-noaa-ops (Claude Code, batch B; reassigned from Kimi Code 2026-10-16)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
