@@ -4,10 +4,10 @@
 # work_K_<n>; then WW3's test.comp on the pair and nccmp-tol on every ww3.*.nc both wrote. Writes
 # <build>/rows/<n>.tsv (the columns of summary.tsv) and fails per ww3gpu_row_verdict. -DDRY_RUN=ON
 # prints the commands and runs none. WW3GPU_OMP_NESTED=ON exports OMP_MAX_ACTIVE_LEVELS=2 for both
-# runs (regtests/CMakeLists.txt). The Kokkos run sets WW_KOKKOS_SNL1_COUNT=1 and
-# WW_KOKKOS_ST4_COUNT=1: every process prints the spectra each Kokkos routine computed to stderr at
-# exit; the row's kokkos_spectra is their sum for one routine, <R>:<sum>,... for several. A routine
-# counts only when the entry's switch builds it (NL1 for SNL1, ST4 for the others). When test.comp finds a file
+# runs (regtests/CMakeLists.txt). The Kokkos run sets WW_KOKKOS_<U>_COUNT=1 for every U of
+# WW3GPU_COUNT_FLAGS: every process prints the spectra (FLX: points) each Kokkos routine computed to
+# stderr at exit; the row's kokkos_spectra is their sum for one routine, <R>:<sum>,... for several. A
+# routine counts only when the entry's switch builds it (ww3gpu_routine_word). When test.comp finds a file
 # different, the Fortran run is repeated into work_G_<n>: a file that two Fortran runs of the same
 # executable already write differently is WW3's own run-to-run variation (ww3_self), and only a
 # file that differs Fortran/Kokkos and is identical Fortran/Fortran counts in test_comp.
@@ -80,7 +80,7 @@ if(DRY_RUN)
     endif()
     list(JOIN a " " a)
     set(fl "")
-    foreach(r SNL1 SDS4 SIN4 SPR4)
+    foreach(r IN LISTS WW3GPU_ALL_ROUTINES)
       if(s AND r IN_LIST WW3GPU_ROUTINES)
         string(APPEND fl "WW_KOKKOS_${r}=1 ")
       else()
@@ -122,20 +122,20 @@ file(WRITE "${rowf}" "${N}\t${TEST}\t${swname}\tno\tno\tno\tn/a\tn/a\t-\t0\t0\t-
 # run(<F|K|G>): one run of the entry; F and G with the Fortran, K with the Kokkos routines of
 # WW3GPU_ROUTINES.
 function(run k)
-  foreach(r SNL1 SDS4 SIN4 SPR4)
+  foreach(r IN LISTS WW3GPU_ALL_ROUTINES)
     if(k STREQUAL "K" AND r IN_LIST WW3GPU_ROUTINES)
       set(ENV{WW_KOKKOS_${r}} 1)
     else()
       set(ENV{WW_KOKKOS_${r}} 0)
     endif()
   endforeach()
-  if(k STREQUAL "K")
-    set(ENV{WW_KOKKOS_SNL1_COUNT} 1)
-    set(ENV{WW_KOKKOS_ST4_COUNT} 1)
-  else()
-    unset(ENV{WW_KOKKOS_SNL1_COUNT})
-    unset(ENV{WW_KOKKOS_ST4_COUNT})
-  endif()
+  foreach(u IN LISTS WW3GPU_COUNT_FLAGS)
+    if(k STREQUAL "K")
+      set(ENV{WW_KOKKOS_${u}_COUNT} 1)
+    else()
+      unset(ENV{WW_KOKKOS_${u}_COUNT})
+    endif()
+  endforeach()
   ww3gpu_entry_args(a ${N} ${k} "${TEST}" "${OPTS}" "${WW3GPU_WW3}" "${thr}" "${WW3GPU_MPI_RANKS}")
   execute_process(COMMAND "${WW3GPU_WW3}/regtests/bin/run_cmake_test" ${a}
                   WORKING_DIRECTORY "${WW3GPU_STAGE}"
@@ -191,14 +191,11 @@ else()
   set(ran no)
 endif()
 file(GLOB klogs "${wk}/log.*" "${wk}/ww3_shel.out" "${wk}/ww3_multi.out")
-# W3INIT's log line of each active routine (the fork's w3initmd.F90, under W3_NL1 and W3_ST4).
+# W3INIT's log line of each active routine (the fork's w3initmd.F90, ww3gpu_routine_log).
 set(klog yes)
 foreach(r IN LISTS active)
-  if(r STREQUAL "SNL1")
-    hit(k "Kokkos DIA \\(W3SNL1\\) enabled" ${klogs})
-  else()
-    hit(k "Kokkos ST4 \\(W3SDS4 W3SIN4 W3SPR4\\) enabled:.* ${r}=T" ${klogs})
-  endif()
+  ww3gpu_routine_log(re "${r}")
+  hit(k "${re}" ${klogs})
   if(NOT k)
     set(klog no)
   endif()
@@ -207,7 +204,7 @@ set(spectra "")
 foreach(r IN LISTS active)
   set(c 0)
   if(EXISTS "${log}.K.log")
-    file(STRINGS "${log}.K.log" cl REGEX "^ww_kokkos: W3${r} spectra computed: [0-9]+$")
+    file(STRINGS "${log}.K.log" cl REGEX "^ww_kokkos: W3${r} (spectra|points) computed: [0-9]+$")
     foreach(l IN LISTS cl)
       string(REGEX REPLACE ".*: " "" v "${l}")
       math(EXPR c "${c} + ${v}")

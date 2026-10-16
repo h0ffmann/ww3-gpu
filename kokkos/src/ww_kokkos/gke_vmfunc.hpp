@@ -19,7 +19,9 @@ namespace vmfunc_detail {
 inline constexpr Real kQrGrav = static_cast<Real>(9.806);
 /// sqrt(1.0/32.0), :347, folded by gfortran to 0x3e3504f3.
 inline constexpr Real kSqrt1o32 = 0x1.6a09e6p-3f;
+#if defined(__GNUC__) && !defined(__clang__) && !defined(__CUDACC__)
 static_assert(kSqrt1o32 == static_cast<Real>(__builtin_sqrtf(1.0f / 32.0f)));
+#endif
 }  // namespace vmfunc_detail
 
 /// VmFunc(k0x, k0y, k1x, k1y, k2x, k2y), :319-354. qr_depth is the module variable qr_depth

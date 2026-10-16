@@ -120,7 +120,7 @@ inline Real minlam(Real mu, Real theta) {
   return ::sqrtf(aux);
 }
 
-/// MAXLAM (:1593-1645).
+/// MAXLAM (:1593-1645); mu, theta in degrees. Evidence: kokkos/port_report/MAXLAM_KOKKOS.md.
 inline Real maxlam(Real mu, Real theta) {
   if (theta < static_cast<Real>(0.)) return static_cast<Real>(0.5);
   const Real muloc = maxss(minss(mu, static_cast<Real>(1.)), static_cast<Real>(0.));

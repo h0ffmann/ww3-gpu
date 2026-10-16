@@ -12,7 +12,7 @@ Profile: full (bench_small, 120 x 80, 9 520 sea points, 12 h), Release -pg, swit
 what the compiler inlined into it are in the caller's row; the shares are this case's and this
 switch's, not every model's.
 
-The profile names 87 routines, 25 of them ported, so this table has 62 rows, not 100. Rows 5 to 62 took less than one gprof sample (10 ms): their order is gprof's, not a cost order, and a longer case or `perf` is needed to rank them. A routine this case never calls (another switch, another grid) is not in the profile and not here.
+The profile names 87 routines, 29 of them ported, so this table has 58 rows, not 100. Rows 5 to 58 took less than one gprof sample (10 ms): their order is gprof's, not a cost order, and a longer case or `perf` is needed to rank them. A routine this case never calls (another switch, another grid) is not in the profile and not here.
 
 | # | routine | WW3 file | self s | self % | cumulative % |
 |---|---|---|---|---|---|
@@ -20,64 +20,60 @@ The profile names 87 routines, 25 of them ported, so this table has 62 rows, not
 | 2 | `w3wavemd:w3wave` | `model/src/w3wavemd.F90` | 0.03 | 0.02 | 100.0 |
 | 3 | `w3adatmd:w3dima` | `model/src/w3adatmd.F90` | 0.01 | 0.01 | 100.0 |
 | 4 | `w3gdatmd:w3dims` | `model/src/w3gdatmd.F90` | 0.01 | 0.01 | 100.0 |
-| 5 | `w3parall:init_get_isea` | `model/src/w3parall.F90` | < 0.01 | 0.00 | 100.0 |
-| 6 | `w3servmd:itrace` | `model/src/w3servmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 7 | `w3timemd:dsec21` | `model/src/w3timemd.F90` | < 0.01 | 0.00 | 100.0 |
-| 8 | `w3servmd:print_memcheck` | `model/src/w3servmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 9 | `w3gsrumd:w3fdwt_r8` | `model/src/w3gsrumd.F90` | < 0.01 | 0.00 | 100.0 |
-| 10 | `w3timemd:stme21` | `model/src/w3timemd.F90` | < 0.01 | 0.00 | 100.0 |
-| 11 | `w3servmd:wwtime` | `model/src/w3servmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 12 | `w3timemd:tick21` | `model/src/w3timemd.F90` | < 0.01 | 0.00 | 100.0 |
-| 13 | `w3gdatmd:w3setg` | `model/src/w3gdatmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 14 | `w3adatmd:w3seta` | `model/src/w3adatmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 15 | `w3odatmd:w3seto` | `model/src/w3odatmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 16 | `w3gsrumd:get_fdw3.constprop.0` | `model/src/w3gsrumd.F90` | < 0.01 | 0.00 | 100.0 |
-| 17 | `w3gsrumd:w3nnsc` | `model/src/w3gsrumd.F90` | < 0.01 | 0.00 | 100.0 |
-| 18 | `w3wdatmd:w3setw` | `model/src/w3wdatmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 19 | `w3idatmd:w3seti` | `model/src/w3idatmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 20 | `w3gdatmd:w3gntx` | `model/src/w3gdatmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 21 | `w3gsrumd:gsu_create` | `model/src/w3gsrumd.F90` | < 0.01 | 0.00 | 100.0 |
-| 22 | `w3gsrumd:w3cgdm_r4` | `model/src/w3gsrumd.F90` | < 0.01 | 0.00 | 100.0 |
-| 23 | `w3gsrumd:w3gsuc_ptr_r8` | `model/src/w3gsrumd.F90` | < 0.01 | 0.00 | 100.0 |
-| 24 | `w3iogrmd:w3iogr` | `model/src/w3iogrmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 25 | `w3parall:set_up_nseal_nsealm` | `model/src/w3parall.F90` | < 0.01 | 0.00 | 100.0 |
-| 26 | `w3timemd:d2j` | `model/src/w3timemd.F90` | < 0.01 | 0.00 | 100.0 |
-| 27 | `w3timemd:t2d` | `model/src/w3timemd.F90` | < 0.01 | 0.00 | 100.0 |
-| 28 | `w3timemd:tdiff` | `model/src/w3timemd.F90` | < 0.01 | 0.00 | 100.0 |
-| 29 | `main` | `—` | < 0.01 | 0.00 | 100.0 |
-| 30 | `w3adatmd:w3dmnl` | `model/src/w3adatmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 31 | `w3adatmd:w3naux` | `model/src/w3adatmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 32 | `w3fldsmd:w3fldh` | `model/src/w3fldsmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 33 | `w3gdatmd:w3dimx` | `model/src/w3gdatmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 34 | `w3gdatmd:w3nmod` | `model/src/w3gdatmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 35 | `w3idatmd:w3dimi` | `model/src/w3idatmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 36 | `w3idatmd:w3ninp` | `model/src/w3idatmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 37 | `w3initmd:w3init` | `model/src/w3initmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 38 | `w3iogomd:w3fldtoij` | `model/src/w3iogomd.F90` | < 0.01 | 0.00 | 100.0 |
-| 39 | `w3iogomd:w3flgrdflag` | `model/src/w3iogomd.F90` | < 0.01 | 0.00 | 100.0 |
-| 40 | `w3iogomd:w3flgrdupdt` | `model/src/w3iogomd.F90` | < 0.01 | 0.00 | 100.0 |
-| 41 | `w3iorsmd:w3iors` | `model/src/w3iorsmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 42 | `w3nmlshelmd:read_domain_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 43 | `w3nmlshelmd:read_homogeneous_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 44 | `w3nmlshelmd:read_input_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 45 | `w3nmlshelmd:read_output_date_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 46 | `w3nmlshelmd:read_output_path_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 47 | `w3nmlshelmd:read_output_type_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 48 | `w3nmlshelmd:report_domain_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 49 | `w3nmlshelmd:report_homogeneous_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 50 | `w3nmlshelmd:report_input_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 51 | `w3nmlshelmd:report_output_date_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 52 | `w3nmlshelmd:report_output_path_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 53 | `w3nmlshelmd:report_output_type_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 54 | `w3nmlshelmd:w3nmlshel` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 55 | `w3odatmd:w3dmo5` | `model/src/w3odatmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 56 | `w3odatmd:w3nout` | `model/src/w3odatmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 57 | `w3servmd:str_to_upper` | `model/src/w3servmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 58 | `w3servmd:strsplit` | `model/src/w3servmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 59 | `w3servmd:wwdate` | `model/src/w3servmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 60 | `w3wdatmd:w3dimw` | `model/src/w3wdatmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 61 | `w3wdatmd:w3ndat` | `model/src/w3wdatmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 62 | `finalise.0.constprop.0` | `—` | < 0.01 | 0.00 | 100.0 |
+| 5 | `w3servmd:itrace` | `model/src/w3servmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 6 | `w3timemd:dsec21` | `model/src/w3timemd.F90` | < 0.01 | 0.00 | 100.0 |
+| 7 | `w3servmd:print_memcheck` | `model/src/w3servmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 8 | `w3gsrumd:w3fdwt_r8` | `model/src/w3gsrumd.F90` | < 0.01 | 0.00 | 100.0 |
+| 9 | `w3timemd:stme21` | `model/src/w3timemd.F90` | < 0.01 | 0.00 | 100.0 |
+| 10 | `w3servmd:wwtime` | `model/src/w3servmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 11 | `w3timemd:tick21` | `model/src/w3timemd.F90` | < 0.01 | 0.00 | 100.0 |
+| 12 | `w3gdatmd:w3setg` | `model/src/w3gdatmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 13 | `w3adatmd:w3seta` | `model/src/w3adatmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 14 | `w3odatmd:w3seto` | `model/src/w3odatmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 15 | `w3gsrumd:get_fdw3.constprop.0` | `model/src/w3gsrumd.F90` | < 0.01 | 0.00 | 100.0 |
+| 16 | `w3gsrumd:w3nnsc` | `model/src/w3gsrumd.F90` | < 0.01 | 0.00 | 100.0 |
+| 17 | `w3wdatmd:w3setw` | `model/src/w3wdatmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 18 | `w3idatmd:w3seti` | `model/src/w3idatmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 19 | `w3gdatmd:w3gntx` | `model/src/w3gdatmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 20 | `w3gsrumd:gsu_create` | `model/src/w3gsrumd.F90` | < 0.01 | 0.00 | 100.0 |
+| 21 | `w3gsrumd:w3cgdm_r4` | `model/src/w3gsrumd.F90` | < 0.01 | 0.00 | 100.0 |
+| 22 | `w3gsrumd:w3gsuc_ptr_r8` | `model/src/w3gsrumd.F90` | < 0.01 | 0.00 | 100.0 |
+| 23 | `w3iogrmd:w3iogr` | `model/src/w3iogrmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 24 | `w3timemd:d2j` | `model/src/w3timemd.F90` | < 0.01 | 0.00 | 100.0 |
+| 25 | `w3timemd:t2d` | `model/src/w3timemd.F90` | < 0.01 | 0.00 | 100.0 |
+| 26 | `w3timemd:tdiff` | `model/src/w3timemd.F90` | < 0.01 | 0.00 | 100.0 |
+| 27 | `main` | `—` | < 0.01 | 0.00 | 100.0 |
+| 28 | `w3adatmd:w3dmnl` | `model/src/w3adatmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 29 | `w3adatmd:w3naux` | `model/src/w3adatmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 30 | `w3fldsmd:w3fldh` | `model/src/w3fldsmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 31 | `w3gdatmd:w3dimx` | `model/src/w3gdatmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 32 | `w3gdatmd:w3nmod` | `model/src/w3gdatmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 33 | `w3idatmd:w3dimi` | `model/src/w3idatmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 34 | `w3idatmd:w3ninp` | `model/src/w3idatmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 35 | `w3initmd:w3init` | `model/src/w3initmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 36 | `w3iogomd:w3fldtoij` | `model/src/w3iogomd.F90` | < 0.01 | 0.00 | 100.0 |
+| 37 | `w3iorsmd:w3iors` | `model/src/w3iorsmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 38 | `w3nmlshelmd:read_domain_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 39 | `w3nmlshelmd:read_homogeneous_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 40 | `w3nmlshelmd:read_input_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 41 | `w3nmlshelmd:read_output_date_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 42 | `w3nmlshelmd:read_output_path_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 43 | `w3nmlshelmd:read_output_type_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 44 | `w3nmlshelmd:report_domain_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 45 | `w3nmlshelmd:report_homogeneous_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 46 | `w3nmlshelmd:report_input_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 47 | `w3nmlshelmd:report_output_date_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 48 | `w3nmlshelmd:report_output_path_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 49 | `w3nmlshelmd:report_output_type_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 50 | `w3nmlshelmd:w3nmlshel` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 51 | `w3odatmd:w3dmo5` | `model/src/w3odatmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 52 | `w3odatmd:w3nout` | `model/src/w3odatmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 53 | `w3servmd:str_to_upper` | `model/src/w3servmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 54 | `w3servmd:strsplit` | `model/src/w3servmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 55 | `w3servmd:wwdate` | `model/src/w3servmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 56 | `w3wdatmd:w3dimw` | `model/src/w3wdatmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 57 | `w3wdatmd:w3ndat` | `model/src/w3wdatmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 58 | `finalise.0.constprop.0` | `—` | < 0.01 | 0.00 | 100.0 |
 
 The cumulative column starts from the ported routines' share, so it reads as the share of the run
 that would be in Kokkos once every row down to it is ported.
@@ -275,3 +271,82 @@ The record is the `regtested` column of `kokkos/ports.tsv`.
 | `w3uostmd:uost_sourceterm_compute` | ported | `uost_uost_sourceterm_compute.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
 | `w3uostmd:uost_sourceterm_setgrid` | ported | `uost_uost_sourceterm_setgrid.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
 | `w3uostmd:uost_srctrmcompute` | ported | `uost_uost_srctrmcompute.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3wavset:fd_wave_setup_apply_fct` | ported | `wavset_fd_wave_setup_apply_fct.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3partmd:fifo_add` | ported | `part_fld.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3partmd:fifo_first` | ported | `part_fld.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3partmd:fifo_empty` | ported | `part_fld.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3wavset:differentiate_xydir` | ported | `wavset_differentiate_xydir.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3wavset:fd_wave_setup_scalar_prod` | ported | `wavset_fd_wave_setup_scalar_prod.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3wavset:trig_compute_diff` | ported | `wavset_trig_compute_diff.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3snl3md:minlam` | ported | `snl3_tables.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3wavset:compute_active_node` | ported | `wavset_compute_active_node.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3tidemd:juldayt` | ported | `tide_juldayt.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3tidemd:vuf` | ported | `tide_vuf.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3wavset:trig_wave_setup_apply_fct` | ported | `wavset_trig_wave_setup_apply_fct.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3snl3md:maxlam` | ported | `snl3_tables.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3snl3md:expnd2` | ported | `snl3_gmd.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3tidemd:tide_find_indices_prediction` | ported | `tide_tide_find_indices_prediction.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3wavset:fd_compute_diff` | ported | `wavset_fd_compute_diff.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3sis2md:w3fsd_dave` | ported | `is2_w3fsd_dave.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3wavset:fd_set_meanvalue_to_zero` | ported | `wavset_fd_set_meanvalue_to_zero.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3parall:init_get_jsea_isproc` | ported | `parall_init_get_jsea_isproc.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3snl3md:expand` | ported | `snl3_gmd.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3wavset:fd_wave_setup_apply_precond` | ported | `wavset_fd_wave_setup_apply_precond.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3gkemd:coocsrind` | ported | `gke_coocsrind.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3updtmd:w3uic1` | ported | `updt_w3uic1.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3wavset:fd_wave_setup_compute_system` | ported | `wavset_fd_wave_setup_compute_system.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3parall:init_get_isea` | ported | `parall_init_get_isea.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3wavset:differentiate_xydir_native` | ported | `wavset_differentiate_xydir_native.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3snl5md:insnl5` | ported | `snl5_insnl5.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3uostmd:uost_sourceterm_compute_ld` | ported | `uost_uost_sourceterm_compute_ld.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3parall:set_up_nseal_nsealm` | ported | `parall_set_up_nseal_nsealm.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3psmcmd:smcxuno2` | ported | `psmc_smcxuno2.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3wavset:fd_wave_setup_solve_poisson_neumann_dir` | ported | `wavset_fd_wave_setup_solve_poisson_neumann_dir.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3psmcmd:smcyuno3r` | ported | `psmc_smcyuno3r.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3wavset:trig_wave_setup_apply_precond` | ported | `wavset_trig_wave_setup_apply_precond.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3psmcmd:smcdcxy` | ported | `psmc_smcdcxy.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3psmcmd:smcyuno2` | ported | `psmc_smcyuno2.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3sic3md:ic3precalc_cheng` | ported | `ic3_ic3precalc_cheng.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3psmcmd:smcxuno3r` | ported | `psmc_smcxuno3r.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3updtmd:w3uic5` | ported | `updt_w3uic5.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3uostmd:uost_sourceterm_compute_se` | ported | `uost_uost_sourceterm_compute_se.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3parall:get_jsea_ibelong` | ported | `parall_get_jsea_ibelong.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3srcemd:calc_fpi` | ported | `srce_calc_fpi.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3sic3md:wn_cmplx_hf` | ported | `ic3_wn_cmplx_hf.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3psmcmd:w3smcell` | ported | `psmc_w3smcell.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3sic3md:bsdet` | ported | `ic3_bsdet.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3gkemd:tfunc` | ported | `gke_tfunc.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3profsmd:mgsro` | ported | `profs_mgsro.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3psmcmd:w3smcgmp` | ported | `psmc_w3smcgmp.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3snl1md:couple` | ported | `snl1_couple.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3fld1md:wnd2z0m` | ported | `fld1_wnd2z0m.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3wavset:differentiate_xydir_mapsta` | ported | `wavset_differentiate_xydir_mapsta.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3sbt9md:ng` | ported | `bt9_ng.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3sic3md:drfun_quad_cheng` | ported | `ic3_drfun_quad_cheng.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3gkemd:prepkgrid` | ported | `gke_prepkgrid.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3wavset:trig_compute_lh_stress` | ported | `wavset_trig_compute_lh_stress.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3tidemd:svd` | ported | `tide_svd.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3psmcmd:smcdhxy` | ported | `psmc_smcdhxy.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3psmcmd:smcxuno3` | ported | `psmc_smcxuno3.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3tidemd:setvuf_fast` | ported | `tide_setvuf_fast.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3iogomd:w3flgrdupdt` | ported | `iogo_w3flgrdupdt.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3gkemd:biinterpwt` | ported | `gke_biinterpwt.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3sic5md:w3ic5wncg` | ported | `ic5_w3ic5wncg.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3gkemd:findquartetconfig` | ported | `gke_findquartetconfig.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3wavset:fd_compute_lh_stress` | ported | `wavset_fd_compute_lh_stress.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3tidemd:setvuf` | ported | `tide_setvuf.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3tidemd:tide_find_indices_analysis` | ported | `tide_tide_find_indices_analysis.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3psmcmd:smcyuno3` | ported | `psmc_smcyuno3.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3parall:prop_refraction_pr1` | ported | `parall_prop_refraction_pr1.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3sic3md:func1_zhao` | ported | `ic3_func1_zhao.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3snl1md:f1f1f1` | ported | `snl1_f1f1f1.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3psmcmd:smcaverg` | ported | `psmc_smcaverg.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3sic5md:nr_corr` | ported | `ic5_nr_corr.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3snl5md:calc_wbtv2` | ported | `snl5_calc_wbtv2.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3sic5md:balancing_matrix` | ported | `ic5_balancing_matrix.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3wavset:preparation_fd_scheme` | ported | `wavset_preparation_fd_scheme.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3iogomd:w3flgrdflag` | ported | `iogo_w3flgrdflag.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3updtmd:w3urho` | ported | `updt_w3urho.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3sic3md:cmplx_root_muller_v1` | ported | `ic3_cmplx_root_muller_v1.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3sic5md:polyroots` | ported | `ic5_polyroots.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |
+| `w3pro3md:w3cflxy` | ported | `prop_cflxy.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its caller's hunk |

@@ -17,7 +17,14 @@ target_sources(ww_kokkos PRIVATE
     shim_state.hpp
     snl1_shim.cpp
     st4_shim.cpp
-    srce_shim.cpp)
+    srce_shim.cpp
+    st0_shim.cpp
+    st1_shim.cpp
+    st2_shim.cpp
+    st3_shim.cpp
+    st6_shim.cpp
+    flx_shim.cpp
+    swl_shim.cpp)
 
 set(WW_W3KOKKOSMD "${CMAKE_CURRENT_SOURCE_DIR}/../../../WW3/model/src/w3kokkosmd.F90"
     CACHE FILEPATH "WW3's w3kokkosmd.F90 (the WW3/ submodule, branch ww3-gpu/kokkos-st4)")

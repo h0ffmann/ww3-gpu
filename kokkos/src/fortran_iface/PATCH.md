@@ -9,6 +9,7 @@ Read with `git -C WW3 fetch origin && git -C WW3 branch -r` and `git rev-list --
 |---|---|---|---|
 | `ww3-gpu/kokkos-st4` | `c9a6a0c6` | **the pin** | the DIA (`W3SNL1`, `INSNL1`) and ST4 (`W3SDS4`, `W3SIN4`, `W3SPR4` and their tables) in `w3srcemd.F90` and `w3initmd.F90`, behind the `KOKKOS` switch |
 | `ww3-gpu/kokkos-srce` | `e062ff0b` | one commit ahead | `W3SRCE` itself (`WW_KOKKOS_SRCE`, with `LN1`, `BT1`, `DB1`): `w3wavemd.F90` +24, `w3initmd.F90` +23, `w3kokkosmd.F90` +212 lines |
+| `ww3-gpu/kokkos-st-flx-swl` | `8e433f99` | seven commits on `ww3-gpu/kokkos-srce`; local, not pushed on 2026-10-16 ⚠ | ST0, ST1, ST2, ST3, ST6 (`W3SPRn`, `W3SINn`, `W3SDSn`), `W3FLX1` to `W3FLX5` and `W3SWL6`, one commit per unit, compiled and not run ([section 6](#6-the-source-term-units-on-ww3-gpukokkos-st-flx-swl)) |
 | `hoff/kokkos-snl1` | `bb08623a` | two commits behind, contained in the pin | the DIA alone; superseded |
 | `develop` | `03adda91` | the fork's base | none; equal to NOAA-EMC/WW3 `develop` on 2026-10-16, so there is no upstream change to take |
 
@@ -439,3 +440,200 @@ That last pair is the point of the whole design: one executable, one switch,
 two answers that must agree within `kokkos/tools/nccmp-tol/tolerances.txt`.
 It is the L2 row of `kokkos/PORT_STATUS.md`, the port's only test since
 ADR-0010 (2026-10-14), and it is what this patch is for.
+
+## 6. The source-term units on `ww3-gpu/kokkos-st-flx-swl`
+
+Seven commits on `ww3-gpu/kokkos-srce` (`e062ff0b`), one per unit: ST0 `ec644d4f`, ST1
+`b1fdb745`, ST2 `bc55eaeb`, ST3 `888adace`, FLX `bee8c001`, SWL `050d79d4`, ST6 `8e433f99`.
+Each unit follows ST4: a `bind(C)` interface block and a `W3KOKKOS_<UNIT>_SETUP (IMOD)` in
+`w3kokkosmd.F90` under the unit's physics switch, a call to it in `W3INIT` after `W3IOGR`, and in
+`W3SRCE` every call of the routine becomes `IF (KOKKOS_X) THEN CALL W3KOKKOS_X (...) ELSE CALL
+W3X (...) END IF` under `W3_KOKKOS`, the original line in the `#else`. Each `W3KOKKOS_X` has
+the Fortran routine's dummy list, calls the C entry point with `NPTS = 1` inside
+`!$OMP CRITICAL (WW_KOKKOS_<UNIT>)`, and stops with `EXTCDE` on a shim failure. Every flag
+defaults to off, so the Fortran runs; without `KOKKOS`, `gfortran -E` of `w3srcemd.F90` and
+`w3initmd.F90` equals the parent's except for the `__FILE__` text and blank lines (v, the ST0,
+ST1, ST2, ST3, ST6+FLX4, ST6+FLX5 and `switch_lab_shrd` switches, 2026-10-16). Compiled, not run:
+no regtest has exercised any of them ⚠.
+
+| Unit | Switch | Flags (`=1` turns the routine on) | Count at exit | W3SRCE calls hooked |
+|---|---|---|---|---|
+| ST0 | `ST0` | `WW_KOKKOS_SPR0` | `WW_KOKKOS_ST0_COUNT` | `W3SPR0` x2 |
+| ST1 | `ST1` | `WW_KOKKOS_SPR1`, `SIN1`, `SDS1` | `WW_KOKKOS_ST1_COUNT` | `W3SPR1` x2, `W3SIN1`, `W3SDS1` |
+| ST2 | `ST2` | `WW_KOKKOS_SPR2`, `SIN2`, `SDS2` | `WW_KOKKOS_ST2_COUNT` | `W3SPR2` x2, `W3SIN2`, `W3SDS2` |
+| ST3 | `ST3` (`STAB3` read at set-up) | `WW_KOKKOS_SPR3`, `SIN3`, `SDS3` | `WW_KOKKOS_ST3_COUNT` | `W3SPR3` x4, `W3SIN3` x3, `W3SDS3` |
+| FLX | `FLX1` .. `FLX5` | `WW_KOKKOS_FLX1` .. `FLX5`; `WW_KOKKOS_FLX_TABLES` | `WW_KOKKOS_FLX_COUNT` | `W3FLX2`, `W3FLX3` x2; `W3FLX1`, `W3FLX4`, `W3FLX5` x1 |
+| SWL | `ST6` | `WW_KOKKOS_SWL6` | `WW_KOKKOS_SWL_COUNT` | `W3SWL6` |
+| ST6 | `ST6` | `WW_KOKKOS_SPR6`, `SIN6`, `SDS6` | `WW_KOKKOS_ST6_COUNT` | `W3SPR6` x2, `W3SIN6`, `W3SDS6` |
+
+Not hooked: the same routines called by `ww3_outp`, `ww3_ounp` and `gx_outp`, which never run
+`W3INIT`'s Kokkos set-up, and the `W3FLX5` call inside `W3SPR4` (ST4 with FLX5), which
+`w3src4md.F90` cannot reach without a module cycle (`W3KOKKOSMD` already uses `W3SRC4MD`).
+Module tables stay one per process as in WW3, built from the first grid: ST2's `BETATB` and ST3's
+`TAUT`/`TAUHFT` by the shim's first commit (W3IOGR's `SAVE` flag `FLINP`), `W3SWL6`'s and ST6's
+`IKN` and ST6's 10 Hz tables by the first call. ST6's `DSII10Hz` is also rewritten after every
+`ww_sin6` where `TAU_WAVE_ATMOS` rewrites it (`w3src6md.F90:1294-1297`), exact for `NPTS = 1`.
+
+The argument tables below give, per C entry point, the Fortran dummy, the `W3SRCE` actual, the C
+type, the intent and the shape per point. Every array is `REAL` (`float`), contiguous and based at
+1 in the dummy; `A` is `W3SRCE`'s `SPEC(NSPEC)`, the action density spectrum. The meanings are
+the routines' `@param` text at the pin; units are WW3's SI conventions and were not read from
+each header ⚠ (`W3SDS2` states rad/s for `FPI` and m/s for `USTAR`). `igrid` is `W3GDATMD`
+`IGRID` and `npts` is 1 in every call.
+
+### `ww_spr0`, `ww_spr1` (`W3SPR0`, `W3SPR1`)
+
+| C | Dummy ← actual | Type | Intent | Shape | Meaning |
+|---|---|---|---|---|---|
+| `a` | `A` ← `SPEC` | `const float*` | in | NSPEC | action density spectrum |
+| `cg` | `CG` ← `CG1` | `const float*` | in | NK | group velocity (m/s) |
+| `wn` | `WN` ← `WN1` | `const float*` | in | NK | wavenumber (rad/m) |
+| `emean` | `EMEAN` ← `EMEAN` | `float*` | out | 1 | mean wave energy |
+| `fmean` | `FMEAN` ← `FMEAN` | `float*` | out | 1 | mean frequency (Hz) |
+| `wnmean` | `WNMEAN` ← `WNMEAN` | `float*` | out | 1 | mean wavenumber (rad/m) |
+| `amax` | `AMAX` ← `AMAX` | `float*` | out | 1 | maximum action density |
+
+### `ww_sin1` (`W3SIN1`)
+
+| C | Dummy ← actual | Type | Intent | Shape | Meaning |
+|---|---|---|---|---|---|
+| `a` | `A` ← `SPEC` | `const float*` | in | NSPEC | action density spectrum |
+| `k` | `K` ← `WN2` | `const float*` | in | NSPEC | wavenumber for the whole spectrum |
+| `ustar` | `USTAR` ← `USTAR` | `const float*` | in | 1 | friction velocity (m/s) |
+| `usdir` | `USDIR` ← `U10DIR` | `const float*` | in | 1 | direction of `USTAR` (rad) |
+| `s`, `d` | `S` ← `VSIN`, `D` ← `VDIN` | `float*` | out | NSPEC | source term, its diagonal derivative |
+
+### `ww_sds1` (`W3SDS1`)
+
+| C | Dummy ← actual | Type | Intent | Shape | Meaning |
+|---|---|---|---|---|---|
+| `a` | `A` ← `SPEC` | `const float*` | in | NSPEC | action density spectrum |
+| `k` | `K` ← `WN2` | `const float*` | in | NSPEC | wavenumber for the whole spectrum |
+| `emean`, `fmean`, `wnmean` | same names | `const float*` | in | 1 each | mean energy, frequency, wavenumber |
+| `s`, `d` | `S` ← `VSDS`, `D` ← `VDDS` | `float*` | out | NSPEC | source term, its diagonal derivative |
+
+### `ww_spr2` (`W3SPR2`)
+
+| C | Dummy ← actual | Type | Intent | Shape | Meaning |
+|---|---|---|---|---|---|
+| `a`, `cg`, `wn` | `A`, `CG`, `WN` ← `SPEC`, `CG1`, `WN1` | `const float*` | in | NSPEC, NK, NK | as `ww_spr0` |
+| `depth` | `DEPTH` ← `DEPTH` | `const float*` | in | 1 | water depth (m) |
+| `fpi` | `FPI` ← `FPI` | `const float*` | in | 1 | peak input frequency (rad/s) |
+| `u` | `U` ← `U10ABS` | `const float*` | in | 1 | wind speed (m/s) |
+| `ustar` | `USTAR` ← `USTAR` | `const float*` | in | 1 | friction velocity (m/s) |
+| `emean`, `fmean`, `wnmean`, `amax` | same names | `float*` | out | 1 each | as `ww_spr0` |
+| `alfa` | `ALFA` ← `ALPHA` | `float*` | out | NK | Phillips' constant |
+| `fp` | `FP` ← `FP` | `float*` | out | 1 | peak frequency |
+
+### `ww_sin2` (`W3SIN2`)
+
+| C | Dummy ← actual | Type | Intent | Shape | Meaning |
+|---|---|---|---|---|---|
+| `a` | `A` ← `SPEC` | `const float*` | in | NSPEC | action density spectrum |
+| `cg` | `CG` ← `CG1` | `const float*` | in | NK | group velocity (m/s) |
+| `k` | `K` ← `WN2` | `const float*` | in | NSPEC | wavenumber for the whole spectrum |
+| `u`, `udir` | `U`, `UDIR` ← `U10ABS`, `U10DIR` | `const float*` | in | 1 each | wind speed (m/s) and direction (rad) |
+| `cd`, `z0` | `CD`, `Z0` ← `CD`, `Z0` | `const float*` | in | 1 each | drag coefficient at `ZWIND`, roughness length (m) |
+| `fpi` | `FPI` ← `FPI` | `float*` | out | 1 | input peak frequency (rad/s) |
+| `s`, `d` | `S` ← `VSIN`, `D` ← `VDIN` | `float*` | out | NSPEC | source term, its diagonal derivative |
+
+### `ww_sds2` (`W3SDS2`)
+
+| C | Dummy ← actual | Type | Intent | Shape | Meaning |
+|---|---|---|---|---|---|
+| `a` | `A` ← `SPEC` | `const float*` | in | NSPEC | action density spectrum |
+| `cg`, `k` | `CG`, `K` ← `CG1`, `WN1` | `const float*` | in | NK each | group velocity, wavenumber |
+| `fpi` | `FPI` ← `FPI` | `const float*` | in | 1 | peak frequency of the input (rad/s) |
+| `ustar` | `USTAR` ← `USTAR` | `const float*` | in | 1 | friction velocity (m/s) |
+| `alfa` | `ALFA` ← `ALPHA` | `const float*` | in | NK | Phillips' constant |
+| `s`, `d` | `S` ← `VSDS`, `D` ← `VDDS` | `float*` | out | NSPEC | source term, its diagonal derivative |
+
+### `ww_spr3` (`W3SPR3`)
+
+| C | Dummy ← actual | Type | Intent | Shape | Meaning |
+|---|---|---|---|---|---|
+| `a`, `cg`, `wn` | `A`, `CG`, `WN` ← `SPEC`, `CG1`, `WN1` | `const float*` | in | NSPEC, NK, NK | as `ww_spr0` |
+| `emean`, `fmean`, `fmeans`, `wnmean`, `amax` | same names | `float*` | out | 1 each | energy; mean frequency for the tail (`FMEAN`) and for the dissipation term (`FMEANS`); mean wavenumber; maximum action density |
+| `u`, `udir` | `U`, `UDIR` ← `U10ABS`, `U10DIR` | `const float*` | in | 1 each | wind speed (m/s), direction (rad) |
+| `ustar`, `usdir` | `USTAR`, `USDIR` ← `USTAR`, `USTDIR` | `float*` | inout | 1 each | friction velocity (m/s), wind stress direction (rad) |
+| `tauwx`, `tauwy` | `TAUWX`, `TAUWY` ← same | `const float*` | in | 1 each | wave-supported stress components |
+| `cd`, `z0`, `charn` | same names | `float*` | out | 1 each | drag coefficient, roughness length (m), Charnock coefficient |
+| `llws` | `LLWS` ← `LLWS` | `const int*` | in | NSPEC | wind-sea mask, `LOGICAL` as 0/1 |
+| `fmeanws` | `FMEANWS` ← `FMEANWS` | `float*` | out | 1 | mean frequency of the wind sea |
+
+### `ww_sin3` (`W3SIN3`; `CD`, `ICE`, `IX`, `IY` are not read and not passed)
+
+| C | Dummy ← actual | Type | Intent | Shape | Meaning |
+|---|---|---|---|---|---|
+| `a` | `A` ← `SPEC` | `const float*` | in | NSPEC | action density spectrum |
+| `cg` | `CG` ← `CG1` | `const float*` | in | NK | group velocity (m/s) |
+| `k` | `K` ← `WN2` | `const float*` | in | NSPEC | wavenumber for the whole spectrum |
+| `u`, `ustar`, `drat`, `as`, `usdir`, `z0` | `U` ← `U10ABS`, `USTAR`, `DRAT`, `AS`, `USDIR` ← `U10DIR`, `Z0` | `const float*` | in | 1 each | wind speed, friction velocity, air/water density ratio, air-sea temperature difference, wind stress direction, roughness length |
+| `tauwx`, `tauwy`, `tauwnx`, `tauwny` | `TAUWX`, `TAUWY`, `TAUWNX` ← `TAUWAX`, `TAUWNY` ← `TAUWAY` | `float*` | out | 1 each | wave-supported stress, and its negative part |
+| `s`, `d` | `S` ← `VSIN`, `D` ← `VDIN` | `float*` | out | NSPEC | source term, its diagonal derivative |
+| `llws` | `LLWS` ← `LLWS` | `int*` | out | NSPEC | wind-sea mask, 0/1 |
+
+### `ww_sds3` (`W3SDS3`; `CG`, `USTAR`, `USDIR`, `DEPTH`, `IX`, `IY` are not read and not passed)
+
+| C | Dummy ← actual | Type | Intent | Shape | Meaning |
+|---|---|---|---|---|---|
+| `a` | `A` ← `SPEC` | `const float*` | in | NSPEC | action density spectrum |
+| `k` | `K` ← `WN1` | `const float*` | in | NK | wavenumber (rad/m) |
+| `emean`, `fmean`, `wnmean` | `EMEAN`, `FMEAN` ← `FMEANS`, `WNMEAN` | `const float*` | in | 1 each | mean energy, frequency, wavenumber |
+| `s`, `d` | `S` ← `VSDS`, `D` ← `VDDS` | `float*` | out | NSPEC | source term, its diagonal derivative |
+
+### `ww_flx1`, `ww_flx4` (`W3FLX1`, `W3FLX4`)
+
+| C | Dummy ← actual | Type | Intent | Shape | Meaning |
+|---|---|---|---|---|---|
+| `zwnd` | `ZWND` ← `ZWND` | `const float*` | in | 1 | wind height (m); not 10 m stops the run |
+| `u10`, `u10d` | `U10`, `U10D` ← `U10ABS`, `U10DIR` | `const float*` | in | 1 each | wind speed (m/s), direction (rad) |
+| `ust`, `ustd`, `z0`, `cd` | `UST` ← `USTAR`, `USTD` ← `USTDIR`, `Z0`, `CD` | `float*` | inout (out in the Fortran) | 1 each | friction velocity, its direction, roughness length, drag coefficient |
+| `iext` | none | `int*` | out | 1 | 1 where the Fortran calls `EXTCDE(1)`; the wrapper writes the routine's FORMAT 1000 and stops |
+
+### `ww_flx2`, `ww_flx3` (`W3FLX2`, `W3FLX3`)
+
+| C | Dummy ← actual | Type | Intent | Shape | Meaning |
+|---|---|---|---|---|---|
+| `zwind`, `depth`, `fp` | `ZWIND` ← `ZWND`, `DEPTH`, `FP` | `const float*` | in | 1 each | wind height (m), depth (m), peak frequency |
+| `u`, `udir` | `U`, `UDIR` ← `U10ABS`, `U10DIR` | `const float*` | in | 1 each | wind speed (m/s), direction (rad) |
+| `ust`, `ustd`, `z0`, `cd` | `UST` ← `USTAR`, `USTD` ← `USTDIR`, `Z0`, `CD` | `float*` | inout | 1 each | as `ww_flx1`; `UST` starts the iteration, `Z0`, `CD` stay as passed when `NITTIN <= 0` |
+
+### `ww_flx5` (`W3FLX5`)
+
+| C | Dummy ← actual | Type | Intent | Shape | Meaning |
+|---|---|---|---|---|---|
+| `zwnd`, `u10`, `u10d` | as `ww_flx1` | `const float*` | in | 1 each | as `ww_flx1` |
+| `taua`, `tauadir`, `rhoair` | `TAUA`, `TAUADIR`, `RHOAIR` ← `TAUA`, `TAUADIR`, `DAIR` | `const float*` | in | 1 each | atmospheric stress, its direction, air density (kg/m3) |
+| `ust`, `ustd`, `z0`, `cd`, `charn` | `UST` ← `USTAR`, `USTD` ← `USTDIR`, `Z0`, `CD`, `CHARN` | `float*` | inout | 1 each | as `ww_flx1`, and the Charnock coefficient |
+| `iext` | none | `int*` | out | 1 | as `ww_flx1` |
+
+### `ww_swl6` (`W3SWL6`), `ww_sds6` (`W3SDS6`)
+
+| C | Dummy ← actual | Type | Intent | Shape | Meaning |
+|---|---|---|---|---|---|
+| `a` | `A` ← `SPEC` | `const float*` | in | NSPEC | action density spectrum |
+| `cg`, `wn` | `CG`, `WN` ← `CG1`, `WN1` | `const float*` | in | NK each | group velocity, wavenumber |
+| `s`, `d` | `S` ← `VSWL`/`VSDS`, `D` ← `VDWL`/`VDDS` | `float*` | out | NSPEC | source term, its diagonal derivative |
+| `nikn` / `info` | none | `int*` | out | 1 / 2 | the integers of the FORMAT the wrapper writes before `EXTCDE(2)` (SIZE(IKN) /= NK) |
+| return | none | `int` | | | 0, or the code of the Fortran's `EXTCDE` |
+
+### `ww_spr6` (`W3SPR6`)
+
+| C | Dummy ← actual | Type | Intent | Shape | Meaning |
+|---|---|---|---|---|---|
+| `a`, `cg`, `wn` | `A`, `CG`, `WN` ← `SPEC`, `CG1`, `WN1` | `const float*` | in | NSPEC, NK, NK | as `ww_spr0` |
+| `emean`, `fmean`, `wnmean`, `amax`, `fp` | same names | `float*` | out | 1 each | as `ww_spr0`, and the peak frequency |
+
+### `ww_sin6` (`W3SIN6`, with `LFACTOR` and `TAU_WAVE_ATMOS`)
+
+| C | Dummy ← actual | Type | Intent | Shape | Meaning |
+|---|---|---|---|---|---|
+| `a` | `A` ← `SPEC` | `const float*` | in | NSPEC | action density spectrum |
+| `cg` | `CG` ← `CG1` | `const float*` | in | NK | group velocity (m/s) |
+| `wn2` | `WN2` ← `WN2` | `const float*` | in | NSPEC | wavenumber for the whole spectrum |
+| `uabs`, `ustar`, `usdir`, `cd`, `dair` | `UABS` ← `U10ABS`, `USTAR`, `USDIR` ← `USTDIR`, `CD`, `DAIR` | `const float*` | in | 1 each | wind speed, friction velocity, its direction, drag coefficient, air density |
+| `tauwx`, `tauwy`, `taunwx`, `taunwy`, `charn` | `TAUWX`, `TAUWY`, `TAUNWX` ← `TAUWAX`, `TAUNWY` ← `TAUWAY`, `CHARN` | `float*` | out | 1 each | wave-supported stress, its negative part, Charnock coefficient |
+| `s`, `d` | `S` ← `VSIN`, `D` ← `VDIN` | `float*` | out | NSPEC | source term, its diagonal derivative |
+| `info` | none | `int*` | out | 2 | the integers of the stopping FORMAT, or the first `ITERMAX` point |
+| return | none | `int` | | | 0, a `WwSt6Code` the wrapper turns into the Fortran's FORMAT and `EXTCDE`, or `LF_ITERMAX`: that point is computed again by the Fortran `W3SIN6`, which writes the warning |
