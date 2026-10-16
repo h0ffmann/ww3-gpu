@@ -4,7 +4,8 @@
 # propagation unit (prop_*: W3XYP3, W3KTP3, W3QCK1-3, WAVNU1), W3WAVE's support routines
 # (wave_*, updt_*, disp_*: W3GATH, W3SCAT, W3DZXY, W3UWND, W3UTRN, DISTAB, WAVNU2; prop_map*:
 # W3MAP3, W3MAPT), NOAA's operational switches (srce_ref1, srce_ic4; pdlib_*: the unstructured
-# PDLIB solver) and the binary
+# PDLIB solver), the other source-term packages (srce_st0..st6, srce_flx1..5,
+# srce_swl*: ST0, ST1, ST2, ST3, ST6, FLX1-5, SWL) and the binary
 # fixture reader its L1 tests read the Fortran reference answers with.
 #
 # SPDX-License-Identifier: MIT
@@ -78,7 +79,36 @@ target_sources(ww_kokkos PRIVATE
     srce_kernel.hpp
     srce_ln1.hpp
     srce_bt1.hpp
-    srce_db1.hpp)
+    srce_db1.hpp
+    srce_st0_spr0.hpp
+    srce_st1_spr1.hpp
+    srce_st1_sin1.hpp
+    srce_st1_sds1.hpp
+    srce_st2_inptab.hpp
+    srce_st2_spr2.hpp
+    srce_st2_sin2.hpp
+    srce_st2_sds2.hpp
+    srce_st3_tabu_stress.hpp
+    srce_st3_tabu_tauhf.hpp
+    srce_st3_calc_ustar.hpp
+    srce_st3_insin3.hpp
+    srce_st3_spr3.hpp
+    srce_st3_sin3.hpp
+    srce_st3_sds3.hpp
+    srce_st6_util.hpp
+    srce_st6_spr6.hpp
+    srce_st6_sds6.hpp
+    srce_st6_lfactor.hpp
+    srce_st6_tau_wave_atmos.hpp
+    srce_st6_sin6.hpp
+    srce_swl_util.hpp
+    srce_swl4.hpp
+    srce_swl6.hpp
+    srce_flx1.hpp
+    srce_flx2.hpp
+    srce_flx3.hpp
+    srce_flx4.hpp
+    srce_flx5.hpp)
 
 # No floating-point contraction in the ported kernels.
 #

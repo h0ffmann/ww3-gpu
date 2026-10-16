@@ -150,3 +150,35 @@ The record is the `regtested` column of `kokkos/ports.tsv`.
 | `w3snl3md:insnl3` | ported | `snl3_tables.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and the W3IOGR hunk |
 | `w3partmd:w3part` | ported | `part_w3part.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and the W3IOSF hunk |
 | `w3snl3md:w3snl3` | ported | `snl3_gmd.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and the W3SRCE hunk |
+| `w3src0md:w3spr0` | ported | `srce_st0_spr0.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs the fork branch pinned and WW3's regtests |
+| `w3src1md:w3spr1` | ported | `srce_st1_spr1.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs the fork branch pinned and WW3's regtests |
+| `w3src1md:w3sin1` | ported | `srce_st1_sin1.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs the fork branch pinned and WW3's regtests |
+| `w3src1md:w3sds1` | ported | `srce_st1_sds1.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs the fork branch pinned and WW3's regtests |
+| `w3src2md:w3spr2` | ported | `srce_st2_spr2.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs the fork branch pinned and WW3's regtests |
+| `w3src2md:w3sin2` | ported | `srce_st2_sin2.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs the fork branch pinned and WW3's regtests |
+| `w3src2md:w3sds2` | ported | `srce_st2_sds2.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs the fork branch pinned and WW3's regtests |
+| `w3src2md:inptab` | ported | `srce_st2_inptab.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs the fork branch pinned and WW3's regtests |
+| `w3src2md:w3beta` | ported | `srce_st2_inptab.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs the fork branch pinned and WW3's regtests |
+| `w3src3md:w3spr3` | ported | `srce_st3_spr3.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs the fork branch pinned and WW3's regtests |
+| `w3src3md:w3sin3` | ported | `srce_st3_sin3.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs the fork branch pinned and WW3's regtests |
+| `w3src3md:w3sds3` | ported | `srce_st3_sds3.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs the fork branch pinned and WW3's regtests |
+| `w3src3md:insin3` | ported | `srce_st3_insin3.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs the fork branch pinned and WW3's regtests |
+| `w3src3md:tabu_stress` | ported | `srce_st3_tabu_stress.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs the fork branch pinned and WW3's regtests |
+| `w3src3md:tabu_tauhf` | ported | `srce_st3_tabu_tauhf.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs the fork branch pinned and WW3's regtests |
+| `w3src3md:calc_ustar` | ported | `srce_st3_calc_ustar.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs the fork branch pinned and WW3's regtests |
+| `w3src6md:w3spr6` | ported | `srce_st6_spr6.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs the fork branch pinned and WW3's regtests |
+| `w3src6md:w3sds6` | ported | `srce_st6_sds6.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs the fork branch pinned and WW3's regtests |
+| `w3src6md:lfactor` | ported | `srce_st6_lfactor.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs the fork branch pinned and WW3's regtests |
+| `w3src6md:tau_wave_atmos` | ported | `srce_st6_tau_wave_atmos.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs the fork branch pinned and WW3's regtests |
+| `w3src6md:irange` | ported | `srce_st6_util.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs the fork branch pinned and WW3's regtests |
+| `w3src6md:rrange` | ported | `srce_st6_util.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs the fork branch pinned and WW3's regtests |
+| `w3src6md:tauwinds` | ported | `srce_st6_util.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs the fork branch pinned and WW3's regtests |
+| `w3swldmd:w3swl6` | ported | `srce_swl6.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs the fork branch pinned and WW3's regtests |
+| `w3swldmd:w3swl4` | ported | `srce_swl4.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs the fork branch pinned and WW3's regtests |
+| `w3swldmd:irange` | ported | `srce_swl_util.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs the fork branch pinned and WW3's regtests |
+| `w3flx1md:w3flx1` | ported | `srce_flx1.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs the fork branch pinned and WW3's regtests |
+| `w3flx2md:w3flx2` | ported | `srce_flx2.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs the fork branch pinned and WW3's regtests |
+| `w3flx3md:w3flx3` | ported | `srce_flx3.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs the fork branch pinned and WW3's regtests |
+| `w3flx4md:w3flx4` | ported | `srce_flx4.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs the fork branch pinned and WW3's regtests |
+| `w3flx5md:w3flx5` | ported | `srce_flx5.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs the fork branch pinned and WW3's regtests |
+| `w3src6md:w3sin6` | ported | `srce_st6_sin6.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs the fork branch pinned and WW3's regtests |

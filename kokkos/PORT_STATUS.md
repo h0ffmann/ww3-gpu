@@ -10,7 +10,10 @@ Routines are ported in descending order of measured wall time
 (`CONTRIBUTING.md`, "Port order is wall time"). The ranking below is measured: gprof on
 `bench_small`, a 2-D case with propagation (`just profile-case full`), not the operational
 case, which is not in this repository. The older `ww3_ts1` table in
-`docs/data/ww3_ts1_gprof_202610.md` stays ⚠ (transcribed from #45).
+`docs/data/ww3_ts1_gprof_202610.md` stays ⚠ (transcribed from #45). Every routine the committed
+profiles time in compute is now translated; what they still rank is setup and I/O. Beyond them
+the order follows what NOAA's operational switches compile (`WW3-noaa/model/bin/switch_NCEP_*`,
+`switch_NWS_*`), then regtest coverage (PRs #152 and #157).
 
 ## Port score
 
@@ -42,11 +45,11 @@ Profile: full (bench_small, 120 x 80, 9 520 sea points, 12 h), Release -pg, swit
 
 | level | run time | lines | routines | files | what it counts (WW3@03adda91) |
 |---|---|---|---|---|---|
-| translated | **99.3 %** | 19972 of 263375 (7.58 %) | 59 of 1023 (5.77 %) | 21 of 147 | a Kokkos translation exists in kokkos/src |
+| translated | **99.3 %** | 25187 of 263375 (9.56 %) | 91 of 1023 (8.90 %) | 32 of 147 | a Kokkos translation exists in kokkos/src |
 | ported | **87.4 %** | 3082 of 263375 (1.17 %) | 10 of 1023 (0.98 %) | 2 of 147 | WW3 at the WW3/ pin calls the Kokkos code, behind its run-time flag |
 | regtested | **48.4 %** | 663 of 263375 (0.25 %) | 2 of 1023 (0.20 %) | 1 of 147 | WW3's regtests ran with it on Kokkos and agreed with the Fortran |
 
-The port itself: 16191 lines in 75 files, the C++ under kokkos/src (every .cpp and .hpp line).
+The port itself: 19491 lines in 104 files, the C++ under kokkos/src (every .cpp and .hpp line).
 
 On a GPU: none yet. The CUDA build links; the RTX 4090 run, `just smoke-ww3-gpu gpu`, is the owner's, supervised.
 <!-- port-score:end -->
@@ -58,8 +61,15 @@ SPDX-License-Identifier: MIT
 | Routine | WW3 file:lines | Phase | Shim | L1 parity | L2 replay | Serial ms | OpenMP ms | CUDA ms | Notes |
 |---|---|---|---|---|---|---|---|---|---|
 | `W3SNL1` + `INSNL1` | `model/src/w3snl1md.F90:115-473`, `:483-786` | 1 (copy-in / kernel / copy-out) | `ww_snl1_init`, `ww_snl1` | **bit-identical** on all three presets, 2026-09-15 (CPU presets re-run 2026-10-14); removed with the tests, 2026-10-14 (see [L1 / L2](#l1--l2)) | **PASS on the CPU** inside WW3 (h0ffmann/WW3 `hoff/kokkos-snl1`): `just smoke-ww3-gpu`, `just full-ww3-gpu`, `just ww3-gpu-matrix` (100 entries): **byte-identical** to the Fortran DIA, 2026-10-15 ([`port_report/W3SNL1_KOKKOS.md`](port_report/W3SNL1_KOKKOS.md)) | [25.88](#where-the-numbers-come-from) | [5.95](#where-the-numbers-come-from) | [0.75](#where-the-numbers-come-from) | 1 000 points/call, end-to-end through the shim. Kernel alone: 24.96 / 5.02 / **0.047** ms. Timed with `-ffp-contract=off`; see below. Level-0 team scratch per point = (NSPECY+NTH) + 8(NSPECX+NTH) + NSPEC floats (`snl1_dia.cpp`): 28 608 B = 27.9 KiB at NK=25/NTH=24 (XFR 1.1, λ 0.25); 52 992 B ≈ 52 KiB at NK=32/NTH=36. When the request exceeds `TeamPolicy::scratch_size_max(0)` (for the Kokkos 5.2 CUDA backend the device's opt-in shared-memory limit minus ~24.6 KB, ≈75 KB on the RTX 4090; on OpenMP less than the 39 248 B that `ww3_ts1`'s NK=36 NTH=24 needs), the kernel falls back to level-1 scratch (2026-10-14, `docs/PORT_ASSESSMENT_202610.md` §3); it throws (→ `WW_KOKKOS_ERR_KERNEL`) only when level 1 is too small too. WW4's default grid (NK=50/NTH=36, XFR 1.07) is one of them on the 4090: see [Level-0 scratch at WW4's default grid](#level-0-scratch-at-ww4s-default-grid). |
-| `W3SNL2`…`W3SNL5` | `model/src/w3snl{2,3,4,5}md.F90` | not started | — | — | — | — | — | — | Out of scope; the `IQTPE <= 0` branch (`W3SNLGQM`) is not replaced either. |
-| `W3SIN4` / `W3SDS4` | `model/src/w3src4md.F90` | not started | — | — | — | — | — | — | The next candidate: same per-point shape as the DIA, so the same shim generalises. |
+| ST4: `W3SDS4`, `W3SIN4`, `W3SPR4`, `CALC_USTAR`, `INSIN4`, `TABU_*` | `model/src/w3src4md.F90` | 1 | `ww_sds4`, `ww_sin4`, `ww_spr4` (`st4_shim.cpp`), wired at the `WW3/` pin | — | ADR-0011 checkpoint under way: `just smoke-ww3-gpu` and `just full-ww3-gpu` byte-identical to the Fortran with each flag and all together, 2026-10-15 ([`docs/log/2026-10-15-st4-checkpoint.md`](../docs/log/2026-10-15-st4-checkpoint.md)); the regtest matrix is not recorded | — | — | — | No timing: no timing without parity. |
+| `W3SRCE` with `W3SLN1`, `W3SBT1`, `W3SDB1` | `model/src/w3srcemd.F90` and callees | 1 | `ww_srce` (`srce_shim.cpp`), on the fork branch `ww3-gpu/kokkos-srce`, not the pin | — | waiting for its checkpoint | — | — | — | |
+| Propagation (`PR3`, `UQ`), `W3WAVE` support, dispersion | `w3pro3md`, `w3uqckmd`, `w3wavemd`, `w3updtmd`, `w3dispmd` | translated | none yet | — | — | — | — | — | Header-only; static parity by object comparison, one fresh review per routine ([`docs/W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md`](../docs/W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md)). |
+| NOAA operational batches A to C: `PDLIB`, `IC4`, `REF1`, `TR1`, `BT4`, `IS1`, `IC1`, partitioning, `NL3` | `w3profsmd_pdlib`, `w3sic4md`, `w3ref1md`, … `w3snl3md` | translated | none yet | — | — | — | — | — | Header-only; static parity, fresh reviews ([`docs/NOAA_OPS_KOKKOS_PLAN_202610.md`](../docs/NOAA_OPS_KOKKOS_PLAN_202610.md)). |
+| `ST0`, `ST1`, `ST2` (with `INPTAB`), `ST3` (with its tables), `ST6` (with `LFACTOR`, `TAU_WAVE_ATMOS`), `FLX1`-`FLX5`, `SWL` (32 routines) | `w3src{0,1,2,3,6}md`, `w3flx{1..5}md`, `w3swldmd` | translated | written and compiled for six units, not committed (PR #157) | — | — | — | — | — | Header-only in the PR; static parity against eight reference builds and a fresh review per routine; `ST2` with `FLX3` is the physics of `switch_NCEP_st2`; nothing run ([`docs/log/2026-10-16-st-flx-swl-kokkos-translation.md`](../docs/log/2026-10-16-st-flx-swl-kokkos-translation.md)). |
+| `W3SNL2`, `W3SNL4`, `W3SNL5`, `W3SNLS` | `model/src/w3snl{2,4,5,s}md.F90` | not started | — | — | — | — | — | — | No operational switch uses them; the `IQTPE <= 0` branch (`W3SNLGQM`) is not replaced either. |
+
+Per routine, with each one's evidence and regtest record: [`ports.tsv`](ports.tsv) and the
+generated [`PORT_TABLE.tsv`](PORT_TABLE.tsv).
 
 **Phase** is the memory contract, not the completeness of the physics:
 *phase 1* copies the spectrum host→device and back around every call; *phase 2*

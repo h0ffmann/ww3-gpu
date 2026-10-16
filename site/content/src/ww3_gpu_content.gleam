@@ -311,16 +311,28 @@ pub fn report_name(routine: String) -> String {
   string.uppercase(name) <> "_KOKKOS"
 }
 
-/// The regtested cell of kokkos/ports.tsv for a report, or "".
+/// "W3SRC3MD_TABU_STRESS_KOKKOS" from "w3src3md:tabu_stress": the report name of a routine whose
+/// name another module also has (scripts/port_score.py, report_name).
+pub fn qualified_report_name(routine: String) -> String {
+  string.uppercase(string.replace(routine, ":", "_")) <> "_KOKKOS"
+}
+
+/// The regtested cell of kokkos/ports.tsv for a report, or "". A module-qualified report name
+/// matches first, so W3SRC3MD_TABU_STRESS_KOKKOS is not taken for ST4's TABU_STRESS_KOKKOS.
 pub fn port_record(ports_tsv: String, report: String) -> String {
-  let found =
-    tsv_rows(ports_tsv, "routine")
-    |> list.find(fn(cells) {
+  let rows = tsv_rows(ports_tsv, "routine")
+  let by = fn(name: fn(String) -> String) {
+    list.find(rows, fn(cells) {
       case cells {
-        [routine, ..] -> report_name(routine) == report
+        [routine, ..] -> name(routine) == report
         [] -> False
       }
     })
+  }
+  let found = case by(qualified_report_name) {
+    Ok(cells) -> Ok(cells)
+    Error(_) -> by(report_name)
+  }
   case found {
     Ok([_, _, _, _, _, regtested, ..]) -> regtested
     _ -> ""

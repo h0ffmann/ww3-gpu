@@ -366,7 +366,7 @@ def port_table(profs, ports, claims, reports_dir=None):
             "test_comp": test_comp or ("—" if not p or not is_yes(p, "regtested") else "not recorded"),
             "nccmp_tol": nccmp.strip(" ,") or "—",
             "googletest": "none: ADR-0010",
-            "report": f"kokkos/port_report/{report_name(n)}" if p and (reports_dir / report_name(n)).exists() else "—",
+            "report": f"kokkos/port_report/{report_name(n, reports_dir)}" if p and (reports_dir / report_name(n, reports_dir)).exists() else "—",
         }
         out.append("\t".join(tsv_cell(row[k]) for k in TABLE_COLS))
     return "\n".join(out) + "\n"
@@ -389,9 +389,15 @@ def block():
     return render(meta_p, prof, meta_w, ports)
 
 
-def report_name(routine):
-    """w3snl1md:w3snl1 -> W3SNL1_KOKKOS.md, the report every ported routine has."""
-    return routine.split(":")[-1].upper() + "_KOKKOS.md"
+def report_name(routine, reports_dir=None):
+    """w3snl1md:w3snl1 -> W3SNL1_KOKKOS.md, the report every ported routine has. Two modules can
+    hold a routine of the same name (TABU_STRESS in ST3 and ST4): the second one's report is
+    W3SRC3MD_TABU_STRESS_KOKKOS.md, used when it exists in reports_dir."""
+    module, _, name = routine.rpartition(":")
+    qualified = f"{module}_{name}".upper() + "_KOKKOS.md"
+    if module and reports_dir is not None and (reports_dir / qualified).exists():
+        return qualified
+    return name.upper() + "_KOKKOS.md"
 
 
 def unrecorded(ports):
@@ -402,7 +408,8 @@ def unrecorded(ports):
 
 
 def missing_reports(ports, reports_dir):
-    return [report_name(p["routine"]) for p in ports if not (reports_dir / report_name(p["routine"])).exists()]
+    return [report_name(p["routine"], reports_dir) for p in ports
+            if not (reports_dir / report_name(p["routine"], reports_dir)).exists()]
 
 
 def write_or_check(check):
@@ -533,6 +540,12 @@ Each sample counts as 0.01 seconds.
     ok(unrecorded([{"routine": "a", "regtested": "", "wired": "yes: pin"}, {"routine": "b", "regtested": "maybe", "wired": ""}])
        == ["a (regtested)", "b (regtested)", "b (wired)"], "an empty or unclear record is refused")
     ok(report_name("w3snl1md:w3snl1") == "W3SNL1_KOKKOS.md", "a report is named after the routine, upper case")
+    with tempfile.TemporaryDirectory() as tmp:
+        (Path(tmp) / "W3SRC3MD_TABU_STRESS_KOKKOS.md").write_text("x", encoding="utf-8")
+        ok(report_name("w3src3md:tabu_stress", Path(tmp)) == "W3SRC3MD_TABU_STRESS_KOKKOS.md",
+           "a module-qualified report wins when it exists")
+        ok(report_name("w3src4md:tabu_stress", Path(tmp)) == "TABU_STRESS_KOKKOS.md",
+           "without one the report is named after the routine")
     with tempfile.TemporaryDirectory() as tmp:
         (Path(tmp) / "W3SNL1_KOKKOS.md").write_text("x", encoding="utf-8")
         ok(missing_reports(ports[:2], Path(tmp)) == ["INSNL1_KOKKOS.md"], "a ported routine without a report is named")

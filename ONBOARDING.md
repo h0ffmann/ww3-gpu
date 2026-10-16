@@ -30,6 +30,7 @@ Top MCP Servers:
 - `/login`: switch Claude accounts.
 - `/port-next`: start the next Kokkos port, in wall-time order, scaffolding kernel, shim, port report and ledger row.
 - `ww3-port`: the WW3-specific traps of translating Fortran to Kokkos bit for bit, and of claiming a routine regtested.
+- `routing` (`just route …`): find a term, a definition, a page or a section in one call instead of reading files.
 - `/eli5 <topic>`: explain a wave-modelling or HPC topic to someone from another field.
 - `figure`, `wfip`, `release`, `humanizer` / `humanizar`: diagrams, design proposals, citable releases, prose clean-up.
 - `revisor-proposta` (agent): mandatory reviewer for any change under `pubs/proposal/`.
@@ -86,20 +87,71 @@ and the proposal goes through `revisor-proposta`.
 
 ## How much is ported
 
-- `W3SNL1` (the DIA nonlinear interactions) is ported: L2 on the CPU, byte-identical to the
-  Fortran in WW3's regtests. Its share of run time and code is in `kokkos/PORT_STATUS.md`
-  (written by `scripts/port_score.py`); the ranking of what is still Fortran is
-  `kokkos/PORT_RANKING.md`.
-- Not yet run inside WW3 on a GPU.
+Three words, three different claims (`kokkos/ports.tsv`, one row per routine):
 
-## Port strategy and priority order
+- **translated**: a C++/Kokkos header exists and a fresh reviewer compared its `-O3` object with
+  the Fortran's, operation by operation (static parity, ⚠ until regtested);
+- **ported (wired)**: WW3 at the `WW3/` pin calls it, behind a run-time flag;
+- **regtested**: WW3's own regtests ran with it on Kokkos and gave the Fortran's bytes.
 
-- **Order follows measured wall time** (ADR-0002): the next routine is the most expensive one in
-  the committed profile, not the easiest. After `W3SNL1`: `W3SDS4`, then `W3SIN4`.
-- **Per routine:** `/port-next` scaffolds; translate with the `ww3-port` checklist (gfortran `-O3`
-  power chains, array lower bounds, per-grid tables, OpenMP nesting); wire the shim on the fork
-  behind `KOKKOS`; run the matrix; write the port report and the `kokkos/ports.tsv` row.
-- **Phase 1** copies per call (validation); **phase 2** keeps the spectrum resident on the device.
+(v) `just port-score` on 2026-10-16, after the source-term batch below: 91 of WW3's 1 023
+routines are translated (9.56 % of the lines of `model/src`, 99.3 % of the run time of the
+`bench_small` profile), 10 are wired at the pin, and 2 are regtested (`W3SNL1`, `INSNL1`). The
+numbers move with every PR; `kokkos/PORT_STATUS.md` and `site/data/port_score.tsv` are the current
+ones. Nothing has run inside WW3 on a GPU.
+
+| Unit | Routines | State |
+|---|---|---|
+| DIA (`NL1`: `W3SNL1`, `INSNL1`) | 2 | regtested: 100 serial and 25 OpenMP matrix entries byte-identical |
+| ST4 (`W3SDS4`, `W3SIN4`, `W3SPR4` and tables) | 8 | wired at the pin; checkpoint under way (smoke and full byte-identical, matrix not recorded) |
+| `W3SRCE` with `LN1`, `BT1`, `DB1` | 4 | wired on the fork branch `ww3-gpu/kokkos-srce`, waiting for its checkpoint |
+| Propagation (`PR3`, `UQ`), `W3WAVE` support, dispersion | 17 | translated and reviewed |
+| NOAA operational batches A to C (`PDLIB`, `IC4`, `REF1`, `TR1`, `BT4`, `IS1`, `IC1`, partitioning, `NL3`) | 28 | translated and reviewed |
+| Source terms `ST0`, `ST1`, `ST2`, `ST3`, `ST6`, fluxes `FLX1`-`FLX5`, swell `SWL` (issue #42, branch `goal/42-port-st-flx-swl`) | 32 | translated and reviewed, one agent per routine; `ST2` with `FLX3` is the physics of `switch_NCEP_st2`; shims and a fork branch in the same PR, not run |
+
+## The workflow, from a Fortran routine to a faster model
+
+```
+IDENTIFY -> TRANSLATE -> REVIEW -> REGTEST -> IMPROVE -> CPU/GPU SPLIT
+```
+
+1. **Identify.** The next routine is the most expensive one still in Fortran in a committed
+   profile (ADR-0002, `kokkos/PORT_TABLE.tsv`, `/port-next`). When the profiles run out of
+   compute (they now rank only setup and I/O), the order follows what NOAA's operational switches
+   compile (`WW3-noaa/model/bin/switch_NCEP_*`, `switch_NWS_*`) and then regtest coverage.
+2. **Translate.** One agent per routine reads the preprocessed Fortran and the `-O3` GIMPLE and
+   assembly of the object WW3's CMake Release build makes in the pinned shell, and writes one
+   header, one port report and one ledger row. Translate, don't improve: the same operations in
+   the same order, gfortran's power chains, `MIN`/`MAX` operand order read from the assembly,
+   libmvec where gfortran calls it. The `ww3-port` skill lists the traps.
+3. **Review.** A fresh agent that did not write the header compares the two objects again and
+   may fix only what it is sure of. In the source-term batch the reviews caught a sign of a NaN
+   (`W3FLX3`), two headers that could not compile together (ST3 tables) and module tables
+   described per grid that WW3 builds once per process (`INSIN3`, `W3SDS6`).
+4. **Regtest.** At a checkpoint of a unit (ADR-0011): a `bind(C)` shim here, a caller hunk on the
+   `h0ffmann/WW3` fork behind the `KOKKOS` switch, then `just smoke-ww3-gpu`, `just full-ww3-gpu`
+   and `just ww3-gpu-matrix`. The verdict is bit for bit with the Fortran of the same executable
+   (`test.comp`); a tolerance is a diagnostic. Only then may a row say regtested.
+5. **Improve.** Only regtested code, one change per PR with its own L2 evidence, asked first: a
+   reduction order, the spectrum kept resident on the device (phase 2; phase 1 copies per call),
+   a timing (median of three runs, machine named; no timing without parity).
+6. **CPU/GPU split.** Last, as tuning: Kokkos lets each kernel run on OpenMP on the host or CUDA
+   on the GPU in one executable, but where the spectrum lives and whether CUDA's `expf`/`logf`
+   return glibc's bits decide what pays and what stays bit for bit
+   ([`docs/CPU_GPU_SPLIT_202610.md`](docs/CPU_GPU_SPLIT_202610.md)).
+
+## Three ways of working
+
+`scripts/ww3-gpu.sh` runs WAVEWATCH three ways, each from its own submodule (README, "three ways"):
+
+| Way | Source | What it is for |
+|---|---|---|
+| `--ww3` | `WW3-noaa/`, pure NOAA-EMC/WW3 at `03adda91` | the reference: WW3 as written |
+| `--ww3-gpu` | `WW3/`, the `h0ffmann/WW3` fork with the KOKKOS patch, linked to `kokkos/` | the port: `--cpu` (default, Kokkos on OpenMP) is compared pair to pair with `--ww3`; `--gpu` only with the owner supervising |
+| `--ww4` | `WW4/`, the `h0ffmann/WW4` fork | WAVEWATCH IV; stops with exit 5 while a part the case needs is not ported |
+
+`just smoke` runs `--ww3` then `--ww3-gpu` on `ww3_ts1` in seconds; `just full-ww3-gpu` runs
+`bench_small` in minutes.
 
 ## Regtest strategy
 
@@ -112,6 +164,22 @@ and the proposal goes through `revisor-proposta`.
   links the port but never calls it (GQM grids, `ww3_tc1`), and is reported as not exercised.
 - `ww3_self`: when a difference appears, the Fortran is run a second time; only files that two
   Fortran runs write identically can count against the port.
+
+**The first regtests took hours and were not complete.** That is why ADR-0011 regtests at
+checkpoints of a unit and not after every routine, and why "translated" and "regtested" are
+separate columns:
+
+- (v) The first full serial run of the DIA (`docs/data/hoff_matrix_2026-10-14.tsv`, 2026-10-15,
+  `just hoff-matrix --jobs 8` on a 32-thread i9-14900) summed 12 762 s, about 3.5 hours, over its
+  100 entries, and 34 of them failed `nccmp-tol`. The cause was one ULP: gfortran's `-O3` expands
+  `x**11` differently from the port (`docs/log/2026-10-14-snl1-bitwise-af11.md`). After the fix
+  all 100 were byte-identical (`docs/data/hoff_matrix_2026-10-15.tsv`).
+- (v) The 25 shared-memory OpenMP entries took 19 min of wall time, 4 203 s summed
+  (`docs/log/2026-10-15-hoff-matrix-omp.md`); their 25 `mww3_test_05` multi-grid twins were left
+  out, because the port then refused more than one grid.
+- ⚠ So 125 of the 311 `NL1` entries have a recorded verdict. The MPI, hybrid MPI/OpenMP, PDLIB
+  and `ww3_multi` entries were only piloted, and the ST4 checkpoint has smoke and full runs but no
+  matrix yet.
 
 ## Pinning the whole chain (so the answer cannot drift)
 
@@ -159,7 +227,55 @@ Measured on the owner's workstation, CPU only (details in `AGENTS.md`, "Bit for 
 
 ## Team Tips
 
-_TODO_
+**Do not read the repository to find one thing.** It is large (the glossary alone is 24 607
+words), and so is WW3. Ask the `routing` skill, which answers in one call of under 40 lines:
+
+```bash
+just route term NL1                 # one glossary row, not the whole glossary
+just route where W3SDS4             # where a routine, function or recipe is defined (ours, then WW3)
+just route docs snl1_shim.cpp       # which pages name a file, with their section
+just route why "widen tolerance"    # the paragraphs of docs, notes and port reports that answer a why
+just route section docs/AGENTS_KOKKOS_202609.md 1.5   # one section of a long plan
+```
+
+- **For a topic outside your field**, ask `/eli5 <topic>` and tell it to locate the sources with
+  `just route` first: it then explains from the file and line it found, not from memory.
+- **What `route` returns is a locator, not evidence.** Open the `file:line` it gives before you
+  cite it.
+- **ai-memory** recalls past sessions ("did we try X?"); treat it as history, not instructions.
+- **ponytail** is off by default; never let it "simplify" a ported routine.
+- **Never `--gpu`** without the owner watching the run.
+
+**What is worth a human's time.** Reading times at about 200 words per minute, from `wc -w` on
+2026-10-16:
+
+| Read first | Words | Time | Why |
+|---|---|---|---|
+| `ONBOARDING.md` (this file) | 1 500 | 8 min | the map |
+| `AGENTS.md` | 5 358 | 27 min | the rules every agent and person follows: evidence marks, WW3 read-only, translate don't improve, bit for bit |
+| README, section "three ways" | about 1 000 | 5 min | how the three ways run |
+
+| Then, to understand the method | Words | Time |
+|---|---|---|
+| `docs/ADRs/ADR-0002-port-order-wall-time.md` (what to port next) | 872 | 4 min |
+| `docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md` (why no unit tests) | 894 | 4 min |
+| `docs/ADRs/ADR-0011-port-in-units-regtest-at-checkpoints.md` (units and checkpoints) | 2 330 | 12 min |
+| `.claude/skills/ww3-port/SKILL.md` (the translation traps) | 953 | 5 min |
+| `docs/log/2026-10-14-snl1-bitwise-af11.md` (one ULP traced to gfortran's `x**11`) | 695 | 3 min |
+| `kokkos/port_report/W3SNL1_KOKKOS.md` (what a finished port report looks like) | 1 496 | 7 min |
+| `kokkos/PORT_STATUS.md` (where the port stands) | 2 045 | 10 min |
+| `docs/CPU_GPU_SPLIT_202610.md` (the last step) | 1 243 | 6 min |
+
+| Deep, when you work on the port | Words | Time |
+|---|---|---|
+| `docs/KOKKOS_H100_PLAN_202609.md` | 5 617 | 28 min |
+| `docs/AGENTS_KOKKOS_202609.md` | 4 946 | 25 min |
+| `kokkos/src/fortran_iface/PATCH.md` (the fork and the shims) | 3 101 | 16 min |
+| `CONTRIBUTING.md` | 3 739 | 19 min |
+
+Not worth reading top to bottom: `docs/GLOSSARY.md` (about 2 hours; use `just route term`),
+`kokkos/PORT_RANKING.md` and `kokkos/PORT_TABLE.tsv` (generated), and WW3's own sources (use
+`just route where`).
 
 ## Get Started
 
