@@ -57,6 +57,7 @@ target_sources(ww_kokkos PRIVATE
     pdlib_params.hpp
     pdlib_fsn2.hpp
     pdlib_fspsi2.hpp
+    pdlib_fsfct2.hpp
     pdlib_boundary_va.hpp
     pdlib_jacobi_spectral.hpp
     pdlib_jacobi_vec.hpp

@@ -6,4 +6,3 @@
 # claim: the branch (and agent) that owns it; plan: the plan that names it
 routine	file	claim	plan
 pdlib_w3profsmd:pdlib_w3xypug	model/src/w3profsmd_pdlib.F90:626-866	goal/42-port-noaa-ops (Claude Code, batch A)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
-pdlib_w3profsmd:pdlib_w3xypfsfct2	model/src/w3profsmd_pdlib.F90:1504-1877	goal/42-port-noaa-ops (Claude Code, batch A)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md

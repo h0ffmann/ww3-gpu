@@ -10,6 +10,7 @@
 #include "pdlib_boundary.hpp"
 #include "pdlib_boundary_va.hpp"
 #include "pdlib_explicit_block.hpp"
+#include "pdlib_fsfct2.hpp"
 #include "pdlib_fsn2.hpp"
 #include "pdlib_fspsi2.hpp"
 #include "pdlib_jacobi_spectral.hpp"

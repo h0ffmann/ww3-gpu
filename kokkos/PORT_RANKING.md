@@ -141,3 +141,4 @@ The record is the `regtested` column of `kokkos/ports.tsv`.
 | `pdlib_w3profsmd:pdlib_jacobi_gauss_seidel_block` | ported | `pdlib_jgs_block.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim with the MPI hooks and the U_JAC contract, and the W3WAVE hunk |
 | `pdlib_w3profsmd:pdlib_explicit_block` | ported | `pdlib_explicit_block.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim with the MPI hooks |
 | `pdlib_w3profsmd:apply_boundary_condition` | ported | `pdlib_boundary.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim with the MPI hooks |
+| `pdlib_w3profsmd:pdlib_w3xypfsfct2` | ported | `pdlib_fsfct2.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); no regtest selects EXPFSFCT |
