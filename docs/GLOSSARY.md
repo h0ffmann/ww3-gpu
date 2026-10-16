@@ -244,6 +244,7 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | INSNL1 | "Preprocessing for nonlinear interactions (weights)" `(v)`, `w3snl1md.F90:483-786` | Builds the quadruplet address tables (`IP11…IM42`, `IC11…IC82`), weights (`AWG1..8`, `SWG1..8`) and `AF11` ("scaling array f**11", `w3adatmd.F90` `(v)`) once per grid. | [course/12-porting-a-kernel-w3snl1.md](../course/12-porting-a-kernel-w3snl1.md) |
 | W3SNLGQM | Snl by the Gaussian Quadrature Method of Lavrenov (2001), adapted from TOMAWAC `(v)` | The `IQTPE <= 0` branch at the same call site; not replaced by the port. | [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md) |
 | W3SNL2 / W3SNL3 / W3SNL4 / W3SNL5 | interface to exact interactions / multiple DIA for arbitrary depths / TSA / GKE (`CalcQRSNL`) `(v)` | The other Snl modules, out of scope. | [kokkos/PORT_STATUS.md](../kokkos/PORT_STATUS.md) |
+| INSNL3 / EXPAND / EXPND2 | "Initialization for generalized multiple DIA routine"; W3SNL3's internal routines that "Expand spectrum" to "simplify indirect addressing" `(v)` (`w3snl3md.F90:644`, `:717`, `:788` at `03adda91`) | INSNL3 builds the quadruplet tables W3SNL3 reads per point. | [kokkos/port_report/W3SNL3_KOKKOS.md](../kokkos/port_report/W3SNL3_KOKKOS.md) |
 | W3SRCEMD / W3SRCE | "Source term integration routine" `(v)`, `w3srcemd.F90:190` | The per-point driver that sums Sin + Snl + Sds + …, sub-steps dynamically and applies the limiter; the profile's top routine and the OpenACC target of Ikuyajolu et al. | [course/09-benchmark-profile-compile-run.md](../course/09-benchmark-profile-compile-run.md), [docs/AGENTS_KOKKOS_202609.md](AGENTS_KOKKOS_202609.md) |
 | W3SRC4MD: W3SPR4 / W3SIN4 / W3SDS4 | "SHOM/Ifremer source terms" after Janssen and Ardhuin et al. (2009, 2010): mean parameters / "diagonal and input source term for WAM4+ approach" / "wave dissipation source term" `(v)` | The `ST4` package, the next port candidate. | [course/07-physics-choices.md](../course/07-physics-choices.md), [kokkos/PORT_STATUS.md](../kokkos/PORT_STATUS.md) |
 | W3SRC6MD: W3SIN6 / W3SDS6 | observation-based input after Donelan et al. (2006) and dissipation after Babanin et al. (2010), Rogers et al. (2012) `(v)` | The `ST6` package. | [course/07-physics-choices.md](../course/07-physics-choices.md) |
@@ -324,6 +325,8 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | ADA89 / HOPPER90 | `Kokkos_ARCH_ADA89` (RTX 4090) / `HOPPER90` (H100) Kokkos architecture keys `(v)` [kokkos/CMakePresets.json](../kokkos/CMakePresets.json) | The pinned CUDA Kokkos is built for ADA89 only; an H100 needs a Kokkos rebuild in `picasso`. | [course/11-kokkos-and-modern-cpp.md](../course/11-kokkos-and-modern-cpp.md) |
 | H100 / RTX 4090 | NVIDIA data-centre (Hopper) and consumer (Ada) GPUs `(v)` [pubs/proposal/pt/04-scope.md](../pubs/proposal/pt/04-scope.md), [README.md](../README.md) | The proposal's target and the owner's workstation card; the 4090 runs FP64 at 1/64 of FP32. | [bench/README.md](../bench/README.md), [kokkos/PORT_STATUS.md](../kokkos/PORT_STATUS.md) |
 | PCIe / NVLink | ⚠ Peripheral Component Interconnect Express / NVIDIA's GPU interconnect (not expanded in the repo) | The host↔device link whose bandwidth bounds every phase-1 port; consumer cards have PCIe only. | [README.md](../README.md), [bench/README.md](../bench/README.md) |
+| GH200 / NVLink-C2C | NVIDIA Grace Hopper Superchip: a Grace CPU and a Hopper GPU joined by NVLink-C2C, a "900 gigabytes per second (GB/s) of coherent interface" `(v)` (NVIDIA GH200 page, read 2026-10-16) | A different product from an H100 card in an x86 server, where the CPU and the GPU memories meet over PCIe Gen5. | [docs/CPU_GPU_SPLIT_202610.md](CPU_GPU_SPLIT_202610.md) |
+| HBM | High Bandwidth Memory: the GPU's stacked memory, about 2 TB/s on the H100 PCIe and 3.35 TB/s on the SXM `(v)` (NVIDIA H100 datasheet, Cisco copy, read 2026-10-16) | Sets how fast the GPU reads the spectrum, against the PCIe link that moves it between memories. | [docs/CPU_GPU_SPLIT_202610.md](CPU_GPU_SPLIT_202610.md) |
 | NVMe | ⚠ Non-Volatile Memory Express (not expanded in the repo) | Fast local storage named among today's lab-machine features. | [pubs/proposal/pt/05-justification.md](../pubs/proposal/pt/05-justification.md) |
 | FP32 / FP64 / float32 | single / double precision; WW3's default `REAL` is 4 bytes, `ww::Real` is `float` `(v)` [kokkos/src/ww_kokkos/real.hpp](../kokkos/src/ww_kokkos/real.hpp) | The port keeps `float` state and accumulates in `double`. | [course/11-kokkos-and-modern-cpp.md](../course/11-kokkos-and-modern-cpp.md) |
 | FMA / `-ffp-contract` / `--fmad` | fused multiply-add and the GCC / nvcc flags that control contraction `(v)` [kokkos/README.md](../kokkos/README.md) | One rounding where the Fortran does two; `ww_kokkos` builds with `-ffp-contract=off` and `--fmad=false` for bit parity. | [course/12-porting-a-kernel-w3snl1.md](../course/12-porting-a-kernel-w3snl1.md), [kokkos/PORT_STATUS.md](../kokkos/PORT_STATUS.md) |
@@ -690,6 +693,8 @@ Every term above, alphabetically, with the section it lives in.
 - execution space / memory space: [HPC and software](#hpc-and-software)
 - `exercises/`: [This repository's own names](#this-repositorys-own-names)
 - explicit interface: [HPC and software](#hpc-and-software)
+- EXPAND: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- EXPND2: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - EXTCDE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - `extern "C"`: [HPC and software](#hpc-and-software)
 - F, E: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
@@ -747,6 +752,8 @@ Every term above, alphabetically, with the section it lives in.
 - genes_gmd: [HPC and software](#hpc-and-software)
 - GFS: [HPC and software](#hpc-and-software)
 - GFS / GEFS: [HPC and software](#hpc-and-software)
+- GH200: [HPC and software](#hpc-and-software)
+- GH200 / NVLink-C2C: [HPC and software](#hpc-and-software)
 - GitHub Pages / chunkedhtml / MathML: [HPC and software](#hpc-and-software)
 - GKE (NL5): [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - GMD (journal): [Models, projects and institutions](#models-projects-and-institutions)
@@ -783,6 +790,7 @@ Every term above, alphabetically, with the section it lives in.
 - GTest: [HPC and software](#hpc-and-software)
 - H100: [HPC and software](#hpc-and-software)
 - H100 / RTX 4090: [HPC and software](#hpc-and-software)
+- HBM: [HPC and software](#hpc-and-software)
 - HDF5: [HPC and software](#hpc-and-software)
 - HOMOG_COUNT: [WW3 programs and files](#ww3-programs-and-files)
 - HOMOG_COUNT / HOMOG_INPUT: [WW3 programs and files](#ww3-programs-and-files)
@@ -815,6 +823,8 @@ Every term above, alphabetically, with the section it lives in.
 - INBND_POINT: [WW3 programs and files](#ww3-programs-and-files)
 - .inp: [WW3 programs and files](#ww3-programs-and-files)
 - INSNL1: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- INSNL3: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- INSNL3 / EXPAND / EXPND2: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - `INSNL1_REF`: [This repository's own names](#this-repositorys-own-names)
 - `INTENT`: [HPC and software](#hpc-and-software)
 - IS0: [WW3 switches](#ww3-switches)
@@ -978,6 +988,7 @@ Every term above, alphabetically, with the section it lives in.
 - nvcc_wrapper: [HPC and software](#hpc-and-software)
 - nvfortran: [HPC and software](#hpc-and-software)
 - NVLink: [HPC and software](#hpc-and-software)
+- NVLink-C2C: [HPC and software](#hpc-and-software)
 - NVMe: [HPC and software](#hpc-and-software)
 - NWS: [Models, projects and institutions](#models-projects-and-institutions)
 - O0: [WW3 switches](#ww3-switches)
