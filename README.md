@@ -233,6 +233,19 @@ packages an older one), and the final stage copies only the compiled programs.
 
 CI scans the image with Trivy on every change to it and weekly (`.github/workflows/docker-scan.yml`): a HIGH or CRITICAL vulnerability with a fix fails the job. `just dscan` runs the same scan here.
 
+The Kokkos code on the GPU has its own image, `docker/Dockerfile.cuda`: NVIDIA's CUDA 13.4 on
+Ubuntu 26.04, Kokkos 5.2.2 built with CUDA for compute capability 8.9 (the RTX 4090; `KOKKOS_ARCH`
+picks another), and only `--ww3-gpu --gpu` inside. The host needs the NVIDIA driver and the
+[NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)
+for `docker run --gpus all`. As on the host, every `--gpu` run asks the supervising person for
+`yes` at the terminal ([Running on the GPU](AGENTS.md#running-on-the-gpu-hard-rule)).
+
+```console
+just dbuild-cuda            # build ww3-gpu-cuda:local
+just dsmoke-ww3-gpu-cuda    # --ww3-gpu smoke --gpu: the Fortran and the CUDA Kokkos routines, same executable
+just dfull-ww3-gpu-cuda     # the same on bench_small
+```
+
 Without just, the same with plain Docker:
 
 ```console

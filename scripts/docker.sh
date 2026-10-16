@@ -7,11 +7,13 @@
 #   scripts/docker.sh run [ww3-gpu.sh args]   run ww3-gpu.sh in the image, any of its options; runs land in
 #                                          build/docker-runs/. The image's /opt/ww3-gpu/BUILD_INFO says
 #                                          what it was built from.
+#   scripts/docker.sh build-cuda [tag]     build ww3-gpu-cuda:<tag> from docker/Dockerfile.cuda
+#   scripts/docker.sh run-cuda [args]      run ww3-gpu.sh in the GPU image with --gpus all
 #   scripts/docker.sh --dry-run <cmd> ...  print the docker command, run nothing
 #   scripts/docker.sh --self-test
 #
-# DOCKER_IMAGE overrides the image name (ww3-gpu:local). CPU only: the image has no CUDA build,
-# and ww3-gpu.sh refuses --gpu in it (exit 64).
+# DOCKER_IMAGE overrides the image name (ww3-gpu:local, ww3-gpu-cuda:local). The CPU image has no
+# CUDA build, and ww3-gpu.sh refuses --gpu in it (exit 64); the GPU image runs only --ww3-gpu --gpu.
 set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -32,6 +34,12 @@ if [ "${1:-}" = --self-test ]; then
   for want in docker/Dockerfile ww3-gpu:t1 WW3_REV=; do
     grep -q -- "$want" <<<"$out" || { echo "docker: build lost '$want': $out" >&2; exit 1; }
   done
+  out="$(bash "${BASH_SOURCE[0]}" --dry-run run-cuda --ww3-gpu smoke --gpu </dev/null)"
+  for want in "--gpus all" ww3-gpu-cuda:local "--gpu"; do
+    grep -q -- "$want" <<<"$out" || { echo "docker: run-cuda lost '$want': $out" >&2; exit 1; }
+  done
+  out="$(bash "${BASH_SOURCE[0]}" --dry-run build-cuda t1)"
+  grep -q -- "docker/Dockerfile.cuda" <<<"$out" || { echo "docker: build-cuda lost its Dockerfile: $out" >&2; exit 1; }
   bash "${BASH_SOURCE[0]}" --dry-run bogus >/dev/null 2>&1 && { echo "docker: accepted a bad command" >&2; exit 1; }
   echo "docker self-test: ok"
   exit 0
@@ -60,5 +68,17 @@ case "$cmd" in
     [ -n "$dry" ] || mkdir -p "$root/build/docker-runs"
     do_or_say docker run --rm --user "$(id -u):$(id -g)" -e "WW3GPU_ROUTINES=${WW3GPU_ROUTINES:-SNL1}" \
       -v "$root/build/docker-runs:/work/runs" "$image" "$@" ;;
+  build-cuda)
+    # The GPU image (docker/Dockerfile.cuda): --ww3-gpu on Kokkos' CUDA backend only.
+    do_or_say docker build -f "$root/docker/Dockerfile.cuda" -t "ww3-gpu-cuda:${1:-local}" \
+      --build-arg "WW3_GPU_REV=$(rev "$root")" --build-arg "WW3_REV=$(rev "$root/WW3")" "$root" ;;
+  run-cuda)
+    # --gpus all needs the NVIDIA Container Toolkit on the host. -it when there is a terminal: the
+    # script asks the supervising human for "yes" before any --gpu run (AGENTS.md hard rule).
+    [ -n "$dry" ] || mkdir -p "$root/build/docker-runs"
+    tty=(); [ -t 0 ] && tty=(-it)
+    do_or_say docker run --rm "${tty[@]}" --gpus all --user "$(id -u):$(id -g)" \
+      -e "WW3GPU_ROUTINES=${WW3GPU_ROUTINES:-SNL1}" -v "$root/build/docker-runs:/work/runs" \
+      "${DOCKER_IMAGE:-ww3-gpu-cuda:local}" "$@" ;;
   *) echo "docker: unknown command: $cmd" >&2; usage ;;
 esac

@@ -1,0 +1,97 @@
+# syntax=docker/dockerfile:1
+# The GPU image: --ww3-gpu on Kokkos' CUDA backend (scripts/ww3-gpu.sh --ww3-gpu <case> --gpu), the
+# fork WW3/ with the KOKKOS switch linked to the port built with the cuda-release preset. No Nix:
+# NVIDIA's CUDA image on Ubuntu 26.04, Kokkos built from its tarball with CUDA, and a final image
+# that keeps the compiled programs, their runtime libraries and the case inputs, not the sources.
+# --ww3 and --ww4 stay in the CPU image (docker/Dockerfile); this one runs only --gpu.
+#
+#   just dbuild-cuda                   # docker build -f docker/Dockerfile.cuda -t ww3-gpu-cuda:local .
+#   just dsmoke-ww3-gpu-cuda           # --ww3-gpu smoke --gpu in the image, docker run --gpus all
+#
+# The host needs the NVIDIA driver and the NVIDIA Container Toolkit (`docker run --gpus all`).
+# Hard rule (AGENTS.md): --gpu runs only under a human's supervision, so the script still asks for
+# `yes` at the terminal inside the container (`docker run -it`).
+
+# CUDA 13.4.2 on Ubuntu 26.04 (2026-10-16); the runtime stage is the same CUDA's runtime image.
+ARG CUDA_DEVEL=nvidia/cuda:13.4.2-devel-ubuntu26.04
+ARG CUDA_RUNTIME=nvidia/cuda:13.4.2-runtime-ubuntu26.04
+ARG KOKKOS_VERSION=5.2.2
+ARG KOKKOS_SHA256=d6557aaef39302282a15f9c770433d1fcdf4e961dfd6d9ed726b9d0d0f546b9f
+# ADA89 is the RTX 4090 (compute capability 8.9), as kokkos/CMakePresets.json's cuda-release.
+ARG KOKKOS_ARCH=ADA89
+
+FROM ${CUDA_DEVEL} AS build
+ARG DEBIAN_FRONTEND=noninteractive
+ARG KOKKOS_VERSION
+ARG KOKKOS_SHA256
+ARG KOKKOS_ARCH
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      gfortran g++ cmake ninja-build make pkg-config perl python3 ca-certificates curl \
+      libnetcdf-dev libnetcdff-dev libgtest-dev \
+ && rm -rf /var/lib/apt/lists/*
+
+# Kokkos Serial + CUDA; its nvcc_wrapper is installed in /opt/kokkos/bin, which the port's
+# cuda-release preset names as the C++ compiler.
+RUN curl -fsSL -o /tmp/kokkos.tgz \
+      "https://github.com/kokkos/kokkos/releases/download/${KOKKOS_VERSION}/kokkos-${KOKKOS_VERSION}.tar.gz" \
+ && echo "${KOKKOS_SHA256}  /tmp/kokkos.tgz" | sha256sum -c - \
+ && tar xzf /tmp/kokkos.tgz -C /tmp \
+ && cmake -S "/tmp/kokkos-${KOKKOS_VERSION}" -B /tmp/kokkos-build -G Ninja -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_INSTALL_PREFIX=/opt/kokkos -DKokkos_ENABLE_SERIAL=ON -DKokkos_ENABLE_CUDA=ON \
+      "-DKokkos_ARCH_${KOKKOS_ARCH}=ON" -DKokkos_ENABLE_TESTS=OFF -DKokkos_ENABLE_DEPRECATED_CODE_4=OFF \
+      -DCMAKE_CXX_STANDARD=20 "-DCMAKE_CXX_COMPILER=/tmp/kokkos-${KOKKOS_VERSION}/bin/nvcc_wrapper" \
+ && cmake --build /tmp/kokkos-build && cmake --install /tmp/kokkos-build \
+ && rm -rf /tmp/kokkos*
+ENV PATH=/opt/kokkos/bin:$PATH
+
+WORKDIR /src
+COPY kokkos/ kokkos/
+COPY WW3/ WW3/
+COPY switches/switch_lab_shrd switches/
+
+ENV P=/opt/ww3-gpu/prebuilt
+RUN cmake -S kokkos --preset cuda-release -B /build/kokkos -DCMAKE_PREFIX_PATH=/opt/kokkos \
+ && cmake --build /build/kokkos \
+ && cmake --install /build/kokkos --prefix /opt/ww_kokkos \
+ && install -D -m 755 /build/kokkos/tools/nccmp-tol/nccmp-tol "$P/bin/nccmp-tol" \
+ && install -D -m 644 kokkos/tools/nccmp-tol/tolerances.txt "$P/share/tolerances.txt"
+
+# The fork with the lab switch plus KOKKOS, as scripts/ww3-gpu.sh builds it for --gpu.
+RUN printf '%s KOKKOS\n' "$(cat switches/switch_lab_shrd)" > /tmp/switch_ww3gpu \
+ && cmake -S WW3 -B /build/ww3-gpu -DSWITCH=/tmp/switch_ww3gpu -DCMAKE_BUILD_TYPE=Release \
+      -DWW_KOKKOS=ON "-DCMAKE_PREFIX_PATH=/opt/ww_kokkos;/opt/kokkos" -DCMAKE_CXX_COMPILER=nvcc_wrapper \
+ && cmake --build /build/ww3-gpu -j"$(nproc)" \
+ && mkdir -p "$P/ww3-gpu-cuda" && cp -r /build/ww3-gpu/bin "$P/ww3-gpu-cuda/bin" \
+ && mkdir -p "$P/cases/ww3_ts1" \
+ && cp -r WW3/regtests/ww3_ts1/input "$P/cases/ww3_ts1/input" \
+ && cp -r kokkos/tests/fixtures/bench_small "$P/cases/bench_small"
+
+# The runtime packages: the packages (Ubuntu's and NVIDIA's) that own every library loaded.
+# libcuda.so comes from the host driver through the container toolkit, so it is left out.
+RUN find "$P" -type f -perm -u+x -exec ldd {} + 2>/dev/null \
+      | awk '/=> \// { print $3 }' | grep -v '/libcuda\.so' | sort -u | xargs -r realpath \
+      | while read -r f; do dpkg -S "$f" 2>/dev/null || dpkg -S "/usr$f" 2>/dev/null || dpkg -S "${f#/usr}" 2>/dev/null; done \
+      | cut -d: -f1 | sort -u > /opt/ww3-gpu/runtime-packages.txt \
+ && cat /opt/ww3-gpu/runtime-packages.txt
+
+ARG WW3_GPU_REV=?
+ARG WW3_REV=?
+RUN { echo "ww3-gpu ${WW3_GPU_REV}"; echo "WW3 ${WW3_REV} (h0ffmann/WW3)"; \
+      echo "kokkos ${KOKKOS_VERSION} CUDA ${KOKKOS_ARCH}"; nvcc --version | tail -1; \
+      gfortran --version | head -1; cmake --version | head -1; } > /opt/ww3-gpu/BUILD_INFO
+
+FROM ${CUDA_RUNTIME}
+ARG DEBIAN_FRONTEND=noninteractive
+COPY --from=build /opt/ww3-gpu /opt/ww3-gpu
+RUN apt-get update && apt-get upgrade -y \
+ && xargs -a /opt/ww3-gpu/runtime-packages.txt apt-get install -y --no-install-recommends \
+ && rm -rf /var/lib/apt/lists/* /usr/bin/pebble
+RUN useradd --create-home --shell /bin/bash wave
+COPY --chmod=755 scripts/ww3-gpu.sh /opt/ww3-gpu/scripts/ww3-gpu.sh
+ENV WW3GPU_PREBUILT=/opt/ww3-gpu/prebuilt \
+    WW3GPU_RUNS=/work/runs
+WORKDIR /work
+RUN chown wave:wave /work
+USER wave
+ENTRYPOINT ["/opt/ww3-gpu/scripts/ww3-gpu.sh"]
+CMD ["--ww3-gpu", "smoke", "--gpu"]
