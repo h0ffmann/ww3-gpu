@@ -27,6 +27,34 @@
 #include "srce_is1.hpp"
 #include "srce_ref1.hpp"
 #include "srce_tr1.hpp"
+#include "srce_flx1.hpp"
+#include "srce_flx2.hpp"
+#include "srce_flx3.hpp"
+#include "srce_flx4.hpp"
+#include "srce_flx5.hpp"
+#include "srce_st0_spr0.hpp"
+#include "srce_st1_sds1.hpp"
+#include "srce_st1_sin1.hpp"
+#include "srce_st1_spr1.hpp"
+#include "srce_st2_inptab.hpp"
+#include "srce_st2_sds2.hpp"
+#include "srce_st2_sin2.hpp"
+#include "srce_st2_spr2.hpp"
+#include "srce_st3_calc_ustar.hpp"
+#include "srce_st3_insin3.hpp"
+#include "srce_st3_sds3.hpp"
+#include "srce_st3_sin3.hpp"
+#include "srce_st3_spr3.hpp"
+#include "srce_st3_tabu_stress.hpp"
+#include "srce_st3_tabu_tauhf.hpp"
+#include "srce_st6_lfactor.hpp"
+#include "srce_st6_sds6.hpp"
+#include "srce_st6_spr6.hpp"
+#include "srce_st6_tau_wave_atmos.hpp"
+#include "srce_st6_util.hpp"
+#include "srce_swl4.hpp"
+#include "srce_swl6.hpp"
+#include "srce_swl_util.hpp"
 #include "updt_dzxy.hpp"
 #include "updt_utrn.hpp"
 #include "updt_uwnd.hpp"
@@ -43,4 +71,6 @@ void ww_support_instantiate() {
   (void)&ww::disp::distab<E>;
   (void)&ww::prop::w3map3<E>;
   (void)&ww::prop::w3mapt<E>;
+  (void)&ww::srce::st3::w3sin3_point<false>;
+  (void)&ww::srce::st3::w3sin3_point<true>;
 }
