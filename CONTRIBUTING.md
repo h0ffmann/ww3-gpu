@@ -47,6 +47,11 @@ The issue forms (*New issue* on GitHub) ask for what each kind of report needs: 
 asks for the command, commit, machine and parity status; a **Spike** for one question, a time box and
 its output; a **WFIP idea** for the proposal deliverable it moves.
 
+Labels are listed in [`.github/labels.yml`](.github/labels.yml) and explained in
+[`ISSUE_LABELS.md`](ISSUE_LABELS.md): give an issue at least one `area/*` (`area/regtest`,
+`area/kokkos`, `area/gpu`, ...). A new or renamed label is a pull request to the manifest, never an
+edit on GitHub's settings page; `just labels-sync` applies it.
+
 ## The proposal (`pubs/proposal/`)
 
 Every change to `pubs/proposal/` goes through the `revisor-proposta` subagent before the pull

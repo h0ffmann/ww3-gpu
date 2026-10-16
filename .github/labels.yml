@@ -1,0 +1,145 @@
+# The label taxonomy, versioned: every label on h0ffmann/ww3-gpu, with its colour and description.
+# ISSUE_LABELS.md says what each one means and when to use it. `just labels-sync` reconciles GitHub
+# against this file with marola-devkit's issues.sh, and .github/workflows/labels.yml does the same
+# on every push to main that changes it; GitHub's settings UI is no longer the source of truth.
+#
+# The shape is marola-devkit's and is parsed strictly by its scripts/issues.sh: one `- name:` per
+# label, then `color:` and `description:`, in that order. Colours are lowercase hex without '#'.
+# A sync creates and edits, never renames a label to another name and never deletes one without
+# --prune: a rename is a `gh label edit --name` by hand first (ISSUE_LABELS.md, "Changing a label").
+
+# --- GitHub's defaults, kept as GitHub ships them ---
+
+- name: "bug"
+  color: "d73a4a"
+  description: "Something isn't working"
+
+- name: "documentation"
+  color: "0075ca"
+  description: "Improvements or additions to documentation"
+
+- name: "duplicate"
+  color: "cfd3d7"
+  description: "This issue or pull request already exists"
+
+- name: "enhancement"
+  color: "a2eeef"
+  description: "New feature or request"
+
+- name: "good first issue"
+  color: "7057ff"
+  description: "Good for newcomers"
+
+- name: "help wanted"
+  color: "008672"
+  description: "Extra attention is needed"
+
+- name: "invalid"
+  color: "e4e669"
+  description: "This doesn't seem right"
+
+- name: "question"
+  color: "d876e3"
+  description: "Further information is requested"
+
+- name: "wontfix"
+  color: "ffffff"
+  description: "This will not be worked on"
+
+# --- area/*: which part of the work, one or more per issue ---
+
+- name: "area/kokkos"
+  color: "1d76db"
+  description: "The C++/Kokkos port: kernels, bind(C) shims, ports.tsv, port reports (kokkos/)"
+
+- name: "area/regtest"
+  color: "0e8a16"
+  description: "WW3's own regtests: just smoke/full-ww3-gpu, the regtest matrix (regtests/), references"
+
+- name: "area/parity"
+  color: "5319e7"
+  description: "Bit for bit with the Fortran: a test.comp difference, ww3_self, the GIMPLE comparison"
+
+- name: "area/gpu"
+  color: "76b900"
+  description: "CUDA backend, GPU builds and GPU hardware (RTX 4090, H100)"
+
+- name: "area/bench"
+  color: "fbca04"
+  description: "Timings and profiles: bench/, bench/results/, the timing column of PORT_STATUS.md"
+
+- name: "area/nix"
+  color: "7eb6e8"
+  description: "The pinned toolchain: picasso shells, flake.nix, compilers, just prereqs"
+
+- name: "area/docker"
+  color: "0db7ed"
+  description: "Container images, .devcontainer/, dbuild/drun, the Trivy scan"
+
+- name: "area/ufsc"
+  color: "006b75"
+  description: "LabECO/UFSC: the H100 machine, its access and the co-advising"
+
+- name: "area/proposal"
+  color: "d4c5f9"
+  description: "The UFRJ/DEL project proposal (pubs/proposal/), reviewed by revisor-proposta"
+
+- name: "area/book"
+  color: "e99695"
+  description: "The book: course/ chapters, examples, exercises, the PDF and Leanpub builds"
+
+- name: "area/noaa"
+  color: "ededed"
+  description: "NOAA announcements and upstream WW3/WW4 changes that affect this repo"
+
+- name: "area/dev-tooling"
+  color: "bfd4f2"
+  description: "Agents, skills, hooks, CI and the scripts behind just, not the lab code"
+
+# --- kind/*, size/*, priority/*: what sort of work, how big, how urgent ---
+
+- name: "kind/research"
+  color: "c5def5"
+  description: "A spike, survey or evaluation: the output is findings, not shipped code"
+
+- name: "size/S"
+  color: "c5def5"
+  description: "Under ~100 changed lines"
+
+- name: "size/M"
+  color: "c5def5"
+  description: "Roughly 100-400 changed lines"
+
+- name: "size/L"
+  color: "c5def5"
+  description: "Over ~400 lines: split it; only ever legal on a parent issue"
+
+- name: "priority/high"
+  color: "b60205"
+  description: "Do before other open work of the same area"
+
+# --- names automation depends on: rename only together with what reads them ---
+
+- name: "wfip"
+  color: "ededed"
+  description: "Touches a WFIP or a spec; .github/labeler.yml sets it, release.yml gives it a heading"
+
+- name: "A2A"
+  color: "fbca04"
+  description: "Mensagens entre os projetos Claude (Marola Agent e Wave Forecaster Agent)"
+
+- name: "para:marola"
+  color: "0e7c86"
+  description: "Mensagem para o projeto Claude Marola Agent; quem tem a label responde"
+
+- name: "para:wave-forecaster"
+  color: "5319e7"
+  description: "Mensagem para o projeto Claude Wave Forecaster Agent; quem tem a label responde"
+
+- name: "skills-update"
+  color: "c5def5"
+  description: "A vendored skill re-pinned by the skills workflow (.claude/skills/skills.lock)"
+
+- name: "kimi"
+  color: "bfd4f2"
+  description: "Kimi Code sessions and improvements"

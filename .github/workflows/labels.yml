@@ -1,0 +1,20 @@
+# labels — apply .github/labels.yml to this repo's labels with marola-devkit's reusable labels-sync
+# (ISSUE_LABELS.md), on every push to main that changes the manifest, or by hand. It creates and
+# edits; it never deletes (prune: false). `just labels-sync` does the same from a terminal.
+name: labels
+
+on:
+  push:
+    branches: [main]
+    paths: [.github/labels.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  sync:
+    uses: marola-dev/marola-devkit/.github/workflows/labels-sync.yml@v0.11.1
+    with:
+      devkit-ref: v0.11.1
