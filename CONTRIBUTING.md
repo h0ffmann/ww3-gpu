@@ -223,7 +223,10 @@ directory, `.kimi-code/AGENTS.md` and then `AGENTS.md`, and skills from `.kimi-c
 files together are past that. So the root `AGENTS.md` stays the rulebook, the skills reach Kimi
 Code through the same `.agents/skills` link Antigravity uses, and
 [`.kimi-code/AGENTS.md`](.kimi-code/AGENTS.md) holds only what Kimi Code lacks: where to read
-first, and the hooks, subagents and slash commands it must do by hand.
+first, and the hooks, subagents and slash commands it must do by hand. Lookups go through
+[`.kimi-code/RETRIEVAL.md`](.kimi-code/RETRIEVAL.md), a question-to-source map read on demand:
+because the two auto-loaded files already pass the 32 KB warning, retrieval detail stays out of
+them.
 
 ## Opening a pull request
 
