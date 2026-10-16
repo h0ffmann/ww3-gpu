@@ -1,6 +1,6 @@
 # NOAA's operational switches on Kokkos: the next translation batch (phase 1)
 
-Status: **batches A and B translated and reviewed**, 2026-10-16 (PR #152); `kokkos/PORT_TABLE.tsv` has each routine's state. Not wired, not regtested. Issue [#42](https://github.com/h0ffmann/ww3-gpu/issues/42),
+Status: **batches A and B translated and reviewed, batch C under way**, 2026-10-16 (PR #152); `kokkos/PORT_TABLE.tsv` has each routine's state. Not wired, not regtested. Issue [#42](https://github.com/h0ffmann/ww3-gpu/issues/42),
 the port planner. Translation only, bit for bit, no test run, under
 [ADR-0011](ADRs/ADR-0011-port-in-units-regtest-at-checkpoints.md); the port has no tests of its own
 ([ADR-0010](ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md)).
@@ -63,6 +63,23 @@ the owner moved it to this branch on 2026-10-16, before any work on it had start
 Each is one header, one port report, one `kokkos/ports.tsv` row, then
 `python3 scripts/port_score.py --write`, as in the units before
 ([`W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md`](W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md), "Method").
+
+## Batch C: this branch (partitioning and `NL3`)
+
+With batches A and B in, the most expensive Fortran left in the PDLIB profile, after the `W3WAVE` driver itself, is the spectral
+partitioning `W3PARTMD` (`pt_fld`, `ptmean`, `ptsort`, `w3part` in `docs/data/ww3_pdlib_gprof.tsv`),
+which every switch compiles and GFS-Wave's partitioned output calls. `NL3` is the nonlinear term
+of `switch_NCEP_glwu`, the Great Lakes system.
+
+| Routine | Lines | Size |
+|---|---|---|
+| `W3PART` | `w3partmd.F90:138-497` | 360 |
+| `PTSORT` | `w3partmd.F90:511-613` | 103 |
+| `PTNGHB` | `w3partmd.F90:630-821` | 192 |
+| `PT_FLD` | `w3partmd.F90:839-1156` | 318 |
+| `PTMEAN` | `w3partmd.F90:1175-1538` | 364 |
+| `INSNL3` | `w3snl3md.F90:788-1649` | 862 |
+| `W3SNL3` | `w3snl3md.F90:181-777` | 597 |
 
 ## The fork
 
