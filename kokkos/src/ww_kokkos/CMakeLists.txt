@@ -52,12 +52,15 @@ target_sources(ww_kokkos PRIVATE
     srce_ic4.hpp
     srce_ic1.hpp
     srce_is1.hpp
+    srce_tr1.hpp
+    srce_bt4.hpp
     pdlib_params.hpp
     pdlib_fsn2.hpp
     pdlib_fspsi2.hpp
     pdlib_boundary_va.hpp
     pdlib_jacobi_spectral.hpp
     pdlib_jacobi_vec.hpp
+    pdlib_jgs_block.hpp
     prop_parall.hpp
     prop_freq_shift.hpp
     wave_support.cpp

@@ -134,3 +134,8 @@ The record is the `regtested` column of `kokkos/ports.tsv`.
 | `w3sic1md:w3sic1` | ported | `srce_ic1.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and the W3SRCE hunk |
 | `w3dispmd:wavnu3` | ported | `disp_wavnu3.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its PDLIB callers wired |
 | `w3dispmd:wavnu_local` | ported | `disp_wavnu3.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its PDLIB callers wired |
+| `w3str1md:w3str1` | ported | `srce_tr1.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and the W3SRCE hunk |
+| `w3sbt4md:tabu_erf` | ported | `srce_bt4.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and the W3SRCE hunk |
+| `w3sbt4md:insbt4` | ported | `srce_bt4.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and the W3SRCE hunk |
+| `w3sbt4md:w3sbt4` | ported | `srce_bt4.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and the W3SRCE hunk |
+| `pdlib_w3profsmd:pdlib_jacobi_gauss_seidel_block` | ported | `pdlib_jgs_block.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim with the MPI hooks and the U_JAC contract, and the W3WAVE hunk |
