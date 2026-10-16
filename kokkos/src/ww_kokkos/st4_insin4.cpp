@@ -30,8 +30,6 @@ Real powi(Real x, int n) {
   return (n < 0) ? static_cast<Real>(1) / y : y;
 }
 
-/// Fortran NINT on REAL: round half away from zero (__builtin_iroundf).
-int nint(Real x) { return static_cast<int>(std::lround(x)); }
 
 /// WAVNU2(W, H, K, CG, EPS, NMAX, ICON), w3dispmd.F90:204-346: wavenumber by
 /// Newton iteration on the dispersion relation. Compiled in its own unit, so

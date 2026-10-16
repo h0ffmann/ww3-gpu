@@ -21,12 +21,6 @@ namespace ww::st4 {
 
 namespace sin4_detail {
 
-// Fortran MAX/MIN of two REALs (GIMPLE MAX_EXPR/MIN_EXPR). NaN operands are
-// not reproduced ⚠: MAX_EXPR leaves the NaN result unspecified.
-KOKKOS_INLINE_FUNCTION Real fmax_(Real a, Real b) { return a > b ? a : b; }
-KOKKOS_INLINE_FUNCTION Real fmin_(Real a, Real b) { return a < b ? a : b; }
-KOKKOS_INLINE_FUNCTION int imax_(int a, int b) { return a > b ? a : b; }
-KOKKOS_INLINE_FUNCTION int imin_(int a, int b) { return a < b ? a : b; }
 
 // Constants gfortran folds at compile time; each checked against the dump.
 inline constexpr Real kKappa2 = kKappa * kKappa;  // KAPPA**2, :606
@@ -78,8 +72,8 @@ KOKKOS_INLINE_FUNCTION void w3sin4_point(const Params& p, const Fields& f, const
   Real const0 = const1 * drat;            // :607
 
   // 1.a  surface roughness (:611-614); FACLN1/FACLN2 are not used further.
-  const Real z0visc = kZ0viscNum / fmax_(ustar, static_cast<Real>(0.0001));
-  const Real z0noz = fmax_(z0visc, p.zz0rat * z0);
+  const Real z0visc = kZ0viscNum / max_r(ustar, static_cast<Real>(0.0001));
+  const Real z0noz = max_r(z0visc, p.zz0rat * z0);
 
   // 1.b  orbital velocity and displacement (:618-638)
   Real uorb = static_cast<Real>(0.);
@@ -131,9 +125,9 @@ KOKKOS_INLINE_FUNCTION void w3sin4_point(const Params& p, const Fields& f, const
     fu = Kokkos::fabs(p.sswellf[2]);
     fud = p.sswellf[1];
     aorb = static_cast<Real>(2) * Kokkos::sqrt(aorb);
-    const Real xi = (Kokkos::log10(fmax_(aorb / z0noz, static_cast<Real>(3.))) - kAbMin) / p.delab;
-    const int ind = imin_(kSizeFwTable - 1, fint(xi));
-    const Real deli1 = fmin_(static_cast<Real>(1.), xi - static_cast<Real>(ind));
+    const Real xi = (Kokkos::log10(max_r(aorb / z0noz, static_cast<Real>(3.))) - kAbMin) / p.delab;
+    const int ind = min_i(kSizeFwTable - 1, fint(xi));
+    const Real deli1 = min_r(static_cast<Real>(1.), xi - static_cast<Real>(ind));
     const Real deli2 = static_cast<Real>(1.) - deli1;
     fw = f.fwtable(ind) * deli2 + f.fwtable(ind + 1) * deli1;
   }
@@ -145,7 +139,7 @@ KOKKOS_INLINE_FUNCTION void w3sin4_point(const Params& p, const Fields& f, const
     if (Kokkos::isnan(as)) {
       usigma = static_cast<Real>(0.);
     } else {
-      usigma = fmax_(static_cast<Real>(0.), static_cast<Real>(-0.025) * as);
+      usigma = max_r(static_cast<Real>(0.), static_cast<Real>(-0.025) * as);
     }
     ustarsigma = (static_cast<Real>(1.0) + u / (static_cast<Real>(10.) + u)) * usigma;
   }
@@ -170,8 +164,8 @@ KOKKOS_INLINE_FUNCTION void w3sin4_point(const Params& p, const Fields& f, const
       const Real taupx = taux - Kokkos::fabs(p.ttauwshelter) * stressstab[istab - 1][0];
       const Real taupy = tauy - Kokkos::fabs(p.ttauwshelter) * stressstab[istab - 1][1];
       // (..)**0.25 is powf(x, 0.25) in the dump (:717).
-      ustp = fmin_(Kokkos::pow((taupx * taupx + taupy * taupy), static_cast<Real>(0.25)),
-                   fmax_(ust, static_cast<Real>(0.3)));
+      ustp = min_r(Kokkos::pow((taupx * taupx + taupy * taupy), static_cast<Real>(0.25)),
+                   max_r(ust, static_cast<Real>(0.3)));
       usdirp = Kokkos::atan2(taupy, taupx);
       cosu = Kokkos::cos(usdirp);
       sinu = Kokkos::sin(usdirp);
@@ -273,7 +267,7 @@ KOKKOS_INLINE_FUNCTION void w3sin4_point(const Params& p, const Fields& f, const
     const int is = ith + (nk - 1) * nth;
     // COSU/SINU are from the last IK=NK pass (:719-720), not from USDIRP of :838.
     const Real coswind = (f.ecos(is - 1) * cosu + f.esin(is - 1) * sinu);
-    const Real cp = (fmax_(coswind, static_cast<Real>(0.)));
+    const Real cp = (max_r(coswind, static_cast<Real>(0.)));
     temp = temp + a[is - 1] * (cp * (cp * cp));
   }
   const Real levtail0 = const0 * temp;
@@ -303,16 +297,16 @@ KOKKOS_INLINE_FUNCTION void w3sin4_point(const Params& p, const Fields& f, const
       const Real cgtail = static_cast<Real>(0.5) * (static_cast<Real>(3) * ykm2 + static_cast<Real>(1)) *
                           Kokkos::sqrt(kGrav / (y * tensk));
       const Real zx = ustr / cm + p.zzalp;
-      const Real zarg = fmin_(kKappa / zx, static_cast<Real>(20.));
-      const Real zmu = fmin_(kGrav * zz0 / (cm * cm) * Kokkos::exp(zarg), static_cast<Real>(1.));
-      const Real zlog = fmin_(Kokkos::log(zmu), static_cast<Real>(0.));
+      const Real zarg = min_r(kKappa / zx, static_cast<Real>(20.));
+      const Real zmu = min_r(kGrav * zz0 / (cm * cm) * Kokkos::exp(zarg), static_cast<Real>(1.));
+      const Real zlog = min_r(Kokkos::log(zmu), static_cast<Real>(0.));
       const Real zlog2 = zlog * zlog;
       const Real zbeta = const1 * zmu * (zlog2 * zlog2);
       Real levtail;
       if (p.sintailpar[2] > static_cast<Real>(0)) {  // capillary peak, :907-919
         Real alpham;
         if (ustr < cm) {
-          alpham = fmax_(static_cast<Real>(0.),
+          alpham = max_r(static_cast<Real>(0.),
                          static_cast<Real>(0.01) * (static_cast<Real>(1.) + Kokkos::log(ustr / cm)));
         } else {
           alpham = static_cast<Real>(0.01) * (static_cast<Real>(1) + static_cast<Real>(3.) * Kokkos::log(ustr / cm));
@@ -328,25 +322,25 @@ KOKKOS_INLINE_FUNCTION void w3sin4_point(const Params& p, const Fields& f, const
       }
       tau1 = tau1 + w[j - 1] * zbeta * (ustr * ustr) * levtail * dely * cgtail / cm;
       taur = taur - w[j - 1] * p.sintailpar[1] * (ustr * ustr) * zbeta * levtail * dely * cgtail / cm;
-      ustr = Kokkos::sqrt(fmax_(taur, static_cast<Real>(0.)));
+      ustr = Kokkos::sqrt(max_r(taur, static_cast<Real>(0.)));
     }
     tauhf = tau1;
   } else {
     // Tabulated tail stress TAUHFT / TAUHFT2 (:936-962); tables are 0-based like the Fortran.
     const Real xi = ust / p.delust;
-    const int ind = imax_(1, imin_(kIustar - 1, fint(xi)));
-    const Real deli1 = fmax_(fmin_(static_cast<Real>(1.), xi - static_cast<Real>(ind)), static_cast<Real>(0.));
+    const int ind = max_i(1, min_i(kIustar - 1, fint(xi)));
+    const Real deli1 = max_r(min_r(static_cast<Real>(1.), xi - static_cast<Real>(ind)), static_cast<Real>(0.));
     const Real deli2 = static_cast<Real>(1.) - deli1;
-    const Real ustm = fmax_(ust, static_cast<Real>(0.00001));
-    const Real xj = fmax_(static_cast<Real>(0.), (kGrav * z0 / (ustm * ustm) - p.aalpha) / p.delalp);
-    const int j = imax_(1, imin_(kIalpha - 1, fint(xj)));
-    const Real delj1 = fmax_(static_cast<Real>(0.), fmin_(static_cast<Real>(1.), xj - static_cast<Real>(j)));
+    const Real ustm = max_r(ust, static_cast<Real>(0.00001));
+    const Real xj = max_r(static_cast<Real>(0.), (kGrav * z0 / (ustm * ustm) - p.aalpha) / p.delalp);
+    const int j = max_i(1, min_i(kIalpha - 1, fint(xj)));
+    const Real delj1 = max_r(static_cast<Real>(0.), min_r(static_cast<Real>(1.), xj - static_cast<Real>(j)));
     const Real delj2 = static_cast<Real>(1.) - delj1;
     Real tau1;
     if (p.ttauwshelter > static_cast<Real>(0)) {
       const Real xk = levtail0 / p.deltail;
-      const int i = imin_(kIlevTail - 1, fint(xk));
-      const Real delk1 = fmin_(static_cast<Real>(1.), xk - static_cast<Real>(i));
+      const int i = min_i(kIlevTail - 1, fint(xk));
+      const Real delk1 = min_r(static_cast<Real>(1.), xk - static_cast<Real>(i));
       const Real delk2 = static_cast<Real>(1.) - delk1;
       const auto& t2 = f.tauhft2;
       tau1 = ((t2(ind, j, i) * deli2 + t2(ind + 1, j, i) * deli1) * delj2 +
@@ -366,9 +360,9 @@ KOKKOS_INLINE_FUNCTION void w3sin4_point(const Params& p, const Fields& f, const
   tauwy = ystress + tauhf * Kokkos::sin(usdirp);
   // Tail reduced so the wave-supported stress stays below the total, ECWAM Stresso.F (:970-976).
   const Real tauw = Kokkos::sqrt(tauwx * tauwx + tauwy * tauwy);
-  const Real ust2b = fmax_(ustar, kEps2);
+  const Real ust2b = max_r(ustar, kEps2);
   const Real ust2 = ust2b * ust2b;
-  const Real tauwb = fmin_(tauw, fmax_(ust2 - kEps1, kEps2Sq));
+  const Real tauwb = min_r(tauw, max_r(ust2 - kEps1, kEps2Sq));
   if (tauwb < tauw) {
     tauwx = tauwx * tauwb / tauw;
     tauwy = tauwy * tauwb / tauw;

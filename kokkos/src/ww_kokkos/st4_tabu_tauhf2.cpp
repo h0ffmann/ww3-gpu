@@ -19,9 +19,6 @@
 namespace ww::st4 {
 
 namespace {
-// Fortran MAX/MIN of REAL: MAX_EXPR/MIN_EXPR in the dump; no NaN reaches them here.
-inline Real fmax_(Real a, Real b) { return a > b ? a : b; }
-inline Real fmin_(Real a, Real b) { return a < b ? a : b; }
 }  // namespace
 
 void tabu_tauhf2(Params& p, Real sigmax, HostArrays& a) {
@@ -50,13 +47,13 @@ void tabu_tauhf2(Params& p, Real sigmax, HostArrays& a) {
   const Real x0 = static_cast<Real>(0.05);  // :1747
 
   for (int k = 0; k <= kIustar; ++k) {
-    const Real ust0 = fmax_(static_cast<Real>(k) * p.delust, static_cast<Real>(0.000001));  // :1750
+    const Real ust0 = max_r(static_cast<Real>(k) * p.delust, static_cast<Real>(0.000001));  // :1750
     for (int l = 0; l <= kIalpha; ++l) {
       Real ust = ust0;  // :1752, not reset per I: each I starts from the previous I's final UST
       const Real zz0 = ((p.aalpha + static_cast<Real>(l) * p.delalp) * (ust0 * ust0)) / g;  // :1753
-      const Real omegacc = fmax_((x0 * g) / ust, omegac);  // :1754
+      const Real omegacc = max_r((x0 * g) / ust, omegac);  // :1754
       const Real yc = std::sqrt(zz0 / g) * omegacc;        // :1755
-      const Real dely = fmax_((static_cast<Real>(1.) - yc) / static_cast<Real>(kJtot), static_cast<Real>(0.));  // :1756
+      const Real dely = max_r((static_cast<Real>(1.) - yc) / static_cast<Real>(kJtot), static_cast<Real>(0.));  // :1756
       for (int i = 0; i <= kIlevTail; ++i) {
         const Real levtail = static_cast<Real>(i) * p.deltail;  // :1761
         // :1762 TAUHFT(K,L) is reset for every I; its integrand uses UST0 only, so
@@ -70,22 +67,22 @@ void tabu_tauhf2(Params& p, Real sigmax, HostArrays& a) {
           const Real omega = std::sqrt(g / zz0) * y;            // :1768
           const Real cm = g / omega;                            // :1770
           Real zx = ust0 / cm + p.zzalp;                        // :1772
-          Real zarg = fmin_(kKappa / zx, static_cast<Real>(20.));
-          Real zmu = fmin_(((zz0 * g) / (cm * cm)) * std::exp(zarg), static_cast<Real>(1.));
-          Real zlog = fmin_(std::log(zmu), static_cast<Real>(0.));
+          Real zarg = min_r(kKappa / zx, static_cast<Real>(20.));
+          Real zmu = min_r(((zz0 * g) / (cm * cm)) * std::exp(zarg), static_cast<Real>(1.));
+          Real zlog = min_r(std::log(zmu), static_cast<Real>(0.));
           Real zl2 = zlog * zlog;
           Real zbeta = (const1 * zmu) * (zl2 * zl2);
           tauhft(k, l) = tauhft(k, l) + ((w[j - 1] * zbeta) / y) * dely;  // :1778
           zx = ust / cm + p.zzalp;                                        // :1779
-          zarg = fmin_(kKappa / zx, static_cast<Real>(20.));
-          zmu = fmin_(((zz0 * g) / (cm * cm)) * std::exp(zarg), static_cast<Real>(1.));
-          zlog = fmin_(std::log(zmu), static_cast<Real>(0.));
+          zarg = min_r(kKappa / zx, static_cast<Real>(20.));
+          zmu = min_r(((zz0 * g) / (cm * cm)) * std::exp(zarg), static_cast<Real>(1.));
+          zlog = min_r(std::log(zmu), static_cast<Real>(0.));
           zl2 = zlog * zlog;
           zbeta = (const1 * zmu) * (zl2 * zl2);
           const Real r = ust / ust0;
           tauhft2(k, l, i) = tauhft2(k, l, i) + (((w[j - 1] * zbeta) * (r * r)) / y) * dely;  // :1785
           tauw = tauw - (((((w[j - 1] * (ust * ust)) * zbeta) * levtail) / y) * dely);      // :1786
-          ust = std::sqrt(fmax_(tauw, static_cast<Real>(0.)));                               // :1787
+          ust = std::sqrt(max_r(tauw, static_cast<Real>(0.)));                               // :1787
         }
       }
     }

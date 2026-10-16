@@ -29,10 +29,6 @@ namespace ww::st4 {
 inline int spr4_work_reals(const Params& p) { return 4 * p.nk; }
 inline int spr4_work_ints(const Params& p) { (void)p; return 0; }
 
-namespace detail {
-/// Fortran MAX of two REALs, as gfortran -O3 emits it (MAX_EXPR).
-KOKKOS_INLINE_FUNCTION Real spr4_max(Real a, Real b) { return (a > b) ? a : b; }
-}  // namespace detail
 
 /// W3SPR4 for one point. Arrays are the caller's, 0-based: a = A(NTH,NK) as
 /// A(NSPEC), cg = CG(1:NK), wn = WN(1:NK), llws = LLWS(1:NSPEC) as 0/1.
@@ -46,7 +42,6 @@ KOKKOS_INLINE_FUNCTION void w3spr4_point(const Params& p, const Fields& f, const
                                          Real& charn, Real& fmeanws, Real& dlwmean, Real* work,
                                          int* iwork) {
   (void)iwork;
-  using detail::spr4_max;
   const int nk = p.nk;
   const int nth = p.nth;
   const Real eps = static_cast<Real>(1.E-7);
@@ -55,8 +50,8 @@ KOKKOS_INLINE_FUNCTION void w3spr4_point(const Params& p, const Fields& f, const
   Real* pwsig = work + 2 * nk;  // SIG(IK)**(2.*WWNMEANPTAIL), :316 and :319
   Real* pwwn = work + 3 * nk;   // WN(IK)**WWNMEANP, :317
 
-  Real unz = spr4_max(static_cast<Real>(0.01), u);  // :280
-  ustar = spr4_max(static_cast<Real>(0.0001), ustar);  // :278
+  Real unz = max_r(static_cast<Real>(0.01), u);  // :280
+  ustar = max_r(static_cast<Real>(0.0001), ustar);  // :278
 
   emean = 0;
   Real emeanws = 0;
@@ -82,7 +77,7 @@ KOKKOS_INLINE_FUNCTION void w3spr4_point(const Params& p, const Fields& f, const
       elcs = elcs + aa * f.ecos(is - 1) * sigfac;
       elsn = elsn + aa * f.esin(is - 1) * sigfac;
       if (llws[is - 1] != 0) eb2[ik - 1] = eb2[ik - 1] + aa;
-      amax = spr4_max(amax, aa);  // MAX(AMAX, A): -O3 MAX_EXPR <A, AMAX>
+      amax = max_r(amax, aa);  // MAX(AMAX, A): -O3 MAX_EXPR <A, AMAX>
     }
   }
 
@@ -123,26 +118,26 @@ KOKKOS_INLINE_FUNCTION void w3spr4_point(const Params& p, const Fields& f, const
   fmeanws = fmeanws + eband * p.sstxftftail;
 
   // 4.  Final processing (:336-350).
-  fmean = kTpiInv * emean / spr4_max(eps, fmean);
+  fmean = kTpiInv * emean / max_r(eps, fmean);
   if (fmean1 < eps) {
     fmean1 = kTpiInv * f.sig(nk);
   } else {
-    fmean1 = kTpiInv * Kokkos::pow(spr4_max(eps, fmean1) / spr4_max(eps, emean),
+    fmean1 = kTpiInv * Kokkos::pow(max_r(eps, fmean1) / max_r(eps, emean),
                                    static_cast<Real>(1) / (static_cast<Real>(2.) * p.wwnmeanptail));
   }
-  wnmean = Kokkos::pow(spr4_max(eps, wnmean) / spr4_max(eps, emean),
+  wnmean = Kokkos::pow(max_r(eps, wnmean) / max_r(eps, emean),
                        static_cast<Real>(1) / p.wwnmeanp);
   if (fmeanws < eps || emeanws < eps) {
     fmeanws = kTpiInv * f.sig(nk);
   } else {
-    fmeanws = kTpiInv * Kokkos::pow(spr4_max(eps, fmeanws) / spr4_max(eps, emeanws),
+    fmeanws = kTpiInv * Kokkos::pow(max_r(eps, fmeanws) / max_r(eps, emeanws),
                                     static_cast<Real>(1) / (static_cast<Real>(2.) * p.wwnmeanptail));
   }
 
   // 5.  Cd and z0 (:355-364), the #else branch of W3_FLX5.
   const Real tauw = Kokkos::sqrt(tauwx * tauwx + tauwy * tauwy);  // TAUWX**2: x*x at -O3
   calc_ustar(p, f, u, tauw, ustar, z0, charn);
-  unz = spr4_max(static_cast<Real>(0.01), u);
+  unz = max_r(static_cast<Real>(0.01), u);
   const Real r = ustar / unz;
   cd = r * r;  // (USTAR/UNZ)**2: one division, squared, at -O3
   usdir = udir;

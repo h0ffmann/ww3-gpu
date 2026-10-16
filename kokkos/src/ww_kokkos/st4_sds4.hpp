@@ -46,11 +46,6 @@ static_assert(kDkhs == 1.000000047497451305389404296875e-3f, "DKHS as folded at 
 // LOG(FAC_KD1) folded = glibc logf(1.01f) (INVENTORY.md, :2395); not constexpr in C++.
 inline constexpr Real kLogFacKd1 = 9.9503211677074432373046875e-3f;
 
-/// NINT: lroundf, then truncation to INTEGER(4) (INVENTORY.md, global rules).
-KOKKOS_INLINE_FUNCTION int nint(Real x) {
-  return static_cast<int>(static_cast<long>(Kokkos::round(x)));
-}
-
 /// FLOOR(x) as the -O3 dump computes it at :2590: i = (int)x; (float)i <= x ? i : i-1,
 /// with the wrap of -fno-strict-overflow, so a NaN gives INT_MAX as in the Fortran.
 KOKKOS_INLINE_FUNCTION int ffloor(Real x) {
@@ -58,11 +53,6 @@ KOKKOS_INLINE_FUNCTION int ffloor(Real x) {
   return static_cast<Real>(i) <= x ? i : static_cast<int>(static_cast<unsigned>(i) - 1u);
 }
 
-/// Fortran MAX/MIN of two REALs. NaN and the sign of a zero are unspecified in
-/// gfortran (maxss operand order per site); only :2512 and :2514 were read in
-/// the assembly and have their own expressions below.
-KOKKOS_INLINE_FUNCTION Real max2(Real a, Real b) { return a > b ? a : b; }
-KOKKOS_INLINE_FUNCTION Real min2(Real a, Real b) { return a < b ? a : b; }
 
 }  // namespace sds4_detail
 
@@ -83,9 +73,9 @@ KOKKOS_INLINE_FUNCTION void w3sds4_point(const Params& p, const Fields& f, const
                                          Real depth, Real dair, Real dlwmean, int flogrd57,
                                          int flogrd58, Real* srhs, Real* ddiag, Real* brlambda,
                                          Real* whitecap, Real* work, int* iwork) {
-  using sds4_detail::max2;
-  using sds4_detail::min2;
-  using sds4_detail::nint;
+  using ww::st4::max_r;
+  using ww::st4::min_r;
+  using ww::st4::nint;
   const Real zero = static_cast<Real>(0.);
   const Real one = static_cast<Real>(1.);
   const int nk = p.nk, nth = p.nth, nspec = p.nspec;
@@ -204,26 +194,26 @@ KOKKOS_INLINE_FUNCTION void w3sds4_point(const Params& p, const Fields& f, const
         if (p.ssdsbm[0] == one) {
           miche = one;
         } else {
-          const Real x = Kokkos::tanh(min2(k[ik - 1] * depth, static_cast<Real>(10.)));
+          const Real x = Kokkos::tanh(min_r(k[ik - 1] * depth, static_cast<Real>(10.)));
           const Real t =
               x * (p.ssdsbm[1] + x * (p.ssdsbm[2] + x * (p.ssdsbm[3] + x * p.ssdsbm[4])));
           miche = t * t;
         }
         const Real coef1 = p.ssdsbr * miche;
-        const Real m = max2(bth0[ik - 1] / coef1 - one, zero);
+        const Real m = max_r(bth0[ik - 1] / coef1 - one, zero);
         const Real sdiagiso = ((ssdsc[1] * f.sig(ik)) * ssdsc[5]) * (m * m);
         const Real coef2 = ((ssdsc[1] * f.sig(ik)) * (one - ssdsc[5])) / (coef1 * coef1);
         // LIBMVEC SITE: -O3 uses _ZGVbN4vv_powf here (INVENTORY.md, :2315), lane i = ITH-1.
         const int is0 = (ik - 1) * nth;
         const Real ssdsp = p.ssdsp;
         mvec_powf(
-            nth, [&](int i) { return max2(bth[is0 + i] - coef1, zero); },
+            nth, [&](int i) { return max_r(bth[is0 + i] - coef1, zero); },
             [&](int) { return ssdsp; },
             [&](int i, Real v) { ddiag[is0 + i] = sdiagiso + coef2 * v; });
       }
       // Breaking probability (:2320-2327), lambda (:2330), source (:2331).
       for (int i = 0; i < nspec; ++i) {
-        const Real m = max2(Kokkos::sqrt(bth[i]) - epsr, zero);
+        const Real m = max_r(Kokkos::sqrt(bth[i]) - epsr, zero);
         pb[i] = m * m;
       }
       for (int i = 0; i < nspec; ++i) pb[i] = pb[i] * static_cast<Real>(28.16);
@@ -363,7 +353,7 @@ KOKKOS_INLINE_FUNCTION void w3sds4_point(const Params& p, const Fields& f, const
         // BTH(1:NTH) is the scratch of this IK.
         for (int ith = 1; ith <= nth; ++ith)
           bth[ith - 1] =
-              max2((a[is0 + ith - 1] * f.sig(ik)) * k3, static_cast<Real>(.00000000000001));
+              max_r((a[is0 + ith - 1] * f.sig(ik)) * k3, static_cast<Real>(.00000000000001));
         Real dirforcum = dlwmean;
         if (ssdsc[10] > zero) dirforcum = MSS(ik, 2);
         const Real c = f.sig(ik) / kk;
@@ -386,7 +376,7 @@ KOKKOS_INLINE_FUNCTION void w3sds4_point(const Params& p, const Fields& f, const
           for (int ith = 1; ith <= nth; ++ith) lmodulation[ith - 1] = one;
         }
         // Lambda (:2507-2509).
-        const Real fk = one + ssdsc[12] * Kokkos::pow(max2(kk / ko, one), ssdsc[14]);
+        const Real fk = one + ssdsc[12] * Kokkos::pow(max_r(kk / ko, one), ssdsc[14]);
         // LIBMVEC SITE: -O3 uses _ZGVbN4v_expf here (INVENTORY.md, :2509), lane i = ITH-1;
         // the exponential first, then (((e*SSDSC(9))*F)/(SSDSC(13)+1))*LMODULATION per element.
         const Real ssdsbr = p.ssdsbr, c9 = ssdsc[8], c13p1 = ssdsc[12] + one;
@@ -410,8 +400,8 @@ KOKKOS_INLINE_FUNCTION void w3sds4_point(const Params& p, const Fields& f, const
               (((brm12[ik - 1] / sds4_detail::kGrav2) * brlambda[is0 + ith - 1]) * c5) / f.sig(ik);
         for (int ith = 1; ith <= nth; ++ith)
           ddiag[is0 + ith - 1] =
-              ((srhs[is0 + ith - 1] * p.ssdsbr) / max2(bth[ith - 1], static_cast<Real>(1.e-20))) /
-              max2(a[is0 + ith - 1], static_cast<Real>(1e-20));
+              ((srhs[is0 + ith - 1] * p.ssdsbr) / max_r(bth[ith - 1], static_cast<Real>(1.e-20))) /
+              max_r(a[is0 + ith - 1], static_cast<Real>(1e-20));
       }
       break;
     }
@@ -456,7 +446,7 @@ KOKKOS_INLINE_FUNCTION void w3sds4_point(const Params& p, const Fields& f, const
         // Wave-turbulence interaction; COS/SIN(USDIR) recomputed per ITH as written (:2567).
         const Real coswind =
             f.ecos(ith - 1) * Kokkos::cos(usdir) + f.esin(ith - 1) * Kokkos::sin(usdir);
-        const Real dturb = facturb2 * max2(coswind, zero);
+        const Real dturb = facturb2 * max_r(coswind, zero);
         const Real diag2 = (ssdsc[2] * renewalfreq + dturb) + dvisc;
         ddiag[is - 1] = ddiag[is - 1] + diag2;
         srhs[is - 1] = srhs[is - 1] + a[is - 1] * diag2;

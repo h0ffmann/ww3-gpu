@@ -44,9 +44,6 @@ namespace {
 template <class T>
 using Borrowed2D = Kokkos::View<T**, Kokkos::LayoutLeft, Kokkos::HostSpace,
                                 Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
-template <class T>
-using Borrowed1D = Kokkos::View<T*, Kokkos::LayoutLeft, Kokkos::HostSpace,
-                                Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
 using DevReal2D = Kokkos::View<Real**, Kokkos::LayoutLeft, DeviceSpace>;
 using DevInt2D = Kokkos::View<int**, Kokkos::LayoutLeft, DeviceSpace>;
 
@@ -127,10 +124,9 @@ bool nested_in_openmp() {
 
 /// Host View of a registered array, copied from the caller's memory.
 template <class T, class V>
-V copy_registered(const char* name, const T* data, int rank, const int* extent) {
+V copy_registered(const char* name, const T* data, const int* extent) {
   const std::string label = std::string("ww_st4.") + name;
   if constexpr (V::rank() == 1) {
-    (void)rank;
     V v(label, extent[0]);
     std::memcpy(v.data(), data, sizeof(T) * static_cast<size_t>(extent[0]));
     return v;
@@ -200,7 +196,7 @@ int set_array(int igrid, int id, const T* data, int rank, const int* lbound,
   with_member(dst, id, [&](auto& member) {
     using V = std::decay_t<decltype(member)>;
     if constexpr (std::is_same_v<typename V::value_type, T>) {
-      member = copy_registered<T, V>(spec.name, data, rank, extent);
+      member = copy_registered<T, V>(spec.name, data, extent);
     }
   });
   it->second.ready = false;
@@ -249,8 +245,7 @@ bool check_arrays(const Params& p, const HostArrays& g, const HostArrays& m, std
 
 template <class V>
 auto to_device(const V& h) {
-  auto d = Kokkos::create_mirror_view_and_copy(DeviceSpace(), h);
-  return d;
+  return Kokkos::create_mirror_view_and_copy(DeviceSpace(), h);
 }
 
 void upload(const HostArrays& h, Fields& d, bool module) {
@@ -549,9 +544,6 @@ int ww_st4_commit(int igrid) {
     g.ready = true;
     ok();
     return WW_KOKKOS_OK;
-  } catch (const std::bad_alloc& e) {
-    set_error(WW_KOKKOS_ERR_RUNTIME, e.what());
-    return WW_KOKKOS_ERR_RUNTIME;
   } catch (const std::exception& e) {
     set_error(WW_KOKKOS_ERR_RUNTIME, e.what());
     return WW_KOKKOS_ERR_RUNTIME;

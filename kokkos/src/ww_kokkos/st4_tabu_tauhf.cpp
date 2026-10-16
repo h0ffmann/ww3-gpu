@@ -11,11 +11,6 @@
 
 namespace ww::st4 {
 
-namespace {
-// gfortran MIN/MAX of two REALs; no NaN reaches them here.
-inline Real fmax2(Real a, Real b) { return a > b ? a : b; }
-inline Real fmin2(Real a, Real b) { return a < b ? a : b; }
-}  // namespace
 
 void tabu_tauhf(Params& p, Real sigmax, HostArrays& a) {
   constexpr int kJtot = 250;  // JTOT :1514
@@ -43,22 +38,22 @@ void tabu_tauhf(Params& p, Real sigmax, HostArrays& a) {
 
   for (int l = 0; l <= kIalpha; ++l) {
     for (int k = 0; k <= kIustar; ++k) {
-      const Real ust = fmax2(static_cast<Real>(k) * delust, static_cast<Real>(0.000001));
+      const Real ust = max_r(static_cast<Real>(k) * delust, static_cast<Real>(0.000001));
       Real zz00 = ust * ust * aalpha / kGrav;
-      if (p.zz0max != static_cast<Real>(0)) zz00 = fmin2(zz00, p.zz0max);
+      if (p.zz0max != static_cast<Real>(0)) zz00 = min_r(zz00, p.zz0max);
       const Real zz0 = zz00 * (static_cast<Real>(1) + static_cast<Real>(l) * delalp / aalpha);
-      const Real omegacc = fmax2(omegac, x0 * kGrav / ust);
+      const Real omegacc = max_r(omegac, x0 * kGrav / ust);
       const Real yc = omegacc * std::sqrt(zz0 / kGrav);
-      const Real dely = fmax2((static_cast<Real>(1.) - yc) / static_cast<Real>(kJtot), static_cast<Real>(0.));
+      const Real dely = max_r((static_cast<Real>(1.) - yc) / static_cast<Real>(kJtot), static_cast<Real>(0.));
       // Integrated in J order up to 0.05*g/UST (:1555-1570).
       for (int j = 1; j <= kJtot; ++j) {
         const Real y = yc + static_cast<Real>(j - 1) * dely;
         const Real omega = y * std::sqrt(kGrav / zz0);
         const Real cm = kGrav / omega;
         const Real zx = ust / cm + p.zzalp;
-        const Real zarg = fmin2(kKappa / zx, static_cast<Real>(20.));
-        const Real zmu = fmin2(kGrav * zz0 / (cm * cm) * std::exp(zarg), static_cast<Real>(1.));
-        const Real zlog = fmin2(std::log(zmu), static_cast<Real>(0.));
+        const Real zarg = min_r(kKappa / zx, static_cast<Real>(20.));
+        const Real zmu = min_r(kGrav * zz0 / (cm * cm) * std::exp(zarg), static_cast<Real>(1.));
+        const Real zlog = min_r(std::log(zmu), static_cast<Real>(0.));
         const Real zlog2 = zlog * zlog;  // ZLOG**4 as (ZLOG**2)**2, -O3 power tree
         const Real zbeta = const1 * zmu * (zlog2 * zlog2);
         a.tauhft(k, l) = a.tauhft(k, l) + w[j - 1] * zbeta / y * dely;

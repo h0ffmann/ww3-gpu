@@ -57,6 +57,23 @@ KOKKOS_INLINE_FUNCTION int fint(Real x) {
              : static_cast<int>(0x80000000u);
 }
 
+/// Fortran MAX/MIN of two REALs or INTEGERs, as gfortran emits MAX_EXPR/MIN_EXPR.
+/// For NaN or a signed zero the result depends on each site's maxss/minss
+/// operand order ⚠ (port reports); calc_ustar keeps its own b<a form.
+KOKKOS_INLINE_FUNCTION Real max_r(Real a, Real b) { return a > b ? a : b; }
+KOKKOS_INLINE_FUNCTION Real min_r(Real a, Real b) { return a < b ? a : b; }
+KOKKOS_INLINE_FUNCTION int max_i(int a, int b) { return a > b ? a : b; }
+KOKKOS_INLINE_FUNCTION int min_i(int a, int b) { return a < b ? a : b; }
+
+/// NINT(x) of a REAL: lroundf (round half away from zero, 64-bit cvttss2si),
+/// truncated to INTEGER(4); NaN or out of range gives 0, as LONG_MIN does.
+KOKKOS_INLINE_FUNCTION int nint(Real x) {
+  const Real r = Kokkos::round(x);
+  return (r > static_cast<Real>(-9.2233715e18) && r < static_cast<Real>(9.2233715e18))
+             ? static_cast<int>(static_cast<long long>(r))
+             : 0;
+}
+
 /// RPAR indices (0-based). The comment names the Fortran variable packed there.
 enum Rpar : int {
   R_DTH = 0,      // SGRD DTH
@@ -81,19 +98,13 @@ enum Rpar : int {
   R_SINTAILPAR,  // SINTAILPAR(1:5)
   R_SSDSP = R_SINTAILPAR + 5,
   R_WWNMEANP,
-  R_SSTXFTF,
   R_SSTXFTWN,
-  R_FFXPM,
-  R_FFXFM,
-  R_FFXFA,
   R_SSDSBRF1,
-  R_SSDSBRF2,
   R_SSDSBINT,
   R_SSDSBCK,
   R_SSDSHCK,
   R_SSDSABK,
   R_SSDSPBK,
-  R_SSINBR,
   R_CAPCHNK,  // CAPCHNK(1:10)
   R_ZZWND = R_CAPCHNK + 10,
   R_SSDSCOS,
@@ -117,9 +128,6 @@ enum Ipar : int {
   I_MK,          // W3GDATMD MK, the allocated frequency extent of the grid tables
   I_MTH,         // W3GDATMD MTH
   I_MSPEC,       // W3GDATMD MSPEC
-  I_SSWELLFPAR,  // SRCP SSWELLFPAR
-  I_SSDSISO,     // SRCP SSDSISO
-  I_SSDSBRFDF,   // SRCP SSDSBRFDF
   I_STAB3,       // 1 when W3_STAB3 is compiled in
   I_IG1,         // 1 when W3_IG1 is compiled in
   I_FLX5,        // 1 when W3_FLX5 is compiled in: ww_st4_init refuses it
@@ -130,7 +138,6 @@ enum Ipar : int {
 /// aggregate, captured by value in every kernel.
 struct Params {
   int nk, nth, nspec, mk, mth, mspec;
-  int sswellfpar, ssdsiso, ssdsbrfdf;
   int stab3, ig1;
   Real dth, xfr, fte, ftf;
   Real aaircmin, aairgb, igpars5;
@@ -140,8 +147,8 @@ struct Params {
   Real ssdsc[21];      ///< SSDSC(1:21): ssdsc[i-1]
   Real ssdsbr;
   Real sintailpar[5];  ///< SINTAILPAR(1:5): sintailpar[i-1]
-  Real ssdsp, wwnmeanp, sstxftf, sstxftwn, ffxpm, ffxfm, ffxfa;
-  Real ssdsbrf1, ssdsbrf2, ssdsbint, ssdsbck, ssdshck, ssdsabk, ssdspbk, ssinbr;
+  Real ssdsp, wwnmeanp, sstxftwn;
+  Real ssdsbrf1, ssdsbint, ssdsbck, ssdshck, ssdsabk, ssdspbk;
   Real capchnk[10];    ///< CAPCHNK(1:10): capchnk[i-1]
   Real zzwnd, ssdscos, ssdsdth, ssdsbt;
   Real ssdsbm[5];      ///< SSDSBM(0:4): ssdsbm[i], the Fortran lower bound is 0
@@ -158,9 +165,6 @@ inline Params unpack(const float* r, const int* i) {
   p.mk = i[I_MK];
   p.mth = i[I_MTH];
   p.mspec = i[I_MSPEC];
-  p.sswellfpar = i[I_SSWELLFPAR];
-  p.ssdsiso = i[I_SSDSISO];
-  p.ssdsbrfdf = i[I_SSDSBRFDF];
   p.stab3 = i[I_STAB3];
   p.ig1 = i[I_IG1];
   p.dth = r[R_DTH];
@@ -185,19 +189,13 @@ inline Params unpack(const float* r, const int* i) {
   for (int j = 0; j < 5; ++j) p.sintailpar[j] = r[R_SINTAILPAR + j];
   p.ssdsp = r[R_SSDSP];
   p.wwnmeanp = r[R_WWNMEANP];
-  p.sstxftf = r[R_SSTXFTF];
   p.sstxftwn = r[R_SSTXFTWN];
-  p.ffxpm = r[R_FFXPM];
-  p.ffxfm = r[R_FFXFM];
-  p.ffxfa = r[R_FFXFA];
   p.ssdsbrf1 = r[R_SSDSBRF1];
-  p.ssdsbrf2 = r[R_SSDSBRF2];
   p.ssdsbint = r[R_SSDSBINT];
   p.ssdsbck = r[R_SSDSBCK];
   p.ssdshck = r[R_SSDSHCK];
   p.ssdsabk = r[R_SSDSABK];
   p.ssdspbk = r[R_SSDSPBK];
-  p.ssinbr = r[R_SSINBR];
   for (int j = 0; j < 10; ++j) p.capchnk[j] = r[R_CAPCHNK + j];
   p.zzwnd = r[R_ZZWND];
   p.ssdscos = r[R_SSDSCOS];
