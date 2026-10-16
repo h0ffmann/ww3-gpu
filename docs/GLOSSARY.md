@@ -414,6 +414,7 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | ITIME / IPASS / IDLAST / ITSTEP / FLCOLD / FLIWND | "Discrete time step counter", "Pass counter for log file", "Last day ID for log file", a step counter (no header entry, declared `:566`), "Flag for 'cold start' of model", "Flag for initialization of model based on wind" `(v)` `w3adatmd.F90:310-317` | Per-model scalars of `WADAT` that `W3NAUX` sets to 0 and `.FALSE.`. | [kokkos/port_report/W3NAUX_KOKKOS.md](../kokkos/port_report/W3NAUX_KOKKOS.md) |
 | NLINIT / NSPECX / IPnn / IMnn / ICnn | "Flag for initialization", "Auxiliary spectral counter" (NSPECX-Y) and the "Spectral address for Snl" tables `(v)` `w3adatmd.F90:276`, `:268`, `:269-271` | The `W3_NL1` block of `WADAT` that `W3DMNL` allocates (with `AF11`) and `W3NAUX` clears; one `NLINIT` per model in the port, `WadatNl1::nlinit`. | [kokkos/port_report/W3DMNL_KOKKOS.md](../kokkos/port_report/W3DMNL_KOKKOS.md) |
 | W3FLDH | "Update homogeneous input fields for the WAVEWATCH III generic shell" `(v)` `w3fldsmd.F90:2149-2504`, `:2169-2170` | Takes the next value of field J from the homogeneous lists `ww3_shel` read (`THO`, `HA`, `HD`, `HS`) and fills the whole field with it; called 14 times by `ww3_shel` (`:2134-2425`). | [kokkos/port_report/W3FLDH_KOKKOS.md](../kokkos/port_report/W3FLDH_KOKKOS.md) |
+| AINIT / AINIT2 / INFLAGS1 | "Flag for array initialization" (`AINIT(2)`) and "Array consolidating the above six" input flags `(v)` `w3adatmd.F90:318`, `w3idatmd.F90:99` | The conditions under which `W3SETA` re-points its alias groups. | [kokkos/port_report/W3SETA_KOKKOS.md](../kokkos/port_report/W3SETA_KOKKOS.md) |
 
 ## HPC and software
 
@@ -627,6 +628,7 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | Record marker | the 4-byte length gfortran writes before and after each record of a sequential unformatted file ⚠ gfortran manual | `mod_def.ww3` is written that way, big-endian; checked on two files WW3 wrote. | [kokkos/port_report/W3IOGR_KOKKOS.md](../kokkos/port_report/W3IOGR_KOKKOS.md) |
 | Hook table (`ww_w3wave_hooks`, `IogrHooks`, `W3OutgHooks`) | this repository's C function-pointer tables `(v)` [kokkos/src/ww_kokkos/wave_w3wave_hooks.hpp](../kokkos/src/ww_kokkos/wave_w3wave_hooks.hpp) | How a translated driver calls the WW3 routines that are not translated; a shim fills it, and an empty hook on the path aborts. | [kokkos/port_report/W3WAVE_KOKKOS.md](../kokkos/port_report/W3WAVE_KOKKOS.md) |
 | WithoutInitializing | Kokkos allocation property `(v)` Kokkos 5.2.2 headers | Creates a View without filling it, as a Fortran `ALLOCATE` leaves memory unset. | [kokkos/port_report/W3DIMA_KOKKOS.md](../kokkos/port_report/W3DIMA_KOKKOS.md) |
+| W3setaTargets | this repository's record of which model each W3SETA/W3XETA pointer group names (`base`, `ainit`, `x`, `fl_all`, `cur`, `wind`, `taua`, `rhoa`, `iter`, `nlinit`) `(v)` [kokkos/src/ww_kokkos/adat_w3seta.hpp](../kokkos/src/ww_kokkos/adat_w3seta.hpp) | Stands for Fortran pointer association that persists across calls; `IADATA` itself is `Wadats::iadata`. | [kokkos/port_report/W3SETA_KOKKOS.md](../kokkos/port_report/W3SETA_KOKKOS.md), [kokkos/port_report/W3XETA_KOKKOS.md](../kokkos/port_report/W3XETA_KOKKOS.md) |
 
 ## Citation and licensing
 
@@ -665,6 +667,7 @@ Every term above, alphabetically, with the section it lives in.
 - AGENTS_KOKKOS: [This repository's own names](#this-repositorys-own-names)
 - ai-memory: [HPC and software](#hpc-and-software)
 - AIFS Single Wave: [Models, projects and institutions](#models-projects-and-institutions)
+- AINIT / AINIT2 / INFLAGS1: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - Amdahl: [HPC and software](#hpc-and-software)
 - AMUX / AMUXMS / ATMUX / ATMUXR / AMUXE / AMUXD / AMUXJ / VBRMV: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - AMUX: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1203,6 +1206,7 @@ Every term above, alphabetically, with the section it lives in.
 - W3SDS1: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3SDS2: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3SDS3: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3setaTargets: [This repository's own names](#this-repositorys-own-names)
 - W3SETW / W3SETI / W3XETA: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3SIN1: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3SIN2: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
