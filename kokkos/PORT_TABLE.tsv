@@ -140,100 +140,6 @@ priority	routine	ww3_file	self_pct	profile	state	claim	translated	wired	checkpoi
 132	yowpdlibmain:runparmetis	model/src/yowpdlibmain.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
 133	yowrankmodule:exchangeiplg	model/src/yowrankmodule.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
 134	yowrankmodule:initrankmodule	model/src/yowrankmodule.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-135	w3fld1md:infld	model/src/w3fld1md.F90:781-875	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-136	w3fld1md:sig2wn	model/src/w3fld1md.F90:1174-1247	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-137	w3fld1md:wnd2sat	model/src/w3fld1md.F90:1377-1473	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-138	w3fld2md:wnd2sat	model/src/w3fld2md.F90:592-687	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-139	w3gig1md:df1f2theta	model/src/w3gig1md.F90:60-142	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-140	w3gkemd:asymsmattimvec	model/src/w3gkemd.F90:983-1061	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-141	w3gkemd:qfunc	model/src/w3gkemd.F90:234-271	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-142	w3gkemd:ufunc	model/src/w3gkemd.F90:358-396	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-143	w3gkemd:vmfunc	model/src/w3gkemd.F90:319-354	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-144	w3gkemd:vpfunc	model/src/w3gkemd.F90:275-315	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-145	w3iogomd:vmin_d	model/src/w3iogomd.F90:4777-4816	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-146	w3iogomd:vplus_d	model/src/w3iogomd.F90:4820-4860	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-147	w3profsmd:amux	model/src/w3profsmd.F90:2856-2901	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-148	w3profsmd:amuxd	model/src/w3profsmd.F90:3095-3146	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-149	w3profsmd:amuxe	model/src/w3profsmd.F90:3046-3093	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-150	w3profsmd:amuxj	model/src/w3profsmd.F90:3148-3201	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-151	w3profsmd:amuxms	model/src/w3profsmd.F90:2903-2944	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-152	w3profsmd:atmux	model/src/w3profsmd.F90:2946-2994	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-153	w3profsmd:atmuxr	model/src/w3profsmd.F90:2996-3044	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-154	w3profsmd:bisinit	model/src/w3profsmd.F90:2630-2699	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-155	w3profsmd:brkdn	model/src/w3profsmd.F90:2594-2627	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-156	w3profsmd:daxpy	model/src/w3profsmd.F90:4712-4761	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-157	w3profsmd:ddot	model/src/w3profsmd.F90:4684-4710	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-158	w3profsmd:dlassq	model/src/w3profsmd.F90:4638-4681	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-159	w3profsmd:dnrm2	model/src/w3profsmd.F90:4568-4635	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-160	w3profsmd:givens	model/src/w3profsmd.F90:2461-2500	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-161	w3profsmd:ilu0	model/src/w3profsmd.F90:4241-4300	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-162	w3profsmd:implu	model/src/w3profsmd.F90:2372-2416	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-163	w3profsmd:ldsol	model/src/w3profsmd.F90:3302-3344	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-164	w3profsmd:ldsolc	model/src/w3profsmd.F90:3391-3437	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-165	w3profsmd:ldsoll	model/src/w3profsmd.F90:3439-3490	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-166	w3profsmd:lsol	model/src/w3profsmd.F90:3258-3300	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-167	w3profsmd:lsolc	model/src/w3profsmd.F90:3346-3389	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-168	w3profsmd:lusol	model/src/w3profsmd.F90:3673-3699	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-169	w3profsmd:lutsol	model/src/w3profsmd.F90:3701-3736	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-170	w3profsmd:qsplit	model/src/w3profsmd.F90:3738-3800	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-171	w3profsmd:runrc	model/src/w3profsmd.F90:3801-3886	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-172	w3profsmd:setdepth	model/src/w3profsmd.F90:1601-1678	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-173	w3profsmd:stopbis	model/src/w3profsmd.F90:2503-2557	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-174	w3profsmd:tidycg	model/src/w3profsmd.F90:2560-2591	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-175	w3profsmd:udsol	model/src/w3profsmd.F90:3536-3579	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-176	w3profsmd:udsolc	model/src/w3profsmd.F90:3626-3671	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-177	w3profsmd:uppdir	model/src/w3profsmd.F90:2418-2459	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-178	w3profsmd:usol	model/src/w3profsmd.F90:3492-3534	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-179	w3profsmd:usolc	model/src/w3profsmd.F90:3581-3624	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-180	w3profsmd:vbrmv	model/src/w3profsmd.F90:3203-3251	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-181	w3psmcmd:smcgtcrfr	model/src/w3psmcmd.F90:2717-2790	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-182	w3psmcmd:smckuno2	model/src/w3psmcmd.F90:2821-2890	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-183	w3psmcmd:smcxuno2r	model/src/w3psmcmd.F90:1551-1644	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-184	w3psmcmd:smcyuno2r	model/src/w3psmcmd.F90:1661-1746	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-185	w3sbt8md:ccosh	model/src/w3sbt8md.F90:523-530	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-186	w3sbt8md:csinh	model/src/w3sbt8md.F90:504-511	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-187	w3sbt9md:calc_nd	model/src/w3sbt9md.F90:571-590	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-188	w3sic3md:cginic3_cheng	model/src/w3sic3md.F90:2420-2493	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-189	w3sic3md:delta	model/src/w3sic3md.F90:1732-1790	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-190	w3sic3md:f_zhao_cheng	model/src/w3sic3md.F90:2713-2809	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-191	w3sic3md:f_zhao_v1	model/src/w3sic3md.F90:1279-1369	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-192	w3sic3md:func0_zhao	model/src/w3sic3md.F90:1372-1462	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-193	w3sic3md:ic3table_cheng	model/src/w3sic3md.F90:1962-2044	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-194	w3sic3md:smooth_k	model/src/w3sic3md.F90:2497-2535	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-195	w3sic5md:cmplx_cosh	model/src/w3sic5md.F90:2050-2144	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-196	w3sic5md:cmplx_sinh	model/src/w3sic5md.F90:1940-2034	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-197	w3sic5md:cmplx_tanh2	model/src/w3sic5md.F90:2160-2256	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-198	w3sis2md:funcd_fderiv	model/src/w3sis2md.F90:1523-1611	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-199	w3sis2md:funcd_fval	model/src/w3sis2md.F90:1420-1506	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-200	w3sis2md:w3rpwnice	model/src/w3sis2md.F90:1098-1187	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-201	w3smcomd:calc_interp	model/src/w3smcomd.F90:622-696	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-202	w3smcomd:mapsta_smc	model/src/w3smcomd.F90:518-568	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-203	w3smcomd:w3s2xy_smc	model/src/w3smcomd.F90:816-863	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-204	w3smcomd:w3s2xy_smcnn	model/src/w3smcomd.F90:711-743	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-205	w3smcomd:w3s2xy_smcnn_int	model/src/w3smcomd.F90:762-798	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-206	w3smcomd:w3s2xy_smcrg	model/src/w3smcomd.F90:359-418	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-207	w3smcomd:w3s2xy_smcrg_dir	model/src/w3smcomd.F90:438-510	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-208	w3snl1md:gauleg	model/src/w3snl1md.F90:1310-1346	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-209	w3snl4md:cgfnc	model/src/w3snl4md.F90:5396-5469	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-210	w3snl4md:wkfnc	model/src/w3snl4md.F90:5286-5369	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-211	w3snl5md:hasnan	model/src/w3snl5md.F90:884-914	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-212	w3snlsmd:expand	model/src/w3snlsmd.F90:597-651	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-213	w3srcemd:sign_vsd_patankar_ww3	model/src/w3srcemd.F90:2647-2722	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-214	w3srcemd:sign_vsd_semi_implicit_ww3	model/src/w3srcemd.F90:2559-2633	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-215	w3tidemd:astr	model/src/w3tidemd.F90:910-971	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-216	w3tidemd:caldatt	model/src/w3tidemd.F90:1284-1310	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-217	w3tidemd:dpythag	model/src/w3tidemd.F90:976-991	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-218	w3tidemd:dsvbksb	model/src/w3tidemd.F90:995-1019	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-219	w3tidemd:tide_predict	model/src/w3tidemd.F90:2513-2568	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-220	w3tidemd:tide_predict_only	model/src/w3tidemd.F90:2571-2617	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-221	w3tidemd:tide_set_indices	model/src/w3tidemd.F90:494-527	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-222	w3uostmd:compute_reduction_psi	model/src/w3uostmd.F90:688-770	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-223	w3uostmd:load_alphabeta	model/src/w3uostmd.F90:357-442	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-224	w3uostmd:uost_initgrid	model/src/w3uostmd.F90:122-217	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-225	w3uostmd:uost_setgrid	model/src/w3uostmd.F90:231-278	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-226	w3uostmd:uost_sourceterm_compute	model/src/w3uostmd.F90:1056-1128	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-227	w3uostmd:uost_sourceterm_setgrid	model/src/w3uostmd.F90:606-667	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
-228	w3uostmd:uost_srctrmcompute	model/src/w3uostmd.F90:298-343	—	—	claimed	goal/42-port-batch-easy	no	no	—	no	—	—	none: ADR-0010	—
 —	w3snl1md:w3snl1	model/src/w3snl1md.F90:115-473	48.35	full	regtested	—	yes: kokkos/src/ww_kokkos/snl1_dia.cpp, kokkos/src/fortran_iface/snl1_shim.cpp	yes: WW3@c9a6a0c6 (h0ffmann/WW3 ww3-gpu/kokkos-st4, which carries the hoff/kokkos-snl1 hunks) calls it under WW_KOKKOS_SNL1=1	passed	yes	byte-identical on all 100 (test.comp); byte-identical on all 25 (test.comp)	nccmp-tol 71 PASS, 29 n/a, 0 FAIL; nccmp-tol 25 PASS	none: ADR-0010	kokkos/port_report/W3SNL1_KOKKOS.md
 —	pdlib_w3profsmd:pdlib_jacobi_gauss_seidel_block	model/src/w3profsmd_pdlib.F90:5463-6406	37.54	pdlib	translated	—	yes: kokkos/src/ww_kokkos/pdlib_jgs_block.hpp	no: header-only; no shim and no W3WAVE hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/PDLIB_JACOBI_GAUSS_SEIDEL_BLOCK_KOKKOS.md
 —	w3src4md:w3sds4	model/src/w3src4md.F90:2043-2659	23.23	full	wired	—	yes: kokkos/src/ww_kokkos/st4_sds4.hpp,kokkos/src/ww_kokkos/st4_libmvec.hpp,kokkos/src/fortran_iface/st4_shim.cpp	yes: WW3@c9a6a0c6 (h0ffmann/WW3 ww3-gpu/kokkos-st4) calls it under WW_KOKKOS_SDS4/SIN4/SPR4=1	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3SDS4_KOKKOS.md
@@ -281,18 +187,97 @@ priority	routine	ww3_file	self_pct	profile	state	claim	translated	wired	checkpoi
 —	pdlib_w3profsmd:pdlib_w3xypfspsi2	model/src/w3profsmd_pdlib.F90:1202-1502	—	—	translated	—	yes: kokkos/src/ww_kokkos/pdlib_fspsi2.hpp, kokkos/src/ww_kokkos/pdlib_params.hpp	no: header-only; no shim and no PDLIB_W3XYPUG hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/PDLIB_W3XYPFSPSI2_KOKKOS.md
 —	pdlib_w3profsmd:pdlib_w3xypug	model/src/w3profsmd_pdlib.F90:626-866	—	—	translated	—	yes: kokkos/src/ww_kokkos/pdlib_w3xypug.hpp	no: header-only; no shim and no W3WAVE hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/PDLIB_W3XYPUG_KOKKOS.md
 —	w3dispmd:wavnu_local	model/src/w3dispmd.F90:456-547	—	—	translated	—	yes: kokkos/src/ww_kokkos/disp_wavnu3.hpp	no: header-only device function; unreachable in WW3 as built	pending	no	—	—	none: ADR-0010	kokkos/port_report/WAVNU_LOCAL_KOKKOS.md
+—	w3fld1md:infld	model/src/w3fld1md.F90:781-875	—	—	translated	—	yes: kokkos/src/ww_kokkos/fld1_infld.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/INFLD_KOKKOS.md
+—	w3fld1md:sig2wn	model/src/w3fld1md.F90:1174-1247	—	—	translated	—	yes: kokkos/src/ww_kokkos/fld1_sig2wn.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/SIG2WN_KOKKOS.md
+—	w3fld1md:wnd2sat	model/src/w3fld1md.F90:1377-1473	—	—	translated	—	yes: kokkos/src/ww_kokkos/fld1_wnd2sat.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3FLD1MD_WND2SAT_KOKKOS.md
+—	w3fld2md:wnd2sat	model/src/w3fld2md.F90:592-687	—	—	translated	—	yes: kokkos/src/ww_kokkos/fld2_wnd2sat.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3FLD2MD_WND2SAT_KOKKOS.md
 —	w3flx1md:w3flx1	model/src/w3flx1md.F90:88-200	—	—	translated	—	yes: kokkos/src/ww_kokkos/srce_flx1.hpp	no: header-only in this commit; flx_shim.cpp and the fork branch ww3-gpu/kokkos-st-flx-swl follow in this pull request	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3FLX1_KOKKOS.md
 —	w3flx2md:w3flx2	model/src/w3flx2md.F90:90-230	—	—	translated	—	yes: kokkos/src/ww_kokkos/srce_flx2.hpp	no: header-only in this commit; flx_shim.cpp and the fork branch ww3-gpu/kokkos-st-flx-swl follow in this pull request	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3FLX2_KOKKOS.md
 —	w3flx3md:w3flx3	model/src/w3flx3md.F90:95-248	—	—	translated	—	yes: kokkos/src/ww_kokkos/srce_flx3.hpp	no: header-only in this commit; flx_shim.cpp and the fork branch ww3-gpu/kokkos-st-flx-swl follow in this pull request	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3FLX3_KOKKOS.md
 —	w3flx4md:w3flx4	model/src/w3flx4md.F90:105-231	—	—	translated	—	yes: kokkos/src/ww_kokkos/srce_flx4.hpp	no: header-only in this commit; flx_shim.cpp and the fork branch ww3-gpu/kokkos-st-flx-swl follow in this pull request	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3FLX4_KOKKOS.md
 —	w3flx5md:w3flx5	model/src/w3flx5md.F90:118-260	—	—	translated	—	yes: kokkos/src/ww_kokkos/srce_flx5.hpp	no: header-only in this commit; flx_shim.cpp and the fork branch ww3-gpu/kokkos-st-flx-swl follow in this pull request; W3SPR4's own FLX5 call (w3src4md.F90:358-359) stays Fortran	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3FLX5_KOKKOS.md
+—	w3gig1md:df1f2theta	model/src/w3gig1md.F90:60-142	—	—	translated	—	yes: kokkos/src/ww_kokkos/gig1_df1f2theta.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/DF1F2THETA_KOKKOS.md
+—	w3gkemd:asymsmattimvec	model/src/w3gkemd.F90:983-1061	—	—	translated	—	yes: kokkos/src/ww_kokkos/gke_asymsmattimvec.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/ASYMSMATTIMVEC_KOKKOS.md
+—	w3gkemd:qfunc	model/src/w3gkemd.F90:234-271	—	—	translated	—	yes: kokkos/src/ww_kokkos/gke_qfunc.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/QFUNC_KOKKOS.md
+—	w3gkemd:ufunc	model/src/w3gkemd.F90:358-396	—	—	translated	—	yes: kokkos/src/ww_kokkos/gke_ufunc.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/UFUNC_KOKKOS.md
+—	w3gkemd:vmfunc	model/src/w3gkemd.F90:319-354	—	—	translated	—	yes: kokkos/src/ww_kokkos/gke_vmfunc.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/VMFUNC_KOKKOS.md
+—	w3gkemd:vpfunc	model/src/w3gkemd.F90:275-315	—	—	translated	—	yes: kokkos/src/ww_kokkos/gke_vpfunc.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/VPFUNC_KOKKOS.md
+—	w3iogomd:vmin_d	model/src/w3iogomd.F90:4777-4816	—	—	translated	—	yes: kokkos/src/ww_kokkos/iogo_vmin_d.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/VMIN_D_KOKKOS.md
+—	w3iogomd:vplus_d	model/src/w3iogomd.F90:4820-4860	—	—	translated	—	yes: kokkos/src/ww_kokkos/iogo_vplus_d.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/VPLUS_D_KOKKOS.md
 —	w3parall:prop_freq_shift	model/src/w3parall.F90:604-739	—	—	translated	—	yes: kokkos/src/ww_kokkos/prop_freq_shift.hpp	no: header-only device function; no shim yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/PROP_FREQ_SHIFT_KOKKOS.md
+—	w3profsmd:amux	model/src/w3profsmd.F90:2856-2901	—	—	translated	—	yes: kokkos/src/ww_kokkos/profs_amux.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/AMUX_KOKKOS.md
+—	w3profsmd:amuxd	model/src/w3profsmd.F90:3095-3146	—	—	translated	—	yes: kokkos/src/ww_kokkos/profs_amuxd.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/AMUXD_KOKKOS.md
+—	w3profsmd:amuxe	model/src/w3profsmd.F90:3046-3093	—	—	translated	—	yes: kokkos/src/ww_kokkos/profs_amuxe.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/AMUXE_KOKKOS.md
+—	w3profsmd:amuxj	model/src/w3profsmd.F90:3148-3201	—	—	translated	—	yes: kokkos/src/ww_kokkos/profs_amuxj.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/AMUXJ_KOKKOS.md
+—	w3profsmd:amuxms	model/src/w3profsmd.F90:2903-2944	—	—	translated	—	yes: kokkos/src/ww_kokkos/profs_amuxms.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/AMUXMS_KOKKOS.md
+—	w3profsmd:atmux	model/src/w3profsmd.F90:2946-2994	—	—	translated	—	yes: kokkos/src/ww_kokkos/profs_atmux.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/ATMUX_KOKKOS.md
+—	w3profsmd:atmuxr	model/src/w3profsmd.F90:2996-3044	—	—	translated	—	yes: kokkos/src/ww_kokkos/profs_atmuxr.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/ATMUXR_KOKKOS.md
+—	w3profsmd:bisinit	model/src/w3profsmd.F90:2630-2699	—	—	translated	—	yes: kokkos/src/ww_kokkos/profs_bisinit.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/BISINIT_KOKKOS.md
+—	w3profsmd:brkdn	model/src/w3profsmd.F90:2594-2627	—	—	translated	—	yes: kokkos/src/ww_kokkos/profs_brkdn.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/BRKDN_KOKKOS.md
+—	w3profsmd:daxpy	model/src/w3profsmd.F90:4712-4761	—	—	translated	—	yes: kokkos/src/ww_kokkos/profs_daxpy.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/DAXPY_KOKKOS.md
+—	w3profsmd:ddot	model/src/w3profsmd.F90:4684-4710	—	—	translated	—	yes: kokkos/src/ww_kokkos/profs_ddot.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/DDOT_KOKKOS.md
+—	w3profsmd:dlassq	model/src/w3profsmd.F90:4638-4681	—	—	translated	—	yes: kokkos/src/ww_kokkos/profs_dlassq.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/DLASSQ_KOKKOS.md
+—	w3profsmd:dnrm2	model/src/w3profsmd.F90:4568-4635	—	—	translated	—	yes: kokkos/src/ww_kokkos/profs_dnrm2.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/DNRM2_KOKKOS.md
+—	w3profsmd:givens	model/src/w3profsmd.F90:2461-2500	—	—	translated	—	yes: kokkos/src/ww_kokkos/profs_givens.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/GIVENS_KOKKOS.md
+—	w3profsmd:ilu0	model/src/w3profsmd.F90:4241-4300	—	—	translated	—	yes: kokkos/src/ww_kokkos/profs_ilu0.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/ILU0_KOKKOS.md
+—	w3profsmd:implu	model/src/w3profsmd.F90:2372-2416	—	—	translated	—	yes: kokkos/src/ww_kokkos/profs_implu.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/IMPLU_KOKKOS.md
+—	w3profsmd:ldsol	model/src/w3profsmd.F90:3302-3344	—	—	translated	—	yes: kokkos/src/ww_kokkos/profs_ldsol.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/LDSOL_KOKKOS.md
+—	w3profsmd:ldsolc	model/src/w3profsmd.F90:3391-3437	—	—	translated	—	yes: kokkos/src/ww_kokkos/profs_ldsolc.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/LDSOLC_KOKKOS.md
+—	w3profsmd:ldsoll	model/src/w3profsmd.F90:3439-3490	—	—	translated	—	yes: kokkos/src/ww_kokkos/profs_ldsoll.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/LDSOLL_KOKKOS.md
+—	w3profsmd:lsol	model/src/w3profsmd.F90:3258-3300	—	—	translated	—	yes: kokkos/src/ww_kokkos/profs_lsol.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/LSOL_KOKKOS.md
+—	w3profsmd:lsolc	model/src/w3profsmd.F90:3346-3389	—	—	translated	—	yes: kokkos/src/ww_kokkos/profs_lsolc.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/LSOLC_KOKKOS.md
+—	w3profsmd:lusol	model/src/w3profsmd.F90:3673-3699	—	—	translated	—	yes: kokkos/src/ww_kokkos/profs_lusol.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/LUSOL_KOKKOS.md
+—	w3profsmd:lutsol	model/src/w3profsmd.F90:3701-3736	—	—	translated	—	yes: kokkos/src/ww_kokkos/profs_lutsol.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/LUTSOL_KOKKOS.md
+—	w3profsmd:qsplit	model/src/w3profsmd.F90:3738-3800	—	—	translated	—	yes: kokkos/src/ww_kokkos/profs_qsplit.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/QSPLIT_KOKKOS.md
+—	w3profsmd:runrc	model/src/w3profsmd.F90:3801-3886	—	—	translated	—	yes: kokkos/src/ww_kokkos/profs_runrc.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/RUNRC_KOKKOS.md
+—	w3profsmd:setdepth	model/src/w3profsmd.F90:1601-1678	—	—	translated	—	yes: kokkos/src/ww_kokkos/profs_setdepth.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/SETDEPTH_KOKKOS.md
+—	w3profsmd:stopbis	model/src/w3profsmd.F90:2503-2557	—	—	translated	—	yes: kokkos/src/ww_kokkos/profs_stopbis.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/STOPBIS_KOKKOS.md
+—	w3profsmd:tidycg	model/src/w3profsmd.F90:2560-2591	—	—	translated	—	yes: kokkos/src/ww_kokkos/profs_tidycg.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/TIDYCG_KOKKOS.md
+—	w3profsmd:udsol	model/src/w3profsmd.F90:3536-3579	—	—	translated	—	yes: kokkos/src/ww_kokkos/profs_udsol.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/UDSOL_KOKKOS.md
+—	w3profsmd:udsolc	model/src/w3profsmd.F90:3626-3671	—	—	translated	—	yes: kokkos/src/ww_kokkos/profs_udsolc.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/UDSOLC_KOKKOS.md
+—	w3profsmd:uppdir	model/src/w3profsmd.F90:2418-2459	—	—	translated	—	yes: kokkos/src/ww_kokkos/profs_uppdir.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/UPPDIR_KOKKOS.md
+—	w3profsmd:usol	model/src/w3profsmd.F90:3492-3534	—	—	translated	—	yes: kokkos/src/ww_kokkos/profs_usol.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/USOL_KOKKOS.md
+—	w3profsmd:usolc	model/src/w3profsmd.F90:3581-3624	—	—	translated	—	yes: kokkos/src/ww_kokkos/profs_usolc.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/USOLC_KOKKOS.md
+—	w3profsmd:vbrmv	model/src/w3profsmd.F90:3203-3251	—	—	translated	—	yes: kokkos/src/ww_kokkos/profs_vbrmv.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/VBRMV_KOKKOS.md
+—	w3psmcmd:smcgtcrfr	model/src/w3psmcmd.F90:2717-2790	—	—	translated	—	yes: kokkos/src/ww_kokkos/psmc_smcgtcrfr.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/SMCGTCRFR_KOKKOS.md
+—	w3psmcmd:smckuno2	model/src/w3psmcmd.F90:2821-2890	—	—	translated	—	yes: kokkos/src/ww_kokkos/psmc_smckuno2.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/SMCKUNO2_KOKKOS.md
+—	w3psmcmd:smcxuno2r	model/src/w3psmcmd.F90:1551-1644	—	—	translated	—	yes: kokkos/src/ww_kokkos/psmc_smcxuno2r.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/SMCXUNO2R_KOKKOS.md
+—	w3psmcmd:smcyuno2r	model/src/w3psmcmd.F90:1661-1746	—	—	translated	—	yes: kokkos/src/ww_kokkos/psmc_smcyuno2r.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/SMCYUNO2R_KOKKOS.md
 —	w3ref1md:w3sref	model/src/w3ref1md.F90:111-670	—	—	translated	—	yes: kokkos/src/ww_kokkos/srce_ref1.hpp	no: header-only device function; no shim and no W3SRCE hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3SREF_KOKKOS.md
+—	w3sbt8md:ccosh	model/src/w3sbt8md.F90:523-530	—	—	translated	—	yes: kokkos/src/ww_kokkos/bt8_ccosh.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/CCOSH_KOKKOS.md
+—	w3sbt8md:csinh	model/src/w3sbt8md.F90:504-511	—	—	translated	—	yes: kokkos/src/ww_kokkos/bt8_csinh.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/CSINH_KOKKOS.md
+—	w3sbt9md:calc_nd	model/src/w3sbt9md.F90:571-590	—	—	translated	—	yes: kokkos/src/ww_kokkos/bt9_calc_nd.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/CALC_ND_KOKKOS.md
 —	w3sic1md:w3sic1	model/src/w3sic1md.F90:93-369	—	—	translated	—	yes: kokkos/src/ww_kokkos/srce_ic1.hpp	no: header-only device function; no shim and no W3SRCE hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3SIC1_KOKKOS.md
+—	w3sic3md:cginic3_cheng	model/src/w3sic3md.F90:2420-2493	—	—	translated	—	yes: kokkos/src/ww_kokkos/ic3_cginic3_cheng.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/CGINIC3_CHENG_KOKKOS.md
+—	w3sic3md:delta	model/src/w3sic3md.F90:1732-1790	—	—	translated	—	yes: kokkos/src/ww_kokkos/ic3_delta.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/DELTA_KOKKOS.md
+—	w3sic3md:f_zhao_cheng	model/src/w3sic3md.F90:2713-2809	—	—	translated	—	yes: kokkos/src/ww_kokkos/ic3_f_zhao_cheng.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/F_ZHAO_CHENG_KOKKOS.md
+—	w3sic3md:f_zhao_v1	model/src/w3sic3md.F90:1279-1369	—	—	translated	—	yes: kokkos/src/ww_kokkos/ic3_f_zhao_v1.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/F_ZHAO_V1_KOKKOS.md
+—	w3sic3md:func0_zhao	model/src/w3sic3md.F90:1372-1462	—	—	translated	—	yes: kokkos/src/ww_kokkos/ic3_func0_zhao.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/FUNC0_ZHAO_KOKKOS.md
+—	w3sic3md:ic3table_cheng	model/src/w3sic3md.F90:1962-2044	—	—	translated	—	yes: kokkos/src/ww_kokkos/ic3_ic3table_cheng.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/IC3TABLE_CHENG_KOKKOS.md
+—	w3sic3md:smooth_k	model/src/w3sic3md.F90:2497-2535	—	—	translated	—	yes: kokkos/src/ww_kokkos/ic3_smooth_k.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/SMOOTH_K_KOKKOS.md
 —	w3sic4md:w3sic4	model/src/w3sic4md.F90:121-803	—	—	translated	—	yes: kokkos/src/ww_kokkos/srce_ic4.hpp	no: header-only device function; no shim and no W3SRCE hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3SIC4_KOKKOS.md
+—	w3sic5md:cmplx_cosh	model/src/w3sic5md.F90:2050-2144	—	—	translated	—	yes: kokkos/src/ww_kokkos/ic5_cmplx_cosh.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/CMPLX_COSH_KOKKOS.md
+—	w3sic5md:cmplx_sinh	model/src/w3sic5md.F90:1940-2034	—	—	translated	—	yes: kokkos/src/ww_kokkos/ic5_cmplx_sinh.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/CMPLX_SINH_KOKKOS.md
+—	w3sic5md:cmplx_tanh2	model/src/w3sic5md.F90:2160-2256	—	—	translated	—	yes: kokkos/src/ww_kokkos/ic5_cmplx_tanh2.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/CMPLX_TANH2_KOKKOS.md
 —	w3sis1md:w3sis1	model/src/w3sis1md.F90:74-227	—	—	translated	—	yes: kokkos/src/ww_kokkos/srce_is1.hpp	no: header-only device function; no shim and no W3SRCE hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3SIS1_KOKKOS.md
+—	w3sis2md:findroots_nr	model/src/w3sis2md.F90:1204-1301	—	—	translated	—	yes: kokkos/src/ww_kokkos/is2_w3rpwnice.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/FINDROOTS_NR_KOKKOS.md
+—	w3sis2md:funcd_fderiv	model/src/w3sis2md.F90:1523-1611	—	—	translated	—	yes: kokkos/src/ww_kokkos/is2_funcd_fderiv.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/FUNCD_FDERIV_KOKKOS.md
+—	w3sis2md:funcd_fval	model/src/w3sis2md.F90:1420-1506	—	—	translated	—	yes: kokkos/src/ww_kokkos/is2_funcd_fval.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/FUNCD_FVAL_KOKKOS.md
+—	w3sis2md:w3rpwnice	model/src/w3sis2md.F90:1098-1187	—	—	translated	—	yes: kokkos/src/ww_kokkos/is2_w3rpwnice.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3RPWNICE_KOKKOS.md
+—	w3smcomd:calc_interp	model/src/w3smcomd.F90:622-696	—	—	translated	—	yes: kokkos/src/ww_kokkos/smco_calc_interp.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/CALC_INTERP_KOKKOS.md
+—	w3smcomd:mapsta_smc	model/src/w3smcomd.F90:518-568	—	—	translated	—	yes: kokkos/src/ww_kokkos/smco_mapsta_smc.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/MAPSTA_SMC_KOKKOS.md
+—	w3smcomd:w3s2xy_smc	model/src/w3smcomd.F90:816-863	—	—	translated	—	yes: kokkos/src/ww_kokkos/smco_w3s2xy_smc.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3S2XY_SMC_KOKKOS.md
+—	w3smcomd:w3s2xy_smcnn	model/src/w3smcomd.F90:711-743	—	—	translated	—	yes: kokkos/src/ww_kokkos/smco_w3s2xy_smcnn.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3S2XY_SMCNN_KOKKOS.md
+—	w3smcomd:w3s2xy_smcnn_int	model/src/w3smcomd.F90:762-798	—	—	translated	—	yes: kokkos/src/ww_kokkos/smco_w3s2xy_smcnn_int.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3S2XY_SMCNN_INT_KOKKOS.md
+—	w3smcomd:w3s2xy_smcrg	model/src/w3smcomd.F90:359-418	—	—	translated	—	yes: kokkos/src/ww_kokkos/smco_w3s2xy_smcrg.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3S2XY_SMCRG_KOKKOS.md
+—	w3smcomd:w3s2xy_smcrg_dir	model/src/w3smcomd.F90:438-510	—	—	translated	—	yes: kokkos/src/ww_kokkos/smco_w3s2xy_smcrg_dir.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3S2XY_SMCRG_DIR_KOKKOS.md
+—	w3snl1md:gauleg	model/src/w3snl1md.F90:1310-1346	—	—	translated	—	yes: kokkos/src/ww_kokkos/snl1_gauleg.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/GAULEG_KOKKOS.md
 —	w3snl3md:insnl3	model/src/w3snl3md.F90:788-1649	—	—	translated	—	yes: kokkos/src/ww_kokkos/snl3_tables.hpp	no: header-only; no shim and no W3IOGR hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/INSNL3_KOKKOS.md
 —	w3snl3md:w3snl3	model/src/w3snl3md.F90:181-777	—	—	translated	—	yes: kokkos/src/ww_kokkos/snl3_gmd.hpp	no: header-only; no shim and no W3SRCE hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3SNL3_KOKKOS.md
+—	w3snl4md:cgfnc	model/src/w3snl4md.F90:5396-5469	—	—	translated	—	yes: kokkos/src/ww_kokkos/snl4_cgfnc.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/CGFNC_KOKKOS.md
+—	w3snl4md:wkfnc	model/src/w3snl4md.F90:5286-5369	—	—	translated	—	yes: kokkos/src/ww_kokkos/snl4_wkfnc.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/WKFNC_KOKKOS.md
+—	w3snl5md:hasnan	model/src/w3snl5md.F90:884-914	—	—	translated	—	yes: kokkos/src/ww_kokkos/snl5_hasnan.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/HASNAN_KOKKOS.md
+—	w3snlsmd:expand	model/src/w3snlsmd.F90:597-651	—	—	translated	—	yes: kokkos/src/ww_kokkos/snls_expand.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3SNLSMD_EXPAND_KOKKOS.md
 —	w3src0md:w3spr0	model/src/w3src0md.F90:81-231	—	—	translated	—	yes: kokkos/src/ww_kokkos/srce_st0_spr0.hpp	no: header-only in this commit; st0_shim.cpp and the fork branch ww3-gpu/kokkos-st-flx-swl follow in this pull request	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3SPR0_KOKKOS.md
 —	w3src1md:w3sds1	model/src/w3src1md.F90:432-586	—	—	translated	—	yes: kokkos/src/ww_kokkos/srce_st1_sds1.hpp	no: header-only in this commit; st1_shim.cpp and the fork branch ww3-gpu/kokkos-st-flx-swl follow in this pull request	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3SDS1_KOKKOS.md
 —	w3src1md:w3sin1	model/src/w3src1md.F90:255-417	—	—	translated	—	yes: kokkos/src/ww_kokkos/srce_st1_sin1.hpp	no: header-only in this commit; st1_shim.cpp and the fork branch ww3-gpu/kokkos-st-flx-swl follow in this pull request	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3SIN1_KOKKOS.md
@@ -320,8 +305,22 @@ priority	routine	ww3_file	self_pct	profile	state	claim	translated	wired	checkpoi
 —	w3src6md:w3sds6	model/src/w3src6md.F90:566-770	—	—	translated	—	yes: kokkos/src/ww_kokkos/srce_st6_sds6.hpp	no: header-only in this commit; st6_shim.cpp and the fork branch ww3-gpu/kokkos-st-flx-swl follow in this pull request	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3SDS6_KOKKOS.md
 —	w3src6md:w3sin6	model/src/w3src6md.F90:298-539	—	—	translated	—	yes: kokkos/src/ww_kokkos/srce_st6_sin6.hpp	no: header-only in this commit; st6_shim.cpp and the fork branch ww3-gpu/kokkos-st-flx-swl follow in this pull request	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3SIN6_KOKKOS.md
 —	w3src6md:w3spr6	model/src/w3src6md.F90:129-264	—	—	translated	—	yes: kokkos/src/ww_kokkos/srce_st6_spr6.hpp	no: header-only in this commit; st6_shim.cpp and the fork branch ww3-gpu/kokkos-st-flx-swl follow in this pull request	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3SPR6_KOKKOS.md
+—	w3srcemd:sign_vsd_patankar_ww3	model/src/w3srcemd.F90:2647-2722	—	—	translated	—	yes: kokkos/src/ww_kokkos/srce_sign_vsd_patankar_ww3.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/SIGN_VSD_PATANKAR_WW3_KOKKOS.md
+—	w3srcemd:sign_vsd_semi_implicit_ww3	model/src/w3srcemd.F90:2559-2633	—	—	translated	—	yes: kokkos/src/ww_kokkos/srce_sign_vsd_semi_implicit_ww3.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/SIGN_VSD_SEMI_IMPLICIT_WW3_KOKKOS.md
 —	w3str1md:w3str1	model/src/w3str1md.F90:183-543	—	—	translated	—	yes: kokkos/src/ww_kokkos/srce_tr1.hpp	no: header-only device function; no shim and no W3SRCE hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3STR1_KOKKOS.md
 —	w3swldmd:irange	model/src/w3swldmd.F90:456-486	—	—	translated	—	yes: kokkos/src/ww_kokkos/srce_swl_util.hpp	no: header-only in this commit; swl_shim.cpp and the fork branch ww3-gpu/kokkos-st-flx-swl follow in this pull request	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3SWLDMD_IRANGE_KOKKOS.md
 —	w3swldmd:w3swl4	model/src/w3swldmd.F90:93-242	—	—	translated	—	yes: kokkos/src/ww_kokkos/srce_swl4.hpp	no: nothing in WW3 calls W3SWL4 (w3srcemd.F90:575 imports only W3SWL6); translated for completeness, it can never be exercised	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3SWL4_KOKKOS.md
 —	w3swldmd:w3swl6	model/src/w3swldmd.F90:264-439	—	—	translated	—	yes: kokkos/src/ww_kokkos/srce_swl6.hpp	no: header-only in this commit; swl_shim.cpp and the fork branch ww3-gpu/kokkos-st-flx-swl follow in this pull request	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3SWL6_KOKKOS.md
+—	w3tidemd:astr	model/src/w3tidemd.F90:910-971	—	—	translated	—	yes: kokkos/src/ww_kokkos/tide_astr.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/ASTR_KOKKOS.md
+—	w3tidemd:caldatt	model/src/w3tidemd.F90:1284-1310	—	—	translated	—	yes: kokkos/src/ww_kokkos/tide_caldatt.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/CALDATT_KOKKOS.md
+—	w3tidemd:dpythag	model/src/w3tidemd.F90:976-991	—	—	translated	—	yes: kokkos/src/ww_kokkos/tide_dpythag.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/DPYTHAG_KOKKOS.md
+—	w3tidemd:dsvbksb	model/src/w3tidemd.F90:995-1019	—	—	translated	—	yes: kokkos/src/ww_kokkos/tide_dsvbksb.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/DSVBKSB_KOKKOS.md
+—	w3tidemd:tide_predict	model/src/w3tidemd.F90:2513-2568	—	—	translated	—	yes: kokkos/src/ww_kokkos/tide_tide_predict.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/TIDE_PREDICT_KOKKOS.md
+—	w3tidemd:tide_predict_only	model/src/w3tidemd.F90:2571-2617	—	—	translated	—	yes: kokkos/src/ww_kokkos/tide_tide_predict_only.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/TIDE_PREDICT_ONLY_KOKKOS.md
+—	w3tidemd:tide_set_indices	model/src/w3tidemd.F90:494-527	—	—	translated	—	yes: kokkos/src/ww_kokkos/tide_tide_set_indices.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/TIDE_SET_INDICES_KOKKOS.md
+—	w3uostmd:compute_reduction_psi	model/src/w3uostmd.F90:688-770	—	—	translated	—	yes: kokkos/src/ww_kokkos/uost_compute_reduction_psi.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/COMPUTE_REDUCTION_PSI_KOKKOS.md
+—	w3uostmd:uost_setgrid	model/src/w3uostmd.F90:231-278	—	—	translated	—	yes: kokkos/src/ww_kokkos/uost_uost_setgrid.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/UOST_SETGRID_KOKKOS.md
+—	w3uostmd:uost_sourceterm_compute	model/src/w3uostmd.F90:1056-1128	—	—	translated	—	yes: kokkos/src/ww_kokkos/uost_uost_sourceterm_compute.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/UOST_SOURCETERM_COMPUTE_KOKKOS.md
+—	w3uostmd:uost_sourceterm_setgrid	model/src/w3uostmd.F90:606-667	—	—	translated	—	yes: kokkos/src/ww_kokkos/uost_uost_sourceterm_setgrid.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/UOST_SOURCETERM_SETGRID_KOKKOS.md
+—	w3uostmd:uost_srctrmcompute	model/src/w3uostmd.F90:298-343	—	—	translated	—	yes: kokkos/src/ww_kokkos/uost_uost_srctrmcompute.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/UOST_SRCTRMCOMPUTE_KOKKOS.md
 —	w3uqckmd:w3qck2	model/src/w3uqckmd.F90:517-891	—	—	translated	—	yes: kokkos/src/ww_kokkos/prop_qck2.hpp	no: header-only device function; no shim and no W3WAVE hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3QCK2_KOKKOS.md

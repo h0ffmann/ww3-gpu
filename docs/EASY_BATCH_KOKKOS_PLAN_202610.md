@@ -1,6 +1,7 @@
 # The easiest Fortran left, translated to Kokkos: one agent per routine, one review pass
 
-Status: **claimed**, 2026-10-16, branch `goal/42-port-batch-easy`. Issue [#42](https://github.com/h0ffmann/ww3-gpu/issues/42),
+Status: **translated and reviewed**, 2026-10-16, branch `goal/42-port-batch-easy` (the record is
+[`docs/log/2026-10-16-easy-batch-kokkos-translation.md`](log/2026-10-16-easy-batch-kokkos-translation.md)). Issue [#42](https://github.com/h0ffmann/ww3-gpu/issues/42),
 the port planner. Translation only, bit for bit, nothing run: no regtest, no regtest written, no
 Kokkos test written (the owner, 2026-10-16). The port has no tests of its own
 ([ADR-0010](ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md)); its checkpoints are
@@ -11,8 +12,8 @@ Kokkos test written (the owner, 2026-10-16). The port has no tests of its own
 Every routine a committed profile times in compute is translated (`kokkos/PORT_RANKING.md`), and
 so is every source-term package NOAA's operational switches compile (PRs #152, #157). The owner
 asked for the easiest of what is left first. Of the 303 untranslated routines of the compute
-modules of `WW3-noaa/model/src` at `03adda91`, these are the 94 of at most 100 lines that do no
-MPI and whose purpose is not file I/O, smallest first. Left out: `w3wavset` (its `SETUP` switch
+modules of `WW3-noaa/model/src` at `03adda91`, these are the 92 of at most 100 lines that do no
+MPI and whose purpose is not file I/O, smallest first. Left out: the `UOST` file readers `LOAD_ALPHABETA` and `UOST_INITGRID`; `w3wavset` (its `SETUP` switch
 needs `PDLIB` and no regtest compiles it), the output printers of `w3arrymd`, the `w3parall`
 timers and exchanges, the `w3tidemd` readers and writers, and the helpers already inside a header
 (`EXPAND`, `EXPND2`, `MINLAM`, `MAXLAM` of `NL3`; the `FIFO_*` of partitioning).
@@ -109,7 +110,6 @@ module's object, and one fresh agent per routine reviews it once.
 | `w3snl4md:wkfnc` | `w3snl4md.F90:5286-5369` | 84 | `mixb` |
 | `w3profsmd:runrc` | `w3profsmd.F90:3801-3886` | 86 | `lab` |
 | `w3psmcmd:smcyuno2r` | `w3psmcmd.F90:1661-1746` | 86 | `smc` |
-| `w3uostmd:load_alphabeta` | `w3uostmd.F90:357-442` | 86 | `mixa` |
 | `w3sis2md:funcd_fval` | `w3sis2md.F90:1420-1506` | 87 | `mixa` |
 | `w3sis2md:funcd_fderiv` | `w3sis2md.F90:1523-1611` | 89 | `mixa` |
 | `w3sis2md:w3rpwnice` | `w3sis2md.F90:1098-1187` | 90 | `mixa` |
@@ -120,7 +120,6 @@ module's object, and one fresh agent per routine reviews it once.
 | `w3sic5md:cmplx_cosh` | `w3sic5md.F90:2050-2144` | 95 | `mixb` |
 | `w3sic5md:cmplx_sinh` | `w3sic5md.F90:1940-2034` | 95 | `mixb` |
 | `w3fld2md:wnd2sat` | `w3fld2md.F90:592-687` | 96 | `mixa` |
-| `w3uostmd:uost_initgrid` | `w3uostmd.F90:122-217` | 96 | `mixa` |
 | `w3fld1md:wnd2sat` | `w3fld1md.F90:1377-1473` | 97 | `mixa, fld1` |
 | `w3sic3md:f_zhao_cheng` | `w3sic3md.F90:2713-2809` | 97 | `mixa` |
 | `w3sic5md:cmplx_tanh2` | `w3sic5md.F90:2160-2256` | 97 | `mixb` |

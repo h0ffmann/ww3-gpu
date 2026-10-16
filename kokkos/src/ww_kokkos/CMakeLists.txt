@@ -5,7 +5,9 @@
 # (wave_*, updt_*, disp_*: W3GATH, W3SCAT, W3DZXY, W3UWND, W3UTRN, DISTAB, WAVNU2; prop_map*:
 # W3MAP3, W3MAPT), NOAA's operational switches (srce_ref1, srce_ic4; pdlib_*: the unstructured
 # PDLIB solver), the other source-term packages (srce_st0..st6, srce_flx1..5,
-# srce_swl*: ST0, ST1, ST2, ST3, ST6, FLX1-5, SWL) and the binary
+# srce_swl*: ST0, ST1, ST2, ST3, ST6, FLX1-5, SWL), the easy batch of routines of 100 lines or less
+# (docs/EASY_BATCH_KOKKOS_PLAN_202610.md: profs_, tide_, uost_, fld1_, fld2_, gig1_, ic3_, is2_,
+# bt8_, bt9_, snl4_, ic5_, snls_, gke_, snl5_, smco_, psmc_, iogo_, srce_, snl1_) and the binary
 # fixture reader its L1 tests read the Fortran reference answers with.
 #
 # SPDX-License-Identifier: MIT
@@ -108,7 +110,99 @@ target_sources(ww_kokkos PRIVATE
     srce_flx2.hpp
     srce_flx3.hpp
     srce_flx4.hpp
-    srce_flx5.hpp)
+    srce_flx5.hpp
+    bt8_ccosh.hpp
+    bt8_csinh.hpp
+    bt9_calc_nd.hpp
+    fld1_infld.hpp
+    fld1_sig2wn.hpp
+    fld1_wnd2sat.hpp
+    fld2_wnd2sat.hpp
+    gig1_df1f2theta.hpp
+    gke_asymsmattimvec.hpp
+    gke_qfunc.hpp
+    gke_ufunc.hpp
+    gke_vmfunc.hpp
+    gke_vpfunc.hpp
+    ic3_cginic3_cheng.hpp
+    ic3_delta.hpp
+    ic3_func0_zhao.hpp
+    ic3_f_zhao_cheng.hpp
+    ic3_f_zhao_v1.hpp
+    ic3_ic3table_cheng.hpp
+    ic3_smooth_k.hpp
+    ic5_cmplx_cosh.hpp
+    ic5_cmplx_sinh.hpp
+    ic5_cmplx_tanh2.hpp
+    iogo_vmin_d.hpp
+    iogo_vplus_d.hpp
+    is2_funcd_fderiv.hpp
+    is2_funcd_fval.hpp
+    is2_w3rpwnice.hpp
+    profs_amuxd.hpp
+    profs_amuxe.hpp
+    profs_amux.hpp
+    profs_amuxj.hpp
+    profs_amuxms.hpp
+    profs_atmux.hpp
+    profs_atmuxr.hpp
+    profs_bisinit.hpp
+    profs_brkdn.hpp
+    profs_daxpy.hpp
+    profs_ddot.hpp
+    profs_dlassq.hpp
+    profs_dnrm2.hpp
+    profs_givens.hpp
+    profs_ilu0.hpp
+    profs_implu.hpp
+    profs_ldsolc.hpp
+    profs_ldsol.hpp
+    profs_ldsoll.hpp
+    profs_lsolc.hpp
+    profs_lsol.hpp
+    profs_lusol.hpp
+    profs_lutsol.hpp
+    profs_qsplit.hpp
+    profs_runrc.hpp
+    profs_setdepth.hpp
+    profs_stopbis.hpp
+    profs_tidycg.hpp
+    profs_udsolc.hpp
+    profs_udsol.hpp
+    profs_uppdir.hpp
+    profs_usolc.hpp
+    profs_usol.hpp
+    profs_vbrmv.hpp
+    psmc_smcgtcrfr.hpp
+    psmc_smckuno2.hpp
+    psmc_smcxuno2r.hpp
+    psmc_smcyuno2r.hpp
+    smco_calc_interp.hpp
+    smco_mapsta_smc.hpp
+    smco_w3s2xy_smc.hpp
+    smco_w3s2xy_smcnn.hpp
+    smco_w3s2xy_smcnn_int.hpp
+    smco_w3s2xy_smcrg_dir.hpp
+    smco_w3s2xy_smcrg.hpp
+    snl1_gauleg.hpp
+    snl4_cgfnc.hpp
+    snl4_wkfnc.hpp
+    snl5_hasnan.hpp
+    snls_expand.hpp
+    srce_sign_vsd_patankar_ww3.hpp
+    srce_sign_vsd_semi_implicit_ww3.hpp
+    tide_astr.hpp
+    tide_caldatt.hpp
+    tide_dpythag.hpp
+    tide_dsvbksb.hpp
+    tide_tide_predict.hpp
+    tide_tide_predict_only.hpp
+    tide_tide_set_indices.hpp
+    uost_compute_reduction_psi.hpp
+    uost_uost_setgrid.hpp
+    uost_uost_sourceterm_compute.hpp
+    uost_uost_sourceterm_setgrid.hpp
+    uost_uost_srctrmcompute.hpp)
 
 # No floating-point contraction in the ported kernels.
 #
