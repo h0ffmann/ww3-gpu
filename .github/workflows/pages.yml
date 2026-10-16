@@ -13,10 +13,10 @@ name: Pages
 
 on:
   pull_request:
-    paths: ['course/**', 'pubs/figures/mermaid/**', 'pubs/filters/mermaid.lua', 'pubs/site/**', 'pdf/ww3-lab-course.pdf', 'scripts/book_prep.py', 'scripts/build_html.sh', 'scripts/build_site.sh', 'docs/ADRs/**', 'docs/WFIPs/**', 'notes/**', 'site/**', 'DESIGN.md', '.zenodo.json', 'CITATION.cff', 'RELEASES.md', 'flake.nix', 'flake.lock', 'scripts/adrs.py', '.github/workflows/pages.yml']
+    paths: ['course/**', 'pubs/figures/mermaid/**', 'pubs/filters/mermaid.lua', 'pubs/site/**', 'pdf/ww3-lab-course.pdf', 'pubs/relatorio-gta/**', 'scripts/build_relatorio.sh', 'scripts/book_prep.py', 'scripts/build_html.sh', 'scripts/build_site.sh', 'docs/ADRs/**', 'docs/WFIPs/**', 'notes/**', 'site/**', 'DESIGN.md', '.zenodo.json', 'CITATION.cff', 'RELEASES.md', 'flake.nix', 'flake.lock', 'scripts/adrs.py', '.github/workflows/pages.yml']
   push:
     branches: [main]
-    paths: ['course/**', 'pubs/figures/mermaid/**', 'pubs/filters/mermaid.lua', 'pubs/site/**', 'pdf/ww3-lab-course.pdf', 'scripts/book_prep.py', 'scripts/build_html.sh', 'scripts/build_site.sh', 'docs/ADRs/**', 'docs/WFIPs/**', 'notes/**', 'site/**', 'DESIGN.md', '.zenodo.json', 'CITATION.cff', 'RELEASES.md', 'flake.nix', 'flake.lock', 'scripts/adrs.py', '.github/workflows/pages.yml']
+    paths: ['course/**', 'pubs/figures/mermaid/**', 'pubs/filters/mermaid.lua', 'pubs/site/**', 'pdf/ww3-lab-course.pdf', 'pubs/relatorio-gta/**', 'scripts/build_relatorio.sh', 'scripts/book_prep.py', 'scripts/build_html.sh', 'scripts/build_site.sh', 'docs/ADRs/**', 'docs/WFIPs/**', 'notes/**', 'site/**', 'DESIGN.md', '.zenodo.json', 'CITATION.cff', 'RELEASES.md', 'flake.nix', 'flake.lock', 'scripts/adrs.py', '.github/workflows/pages.yml']
   release:
     types: [published]
   # pubs.yml commits the rebuilt PDF with [skip ci], which starts no push run; redeploy after it.

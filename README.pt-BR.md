@@ -74,8 +74,10 @@ just wfip check    # os documentos de desenho e seus critérios de pronto
 script. Cada fato que ela mostra vem dos arquivos deste repositório, lidos pelo `site/content`: os
 capítulos, as decisões, os desenhos, as notas, o DOI e as pessoas. Os capítulos ficam em
 [`/book/`](https://h0ffmann.github.io/ww3-gpu/book/), ao lado do
-[PDF](https://h0ffmann.github.io/ww3-gpu/ww3-lab-course.pdf), da página de andamento (`/andamento/`)
-e das decisões (`/adrs/`). O visual está em [`DESIGN.md`](DESIGN.md): um mar à noite, com três
+[PDF](https://h0ffmann.github.io/ww3-gpu/ww3-lab-course.pdf), da página de andamento (`/andamento/`),
+das decisões (`/adrs/`) e de um relatório em português fácil para o GTA, do DEL/UFRJ
+(`/relatorio-gta/`, feito de [`pubs/relatorio-gta/`](pubs/relatorio-gta/relatorio.easy.pt-BR.md), com PDF em
+[`pdf/relatorio-gta-pedro-cruz.pdf`](pdf/relatorio-gta-pedro-cruz.pdf)). O visual está em [`DESIGN.md`](DESIGN.md): um mar à noite, com três
 luzes. A mesma página sai em português em [`/pt-BR/`](https://h0ffmann.github.io/ww3-gpu/pt-BR/),
 de uma fonte só e de uma tabela de traduções,
 [`site/data/translations/pt-BR.tsv`](site/data/translations/pt-BR.tsv): o build falha quando uma

@@ -71,7 +71,9 @@ Every fact on it is read from this repository's files by `site/content`: the cha
 decisions, the designs, the notes, the DOI and the people. The chapters are at
 [`/book/`](https://h0ffmann.github.io/ww3-gpu/book/), next to the
 [PDF](https://h0ffmann.github.io/ww3-gpu/ww3-lab-course.pdf), the progress page
-(`/andamento/`) and the decisions (`/adrs/`). [`DESIGN.md`](DESIGN.md) has its look: a sea at night,
+(`/andamento/`), the decisions (`/adrs/`) and an easy Brazilian Portuguese report for the GTA,
+DEL/UFRJ (`/relatorio-gta/`, from [`pubs/relatorio-gta/`](pubs/relatorio-gta/relatorio.easy.pt-BR.md), PDF in
+[`pdf/relatorio-gta-pedro-cruz.pdf`](pdf/relatorio-gta-pedro-cruz.pdf)). [`DESIGN.md`](DESIGN.md) has its look: a sea at night,
 and three lights on it. The same page is built in Brazilian Portuguese at
 [`/pt-BR/`](https://h0ffmann.github.io/ww3-gpu/pt-BR/), from one source and a table of
 translations, [`site/data/translations/pt-BR.tsv`](site/data/translations/pt-BR.tsv): the build

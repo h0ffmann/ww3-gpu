@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # build_html — the book as a static website, one page per chapter, for GitHub Pages (issue #76).
 #   scripts/build_html.sh   -> build/site/book/index.html (+ one page per chapter, figures, style.css),
-#                              build/site/{ww3-lab-course.pdf,andamento/,adrs/}
+#                              build/site/{ww3-lab-course.pdf,andamento/,adrs/,relatorio-gta/}
 # The site's front page, build/site/index.html, is the Gleam landing (site/, `just site`), not this.
 # OUT_DIR overrides build/. Needs pandoc >= 3.0 (the chunkedhtml writer); no TeX.
 #
@@ -38,6 +38,8 @@ cp -r "$root/pubs/site/andamento" "$root_site/andamento"
 # The ADR list at /adrs/, filled from docs/ADRs/ on every build so it cannot go stale.
 mkdir -p "$root_site/adrs"
 python3 "$root/scripts/adrs.py" --site "$root/pubs/site/adrs/index.html" "$root_site/adrs/index.html"
+# The easy pt-BR report for the GTA (DEL/UFRJ) at /relatorio-gta/; its PDF is committed in pdf/.
+OUT_DIR="$out_dir" bash "$root/scripts/build_relatorio.sh"
 # The PDF is the one pubs.yml rebuilds and commits to pdf/; Pages has no TeX to build it again.
 cp "$root/pdf/ww3-lab-course.pdf" "$root_site/ww3-lab-course.pdf"
 # mermaid.lua points each figure at its committed render by absolute path, which chunkedhtml keeps
