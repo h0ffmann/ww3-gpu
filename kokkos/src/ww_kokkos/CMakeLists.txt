@@ -1,5 +1,6 @@
 # kokkos/src/ww_kokkos/CMakeLists.txt
-# Sources of the portable kernel library: the DIA port (snl1_*) and the binary
+# Sources of the portable kernel library: the DIA port (snl1_*), the ST4 port
+# (st4_*: W3SDS4, W3SIN4, W3SPR4, CALC_USTAR, INSIN4, TABU_*) and the binary
 # fixture reader its L1 tests read the Fortran reference answers with.
 #
 # SPDX-License-Identifier: MIT
@@ -12,7 +13,19 @@ target_sources(ww_kokkos PRIVATE
     snl1_dia.hpp
     snl1_dia.cpp
     fixture_io.hpp
-    fixture_io.cpp)
+    fixture_io.cpp
+    st4_params.hpp
+    st4_arrays.hpp
+    st4_libmvec.hpp
+    st4_calc_ustar.hpp
+    st4_spr4.hpp
+    st4_sin4.hpp
+    st4_sds4.hpp
+    st4_tables_build.hpp
+    st4_insin4.cpp
+    st4_tabu_stress.cpp
+    st4_tabu_tauhf.cpp
+    st4_tabu_tauhf2.cpp)
 
 # No floating-point contraction in the ported kernels.
 #
@@ -29,4 +42,10 @@ target_compile_options(ww_kokkos PRIVATE
 # *host* half of the compile only; the device half needs nvcc's own switch.
 if(Kokkos_ENABLE_CUDA)
   target_compile_options(ww_kokkos PRIVATE $<$<COMPILE_LANGUAGE:CXX>:--fmad=false>)
+endif()
+
+# ST4 calls glibc's libmvec where gfortran -O3 does (st4_libmvec.hpp), so the
+# host port computes the Fortran's bits at those five loops.
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64")
+  target_link_libraries(ww_kokkos PUBLIC mvec)
 endif()

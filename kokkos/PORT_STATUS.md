@@ -25,10 +25,10 @@ Profile: full (bench_small, 120 x 80, 9 520 sea points, 12 h), Release -pg, swit
 | # | routine | self s | self % | cumulative % | port status |
 |---|---|---|---|---|---|
 | 1 | `w3snl1md:w3snl1` | 63.53 | 48.4 | 48.4 | L2 |
-| 2 | `w3src4md:w3sds4` | 30.52 | 23.2 | 71.6 | Fortran |
-| 3 | `w3src4md:w3sin4` | 16.63 | 12.7 | 84.2 | Fortran |
+| 2 | `w3src4md:w3sds4` | 30.52 | 23.2 | 71.6 | ported |
+| 3 | `w3src4md:w3sin4` | 16.63 | 12.7 | 84.2 | ported |
 | 4 | `w3srcemd:w3srce` | 7.36 | 5.6 | 89.8 | Fortran |
-| 5 | `w3src4md:w3spr4` | 4.10 | 3.1 | 93.0 | Fortran |
+| 5 | `w3src4md:w3spr4` | 4.10 | 3.1 | 93.0 | ported |
 | 6 | `w3pro3md:w3xyp3` | 3.92 | 3.0 | 95.9 | Fortran |
 | 7 | `w3uqckmd:w3qck3` | 1.50 | 1.1 | 97.1 | Fortran |
 | 8 | `w3uqckmd:w3qck1` | 1.19 | 0.9 | 98.0 | Fortran |
@@ -43,10 +43,10 @@ Profile: full (bench_small, 120 x 80, 9 520 sea points, 12 h), Release -pg, swit
 | port score | value | what it counts |
 |---|---|---|
 | time | **48.4 %** | the profile's self time in routines that pass the WW3 replay (L2 or gpu) |
-| routines | 2 of 1023 (0.20 %) | ported routines over every SUBROUTINE and FUNCTION in model/src at WW3@03adda91 |
-| files | 1 of 147 (0.68 %) | WW3 .F90 files with a ported routine, over every .F90 file in model/src |
-| lines | 663 of 263375 (0.25 %) | the ported routines' Fortran lines over model/src's |
-| the port | 1559 lines in 11 files | the C++ under kokkos/src (every .cpp and .hpp line) |
+| routines | 10 of 1023 (0.98 %) | ported routines over every SUBROUTINE and FUNCTION in model/src at WW3@03adda91 |
+| files | 2 of 147 (1.36 %) | WW3 .F90 files with a ported routine, over every .F90 file in model/src |
+| lines | 3082 of 263375 (1.17 %) | the ported routines' Fortran lines over model/src's |
+| the port | 4443 lines in 24 files | the C++ under kokkos/src (every .cpp and .hpp line) |
 
 On a GPU: none yet. The CUDA build links; the RTX 4090 run, `just smoke-ww3-gpu gpu`, is the owner's, supervised.
 <!-- port-score:end -->
