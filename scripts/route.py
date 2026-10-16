@@ -37,7 +37,9 @@ def tracked(root=ROOT):
                              check=True).stdout.split("\n")
     except (OSError, subprocess.CalledProcessError):
         out = [str(p.relative_to(root)) for p in root.rglob("*") if p.is_file()]
-    return [f for f in out if f and not f.startswith(SUBMODULES) and (root / f).is_file()]
+    # dict.fromkeys: during a merge, ls-files lists a conflicted path once per stage
+    return [f for f in dict.fromkeys(out)
+            if f and not f.startswith(SUBMODULES) and (root / f).is_file()]
 
 
 def lines(root, f):
