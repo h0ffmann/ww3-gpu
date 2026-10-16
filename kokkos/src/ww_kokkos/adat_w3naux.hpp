@@ -12,8 +12,11 @@
 // container W3DIMA fills. Wadats::wadats is WADATS, Wadats::nadata is NADATA;
 // Wadat holds the three scalars W3DIMA reads or writes (NSEALM, AINIT, FL_ALL).
 // The other scalars of TYPE WADAT that W3NAUX sets (ITIME, IPASS, IDLAST, ITSTEP,
-// FLCOLD, FLIWND, AINIT2, and NLINIT of the W3_NL1 block) are WadatScalars below,
-// in a vector parallel to Wadats::wadats: scalars[imod-1] is WADATS(IMOD)'s.
+// FLCOLD, FLIWND, AINIT2) are WadatScalars below, in a vector parallel to
+// Wadats::wadats: scalars[imod-1] is WADATS(IMOD)'s. NLINIT belongs to the W3_NL1
+// block, which adat_w3dmnl.hpp holds as WadatsNl1; W3NAUX sizes that vector too
+// and clears its nlinit, so the one Fortran field has one C++ home, the one
+// W3DMNL and W3SETA read.
 //
 // Checked against gfortran 16.2 -O3 GIMPLE (-fdump-tree-optimized-lineno) of
 // w3adatmd.F90 with WW3's Release flags and the switch_lab_shrd defines:
@@ -38,6 +41,7 @@
 #include <utility>
 #include <vector>
 
+#include "adat_w3dmnl.hpp"
 #include "adat_wadat.hpp"
 
 namespace ww::adat {
@@ -61,23 +65,25 @@ struct WadatScalars {
   bool flcold = false;  ///< FLCOLD, 'cold start' of model (:315)
   bool fliwnd = false;  ///< FLIWND, initialization based on wind (:316-317)
   bool ainit2 = false;  ///< AINIT2 (:568), set .TRUE. by W3XDMA (:2375)
-  bool nlinit = false;  ///< NLINIT, W3_NL1 initialization flag (:276, :546)
 };
 
 /// @brief W3NAUX(NDSE, NDST), shared memory (W3_SHRD) build with W3_NL1.
 /// @param reg     WADATS, NADATA and IADATA (in/out). WADATS counts as allocated
 ///                when reg.nadata != -1 (see the check below).
 /// @param scalars the WadatScalars of each model, parallel to reg.wadats (out).
+/// @param nl1     the W3_NL1 block of each model, parallel to reg.wadats (out);
+///                its nlinit is WADATS(IMOD)%NLINIT.
 /// @param ngrids  W3GDATMD NGRIDS, as W3NMOD left it.
 /// @return W3nauxStatus::ok, or the code EXTCDE would have exited with. On a code
-///         other than ok, reg and scalars are as on entry.
-/// @post On ok: reg.wadats.size() == scalars.size() == max(ngrids, 0),
+///         other than ok, reg, scalars and nl1 are as on entry.
+/// @post On ok: reg.wadats.size() == scalars.size() == nl1.models.size()
+///       == max(ngrids, 0),
 ///       reg.nadata == ngrids, reg.iadata unchanged.
 /// @author ww3-gpu; heritage H. L. Tolman (W3ADATMD)
 /// @date 2026-10-16
 template <class ExecSpace>
 W3nauxStatus w3naux(Wadats<ExecSpace>& reg, std::vector<WadatScalars>& scalars,
-                    int ngrids) {
+                    WadatsNl1<ExecSpace>& nl1, int ngrids) {
   if (ngrids == -1) return W3nauxStatus::ngrids_not_set;  // :782-785
 
   // :790, gfortran's "already allocated" (ISTAT 5014). WADATS is never deallocated
@@ -91,14 +97,17 @@ W3nauxStatus w3naux(Wadats<ExecSpace>& reg, std::vector<WadatScalars>& scalars,
   const std::size_t n = ngrids > 0 ? static_cast<std::size_t>(ngrids) : std::size_t{0};
   std::vector<Wadat<ExecSpace>> w;
   std::vector<WadatScalars> s;
+  std::vector<WadatNl1<ExecSpace>> q;
   try {
     w.resize(n);
     s.resize(n);
+    q.resize(n);
   } catch (const std::exception&) {
     return W3nauxStatus::alloc_failed;
   }
   reg.wadats = std::move(w);
   scalars = std::move(s);
+  nl1.models = std::move(q);
 
   reg.nadata = ngrids;  // :792
 
@@ -115,7 +124,7 @@ W3nauxStatus w3naux(Wadats<ExecSpace>& reg, std::vector<WadatScalars>& scalars,
     a.ainit = false;  // :805
     c.ainit2 = false; // :806
     a.fl_all = false; // :807
-    c.nlinit = false; // :809, W3_NL1
+    nl1.models[i].nlinit = false; // :809, W3_NL1
   }
   return W3nauxStatus::ok;
 }

@@ -36,9 +36,11 @@ floating-point arithmetic and allocates no array component: that is `W3DIMA`'s j
 
 `adat_wadat.hpp` (written for `W3DIMA`) holds `Wadats` (`WADATS`, `NADATA`, `IADATA`) and, per
 model, `Wadat` with the arrays and the three scalars `W3DIMA` reads or writes: `NSEALM`, `AINIT`,
-`FL_ALL`. `W3NAUX` sets eight more scalars of `TYPE WADAT`. Those are `WadatScalars` in
+`FL_ALL`. `W3NAUX` sets eight more scalars of `TYPE WADAT`. Seven are `WadatScalars` in
 `adat_w3naux.hpp`, a vector the caller keeps parallel to `Wadats::wadats` (`scalars[imod-1]` is
-`WADATS(IMOD)`'s), so the `W3DIMA` files stay as reviewed. A later `W3SETA` port that needs
+`WADATS(IMOD)`'s), so the `W3DIMA` files stay as reviewed. The eighth, `NLINIT`, is in the
+`W3_NL1` block, `WadatsNl1` of `adat_w3dmnl.hpp`, which `W3NAUX` sizes with `Wadats`: one field,
+one home, the one `W3DMNL` and `W3SETA` read (found duplicated by `W3DMNL`'s review, fixed). A later `W3SETA` port that needs
 `ITIME`, `FLCOLD` and the rest reads them from there.
 
 | `TYPE WADAT` component | Declared | Set by W3NAUX | Held in |
@@ -50,7 +52,7 @@ model, `Wadat` with the arrays and the three scalars `W3DIMA` reads or writes: `
 | `AINIT` | `:568` | `.FALSE.`, `:805` | `Wadat::ainit` |
 | `AINIT2` | `:568` | `.FALSE.`, `:806` | `WadatScalars` |
 | `FL_ALL` | `:568` | `.FALSE.`, `:807` | `Wadat::fl_all` |
-| `NLINIT` (`W3_NL1` block) | `:546` | `.FALSE.`, `:809` | `WadatScalars` |
+| `NLINIT` (`W3_NL1` block) | `:546` | `.FALSE.`, `:809` | `WadatsNl1::models[i].nlinit` (`adat_w3dmnl.hpp`) |
 
 `LOGICAL` is `bool` here, as `Wadat::ainit` and `Wadat::fl_all` already are.
 

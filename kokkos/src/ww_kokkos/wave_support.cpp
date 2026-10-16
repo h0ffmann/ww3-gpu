@@ -9,6 +9,7 @@
 // and of the easy batch (docs/EASY_BATCH_KOKKOS_PLAN_202610.md) are included so every preset
 // compiles them together.
 #include "adat_w3dima.hpp"
+#include "adat_w3dmnl.hpp"
 #include "adat_w3naux.hpp"
 #include "bt8_ccosh.hpp"
 #include "bt8_csinh.hpp"
@@ -289,4 +290,5 @@ void ww_support_instantiate() {
   (void)&ww::pdlib::pdlib_mapsta_init<E>;
   (void)&ww::pdlib::set_iobpa_pdlib<E>;
   (void)&ww::adat::w3naux<E>;
+  (void)&ww::adat::w3dmnl<E>;
 }

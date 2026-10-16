@@ -412,6 +412,7 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | MAPSTA_LOC / INDEX_MAP / NBND_MAP / MAPSTA_HACK | the per-process copy of `MAPSTA(1,:)`, the local indices of its nodes with `MAPSTA < 1`, their count, and the switch that would use them `(v)` `w3gdatmd.F90:756-758`, `w3profsmd_pdlib.F90:113` | `MAPSTA_HACK` is `.FALSE.` and never assigned, so only `NBND_MAP` is read at the pin: it sizes `AC_MAP` in `PDLIB_W3XYPUG` (`:731`). | [kokkos/port_report/PDLIB_MAPSTA_INIT_KOKKOS.md](../kokkos/port_report/PDLIB_MAPSTA_INIT_KOKKOS.md) |
 | WADATS / NADATA / IADATA | "Array of data structures" / "Number of models in array dim." / "Selected model for output, init. at -1" `(v)` `w3adatmd.F90:87`, `:81`, `:82` | `W3NAUX` allocates `WADATS(NGRIDS)` and sets `NADATA`; `W3SETA` sets `IADATA`. | [kokkos/port_report/W3NAUX_KOKKOS.md](../kokkos/port_report/W3NAUX_KOKKOS.md) |
 | ITIME / IPASS / IDLAST / ITSTEP / FLCOLD / FLIWND | "Discrete time step counter", "Pass counter for log file", "Last day ID for log file", a step counter (no header entry, declared `:566`), "Flag for 'cold start' of model", "Flag for initialization of model based on wind" `(v)` `w3adatmd.F90:310-317` | Per-model scalars of `WADAT` that `W3NAUX` sets to 0 and `.FALSE.`. | [kokkos/port_report/W3NAUX_KOKKOS.md](../kokkos/port_report/W3NAUX_KOKKOS.md) |
+| NLINIT / NSPECX / IPnn / IMnn / ICnn | "Flag for initialization", "Auxiliary spectral counter" (NSPECX-Y) and the "Spectral address for Snl" tables `(v)` `w3adatmd.F90:276`, `:268`, `:269-271` | The `W3_NL1` block of `WADAT` that `W3DMNL` allocates (with `AF11`) and `W3NAUX` clears; one `NLINIT` per model in the port, `WadatNl1::nlinit`. | [kokkos/port_report/W3DMNL_KOKKOS.md](../kokkos/port_report/W3DMNL_KOKKOS.md) |
 
 ## HPC and software
 
@@ -1069,6 +1070,7 @@ Every term above, alphabetically, with the section it lives in.
 - NITTIN: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - NK10Hz / IK10Hz / SIG10Hz / DSII10Hz: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - NK10Hz: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- NLINIT / NSPECX / IPnn / IMnn / ICnn: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - NNIDX: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - NOGRP / NGRPP / NOEXTR: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - NOVAL: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
