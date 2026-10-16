@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Postponed (2026-10-15, ADR-0011) |
+| **Status** | Implemented (2026-10-15) |
 | **Author** | M. Hoffmann (asked 2026-10-14 in the project thread: "how to use Kokkos code + ww3 regtest tooling, in a automated way, using the WW3 fork") |
 | **Created** | 2026-10-14 |
 | **Deliverable** | D4, D5 |
@@ -14,7 +14,8 @@
 | **Blocked by** | none |
 | **Risk** | `run_cmake_test` rebuilds WW3 for every entry, so 100 entries take hours, and a failure at that scale is hard to read; the selection is the lever (§11) |
 
-> **Postponed on 2026-10-15.** [ADR-0011](../ADRs/ADR-0011-port-in-units-regtest-at-checkpoints.md) runs the matrix only at checkpoints; its DoD is ticked for W3SNL1, and its next change, the ST4 selection of [`ST4_KOKKOS_PLAN_202610.md`](../ST4_KOKKOS_PLAN_202610.md) §10.3, is made for the ST4 checkpoint.
+> **Implemented on 2026-10-15**, when the last box of §7 was ticked: the 100 serial `NL1` entries byte-identical to the Fortran DIA after the `AF11` fix ([`docs/log/2026-10-14-snl1-bitwise-af11.md`](../log/2026-10-14-snl1-bitwise-af11.md), `docs/data/hoff_matrix_2026-10-15.tsv`) and the 25 OpenMP entries ([`docs/log/2026-10-15-hoff-matrix-omp.md`](../log/2026-10-15-hoff-matrix-omp.md)). The owner marked it so on 2026-10-16; it had been Postponed the same day it was finished.
+> [ADR-0011](../ADRs/ADR-0011-port-in-units-regtest-at-checkpoints.md) runs the matrix only at checkpoints; its next change, the ST4 selection of [`ST4_KOKKOS_PLAN_202610.md`](../ST4_KOKKOS_PLAN_202610.md) §10.3, is made for the ST4 checkpoint.
 
 ### Readiness
 
