@@ -120,3 +120,33 @@ The record is the `regtested` column of `kokkos/ports.tsv`.
 | `w3updtmd:w3utrn` | ported | `updt_utrn.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run in this round); the W3WAVE support checkpoint (ADR-0011) runs it once a shim and the W3WAVE wiring exist |
 | `w3pro3md:w3map3` | ported | `prop_map3.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run in this round); the W3WAVE support checkpoint (ADR-0011) runs it once a shim and the W3WAVE wiring exist |
 | `w3pro3md:w3mapt` | ported | `prop_mapt.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run in this round); the W3WAVE support checkpoint (ADR-0011) runs it once a shim and the W3WAVE wiring exist |
+| `w3ref1md:w3sref` | ported | `srce_ref1.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and the W3SRCE hunk |
+| `w3sic4md:w3sic4` | ported | `srce_ic4.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and the W3SRCE hunk |
+| `pdlib_w3profsmd:pdlib_w3xypfsn2` | ported | `pdlib_fsn2.hpp`, `pdlib_params.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim, the MPI callables and the PDLIB_W3XYPUG hunk |
+| `pdlib_w3profsmd:apply_boundary_condition_va` | ported | `pdlib_boundary_va.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim, the MPI callables and the PDLIB_W3XYPUG hunk |
+| `pdlib_w3profsmd:pdlib_w3xypfspsi2` | ported | `pdlib_fspsi2.hpp`, `pdlib_params.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim, the MPI callables and the PDLIB_W3XYPUG hunk |
+| `w3parall:prop_refraction_pr3` | ported | `prop_parall.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and the PDLIB implicit solver wired |
+| `w3parall:prop_freq_shift_m2` | ported | `prop_parall.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and the PDLIB implicit solver wired |
+| `w3parall:prop_freq_shift` | ported | `prop_freq_shift.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and the PDLIB implicit solver wired |
+| `pdlib_w3profsmd:calcarray_jacobi_spectral_1` | ported | `pdlib_jacobi_spectral.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and the PDLIB implicit solver wired |
+| `pdlib_w3profsmd:calcarray_jacobi_vec` | ported | `pdlib_jacobi_vec.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and the PDLIB implicit solver wired |
+| `w3sis1md:w3sis1` | ported | `srce_is1.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and the W3SRCE hunk |
+| `w3sic1md:w3sic1` | ported | `srce_ic1.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and the W3SRCE hunk |
+| `w3dispmd:wavnu3` | ported | `disp_wavnu3.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its PDLIB callers wired |
+| `w3dispmd:wavnu_local` | ported | `disp_wavnu3.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its PDLIB callers wired |
+| `w3str1md:w3str1` | ported | `srce_tr1.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and the W3SRCE hunk |
+| `w3sbt4md:tabu_erf` | ported | `srce_bt4.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and the W3SRCE hunk |
+| `w3sbt4md:insbt4` | ported | `srce_bt4.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and the W3SRCE hunk |
+| `w3sbt4md:w3sbt4` | ported | `srce_bt4.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and the W3SRCE hunk |
+| `pdlib_w3profsmd:pdlib_jacobi_gauss_seidel_block` | ported | `pdlib_jgs_block.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim with the MPI hooks and the U_JAC contract, and the W3WAVE hunk |
+| `pdlib_w3profsmd:pdlib_explicit_block` | ported | `pdlib_explicit_block.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim with the MPI hooks |
+| `pdlib_w3profsmd:apply_boundary_condition` | ported | `pdlib_boundary.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim with the MPI hooks |
+| `pdlib_w3profsmd:pdlib_w3xypfsfct2` | ported | `pdlib_fsfct2.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); no regtest selects EXPFSFCT |
+| `pdlib_w3profsmd:pdlib_w3xypug` | ported | `pdlib_w3xypug.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and the W3WAVE hunk |
+| `w3partmd:ptnghb` | ported | `part_ptnghb.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and the W3PART hunk |
+| `w3partmd:pt_fld` | ported | `part_fld.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and the W3PART hunk |
+| `w3partmd:ptsort` | ported | `part_ptsort.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and the W3PART hunk |
+| `w3partmd:ptmean` | ported | `part_ptmean.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs W3PART and a shim |
+| `w3snl3md:insnl3` | ported | `snl3_tables.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and the W3IOGR hunk |
+| `w3partmd:w3part` | ported | `part_w3part.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and the W3IOSF hunk |
+| `w3snl3md:w3snl3` | ported | `snl3_gmd.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and the W3SRCE hunk |

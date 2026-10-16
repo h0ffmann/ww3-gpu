@@ -25,6 +25,8 @@ Prepared 9 September 2026. Supersedes the Rust plan of the same date. Figures ma
 
 **Recommendation.** (1) Weeks 1–3: profile and tune the current CPU run on the H100 host; this may already meet the "several runs per day" target. (2) Email the Omega/WW3 team. (3) Run the 3-month pilot to a validated C reference of the frozen configuration. (4) Gate to Stage 2 on the criteria in §8.
 
+**Splitting the physics between the host CPUs (OpenMP) and the H100 (CUDA)** is possible in one Kokkos executable; what it costs and why it is a tuning step after translation and checkpoints is [`CPU_GPU_SPLIT_202610.md`](CPU_GPU_SPLIT_202610.md) (2026-10-16).
+
 ---
 
 ## 2. Kokkos vs SYCL for this project

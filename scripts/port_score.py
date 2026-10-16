@@ -26,7 +26,9 @@ FUNCTION in model/src) and the files (over every .F90 file) of each level
 and, beside them, the size of the port itself: the C++ files and lines under kokkos/src.
 --write also writes site/data/port_score.tsv, which the website reads (site/content), and
 kokkos/PORT_RANKING.md: the routines still in Fortran by self time, up to RANK_TOP, and for each
-ported routine its Kokkos files and its regtest record (the port has no tests of its own, ADR-0010).
+ported routine its Kokkos files and its regtest record (the port has no tests of its own, ADR-0010),
+and kokkos/PORT_TABLE.tsv: one row per routine that is translated, claimed (kokkos/port_claims.tsv)
+or timed by any committed profile (docs/data/ww3_*_gprof.tsv), the next port first.
 The profile is one case on one machine: the time score is that case's, not every model's.
 """
 
@@ -44,6 +46,8 @@ STATUS_MD = ROOT / "kokkos" / "PORT_STATUS.md"
 REPORTS = ROOT / "kokkos" / "port_report"
 SITE_TSV = ROOT / "site" / "data" / "port_score.tsv"
 RANKING_MD = ROOT / "kokkos" / "PORT_RANKING.md"
+CLAIMS = ROOT / "kokkos" / "port_claims.tsv"
+TABLE_TSV = ROOT / "kokkos" / "PORT_TABLE.tsv"
 KOKKOS_SRC = ROOT / "kokkos" / "src"
 START, END = "<!-- port-score:start -->", "<!-- port-score:end -->"
 STEPS = ["ported", "L2", "gpu"]
@@ -227,10 +231,14 @@ def render(meta_p, prof, meta_w, ports):
     return "\n".join(lines)
 
 
+# Modules whose file is not named after them (`grep -il "^ *module <name>" WW3/model/src/*.F90`).
+MODULE_FILE = {"pdlib_w3profsmd": "w3profsmd_pdlib"}
+
+
 def ww3_file(routine):
     """w3src4md:w3sds4 -> model/src/w3src4md.F90; a name without a module has no file here."""
     mod = routine.split(":")[0] if ":" in routine else ""
-    return f"model/src/{mod}.F90" if mod else "—"
+    return f"model/src/{MODULE_FILE.get(mod, mod)}.F90" if mod else "—"
 
 
 def ranking(meta_p, prof, meta_w, ports):
@@ -291,6 +299,84 @@ def ranking(meta_p, prof, meta_w, ports):
     return "\n".join(out)
 
 
+TABLE_COLS = ["priority", "routine", "ww3_file", "self_pct", "profile", "state", "claim", "translated",
+              "wired", "checkpoint", "regtested", "test_comp", "nccmp_tol", "googletest", "report"]
+
+
+def profiles(data_dir=None):
+    """Every committed gprof profile: {case: [rows]}, from docs/data/ww3_<case>_gprof.tsv."""
+    data_dir = data_dir or PROFILE.parent
+    return {p.name[len("ww3_"):-len("_gprof.tsv")]: meta_and_rows(p)[1]
+            for p in sorted(data_dir.glob("ww3_*_gprof.tsv"))}
+
+
+def tsv_cell(text):
+    return " ".join(text.replace("\t", " ").split())
+
+
+def port_table(profs, ports, claims, reports_dir=None):
+    """kokkos/PORT_TABLE.tsv: the untranslated routines by their largest self share in any profile
+    (claimed ones without a profile row after them), then every translated routine. One line per
+    routine; the regtest columns are read from the `regtested` record of kokkos/ports.tsv."""
+    reports_dir = reports_dir or REPORTS
+    by_port = {p["routine"]: p for p in ports}
+    by_claim = {c["routine"]: c for c in claims}
+    best = {}
+    for case, rows in profs.items():
+        for r in rows:
+            pct = float(r["self_pct"])
+            if r["routine"] not in best or pct > best[r["routine"]][0]:
+                best[r["routine"]] = (pct, case)
+    names = set(best) | set(by_port) | set(by_claim)
+    todo = sorted((n for n in names if n not in by_port), key=lambda n: (-best.get(n, (-1.0, ""))[0], n))
+    done = sorted(by_port, key=lambda n: (-best.get(n, (-1.0, ""))[0], n))
+    out = [
+        "# Every WW3 routine the port has translated, claimed or seen in a profile, the next port first.",
+        "# Written by scripts/port_score.py --write from kokkos/ports.tsv, kokkos/port_claims.tsv and",
+        "# docs/data/ww3_*_gprof.tsv; do not edit. priority: the order to port in (ADR-0002, wall time),",
+        "# for routines not yet translated. self_pct: the largest self share in any committed profile,",
+        "# with that profile's case; '—' when no profile times it. checkpoint: the ADR-0011 regtest",
+        "# checkpoint of a translated routine, passed when regtested is yes. googletest: the port has no",
+        "# tests of its own (ADR-0010). test_comp and nccmp_tol quote the regtest record.",
+        "\t".join(TABLE_COLS),
+    ]
+    for i, n in enumerate(todo + done, 1):
+        p, c = by_port.get(n), by_claim.get(n, {})
+        pct, case = best.get(n, (None, "—"))
+        reg = p.get("regtested", "") if p else ""
+        rec = re.sub(r"^(yes|no): ", "", reg)
+        if p:
+            state = "regtested" if is_yes(p, "regtested") else "wired" if is_yes(p, "wired") else "translated"
+        else:
+            state = "claimed" if c else "todo"
+        test_comp = "; ".join(re.findall(r"byte-identical on all \d+(?: \(test\.comp\))?", rec)) if p else ""
+        nccmp = "; ".join(re.findall(r"nccmp-tol \d+ PASS[^;(]*?(?=, after|, with|\(|;|$)", rec)) if p else ""
+        row = {
+            "priority": str(i) if not p else "—",
+            "routine": n,
+            "ww3_file": (p or c).get("file", "") if (p or c) else ww3_file(n),
+            "self_pct": f"{pct:.2f}" if pct is not None else "—",
+            "profile": case,
+            "state": state,
+            "claim": c.get("claim", "—") if not p else "—",
+            "translated": "yes: " + p.get("kokkos", "") if p else "no",
+            "wired": p.get("wired", "") if p else "no",
+            "checkpoint": ("passed" if is_yes(p, "regtested") else "pending") if p else "—",
+            "regtested": ("yes" if is_yes(p, "regtested") else "no") if p else "no",
+            "test_comp": test_comp or ("—" if not p or not is_yes(p, "regtested") else "not recorded"),
+            "nccmp_tol": nccmp.strip(" ,") or "—",
+            "googletest": "none: ADR-0010",
+            "report": f"kokkos/port_report/{report_name(n)}" if p and (reports_dir / report_name(n)).exists() else "—",
+        }
+        out.append("\t".join(tsv_cell(row[k]) for k in TABLE_COLS))
+    return "\n".join(out) + "\n"
+
+
+def table_text():
+    claims = meta_and_rows(CLAIMS)[1] if CLAIMS.exists() else []
+    return port_table(profiles(), meta_and_rows(PORTS)[1], claims)
+
+
 def ranking_text():
     meta_p, prof = meta_and_rows(PROFILE)
     meta_w, ports = meta_and_rows(PORTS)
@@ -342,16 +428,19 @@ def write_or_check(check):
     old_tsv = SITE_TSV.read_text(encoding="utf-8") if SITE_TSV.exists() else ""
     rank = ranking_text()
     old_rank = RANKING_MD.read_text(encoding="utf-8") if RANKING_MD.exists() else ""
-    if new == text and tsv == old_tsv and rank == old_rank:
-        print("port_score: PORT_STATUS.md, PORT_RANKING.md and site/data/port_score.tsv are current")
+    table = table_text()
+    old_table = TABLE_TSV.read_text(encoding="utf-8") if TABLE_TSV.exists() else ""
+    if new == text and tsv == old_tsv and rank == old_rank and table == old_table:
+        print("port_score: PORT_STATUS.md, PORT_RANKING.md, PORT_TABLE.tsv and site/data/port_score.tsv are current")
         return 0
     if check:
-        print("port_score: the port score is stale (PORT_STATUS.md, PORT_RANKING.md or site/data/port_score.tsv): run scripts/port_score.py --write", file=sys.stderr)
+        print("port_score: the port score is stale (PORT_STATUS.md, PORT_RANKING.md, PORT_TABLE.tsv or site/data/port_score.tsv): run scripts/port_score.py --write", file=sys.stderr)
         return 1
     STATUS_MD.write_text(new, encoding="utf-8")
     SITE_TSV.write_text(tsv, encoding="utf-8")
     RANKING_MD.write_text(rank, encoding="utf-8")
-    print("port_score: wrote PORT_STATUS.md, PORT_RANKING.md and site/data/port_score.tsv")
+    TABLE_TSV.write_text(table, encoding="utf-8")
+    print("port_score: wrote PORT_STATUS.md, PORT_RANKING.md, PORT_TABLE.tsv and site/data/port_score.tsv")
     return 0
 
 
@@ -447,7 +536,8 @@ Each sample counts as 0.01 seconds.
     with tempfile.TemporaryDirectory() as tmp:
         (Path(tmp) / "W3SNL1_KOKKOS.md").write_text("x", encoding="utf-8")
         ok(missing_reports(ports[:2], Path(tmp)) == ["INSNL1_KOKKOS.md"], "a ported routine without a report is named")
-    ok(ww3_file("w3src4md:w3sds4") == "model/src/w3src4md.F90" and ww3_file("init") == "—",
+    ok(ww3_file("w3src4md:w3sds4") == "model/src/w3src4md.F90" and ww3_file("init") == "—"
+       and ww3_file("pdlib_w3profsmd:x") == "model/src/w3profsmd_pdlib.F90",
        "a module's routine maps to its file; a bare name has none")
     rk = ranking({"case": "t"}, rows, {"ww3_rev": "abc"},
                  [dict(ports[0], kokkos="kokkos/src/a.cpp, kokkos/src/s.cpp", regtested="yes: L2, ww3_ts1")])
@@ -455,6 +545,24 @@ Each sample counts as 0.01 seconds.
        "the ranking skips the ported routine and its cumulative share starts from the port's")
     ok("this table has 3 rows, not 100" in rk, "the ranking says how many rows the profile allows")
     ok("| `w3snl1md:w3snl1` | L2 | `a.cpp`, `s.cpp` | yes: L2, ww3_ts1 |" in rk, "a port's row names its files and its regtest record")
+    tports = [dict(ports[0], file="model/src/w3snl1md.F90:1-2", kokkos="kokkos/src/a.cpp",
+                   regtested="yes: matrix of 100 entries, byte-identical on all 100 (test.comp), nccmp-tol 71 PASS, 29 n/a, 0 FAIL, after AF11"),
+              dict(ports[2], file="model/src/w3src4md.F90:1-2", kokkos="kokkos/src/b.hpp")]
+    claims = [{"routine": "w3srce", "file": "model/src/w3srcemd.F90:1-9", "claim": "goal/1-x"},
+              {"routine": "w3xxmd:w3new", "file": "model/src/w3xxmd.F90:1-2", "claim": "Kimi Code"}]
+    with tempfile.TemporaryDirectory() as tmp:
+        tb = port_table({"t": rows}, tports, claims, Path(tmp)).splitlines()
+    body = [ln.split("\t") for ln in tb if not ln.startswith("#")]
+    ok(body[0] == TABLE_COLS, "the table's header is its columns")
+    ok([r[1] for r in body[1:]] == ["w3src4md:w3sin4", "w3srce", "w3xxmd:w3new", "w3src4md:w3sds4", "w3snl1md:w3snl1"],
+       "untranslated by self share, a claim without a profile row after them, then the translated")
+    ok(body[1][0] == "1" and body[4][0] == "—", "only untranslated routines get a priority")
+    ok(body[2][5] == "claimed" and body[2][6] == "goal/1-x" and body[1][5] == "todo", "a claim shows in state and claim")
+    ok(body[3][3] == "—" and body[3][4] == "—", "a routine no profile times has no share")
+    ok(body[5][5] == "regtested" and body[5][9] == "passed" and body[5][11] == "byte-identical on all 100 (test.comp)"
+       and body[5][12] == "nccmp-tol 71 PASS, 29 n/a, 0 FAIL", "a regtested row quotes its test.comp and nccmp-tol record")
+    ok(body[4][5] == "translated" and body[4][9] == "pending" and body[4][13] == "none: ADR-0010",
+       "a translated, unregtested row has its checkpoint pending")
     print("port_score self-test: " + ("ok" if not fails else f"{fails} failure(s)"))
     return 1 if fails else 0
 

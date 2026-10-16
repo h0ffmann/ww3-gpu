@@ -1,5 +1,43 @@
 # `PATCH.md`: wiring the Kokkos DIA into WAVEWATCH III
 
+## The fork today, 2026-10-16
+
+Read with `git -C WW3 fetch origin && git -C WW3 branch -r` and `git rev-list --count` (v,
+2026-10-16):
+
+| h0ffmann/WW3 branch | Head | Against the `WW3/` pin | What it wires |
+|---|---|---|---|
+| `ww3-gpu/kokkos-st4` | `c9a6a0c6` | **the pin** | the DIA (`W3SNL1`, `INSNL1`) and ST4 (`W3SDS4`, `W3SIN4`, `W3SPR4` and their tables) in `w3srcemd.F90` and `w3initmd.F90`, behind the `KOKKOS` switch |
+| `ww3-gpu/kokkos-srce` | `e062ff0b` | one commit ahead | `W3SRCE` itself (`WW_KOKKOS_SRCE`, with `LN1`, `BT1`, `DB1`): `w3wavemd.F90` +24, `w3initmd.F90` +23, `w3kokkosmd.F90` +212 lines |
+| `hoff/kokkos-snl1` | `bb08623a` | two commits behind, contained in the pin | the DIA alone; superseded |
+| `develop` | `03adda91` | the fork's base | none; equal to NOAA-EMC/WW3 `develop` on 2026-10-16, so there is no upstream change to take |
+
+What the next plug-ins need from the fork:
+
+- **`W3SRCE`, `W3SLN1`, `W3SBT1`, `W3SDB1`**: moving the pin to `e062ff0b`. That is a checkpoint
+  under ADR-0011 (`just smoke-ww3-gpu`, `just full-ww3-gpu`, `just ww3-gpu-matrix`) before
+  `kokkos/ports.tsv` may say `wired` yes.
+- **Propagation and the `W3WAVE` support routines** (`W3XYP3`, `W3KTP3`, `W3QCK1-3`, `W3GATH`,
+  `W3SCAT`, `W3UWND`, `W3DZXY`, `W3UTRN`, `W3MAP3`, `W3MAPT`, `DISTAB`): nothing on the fork yet.
+  Each needs a `bind(C)` interface in `w3kokkosmd.F90`, a C shim in `kokkos/src/fortran_iface/`,
+  and a hunk in `w3wavemd.F90` (or `w3iogrmd.F90` for `DISTAB`) that keeps the Fortran call
+  selectable at run time, on a new fork branch from `ww3-gpu/kokkos-srce`. The shared-memory
+  `W3GATH`/`W3SCAT` path is the only one ported; NOAA's operational switches are `DIST MPI`
+  (`WW3-noaa/model/bin/switch_NCEP_st4`), whose branches are not.
+- The fork's `model/src/CMakeLists.txt` already links `ww_kokkos` under `KOKKOS`, and a new shim
+  is one more source in this repository's `fortran_iface` target. What has to move with each new
+  set of entry points is the ABI version: the fork asks for `find_package(ww_kokkos 0.2)` and
+  `kokkos/CMakeLists.txt` declares `0.2.0`. `ww3-gpu/kokkos-srce` adds the `W3SRCE` entry points
+  and still asks for `0.2`, so an install of `ww_kokkos` from before them satisfies the version
+  check and fails only at link ⚠; the next fork branch should raise both sides to `0.3`.
+- The source-term path runs per sea point, so it works under `DIST MPI` as under `SHRD` (the
+  regtest matrix's MPI entries ran it, `AGENTS.md`, "Bit for bit"). A propagation path is
+  different: `W3GATH`/`W3SCAT` and the `PDLIB` solver exchange data between ranks, so their
+  hunks must keep the Fortran under those switches until a port of that branch exists, and the
+  fork's only switch guard today is `KOKKOS` with `ST4` and `FLX5`.
+
+## How the first patch was made
+
 > **Applied on 2026-10-14** as the h0ffmann/WW3 branch `hoff/kokkos-snl1`
 > (commit `6d1bcdfe`), which the `WW3/` submodule now pins; `w3kokkosmd.F90` lives
 > there, not here. Two things changed on the way: `SIG(1)` in hunk 2 became

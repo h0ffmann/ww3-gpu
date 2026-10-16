@@ -1,0 +1,7 @@
+# Who translates which WW3 routine next, so two agents never port the same one. Hand-kept: add a
+# row when a batch is claimed, delete it when the routine gets its kokkos/ports.tsv row.
+# scripts/port_score.py --write merges it into kokkos/PORT_TABLE.tsv.
+# routine: module:routine in lower case, as kokkos/ports.tsv and the gprof profiles name it
+# file: model/src/<file>.F90:<first>-<last> at NOAA-EMC/WW3 03adda91
+# claim: the branch (and agent) that owns it; plan: the plan that names it
+routine	file	claim	plan

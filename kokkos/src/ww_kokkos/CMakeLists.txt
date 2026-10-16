@@ -3,7 +3,8 @@
 # (st4_*: W3SDS4, W3SIN4, W3SPR4, CALC_USTAR, INSIN4, TABU_*), the W3SRCE unit (srce_*), the
 # propagation unit (prop_*: W3XYP3, W3KTP3, W3QCK1-3, WAVNU1), W3WAVE's support routines
 # (wave_*, updt_*, disp_*: W3GATH, W3SCAT, W3DZXY, W3UWND, W3UTRN, DISTAB, WAVNU2; prop_map*:
-# W3MAP3, W3MAPT) and the binary
+# W3MAP3, W3MAPT), NOAA's operational switches (srce_ref1, srce_ic4; pdlib_*: the unstructured
+# PDLIB solver) and the binary
 # fixture reader its L1 tests read the Fortran reference answers with.
 #
 # SPDX-License-Identifier: MIT
@@ -44,8 +45,35 @@ target_sources(ww_kokkos PRIVATE
     updt_uwnd.hpp
     updt_utrn.hpp
     disp_distab.hpp
+    disp_wavnu3.hpp
     prop_map3.hpp
     prop_mapt.hpp
+    srce_ref1.hpp
+    srce_ic4.hpp
+    srce_ic1.hpp
+    srce_is1.hpp
+    srce_tr1.hpp
+    srce_bt4.hpp
+    snl3_tables.hpp
+    snl3_gmd.hpp
+    part_ptsort.hpp
+    part_ptnghb.hpp
+    part_fld.hpp
+    part_ptmean.hpp
+    part_w3part.hpp
+    pdlib_params.hpp
+    pdlib_fsn2.hpp
+    pdlib_fspsi2.hpp
+    pdlib_fsfct2.hpp
+    pdlib_w3xypug.hpp
+    pdlib_boundary_va.hpp
+    pdlib_jacobi_spectral.hpp
+    pdlib_jacobi_vec.hpp
+    pdlib_jgs_block.hpp
+    pdlib_explicit_block.hpp
+    pdlib_boundary.hpp
+    prop_parall.hpp
+    prop_freq_shift.hpp
     wave_support.cpp
     srce_kernel.hpp
     srce_ln1.hpp

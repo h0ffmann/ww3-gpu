@@ -244,10 +244,13 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | INSNL1 | "Preprocessing for nonlinear interactions (weights)" `(v)`, `w3snl1md.F90:483-786` | Builds the quadruplet address tables (`IP11…IM42`, `IC11…IC82`), weights (`AWG1..8`, `SWG1..8`) and `AF11` ("scaling array f**11", `w3adatmd.F90` `(v)`) once per grid. | [course/12-porting-a-kernel-w3snl1.md](../course/12-porting-a-kernel-w3snl1.md) |
 | W3SNLGQM | Snl by the Gaussian Quadrature Method of Lavrenov (2001), adapted from TOMAWAC `(v)` | The `IQTPE <= 0` branch at the same call site; not replaced by the port. | [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md) |
 | W3SNL2 / W3SNL3 / W3SNL4 / W3SNL5 | interface to exact interactions / multiple DIA for arbitrary depths / TSA / GKE (`CalcQRSNL`) `(v)` | The other Snl modules, out of scope. | [kokkos/PORT_STATUS.md](../kokkos/PORT_STATUS.md) |
+| INSNL3 / EXPAND / EXPND2 | "Initialization for generalized multiple DIA routine"; W3SNL3's internal routines that "Expand spectrum" to "simplify indirect addressing" `(v)` (`w3snl3md.F90:644`, `:717`, `:788` at `03adda91`) | INSNL3 builds the quadruplet tables W3SNL3 reads per point. | [kokkos/port_report/W3SNL3_KOKKOS.md](../kokkos/port_report/W3SNL3_KOKKOS.md) |
 | W3SRCEMD / W3SRCE | "Source term integration routine" `(v)`, `w3srcemd.F90:190` | The per-point driver that sums Sin + Snl + Sds + …, sub-steps dynamically and applies the limiter; the profile's top routine and the OpenACC target of Ikuyajolu et al. | [course/09-benchmark-profile-compile-run.md](../course/09-benchmark-profile-compile-run.md), [docs/AGENTS_KOKKOS_202609.md](AGENTS_KOKKOS_202609.md) |
 | W3SRC4MD: W3SPR4 / W3SIN4 / W3SDS4 | "SHOM/Ifremer source terms" after Janssen and Ardhuin et al. (2009, 2010): mean parameters / "diagonal and input source term for WAM4+ approach" / "wave dissipation source term" `(v)` | The `ST4` package, the next port candidate. | [course/07-physics-choices.md](../course/07-physics-choices.md), [kokkos/PORT_STATUS.md](../kokkos/PORT_STATUS.md) |
 | W3SRC6MD: W3SIN6 / W3SDS6 | observation-based input after Donelan et al. (2006) and dissipation after Babanin et al. (2010), Rogers et al. (2012) `(v)` | The `ST6` package. | [course/07-physics-choices.md](../course/07-physics-choices.md) |
-| W3SLN1, W3SBT1, W3SDB1, W3STR1, W3SIC1…5, W3REF1 | linear input / JONSWAP bottom friction / Battjes–Janssen breaking / LTA triads / ice source terms / shoreline reflection `(v)` module headers | The remaining per-point source-term routines, "trivial once `W3SRCE` exists" in the ranked list. | [course/13-bulk-porting-with-agents.md](../course/13-bulk-porting-with-agents.md) |
+| W3SLN1, W3SBT1, W3SDB1, W3STR1, W3SIC1…5, W3REF1 | linear input / JONSWAP bottom friction / Battjes–Janssen breaking / LTA triads / ice source terms / shoreline reflection (`W3REF1MD`, whose routine is `W3SREF`) `(v)` module headers | The remaining per-point source-term routines, "trivial once `W3SRCE` exists" in the ranked list. | [course/13-bulk-porting-with-agents.md](../course/13-bulk-porting-with-agents.md) |
+| W3SBT4 / INSBT4 / TABU_ERF, W3SIS1, WAVNU_LOCAL, WAVNU3 | "SHOWEX bottom friction with movable bed effects" and its tables / "Spectral reflection due to ice" / wavenumber and group velocity "from the improved Eckard's formula by Beji (2003)" `(v)` `WW3-noaa/model/src/w3sbt4md.F90:340`, `w3sis1md.F90:74`, `w3dispmd.F90:456` | Small routines of the switches `BT4`, `IS1` and of `W3DISPMD`, in Batch B of the NOAA translation plan. | [docs/NOAA_OPS_KOKKOS_PLAN_202610.md](NOAA_OPS_KOKKOS_PLAN_202610.md) |
+| RWPS / GLWU | the NWS Regional Wave Prediction System / NCEP's Great Lakes Wave Unstructured model, named by WW3's switch files `switch_NWS_rwps` and `switch_NCEP_glwu` `(v)` `WW3-noaa/model/bin/` ⚠ (the expansions are not written in those files) | Operational NOAA configurations whose switches (`PDLIB`, `IC4`, `REF1`, `TR1`; `NL3`) go beyond the lab switch. | [docs/NOAA_OPS_KOKKOS_PLAN_202610.md](NOAA_OPS_KOKKOS_PLAN_202610.md) |
 | W3FLX2MD / W3FLX2 | "Flux/stress computations according Tolman and Chalikov (1996)" `(v)` | The `FLX2` friction-velocity routine, `ST2`'s companion. | [course/01-build.md](../course/01-build.md) |
 | W3PRO2MD / W3PRO3MD | "third order propagation scheme" modules (`PR2` / `PR3`) `(v)` | Hold `W3XYP2`/`W3KTP2` and `W3XYP3`/`W3KTP3`. | [course/09-benchmark-profile-compile-run.md](../course/09-benchmark-profile-compile-run.md) |
 | W3XYP2 / W3XYP3 | "Propagation in physical space for a given spectral component" `(v)` | Spatial advection per spectral bin, the memory-bound bucket. | [docs/AGENTS_KOKKOS_202609.md](AGENTS_KOKKOS_202609.md) |
@@ -262,6 +265,8 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | W3IOGOMD / W3OUTG / W3IOGO | "Gridded output of mean wave parameters": fill output arrays / read-write `out_grd.ww3` `(v)` | Integral parameters (`Hs`, `Tp`, …) from the spectrum; ranked #8 for the port. | [docs/AGENTS_KOKKOS_202609.md](AGENTS_KOKKOS_202609.md) |
 | W3IOPOMD / W3IOPO, W3IORSMD / W3IORS, W3IOBCMD / W3IOBC, W3IOTRMD / W3IOTR | point output / restart files / boundary conditions / track output read-write `(v)` | The I/O bucket (`w3io*`) of the profile. | [course/09-benchmark-profile-compile-run.md](../course/09-benchmark-profile-compile-run.md) |
 | W3PARTMD / W3PART | "Spectral partitioning according to the watershed method" / "Interface to watershed partitioning routines" `(v)` | The wind-sea/swell partition behind `PHS`, `PTP`, `PDIR`. | [course/06-output.md](../course/06-output.md) |
+| PTSORT / PTNGHB / PT_FLD / PTMEAN | the routines W3PART calls: "sorts the image data in ascending order", "computes the nearest neighbors for each grid" point, "does incremental flooding of the image", "Compute mean parameters per partition" `(v)` (`w3partmd.F90` headers at `03adda91`) | The watershed algorithm's pieces; each is translated in its own header `kokkos/src/ww_kokkos/part_*.hpp`. | [kokkos/port_report/PT_FLD_KOKKOS.md](../kokkos/port_report/PT_FLD_KOKKOS.md) |
+| PTMETH / PTFCUT / IHMAX / HSPMIN / WSMULT | W3ODATMD's partitioning settings: the method, 1 to 5, read from the namelist; the cutoff frequency of methods 4 and 5; "Number of discrete spectral levels"; "Minimum significant height per part."; "Multiplier for wind sea boundary." `(v)` (`w3partmd.F90:197-209`, `w3odatmd.F90:265-269`) | Per output set; `ww3_grid` sets `IHMAX = MAX(50, IHM)` and `HSPMIN = MAX(0.0001, HSPM)` (`w3gridmd.F90:3140-3141`). | [kokkos/port_report/W3PART_KOKKOS.md](../kokkos/port_report/W3PART_KOKKOS.md) |
 | W3UPDTMD (W3UPDT*): W3UWND / W3UCUR / W3ULEV / W3UICE / W3UINI / W3UTRN | "Bundles all input updating routines": interpolate wind / current / water level / ice map / fetch-limited initial field / cell transparencies `(v)` | Forcing interpolation, cheap but the trigger of host→device copies. | [docs/AGENTS_KOKKOS_202609.md](AGENTS_KOKKOS_202609.md) |
 | W3DZXY | "Calculate derivatives of a field" `(v)` `WW3-noaa/model/src/w3updtmd.F90:3225` | Gradients of a sea-point field on the rectilinear grid by centred differences, mapped by the grid metrics; in `w3updtmd.F90`, called by `W3WAVE`. | [docs/W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md](W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md) |
 | W3GDATMD | "Define data structures to set up wave model grids and aliases to use individual grids transparently" `(v)` | Grid data: `NK`, `NTH`, `NSPEC`, `XFR`, `SIG(0:NK+1)`, `DTH`, the DIA constants `LAM`, `SNLC1`, `KDCON`, `KDMN`, `SNLS1..3`, `FACHFE`, `IQTPE`; the largest source of hidden global state. | [course/12-porting-a-kernel-w3snl1.md](../course/12-porting-a-kernel-w3snl1.md) |
@@ -276,6 +281,8 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | W3SERVMD / EXTCDE / STRACE | service routines: "Perform a program stop with an exit code" / "Keep track of entered subroutines" `(v)` | `EXTCDE(1)` is the abort the patched caller must issue on a shim error; `STRACE` is the `S`-switch tracer. | [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md) |
 | W3DISPMD / DISTAB / WAVNU1 / WAVNU2 / WAVNU3 | dispersion-relation routines: fill interpolation tables / "wavenumber and group velocity from the interpolation array" / "calculation of wavenumber K from a given angular frequency W and waterdepth H" by Newton on W² = g·k·tanh(k·h) / "from the improved Eckard's formula by Beji (2003)" `(v)` | How WW3 gets `WN` and `CG` from σ and depth. | [docs/KOKKOS_H100_PLAN_202609.md](KOKKOS_H100_PLAN_202609.md) |
 | W3PROFSMD / w3profsmd_pdlib.F90 | "Propagation schemes for unstructured grids using fluctuation splitting" / its PDLIB, implicit version `(v)` | Unstructured propagation, deferred. | [docs/AGENTS_KOKKOS_202609.md](AGENTS_KOKKOS_202609.md) |
+| PDLIB_W3XYPFSN2 / PDLIB_W3XYPFSPSI2 / PDLIB_JACOBI_GAUSS_SEIDEL_BLOCK / CALCARRAY_JACOBI_VEC / APPLY_BOUNDARY_CONDITION_VA | routines of `w3profsmd_pdlib.F90` (gprof's module `pdlib_w3profsmd`): explicit N and PSI fluctuation-splitting advection / the implicit block Gauss-Seidel solver / the assembly of its sparse system / the open-boundary spectra `(v)` source read 2026-10-16, `WW3-noaa/model/src/w3profsmd_pdlib.F90:868,1202,5463,3531,5037` | The unstructured-grid propagation of NOAA's PDLIB configurations, batch A of the NOAA translation plan. | [docs/NOAA_OPS_KOKKOS_PLAN_202610.md](NOAA_OPS_KOKKOS_PLAN_202610.md) |
+| PROP_REFRACTION_PR3 / PROP_FREQ_SHIFT_M2 / PROP_FREQ_SHIFT | routines of `W3PARALL` (`w3parall.F90`): refraction velocity in direction / frequency-shift velocity, method 2 / method 1, per node of an unstructured grid `(v)` source read 2026-10-16, `WW3-noaa/model/src/w3parall.F90:447,754,604` | Feed the spectral part of the PDLIB implicit scheme's matrix. | [docs/NOAA_OPS_KOKKOS_PLAN_202610.md](NOAA_OPS_KOKKOS_PLAN_202610.md) |
 | W3PARALL / W3TRIAMD / W3GSRUMD / W3CSPCMD / W3FLDSMD / W3TIMEMD | parallel routines for the implicit solver / unstructured grid reader / grid search & regrid utilities / spectral-grid conversion / forcing field I/O / time utilities `(v)` | Supporting modules named in the H100 plan's repository map. | [docs/KOKKOS_H100_PLAN_202609.md](KOKKOS_H100_PLAN_202609.md) |
 | wm*md.F90 (WMESMFMD, WMSCRPMD, …) | `ww3_multi` counterparts: ESMF interface module, SCRIP remapping, … `(v)` | Dropped from the port's scope. | [docs/KOKKOS_H100_PLAN_202609.md](KOKKOS_H100_PLAN_202609.md) |
 | VA, VS/VD, SPEC, VSNL/VDNL, CG1, WNMEAN, DEPTH, ISEA/JSEA, IMOD | storage array for spectra / source and diagonal / the point's spectrum inside `W3SRCE` / DIA outputs / `CG(1:NK,ISEA)` / mean wavenumber / depth / global and local sea-point index / grid number `(v)` `w3wdatmd.F90`, [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md) | The variable names that appear in the patch hunks. | [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md) |
@@ -318,6 +325,8 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | ADA89 / HOPPER90 | `Kokkos_ARCH_ADA89` (RTX 4090) / `HOPPER90` (H100) Kokkos architecture keys `(v)` [kokkos/CMakePresets.json](../kokkos/CMakePresets.json) | The pinned CUDA Kokkos is built for ADA89 only; an H100 needs a Kokkos rebuild in `picasso`. | [course/11-kokkos-and-modern-cpp.md](../course/11-kokkos-and-modern-cpp.md) |
 | H100 / RTX 4090 | NVIDIA data-centre (Hopper) and consumer (Ada) GPUs `(v)` [pubs/proposal/pt/04-scope.md](../pubs/proposal/pt/04-scope.md), [README.md](../README.md) | The proposal's target and the owner's workstation card; the 4090 runs FP64 at 1/64 of FP32. | [bench/README.md](../bench/README.md), [kokkos/PORT_STATUS.md](../kokkos/PORT_STATUS.md) |
 | PCIe / NVLink | ⚠ Peripheral Component Interconnect Express / NVIDIA's GPU interconnect (not expanded in the repo) | The host↔device link whose bandwidth bounds every phase-1 port; consumer cards have PCIe only. | [README.md](../README.md), [bench/README.md](../bench/README.md) |
+| GH200 / NVLink-C2C | NVIDIA Grace Hopper Superchip: a Grace CPU and a Hopper GPU joined by NVLink-C2C, a "900 gigabytes per second (GB/s) of coherent interface" `(v)` (NVIDIA GH200 page, read 2026-10-16) | A different product from an H100 card in an x86 server, where the CPU and the GPU memories meet over PCIe Gen5. | [docs/CPU_GPU_SPLIT_202610.md](CPU_GPU_SPLIT_202610.md) |
+| HBM | High Bandwidth Memory: the GPU's stacked memory, about 2 TB/s on the H100 PCIe and 3.35 TB/s on the SXM `(v)` (NVIDIA H100 datasheet, Cisco copy, read 2026-10-16) | Sets how fast the GPU reads the spectrum, against the PCIe link that moves it between memories. | [docs/CPU_GPU_SPLIT_202610.md](CPU_GPU_SPLIT_202610.md) |
 | NVMe | ⚠ Non-Volatile Memory Express (not expanded in the repo) | Fast local storage named among today's lab-machine features. | [pubs/proposal/pt/05-justification.md](../pubs/proposal/pt/05-justification.md) |
 | FP32 / FP64 / float32 | single / double precision; WW3's default `REAL` is 4 bytes, `ww::Real` is `float` `(v)` [kokkos/src/ww_kokkos/real.hpp](../kokkos/src/ww_kokkos/real.hpp) | The port keeps `float` state and accumulates in `double`. | [course/11-kokkos-and-modern-cpp.md](../course/11-kokkos-and-modern-cpp.md) |
 | FMA / `-ffp-contract` / `--fmad` | fused multiply-add and the GCC / nvcc flags that control contraction `(v)` [kokkos/README.md](../kokkos/README.md) | One rounding where the Fortran does two; `ww_kokkos` builds with `-ffp-contract=off` and `--fmad=false` for bit parity. | [course/12-porting-a-kernel-w3snl1.md](../course/12-porting-a-kernel-w3snl1.md), [kokkos/PORT_STATUS.md](../kokkos/PORT_STATUS.md) |
@@ -458,6 +467,7 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | `RPAR` / `IPAR` | real and integer parameter arrays `(v)` [kokkos/src/ww_kokkos/st4_params.hpp](../kokkos/src/ww_kokkos/st4_params.hpp) | The ST4 scalars of WW3's `SRCP` derived type, packed by the Fortran into a `REAL(C_FLOAT)` and an `INTEGER(C_INT)` array, because no derived type crosses the `bind(C)` boundary; each index is a named constant on both sides (`R_*`, `I_*`; the arrays travel separately under `A_*` ids). | [docs/ST4_KOKKOS_PLAN_202610.md](ST4_KOKKOS_PLAN_202610.md) |
 | `ww_st4_init` / `ww_st4_set_real` / `ww_st4_set_int` / `ww_st4_commit` / `ww_sds4` / `ww_sin4` / `ww_spr4` / `ww_st4_enabled` / `ww_st4_last_error` | the C entry points of the ST4 port: configure a grid (scalars, then each array with its LBOUND and SHAPE, then commit), run a routine on `npts` points, read a flag, read the last status `(v)` [kokkos/src/fortran_iface/ww_kokkos_c.hpp](../kokkos/src/fortran_iface/ww_kokkos_c.hpp) | Status codes 5 (`WW_KOKKOS_ERR_UNSUPPORTED`, `W3_FLX5`) and 6 (`WW_KOKKOS_ERR_TABLE`) extend the SNL1 ones. | [kokkos/port_report/W3SDS4_KOKKOS.md](../kokkos/port_report/W3SDS4_KOKKOS.md) |
 | libmvec | glibc's vector math library: SIMD versions of `powf`, `expf` and others (`_ZGVbN4vv_powf` takes four floats in one SSE register) that gfortran `-O3` calls inside vectorised loops `(v)` [kokkos/src/ww_kokkos/st4_libmvec.hpp](../kokkos/src/ww_kokkos/st4_libmvec.hpp) | Its results differ from scalar libm by up to 3 ULP, so five ST4 loops are bit for bit only when the port calls it with the same grouping of four; no device has it. | [kokkos/port_report/W3SDS4_KOKKOS.md](../kokkos/port_report/W3SDS4_KOKKOS.md) |
+| SLP | superword-level parallelism: GCC's vectoriser of straight-line code (`-fopt-info-vec` reports "basic block part vectorized"), as opposed to loop vectorisation `(v)` [kokkos/src/ww_kokkos/snl3_tables.hpp](../kokkos/src/ww_kokkos/snl3_tables.hpp) | In `INSNL3` it computes four `LOG`s with libmvec for the stored indices while keeping scalar `logf` for the exponents of the weights, so the port computes both. | [kokkos/port_report/INSNL3_KOKKOS.md](../kokkos/port_report/INSNL3_KOKKOS.md) |
 | `WW_KOKKOS_SRCE` / `WW_KOKKOS_SRCE_COUNT` | environment variables of the W3SRCE port: `=1` makes `ww_srce_enabled()` return 1 so `W3WAVE` calls the Kokkos `W3SRCE`, with every source term it calls; the count prints the spectra integrated at exit `(v)` [kokkos/src/fortran_iface/srce_shim.cpp](../kokkos/src/fortran_iface/srce_shim.cpp) | Default unset, so WW3 runs the Fortran |
 | `ww_srce_init` / `ww_srce` / `ww_srce_enabled` / `ww_srce_last_error` | the C entry points of the W3SRCE port `(v)` [kokkos/src/fortran_iface/ww_kokkos_c.hpp](../kokkos/src/fortran_iface/ww_kokkos_c.hpp) | `ww_srce_init` needs the DIA and ST4 contexts of the same grid |
 | GIMPLE | GCC's three-address intermediate representation; `-fdump-tree-optimized` writes it after the optimisations `(v)` [ADR-0011](ADRs/ADR-0011-port-in-units-regtest-at-checkpoints.md) | The static-parity argument compares the Fortran's and the C++'s, statement by statement |
@@ -683,6 +693,8 @@ Every term above, alphabetically, with the section it lives in.
 - execution space / memory space: [HPC and software](#hpc-and-software)
 - `exercises/`: [This repository's own names](#this-repositorys-own-names)
 - explicit interface: [HPC and software](#hpc-and-software)
+- EXPAND: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- EXPND2: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - EXTCDE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - `extern "C"`: [HPC and software](#hpc-and-software)
 - F, E: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
@@ -740,6 +752,8 @@ Every term above, alphabetically, with the section it lives in.
 - genes_gmd: [HPC and software](#hpc-and-software)
 - GFS: [HPC and software](#hpc-and-software)
 - GFS / GEFS: [HPC and software](#hpc-and-software)
+- GH200: [HPC and software](#hpc-and-software)
+- GH200 / NVLink-C2C: [HPC and software](#hpc-and-software)
 - GitHub Pages / chunkedhtml / MathML: [HPC and software](#hpc-and-software)
 - GKE (NL5): [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - GMD (journal): [Models, projects and institutions](#models-projects-and-institutions)
@@ -776,6 +790,7 @@ Every term above, alphabetically, with the section it lives in.
 - GTest: [HPC and software](#hpc-and-software)
 - H100: [HPC and software](#hpc-and-software)
 - H100 / RTX 4090: [HPC and software](#hpc-and-software)
+- HBM: [HPC and software](#hpc-and-software)
 - HDF5: [HPC and software](#hpc-and-software)
 - HOMOG_COUNT: [WW3 programs and files](#ww3-programs-and-files)
 - HOMOG_COUNT / HOMOG_INPUT: [WW3 programs and files](#ww3-programs-and-files)
@@ -784,6 +799,7 @@ Every term above, alphabetically, with the section it lives in.
 - `hoff_matrix.sh`: [This repository's own names](#this-repositorys-own-names)
 - HOPPER90: [HPC and software](#hpc-and-software)
 - Hs (HS): [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
+- HSPMIN: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - IC0: [WW3 switches](#ww3-switches)
 - IC0–IC5: [WW3 switches](#ww3-switches)
 - IC1: [WW3 switches](#ww3-switches)
@@ -800,12 +816,15 @@ Every term above, alphabetically, with the section it lives in.
 - IFREMER: [Models, projects and institutions](#models-projects-and-institutions)
 - IFREMER / SHOM: [Models, projects and institutions](#models-projects-and-institutions)
 - IG1: [WW3 switches](#ww3-switches)
+- IHMAX: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - IMOD: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - INBND_COUNT: [WW3 programs and files](#ww3-programs-and-files)
 - INBND_COUNT / INBND_POINT: [WW3 programs and files](#ww3-programs-and-files)
 - INBND_POINT: [WW3 programs and files](#ww3-programs-and-files)
 - .inp: [WW3 programs and files](#ww3-programs-and-files)
 - INSNL1: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- INSNL3: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- INSNL3 / EXPAND / EXPND2: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - `INSNL1_REF`: [This repository's own names](#this-repositorys-own-names)
 - `INTENT`: [HPC and software](#hpc-and-software)
 - IS0: [WW3 switches](#ww3-switches)
@@ -969,6 +988,7 @@ Every term above, alphabetically, with the section it lives in.
 - nvcc_wrapper: [HPC and software](#hpc-and-software)
 - nvfortran: [HPC and software](#hpc-and-software)
 - NVLink: [HPC and software](#hpc-and-software)
+- NVLink-C2C: [HPC and software](#hpc-and-software)
 - NVMe: [HPC and software](#hpc-and-software)
 - NWS: [Models, projects and institutions](#models-projects-and-institutions)
 - O0: [WW3 switches](#ww3-switches)
@@ -1062,6 +1082,12 @@ Every term above, alphabetically, with the section it lives in.
 - pratico: [HPC and software](#hpc-and-software)
 - Projects (Claude Code): [HPC and software](#hpc-and-software)
 - pt-BR: [This repository's own names](#this-repositorys-own-names)
+- PT_FLD: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- PTFCUT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- PTMEAN: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- PTMETH: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- PTNGHB: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- PTSORT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - PTP: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - publisher: [HPC and software](#hpc-and-software)
 - `proof/`: [This repository's own names](#this-repositorys-own-names)
@@ -1148,6 +1174,7 @@ Every term above, alphabetically, with the section it lives in.
 - Sin: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - Sin, Snl, Sds, Sbot/Sbt, Sdb, Sice, Str, Sln: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - Sln: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
+- SLP: [This repository's own names](#this-repositorys-own-names)
 - sm_89: [HPC and software](#hpc-and-software)
 - SMC: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - SMC: [WW3 switches](#ww3-switches)
@@ -1422,6 +1449,7 @@ Every term above, alphabetically, with the section it lives in.
 - WRT: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - WRT / XNL (NL2): [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - WFIP: [This repository's own names](#this-repositorys-own-names)
+- WSMULT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - WW3: [Models, projects and institutions](#models-projects-and-institutions)
 - ww3-gpu (ex ww-lab): [This repository's own names](#this-repositorys-own-names)
 - WW3-tools: [HPC and software](#hpc-and-software)
