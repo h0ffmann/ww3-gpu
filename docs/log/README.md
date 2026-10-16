@@ -42,6 +42,8 @@ Date, author, issue/PR/WFIP.
 | 2026-10-14 | [Graphify on ww3-gpu's own code: build cost, query cost, what it misses](2026-10-14-graphify-on-ww3-gpu.md) | ADR-0007 revision |
 | 2026-10-15 | [ST4 translated to Kokkos, eight routines in parallel, not regtested](2026-10-15-st4-kokkos-translation.md) | #45 |
 | 2026-10-15 | [W3SRCE translated to Kokkos with its three Fortran source terms, not regtested](2026-10-15-w3srce-kokkos-translation.md) | #42 |
+| 2026-10-16 | [Propagation (PR3 with UQ) translated to Kokkos, six routines, nothing run](2026-10-16-propagation-kokkos-translation.md) | #42 |
+| 2026-10-16 | [W3WAVE support routines translated to Kokkos; the two translation units joined on one branch](2026-10-16-w3wave-support-kokkos-translation.md) | #42 |
 | 2026-10-15 | [The ST4 checkpoint, first half: byte-identical on ww3_ts1 and bench_small, the matrix running](2026-10-15-st4-checkpoint.md) | #45, ADR-0011 |
 | 2026-10-14 | [Matrix entry 16 (`ww3_ts1 -g ST4_T500`): the Kokkos DIA fails `nccmp-tol`, and the Fortran alone does too](2026-10-14-hoff-matrix-entry16.md) | WFIP-0003 |
 | 2026-10-15 | [Matrix entries 51 and 54 (`ww3_ts3`, ST1): the same amplification as entry 16](2026-10-15-hoff-matrix-entries51-54.md) | WFIP-0003 |
