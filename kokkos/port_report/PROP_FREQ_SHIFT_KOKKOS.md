@@ -5,7 +5,10 @@ no test run (the owner, 2026-10-16).
 
 The frequency-shift velocity `CAS` and the band widths `DMM` (method 1) of one node of the
 unstructured grid, for the PDLIB implicit scheme's spectral matrix; `CALCARRAY_JACOBI_SPECTRAL_1`
-calls it when `FreqShiftMethod = 1`.
+calls it when `FreqShiftMethod = 1`. At this pin that never happens (v): `FreqShiftMethod` is a
+module variable initialised to 2 (`w3profsmd_pdlib.F90:125`) and every other line only compares it
+(`:4494,4647,5920,7599,7686`), so this routine is translated but unreachable in WW3 as built; it
+matters only if a later WW3 makes the method selectable.
 
 ## What was ported
 
