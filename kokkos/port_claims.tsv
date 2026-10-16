@@ -6,7 +6,6 @@
 # claim: the branch (and agent) that owns it; plan: the plan that names it
 routine	file	claim	plan
 w3partmd:ptsort	model/src/w3partmd.F90:511-613	goal/42-port-noaa-ops (Claude Code, PR #152)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
-w3partmd:ptnghb	model/src/w3partmd.F90:630-821	goal/42-port-noaa-ops (Claude Code, PR #152)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
 w3partmd:pt_fld	model/src/w3partmd.F90:839-1156	goal/42-port-noaa-ops (Claude Code, PR #152)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
 w3partmd:ptmean	model/src/w3partmd.F90:1175-1538	goal/42-port-noaa-ops (Claude Code, PR #152)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
 w3partmd:w3part	model/src/w3partmd.F90:138-497	goal/42-port-noaa-ops (Claude Code, PR #152)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
