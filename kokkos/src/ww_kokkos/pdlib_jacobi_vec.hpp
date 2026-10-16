@@ -1,127 +1,11 @@
 // kokkos/src/ww_kokkos/pdlib_jacobi_vec.hpp
-// calcARRAY_JACOBI_VEC, ported to Kokkos: the geographical-advection part of
-// the implicit N-scheme system of the block Jacobi/Gauss-Seidel solver, for
-// every spectral component: adds to the CSR matrix ASPAR_JAC(NSPEC,PDLIB_NNZ)
-// and the right-hand side B_JAC(NSPEC,NSEAL) of the nodes this rank owns.
-// Phase 1, translated, not regtested.
-//
-// WW3 heritage: WW3-noaa/model/src/w3profsmd_pdlib.F90:3531-3787 at NOAA-EMC/WW3
-// 03adda91 (the WW3/ fork's file is byte-identical, v, cmp 2026-10-16); authors
-// A. Roland and M. Dutour-Sikiric. Called by PDLIB_JACOBI_GAUSS_SEIDEL_BLOCK
-// (:5767) when IMEM == 1, after ASPAR_JAC = ZERO and B_JAC = ZERO (:5741-5748,
-// when .NOT. LSLOC) and CALCARRAY_JACOBI_SOURCE_1 (:5756): this kernel adds to
-// what is there.
-//
-// Switches: the routine's preprocessor blocks, and what each one does here.
-//   W3_REF1 (USE of IOBP_LOC :3583-3585, INTEGER IBR :3641-3643, IBR :3731-3733,
-//     the branch :3743-3754): at nodes with IBR == 1, DTK = KP*DTG without IB1
-//     and B_JAC + TRIA03*VA without IB2. Ported as the template flag kRef1
-//     (default false, REF0). Every ww3_tp2.17 switch under input_deep/ and
-//     input_deep_restart/ has REF1, and so does model/bin/switch_NWS_rwps
-//     (byte-identical to input_deep/switch_PDLIB, v, cmp); matrix.base runs
-//     input_deep as `-s PDLIB -i input_deep -g e`. 8 switch files with PDLIB
-//     under regtests/*/input*/ and model/bin/ have REF1 (v, grep).
-//   W3_DB1, W3_BT1, W3_BT4, W3_BT8, W3_BT9, W3_IC1, W3_IC2, W3_IC3, W3_TR1
-//     (:3605-3629): one USE of a source-term module each, nothing else. None of
-//     those modules names ASPAR_JAC, B_JAC, POS_TRICK, FSGEOADVECT or memunit
-//     (v, grep), so no host-associated name is shadowed, and the arithmetic
-//     GIMPLE of the CXY and element loops is the same, statement for statement,
-//     with BT4 TR0 IC0 and with BT1 TR1 IC4 (v, normalised diff).
-//   W3_MGP (:3634, :3699-3703, the only use of VGX, VGY): no switch file with
-//     PDLIB in regtests/*/input*/ or model/bin/ has MGP (v, grep). Not ported, so
-//     VGX and VGY are not arguments.
-//   NOCGTABLE (:3586, :3652, :3688): not a WW3 switch. CMake defines W3_<name>
-//     for each switch (model/src/CMakeLists.txt:29), so no switch file can set
-//     the bare NOCGTABLE, and none names it (v, grep). Not ported.
-//   W3_S, W3_DEBUGSRC, W3_DEBUGSOLVER: tracing and prints, not ported.
-// Checked statically against two objects of WW3's CMake Release build of
-// w3profsmd_pdlib.F90 (gfortran 16.2, the -fdump object disassembles identically
-// to the CMake one): regtests/ww3_tp2.17/input/switch_PDLIB (REF0 BT4 DB1 TR0
-// IC0, kRef1 = false) and input_deep/switch_PDLIB = switch_NWS_rwps (REF1 BT1
-// DB1 TR1 IC4, kRef1 = true). The other tp2.17 combinations (switch_RWPS with
-// BT4, switch_RWPSBS1 with BS1) differ from the second only in USE-only or
-// unrelated switches and were not built (⚠). print_memcheck (:3676,
-// :3781) is empty without W3_MEMCHECK (w3servmd.F90:2501-2516) and the store
-// memunit = 50000+IAPROC (:3663) is module state: both stay in Fortran. The
-// routine has no MPI call; the exchanges of the solver are its caller's.
-//
-// Module data it reads, besides pdlib_params.hpp (INE, PDLIB_IEN, PDLIB_CCON,
-// iplg, IOBPD_LOC, IOBPA_LOC, IOBDP_LOC, CLATS, ECOS, ESIN, np, npa, ne, NTH):
-//   PDLIB_TRIA03(ne), PDLIB_POSI(3,COUNT_MAX)   JacobiVecMesh below
-//   PDLIB_IE_CELL2(I,IP), PDLIB_POS_CELL2(I,IP) = PDLIB_IE_CELL(J),
-//     PDLIB_POS_CELL(J) with J = sum(CCON(1:IP-1)) + I (yowpdlibmain.F90:
-//     1505-1515 fills both from the same CELLVERTEX in the same loop), so
-//     g.ie_cell(g.cell_off(IP-1)+I-1) and g.pos_cell(...).
-//   POS_TRICK(3,2), set to constants in BLOCK_SOLVER_INIT (:6821-6826): jvec_detail::pos_trick.
-//   FSGEOADVECT = FLCX .AND. FLCY (:330-333), FLCUR (W3IDATMD), CG(0:NK+1,0:NSEA),
-//   CX, CY(0:NSEA), VA(NSPEC,0:NSEALM): JacobiVecIn.
-//
-// Arithmetic checked against gfortran 16.2 -O3 GIMPLE and the object of
-// w3profsmd_pdlib.F90 (WW3's CMake Release flags, switch_PDLIB):
-//   :3674-3675  CCOSA = FACX*ECOS, CSINA = FACX*ESIN (FACX in both, as written):
-//               mulps, element-wise; recomputed here per ISP, same product.
-//   :3691-3698  (CCOS*CG1)/CLATS and CSIN*CG1 (divss, a true division); with
-//               FLCUR, + ((FACX*CX)/CLATS)*REAL(IOBDP) and + (FACY*CY)*REAL(IOBDP)
-//               (basic-block SLP on the pair, element-wise lanes).
-//   :3709-3714  FLxy = IEN(a)*CXYY(1,n) + IEN(b)*CXYY(2,n), two mulss, one addss.
-//   :3715-3717  REAL(8): each FL widened (cvtss2sd), 2.0d0*FL as addsd x,x, the
-//               sums in source order (+ commuted in :3716-3717, no bit change),
-//               times ONESIXTH widened (.LC96 = 0x3fc5555560000000), cvtsd2ss,
-//               then the sign flip (xorps .LC42).
-//   :3718-3719  SUM(CXYY(i,:)) is ((c1 + 0.) + c2) + c3 in REAL: the + 0. is
-//               kept (addss %xmm10 = +0.; it turns -0 into +0), then * ONESIXTH.
-//   :3723       KP = MAX(ZERO,K): maxss %0,k, k > 0 ? k : 0.
-//   :3724       SUM(MIN(ZERO,K)) = ((m1 + 0.) + m2) + m3, minss %0,k: k < 0 ? k : 0;
-//               MIN(-THR, s): minss .LC102,s: s < -THR ? s : -THR. The REAL(8)
-//               (CRFS-KP)*1.d0/MIN(..) was narrowed to subss, divss: exact, a
-//               double rounding of one IEEE / of two REALs is innocuous
-//               (53 >= 2*24+2), so the C++ writes the float division.
-//   :3752-3764  DTK = (KP*DTG)*REAL(IB1); B_JAC + (TRIA03*VA)*REAL(IB2);
-//               ((A(I1) + TRIA03) + DTK) - DELTAL*DTK; A(Ik) - DELTAL*DTK.
-//   :3745-3746  REF1 object, IBR == 1: DTK = KP*DTG (one mulss);
-//               B_JAC + TRIA03*VA (one mulss, one addss); the ASPAR_JAC
-//               statements as above. IBR == 0 is :3748-3749, the same as
-//               :3752-3753. IBR = (1-IOBPA)*((1-IOBP)*(1-IOBPD)) in INTEGER(4)
-//               (INTEGER*2 and *1 widened first): exact, any order.
-// No FMA, no libm call, no reciprocal multiply. Vectorised (-fopt-info-vec):
-// :3674, :3675 (loops) and :3693, :3696 (SLP), all element-wise; no reduction
-// is vectorised, so every sum is the scalar order written here.
-//
-// Why the parallel passes give the Fortran's bits. The Fortran runs, per ISP:
-// a node loop filling CXY(2,npa), an element loop filling KP, DELTAL(3,ne), and
-// the assembly loop over IP = 1..np. Here the same three loops are three
-// passes, each over (ISP of a batch, IP or IE):
-//   CXY: each (ISP,IP) writes CXY(:,IP) of its ISP from inputs only.
-//   KP, DELTAL: each (ISP,IE) writes column IE of its ISP from CXY only.
-//   Assembly: each (ISP,IP) writes B_JAC(ISP,IP) and ASPAR_JAC(ISP,K) only for
-//   K = PDLIB_POSI(1:3,J) of its own J, and those are positions in CSR row IP:
-//   ComputeIA_JA_POSI_NNZ searches K in PDLIB_IA(IP)..PDLIB_IA(IP+1)-1 only
-//   (yowpdlibmain.F90:1618-1630). Rows of different IP are disjoint, so no two
-//   threads touch one entry; within one IP the thread runs I = 1..CCON(IP) and
-//   the statements in the Fortran's order, reading and writing ASPAR_JAC in
-//   memory each time (a repeated K in a degenerate element still sees the
-//   previous store). The running J of :3730-3769 counts CCON(IP) in both
-//   branches, so at node IP it starts at g.cell_off(IP-1). Different ISP touch
-//   different rows of ASPAR_JAC and B_JAC and their own work columns.
-// No reduction, no atomic: the result is the same on any execution space and
-// batch size. Kernels on one execution-space instance run in order; the fence
-// after each batch makes the work arrays reusable.
-//
-// Precision: every array is REAL (float); REAL(8) only in CRFS (:3715-3717), as
-// the object computes it. Integers IB1 = (1-IOBPA)*IOBPD and IB2 = IOBPD are
-// default INTEGER, converted to REAL where multiplied (cvtsi2ss).
-//
-// The C++ object (openmp-release flags, -ffp-contract=off, g++ 16.2) has the same
-// operations in the same order: no FMA, cvtsd2ss then the sign flip, the + 0.
-// adds, vmaxss/vminss with the Fortran's operand roles; min_ss(k, 0) is emitted
-// as vcmpnltss/vandnps, which gives k < 0 ? k : +0 for every k, NaN included.
-//
-// CUDA (nvcc_wrapper, sm_89, --fmad=false, compiled, never run): the PTX has no
-// fma; divisions are div.rn.f32 (the FFMA in the SASS are its correctly rounded
-// expansion); the ternary MIN/MAX become min.f32/max.f32, which return the
-// non-NaN operand as the x86 code does. A -0 from min.f32 in the SUM of :3724
-// cannot change it: the sum starts with m1 + 0., never -0 in round-to-nearest.
-// Whether max.f32(-0, +0) is +0 as maxss gives, for KP, is not checked here (⚠).
+// calcARRAY_JACOBI_VEC: the geographic advection of the implicit N-scheme for every
+// spectral component, added into ASPAR_JAC (CSR) and B_JAC of the nodes this rank owns,
+// on top of what the caller left there. Phase 1, translated, not regtested.
+// WW3 heritage: WW3-noaa/model/src/w3profsmd_pdlib.F90:3531-3787 at NOAA-EMC/WW3 03adda91;
+// A. Roland, M. Dutour-Sikiric. Evidence: kokkos/port_report/CALCARRAY_JACOBI_VEC_KOKKOS.md.
+// kRef1 is the W3_REF1 build (:3743-3754); W3_MGP and NOCGTABLE are not ported.
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <Kokkos_Core.hpp>
@@ -149,13 +33,10 @@ KOKKOS_INLINE_FUNCTION int pos_trick(int pos, int k) {
 template <class MemSpace>
 struct JacobiVecMesh {
   using memory_space = MemSpace;
-  /// PDLIB_TRIA03(ne), REAL(rkind=4) (PDLIB/yownodepool.F90:80, filled
-  /// yowpdlibmain.F90:1411-1415): one third of each element's area.
+  /// PDLIB_TRIA03(ne) (yownodepool.F90:80): one third of each element's area.
   Kokkos::View<const Real*, Kokkos::LayoutLeft, MemSpace> tria03;
-  /// PDLIB_POSI(3,COUNT_MAX), integer (yownodepool.F90:85, filled
-  /// yowpdlibmain.F90:1616-1631): for the J-th (node, element) pair, the CSR
-  /// positions K (1-based, values kept) of the node itself, and the next and
-  /// previous corner, in row IP. posi(k-1, J-1).
+  /// PDLIB_POSI(3,COUNT_MAX) (yownodepool.F90:85): CSR positions K (1-based) in row IP of
+  /// the node and of the next and previous corner of its J-th element. posi(k-1, J-1).
   Kokkos::View<const int**, Kokkos::LayoutLeft, MemSpace> posi;
 };
 
@@ -174,14 +55,12 @@ struct JacobiVecIn {
   /// CX(0:NSEA), CY(0:NSEA), REAL (w3adatmd.F90:1008): cx(IP_glob).
   Kokkos::View<const Real*, Kokkos::LayoutLeft, MemSpace> cx;
   Kokkos::View<const Real*, Kokkos::LayoutLeft, MemSpace> cy;
-  /// VA(NSPEC,0:NSEALM), REAL (w3wdatmd.F90:491): va(ISP-1, IP), the second
-  /// base 0 kept, IP the local node 1..np.
+  /// VA(NSPEC,0:NSEALM) (w3wdatmd.F90:491): va(ISP-1, IP), IP the local node 1..np.
   Kokkos::View<const Real**, Kokkos::LayoutLeft, MemSpace> va;
 };
 
-/// The Fortran's automatic arrays CXY(2,NPA), KP(3,NE), DELTAL(3,NE)
-/// (:3646-3654), with a third extent: the number of ISP done per pass. 1 is the
-/// Fortran's memory; NSPEC is three launches per call. Same bits either way.
+/// CXY(2,NPA), KP(3,NE), DELTAL(3,NE) (:3646-3654) with a third extent, the ISP per pass
+/// (1 is the Fortran's memory); the bits do not depend on it.
 template <class MemSpace>
 struct JacobiVecWork {
   using memory_space = MemSpace;
@@ -204,11 +83,8 @@ struct JacobiVecWork {
 template <class MemSpace>
 using JacobiMatrixView = Kokkos::View<Real**, Kokkos::LayoutLeft, MemSpace>;
 
-/// calcARRAY_JACOBI_VEC(DTG,FACX,FACY,VGX,VGY), w3profsmd_pdlib.F90:3531-3787.
-/// Adds the advection terms of every ISP = 1..NSPEC into aspar_jac and b_jac
-/// (and sets b_jac(ISP,IP) = 0 at dry nodes), as the Fortran does. Returns
-/// after a fence. kRef1 is the switch W3_REF1: calcarray_jacobi_vec<true>(...)
-/// for a WW3 built with REF1, the default for REF0.
+/// calcARRAY_JACOBI_VEC(DTG,FACX,FACY,VGX,VGY), :3531-3787: adds the advection of every ISP
+/// into aspar_jac and b_jac (b_jac = 0 at dry nodes). Returns after a fence.
 template <bool kRef1 = false, class ExecSpace>
 void calcarray_jacobi_vec(const ExecSpace& exec,
                           const PdlibGeometry<typename ExecSpace::memory_space>& g,
@@ -300,6 +176,7 @@ void calcarray_jacobi_vec(const ExecSpace& exec,
           const Real fl22 = x1 * i3 + y1 * i4;
           const Real fl31 = x1 * i5 + y1 * i6;
           const Real fl32 = x2 * i5 + y2 * i6;
+          // :3715-3717 in double, narrowed, then the sign flip.
           const double d11 = static_cast<double>(fl11), d12 = static_cast<double>(fl12);
           const double d21 = static_cast<double>(fl21), d22 = static_cast<double>(fl22);
           const double d31 = static_cast<double>(fl31), d32 = static_cast<double>(fl32);
@@ -307,6 +184,7 @@ void calcarray_jacobi_vec(const ExecSpace& exec,
           const Real crfs1 = -static_cast<Real>((2.0 * d31 + d32 + d21 + 2.0 * d22) * os);
           const Real crfs2 = -static_cast<Real>((2.0 * d32 + 2.0 * d11 + d12 + d31) * os);
           const Real crfs3 = -static_cast<Real>((2.0 * d12 + 2.0 * d21 + d22 + d11) * os);
+          // :3718-3719, the + 0. kept: it turns -0 into +0.
           const Real lambda1 = (((x1 + kZero) + x2) + x3) * kOneSixth;
           const Real lambda2 = (((y1 + kZero) + y2) + y3) * kOneSixth;
           const Real k1 = lambda1 * i1 + lambda2 * i2;
@@ -318,6 +196,7 @@ void calcarray_jacobi_vec(const ExecSpace& exec,
           kp(0, ie0, b) = kp1;
           kp(1, ie0, b) = kp2;
           kp(2, ie0, b) = kp3;
+          // :3724, minss with 0 as source; (CRFS-KP)/MIN(..) narrowed to float, exact.
           const Real s = ((min_ss(k1, kZero) + kZero) + min_ss(k2, kZero)) + min_ss(k3, kZero);
           const Real den = min_ss(s, -kThr);
           deltal(0, ie0, b) = (crfs1 - kp1) / den;
@@ -325,7 +204,8 @@ void calcarray_jacobi_vec(const ExecSpace& exec,
           deltal(2, ie0, b) = (crfs3 - kp3) / den;
         });
 
-    // :3728-3770, IP = 1..np: row IP of ASPAR_JAC and B_JAC(ISP,IP) only.
+    // :3728-3770, IP = 1..np. POSI holds positions in CSR row IP only (yowpdlibmain.F90:
+    // 1618-1630): no two threads touch one entry, and each walks its J in the Fortran's order.
     Kokkos::parallel_for(
         "pdlib_jacobi_vec_assemble", Policy2(exec, {0, 0}, {nb, np}),
         KOKKOS_LAMBDA(const int b, const int ip0) {

@@ -1,64 +1,14 @@
 // kokkos/src/ww_kokkos/srce_tr1.hpp
-// W3STR1, ported to Kokkos: triad interactions by the Lumped Triad Approximation
-// (LTA) of Eldeberky (1996), as in SWAN 40.91, one spectral point. Phase 1,
-// translated, not regtested.
-//
-// WW3 heritage: WW3-noaa/model/src/w3str1md.F90:183-543 at NOAA-EMC/WW3 03adda91;
-// authors A. J. van der Westhuysen, A. Roland. Switch TR1 (NOAA's switch_NWS_rwps,
-// the ww3_tp2.17 and ww3_tp2.19 PDLIB/RWPS switches, ww3_tp1.9's switch and switch_MPI).
-// Called by W3SRCE at w3srcemd.F90:1283; under PDLIB only when .NOT. FSSOURCE .OR. LSLOC
-// (:1280-1286). VSTR/VDTR enter the VS/VD sums without PDLIB (:1490, :1509) and, under
-// PDLIB, B_JAC/ASPAR_JAC (:1643-1655) and the direct update (:1782-1787). The shim
-// copies S and D in as well as out: the early return and the IK = NK row keep the
-// caller's values, which W3SRCE zeroes once before its sub-steps (:899-900). The
-// routine has no #ifdef but W3_S (STRACE), which is not ported: nothing in its
-// arithmetic depends on a switch. IX is a dummy argument never read, and is not
-// passed. PTRIAD(1:5) are literals in the source (:435-439), folded here as there.
-//
-// Dead locals not carried: ED (:406-410, stored, never read), EF (:488, :493),
-// EDM (:503, :509), ED0 (:497), HMAX (:403); SA2, A2, A3 are never touched. None
-// reaches S or D, so dropping them changes no output bit.
-//
-// Arithmetic checked against gfortran 16.2 -O3 GIMPLE and the object of
-// w3str1md.F90 (WW3's CMake Release flags, switch_lab_shrd with TR0 -> TR1):
-//   :395-397 MAXVAL(A) inlined: the first A >= -Inf starts the maximum, then
-//          A > M ? A : M (maxss); all NaN gives NaN and does not return;
-//   :405-420 EB summed over ITH in order, then (EB*DDEN)/CG, EMEAN and SIGM01
-//          in-order reductions (the vectorised :416 loop folds lanes left to right);
-//   :441   4*sqrtf(MAX(0,EMEAN)), maxss with EMEAN as destination;
-//   :442   (GRAV*HS) / (((SIGM01*SIGM01)*(2*SQRT(2.))) * (DEPTH*DEPTH)), 2*SQRT(2.)
-//          folded to 0x403504f3;
-//   :446-448 DEP**2 = D*D, DEP**3 = D*(D*D) (power tree), G9DEP = GRAV*D;
-//   :452   INT(FLOAT(NK)*0.5);
-//   :455-465 logf; LOG(2.) folded to 0x3f317218, LOG(0.5) to its negation; INT
-//          truncates; XIS**ISP, **ISP1, **ISM, **ISM1 are __powisf2 calls;
-//   :486-487 BIPH = (tanhf(0.2/URSELL) - 1) * 1.5707964 (0.5*PI folded), |sinf|;
-//   :492   E = ((A*TPI)*SIG)/CG (the vectorised :491 loop is element-wise);
-//   :502-506 the interpolation in source order, WISM*X(IK+ISM1) + WISM1*X(IK+ISM);
-//   :514-518 AUX1 = WNM**2*(G9DEP+2*CM**2); AUX2 = (WN0*DEP) *
-//          ((G9DEP + (1.3074667*DEP_3)*WN0**2) - (0.4*W0**2)*DEP_2), (2./15.)*GRAV
-//          folded to 0x3fa75b12, 2./5. to 0x3ecccccd; FT = ((C0*CG)*RINT**2)*SINBPH
-//          (PTRIAD(1) = 1. folded away); SA = MAX(0, FT*(EM*EM - (2*EM)*E0)),
-//          maxss with the product as destination, so NaN gives 0;
-//   :522-534 SIGPICG = (SIG*TPI)/CG; STRI = SA - 2*(WISP*SA(+ISP1) + WISP1*SA(+ISP));
-//          D = STRI/(A*SIGPICG), S = STRI/SIGPICG, true divisions.
-// No FMA, no reciprocal multiply, no libmvec: every libm call (logf, tanhf, sinf,
-// __powisf2) is scalar. No reduction is reordered.
-//
-// Quirks kept from the Fortran:
-//   - MAXVAL(A) < TINY(1.) returns before S and D are written (:395-397): the
-//     caller's VSTR, VDTR keep what they held (zero from w3srcemd.F90:899-900, or
-//     the previous sub-step's values).
-//   - On the URSELL >= 0.01 path S and D are written for IK = 1..NK-1 only (:522);
-//     the last frequency row keeps what the caller had there.
-// sig points at SIG(1) inside the whole SIG(0:NK+1) (w3gdatmd.F90:2066): with NK = 2
-// or 3, I1 = 0 and the Fortran reads SIG(0) legally, which here is sig[-1].
-// Preconditions the Fortran assumes and does not check (out of bounds there):
-// ISP+1 <= NK (E(1:ISMAX) is read with
-// ISMAX >= ISP+1), NK-1+ISP+1 <= 100 (SA has 100 columns).
-//
-// ⚠ On a device logf, tanhf, sinf and sqrtf are CUDA's, not glibc's
-// (AGENTS.md, "Bit for bit", GPU).
+// W3STR1: triad interactions by the Lumped Triad Approximation (Eldeberky 1996), one
+// spectral point. Phase 1, translated, not regtested. WW3 heritage:
+// WW3-noaa/model/src/w3str1md.F90:183-543 at NOAA-EMC/WW3 03adda91; authors
+// A. J. van der Westhuysen, A. Roland. Evidence: kokkos/port_report/W3STR1_KOKKOS.md.
+// The shim copies S and D in as well as out: MAXVAL(A) < TINY returns before writing
+// (:395-397), and with URSELL >= 0.01 the IK = NK row is not written (:522).
+// sig points at SIG(1) inside SIG(0:NK+1): with NK = 2 or 3 the Fortran reads SIG(0), sig[-1].
+// Unchecked, as in the Fortran: ISP+1 <= NK and NK+ISP <= 100 (the columns of SA).
+// ⚠ On a device logf, tanhf, sinf and sqrtf are CUDA's, not glibc's.
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <Kokkos_Core.hpp>
@@ -73,13 +23,11 @@ namespace ww::srce {
 inline constexpr int kTr1SaCols = 100;
 
 namespace tr1_detail {
-// Fortran MAX of two REALs: fmax2(a,b) = b>a?b:a. A NaN or a +0/-0 tie gives `a`;
-// each call passes the operands in the order of the build's maxss (w3str1md.o:
-// `maxss src,dst` is dst > src ? dst : src, i.e. fmax2(src,dst)).
+// Fortran MAX as maxss: fmax2(a,b) = b>a?b:a, a NaN or a +0/-0 tie gives `a`. Each call
+// passes the operands in the order of w3str1md.o.
 KOKKOS_INLINE_FUNCTION Real fmax2(Real a, Real b) { return (b > a) ? b : a; }
 
-// x**n for a run-time INTEGER n: libgcc's __powisf2 (libgcc2.c; srce_ref1.hpp has
-// the same function). Never std::pow.
+// x**n for a run-time INTEGER n as libgcc's __powisf2; never std::pow.
 KOKKOS_INLINE_FUNCTION Real powi(Real x, int m) {
   unsigned int n = (m < 0) ? 0u - static_cast<unsigned int>(m) : static_cast<unsigned int>(m);
   Real y = (n % 2u) != 0u ? x : static_cast<Real>(1);
@@ -103,12 +51,8 @@ inline constexpr Real kTiny1 = 0x1p-126f;          // TINY(1.) :395
 inline constexpr Real kJacEps = 1E-12f;            // JACEPS :401, 0x2b8cbccc
 }  // namespace tr1_detail
 
-/// W3STR1(A, CG, WN, DEPTH, IX, S, D) for one point.
-/// p gives NK, NTH, NSPEC. sig = SIG(1:NK), dden = DDEN(1:NK), fte, ftf = W3GDATMD
-/// FTE, FTF; a = A(1:NSPEC), cg = CG(1:NK), wn = WN(1:NK), s, d = S, D(1:NSPEC),
-/// all 0-based: A(ITH+(IK-1)*NTH) is a[ITH+(IK-1)*NTH-1]. e (NK), eb (NK) and
-/// sa (NTH*kTr1SaCols, SA(ITH,J) at sa[(J-1)*NTH+ITH-1]) are caller-provided work
-/// for the Fortran locals E, EB and SA (w3str1md.F90:379-380).
+/// W3STR1 for one point, arrays 0-based. e, eb (NK) and sa (NTH*kTr1SaCols, SA(ITH,J) at
+/// sa[(J-1)*NTH+ITH-1]) are work for the locals E, EB, SA.
 KOKKOS_INLINE_FUNCTION void w3str1_point(const Params& p, const Real* sig, const Real* dden,
                                          Real fte, Real ftf, const Real* a, const Real* cg,
                                          const Real* wn, Real depth, Real* s, Real* d,
@@ -135,7 +79,7 @@ KOKKOS_INLINE_FUNCTION void w3str1_point(const Params& p, const Real* sig, const
   Real emean = 0;
   const Real jaceps = tr1_detail::kJacEps;
 
-  // :405-412 (ED dropped, see the header).
+  // :405-412 (ED, never read, dropped).
   for (int ik = 1; ik <= nk; ++ik) {
     eb[ik - 1] = 0;
     for (int ith = 1; ith <= nth; ++ith) {

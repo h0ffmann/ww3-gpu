@@ -1,181 +1,17 @@
 // kokkos/src/ww_kokkos/pdlib_jgs_block.hpp
-// PDLIB_JACOBI_GAUSS_SEIDEL_BLOCK, ported to Kokkos: the implicit block
-// Gauss-Seidel (or Jacobi) solver of the unstructured-grid action balance, all
-// spectral components of a node at once, on the mesh of this MPI rank. Phase 1,
-// translated, not regtested.
-//
-// WW3 heritage: WW3-noaa/model/src/w3profsmd_pdlib.F90:5463-6406 at NOAA-EMC/WW3
-// 03adda91 (identical in the WW3/ fork at c9a6a0c6, v, diff 2026-10-16); authors
-// A. Roland and M. Dutour-Sikiric. Called by PDLIB_W3XYPUG_BLOCK_IMPLICIT
-// (:2805). Line numbers below are of that file unless another is named.
-//
-// Compile-time variants. Every #ifdef of :5463-6406, against the 44 switch
-// files that hold PDLIB in WW3/ and WW3-noaa/ (regtests/*/input*/switch_* and
-// model/bin/switch_*, v, 2026-10-16): 16 have ST4, 16 ST4 REF1, 2 ST4 TRNK
-// (ww3_ufs1.1/input_unstr/switch_PDLIB_TRNK), 6 ST0, 2 ST1, 2 ST0 FLX2; no file
-// defines FLX5, NOCGTABLE or WEIGHTS (v, grep -w). Each arithmetic variant is a
-// template flag of pdlib_jacobi_gauss_seidel_block<kRef1, kTrnk, kSt4>:
-//   W3_REF1  :5531, :5564 USE only; :6031-6040 (sweep, block Gauss-Seidel) and
-//            :6220-6224 (mask) restore VA from VAOLD where REFPARS(3) < 0.5 and
-//            IOBPD_LOC(ITH,IP) = 0 and IOBPA_LOC(IP) = 0: arithmetic, kRef1.
-//            calcARRAY_JACOBI_VEC has its own REF1 branch; the driver calls
-//            hooks.calcarray_jacobi_vec<kRef1>() so both use one flag.
-//   W3_TRNK  :5568, :5636 declarations; :6373-6387 truncates VA to
-//            B_JGS_TRUNK_DIGITS (log10f, lroundf, __powisf2, roundf): kTrnk.
-//   W3_ST4   :5561 USE; :6306-6314 the W3SPR4 call of the limiter. Without ST4
-//            the limiter reads FMEAN, FMEANWS, USTAR never assigned: kSt4.
-//   W3_FLX5  :5601-5603, :6309-6311 add TAUA, TAUADIR, DAIR to the W3SPR4 call;
-//            DAIR is neither declared nor USEd in the routine, so under IMPLICIT
-//            NONE FLX5 with PDLIB does not compile at this commit (by reading ⚠,
-//            not compiled); no switch sets it. Not ported.
-//   W3_S, W3_DEBUG*, WEIGHTS, NOCGTABLE: tracing, debug output, a weights
-//            file, and a CG recomputation that no switch selects. Not ported.
-// W3PARALL fixes IMEM = 1 and LSLOC = .true. as PARAMETERs (w3parall.F90:89-90),
-// so the IMEM == 2 branches (:5864-5867, :5784-5785) and the .NOT. LSLOC blocks
-// (:5741-5748, :5753-5761) are dead in the object and not ported.
-// FreqShiftMethod is a module variable initialised to 2 and never assigned
-// (:125): both methods are ported, selected at run time.
-//
-// What this routine does not do. It does not call W3SRCE: with LSLOC the
-// implicit source terms arrive already summed into B_JAC and the diagonal of
-// ASPAR_JAC, written by W3SRCE's implicit branch (w3srcemd.F90:1601-1654) that
-// W3WAVE calls per node before the propagation (w3wavemd.F90:1548-1650). So
-// there is no source-term callback here; the Kokkos W3SRCE (srce_kernel.hpp) is
-// wired, if ever, at that W3WAVE call. W3WAVE zeroes B_JAC and ASPAR_JAC at
-// w3wavemd.F90:1543-1546 when neither FLSOU nor FSSOURCE is set, and at
-// :1563-1565 (before W3SRCE) when both are; with exactly one of them set,
-// nothing in W3WAVE zeroes them. The one source-term routine this routine does
-// call is W3SPR4 (:6306-6313), only when FLSOU .and. B_JGS_LIMITER: a callback
-// (Spr4 below), with an adapter onto st4_spr4.hpp's w3spr4_point.
-//
-// The calls into Fortran (the shim performs them; the driver
-// pdlib_jacobi_gauss_seidel_block() below stops and calls the Hooks object at
-// each, in this order). The kernels hold no MPI and no I/O.
-//   :5712  PDLIB_exchange2DREAL_zero(VA)          hooks.exchange_va_zero()
-//   :5767  calcARRAY_JACOBI_VEC(DTG,FACX,FACY,VGX,VGY)  hooks.calcarray_jacobi_vec<kRef1>()
-//          (w3profsmd_pdlib.F90:3531-3787; another translator writes
-//          pdlib_jacobi_vec.hpp. Interface needed: add, for ISP = 1..NSPEC and
-//          IP = 1..np, the geographic advection into ASPAR_JAC(ISP,1:NNZ) and
-//          B_JAC(ISP,1:np) of JgsArrays, on top of what W3SRCE left, reading
-//          VA(ISP,1:np); this header reads both only after it returns.)
-//   :5783  calcARRAY_JACOBI_SPECTRAL_1(DTG), when FSFREQSHIFT .or. FSREFRACTION
-//          (:4413-4557, not translated here): fills CAD_THE, CAS_SIG or
-//          CWNB_SIG_M2 and adds the spectral diagonal to ASPAR_JAC.
-//          hooks.calcarray_jacobi_spectral_1()
-//   :5788  APPLY_BOUNDARY_CONDITION(IMOD)          hooks.apply_boundary_condition()
-//   :5792  PDLIB_exchange2DREAL_zero(VA)           hooks.exchange_va_zero()
-//   then per iteration, after each sweep:
-//   :6086  PDLIB_exchange2DREAL_zero(VA)  (block Gauss-Seidel), or
-//   :6088  PDLIB_exchange2DREAL(U_JAC) then :6089 VA(:,1:NPA) = U_JAC (Jacobi)
-//          hooks.exchange_va_zero() / hooks.exchange_u_jac()
-//   :6108  every 10th iteration, MPI_ALLREDUCE(is_converged, itmp, 1, MPI_INT,
-//          MPI_SUM, MPI_COMM_WCMP)            hooks.allreduce_sum_int(int)
-//   :6115  IF (myrank == 0) WRITE(*,*) 'No. of solver iterations', ...
-//          hooks.report_iterations(nbiter, is_converged, prop_conv)
-//   :6190  MPI_ALLREDUCE(Sum_L2, Sum_L2_GL, 1, rtype, MPI_SUM, ...), only when
-//          B_JGS_TERMINATE_NORM, which is F in every regtest (v, grep of
-//          WW3-noaa/regtests, 46 settings) and the w3gridmd.F90:2493 default.
-//          See "undefined" below: no hook can reproduce its result.
-// The MPI_COMM_RANK (:5658) only feeds the WRITE; print_memcheck is empty
-// without W3_MEMCHECK (w3servmd.F90:2501-2516). The convergence count and the
-// norm are host scalars the driver reads back after each kernel.
-//
-// Order. Gauss-Seidel is order-dependent: node IP reads VA(:,JP) of neighbours
-// that earlier nodes of the same sweep already overwrote (:5884-5885), and
-// is_converged and LCONVERGED depend on the node order. The sweep (:5816-6069)
-// and the norm (:6132-6189) therefore run on one thread, IP = 1..np in order,
-// with every per-node loop in the Fortran's order. A kernel without
-// reductions or atomics computes the same bits on any execution space; these
-// two have running sums (Sum_New, DiffNew, Sum_L2), kept sequential. The
-// passes run in parallel only where each index touches its own column:
-//   :5694-5708  VA(:,JSEA) / CG * CLATS, per JSEA;    :5713 VAOLD = VA;
-//   :6089       VA(:,1:NPA) = U_JAC;                  :6213-6229 per IP;
-//   :6238-6352  per JSEA, when the limiter is off (no state crosses JSEA).
-// With FLSOU .and. B_JGS_LIMITER the last loop runs serially as written: its
-// locals (CG1, WN1, USTAR, LLWS, ...) carry from one JSEA to the next.
-//
-// The Jacobi path (B_JGS_BLOCK_GAUSS_SEIDEL = F) runs in regtests: ww3_tp2.17
-// grids d and e, ww3_ufs1.1/input_unstr grids b, c, d (v, grep). The sweep writes
-// U_JAC only at wet nodes (:6043); at dry nodes (IOBDP_LOC = 0, :5820-5824)
-// :6089 copies into VA whatever U_JAC held, from its allocation (:7607) or an
-// earlier call, and wet rows read those VA columns through their
-// off-diagonals. So JgsArrays::u_jac must be the
-// Fortran's U_JAC (aliased, or copied in and out on every call), never a fresh
-// zero-filled View.
-//
-// Precision (REAL is float, REAL*8 double; declarations :5581-5613). double:
-// eSum, ACLOC, CAD, CAS, CP_SIG, CM_SIG, CWNB_M2, DWNI_M2, eA_/eC_THE,
-// eA_/eC_SIG, eFactM1/P1, eProd, Sum_New, DiffNew, Sum_L2, eVA, eVO, NEWDAC,
-// MAXDAC, FRLOCAL, prop_conv. float: VA, VAOLD, B_JAC, ASPAR_JAC, ASPAR_DIAG,
-// DMM, DAM, DAM2, CG1, WN1, U_JAC. Mixed operations as the GIMPLE has them:
-//   :5884  eProd = ASPAR_JAC*VA is a float product, then widened;
-//   :5910  DBLE(DTG)*eSI, then *MAX(..) in double, negated;
-//   :5925  DMM = WN1(IK+1)-WN1(IK) is a float subtraction;
-//   :5933, :5957  eFactM1 = DBLE(CG1(IK-1)/CG1(IK)), a float division;
-//   :5948  DWNI_M2 = DBLE(CG1/DSIP), a float division;
-//   :6030  VA = REAL(eSum) * IOBDP_LOC: narrowed, then a float product;
-//   :6219  (MAX(0,VA)*IOBDP) in float, widened, *DBLE(IOBPD), narrowed;
-//   :6262  eVA = MAX(0, (CG1/CLATS)*VA) in float, widened (and narrowed back);
-//   :6318  DAM: 0.0081*0.1 folded to a float, all float;
-//   :6332  DAM2: (1E-06*GRAV) folded to a float, then double from FRLOCAL**4
-//          = (F*F)*(F*F) on, narrowed at the store;
-//   :6344  NEWDAC = DBLE(VA - VAOLD), a float subtraction.
-// Sum_Prev (:5862) is never read; the object does not compute it.
-//
-// Arithmetic checked against gfortran 16.2 -O3 GIMPLE and the object of
-// w3profsmd_pdlib.F90 (WW3's CMake Release flags, switch_PDLIB; the -fdump
-// object's routine disassembles identically to the CMake one, v): no FMA, no
-// libm call (SIGN is copysign, ABS andpd), no integer power but the WN**3 and
-// FRLOCAL**4 chains above. Vectorised: element-wise copies and products, and the
-// three sums (:6050, :6052, :6187) as in-order lane extractions (val + e0) + e1,
-// so every sum is the scalar order. MIN/MAX in the operand order of the emitted
-// maxsd/minsd/maxss/maxpd/minpd (dest = dest OP src ? dest : src; max_sd(a,b)
-// below is a > b ? a : b with a the destination):
-//   :5910/5911, :6150/6151  max_sd(cad, 0), min_sd(cad, 0)
-//   :5958/5965              max_sd(cwnb, 0), min_sd(cwnb, 0)
-//   :5922/5923, :6158/6159  CP_SIG/CM_SIG: maxpd/minpd on pairs, element
-//                           ISP <= 2*(NSPEC/2): max_sd(cas, 0); the odd last
-//                           element is a scalar maxsd/minsd into a zeroed
-//                           register: max_sd(0, cas). A -0 or NaN CAS gives a
-//                           different result in the two paths, so both are kept.
-//   :6219, :6262, :6263     max_ss(x, 0)
-//   :6332  max_ss(FMEAN, FMEANWS)    :6345  max_ss(DAM, DAM2)
-//   :6346  min_sd(MAXDAC, |NEWDAC|)  :6347  max_sd(VAOLD+NEWDAC, 0)
-// The REF1 object (switch of regtests/ww3_tp2.17/input_deep, full CMake build)
-// and the TRNK object (switch_PDLIB plus -DW3_TRNK; TRNK adds no module symbol)
-// have the same min/max operand roles at every site above (v); REF1 adds the
-// two restores as float loads, VAOLD*REAL(IOBDP_LOC) and a plain copy (v).
-// The C++ object (openmp-release flags plus -ffp-contract=off) has no FMA; its
-// libm calls are log10f and roundf (TRNK) and W3SPR4's own (v).
-//
-// CUDA (nvcc_wrapper, --fmad=false, sm_89, compiled, never run): no fma.rn in
-// the sweep, norm, mask, conversion or U_JAC kernels; divisions are div.rn.
-// The fma.rn of jgs_truncate and of the limiter kernel come from libdevice
-// (log10f; W3SPR4's powf, expf, logf, atan2f, tanhf), whose bits against glibc
-// are unknown ⚠. nvcc emits max/min.f32/f64 for some MIN/MAX against 0; whether
-// each keeps the SSE result for a NaN or -0 operand is not checked ⚠. The
-// serial kernels run on one GPU thread.
-//
-// What the Fortran leaves undefined (⚠, not reproducible bit for bit):
-//   - the limiter (FLSOU .and. B_JGS_LIMITER, off in ww3_tp2.17): TAUWX, TAUWY
-//     (:5604) and LLWS (:5613) are never assigned in the routine, and W3SPR4
-//     reads them as INTENT(IN) (w3src4md.F90:355, :302), so they are undefined
-//     on every JSEA; USTAR and USTDIR (:5604, INTENT(INOUT)) are undefined on
-//     the first JSEA only. W3SPR4 gets CG1 from CG1(0) (sequence association
-//     of CG1(0:NK+1) with CG(NK)), and CG1(0) and WN1 are stale from the last
-//     node the sweep or the norm loaded. The C++ keeps the same carry; its
-//     values are zero where the Fortran's are stack contents;
-//   - the norm (B_JGS_TERMINATE_NORM, F in every regtest) uses ASPAR_DIAG and
-//     DMM left by the last node the sweep solved; with FSFREQSHIFT .and. .NOT.
-//     LSIG nothing in the call writes DMM (only :5924-5928 does), so it reads
-//     stack contents. With FSFREQSHIFT it reads CAS_SIG, which is allocated only
-//     for FreqShiftMethod 1 (:7599-7604): with method 2 the driver refuses
-//     (returns 2) rather than read outside a View;
-//   - the norm's MPI_ALLREDUCE (:6190) passes Sum_L2, REAL(8), with rtype =
-//     MPI_REAL4 (PDLIB/yowdatapool.F90:77) into Sum_L2_GL, a non-SAVE local
-//     REAL(8) (:5593): only its low four bytes are written, so the value the
-//     exit test (:6195) reads is undefined. No hook can reproduce it;
-//     hooks.allreduce_norm is the call site only.
+// PDLIB_JACOBI_GAUSS_SEIDEL_BLOCK: the implicit block Gauss-Seidel (or Jacobi) solver of
+// the unstructured-grid action balance, all components of a node at once, on this MPI
+// rank's mesh. Phase 1, translated, not regtested. WW3 heritage:
+// WW3-noaa/model/src/w3profsmd_pdlib.F90:5463-6406 at NOAA-EMC/WW3 03adda91; A. Roland,
+// M. Dutour-Sikiric. Evidence: kokkos/port_report/PDLIB_JACOBI_GAUSS_SEIDEL_BLOCK_KOKKOS.md.
+// kRef1, kTrnk, kSt4 are the switches W3_REF1, W3_TRNK, W3_ST4. IMEM = 1 and LSLOC are
+// PARAMETERs (w3parall.F90:89-90): their other branches are dead and not ported. No W3SRCE
+// call: with LSLOC the source terms arrive in B_JAC and ASPAR_JAC (w3srcemd.F90:1601-1654).
+// The sweep and the norm are order dependent (Gauss-Seidel, running sums): one thread, in order.
+// ⚠ Undefined in the Fortran, zero here: the limiter's TAUWX, TAUWY, LLWS (USTAR, USTDIR on
+// the first JSEA); the norm's DMM under FSFREQSHIFT without LSIG (nothing writes it);
+// Sum_L2_GL (:6190 passes a REAL(8) as MPI_REAL4), so allreduce_norm is the call site only.
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <Kokkos_Core.hpp>
@@ -195,8 +31,8 @@ KOKKOS_INLINE_FUNCTION double max_sd(double a, double b) { return (a > b) ? a : 
 KOKKOS_INLINE_FUNCTION double min_sd(double a, double b) { return (a < b) ? a : b; }
 KOKKOS_INLINE_FUNCTION Real max_ss(Real a, Real b) { return (a > b) ? a : b; }
 
-// :5922/5923 and :6158/6159: CP_SIG(i) = MAX(ZERO,CAS(i)), CM_SIG(i) = MIN(ZERO,CAS(i))
-// as the object computes them, i 1-based (see the header comment).
+// :5922/5923, :6158/6159, i 1-based: maxpd/minpd for i <= 2*(NSPEC/2), the odd last element
+// scalar with 0 as destination.
 KOKKOS_INLINE_FUNCTION double cp_sig(double cas, int i, int nspec) {
   return (i <= 2 * (nspec / 2)) ? max_sd(cas, 0.0) : max_sd(0.0, cas);
 }
@@ -204,8 +40,7 @@ KOKKOS_INLINE_FUNCTION double cm_sig(double cas, int i, int nspec) {
   return (i <= 2 * (nspec / 2)) ? min_sd(cas, 0.0) : min_sd(0.0, cas);
 }
 
-// 0.0081*0.1 (:6318), two REAL literals folded to one REAL (0x3a54562f in the GIMPLE
-// as 8.100000559352338e-4).
+// 0.0081*0.1 (:6318) folded to one REAL.
 inline constexpr Real kDamNum = 0x1.a8ac5ep-11f;
 static_assert(kDamNum == 0.0081f * 0.1f, "0.0081*0.1 folded as REAL");
 // 1./TPI (:6330) and TPIINV (:6331), constants.F90:73-75: 0x3e22f983.
@@ -217,9 +52,7 @@ static_assert(kGravE6 == 1E-06f * 9.806f, "1E-06*GRAV folded as REAL");
 // TINY(1.) widened (:6116, the GIMPLE's 1.1754943508222875e-38).
 inline constexpr double kTiny1 = 0x1p-126;
 
-// REAL**INTEGER with a run-time exponent (:6382, W3_TRNK): libgcc's __powisf2,
-// the binary chain, 1/y for a negative exponent (libgcc2.c; srce_ref1.hpp has
-// the same function).
+// REAL**INTEGER with a run-time exponent (:6382, W3_TRNK) as libgcc's __powisf2.
 KOKKOS_INLINE_FUNCTION Real powisf2(Real x, int m) {
   unsigned int n = (m < 0) ? 0u - static_cast<unsigned int>(m) : static_cast<unsigned int>(m);
   Real y = (n % 2u) ? x : Real(1);
@@ -261,9 +94,8 @@ struct JgsMesh {
   using I1 = Kokkos::View<const int*, Kokkos::LayoutLeft, MemSpace>;
   using R1 = Kokkos::View<const Real*, Kokkos::LayoutLeft, MemSpace>;
   using R2 = Kokkos::View<const Real**, Kokkos::LayoutLeft, MemSpace>;
-  /// PDLIB_IA_P(npa+1) (PDLIB/yownodepool.F90:82, filled yowpdlibmain.F90:1595-1614):
-  /// ia_p(ip-1) = PDLIB_IA_P(IP), the 0-based start of row IP; row IP is
-  /// entries PDLIB_IA_P(IP)+1 .. PDLIB_IA_P(IP+1) of JA and ASPAR_JAC.
+  /// PDLIB_IA_P(npa+1) (yownodepool.F90:82): row IP is entries ia_p(ip-1)+1 .. ia_p(ip) of
+  /// JA and ASPAR_JAC.
   I1 ia_p;
   /// PDLIB_JA(PDLIB_NNZ) (:81, :1609): local node id 1..npa of each entry.
   I1 ja;
@@ -271,8 +103,7 @@ struct JgsMesh {
   I1 i_diag;
   /// JX_TO_JSEA(npa) (w3parall.F90:83, w3profsmd_pdlib.F90:289-306).
   I1 jx_to_jsea;
-  /// ListISPprevDir(NSPEC), ListISPnextDir(NSPEC) (w3parall.F90:86,
-  /// w3profsmd_pdlib.F90:6832-6868): 1-based ISP of the neighbouring direction.
+  /// ListISPprevDir, ListISPnextDir(NSPEC) (w3parall.F90:86): 1-based ISP of the neighbours.
   I1 isp_prev_dir;
   I1 isp_next_dir;
   /// SIG(0:NK+1), DSIP(0:NK+1), REAL (w3gdatmd.F90:2068): sig(ik), dsip(ik).
@@ -283,9 +114,8 @@ struct JgsMesh {
   R2 wn;
 };
 
-/// The module arrays the routine reads and writes. aspar_jac and b_jac are
-/// written by W3SRCE and calcARRAY_JACOBI_VEC before this routine reads them,
-/// so they are not const here.
+/// The module arrays the routine reads and writes; W3SRCE and calcARRAY_JACOBI_VEC write
+/// aspar_jac and b_jac first.
 template <class MemSpace>
 struct JgsArrays {
   using memory_space = MemSpace;
@@ -294,10 +124,8 @@ struct JgsArrays {
   R2 vaold;        ///< VAOLD(NSPEC,NSEAL) (:505): vaold(isp-1, jsea-1)
   R2 aspar_jac;    ///< ASPAR_JAC(NSPEC,PDLIB_NNZ) (w3profsmd_pdlib.F90:7589): (isp-1, k-1)
   R2 b_jac;        ///< B_JAC(NSPEC,NSEAL) (:7595): (isp-1, ip-1)
-  /// U_JAC(NSPEC,npa) (:7607), only when not block Gauss-Seidel. Must be the
-  /// Fortran's array (aliased, or copied in and out on every call), never a
-  /// fresh zero-filled View: the sweep skips dry nodes, so :6089 copies the
-  /// earlier contents of those columns into VA (see the header comment).
+  /// U_JAC(NSPEC,npa) (:7607), Jacobi only. Must alias (or round-trip) the Fortran's U_JAC:
+  /// the sweep skips dry nodes and :6089 copies those columns' old contents into VA.
   R2 u_jac;
   R2 cad_the;      ///< CAD_THE(NSPEC,NSEAL) (:7597)
   R2 cas_sig;      ///< CAS_SIG(NSPEC,NSEAL) (:7600), FreqShiftMethod 1 only
@@ -759,11 +587,9 @@ double jgs_norm(const ExecSpace& exec, const JgsParams& p,
   return host;
 }
 
-/// :6213-6229: VA(ISP,IP) = MAX(ZERO,VA)*IOBDP_LOC(IP)*DBLE(IOBPD_LOC(ITH,IP)),
-/// IP = 1..npa; each IP writes its own column. With REF1 (:6220-6224) the
-/// masked value is stored, then replaced by VAOLD(ISP,IP) where the reflection
-/// test holds; VAOLD is (NSPEC,NSEAL), so this needs npa <= NSEAL as the
-/// Fortran does (PDLIB_NSEAL counts the npa nodes with ISEA > 0, :248-279).
+/// :6213-6229, each IP its own column. With REF1 (:6220-6224) VAOLD(ISP,IP) replaces the
+/// masked value where the reflection test holds; VAOLD is (NSPEC,NSEAL), so npa <= NSEAL
+/// is assumed, as in the Fortran (:248-279).
 template <bool kRef1, class ExecSpace>
 void jgs_mask(const ExecSpace& exec, const JgsParams& p,
               const PdlibGeometry<typename ExecSpace::memory_space>& g,
@@ -831,11 +657,10 @@ void jgs_to_energy(const ExecSpace& exec, const JgsParams& p,
   exec.fence();
 }
 
-/// :6238-6352 with FLSOU .and. B_JGS_LIMITER, one thread, JSEA in order: the
-/// conversion, CG1(1:NK) of this node over the stale CG1(0), CG1(NK+1) and WN1,
-/// W3SPR4 through spr4, DAM, DAM2 and the limiter.
-/// Without ST4 (kSt4 false) there is no W3SPR4 call: FMEAN, FMEANWS and USTAR
-/// keep whatever the locals held, undefined in the Fortran (⚠), zero here.
+/// :6238-6352 with FLSOU .and. B_JGS_LIMITER, one thread, JSEA in order: the locals carry
+/// across JSEA as the Fortran's do (CG1(0), CG1(NK+1) and WN1 stay those of the last node
+/// the sweep or the norm loaded). Without ST4 there is no W3SPR4 call: FMEAN, FMEANWS and
+/// USTAR keep what the locals held, undefined in the Fortran (⚠), zero here.
 template <bool kSt4, class ExecSpace, class Spr4>
 void jgs_to_energy_limited(const ExecSpace& exec, const JgsParams& p,
                            const PdlibGeometry<typename ExecSpace::memory_space>& g,
@@ -912,11 +737,8 @@ void jgs_to_energy_limited(const ExecSpace& exec, const JgsParams& p,
   exec.fence();
 }
 
-/// :6373-6387 (W3_TRNK), IP = 1..npa, each IP its own column: where
-/// VA > TINY(1.), EXPVA = NINT(LOG10(VA)) (log10f, lroundf), TRVA =
-/// 10.**(EXPVA-B_JGS_TRUNK_DIGITS) (__powisf2), and where TRVA > TINY(1.),
-/// VA = ANINT(VA/TRVA)*TRVA (divss, roundf, mulss). Checked against the object
-/// built with -DW3_TRNK (v). ⚠ log10f on CUDA is not glibc's.
+/// :6373-6387 (W3_TRNK), each IP its own column: VA = ANINT(VA/TRVA)*TRVA with
+/// TRVA = 10.**(NINT(LOG10(VA))-B_JGS_TRUNK_DIGITS). ⚠ log10f on CUDA is not glibc's.
 template <class ExecSpace>
 void jgs_truncate(const ExecSpace& exec, const JgsParams& p,
                   const JgsArrays<typename ExecSpace::memory_space>& a) {

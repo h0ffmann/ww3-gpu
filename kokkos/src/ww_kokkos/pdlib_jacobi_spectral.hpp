@@ -1,86 +1,11 @@
 // kokkos/src/ww_kokkos/pdlib_jacobi_spectral.hpp
-// CALCARRAY_JACOBI_SPECTRAL_1, ported to Kokkos: the spectral-space part of the
-// implicit (block Jacobi / Gauss-Seidel) system on the unstructured mesh. For
-// each node it adds to the diagonal block ASPAR_JAC(:,PDLIB_I_DIAG(IP)) the
-// upwind coefficients of the frequency shift (method 1 or 2) and of refraction,
-// and keeps the velocities for the solver (CAS_SIG, CWNB_SIG_M2, CAD_THE).
-// Phase 1, translated, not regtested.
-//
-// WW3 heritage: WW3-noaa/model/src/w3profsmd_pdlib.F90:4413-4557 at NOAA-EMC/WW3
-// 03adda91 (identical in the WW3/ fork, v, cmp, 2026-10-16); authors A. Roland
-// and M. Dutour-Sikiric. Called by PDLIB_JACOBI_GAUSS_SEIDEL_BLOCK (:5781-5783)
-// when FSFREQSHIFT .OR. FSREFRACTION and IMEM == 1 (w3parall.F90:90, a
-// PARAMETER). Compiled as regtests/ww3_tp2.17/input/switch_PDLIB builds it:
-// W3_S, W3_DEBUGFREQSHIFT and W3_DEBUGREFRACTION (:4469-4471, :4517-4519,
-// :4545-4548) are not compiled and not ported; a kernel never prints. The mesh
-// arrays are pdlib_params.hpp; what it lacks is JacSpecArrays below.
-//
-// Not translated here, called through the Prop template argument (the routines
-// of w3parall.F90 that prop_parall.hpp translates). Assumed interface, each a
-// const KOKKOS_FUNCTION member of Prop, ip and isea passed as the Fortran's
-// 1-based IP and ISEA, every array a pointer to the first element of a
-// contiguous Fortran array, written in full by the callee (intent(out)):
-//   void freq_shift(int ip, int isea, Real* cas, Real* dmm, Real dtg)
-//        PROP_FREQ_SHIFT(IP, ISEA, CAS, DMM, DTG), w3parall.F90:604-739;
-//        cas = CAS(1:NSPEC), dmm = DMM(0:NK2) (dmm[0] is DMM(0)).
-//   void freq_shift_m2(int ip, int isea, Real* cwnb_m2, Real* dwni_m2, Real dtg)
-//        PROP_FREQ_SHIFT_M2, w3parall.F90:754-894; cwnb_m2 = CWNB_M2(1-NTH:NSPEC)
-//        (cwnb_m2[0] is CWNB_M2(1-NTH)), dwni_m2 = DWNI_M2(1:NK).
-//   void refraction_pr3(int ip, int isea, Real dtg, Real* cad, bool do_limiter)
-//        PROP_REFRACTION_PR3, w3parall.F90:447-589; cad = CAD(1:NSPEC).
-// The callees fill CAS, CWNB_M2 and CAD completely, and the Fortran then copies
-// each into CAS_SIG(:,IP), CWNB_SIG_M2(:,IP), CAD_THE(:,IP) unchanged (:4512,
-// :4532, :4550). Here the callee writes straight into that column, which holds
-// the same bits; DMM and DWNI_M2 go to the per-node work columns of JacSpecWork.
-//
-// Precision. Every variable is REAL (float): DTG, eSI, eVal, the automatic
-// arrays (:4477-4481), FACHFA (w3gdatmd.F90:799), ZERO = 0.0d0 as a REAL
-// PARAMETER (w3parall.F90:94, kZero), ASPAR_JAC and the three saved arrays
-// (w3profsmd_pdlib.F90:114-116). No double appears in the routine's GIMPLE.
-//
-// Arithmetic checked against gfortran 16.2 -O3 GIMPLE and the object of
-// w3profsmd_pdlib.F90 (WW3's CMake Release flags, switch_PDLIB; the
-// -fdump-tree-optimized object disassembles identically to the CMake one). No
-// FMA, no libm call, no reciprocal multiply; every expression is the source's,
-// left to right:
-//   :4503  CP_SIG/DMM(IK-1) - CM_SIG/DMM(IK): divss, divss, subss;
-//   :4506  B_SIG + (CM_SIG/DMM(NK))*FACHFA: divss, mulss, addss;
-//   :4508, :4554  ASPAR + B*eSI: mulss/mulps then addss/addps;
-//   :4521-4522  ASPAR - eSI*(DWNI_M2(IK)*(MIN(..) - MAX(..))): subss, mulss, mulss, subss;
-//   :4525-4527  ASPAR + eSI*((DWNI_M2(NK)*MIN(..))*FACHFA);
-//   :4551-4553  CP = DTG*MAX(ZERO,CAD), CM = DTG*MIN(ZERO,CAD), B = CP - CM.
-// The vectorised loops (fopt-info) are the element-wise :4497, :4498, :4508,
-// :4551-4554: no reduction anywhere, so lanes add nothing to the order.
-//
-// MIN/MAX. With a NaN or a +0/-0 tie the SSE result depends on which operand
-// is the destination (dest OP src ? dest : src), and the object puts ZERO on
-// different sides in the vector body and the scalar tail of one loop. The
-// result is therefore a function of the element's position in NSPEC, and is
-// written so (n = NSPEC, x the array element, "x>0?x:0" means maxss/maxps with
-// x as destination):
-//   :4497 MAX(ZERO,CAS): v = (n <= 3) ? 0 : 4*(n/4); x>0?x:0 for i <= v,
-//         0>x?0:x for i = v+1, v+2 (the tail of up to three, unrolled);
-//   :4498 MIN(ZERO,CAS): x<0?x:0 for i < v and i = v+1, 0<x?0:x for i = v, v+2;
-//   :4551 MAX(ZERO,CAD): x>0?x:0, except 0>x?0:x for i = n-1 when n is odd
-//         (4-wide body, one 2-wide step, one scalar step);
-//   :4552 MIN(ZERO,CAD): x<0?x:0, except 0<x?0:x for i = n-1 when n is odd;
-//   :4521 MIN(CWNB_M2(ISP-NTH),ZERO), :4525: x<0?x:0; MAX(CWNB_M2(ISP),ZERO): x>0?x:0.
-// i is the 0-based ISP. The products by DTG and eSI are written in the
-// object's operand order; IEEE * and + commute, so only a NaN payload could
-// tell them apart.
-//
-// Why the parallel pass gives the Fortran's bits. One thread per node IP. Every
-// write of node IP goes to column PDLIB_I_DIAG(IP) of ASPAR_JAC, which is the
-// diagonal entry of row IP of the CSR pattern (yowpdlibmain.F90:1625), so no
-// two nodes write the same entry, and to column IP of CAS_SIG, CWNB_SIG_M2,
-// CAD_THE and of the work arrays. Each node reads only inputs no node writes
-// here, and the automatic arrays are filled in full for every IP before they
-// are read, so nothing carries from one IP to the next. Inside a node the
-// Fortran's loop order is kept, and each ASPAR_JAC entry receives its
-// freq-shift update before its refraction update, as at :4508/:4523/:4527
-// before :4554. Method 1's B_SIG is fused into the ASPAR update per ISP: B_SIG(ISP)
-// depends on CP_SIG(ISP) and CM_SIG(ISP) only, the same float operations in the
-// same order, without the NSPEC array a kernel may not allocate. No atomics.
+// CALCARRAY_JACOBI_SPECTRAL_1: adds the upwind frequency-shift (method 1 or 2) and
+// refraction coefficients to the diagonal block ASPAR_JAC(:,PDLIB_I_DIAG(IP)) and keeps
+// CAS_SIG, CWNB_SIG_M2, CAD_THE for the solver. Phase 1, translated, not regtested.
+// WW3 heritage: WW3-noaa/model/src/w3profsmd_pdlib.F90:4413-4557 at NOAA-EMC/WW3 03adda91;
+// A. Roland, M. Dutour-Sikiric. Evidence:
+// kokkos/port_report/CALCARRAY_JACOBI_SPECTRAL_1_KOKKOS.md.
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <Kokkos_Core.hpp>
@@ -91,8 +16,9 @@
 namespace ww::pdlib {
 
 namespace jspec_detail {
-// SSE MIN/MAX as emitted: dest OP src ? dest : src; a NaN or a +0/-0 tie in
-// `a` gives `b`. Each call passes the operands in the order read from the object.
+// SSE MIN/MAX as emitted (dest OP src ? dest : src): a NaN or a +0/-0 tie in `a` gives `b`.
+// The object puts ZERO on different sides in the vector body and the scalar tail, so the
+// operand order below depends on the 0-based ISP i of n = NSPEC.
 KOKKOS_INLINE_FUNCTION Real min_ss(Real a, Real b) { return (a < b) ? a : b; }
 KOKKOS_INLINE_FUNCTION Real max_ss(Real a, Real b) { return (a > b) ? a : b; }
 
@@ -133,17 +59,14 @@ template <class MemSpace>
 struct JacSpecArrays {
   using memory_space = MemSpace;
   using W2 = Kokkos::View<Real**, Kokkos::LayoutLeft, MemSpace>;
-  /// PDLIB_I_DIAG(npa), integer (PDLIB/yownodepool.F90:85, filled
-  /// yowpdlibmain.F90:1625): 1-based position K of the diagonal entry of row
-  /// IP in the CSR arrays, the column of ASPAR_JAC.
+  /// PDLIB_I_DIAG(npa) (yownodepool.F90:85): 1-based CSR position of row IP's diagonal.
   Kokkos::View<const int*, Kokkos::LayoutLeft, MemSpace> i_diag;
   /// ASPAR_JAC(NSPEC, PDLIB_NNZ), REAL (w3profsmd_pdlib.F90:114, :7589).
   W2 aspar_jac;
-  /// CAS_SIG(NSPEC, NSEAL), REAL (:115, :7600); allocated only when
-  /// FreqShiftMethod == 1, written only then.
+  /// CAS_SIG(NSPEC, NSEAL) (:115, :7600): allocated and written only for FreqShiftMethod 1.
   W2 cas_sig;
-  /// CWNB_SIG_M2(1-NTH:NSPEC, NSEAL), REAL (:116, :7603); allocated only when
-  /// FreqShiftMethod == 2. cwnb_sig_m2(isp + nth - 1, ip - 1) = CWNB_SIG_M2(ISP,IP).
+  /// CWNB_SIG_M2(1-NTH:NSPEC, NSEAL) (:116, :7603), FreqShiftMethod 2:
+  /// cwnb_sig_m2(isp + nth - 1, ip - 1) = CWNB_SIG_M2(ISP,IP).
   W2 cwnb_sig_m2;
   /// CAD_THE(NSPEC, NSEAL), REAL (:115, :7597).
   W2 cad_the;
@@ -166,8 +89,13 @@ struct JacSpecWork {
   }
 };
 
-/// CALCARRAY_JACOBI_SPECTRAL_1(DTG), :4413-4557. prop supplies the three
-/// w3parall routines (see the header comment).
+/// CALCARRAY_JACOBI_SPECTRAL_1(DTG), :4413-4557, one thread per node: each writes only its
+/// diagonal column and its own columns. prop supplies const KOKKOS_FUNCTION members (1-based
+/// ip, isea; prop_parall.hpp, prop_freq_shift.hpp), each writing its array in full:
+///   freq_shift(ip, isea, cas, dmm, dtg)            CAS(1:NSPEC), DMM(0:NK2)
+///   freq_shift_m2(ip, isea, cwnb_m2, dwni_m2, dtg) CWNB_M2(1-NTH:NSPEC), DWNI_M2(1:NK)
+///   refraction_pr3(ip, isea, dtg, cad, do_limiter) CAD(1:NSPEC)
+/// The callee writes straight into CAS_SIG/CWNB_SIG_M2/CAD_THE(:,IP), as the Fortran copies.
 template <class ExecSpace, class Prop>
 void calcarray_jacobi_spectral_1(const ExecSpace& exec,
                                  const PdlibGeometry<typename ExecSpace::memory_space>& g,
@@ -221,7 +149,7 @@ void calcarray_jacobi_spectral_1(const ExecSpace& exec,
               Real* d = &dmm(0, p);
               prop.freq_shift(ip, isea, cas, d, dtg);  // :4496
               for (int ith = 1; ith <= nth; ++ith) {
-                for (int ik = 1; ik <= nk; ++ik) {  // :4501-4504
+                for (int ik = 1; ik <= nk; ++ik) {  // :4501-4504, B_SIG fused per ISP
                   const int i = ith + (ik - 1) * nth - 1;
                   const Real cp = cp_sig(i, nspec, cas[i]);
                   const Real cm = cm_sig(i, nspec, cas[i]);

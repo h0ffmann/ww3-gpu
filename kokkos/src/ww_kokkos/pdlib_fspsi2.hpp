@@ -1,87 +1,10 @@
 // kokkos/src/ww_kokkos/pdlib_fspsi2.hpp
-// PDLIB_W3XYPFSPSI2, ported to Kokkos: explicit PSI-scheme fluctuation-splitting
-// advection of one spectral component ISP on the unstructured (PDLIB) mesh of
-// this MPI rank. Phase 1, translated, not regtested.
-//
-// WW3 heritage: WW3-noaa/model/src/w3profsmd_pdlib.F90:1202-1502 at NOAA-EMC/WW3
-// 03adda91 (A. Roland, M. Dutour-Sikiric), switch PDLIB of
-// regtests/ww3_tp2.17/input/switch_PDLIB; called through PDLIB_W3XYPUG. The fork
-// WW3/ (c9a6a0c6) has the routine byte for byte (v, diff, 2026-10-16). That
-// switch is kRef1 = false; regtests/ww3_tp2.17/input_deep/switch_PDLIB and
-// NOAA's switch_NWS_rwps add REF1, kRef1 = true. W3_S (:1289, :1314, tracing)
-// and W3_DEBUGSOLVER are in none of those switches and are not ported; IP_glob
-// of :1378 is dead.
-//
-// W3_REF1, the template flag kRef1 of fspsi2_substep and pdlib_w3xypfspsi2,
-// read against the -O3 object and GIMPLE of w3profsmd_pdlib.F90 built with a
-// copy of input_deep/switch_PDLIB (CMake Release, gfortran 16.2, 2026-10-16):
-//   :1255-1260  USE REFPARS, NX: REFPARS(3) is the argument refpars3, read
-//             only when kRef1.
-//   :1292-1294, :1327-1329  IOBPDR(NX) = (1-IOBP_LOC)*(1-IOBPD_LOC(ITH,:)): a
-//             local never read. The REF1 object keeps the malloc, the store
-//             loop (NX trips) and the free, and nothing reads the buffer: not
-//             translated, no value depends on it. With NX > npa it reads
-//             IOBP_LOC and IOBPD_LOC past their extent npa ⚠ (WW3's, harmless
-//             to the results).
-//   :1438-1440  after :1437, IF (REFPARS(3) < 0.5 .AND. IOBPD_LOC(ITH,IP) == 0
-//             .AND. IOBPA_LOC(IP) == 0) U(IP) = AC(IP), the AC before :1442.
-//             The object tests 0.5 > REFPARS(3) (comiss, seta: false for a
-//             NaN) and (IOBPA | IOBPD) == 0 and takes AC(IP). REF1 stops the
-//             vectorisation of :1437 (two scalar copies, span 1 and strided,
-//             with the same operations: mulss, maxss %0,d, then *IOBPD and
-//             *IOBDP in REAL, element-wise as the vector lanes were). The C++
-//             computes :1437 and then overrides it, as the source orders it.
-//
-// MPI stays in Fortran. The launchers stop where the Fortran calls MPI, and the
-// shim makes the calls between them, in this order:
-//   :1386  MPI_ALLREDUCE(DTMAX, MPI_MIN, MPI_COMM_WCMP), only when LCALC: between
-//          fspsi2_lcalc_local (returns this rank's DTMAX) and fspsi2_set_iter
-//          (takes DTMAX_GL);
-//   :1488  PDLIB_exchange1DREAL(AC), once per sub-step IT = 1..ITER(IK,ITH),
-//          after fspsi2_substep(IT) and before fspsi2_substep(IT+1).
-// pdlib_w3xypfspsi2 at the end runs the whole routine in that order with the two
-// calls passed in as callables.
-//
-// Arithmetic checked against gfortran 16.2 -O3 GIMPLE and the object of
-// w3profsmd_pdlib.F90 (WW3's CMake Release flags, switch_PDLIB; the function's
-// disassembly is identical to the CMake object's):
-//   * every variable is REAL (rkind = 4, PDLIB/yowdatapool.F90:48); double
-//     exactly where the object computes in double: FL111..FL312 (2.d0*FL+FL,
-//     :1359-1364), BETAHAT and the BET1 clamp (0.5d0, 1.d0, :1416-1421),
-//     DTMAXEXP and CFLXYMAX (DBLE, :1380, :1383), DTSI (:1400);
-//   * gfortran narrowed two DBLE statements to float, and so does this file:
-//     NM = -(1.0f/MIN(...)) (:1351, divss) and CFLXY = DT/DTMAX_GL (:1388, divss);
-//     both give the same bits as the double form (one correctly rounded op);
-//   * SUM and DOT_PRODUCT are in-order sums that start from +0.0, kept as
-//     (0 + x1) + x2 + x3 (:1351, :1410-1411);
-//   * BET1 = THETA_L/FT is emitted as (-THETA_L)/(-FT) and FT*BET1 as BET1*FT
-//     (:1414, :1422); written that way (equal bits, NaN sign aside);
-//   * MOD(CFLXY,1.0d0) is inline x87 fprem (exact), NINT is lroundf (:1389-1391);
-//   * every MIN/MAX follows the emitted minss/maxss/minsd/maxsd: a<b?a:b with
-//     the accumulated value as a; MIN(BETAHAT,1.d0-BETAHAT,1.d0) is emitted as
-//     MIN(MIN(BETAHAT,1),1-BETAHAT);
-//   * constants: ONESIXTH 0x3e2aaaab, -THR 0x80800000, THR 0x00800000, 1.E10
-//     0x501502f9, 10.E10 0x51ba43b7, DBLE(10.E-10) 0x3e112e0be0000000, 0.001
-//     0x3a83126f, 0.5d0, 1.d0;
-//   * no FMA anywhere (SSE baseline, contraction off). The vectorised loops (the
-//     K-value SLP at :1345-1366, DTSI at :1400, the node update at :1437) are
-//     element-wise, no reduction, so lanes give the scalar bits.
-//
-// Summation order. KKSUM(NI) = KKSUM(NI) + KELEM(:,IE) (:1373-1374) and
-// ST(NI) = ST(NI) + THETA_L (:1427) add over IE = 1..NE in increasing IE, and
-// the object does them one node at a time in that order. Here they are written
-// in gather form: one thread per node walks PDLIB_IE_CELL/PDLIB_POS_CELL, which
-// list the elements of each node in increasing IE (yowpdlibmain.F90:1478-1514;
-// check_cell_adjacency in pdlib_params.hpp verifies it), and adds from +0.0. Each
-// node receives the same additions in the same order, so the bits are the
-// Fortran's on any execution space, with no atomics. The per-element values
-// (THETA_L) are written to work.theta first by a parallel loop over elements.
-//
-// Two loops stay serial (one thread): the LCALC loop over IP (:1377-1384),
-// because DTMAXEXP carries from the last node that set it into CFLXYMAX of the
-// following nodes and the MIN chain of DTMAX is order dependent for NaN; and the
-// boundary loop over IBI (:1462-1476), where two IBI on the same node would keep
-// the last store.
+// PDLIB_W3XYPFSPSI2: explicit PSI-scheme advection of one spectral component on the
+// unstructured mesh of this MPI rank. Phase 1, translated, not regtested.
+// WW3 heritage: WW3-noaa/model/src/w3profsmd_pdlib.F90:1202-1502 at NOAA-EMC/WW3 03adda91;
+// A. Roland, M. Dutour-Sikiric. Evidence: kokkos/port_report/PDLIB_W3XYPFSPSI2_KOKKOS.md.
+// kRef1 is the W3_REF1 build (input_deep/switch_PDLIB, switch_NWS_rwps): it adds :1438-1440.
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <Kokkos_Core.hpp>
@@ -94,11 +17,8 @@
 
 namespace ww::pdlib {
 
-/// The automatic arrays of PDLIB_W3XYPFSPSI2 (:1303-1309), plus theta, which
-/// holds THETA_L of every element so the gather can add it in IE order, and
-/// dtmax, the 0-d result of the LCALC loop. LayoutLeft, Fortran extents:
-///   kelem(k-1, ie-1) = KELEM(k,IE), (3, NE);   flall, theta likewise
-///   nm(ie-1) = NM(IE);   dtsi, u, st, kksum: (npa)
+/// The automatic arrays (:1303-1309), LayoutLeft with Fortran extents, plus theta (THETA_L
+/// per element, for the gather in IE order) and dtmax, the LCALC loop's result.
 template <class MemSpace>
 struct Fspsi2Work {
   using memory_space = MemSpace;
@@ -170,6 +90,7 @@ KOKKOS_INLINE_FUNCTION void fspsi2_kvalues_elem(int ie, const Geo& g, const CVie
   Real s = kZero + min_ab(k1, kZero);
   s = s + min_ab(k2, kZero);
   s = s + min_ab(k3, kZero);
+  // :1351, the DBLE division narrowed to divss, as gfortran does.
   w.nm(e) = -(Real(1) / min_ab(s, -kThr));
   w.kelem(0, e) = max_ab(k1, kZero);  // :1352, maxss 0,k
   w.kelem(1, e) = max_ab(k2, kZero);
@@ -211,7 +132,7 @@ KOKKOS_INLINE_FUNCTION void fspsi2_theta_elem(int ie, const Geo& g, const Work& 
     th1 = (u1 - utilde) * k1;  // :1412
     th2 = (u2 - utilde) * k2;
     th3 = (u3 - utilde) * k3;
-    Real b1 = (-th1) / negft;  // :1414, THETA_L/FT
+    Real b1 = (-th1) / negft;  // :1414, THETA_L/FT as the object's (-THETA_L)/(-FT)
     Real b2 = (-th2) / negft;
     Real b3 = (-th3) / negft;
     if (b1 < kZero || b2 < kZero || b3 < kZero) {  // :1415
@@ -225,7 +146,7 @@ KOKKOS_INLINE_FUNCTION void fspsi2_theta_elem(int ie, const Geo& g, const Work& 
       b1 = bet_clamp(bh1, bh2);  // :1419-1421
       b2 = bet_clamp(bh2, bh3);
       b3 = bet_clamp(bh3, bh1);
-      th1 = b1 * ft;  // :1422
+      th1 = b1 * ft;  // :1422, FT*BET1 as BET1*FT
       th2 = b2 * ft;
       th3 = b3 * ft;
     }
@@ -292,7 +213,7 @@ Real fspsi2_lcalc_local(const ExecSpace& exec,
 /// :1387-1396 on the host: ITER(IK,ITH) from DTMAX_GL, the result of the
 /// MPI_ALLREDUCE of :1386.
 inline int fspsi2_iter_value(Real dt, Real dtmax_gl) {
-  const Real cflxy = dt / dtmax_gl;  // :1388, divss
+  const Real cflxy = dt / dtmax_gl;  // :1388, the DBLE division narrowed to divss, as gfortran does
   // :1389, ABS(MOD(CFLXY,1.0d0)): fprem on the widened float, exact.
   const Real rest = std::fabs(static_cast<Real>(std::fmod(static_cast<double>(cflxy), 1.0)));
   const int n = static_cast<int>(std::lroundf(cflxy));  // :1391, NINT
@@ -372,9 +293,8 @@ void fspsi2_substep(const ExecSpace& exec, const PdlibGeometry<typename ExecSpac
           ac(p) = up;
         });
   } else {
-    // The same statements, then :1439 (header). A lambda of its own: a name in
-    // a discarded if-constexpr branch is still captured, and the kRef1 = false
-    // closure above must stay as it was.
+    // :1439: REFPARS(3) < 0.5 keeps the old AC. A lambda of its own: a name in a discarded
+    // if-constexpr branch is still captured, and the kRef1 = false closure must stay as it was.
     Kokkos::parallel_for(
         "fspsi2_update", Policy(exec, 0, geo.npa), KOKKOS_LAMBDA(const int p) {
           Real s = kZero;

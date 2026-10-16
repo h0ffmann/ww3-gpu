@@ -1,61 +1,14 @@
 // kokkos/src/ww_kokkos/srce_bt4.hpp
-// W3SBT4, ported to Kokkos: SHOWEX bottom friction with movable-bed roughness
-// (Ardhuin et al. 2003) and the sub-grid depth treatment of Tolman (1995), one
-// spectral point; with INSBT4 and TABU_ERF, the host build of its ERF table.
-// Phase 1, translated, not regtested.
-//
-// WW3 heritage: WW3-noaa/model/src/w3sbt4md.F90 at NOAA-EMC/WW3 03adda91 (identical
-// in WW3/ at c9a6a0c6): INSBT4 :145-231, TABU_ERF :242-312, W3SBT4 :340-636;
-// authors F. Ardhuin, J. Lepesqueur. Switch BT4 (ww3_tp2.17's switch_PDLIB,
-// switch_NO_PDLIB, switch_RWPS; ww3_tp2.14's OASIS switches; model/bin
-// switch_Ifremer*, switch_ite_pdlib, switch_USACE_1, switch_ugdev2). Called by W3SRCE
-// at w3srcemd.F90:1342-1343 with SPEC, CG1, WN1, and by the point post-processors
-// ww3_outp.F90:2309, ww3_ounp.F90:2485 and gx_outp.F90:1252. The only #ifdef in the three
-// routines is W3_S (STRACE), not ported; no switch changes their arithmetic.
-// IX and IY (:338) are never read and are not passed. The Fortran's FIRST flag
-// (:465-468) calls INSBT4 on the first call of the process: the caller builds the
-// table with insbt4() before the kernel runs. ERFTABLE and DELXERF are module
-// variables, one copy per process, not per grid. A shim selects SBTCX per grid
-// (MPARS(IMOD)) and reads DELAB and FWTABLE at call time: each mod_def read
-// rewrites those CONSTANTS module variables (w3iogrmd.F90:1265).
-//
-// Arithmetic checked against gfortran 16.2 -O3 GIMPLE and the object of
-// w3sbt4md.F90 (WW3's CMake Release flags, switch_lab_shrd with BT1 -> BT4):
-//   :300   DELXERF = (2*XERFMAX)/300 folded to 0x3cda740e;
-//   :302   x = REAL(I)*DELXERF - 4.;
-//   :304-6 2**(1/2) is INTEGER 2**0 = 1, so y = (1 -|erff(x)|)*0.5 or
-//          (1 + erff(x))*0.5; /2 became *0.5 (exact). erff is a libm call;
-//   :489   DSUB = DEPTH*(XSUB(ISUB) + 1.);
-//   :496   WN*DSUB < 6., the same product passed to sinhf at :511;
-//   :511   (SIG*SIG*0.5) / (sinhf(WN*DSUB)**2 * GRAV), a true division;
-//   :513   FACTOR = (((DDEN/CG)*2)*CBETA)*GRAV;
-//   :516   AORB += VARU/(SIG*SIG);
-//   :527-8 sqrtss (inline, no call); :533-4 ((AORB*1.7)*AX)/sqrtf((AX*AX+AY*AY)+1E-12);
-//   :538,610 log10f, then (log + 1.)/DELAB (ABMIN = -1 folded);
-//   :544   (FW*UORB2)/(DD50*32.3598) with 2*GRAV*(SED_SG-1) folded to 0x42017070;
-//   :551   ((SHIELDS(2)-SHIELDS(1))/0.002)*SBTCX(5), XSUB(2)-XSUB(1) folded
-//          to 0x3b03126f, a true division;
-//   :562,593 powf(SHIELDS(3) or PSIN2, SBTCX(2)) with a REAL exponent;
-//   :564,594 powf(UORB2/(AORB*16.1799), 1.4) with (SED_SG-1)*GRAV folded to
-//          0x41817070; 1.4 is a REAL literal, so powf, not a power tree;
-//   :590   expf(-((PSIX*PSIX)*0.5)) / SQRT(TPI) * DPSI / (PROBA2+0.0001), SQRT(TPI)
-//          folded to 0x40206c99, both true divisions;
-//   :619-20 CONST2 = ((DDEN/CG)*GRAV)/(SIG/WN);
-//   :621   DSUM = -((FW*UORB)*CBETA); :625 TEMP2 = (CONST2*D)*A.
-// No FMA, no reciprocal multiply, no libmvec: the only vectorisation is the pair
-// TAUBBL(1:2) updated as one 8-byte vector (:626-627) and the BEDFORM store, both
-// element-wise, so the scalar loop below gives the same bits. TAUBBL is summed in
-// IS order, as the Fortran. MIN and MAX: each is written as the minss/maxss of
-// w3sbt4md.o, minss(d, s) = d < s ? d : s and maxss(d, s) = d > s ? d : s, with
-// d the destination register. Three sites put the constant first (:474, :527,
-// :610), so a NaN there propagates where the other sites return the constant.
-// Integer MIN/MAX (:539, :584, :611) are cmov and have no such choice. INT()
-// at :539, :584, :611 is ww::st4::fint (st4_params.hpp:54), cvttss2si's INT_MIN
-// for NaN or out of range, so the MAX(...,0) at :584 is kept: a C++ cast there
-// is undefined and let g++ drop it.
-//
-// ⚠ On a device CUDA's sinhf, log10f, powf, expf, erff and sqrtf are not glibc's
-// (AGENTS.md, "Bit for bit", GPU); the table builder runs on the host.
+// W3SBT4: SHOWEX bottom friction with movable-bed roughness and sub-grid depth, one
+// spectral point; INSBT4 and TABU_ERF, the host build of its ERF table. Phase 1,
+// translated, not regtested. WW3 heritage: WW3-noaa/model/src/w3sbt4md.F90 at
+// NOAA-EMC/WW3 03adda91 (INSBT4 :145-231, TABU_ERF :242-312, W3SBT4 :340-636); authors
+// F. Ardhuin, J. Lepesqueur. Evidence: kokkos/port_report/W3SBT4_KOKKOS.md,
+// INSBT4_KOKKOS.md, TABU_ERF_KOKKOS.md.
+// The caller builds the table with insbt4() once per process (the FIRST flag, :465-468)
+// and reads SBTCX, DELAB and FWTABLE of the current grid at call time (w3iogrmd.F90:1265).
+// ⚠ On a device sinhf, log10f, powf, expf and sqrtf are CUDA's, not glibc's.
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <cmath>
@@ -67,14 +20,13 @@
 
 namespace ww::srce {
 
-/// SIZEERFTABLE (w3sbt4md.F90:130) and SIZEFWTABLE (constants.F90:92): both tables
-/// are (0:300).
+/// SIZEERFTABLE (w3sbt4md.F90:130), SIZEFWTABLE (constants.F90:92): tables are (0:300).
 inline constexpr int kSizeErfTable = 300;
 inline constexpr int kSizeFwTableBt4 = 300;
 
 namespace bt4_detail {
-// The minss/maxss of w3sbt4md.o: d is the destination operand, returned when the
-// comparison holds; s is returned on a NaN or a tie.
+// minss/maxss of w3sbt4md.o, d the destination: a NaN or a tie gives s. Three sites put
+// the constant first (:474, :527, :610).
 KOKKOS_INLINE_FUNCTION Real minss(Real d, Real s) { return (d < s) ? d : s; }
 KOKKOS_INLINE_FUNCTION Real maxss(Real d, Real s) { return (d > s) ? d : s; }
 KOKKOS_INLINE_FUNCTION int imin(int a, int b) { return (a < b) ? a : b; }
@@ -122,13 +74,9 @@ struct Bt4Params {
   Real delxerf;        ///< W3SBT4MD DELXERF (set by tabu_erf)
 };
 
-/// W3SBT4(A, CG, WN, DEPTH, D50, PSIC, TAUBBL, BEDFORM, S, D, IX, IY), one point.
-/// sig, dden = SIG(1:NK), DDEN(1:NK); cg, wn = CG(1:NK), WN(1:NK); ecos, esin =
-/// ECOS(1:NSPEC), ESIN(1:NSPEC) (:503-504 read them at ITH, :626-627 at IS);
-/// a, s, d = A, S, D(1:NSPEC); fwtable = FWTABLE(0:300), erftable = ERFTABLE(0:300);
-/// taubbl[2] out, bedform[3] in/out (only written). All 0-based. cbeta (NK) is
-/// caller-provided work for the Fortran local CBETA (:441); DSUM (:449) is only
-/// written and is a scalar here.
+/// W3SBT4 for one point, arrays 0-based. ecos, esin = ECOS, ESIN(1:NSPEC), read at ITH
+/// (:503-504) and at IS (:626-627); taubbl[2] out, bedform[3] written. cbeta (NK) is work
+/// for the local CBETA; DSUM is a scalar here.
 KOKKOS_INLINE_FUNCTION void w3sbt4_point(const Bt4Params& p, const Real* sig, const Real* dden,
                                          const Real* ecos, const Real* esin,
                                          const Real* fwtable, const Real* erftable,
@@ -228,6 +176,7 @@ KOKKOS_INLINE_FUNCTION void w3sbt4_point(const Bt4Params& p, const Real* sig, co
     // :581-602, subgrid
     const Real psix = (sbtcx[2] - shields[2]) / dpsi;
     const Real psixt = maxss((psix + bt4_detail::kXerfMax) / p.delxerf, static_cast<Real>(0.));
+    // :584. fint is cvttss2si (INT_MIN for NaN): the MAX(...,0) is kept, a cast would be UB.
     const int inde = imax(imin(kSizeErfTable - 1, ww::st4::fint(psixt)), 0);
     const Real deli1 = minss(psixt - static_cast<Real>(inde), one);
     const Real deli2 = one - deli1;

@@ -1,31 +1,10 @@
 // kokkos/src/ww_kokkos/pdlib_boundary_va.hpp
-// APPLY_BOUNDARY_CONDITION_VA, ported to Kokkos: the open-boundary spectra
-// BBPI0/BBPIN, interpolated in time, times CG, written into VA on the boundary
-// sea points of this rank. Phase 1, translated, not regtested.
-//
+// APPLY_BOUNDARY_CONDITION_VA: the open-boundary spectra BBPI0/BBPIN, interpolated in
+// time, times CG, written into VA. Phase 1, translated, not regtested.
 // WW3 heritage: WW3-noaa/model/src/w3profsmd_pdlib.F90:5037-5148 at NOAA-EMC/WW3
-// 03adda91, switch PDLIB (A. Roland, M. Dutour-Sikiric). Called from W3WAVE
-// (w3wavemd.F90:1321) under IF (FLBPI), followed by PDLIB_exchange2DREAL_zero(VA),
-// which stays in Fortran. Host side, in the shim: GTYPE .eq. UNGTYPE (:5114),
-// FLBPI .and. IAPROC .le. NAPROC (:5122) and RD10 = DSEC21(TBPI0,TIME),
-// RD20 = DSEC21(TBPI0,TBPIN) (:5116-5117), both REAL; the ELSE of :5118-5121
-// (RD10=1., RD20=0.) is dead, since :5122 needs FLBPI.
-//
-// Arithmetic checked against gfortran 16.2 -O3 GIMPLE and the object of
-// w3profsmd_pdlib.F90 (WW3's own flags, switch_PDLIB), all REAL, no REAL(8):
-//   :5125  rd20 > 0x1.0624dep-10f (0.001 as REAL, .rodata.cst4), comiss;
-//   :5126  divss rd10/rd20, then maxss(.,0), then minss(.,1);
-//   :5127  subss 1 - rd2;
-//   :5139  mulss BBPI0*RD1, mulss BBPIN*RD2, addss (two roundings, no FMA);
-//   :5140  mulss CG*eAC, maxss(.,0).
-// SSE MIN/MAX as emitted (dest OP src ? dest : src); every call puts the
-// computed value first and the constant second, as the object does.
-//
-// Parallel over ISP, serial over IBI. ISBPI can name one sea point for two IBI,
-// so VA(ISP,JSEA) can be written more than once and the last IBI wins. Each
-// thread owns one ISP and walks IBI in the Fortran's order, so every element
-// of VA receives the same sequence of writes as in the Fortran; no thread
-// writes another's ISP, and nothing is reduced.
+// 03adda91; A. Roland, M. Dutour-Sikiric. Evidence:
+// kokkos/port_report/APPLY_BOUNDARY_CONDITION_VA_KOKKOS.md.
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <Kokkos_Core.hpp>
@@ -40,8 +19,7 @@ KOKKOS_INLINE_FUNCTION Real min_ss(Real a, Real b) { return (a < b) ? a : b; }
 KOKKOS_INLINE_FUNCTION Real max_ss(Real a, Real b) { return (a > b) ? a : b; }
 }  // namespace bcva_detail
 
-/// ISEA_TO_JSEA(NSEA) (w3profsmd_pdlib.F90:289), integer, 1-based values,
-/// <= 0 for a sea point not on this rank: isea_to_jsea(isea-1).
+/// ISEA_TO_JSEA(NSEA) (:289), 1-based values, <= 0 off this rank: isea_to_jsea(isea-1).
 template <class MemSpace>
 using BcvaIseaToJsea = Kokkos::View<const int*, Kokkos::LayoutLeft, MemSpace>;
 /// CG(0:NK+1,0:NSEA) (w3adatmd.F90:1325), REAL: cg(ik, isea), bases kept.
@@ -51,8 +29,8 @@ using BcvaCgView = Kokkos::View<const Real**, Kokkos::LayoutLeft, MemSpace>;
 template <class MemSpace>
 using BcvaVaView = Kokkos::View<Real**, Kokkos::LayoutLeft, MemSpace>;
 
-/// The body of APPLY_BOUNDARY_CONDITION_VA from :5122, for a caller that has
-/// already checked GTYPE == UNGTYPE, FLBPI and IAPROC <= NAPROC.
+/// The body from :5122, for a caller that has checked GTYPE == UNGTYPE, FLBPI and
+/// IAPROC <= NAPROC and computed rd10, rd20 = DSEC21 (:5116-5117).
 template <class ExecSpace>
 void apply_boundary_condition_va(const ExecSpace& exec,
                                  const PdlibGeometry<typename ExecSpace::memory_space>& g,
@@ -81,7 +59,7 @@ void apply_boundary_condition_va(const ExecSpace& exec,
       "pdlib_boundary_va", Kokkos::RangePolicy<ExecSpace>(exec, 0, nspec),
       KOKKOS_LAMBDA(const int isp0) {
         const int ik = 1 + isp0 / nth;  // ISP = ITH + (IK-1)*NTH, :5138
-        for (int ibi = 1; ibi <= nbi; ++ibi) {  // :5132, in order (header)
+        for (int ibi = 1; ibi <= nbi; ++ibi) {  // :5132, in order: the last IBI wins
           const int isea = isbpi(ibi - 1);
           const int jsea = isea_to_jsea(isea - 1);  // :5134
           if (jsea > 0) {

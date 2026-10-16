@@ -1,117 +1,10 @@
 // kokkos/src/ww_kokkos/pdlib_fsn2.hpp
-// PDLIB_W3XYPFSN2, ported to Kokkos: explicit N-scheme (fluctuation splitting)
-// advection in geographical space of one spectral component on the
+// PDLIB_W3XYPFSN2: explicit N-scheme advection of one spectral component on the
 // unstructured mesh of this MPI rank. Phase 1, translated, not regtested.
-//
-// WW3 heritage: WW3-noaa/model/src/w3profsmd_pdlib.F90:868-1200 at NOAA-EMC/WW3
-// 03adda91 (identical in the WW3/ fork at c9a6a0c6); authors A. Roland and
-// M. Dutour-Sikiric. Called by PDLIB_W3XYPUG (:837) when FSN. Compiled as
-// regtests/ww3_tp2.17/input/switch_PDLIB builds it (kRef1 = false), and as
-// regtests/ww3_tp2.17/input_deep/switch_PDLIB and NOAA's switch_NWS_rwps build
-// it with REF1 (kRef1 = true). W3_S (:913, :956, :988, tracing) and
-// W3_DEBUGSOLVER are in none of those switches and are not ported.
-// The mesh and module arrays are pdlib_params.hpp.
-//
-// W3_REF1, the template flag kRef1 of fsn2_substep and w3xypfsn2, read against
-// the -O3 object and GIMPLE of w3profsmd_pdlib.F90 built with a copy of
-// input_deep/switch_PDLIB (WW3's CMake Release, gfortran 16.2, 2026-10-16):
-//   :923-928  USE REFPARS, NX: REFPARS(3) is the argument refpars3, read only
-//             when kRef1.
-//   :959-961, :1002-1004  IOBPDR(NX) = (1-IOBP_LOC)*(1-IOBPD_LOC(ITH,:)): a
-//             local the routine never reads. The REF1 object keeps the malloc,
-//             the store loop (NX trips, LHS extent) and the free, and nothing
-//             reads the buffer, so it changes no value and is not translated.
-//             With NX > npa (more than one rank) the loop reads IOBP_LOC and
-//             IOBPD_LOC past their extent npa (:596-598) ⚠, a WW3 defect that
-//             cannot change a result.
-//   :1125-1127  after :1124, IF (REFPARS(3) < 0.5 .AND. IOBPD_LOC(ITH,IP) == 0
-//             .AND. IOBPA_LOC(IP) == 0) U(IP) = AC(IP): the old AC, read before
-//             the store of :1134. The object tests 0.5 > REFPARS(3) (comiss,
-//             seta: false for a NaN) and (IOBPA | IOBPD) == 0, and takes AC(IP)
-//             instead of the :1124 value; :1124's arithmetic is the same as
-//             without REF1 (mulss, maxss %0,x, cvtss2sd, two mulsd, cvtsd2ss),
-//             in both loop copies (span 1 and strided). The C++ computes :1124,
-//             then overrides it, as the source orders it: the same bits.
-//
-// The MPI calls stay in Fortran. The routine has two, and the driver
-// w3xypfsn2() below stops at each and calls back into the shim:
-//   :1062-1064  only when LCALC: FIN(1)=DTMAX; MPI_ALLREDUCE(FIN, FOUT, 1,
-//               rtype=MPI_REAL4, MPI_MIN, MPI_COMM_WCMP); DTMAX_GL=FOUT(1).
-//               Between fsn2_elements_cfl() and fsn2_set_iter().
-//   :1188       PDLIB_exchange1DREAL(AC) (PDLIB/yowexchangeModule.F90:250),
-//               once at the end of every sub-step IT = 1..ITER, after the
-//               boundary update; the next sub-step starts from the exchanged
-//               AC. After each fsn2_substep(), before the next one.
-// On one rank the exchange has no neighbour domain and the reduction returns
-// DTMAX, but the call sites are the same.
-//
-// Precision. Every array is REAL (rkind = 4, pdlib_params.hpp); REAL(8) appears
-// only where the source writes a double literal or DBLE, and the object keeps
-// it there, so double is used exactly at:
-//   :1033-1038  FL111.. = 2.d0*FLa+FLb: cvtps2pd, addpd x,x, addpd, cvtpd2ps;
-//   :1057       SI / MAX(DBLE(10.E-10), KKSUM*IOBDP): cvtss2sd, maxsd, divsd, cvtsd2ss;
-//   :1060       MAX(CFLXYMAX, DBLE(DT)/DTMAXEXP): divsd, maxsd, cvtsd2ss;
-//   :1066       MOD(CFLXY, 1.0d0): x87 fprem on CFLXY, cvtsd2ss, then ABS;
-//   :1081       DBLE(DT)/DBLE(ITER)/SI: divsd, divsd (divpd when vectorised), cvtsd2ss;
-//   :1124       MAX(..)*DBLE(IOBPD)*IOBDP: the MAX in REAL, then two mulsd, cvtsd2ss.
-// gfortran narrowed two double expressions to REAL, both exactly (a double
-// rounding of one IEEE + - * / of two REALs is innocuous, 53 >= 2*24+2):
-//   :1025  -1.D0/MIN(..) is divss 1.0/x then a sign flip (xorps .LC42);
-//   :1065  DBLE(DT)/DTMAX_GL is divss.
-// The C++ writes the narrowed forms, as the object computes them.
-//
-// Arithmetic checked against gfortran 16.2 -O3 GIMPLE and the object of
-// w3profsmd_pdlib.F90 (WW3's CMake Release flags, switch_PDLIB; the -fdump
-// object disassembles identically to the CMake one): no FMA; libm only
-// lroundf (NINT, :1068-1072) and the inline fprem; the products of :1021-1023
-// and :1027-1032 are two mulss and one addss each, written in source order
-// (the vector lanes commute operands of + and *, which changes no bits).
-// Vectorised (fopt-info): :1080-1081 (DTSI, 4 lanes, element-wise divpd) and
-// basic-block SLP at :1021, :1026, :1039 (element-wise lanes); no reduction is
-// vectorised, so every sum below is the scalar order. MIN/MAX in the operand
-// order of the emitted minss/maxss/minsd/maxsd (dest = dest OP src ? dest : src):
-//   :1025  minss %0,k: k<0?k:0 per corner; minss -THR,s: s<-THR?s:-THR
-//   :1026  maxss/maxps %0,k: k>0?k:0
-//   :1057  maxsd floor,p: p>floor?p:floor          :1058 minss e,d: d<e?d:e
-//   :1060  maxsd cfl,q: q>cfl?q:cfl (the span-1 loop version that runs; the
-//          strided version, for a non-contiguous IOBDP_LOC, has cfl>q?cfl:q)
-//   :1124  maxss %0,x: x>0?x:0                     :1149 maxss 0,q; minss 1,t
-// The C++ object (openmp-release flags, -ffp-contract=off) has no FMA, the same
-// + 0. adds and in-order accumulations, and calls lroundf and the inline fprem
-// as the Fortran does.
-//
-// CUDA (nvcc 12.9, --fmad=false, sm_89, compiled, never run): the PTX has no
-// fma, divisions are div.rn, the + 0. adds are kept. nvcc turns each MIN/MAX
-// whose second operand is a constant (0, -THR, 1, DBLE(10.E-10)) into
-// min/max.f32/f64: the same result for a NaN first operand. For zeros, the PTX
-// ISA (§9.7.3.11-12, read 2026-10-16) gives min.f32(-0,+0) = -0 where minss in
-// this operand order gives +0; the only such tie is at :1025, whose result goes
-// through a + 0. add and later sums that erase the sign, so no bit changes.
-// max.f32 gives +0 as maxss does. The MIN/MAX of two variables (:1058, :1060)
-// stay selp.
-//
-// Why the parallel passes give the Fortran's bits.
-//   Elements (:1015-1042): each IE writes only KELEM(:,IE), FLALL(:,IE),
-//   NM(IE) from C, PDLIB_IEN and constants: no element reads another's output.
-//   KKSUM (:1048-1052) and ST (:1108-1113) are scatter-adds, element by element
-//   into nodes. For one node IP the Fortran adds into KKSUM(IP) once per element
-//   that holds it, in increasing IE, starting from ZERO: ((0+t1)+t2)+...; the
-//   other nodes' stores in between do not touch KKSUM(IP). PDLIB_IE_CELL lists
-//   the elements of each node in increasing IE (yowpdlibmain.F90:1478-1514;
-//   check_cell_adjacency verifies it), so a pass parallel over nodes that
-//   starts at 0 and adds the same terms in IE_CELL order performs the same
-//   float additions on the same values. No atomics: each node is one thread.
-//   ST's term KELEM(k,IE)*(U(NI(k))-UTILDE(IE)) reads U, which nothing writes
-//   during that loop, so UTILDE(IE) is computed once per element in a pass
-//   before (utilde, a C++ work array) and has the bits the Fortran recomputes
-//   per element.
-//   Nodes (:1080-1082, :1123-1134): each IP reads and writes only its own entries.
-//   Serial: the LCALC node loop (:1053-1061), since DTMAXEXP carries from one
-//   IP to the next when IOBP_LOC(IP) /= 1 and DTMAX is a running MIN whose
-//   result depends on order for NaN and signed zeros; and the boundary loop
-//   (:1162-1175), where two IBI on one node leave the last write. One thread
-//   runs each, in the Fortran's order. Kernels on one execution-space instance
-//   run in order; the fences make each pass's writes visible to the next.
+// WW3 heritage: WW3-noaa/model/src/w3profsmd_pdlib.F90:868-1200 at NOAA-EMC/WW3 03adda91;
+// A. Roland, M. Dutour-Sikiric. Evidence: kokkos/port_report/PDLIB_W3XYPFSN2_KOKKOS.md.
+// kRef1 is the W3_REF1 build (input_deep/switch_PDLIB, switch_NWS_rwps): it adds :1125-1127.
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <Kokkos_Core.hpp>
@@ -239,7 +132,8 @@ Real fsn2_elements_cfl(const ExecSpace& exec,
 
   if (!lcalc) return kDtmaxInit;  // :999, unused when not LCALC
 
-  // :1048-1052, KKSUM = ZERO then the scatter-add, as a gather in IE order.
+  // :1048-1052, KKSUM = ZERO then the scatter-add, as a gather in IE order:
+  // IE_CELL lists each node's elements in increasing IE, the Fortran's addition order.
   const auto kksum = w.kksum;
   const auto cell_off = g.cell_off;
   const auto ie_cell = g.ie_cell;
@@ -253,7 +147,7 @@ Real fsn2_elements_cfl(const ExecSpace& exec,
       });
   exec.fence();
 
-  // :1053-1061, serial (header). IP_glob = iplg(IP) of :1055 is dead.
+  // :1053-1061, one thread: DTMAXEXP carries across IP and the MIN chain depends on order.
   const int np = g.np;
   const int fsbccfl = g.fsbccfl;
   const auto iobp = g.iobp_loc;
@@ -292,7 +186,7 @@ Real fsn2_elements_cfl(const ExecSpace& exec,
 /// DTMAX_GL. NINT is glibc's lroundf, the INTEGER(4) result is its low 32 bits,
 /// and ABS is neg/cmovns (ABS(-2**31) stays -2**31), as the object does.
 inline int fsn2_iter(Real dt, Real dtmax_gl) {
-  const Real cflxy = dt / dtmax_gl;  // :1065, divss (narrowed, header)
+  const Real cflxy = dt / dtmax_gl;  // :1065, DBLE(DT)/DTMAX_GL narrowed to divss, as gfortran does
   // :1066, fprem of CFLXY by 1 (exact), to double, cvtsd2ss, andps.
   const Real rest = std::fabs(static_cast<Real>(std::fmod(static_cast<double>(cflxy), 1.0)));
   const int n = static_cast<int>(static_cast<unsigned int>(
@@ -357,7 +251,7 @@ void fsn2_substep(const ExecSpace& exec, const PdlibGeometry<typename ExecSpace:
   exec.fence();
 
   // :1108, :1112, ST = ZERO then ST(NI) = ST(NI) + KELEM*(U(NI)-UTILDE), as a
-  // gather in IE order (header).
+  // gather in IE order, no atomics.
   const auto cell_off = g.cell_off;
   const auto ie_cell = g.ie_cell;
   const auto pos_cell = g.pos_cell;
@@ -392,9 +286,8 @@ void fsn2_substep(const ExecSpace& exec, const PdlibGeometry<typename ExecSpace:
           ac(ip) = un;
         });
   } else {
-    // The same statement, then :1126 (header). A lambda of its own: a name in a
-    // discarded if-constexpr branch is still captured, and the kRef1 = false
-    // closure above must stay as it was.
+    // :1126: REFPARS(3) < 0.5 keeps the old AC. A lambda of its own: a name in a discarded
+    // if-constexpr branch is still captured, and the kRef1 = false closure must stay as it was.
     Kokkos::parallel_for(
         "pdlib_fsn2_update", Policy(exec, 0, g.npa), KOKKOS_LAMBDA(const int ip) {
           const Real a = dtsi(ip) * st(ip);
@@ -411,7 +304,7 @@ void fsn2_substep(const ExecSpace& exec, const PdlibGeometry<typename ExecSpace:
   }
   exec.fence();
 
-  // :1145-1176, serial in IBI order (header).
+  // :1145-1176, one thread in IBI order: two IBI on one node leave the last write.
   if (b.flbpi == 0) return;
   const int nbi = b.nbi;
   const int isp0 = isp - 1;
@@ -447,13 +340,10 @@ void fsn2_substep(const ExecSpace& exec, const PdlibGeometry<typename ExecSpace:
   exec.fence();
 }
 
-/// PDLIB_W3XYPFSN2(ISP, C, LCALC, RD10, RD20, DT, AC), the whole routine.
-/// allreduce_min(Real dtmax) -> Real is the shim's MPI_ALLREDUCE of :1063;
-/// exchange(ac) is its PDLIB_exchange1DREAL(AC) of :1188. Both are host
-/// callables, called with every kernel before them fenced; a device-resident
-/// AC must be brought to the host and back by the exchange callable.
-/// kRef1 = true is the routine compiled with W3_REF1 (header); refpars3 is
-/// REFPARS(3) of the grid (w3gdatmd.F90:726), read only then.
+/// PDLIB_W3XYPFSN2(ISP, C, LCALC, RD10, RD20, DT, AC). allreduce_min(Real) -> Real is the
+/// shim's MPI_ALLREDUCE of :1062-1064 (LCALC only); exchange(ac) its PDLIB_exchange1DREAL(AC)
+/// of :1188, after every sub-step. Host callables, called after a fence; a device-resident
+/// AC must be brought to the host and back by exchange. refpars3 = REFPARS(3), kRef1 only.
 template <bool kRef1 = false, class ExecSpace, class AllreduceMin, class Exchange>
 void w3xypfsn2(const ExecSpace& exec, const PdlibGeometry<typename ExecSpace::memory_space>& g,
                const PdlibState<typename ExecSpace::memory_space>& s,

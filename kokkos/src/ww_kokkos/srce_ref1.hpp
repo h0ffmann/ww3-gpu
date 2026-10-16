@@ -1,54 +1,10 @@
 // kokkos/src/ww_kokkos/srce_ref1.hpp
-// W3SREF, ported to Kokkos: shoreline, subgrid-island and iceberg reflection
-// (switch REF1), one spectral point. Phase 1, translated, not regtested.
-//
-// WW3 heritage: WW3-noaa/model/src/w3ref1md.F90:111-670 at NOAA-EMC/WW3 03adda91
-// (identical in the WW3/ fork); author F. Ardhuin. Called from W3SRCE
-// (w3srcemd.F90:2309-2313) when REFLEC(1) > 0, REFLEC(2) > 0 or REFLEC(4) > 0 with
-// BERG > 0. The reference build is switches/switch_lab_shrd with REF0 replaced by
-// REF1: W3_IG1 is not compiled (the ICALC = 2 pass, :250-257, :297-300,
-// :318-438, :655-666, is not ported), W3_PDLIB is not compiled, W3_S output is
-// not ported and a kernel never prints. Both GTYPE branches are ported, since
-// GTYPE is a run-time grid setting.
-//
-// Dropped because the reference build never reads them: CX1, CY1, EMEAN, FMEAN,
-// DEPTH and WN (read only under W3_IG1), JSEA (W3_PDLIB only) and FMEAN2 (:308,
-// :312: -O3 removes it, it feeds only the IG1 branch). R1 at :497 is overwritten
-// at :498 before any read and is not translated. RAMP2 at :475 is never read
-// (:615 or :626 overwrite it before :631); kept as the source has it.
-//
-// LPDLIB: W3INIT sets it .FALSE. and sets it .TRUE. only under W3_PDLIB
-// (w3initmd.F90:652-655), so in the model LPDLIB is "W3_PDLIB compiled". The
-// caller passes `si` = SI(IX) and `iobpd` = IOBPD(:,IX) without PDLIB (the
-// reference), PDLIB_SI(JSEA) and IOBPD_LOC(:,JSEA) with it (:287, :486); that arm
-// is the same arithmetic but was not compiled or compared ⚠.
-//
-// Arithmetic checked against gfortran 16.2 -O3 GIMPLE and the object of
-// w3ref1md.F90 (WW3's CMake Release flags, the switch above; the object is
-// byte-identical to the CMake one):
-//   :266        FACX = 1/(DERA*RADIUS) folded to 0x3716feb5;
-//   :274-281    (SX*CLATS(ISEA))/FACX, SY/FACX, HPFAC/FACX, HQFAC/FACX: true divisions;
-//   :291-292    REAL((SQRT(SI)*5.d0)*(DERA*RADIUS)), SI is REAL(8): sqrt in double,
-//               DERA*RADIUS folded to the REAL 111111.109375 and widened;
-//   :301-310    EB summed in ITH order, (DDEN*EB)/CG; FMEAN2 gone;
-//   :311-313    maxss operand order MAX(1E-7,FMEANA) as b>a?b:a with a = 1E-7,
-//               MAX(FMEANA,SIG(1)) with a = SIG(1) (from the object);
-//   :440        NINT is lroundf; :465, :536, :591-593 R**NRS are __powisf2 calls;
-//   :450-451    SLOPE**5 as s2 = s*s, s5 = s2*(s*s2); MAX(FMEANA,0.001)**4 as
-//               (m*m)*(m*m); 0.0001*GRAV**2 folded to 0x3c1d8b6f; the NaN branch
-//               folds the numerator to 0x2331612c, which these operations give;
-//   :452, :622  log10f; (L+4.5)*0.07 + M*1.5 (0.007 at :622);
-//   :473, :614  (FMEANA*(0.75*TPI))/SIG(IK), 0.75*TPI folded; powf(x, REFPARS(10));
-//   :632-634    expf(-((BERG*DELX)*1E-4)); 1-TRN and 1-EXP as true subtractions.
-// No FMA, no reciprocal multiply, no vectorised loop (-fopt-info-vec is empty);
-// every libm call is scalar: log10f, powf, expf, lroundf, __powisf2.
-// The C++ object (openmp-release flags, -ffp-contract=off) has the same
-// operations, constants and MIN/MAX semantics, all scalar, no FMA. It calls powf
-// three times where gfortran (-fno-math-errno) shares the :614 call with :623, and
-// sqrt twice at :291-292: same arguments, same bits. NINT is roundf and a
-// conversion: lroundf's bits for |x| < 2**63 (st4_params.hpp, nint).
-// The kernel has no reduction across points and no atomic; within a point the
-// loops run in the Fortran's order, so any execution space gives the same bits.
+// W3SREF: shoreline, subgrid-island and iceberg reflection (REF1), one spectral point.
+// Phase 1, translated, not regtested. WW3 heritage: WW3-noaa/model/src/w3ref1md.F90:111-670
+// at NOAA-EMC/WW3 03adda91; author F. Ardhuin. Not ported: W3_IG1 (the ICALC = 2
+// pass), W3_S. ⚠ The PDLIB arm (si = PDLIB_SI, iobpd = IOBPD_LOC) was not compared.
+// Evidence: kokkos/port_report/W3SREF_KOKKOS.md.
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <cstdint>
@@ -61,16 +17,12 @@
 namespace ww::srce {
 
 namespace ref1_detail {
-// Fortran MIN/MAX of two REALs: fmin2(a,b) = b<a?b:a, fmax2(a,b) = b>a?b:a. A NaN
-// or a +0/-0 tie gives `a`; each call passes the operands in the order of the
-// build's minss/maxss (w3ref1md.o: `maxss src,dst` is fmax2(src,dst)), which is
-// not always the Fortran order.
+// Fortran MIN/MAX as minss/maxss: a NaN or a +0/-0 tie gives `a`. Each call passes the
+// operands in the order of w3ref1md.o, not always the Fortran's.
 KOKKOS_INLINE_FUNCTION Real fmin2(Real a, Real b) { return (b < a) ? b : a; }
 KOKKOS_INLINE_FUNCTION Real fmax2(Real a, Real b) { return (b > a) ? b : a; }
 
-// x**n for a run-time INTEGER n: libgcc's __powisf2 (libgcc.a of gfortran 16.2,
-// disassembled: y = odd ? x : 1; while (n >>= 1) { x = x*x; if odd y = y*x; };
-// 1/y for n < 0). Never std::pow.
+// x**n for a run-time INTEGER n as libgcc's __powisf2 (1/y for n < 0); never std::pow.
 KOKKOS_INLINE_FUNCTION Real powi(Real x, int m) {
   unsigned int n = (m < 0) ? 0u - static_cast<unsigned int>(m) : static_cast<unsigned int>(m);
   Real y = (n % 2u) != 0u ? x : static_cast<Real>(1);
@@ -143,21 +95,10 @@ inline Ref1Params unpack_ref1(const float* r, const int* i) {
   return p;
 }
 
-/// W3SREF(A, CG, WN, EMEAN, FMEAN, DEPTH, CX1, CY1, REFLC, REFLD, TRNX, TRNY,
-/// BERG, DT, IX, IY, JSEA, S) for one point.
-///
-/// Grid arrays, 0-based pointers:
-///   sig   = SIG(0:NK+1), sig[k] = SIG(k): :614 and :623 read SIG(IK) after the
-///           IK loops, where IK = NK+1 (1 when NK < 1), as the -O3 build does;
-///   dden  = DDEN(1:NK); ecos, esin = ECOS(1:NTH), ESIN(1:NTH);
-///   iobpd = IOBPD(1:NTH,IX) (INTEGER*1), read only when GTYPE = UNGTYPE,
-///           REFPARS(3) < 0.5 and REFLC(1) > 0; may be null otherwise.
-/// Point values the caller looks up, each read only for its GTYPE (any value
-/// otherwise): clats = CLATS(MAPFS(IY,IX)) (RLGTYPE, SMCTYPE), hpfac, hqfac =
-/// HPFAC(IY,IX), HQFAC(IY,IX) (CLGTYPE), si = SI(IX), REAL(8) (UNGTYPE).
-/// Point arrays: a = A(1:NSPEC), INOUT (the UNGTYPE branch zeroes the energy not
-/// going to the coast, :493); cg = CG(1:NK); reflc = REFLC(1:4); refld =
-/// REFLD(1:6); s = S(1:NSPEC), OUT.
+/// W3SREF for one point, arrays 0-based. sig = SIG(0:NK+1): :614 and :623 read SIG(IK)
+/// after the IK loops (IK = NK+1), as the -O3 build does. iobpd may be null unless GTYPE =
+/// UNGTYPE, REFPARS(3) < 0.5 and REFLC(1) > 0; clats, hpfac/hqfac, si are read only for
+/// their GTYPE. a is INOUT: the UNGTYPE branch zeroes energy not going to the coast (:493).
 KOKKOS_INLINE_FUNCTION void w3sref_point(const Ref1Params& p, const Real* sig, const Real* dden,
                                          const Real* ecos, const Real* esin,
                                          const std::int8_t* iobpd, Real clats, Real hpfac,
@@ -192,8 +133,7 @@ KOKKOS_INLINE_FUNCTION void w3sref_point(const Ref1Params& p, const Real* sig, c
     dely = static_cast<Real>(5. * Kokkos::sqrt(si) * kDeraRadius);
   }
 
-  // :296-313. IK1 = 1 without W3_IG1. ik keeps the Fortran DO variable's value
-  // after the loop: NK+1, or 1 when NK < 1.
+  // :296-313. ik keeps the DO variable's value after the loop: NK+1, or 1 when NK < 1.
   int ik;
   for (ik = 1; ik <= nk; ++ik) {
     Real eb = zero;
@@ -345,8 +285,7 @@ KOKKOS_INLINE_FUNCTION void w3sref_point(const Ref1Params& p, const Real* sig, c
     }
   }
 
-  // :608-653. Diffuse reflection by subgrid islands and icebergs. SIG(IK) at
-  // :614 and :623 is read with IK left by the last DO loop (see above).
+  // :608-653. SIG(IK) at :614 and :623 uses the IK the last DO loop left.
   if (((p.refpars[1] > zero) && ((trnx + trny) < static_cast<Real>(2.))) ||
       ((p.refpars[3] > zero) && (berg > zero))) {
     if (p.refpars[5] > zero) {

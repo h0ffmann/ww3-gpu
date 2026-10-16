@@ -1,27 +1,11 @@
 // kokkos/src/ww_kokkos/pdlib_params.hpp
-// The unstructured-mesh (PDLIB) arrays and per-call state that PDLIB_W3XYPUG,
-// PDLIB_W3XYPFSN2 and PDLIB_W3XYPFSPSI2 read, as Kokkos views, and the
-// W3PARALL constants they share. Phase 1: one spectral component per call, the
-// per-rank arithmetic only; every MPI call stays in Fortran (the kernels'
-// headers name the call sites).
-//
-// WW3 heritage: WW3-noaa/model/src/w3profsmd_pdlib.F90:626-1502 (the three
-// routines, their USE lists at :652-671, :921-940, :1258-1274) at NOAA-EMC/WW3
-// 03adda91, switch PDLIB of regtests/ww3_tp2.17/input/switch_PDLIB; the yow*
-// modules under model/src/PDLIB/ at the same commit. The fork WW3/ (c9a6a0c6)
-// has the same w3profsmd_pdlib.F90 byte for byte (v, diff, 2026-10-16).
-//
-// Precision. yowDatapool fixes rkind = 4 (PDLIB/yowdatapool.F90:48) and
-// rtype = MPI_REAL4 (:77), so PDLIB_SI and PDLIB_IEN are REAL like the W3*
-// arrays: float here. The REAL(8) arithmetic of the routines comes from double
-// literals (1.D0, 2.d0, 0.5d0, 1.0d0) and DBLE() inside REAL statements; each
-// kernel header says where and keeps double exactly there.
-//
-// Layout. Every array is a LayoutLeft view with the Fortran's extents, so
-// X(i,j) of the Fortran is x(i-1, j-1) here; an array with lower bound 0 keeps
-// its 0 at index 0 (CLATS, BBPI0, BBPIN). Index values stored in the arrays
-// (INE, PDLIB_IE_CELL, ISBPI, MAPSF, IPGL_npa, ...) stay 1-based as Fortran
-// wrote them; the kernels subtract 1 where they index.
+// The PDLIB mesh arrays and per-call state the PDLIB kernels read, as Kokkos views, and the
+// W3PARALL constants they share. WW3 heritage: WW3-noaa/model/src/w3profsmd_pdlib.F90 and
+// model/src/PDLIB/yow* at NOAA-EMC/WW3 03adda91. Evidence: the port reports
+// PDLIB_W3XYPFSN2_KOKKOS.md, PDLIB_W3XYPFSPSI2_KOKKOS.md. LayoutLeft with the Fortran's
+// extents (a lower bound 0 kept at index 0); stored index values stay 1-based; rkind = 4
+// (PDLIB/yowdatapool.F90:48), so every REAL array is float.
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <Kokkos_Core.hpp>
@@ -33,17 +17,14 @@
 
 namespace ww::pdlib {
 
-// W3PARALL PARAMETERs (w3parall.F90:92-97). Each is a REAL PARAMETER, so the
-// double initialiser is rounded to REAL once at compile time.
+// W3PARALL REAL PARAMETERs (w3parall.F90:92-97): the double initialiser rounds once to REAL.
 inline constexpr Real kOneSixth = static_cast<Real>(1.0 / 6.0);  // ONESIXTH = 1.0d0/6.0d0, :92
 inline constexpr Real kZero = static_cast<Real>(0.0);            // ZERO = 0.0d0, :94
 inline constexpr Real kThr = 0x1p-126f;                          // THR = TINY(1.0), :97
 static_assert(kOneSixth == 0x1.555556p-3f, "ONESIXTH as REAL, 0x3e2aaaab");
 static_assert(kThr == 1.17549435082228750796873653722224568e-38f, "TINY(1.0), 0x00800000");
 
-// Literals shared by FSN2 and PSI2 (w3profsmd_pdlib.F90:999, :1053, :1057,
-// :1148 and the same statements of PSI2). 10.E10 and 10.E-10 are REAL literals
-// (no d exponent) widened by DBLE: their double value is the float's.
+// Literals of FSN2 and PSI2 (:999, :1053, :1057, :1148); 10.E10, 10.E-10 are REAL literals.
 inline constexpr Real kDtmaxInit = 10.E10f;   // DTMAX = DBLE(10.E10) stored to REAL, :999
 inline constexpr Real kDtmaxExpInit = 1.E10f;  // DTMAXEXP = 1.E10, :1053
 inline constexpr double kSiFloor = static_cast<double>(10.E-10f);  // DBLE(10.E-10), :1057
@@ -75,66 +56,42 @@ struct PdlibGeometry {
   int nsea = 0;       ///< W3GDATMD NSEA, the extent of mapsf / clats
   int fsbccfl = 0;    ///< W3GDATMD FSBCCFL, LOGICAL (w3gdatmd.F90:1048), 0/1
 
-  /// INE(3,ne), integer (PDLIB/yowelementpool.F90:56): local node ids 1..npa
-  /// of the three corners, counter-clockwise. ine(k-1, ie-1) = INE(k,IE).
+  /// INE(3,ne) (yowelementpool.F90:56): local node ids of the corners, counter-clockwise.
   I2 ine;
-  /// PDLIB_IEN(6,ne), REAL(rkind=4) (PDLIB/yownodepool.F90:80, allocated
-  /// yowpdlibmain.F90:1369, filled :1393-1398): the inward edge normals
-  /// (-DY, DX) of the edge opposite each corner, pairs (1,2), (3,4), (5,6).
+  /// PDLIB_IEN(6,ne) (yownodepool.F90:80): inward normals (-DY, DX) of the opposite edges.
   R2 ien;
-  /// PDLIB_SI(npa), REAL(rkind=4) (yownodepool.F90:80, :1369, summed
-  /// :1412-1414): median-dual area of each node.
+  /// PDLIB_SI(npa) (yownodepool.F90:80): median-dual area of each node.
   R1 si;
-  /// PDLIB_CCON(npa), integer (yownodepool.F90:81, :1373, :1408-1410): the
-  /// number of elements touching each node.
+  /// PDLIB_CCON(npa) (yownodepool.F90:81): number of elements touching each node.
   I1 ccon;
-  /// Not a Fortran array: cell_off(ip-1) = sum of PDLIB_CCON(1:ip-1), extent
-  /// npa+1, the 0-based start of node ip in ie_cell/pos_cell, as the Fortran's
-  /// running J of yowpdlibmain.F90:1507-1514 counts it. Built by
-  /// build_cell_off below.
+  /// Not Fortran: cell_off(ip-1) = sum of CCON(1:ip-1), extent npa+1 (build_cell_off).
   I1 cell_off;
-  /// PDLIB_IE_CELL(COUNT_MAX), PDLIB_POS_CELL(COUNT_MAX), integer
-  /// (yownodepool.F90:83, allocated yowpdlibmain.F90:1497, filled :1507-1514
-  /// from CELLVERTEX, :1478-1485): for node IP, entries J = cell_off+1 ..
-  /// cell_off+CCON(IP) give the element IE and the corner POS (1..3) with
-  /// INE(POS,IE) = IP. CELLVERTEX is filled in a loop over IE = 1..ne, so the
-  /// elements of each node are in increasing IE: the order the gather-form
-  /// accumulations below depend on (check_cell_adjacency verifies it).
+  /// PDLIB_IE_CELL, PDLIB_POS_CELL (yownodepool.F90:83): element and corner of node IP at
+  /// cell_off+1..cell_off+CCON(IP), in increasing IE: the order the gather sums rely on.
   I1 ie_cell;
   I1 pos_cell;
-  /// iplg(npa), integer (yownodepool.F90:116): local -> global node id
-  /// (ghosts included, yowrankModule.F90:230-233). Read by PDLIB_W3XYPUG
-  /// (w3profsmd_pdlib.F90:747); read but dead in FSN2 (:1055) and PSI2.
+  /// iplg(npa) (yownodepool.F90:116): local -> global node id.
   I1 iplg;
-  /// IPGL_npa(np_global), integer (PDLIB/yowrankModule.F90:70, filled
-  /// :227-233): global -> local node id 1..npa on this rank, 0 elsewhere.
+  /// IPGL_npa(np_global) (yowrankModule.F90:70): global -> local node id, 0 off this rank.
   I1 ipgl_npa;
-  /// IOBP_LOC(npa), INTEGER*2 (w3gdatmd.F90:1120, allocated
-  /// w3profsmd_pdlib.F90:596): boundary-node type.
+  /// IOBP_LOC(npa), INTEGER*2 (w3gdatmd.F90:1120): boundary-node type.
   S1 iobp_loc;
-  /// IOBPD_LOC(NTH,npa), INTEGER*1 (w3gdatmd.F90:1119, w3profsmd_pdlib.F90:598):
-  /// 1 when direction ITH may propagate at the node, 0 when it comes from land.
+  /// IOBPD_LOC(NTH,npa), INTEGER*1 (w3gdatmd.F90:1119): 0 where direction ITH is from land.
   B2 iobpd_loc;
   /// IOBDP_LOC(npa), INTEGER*1 (w3gdatmd.F90:1121, :600): 0 at dry nodes.
   B1 iobdp_loc;
-  /// IOBPA_LOC(npa), INTEGER*1 (w3gdatmd.F90:1122, :602): 1 at active
-  /// boundary nodes, where the advection term is switched off.
+  /// IOBPA_LOC(npa), INTEGER*1 (w3gdatmd.F90:1122): 1 at active boundary nodes.
   B1 iobpa_loc;
-  /// MAPSF(NSEA,3), integer (w3gdatmd.F90:1736): column 1 is the global node
-  /// id of sea point ISEA on an unstructured grid. mapsf(isea-1, 0).
+  /// MAPSF(NSEA,3) (w3gdatmd.F90:1736): mapsf(isea-1, 0) is the global node of ISEA.
   I2 mapsf;
-  /// CLATS(0:NSEA), REAL (w3gdatmd.F90:1741): clats(isea) = CLATS(ISEA);
-  /// 1 on a Cartesian mesh.
+  /// CLATS(0:NSEA) (w3gdatmd.F90:1741): clats(isea); 1 on a Cartesian mesh.
   R1 clats;
-  /// MAPFS(MY,MX), integer (w3gdatmd.F90:1735), MY = 1 on an unstructured
-  /// grid: mapfs(0, ip_glob-1) = MAPFS(1,IP_glob) = ISEA (PDLIB_W3XYPUG, :748).
+  /// MAPFS(MY,MX), MY = 1 here (w3gdatmd.F90:1735): mapfs(0, ip_glob-1) = ISEA.
   I2 mapfs;
   /// ECOS(NTH), ESIN(NTH), REAL (W3GDATMD): read by PDLIB_W3XYPUG (:741-742).
   R1 ecos;
   R1 esin;
-  /// INDEX_MAP(NBND_MAP), integer (w3gdatmd.F90:1117, allocated
-  /// w3profsmd_pdlib.F90:499): read by PDLIB_W3XYPUG only when the module
-  /// flag MAPSTA_HACK (w3profsmd_pdlib.F90:113, .FALSE., never set) is true.
+  /// INDEX_MAP (w3gdatmd.F90:1117): read only under MAPSTA_HACK, .FALSE., never set (:113).
   I1 index_map;
 };
 
@@ -143,12 +100,10 @@ struct PdlibGeometry {
 template <class MemSpace>
 struct PdlibState {
   using memory_space = MemSpace;
-  /// ITER(NK,NTH), integer (w3adatmd.F90:657, allocated :1434): sub-steps of
-  /// component (IK,ITH); written when LCALC, read always. iter(ik-1, ith-1).
+  /// ITER(NK,NTH) (w3adatmd.F90:657): iter(ik-1, ith-1), written when LCALC.
   Kokkos::View<int**, Kokkos::LayoutLeft, MemSpace> iter;
-  /// CFLXYMAX(NSEALM), REAL (w3adatmd.F90:623, allocated :1292): running
-  /// maximum Courant number per local node: the N scheme writes IP = 1..np, the PSI
-  /// scheme IP = 1..npa (:1383), inside the array while NSEALM >= npa ⚠.
+  /// CFLXYMAX(NSEALM) (w3adatmd.F90:623): FSN2 writes 1..np, PSI2 1..npa, in bounds while
+  /// NSEALM >= npa ⚠.
   Kokkos::View<Real*, Kokkos::LayoutLeft, MemSpace> cflxymax;
 };
 
@@ -177,11 +132,8 @@ inline void build_cell_off(const int* ccon, int npa, int* out) {
   out[npa] = j;
 }
 
-/// True when ie_cell/pos_cell list, for each node, every element that holds
-/// it in INE, in increasing IE, with the corner that holds it, and nothing
-/// else, and no element repeats a node: the property the gather-form sums need to add in the Fortran's
-/// order. ine is INE(3,ne) column major, 1-based values. Host only; the shim
-/// calls it once after the mesh is copied.
+/// True when ie_cell/pos_cell list, for each node, every element holding it, in increasing
+/// IE, with its corner, and no element repeats a node. Host only; the shim calls it once.
 inline bool check_cell_adjacency(const int* ine, int ne, int npa, const int* cell_off,
                                  const int* ie_cell, const int* pos_cell) {
   // Rebuild CELLVERTEX's order (yowpdlibmain.F90:1478-1485) and compare.
@@ -201,9 +153,8 @@ inline bool check_cell_adjacency(const int* ine, int ne, int npa, const int* cel
         ok = false;
         break;
       }
-      // A repeated corner cannot reach the solver: it makes the element area
-      // DBLTMP exactly 0 and PDLIB_INIT stops (yowpdlibmain.F90:1399-1405). The
-      // gather assumes each element names a node once, so refuse such a mesh.
+      // A repeated corner makes the area 0 and PDLIB_INIT stops (yowpdlibmain.F90:1399-1405);
+      // the gather assumes each element names a node once.
       for (int q = 1; q < pos; ++q)
         if (ine[(ie - 1) * 3 + (q - 1)] == ip) ok = false;
       const int j = fill[ip - 1]++;

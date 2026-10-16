@@ -1,44 +1,12 @@
 // kokkos/src/ww_kokkos/srce_ic4.hpp
-// W3SIC4, ported to Kokkos: wave attenuation by sea ice from empirical and
-// parametric decay rates k_i(f), one spectral point. Phase 1, translated, not
-// regtested.
-//
+// W3SIC4: wave attenuation by sea ice from empirical and parametric decay rates k_i(f),
+// every IC4METHOD (1-10, default), one spectral point. Phase 1, translated, not regtested.
 // WW3 heritage: WW3-noaa/model/src/w3sic4md.F90:121-803 at NOAA-EMC/WW3 03adda91;
-// authors C. Collins, E. Rogers (method 10 E. Thomas). Switch IC4 (NOAA's
-// switch_NWS_rwps). Called by W3SRCE at w3srcemd.F90:1381 (IC_NUMERICS, ICE > 0)
-// and :2164 (INFLAGS2(4) and ICE > 0, not IC_NUMERICS). IC4METHOD = IC4PARS(1) is a
-// run-time namelist setting, so every method the source compiles is translated:
-// 1 to 10 and the default (WN_I = ICECOEF1). W3_S, W3_T, W3_T0, W3_T1 and W3_T38
-// output is not ported: a kernel never prints. DEPTH (read only by W3_T38) and
-// IX, IY (only to index the input fields) are not passed: the caller gathers the
-// point's fields into Ic4Point. ICECOEF8 = MUDV (:528) is never read; -O3 drops it.
-//
-// Arithmetic checked against gfortran 16.2 -O3 GIMPLE and the object of
-// w3sic4md.F90 (WW3's CMake Release flags, switch_lab_shrd with IC0 -> IC4):
-//   :500   FREQ = SIG / TPI, a true division (TPI folded, 0x40c90fdb);
-//   :544   expf(-((ICECOEF1*TPI) / SIG) - ICECOEF2), ICECOEF1*TPI hoisted;
-//   :575-6 (C1 + C2*F) + C3*(F*F); C4*((F*F)*F) + C5*((F*F)*(F*F)) (power trees);
-//   :582-5 (2.058*H - 0.3203) - 0.9375*T; (0.1566*H)*T - 0.4269*(H*H);
-//          0.0006*(T*T); expf((K1+K2)+K3), T = TPI/SIG;
-//   :597-600 (EB*DDEN)/CG, EMEAN summed in IK order (in-order reduction),
-//          4*sqrtf(MAX(EMEAN,0)); the EB loop over ITH is scalar;
-//   :660   (0.2*powf(F,2.13))*HICE; :683 (Chf*HICE)*((F*F)*F);
-//   :706-8 MPOW = 0.5*NPOW - 1; (Chf*powf(HICE,MPOW))*powf(F,NPOW);
-//   :716-745 the cubic fit, summed left to right in source order, X**3 as
-//          (X*X)*X, 10.**K a scalar powf(10.,K) (no exp10f), the 2.12e-3/X1**2 and
-//          4.59e-2/X1**4 terms true divisions;
-//   :761   -((2*CG)*WN_I).
-// No FMA, no reciprocal multiply. Four loops call glibc's vector math (libmvec),
-// emulated by st4_libmvec.hpp on the host so each element gets the same function:
-// :544 and :585 (_ZGVbN4v_expf, over 0:NK+1, lanes from element 0, hence SIG(0)
-// and SIG(NK+1) are passed), :660 and :707 (_ZGVbN4vv_powf, over IK = 1..NK).
-// Every other vectorised loop is element-wise or an in-order reduction (no bits
-// change). MIN and MAX: the operand order of each minss/maxss in w3sic4md.o is
-// written as a ternary below, with the NaN result it implies.
-//
-// ⚠ On a device there is no libmvec: those four sites fall back to scalar
-// expf/powf, and CUDA's expf, powf and sqrtf are not glibc's
-// (AGENTS.md, "Bit for bit", GPU).
+// authors C. Collins, E. Rogers (method 10 E. Thomas). Evidence:
+// kokkos/port_report/W3SIC4_KOKKOS.md. The object vectorises four loops with libmvec
+// (LIBMVEC SITE below), emulated by st4_libmvec.hpp. ⚠ On a device they and
+// expf/powf/sqrtf are CUDA's, not glibc's.
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <Kokkos_Core.hpp>
@@ -53,8 +21,7 @@ namespace ww::srce {
 inline constexpr int kNic4 = 16;
 inline constexpr int kNic42 = 5;
 
-/// W3SIC4's grid scalars and namelist arrays (W3GDATMD, per grid via W3SETG,
-/// w3gdatmd.F90:2330-2336). Packing them for the device is the shim's job.
+/// W3SIC4's grid scalars and namelist arrays (W3GDATMD, w3gdatmd.F90:2330-2336).
 struct Ic4Params {
   int ic4method;       ///< IC4PARS(1) (:530)
   Real ki[kNic4];      ///< IC4_KI(1:NIC4): ki[i-1]
@@ -64,10 +31,8 @@ struct Ic4Params {
   Real kibk;           ///< IC4_KIBK
 };
 
-/// The point's input fields (W3IDATMD) as :511-527 reads them. icecoef[j-1] is
-/// ICECOEFj: ICEP1..ICEP5(IX,IY), MUDD(IX,IY), MUDT(IX,IY), each 0.0 when its
-/// INFLAGS2 flag (-7..-1) is false. inflags[0..4] = INFLAGS2(-7..-3), which methods
-/// 2, 8 and 9 test to choose namelist or field input.
+/// The point's fields (:511-527): icecoef[j-1] = ICECOEFj, 0 when its INFLAGS2 flag is
+/// false; inflags[0..4] = INFLAGS2(-7..-3).
 struct Ic4Point {
   Real icecoef[7];
   bool inflags[5];
@@ -75,13 +40,11 @@ struct Ic4Point {
 
 namespace ic4_detail {
 
-/// W3SIC4 returns this when methods 5 or 6 meet a zero parameter; the Fortran
-/// writes "ICE PARAMETERS REQUIRED BUT NOT SELECTED" and calls EXTCDE(201)
-/// (:617-622, :639-644). The kernel cannot stop the run: the shim must.
+/// Returned where the Fortran stops in EXTCDE(201) (methods 5, 6, :617-622, :639-644): the
+/// kernel cannot stop the run, the shim must.
 inline constexpr int kExtcde = 201;
 
-// REAL literals whose decimal form is not exact in binary are written as C++
-// float literals: both round the same decimal once to REAL.
+// Inexact REAL literals are float literals: both round the decimal once to REAL.
 
 // SIG at element i of SIG(0:NK+1); sig = SIG(1:NK).
 KOKKOS_INLINE_FUNCTION Real sig_at(int i, int nk, const Real* sig, Real sig_0, Real sig_nkp1) {
@@ -90,14 +53,9 @@ KOKKOS_INLINE_FUNCTION Real sig_at(int i, int nk, const Real* sig, Real sig_0, R
 
 }  // namespace ic4_detail
 
-/// W3SIC4(A, DEPTH, CG, IX, IY, S, D) for one point. sig = SIG(1:NK), sig_0 =
-/// SIG(0), sig_nkp1 = SIG(NK+1) (the lanes of the :544 and :585 vector loops);
-/// dden = DDEN(1:NK), cg = CG(1:NK) (W3SRCE's CG1), a/s/d = A/S/D(1:NSPEC), all
-/// 0-based; mapwn = MAPWN(1:NSPEC), whose values are 1-based IK. wn_i (NK) is
-/// caller-provided work for the Fortran local WN_I(1:NK), then D1D.
-///
-/// Returns 0, or 201 when the Fortran would stop in EXTCDE(201) (methods 5, 6);
-/// d is then 0 (D = 0.0 at :472) and s is not written.
+/// W3SIC4 for one point, arrays 0-based, mapwn values 1-based IK. sig = SIG(1:NK); sig_0,
+/// sig_nkp1 = SIG(0), SIG(NK+1), lanes of the :544 and :585 vector loops. wn_i (NK) is work
+/// for WN_I, then D1D. Returns 0, or kExtcde with d = 0 (:472) and s not written.
 KOKKOS_INLINE_FUNCTION int w3sic4_point(const Params& p, const Ic4Params& ic,
                                         const Ic4Point& pt, const Real* sig, Real sig_0,
                                         Real sig_nkp1, const Real* dden, const int* mapwn,
@@ -110,8 +68,7 @@ KOKKOS_INLINE_FUNCTION int w3sic4_point(const Params& p, const Ic4Params& ic,
   const Real zero = static_cast<Real>(0.);
   const Real half = static_cast<Real>(0.5);
 
-  // :472-499. WN_I = 0.0; the ALPHA, MARG, KARG work arrays are not kept: each
-  // element of WN_I is finished where it is computed.
+  // :472-499. ALPHA, MARG, KARG are not kept: each WN_I is finished where computed.
   for (int is = 0; is < nspec; ++is) d[is] = zero;
   for (int ik = 0; ik < nk; ++ik) wn_i[ik] = zero;
 
@@ -184,8 +141,7 @@ KOKKOS_INLINE_FUNCTION int w3sic4_point(const Params& p, const Ic4Params& ic,
       break;
     }
     case 4: {
-      // :590-600. The two IK loops are fused: EB(IK) and the order of the EMEAN sum
-      // are those of the Fortran.
+      // :590-600. The two IK loops fused; EB and the EMEAN sum keep the Fortran's order.
       Real emean = zero;
       for (int ik = 1; ik <= nk; ++ik) {
         Real eb = zero;
