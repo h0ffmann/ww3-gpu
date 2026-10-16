@@ -285,25 +285,13 @@ Fortran.
   multiply-add or an atomic that reorders a sum breaks this rule: ask the owner first, and it is
   its own PR.
 
-Is WW3 deterministic enough for this rule? Measured on the owner's workstation, CPU only:
-
-- (v) Serial, OpenMP and MPI runs reproduce: the Fortran and Kokkos DIA of one executable gave
-  byte-identical output on the 100 serial and 25 OpenMP `NL1` entries
-  ([`docs/data/hoff_matrix_2026-10-15.tsv`](docs/data/hoff_matrix_2026-10-15.tsv),
-  [`docs/data/hoff_matrix_omp_2026-10-15.tsv`](docs/data/hoff_matrix_omp_2026-10-15.tsv)), which
-  needs each run to be reproducible; `ww3_multi`, MPI and hybrid MPI/OpenMP entries were
-  byte-identical in the pilots of 2026-10-15 (`docs/log/2026-10-15-snl1-regtest-all.md`).
-- (v) Not everywhere: with PDLIB under MPI (`ww3_tp2.17 -g d`, 4 ranks), two runs of the same
-  Fortran executable wrote 25 of 67 files differently, all `restart.ww3`, while every field
-  output was identical. That is what `ww3_self` exists for. The cause is not traced ⚠; the
-  bytes look undefined rather than computed (one run wrote 0 where the other did not).
-- (v) WW3 has a data race of its own under `OMPG`: `IKN`, `ALLOCATABLE, SAVE`, allocated inside
-  the parallel region in `W3SWL6` (`model/src/w3swldmd.F90:359-377`). It aborts a run; it does not
-  change bits. Rerun, record, never edit WW3.
-- ⚠ On a GPU the rule needs the kernel's transcendental functions (`expf`, `logf`) to return
-  glibc's bits. CUDA's math library uses other algorithms, and the 2026-09-15 match on fixture
-  points does not show it for every input; contraction off (`--fmad=false`) is necessary, not
-  sufficient. A GPU port that cannot meet the rule stops and asks the owner.
+Whether WW3 itself is deterministic enough for this rule (serial, OpenMP and MPI runs
+reproduce; a PDLIB restart under MPI and an `OMPG` data race of WW3's own do not) is measured in
+`CONTRIBUTING.md`, "Is WW3 deterministic enough for bit for bit". ⚠ On a GPU the rule needs the
+kernel's transcendental functions (`expf`, `logf`) to return glibc's bits. CUDA's math library uses
+other algorithms, and the 2026-09-15 match on fixture points does not show it for every input;
+contraction off (`--fmad=false`) is necessary, not sufficient. A GPU port that cannot meet the rule
+stops and asks the owner.
 
 ## Running on the GPU (hard rule)
 
@@ -354,20 +342,11 @@ a symlink to the same directory so Antigravity and Kimi Code load the same files
 audience rule for its own job; a new one does too, and its YAML front matter must parse
 (`check_agent_frontmatter.py`: an unquoted description containing `: ` silently disables it).
 
-| Name | Job |
-|---|---|
-| `figure` | add or change a Mermaid diagram and its reading card; `figures.py` is its harness |
-| `eli5` | explain a topic to someone from another field (the second audience exception) |
-| `release` | cut a citable release: tag, GitHub release, Zenodo DOI, `CITATION.cff`, `.zenodo.json` |
-| `ww4-status` | diff NOAA-EMC/WW4 against `docs/ww4-status.json` and refresh lesson 14 and the proposal |
-| `noaa-notices` | list NOAA notices (NWS PNS/SCN, NCEP model changes, NOAA-EMC/WW3 production branches) new since `docs/noaa-notices.json` and route each to the file it breaks or dates |
-| `ww3-port` | the WW3-specific traps of a Fortran-to-Kokkos translation (gfortran `-O3` powers, array bases, per-grid tables, OpenMP nesting) and of claiming a routine regtested; follows `/port-next` |
-| `wfip` | write, revise or report on a WFIP; `scripts/wfip.py` is its harness and `just specify` wires GitHub's Spec Kit (its `/speckit-*` skills are generated per clone and not tracked) |
-| `humanizar`, `humanizer` | remove AI tells from pt-BR and English prose without changing facts; third-party |
-| `ponytail`, `ponytail-review`, `ponytail-audit` | the laziest solution that works; over-engineering review and audit; third-party |
-| `sharingan` | port a skill, workflow or pattern from another repository by URL: fetch it pinned, let the licence decide vendor, adapt or rewrite, map each upstream concept to a home here; third-party (marola-devkit) |
-| `revisor-proposta` (agent) | the proposal's scientific reviewer, read-only |
-| `security-reviewer` (agent) | security review of a branch's diff (secrets and personal data in git, hooks, prompts, workflows, scripts), read-only; run it before a PR that touches `.claude/`, `.github/workflows/` or `scripts/` is marked ready |
+What each skill and agent does is its own front matter, which the tool loads, and the table in
+`CONTRIBUTING.md`, "Skills and agents". Run `security-reviewer` before a PR that touches
+`.claude/`, `.github/workflows/` or `scripts/` is marked ready; `revisor-proposta` is the
+proposal's reviewer. `routing` answers "where is it" with one bounded `scripts/route.py` call
+instead of reading `docs/GLOSSARY.md`, a plan or `WW3/model/src` whole, or grepping the submodules.
 
 The third-party skills (`humanizar`, `humanizer`, `ponytail*`, `sharingan`) are vendored and pinned
 in `.claude/skills/skills.lock`, and the audience paragraph each carries, plus the paths `sharingan`
@@ -375,17 +354,12 @@ re-points at this repository's homes, is the `.claude/skills/<name>.patch` the l
 re-applied on every update. **Edit the patch, not the copy.** `.github/workflows/skills.yml` opens a weekly update PR
 with marola-devkit's `skills-vendor`; `skills-vendor update <name>` does it by hand.
 
-ponytail is also enabled as a Claude Code plugin (`ponytail@ponytail`, `.claude/settings.json`,
-pinned to `v5.2.0`) for its commands (`/ponytail:ponytail-debt`, `-gain`, `-help`) and the
-statusline. Its mode is off by default (`PONYTAIL_DEFAULT_MODE=off` in the same file, the owner,
-14 October 2026): its rules cover a whole session and have no setting to limit them to some files
-or languages, and they pull against "Translate, don't improve" (v) (3536 characters injected with
-`full`, nothing with `off`; `docs/log/2026-10-14-ponytail-plugin.md`). A person turns it on for a
-session with `/ponytail`, for C++ around the port; even then "the smallest change" never licenses
-a refactor, a vectorisation or a "simplification" of a ported routine. `PONYTAIL_MAP=0` turns off
-its codebase map, which lists Python and JS only, never C++, CUDA or Fortran (v)
-(`hooks/ponytail-map.js:17` at 5.2.0). README.md, "ponytail, off by default", is the user's guide.
-The vendored skills above stay the ones that carry this repository's audience paragraph.
+ponytail is also enabled as a Claude Code plugin, with its mode off by default
+(`PONYTAIL_DEFAULT_MODE=off`, the owner, 14 October 2026), because its rules cover a whole session
+and pull against "Translate, don't improve". A person turns it on for a session with `/ponytail`;
+even then "the smallest change" never licenses a refactor, a vectorisation or a "simplification"
+of a ported routine. The evidence is in `CONTRIBUTING.md`, "Skills and agents"; README.md,
+"ponytail, off by default", is the user's guide.
 
 ## Messages between Claude projects
 

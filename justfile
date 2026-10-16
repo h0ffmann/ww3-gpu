@@ -296,6 +296,10 @@ uprd *args:
 wfip *args:
     python3 scripts/wfip.py "$@"
 
+# Where something is, in one bounded call (scripts/route.py): `just route term NL1`, `where W3SDS4`, `docs <file>`, `why "<words>"`, `section <file> <heading>`.
+route *args:
+    python3 scripts/route.py "$@"
+
 # One line per ADR (docs/ADRs): number, status, date, decision; `just adrs --status accepted`.
 adrs *args:
     python3 scripts/adrs.py "$@"

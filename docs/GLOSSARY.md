@@ -399,6 +399,7 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 
 | Term | Expansion | What it is | Where it appears |
 |---|---|---|---|
+| `routing` / `scripts/route.py` / `just route` | the skill and its standard-library tool that answer "where is it" in one bounded call: `term`, `where`, `docs`, `why`, `section` `(v)` [.claude/skills/routing/SKILL.md](../.claude/skills/routing/SKILL.md) | The ww3-gpu adaptation of marola's MIP-0084 and MIP-0085 routing: indexes built from `git ls-files` per call, output capped at 40 lines, a locator and never evidence. | [AGENTS.md](../AGENTS.md#skills-and-agents), [CONTRIBUTING.md](../CONTRIBUTING.md#skills-and-agents) |
 | `bench/results/` | result records `(v)` [bench/README.md](../bench/README.md) | One JSON record per measured study (machine, toolchain, commit, parity status, each run's command); `scripts/results.py` generates the tables that quote it and refuses a timing without a passed WW3 regtest replay (`regtest`), or, for a record made before 2026-10-14, the `l1` of its day. | [kokkos/PORT_STATUS.md](../kokkos/PORT_STATUS.md) |
 | `docker/Dockerfile` / `just dbuild` / `just drun` / `just d<recipe>` / `WW3GPU_PREBUILT` | the Ubuntu runtime image and its recipes (`scripts/docker.sh`), and the variable that makes `scripts/ww3-gpu.sh` run prebuilt programs `(v)` [docker/Dockerfile](../docker/Dockerfile) | Ubuntu 26.04, no Nix: the build stage compiles Kokkos 5.2.2, the port, `nccmp-tol`, WW3 with and without `KOKKOS`, and WW4; the image keeps the programs, their runtime libraries and the case inputs. CPU only. | [README.md](../README.md#2--the-docker-image) |
 | `docs/log/` | the research log `(v)` [docs/log/README.md](log/README.md) | Dated, append-only entries of what was tried, negative results included. | [AGENTS.md](../AGENTS.md) |
@@ -1086,6 +1087,7 @@ Every term above, alphabetically, with the section it lives in.
 - restart.ww3: [WW3 programs and files](#ww3-programs-and-files)
 - rompy: [HPC and software](#hpc-and-software)
 - routine (Claude): [This repository's own names](#this-repositorys-own-names)
+- `routing` / `scripts/route.py` / `just route`: [This repository's own names](#this-repositorys-own-names)
 - rstrt_b4b: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - rstrt_b4b / nth_b4b / npl_b4b: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - RTD: [WW3 switches](#ww3-switches)
