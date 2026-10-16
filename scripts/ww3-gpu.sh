@@ -139,8 +139,8 @@ if [ "$device" = gpu ] && [ "$mode" != ww3-gpu ]; then
   exit 64
 fi
 if [ "$device" = gpu ]; then backend=cuda; else backend=openmp; fi
-if [ -n "$pre" ] && [ "$device" = gpu ]; then
-  echo "ww3-gpu: the prebuilt programs ($pre) are CPU only; there is no CUDA build in them" >&2
+if [ -n "$pre" ] && [ "$device" = gpu ] && [ ! -d "$pre/ww3-gpu-cuda/bin" ]; then
+  echo "ww3-gpu: the prebuilt programs ($pre) are CPU only; the GPU image is docker/Dockerfile.cuda" >&2
   exit 64
 fi
 
@@ -223,7 +223,7 @@ if [ "$mode" = ww4 ]; then
 fi
 
 if [ -n "$pre" ]; then
-  if [ "$mode" = ww3 ]; then bin="$pre/ww3/bin"; else bin="$pre/ww3-gpu-openmp/bin"; fi
+  if [ "$mode" = ww3 ]; then bin="$pre/ww3/bin"; else bin="$pre/ww3-gpu-$backend/bin"; fi
   nccmp="$pre/bin/nccmp-tol"
   # nccmp-tol's default tolerance file is a path in the source tree, which the image does not have.
   tols=("$pre/share/tolerances.txt")

@@ -2,7 +2,7 @@
 # A runtime image for WAVEWATCH III three ways (scripts/ww3-gpu.sh): --ww3 (pure NOAA WW3, from
 # WW3-noaa/), --ww3-gpu (the fork WW3/ with the Kokkos port, W3SNL1 and ST4, OpenMP backend) and --ww4 (WAVEWATCH IV). Ubuntu packages only, no
 # Nix: the build stage compiles everything, and the final image keeps the programs, their
-# runtime libraries and the case inputs, not the sources. CPU only; there is no CUDA build here.
+# runtime libraries and the case inputs, not the sources. CPU only; the GPU image is Dockerfile.cuda.
 #
 #   just dbuild                        # docker build -f docker/Dockerfile -t ww3-gpu:local .
 #   just dsmoke-ww3-gpu                   # scripts/ww3-gpu.sh --ww3-gpu smoke inside the image

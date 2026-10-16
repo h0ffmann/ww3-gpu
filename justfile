@@ -161,6 +161,22 @@ drun *args:
 dscan tag="local":
     docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:0.76.0 image --scanners vuln --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 ww3-gpu:{{tag}}
 
+# Build the GPU image ww3-gpu-cuda:<tag>: --ww3-gpu on Kokkos' CUDA backend (docker/Dockerfile.cuda)
+dbuild-cuda tag="local":
+    bash scripts/docker.sh build-cuda {{tag}}
+
+# Run scripts/ww3-gpu.sh in the GPU image with --gpus all (needs the NVIDIA Container Toolkit)
+drun-cuda *args:
+    bash scripts/docker.sh run-cuda {{args}}
+
+# `just smoke-ww3-gpu gpu` in the GPU image; asks the supervising human for "yes" (AGENTS.md)
+dsmoke-ww3-gpu-cuda:
+    bash scripts/docker.sh run-cuda --ww3-gpu smoke --gpu
+
+# `just full-ww3-gpu gpu` in the GPU image; asks the supervising human for "yes" (AGENTS.md)
+dfull-ww3-gpu-cuda:
+    bash scripts/docker.sh run-cuda --ww3-gpu full --gpu
+
 # `just smoke` in the image: WW3 as written, then WW3 with the Kokkos DIA.
 dsmoke: dsmoke-ww3 dsmoke-ww3-gpu
 
