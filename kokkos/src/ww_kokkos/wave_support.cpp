@@ -11,6 +11,7 @@
 #include "pdlib_fspsi2.hpp"
 #include "prop_map3.hpp"
 #include "prop_mapt.hpp"
+#include "prop_freq_shift.hpp"
 #include "prop_parall.hpp"
 #include "srce_ic4.hpp"
 #include "srce_ref1.hpp"

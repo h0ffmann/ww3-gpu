@@ -20,4 +20,3 @@ w3sis1md:w3sis1	model/src/w3sis1md.F90:74-227	Kimi Code, batch B	docs/NOAA_OPS_K
 w3sic1md:w3sic1	model/src/w3sic1md.F90:93-369	Kimi Code, batch B	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
 w3str1md:w3str1	model/src/w3str1md.F90:183-543	Kimi Code, batch B	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
 pdlib_w3profsmd:calcarray_jacobi_spectral_1	model/src/w3profsmd_pdlib.F90:4413-4557	goal/42-port-noaa-ops (Claude Code, batch A)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
-w3parall:prop_freq_shift	model/src/w3parall.F90:604-739	goal/42-port-noaa-ops (Claude Code, batch A)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
