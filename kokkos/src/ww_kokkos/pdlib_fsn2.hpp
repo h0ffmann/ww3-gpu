@@ -6,9 +6,32 @@
 // WW3 heritage: WW3-noaa/model/src/w3profsmd_pdlib.F90:868-1200 at NOAA-EMC/WW3
 // 03adda91 (identical in the WW3/ fork at c9a6a0c6); authors A. Roland and
 // M. Dutour-Sikiric. Called by PDLIB_W3XYPUG (:837) when FSN. Compiled as
-// regtests/ww3_tp2.17/input/switch_PDLIB builds it: W3_S, W3_DEBUGSOLVER and
-// W3_REF1 (:1003, :1126, REF0 in that switch) are not compiled and not ported.
+// regtests/ww3_tp2.17/input/switch_PDLIB builds it (kRef1 = false), and as
+// regtests/ww3_tp2.17/input_deep/switch_PDLIB and NOAA's switch_NWS_rwps build
+// it with REF1 (kRef1 = true). W3_S (:913, :956, :988, tracing) and
+// W3_DEBUGSOLVER are in none of those switches and are not ported.
 // The mesh and module arrays are pdlib_params.hpp.
+//
+// W3_REF1, the template flag kRef1 of fsn2_substep and w3xypfsn2, read against
+// the -O3 object and GIMPLE of w3profsmd_pdlib.F90 built with a copy of
+// input_deep/switch_PDLIB (WW3's CMake Release, gfortran 16.2, 2026-10-16):
+//   :923-928  USE REFPARS, NX: REFPARS(3) is the argument refpars3, read only
+//             when kRef1.
+//   :959-961, :1002-1004  IOBPDR(NX) = (1-IOBP_LOC)*(1-IOBPD_LOC(ITH,:)): a
+//             local the routine never reads. The REF1 object keeps the malloc,
+//             the store loop (NX trips, LHS extent) and the free, and nothing
+//             reads the buffer, so it changes no value and is not translated.
+//             With NX > npa (more than one rank) the loop reads IOBP_LOC and
+//             IOBPD_LOC past their extent npa (:596-598) ⚠, a WW3 defect that
+//             cannot change a result.
+//   :1125-1127  after :1124, IF (REFPARS(3) < 0.5 .AND. IOBPD_LOC(ITH,IP) == 0
+//             .AND. IOBPA_LOC(IP) == 0) U(IP) = AC(IP): the old AC, read before
+//             the store of :1134. The object tests 0.5 > REFPARS(3) (comiss,
+//             seta: false for a NaN) and (IOBPA | IOBPD) == 0, and takes AC(IP)
+//             instead of the :1124 value; :1124's arithmetic is the same as
+//             without REF1 (mulss, maxss %0,x, cvtss2sd, two mulsd, cvtsd2ss),
+//             in both loop copies (span 1 and strided). The C++ computes :1124,
+//             then overrides it, as the source orders it: the same bits.
 //
 // The MPI calls stay in Fortran. The routine has two, and the driver
 // w3xypfsn2() below stops at each and calls back into the shim:
@@ -297,12 +320,14 @@ void fsn2_dtsi(const ExecSpace& exec, const PdlibGeometry<typename ExecSpace::me
 
 /// One sub-step IT (1-based) of :1097-1176, everything before the exchange of
 /// :1188. The caller performs PDLIB_exchange1DREAL(AC) after it returns.
-template <class ExecSpace>
+/// kRef1 adds the W3_REF1 statement of :1126, which reads refpars3 = REFPARS(3).
+template <bool kRef1 = false, class ExecSpace>
 void fsn2_substep(const ExecSpace& exec, const PdlibGeometry<typename ExecSpace::memory_space>& g,
                   const PdlibBoundary<typename ExecSpace::memory_space>& b,
                   const Fsn2Work<typename ExecSpace::memory_space>& w, int isp, int ith, int it,
                   int iter, Real rd10, Real rd20, Real dt,
-                  const Fsn2AcView<typename ExecSpace::memory_space>& ac) {
+                  const Fsn2AcView<typename ExecSpace::memory_space>& ac,
+                  [[maybe_unused]] Real refpars3 = kZero) {
   using Policy = Kokkos::RangePolicy<ExecSpace>;
   using fsn2_detail::max_ss;
   using fsn2_detail::min_ss;
@@ -355,16 +380,35 @@ void fsn2_substep(const ExecSpace& exec, const PdlibGeometry<typename ExecSpace:
   const auto iobpd = g.iobpd_loc;
   const auto iobdp = g.iobdp_loc;
   const int ith0 = ith - 1;
-  Kokkos::parallel_for(
-      "pdlib_fsn2_update", Policy(exec, 0, g.npa), KOKKOS_LAMBDA(const int ip) {
-        const Real a = dtsi(ip) * st(ip);
-        const Real m = max_ss(u(ip) - a * static_cast<Real>(1 - static_cast<int>(iobpa(ip))), kZero);
-        const double v = (static_cast<double>(m) * static_cast<double>(iobpd(ith0, ip))) *
-                         static_cast<double>(iobdp(ip));
-        const Real un = static_cast<Real>(v);
-        u(ip) = un;
-        ac(ip) = un;
-      });
+  if constexpr (!kRef1) {
+    Kokkos::parallel_for(
+        "pdlib_fsn2_update", Policy(exec, 0, g.npa), KOKKOS_LAMBDA(const int ip) {
+          const Real a = dtsi(ip) * st(ip);
+          const Real m = max_ss(u(ip) - a * static_cast<Real>(1 - static_cast<int>(iobpa(ip))), kZero);
+          const double v = (static_cast<double>(m) * static_cast<double>(iobpd(ith0, ip))) *
+                           static_cast<double>(iobdp(ip));
+          const Real un = static_cast<Real>(v);
+          u(ip) = un;
+          ac(ip) = un;
+        });
+  } else {
+    // The same statement, then :1126 (header). A lambda of its own: a name in a
+    // discarded if-constexpr branch is still captured, and the kRef1 = false
+    // closure above must stay as it was.
+    Kokkos::parallel_for(
+        "pdlib_fsn2_update", Policy(exec, 0, g.npa), KOKKOS_LAMBDA(const int ip) {
+          const Real a = dtsi(ip) * st(ip);
+          const Real m = max_ss(u(ip) - a * static_cast<Real>(1 - static_cast<int>(iobpa(ip))), kZero);
+          const double v = (static_cast<double>(m) * static_cast<double>(iobpd(ith0, ip))) *
+                           static_cast<double>(iobdp(ip));
+          Real un = static_cast<Real>(v);
+          // REFPARS(3) .LT. 0.5 (REAL); AC(IP) still holds the value before :1134.
+          if (refpars3 < static_cast<Real>(0.5f) && iobpd(ith0, ip) == 0 && iobpa(ip) == 0)
+            un = ac(ip);
+          u(ip) = un;
+          ac(ip) = un;
+        });
+  }
   exec.fence();
 
   // :1145-1176, serial in IBI order (header).
@@ -408,14 +452,16 @@ void fsn2_substep(const ExecSpace& exec, const PdlibGeometry<typename ExecSpace:
 /// exchange(ac) is its PDLIB_exchange1DREAL(AC) of :1188. Both are host
 /// callables, called with every kernel before them fenced; a device-resident
 /// AC must be brought to the host and back by the exchange callable.
-template <class ExecSpace, class AllreduceMin, class Exchange>
+/// kRef1 = true is the routine compiled with W3_REF1 (header); refpars3 is
+/// REFPARS(3) of the grid (w3gdatmd.F90:726), read only then.
+template <bool kRef1 = false, class ExecSpace, class AllreduceMin, class Exchange>
 void w3xypfsn2(const ExecSpace& exec, const PdlibGeometry<typename ExecSpace::memory_space>& g,
                const PdlibState<typename ExecSpace::memory_space>& s,
                const PdlibBoundary<typename ExecSpace::memory_space>& b,
                const Fsn2Work<typename ExecSpace::memory_space>& w, int isp,
                const Fsn2CView<typename ExecSpace::memory_space>& c, bool lcalc, Real rd10,
                Real rd20, Real dt, const Fsn2AcView<typename ExecSpace::memory_space>& ac,
-               AllreduceMin&& allreduce_min, Exchange&& exchange) {
+               AllreduceMin&& allreduce_min, Exchange&& exchange, Real refpars3 = kZero) {
   const int ith = 1 + (isp - 1) % g.nth;  // :997
   const int ik = 1 + (isp - 1) / g.nth;   // :998
   using HostInt = Kokkos::View<int, Kokkos::HostSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
@@ -438,7 +484,7 @@ void w3xypfsn2(const ExecSpace& exec, const PdlibGeometry<typename ExecSpace::me
   fsn2_dtsi(exec, g, w, dt, iter);  // :1080-1082
   // :1097, the trip count is ITER(IK,ITH) read once.
   for (int it = 1; it <= iter; ++it) {
-    fsn2_substep(exec, g, b, w, isp, ith, it, iter, rd10, rd20, dt, ac);
+    fsn2_substep<kRef1>(exec, g, b, w, isp, ith, it, iter, rd10, rd20, dt, ac, refpars3);
     exchange(ac);  // :1188, PDLIB_exchange1DREAL(AC) in the shim
   }
 }

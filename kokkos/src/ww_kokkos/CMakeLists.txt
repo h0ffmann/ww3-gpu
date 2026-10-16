@@ -45,6 +45,7 @@ target_sources(ww_kokkos PRIVATE
     updt_uwnd.hpp
     updt_utrn.hpp
     disp_distab.hpp
+    disp_wavnu3.hpp
     prop_map3.hpp
     prop_mapt.hpp
     srce_ref1.hpp

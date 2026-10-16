@@ -132,3 +132,5 @@ The record is the `regtested` column of `kokkos/ports.tsv`.
 | `pdlib_w3profsmd:calcarray_jacobi_vec` | ported | `pdlib_jacobi_vec.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and the PDLIB implicit solver wired |
 | `w3sis1md:w3sis1` | ported | `srce_is1.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and the W3SRCE hunk |
 | `w3sic1md:w3sic1` | ported | `srce_ic1.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and the W3SRCE hunk |
+| `w3dispmd:wavnu3` | ported | `disp_wavnu3.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its PDLIB callers wired |
+| `w3dispmd:wavnu_local` | ported | `disp_wavnu3.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and its PDLIB callers wired |

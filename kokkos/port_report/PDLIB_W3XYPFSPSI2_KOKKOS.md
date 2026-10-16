@@ -38,10 +38,14 @@ Reference: the `-O3` object of `w3profsmd_pdlib.F90` (WW3's CMake Release flags,
 - ⚠ `CFLXYMAX` is written for `IP = 1..npa`, inside the array only while `NSEALM >= npa`.
 - ⚠ CUDA compiled by the translator (`sm_89`, `--fmad=false`, no `fma` in the PTX; the SASS's
   FFMA/DFMA are the expansion of `div.rn`), never run; the reviewer did not examine CUDA.
-- ⚠ Only the variant `switch_PDLIB` compiles is translated. The routine's `W3_REF1` blocks
-  (:1255, :1292, :1327, :1438) are not: `REF1` is in NOAA's `switch_NWS_rwps` and in
-  `ww3_tp2.17/input_deep/switch_PDLIB`, so this port gives other bits under those switches
-  until the `REF1` variant is added (found 2026-10-16 by the review of `CALCARRAY_JACOBI_VEC`).
+- (v) `W3_REF1` (`:1255, :1292, :1327, :1438`), added 2026-10-16 as `template <bool kRef1 = false>` with a trailing
+  `refpars3` argument (`REFPARS(3)` of the grid): at `:1438`, `U(IP) = AC(IP)` when
+  `REFPARS(3) < 0.5` (false for NaN) and `IOBPD_LOC(ITH,IP) = IOBPA_LOC(IP) = 0`, reading the
+  old `AC`, after the `U` update and before `AC = REAL(U)`; checked against an object built with
+  `ww3_tp2.17/input_deep/switch_PDLIB`, and by a second fresh review. `IOBPDR` is filled but never
+  read, so it is not translated. With `kRef1 = false` the kernels are the reviewed ones, token for
+  token (the diff re-indents them inside `if constexpr`).
+- ⚠ That the shim passes `REFPARS(3)` of the right grid is not checked (no shim yet).
 
 ## Benchmarks
 

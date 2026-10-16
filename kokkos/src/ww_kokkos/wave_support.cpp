@@ -6,6 +6,7 @@
 // on the default execution space, so each preset generates their code (device code on CUDA) until
 // a shim calls them. Nothing calls ww_support_instantiate.
 #include "disp_distab.hpp"
+#include "disp_wavnu3.hpp"
 #include "pdlib_boundary_va.hpp"
 #include "pdlib_fsn2.hpp"
 #include "pdlib_fspsi2.hpp"

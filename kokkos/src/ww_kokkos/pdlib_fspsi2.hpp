@@ -6,9 +6,31 @@
 // WW3 heritage: WW3-noaa/model/src/w3profsmd_pdlib.F90:1202-1502 at NOAA-EMC/WW3
 // 03adda91 (A. Roland, M. Dutour-Sikiric), switch PDLIB of
 // regtests/ww3_tp2.17/input/switch_PDLIB; called through PDLIB_W3XYPUG. The fork
-// WW3/ (c9a6a0c6) has the routine byte for byte (v, diff, 2026-10-16). W3_S,
-// W3_REF1 and W3_DEBUGSOLVER are not in that switch and are not ported; IP_glob
+// WW3/ (c9a6a0c6) has the routine byte for byte (v, diff, 2026-10-16). That
+// switch is kRef1 = false; regtests/ww3_tp2.17/input_deep/switch_PDLIB and
+// NOAA's switch_NWS_rwps add REF1, kRef1 = true. W3_S (:1289, :1314, tracing)
+// and W3_DEBUGSOLVER are in none of those switches and are not ported; IP_glob
 // of :1378 is dead.
+//
+// W3_REF1, the template flag kRef1 of fspsi2_substep and pdlib_w3xypfspsi2,
+// read against the -O3 object and GIMPLE of w3profsmd_pdlib.F90 built with a
+// copy of input_deep/switch_PDLIB (CMake Release, gfortran 16.2, 2026-10-16):
+//   :1255-1260  USE REFPARS, NX: REFPARS(3) is the argument refpars3, read
+//             only when kRef1.
+//   :1292-1294, :1327-1329  IOBPDR(NX) = (1-IOBP_LOC)*(1-IOBPD_LOC(ITH,:)): a
+//             local never read. The REF1 object keeps the malloc, the store
+//             loop (NX trips) and the free, and nothing reads the buffer: not
+//             translated, no value depends on it. With NX > npa it reads
+//             IOBP_LOC and IOBPD_LOC past their extent npa ⚠ (WW3's, harmless
+//             to the results).
+//   :1438-1440  after :1437, IF (REFPARS(3) < 0.5 .AND. IOBPD_LOC(ITH,IP) == 0
+//             .AND. IOBPA_LOC(IP) == 0) U(IP) = AC(IP), the AC before :1442.
+//             The object tests 0.5 > REFPARS(3) (comiss, seta: false for a
+//             NaN) and (IOBPA | IOBPD) == 0 and takes AC(IP). REF1 stops the
+//             vectorisation of :1437 (two scalar copies, span 1 and strided,
+//             with the same operations: mulss, maxss %0,d, then *IOBPD and
+//             *IOBDP in REAL, element-wise as the vector lanes were). The C++
+//             computes :1437 and then overrides it, as the source orders it.
 //
 // MPI stays in Fortran. The launchers stop where the Fortran calls MPI, and the
 // shim makes the calls between them, in this order:
@@ -315,12 +337,14 @@ void fspsi2_kvalues(const ExecSpace& exec, const PdlibGeometry<typename ExecSpac
 }
 
 /// One sub-step IT (1..niter) of :1405-1476, up to the PDLIB_exchange1DREAL(AC)
-/// of :1488, which the caller makes after this returns.
-template <class ExecSpace, class AcView>
+/// of :1488, which the caller makes after this returns. kRef1 adds :1439, which
+/// reads refpars3 = REFPARS(3).
+template <bool kRef1 = false, class ExecSpace, class AcView>
 void fspsi2_substep(const ExecSpace& exec, const PdlibGeometry<typename ExecSpace::memory_space>& g,
                     const PdlibBoundary<typename ExecSpace::memory_space>& bnd, int isp, int it,
                     int niter, Real dt, Real rd10, Real rd20, const AcView& ac,
-                    const Fspsi2Work<typename ExecSpace::memory_space>& w) {
+                    const Fspsi2Work<typename ExecSpace::memory_space>& w,
+                    [[maybe_unused]] Real refpars3 = kZero) {
   using Policy = Kokkos::RangePolicy<ExecSpace>;
   const auto geo = g;
   const auto work = w;
@@ -331,21 +355,45 @@ void fspsi2_substep(const ExecSpace& exec, const PdlibGeometry<typename ExecSpac
       KOKKOS_LAMBDA(const int ie) { fspsi2_theta_elem(ie, geo, work); });
   // :1406 ST = ZERO, :1427 ST(NI) += THETA_L in increasing IE, then :1436-1441
   // and :1442 AC = REAL(U), node by node.
-  Kokkos::parallel_for(
-      "fspsi2_update", Policy(exec, 0, geo.npa), KOKKOS_LAMBDA(const int p) {
-        Real s = kZero;
-        for (int j = geo.cell_off(p); j < geo.cell_off(p + 1); ++j)
-          s = s + work.theta(geo.pos_cell(j) - 1, geo.ie_cell(j) - 1);
-        work.st(p) = s;
-        // :1437, (DTSI*ST)*(1-IOBPA); maxss 0,d; *IOBPD; *IOBDP.
-        const Real d =
-            work.u(p) - (work.dtsi(p) * s) * static_cast<Real>(1 - int(geo.iobpa_loc(p)));
-        const Real m = fspsi2_detail::max_ab(d, kZero);
-        const Real up = (m * static_cast<Real>(geo.iobpd_loc(ith - 1, p))) *
-                        static_cast<Real>(geo.iobdp_loc(p));
-        work.u(p) = up;
-        ac(p) = up;
-      });
+  if constexpr (!kRef1) {
+    Kokkos::parallel_for(
+        "fspsi2_update", Policy(exec, 0, geo.npa), KOKKOS_LAMBDA(const int p) {
+          Real s = kZero;
+          for (int j = geo.cell_off(p); j < geo.cell_off(p + 1); ++j)
+            s = s + work.theta(geo.pos_cell(j) - 1, geo.ie_cell(j) - 1);
+          work.st(p) = s;
+          // :1437, (DTSI*ST)*(1-IOBPA); maxss 0,d; *IOBPD; *IOBDP.
+          const Real d =
+              work.u(p) - (work.dtsi(p) * s) * static_cast<Real>(1 - int(geo.iobpa_loc(p)));
+          const Real m = fspsi2_detail::max_ab(d, kZero);
+          const Real up = (m * static_cast<Real>(geo.iobpd_loc(ith - 1, p))) *
+                          static_cast<Real>(geo.iobdp_loc(p));
+          work.u(p) = up;
+          ac(p) = up;
+        });
+  } else {
+    // The same statements, then :1439 (header). A lambda of its own: a name in
+    // a discarded if-constexpr branch is still captured, and the kRef1 = false
+    // closure above must stay as it was.
+    Kokkos::parallel_for(
+        "fspsi2_update", Policy(exec, 0, geo.npa), KOKKOS_LAMBDA(const int p) {
+          Real s = kZero;
+          for (int j = geo.cell_off(p); j < geo.cell_off(p + 1); ++j)
+            s = s + work.theta(geo.pos_cell(j) - 1, geo.ie_cell(j) - 1);
+          work.st(p) = s;
+          const Real d =
+              work.u(p) - (work.dtsi(p) * s) * static_cast<Real>(1 - int(geo.iobpa_loc(p)));
+          const Real m = fspsi2_detail::max_ab(d, kZero);
+          Real up = (m * static_cast<Real>(geo.iobpd_loc(ith - 1, p))) *
+                    static_cast<Real>(geo.iobdp_loc(p));
+          // REFPARS(3) .LT. 0.5 (REAL); AC(IP) still holds the value before :1442.
+          if (refpars3 < static_cast<Real>(0.5f) && geo.iobpd_loc(ith - 1, p) == 0 &&
+              geo.iobpa_loc(p) == 0)
+            up = ac(p);
+          work.u(p) = up;
+          ac(p) = up;
+        });
+  }
   if (bnd.flbpi == 0) return;  // :1446
   // :1447-1456 on the host. ITER(IK,ITH) re-read here is niter.
   Real rd1 = rd10 - (dt * static_cast<Real>(niter - it)) / static_cast<Real>(niter);
@@ -377,15 +425,18 @@ void fspsi2_substep(const ExecSpace& exec, const PdlibGeometry<typename ExecSpac
 /// PDLIB_W3XYPFSPSI2(ISP, C, LCALC, RD10, RD20, DT, AC) in the Fortran's order.
 /// allreduce_min(Real) -> Real performs :1386 and exchange(ac) performs :1488;
 /// both are called after a fence, on the host. c(ip-1, j-1) = C(IP,J), (npa, 2);
-/// ac(ip-1) = AC(IP), (npa).
-template <class ExecSpace, class CView, class AcView, class AllreduceMin, class Exchange>
+/// ac(ip-1) = AC(IP), (npa). kRef1 = true is the routine compiled with W3_REF1;
+/// refpars3 is REFPARS(3) of the grid (w3gdatmd.F90:726), read only then.
+template <bool kRef1 = false, class ExecSpace, class CView, class AcView, class AllreduceMin,
+          class Exchange>
 void pdlib_w3xypfspsi2(const ExecSpace& exec, int isp, const CView& c, bool lcalc, Real rd10,
                        Real rd20, Real dt, const AcView& ac,
                        const PdlibGeometry<typename ExecSpace::memory_space>& g,
                        const PdlibState<typename ExecSpace::memory_space>& state,
                        const PdlibBoundary<typename ExecSpace::memory_space>& bnd,
                        const Fspsi2Work<typename ExecSpace::memory_space>& w,
-                       AllreduceMin&& allreduce_min, Exchange&& exchange) {
+                       AllreduceMin&& allreduce_min, Exchange&& exchange,
+                       Real refpars3 = kZero) {
   const int ith = 1 + (isp - 1) % g.nth;  // :1323-1324
   const int ik = 1 + (isp - 1) / g.nth;
   fspsi2_kvalues(exec, g, c, w);
@@ -400,7 +451,7 @@ void pdlib_w3xypfspsi2(const ExecSpace& exec, int isp, const CView& c, bool lcal
   }
   fspsi2_dtsi(exec, g, dt, niter, w);
   for (int it = 1; it <= niter; ++it) {  // :1403, the bound read once
-    fspsi2_substep(exec, g, bnd, isp, it, niter, dt, rd10, rd20, ac, w);
+    fspsi2_substep<kRef1>(exec, g, bnd, isp, it, niter, dt, rd10, rd20, ac, w, refpars3);
     exec.fence();
     exchange(ac);  // :1488
   }
