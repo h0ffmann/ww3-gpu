@@ -12,7 +12,7 @@ Profile: full (bench_small, 120 x 80, 9 520 sea points, 12 h), Release -pg, swit
 what the compiler inlined into it are in the caller's row; the shares are this case's and this
 switch's, not every model's.
 
-The profile names 87 routines, 22 of them ported, so this table has 65 rows, not 100. Rows 5 to 65 took less than one gprof sample (10 ms): their order is gprof's, not a cost order, and a longer case or `perf` is needed to rank them. A routine this case never calls (another switch, another grid) is not in the profile and not here.
+The profile names 87 routines, 25 of them ported, so this table has 62 rows, not 100. Rows 5 to 62 took less than one gprof sample (10 ms): their order is gprof's, not a cost order, and a longer case or `perf` is needed to rank them. A routine this case never calls (another switch, another grid) is not in the profile and not here.
 
 | # | routine | WW3 file | self s | self % | cumulative % |
 |---|---|---|---|---|---|
@@ -72,15 +72,12 @@ The profile names 87 routines, 22 of them ported, so this table has 65 rows, not
 | 54 | `w3nmlshelmd:w3nmlshel` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
 | 55 | `w3odatmd:w3dmo5` | `model/src/w3odatmd.F90` | < 0.01 | 0.00 | 100.0 |
 | 56 | `w3odatmd:w3nout` | `model/src/w3odatmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 57 | `w3pro3md:w3map3` | `model/src/w3pro3md.F90` | < 0.01 | 0.00 | 100.0 |
-| 58 | `w3pro3md:w3mapt` | `model/src/w3pro3md.F90` | < 0.01 | 0.00 | 100.0 |
-| 59 | `w3servmd:str_to_upper` | `model/src/w3servmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 60 | `w3servmd:strsplit` | `model/src/w3servmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 61 | `w3servmd:wwdate` | `model/src/w3servmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 62 | `w3updtmd:w3utrn` | `model/src/w3updtmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 63 | `w3wdatmd:w3dimw` | `model/src/w3wdatmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 64 | `w3wdatmd:w3ndat` | `model/src/w3wdatmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 65 | `finalise.0.constprop.0` | `—` | < 0.01 | 0.00 | 100.0 |
+| 57 | `w3servmd:str_to_upper` | `model/src/w3servmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 58 | `w3servmd:strsplit` | `model/src/w3servmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 59 | `w3servmd:wwdate` | `model/src/w3servmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 60 | `w3wdatmd:w3dimw` | `model/src/w3wdatmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 61 | `w3wdatmd:w3ndat` | `model/src/w3wdatmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 62 | `finalise.0.constprop.0` | `—` | < 0.01 | 0.00 | 100.0 |
 
 The cumulative column starts from the ported routines' share, so it reads as the share of the run
 that would be in Kokkos once every row down to it is ported.
@@ -120,3 +117,6 @@ The record is the `regtested` column of `kokkos/ports.tsv`.
 | `w3updtmd:w3dzxy` | ported | `updt_dzxy.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run in this round); the W3WAVE support checkpoint (ADR-0011) runs it once a shim and the W3WAVE wiring exist |
 | `w3dispmd:wavnu2` | ported | `disp_distab.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run in this round); the W3WAVE support checkpoint (ADR-0011) runs it once a shim and the W3IOGR wiring exist |
 | `w3dispmd:distab` | ported | `disp_distab.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run in this round); the W3WAVE support checkpoint (ADR-0011) runs it once a shim and the W3IOGR wiring exist |
+| `w3updtmd:w3utrn` | ported | `updt_utrn.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run in this round); the W3WAVE support checkpoint (ADR-0011) runs it once a shim and the W3WAVE wiring exist |
+| `w3pro3md:w3map3` | ported | `prop_map3.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run in this round); the W3WAVE support checkpoint (ADR-0011) runs it once a shim and the W3WAVE wiring exist |
+| `w3pro3md:w3mapt` | ported | `prop_mapt.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run in this round); the W3WAVE support checkpoint (ADR-0011) runs it once a shim and the W3WAVE wiring exist |

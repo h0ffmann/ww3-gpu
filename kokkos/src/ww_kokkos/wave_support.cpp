@@ -1,0 +1,27 @@
+// kokkos/src/ww_kokkos/wave_support.cpp
+// W3WAVE's support headers (W3GATH, W3SCAT, W3DZXY, W3UWND, W3UTRN, DISTAB with WAVNU2, and the
+// PR3 maps W3MAP3, W3MAPT) are header-only device functions with no caller yet: the shims and the
+// W3WAVE and W3IOGR wiring come with the unit's checkpoint
+// (docs/W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md). This translation unit instantiates every launcher
+// on the default execution space, so each preset generates their code (device code on CUDA) until
+// a shim calls them. Nothing calls ww_support_instantiate.
+#include "disp_distab.hpp"
+#include "prop_map3.hpp"
+#include "prop_mapt.hpp"
+#include "updt_dzxy.hpp"
+#include "updt_utrn.hpp"
+#include "updt_uwnd.hpp"
+#include "wave_gath_scat.hpp"
+
+void ww_support_instantiate();
+void ww_support_instantiate() {
+  using E = Kokkos::DefaultExecutionSpace;
+  (void)&ww::wave::w3gath<E>;
+  (void)&ww::wave::w3scat<E>;
+  (void)&ww::updt::w3dzxy<E>;
+  (void)&ww::updt::w3uwnd<E>;
+  (void)&ww::updt::w3utrn<E>;
+  (void)&ww::disp::distab<E>;
+  (void)&ww::prop::w3map3<E>;
+  (void)&ww::prop::w3mapt<E>;
+}
