@@ -38,6 +38,10 @@ Reference: the `-O3` object of `w3profsmd_pdlib.F90` (WW3's CMake Release flags,
 - ⚠ `CFLXYMAX` is written for `IP = 1..npa`, inside the array only while `NSEALM >= npa`.
 - ⚠ CUDA compiled by the translator (`sm_89`, `--fmad=false`, no `fma` in the PTX; the SASS's
   FFMA/DFMA are the expansion of `div.rn`), never run; the reviewer did not examine CUDA.
+- ⚠ Only the variant `switch_PDLIB` compiles is translated. The routine's `W3_REF1` blocks
+  (:1255, :1292, :1327, :1438) are not: `REF1` is in NOAA's `switch_NWS_rwps` and in
+  `ww3_tp2.17/input_deep/switch_PDLIB`, so this port gives other bits under those switches
+  until the `REF1` variant is added (found 2026-10-16 by the review of `CALCARRAY_JACOBI_VEC`).
 
 ## Benchmarks
 

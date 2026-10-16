@@ -46,6 +46,10 @@ GIMPLE and assembly by the translator and by a fresh reviewer, 2026-10-16.
   the only such tie is at `:1025`, whose sign the following sums erase.
 - ⚠ The SASS was not read; `NINT`/`MOD` on NaN or Inf not compared; the shim's `cell_off` and
   `check_cell_adjacency` do not exist yet.
+- ⚠ Only the variant `switch_PDLIB` compiles is translated. The routine's `W3_REF1` blocks
+  (:923, :959, :1002, :1125) are not: `REF1` is in NOAA's `switch_NWS_rwps` and in
+  `ww3_tp2.17/input_deep/switch_PDLIB`, so this port gives other bits under those switches
+  until the `REF1` variant is added (found 2026-10-16 by the review of `CALCARRAY_JACOBI_VEC`).
 
 ## Benchmarks
 
