@@ -1,6 +1,6 @@
 # NOAA's operational switches on Kokkos: the next translation batch (phase 1)
 
-Status: **in progress**, 2026-10-16; `kokkos/PORT_TABLE.tsv` has each routine's state. Issue [#42](https://github.com/h0ffmann/ww3-gpu/issues/42),
+Status: **batches A and B translated and reviewed**, 2026-10-16 (PR #152); `kokkos/PORT_TABLE.tsv` has each routine's state. Not wired, not regtested. Issue [#42](https://github.com/h0ffmann/ww3-gpu/issues/42),
 the port planner. Translation only, bit for bit, no test run, under
 [ADR-0011](ADRs/ADR-0011-port-in-units-regtest-at-checkpoints.md); the port has no tests of its own
 ([ADR-0010](ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md)).

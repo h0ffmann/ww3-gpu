@@ -1,151 +1,28 @@
 // kokkos/src/ww_kokkos/pdlib_fsfct2.hpp
-// PDLIB_W3XYPFSFCT2, ported to Kokkos: explicit flux-corrected transport (FCT)
-// advection in geographical space of one spectral component ISP on the
-// unstructured (PDLIB) mesh of this MPI rank: a low-order N-scheme/PSI step
-// (THETA_L, with the PSI limiter), a Lax-Wendroff high-order flux (THETA_H) and
-// Zalesak-type limiting of the antidiffusive part THETA_ACE = THETA_H - THETA_L.
-// Phase 1, translated, not regtested.
-//
-// WW3 heritage: WW3-noaa/model/src/w3profsmd_pdlib.F90:1504-1877 at NOAA-EMC/WW3
-// 03adda91 (A. Roland, M. Dutour-Sikiric); the WW3/ fork's file is
-// byte-identical (v, cmp, 2026-10-16). Called by PDLIB_W3XYPUG (:834-835) when
-// FSFCT. No namelist under regtests/ sets EXPFSFCT = T (v, grep, 2026-10-16),
-// so no WW3 regtest reaches this routine as shipped ⚠.
-//
-// Switches.
-//   W3_REF1 (:1557-1562 USE REFPARS, NX; :1594-1596 IOBPDR; :1641-1643; :1804-1806):
-//     the template flag kRef1 (default false). regtests/ww3_tp2.17/input/
-//     switch_PDLIB is kRef1 = false; input_deep/switch_PDLIB and NOAA's
-//     model/bin/switch_NWS_rwps have REF1 (8 of the 22 switch files with PDLIB
-//     under regtests/*/input*/ and model/bin/ do, v, grep).
-//     :1642 IOBPDR(:) = (1-IOBP_LOC)*(1-IOBPD_LOC(ITH,:)) is stored and never
-//     read: the REF1 object keeps the malloc, the store loop and the free, and
-//     nothing reads the buffer (v, GIMPLE), so it is not translated. With
-//     NX > npa it reads IOBP_LOC/IOBPD_LOC past npa ⚠ (WW3's, harmless).
-//     :1805 IF (REFPARS(3) .LT. 0.5 .AND. IOBPD_LOC(ITH,IP) .EQ. 0 .AND.
-//     IOBPA_LOC(IP) .EQ. 0) U(IP) = AC(IP): the object tests 0.5 > REFPARS(3)
-//     (comiss .LC94 = 0x3f000000, seta; false for a NaN) and (IOBPA|IOBPD) == 0,
-//     and then stores AC(IP) instead of :1803's value, in both copies of the
-//     loop (span 1 and strided). The C++ computes :1803, then overrides.
-//     REF1 also changes the code gfortran emits for :1762-1763 (below).
-//   MPI_PARALL_GRID (:1758-1760, PDLIB_exchange1DREAL(UL)): not a WW3 switch;
-//     CMake defines only W3_<switch> (model/src/CMakeLists.txt:28-30) and no
-//     file under regtests/ or model/bin/ names it (v, grep). Not compiled: both
-//     objects call pdlib_exchange1dreal once, on AC (v, GIMPLE). Not ported.
-//   W3_S (tracing), W3_DEBUGSOLVER, W3__DEBUGSOLVER (prints): not ported.
-//
-// MPI stays in Fortran. The routine has two calls, and w3xypfsfct2() stops at
-// each and calls back into the shim, at the Fortran's positions:
-//   :1699-1701  only when LCALC: FIN(1)=DTMAX; MPI_ALLREDUCE(FIN, FOUT, 1,
-//               rtype=MPI_REAL4, MPI_MIN, MPI_COMM_WCMP); DTMAX_GL=FOUT(1).
-//               Between fsfct2_elements_cfl() and fsn2_iter() (:1702-1710).
-//   :1863       PDLIB_exchange1DREAL(AC), once at the end of each sub-step
-//               IT = 1..ITER(IK,ITH), after the boundary update; the next
-//               sub-step starts from the exchanged AC. After fsfct2_substep().
-//
-// Precision. Arrays and scalars follow their declarations (:1603-1626), not the
-// arithmetic of the statements: REAL (float) are DTSI, U, UL, UIP, USTARI,
-// DTMAX*, CFLXY, REST, RD1/RD2; REAL*8 (double) are KELEM, FLALL, KKSUM, ST, NM,
-// FT, UTILDE, FL*, LAMBDA, KTMP, BET1, BETAHAT, TMP, TMP1, THETA_*, PM, PP,
-// UIM, WII. gfortran -O3 evaluates each statement in the width of its operands
-// and rounds at the store, and the C++ casts at the same points (v, GIMPLE):
-//   :1659-1660  LAMBDA = ONESIXTH*((C1+C2)+C3) in float, then widened;
-//   :1661-1663  KELEM in double (LAMBDA * DBLE(IEN));
-//   :1667-1672  FL11.. = C*IEN + C*IEN in float, widened at the store;
-//   :1673-1681  2.d0*FL+FL and FLALL in double;
-//   :1665       NM = -(1.0/MIN(...)) in double;
-//   :1694       KKSUM*IOBDP and the floor DBLE(10.E-10) in double, SI/that
-//               rounded to REAL; :1697 DBLE(DT)/DTMAXEXP in double;
-//   :1714       DBLE(DT)/DBLE(ITER) once, then /SI, rounded to REAL;
-//   :1725-1745  all double; 1./3. is a REAL literal, DBLE'd (0x3fd5555560000000);
-//               DT/(2.*PDLIB_TRIA) is a float divide (2.*TRIA is TRIA+TRIA,
-//               exact), widened before * KELEM;
-//   :1755, :1803  U/UL - DTSI*ST*(1-IOBPA) in double (ST is double), MAX, then
-//               *IOBPD *IOBDP in double, rounded to REAL;
-//   :1769       MAXVAL and UIP in float; :1770 MINVAL in float, widened, UIM in
-//               double; :1773 (UIP-UL) in float, widened; :1774 UIM-DBLE(UL).
-//
-// Arithmetic checked against gfortran 16.2 -O3 GIMPLE and objdump of
-// w3profsmd_pdlib.F90 built with each reference build's flags.make (WW3's CMake
-// Release: -O3, SSE2 baseline, contraction irrelevant without FMA): the -fdump
-// objects disassemble identically to the CMake objects for both switch files
-// (v, cmp). No FMA; libm only lroundf (:1705) and the inline x87 fprem
-// (:1703). SUM and DOT_PRODUCT are inlined as in-order sums from +0.0, and the
-// + 0.0 is kept: ((x1 + 0) + x2) + x3 (:1665, :1725-1726). FT = -(ONESIXTH*dot)
-// keeps q6 = ONESIXTH*dot, and UTILDE is NM*(dot2 + q6) (dot2 - FT, emitted as
-// an add); BET1 = THETA_L/FT is emitted as (-THETA_L)/q6 (:1729): written so.
-// NaN constants: MAXVAL of three NaN REALs is 0x7fc00000 (.LC74), MINVAL of
-// NaN REALs and of NaN TMP are 0x7ff8000000000000 (.LC192); MAXVAL/MINVAL take
-// the first non-NaN element and compare the rest with strict < / > (GIMPLE
-// COND_EXPRs, kept as written below).
-//
-// MIN/MAX operand order. minss/maxss/minsd/maxsd (and the packed forms) return
-// the second operand on a NaN or a +0/-0 tie: min_ab(a,b) = a<b?a:b with a the
-// register the instruction writes. Read from the object, per statement:
-//   :1665  min_ab(K,0), min_ab(SUM,-THR)        :1666 max_ab(K,0)
-//   :1694  max_ab(p,floor)  :1695 min_ab(DTMAX,DTMAXEXP)  :1697 max_ab(q,CFL)
-//          (the span-1 loop copy, which runs; the strided copy has
-//          max_ab(CFL,q) and runs only for a non-unit IOBDP_LOC span)
-//   :1734-1736  max_ab(min_ab(1-BETAHAT(j), min_ab(BETAHAT(i),1)), 0), all
-//          three components (2 packed lanes + 1 scalar)
-//   :1744  max_ab(-ACE,0)   :1745 min_ab(-ACE,0)
-//   :1755, :1803  max_ab(x,0), both loop copies
-//   :1762-1763, by IP (n = npa, nv = n>3 ? n&~3 : 0: vector body, then a
-//          3-element scalar tail; n<=3 runs a scalar path):
-//          REF0: USTARI(1,IP) = max_ab(UL,U) at IP-1 == nv, max_ab(U,UL)
-//                elsewhere; USTARI(2,IP) = min_ab(U,UL) everywhere.
-//          REF1: USTARI(1,IP) = max_ab(U,UL) everywhere; USTARI(2,IP) =
-//                min_ab(UL,U) at IP-1 in {nv, nv+1} when n>3, at IP-1 == 0
-//                when n == 1, at IP-1 == 1 when n in {2,3}; min_ab(U,UL)
-//                elsewhere.
-//   :1769-1770  UIP = max_ab(UIP,lim) for corners 1 and 2, max_ab(lim,UIP) for
-//          corner 3; UIM the same with min_ab. Both switch files.
-//   :1773-1774, by S (ne, nve = ne>3 ? ne&~3 : 0): max_ab(PP,THR) and
-//          min_ab(PM,-THR), but max_ab(THR,PP) and min_ab(-THR,PM) at
-//          S-1 == nve+2 (the third scalar-tail element); min_ab(q,1) always.
-//          Both switch files.
-//   :1821-1824  max_ab(RD1/RD2,0) then min_ab(.,1).
-// A swapped pair differs only for a NaN operand or a +0/-0 tie; the C++ keeps
-// the object's pair at every index.
-//
-// Extents ⚠ (WW3 defects the C++ cannot reproduce, only document). UIP(NE),
-// UIM(NE) are indexed by node (:1769-1770), and the array statements
-// :1773-1774 take their trip count from UIP/UIM, NE, not from WII(2,NPA):
-// S = 1..NE reads PP, UL past npa and writes WII past its end when NE > npa,
-// and leaves WII(:,NE+1:npa) unset when NE < npa (v, GIMPLE ubound.833/835 =
-// ne). So the Fortran has a defined result only when NE == npa: NE > npa (the
-// usual triangulation) overflows the heap, NE < npa reads unset WII. The C++
-// sizes UIP/UIM/WII by npa and computes S = 1..min(NE,npa), a deliberate
-// departure for the owner to confirm; with NE < npa it reads wii(:,NE+1..npa)
-// left from the previous sub-step or call (zero on first use).
-//
-// Summation order. KKSUM(NI) += KELEM (:1688), ST(NI) += THETA_L (:1740),
-// PP(NI), PM(NI) += ... (:1744-1745), UIP/UIM(NI) = MAX/MIN(...) (:1769-1770)
-// and ST(I1..I3) += THETA_ACE*TMP1 (:1797-1799) run over IE = 1..NE; for one
-// node each statement touches it once per element that holds it, in increasing
-// IE, from ZERO (or 0.). PDLIB_IE_CELL lists the elements of each node in
-// increasing IE with the corner in PDLIB_POS_CELL (yowpdlibmain.F90:1478-1514;
-// check_cell_adjacency verifies it, and that no element names a node twice), so
-// a pass parallel over nodes that starts at 0 and walks IE_CELL performs the
-// same operations on the same values, with the corner-dependent MIN/MAX order
-// of :1769-1770. No atomics: each node is one thread. The per-element inputs
-// (THETA_L, THETA_ACE, MAXVAL, MINVAL, TMP1) are written by element passes
-// first; nothing in those loops reads what the same loop accumulates.
-// Serial (one thread, the Fortran's order): the LCALC node loop (:1691-1698),
-// where DTMAXEXP carries from node to node and DTMAX is a running MIN; and the
-// boundary loop (:1837-1850), where two IBI on one node keep the last store.
-//
-// CUDA (nvcc_wrapper, sm_89, --fmad=false, -fopenmp; compiled, never run): the
-// PTX has no fma, divisions are div.rn.f32/f64, conversions cvt.rn; no libm
-// call is made on the device (fsn2_iter runs on the host). nvcc turns the
-// MIN/MAX whose second operand is a constant (0, +-THR, 1, DBLE(10.E-10), and
-// the first UIP/UIM step from 0.) into min/max.f32/f64: the same result for a
-// NaN first operand, and for zeros max gives +0 as maxss does, but min(-0,+0)
-// is -0 where minsd gives +0 (PTX ISA, min). Those ties (:1665 MIN(ZERO,K),
-// :1745 MIN(ZERO,-ACE), :1770 the first MIN with UIM = 0.) change only the sign
-// of a zero that is then added to an accumulator started at +0, or reaches ST
-// through WII and TMP1 as a zero factor; an RN sum that starts at +0 never
-// becomes -0, so AC gets the same bits ⚠ (argument, not run).
+// PDLIB_W3XYPFSFCT2: explicit flux-corrected transport (FCT) advection of one spectral component
+// on the unstructured mesh of this MPI rank. Phase 1, translated, not regtested.
+// WW3 heritage: WW3-noaa/model/src/w3profsmd_pdlib.F90:1504-1877 at NOAA-EMC/WW3 03adda91;
+// A. Roland, M. Dutour-Sikiric. Evidence: kokkos/port_report/PDLIB_W3XYPFSFCT2_KOKKOS.md.
+// No regtest namelist sets EXPFSFCT = T, so no WW3 regtest reaches this routine ⚠.
+// kRef1 is W3_REF1: it adds :1805 and changes the MIN/MAX order of :1762-1763.
+// Hook positions: allreduce_min at :1699-1701 (LCALC only), exchange(ac) at :1863 after each
+// sub-step's boundary update.
+// Each value is rounded in its declared width (:1603-1626), as the GIMPLE does; the + 0.0 of the
+// inlined SUM/DOT_PRODUCT is kept (:1665, :1725-1726); BET1 is (-THETA_L)/q6 (:1729).
+// MIN/MAX operand order, read from the object (min_ab(a,b) = a<b?a:b, a the destination):
+//   :1697 max_ab(q,CFL) (span-1 loop copy). :1762-1763 by IP, nv = npa>3 ? npa&~3 : 0:
+//   REF0 USTARI(1) = max_ab(UL,U) at IP-1 == nv, else max_ab(U,UL); USTARI(2) = min_ab(U,UL).
+//   REF1 USTARI(1) = max_ab(U,UL); USTARI(2) = min_ab(UL,U) at IP-1 in {nv,nv+1} (npa>3),
+//   0 (npa == 1), 1 (npa in {2,3}), else min_ab(U,UL).
+//   :1769-1770 corner 3 takes max_ab(lim,UIP)/min_ab(lim,UIM), corners 1-2 the other order.
+//   :1773-1774 max_ab(THR,PP), min_ab(-THR,PM) at S-1 == nve+2 (nve = ne>3 ? ne&~3 : 0), else
+//   the other order.
+// Extents departure ⚠: UIP/UIM are (NE) but indexed by node, and :1773-1774 run S = 1..NE over
+// WII(2,NPA); the Fortran is defined only when NE == npa. The C++ sizes them npa and runs
+// S = 1..min(NE,npa), a departure for the owner to confirm.
+// Node sums (:1688, :1740, :1744-1745, :1769-1770, :1797-1799) are gathered per node over
+// PDLIB_IE_CELL in increasing IE: the Fortran's order. :1691-1698 and :1837-1850 run serially.
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <Kokkos_Core.hpp>

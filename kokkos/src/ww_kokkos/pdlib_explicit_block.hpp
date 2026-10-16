@@ -1,127 +1,22 @@
 // kokkos/src/ww_kokkos/pdlib_explicit_block.hpp
-// PDLIB_EXPLICIT_BLOCK, ported to Kokkos: the explicit N-scheme for the
-// geographic advection of every spectral component on the unstructured mesh of
-// this MPI rank, frequency by frequency, all directions at once, with sub-steps
-// set by the CFL limit. Phase 1, translated, not regtested.
-//
-// WW3 heritage: WW3-noaa/model/src/w3profsmd_pdlib.F90:6408-6685 at NOAA-EMC/WW3
-// 03adda91, switch PDLIB (A. Roland, M. Dutour-Sikiric). Called only by
-// PDLIB_W3XYPUG_BLOCK_EXPLICIT (:2881), which passes RD10 = DSEC21(TBPI0,TIME)
-// and RD20 = DSEC21(TBPI0,TBPIN) when FLBPI, else 1. and 0. (:2873-2879); that
-// is called by W3WAVE with FACY = FACX and LCALC = UGDTUPDATE (w3wavemd.F90:1925).
-// The module arrays FLALL1-3, KELEM1-3, NM (NTH,NE,NK), DTSI (NPA), all REAL*8,
-// and ITER (NK) (:119-123) are allocated by BLOCK_SOLVER_EXPLICIT_INIT
-// (:6743-6746) and keep their values between calls: with LCALC false the
-// routine reuses them.
-//
-// Compile-time variants. The #ifdefs of :6408-6685 are W3_S (STRACE, not ported),
-// W3_PDLIB (the USEs, always on here) and W3_REF1 (:6471-6473 USE, :6492-6494
-// UOLD, :6642-6644 the restore). Of the 11 switch files with PDLIB under
-// regtests/ww3_tp2.17/input*/, regtests/ww3_ufs1.1/input_unstr/ and
-// model/bin/switch_NWS_rwps, 6 add REF1 and 1 TRNK, which this routine does not
-// test (v, grep -w, 2026-10-16). REF1 is the template flag kRef1.
-//
-// What it calls.
-//   :6513  WAVNU3 (w3dispmd.F90:348-454), out of line in the object
-//          (__w3dispmd_MOD_wavnu3): called here as ww::disp::wavnu3 of
-//          disp_wavnu3.hpp, a device function, per node. It has no #ifdef and no
-//          per-grid state, so there is no hook. ⚠ on a GPU its powf, expf, tanhf,
-//          sinhf are libdevice's, not glibc's (disp_wavnu3.hpp).
-//   No W3SRCE piece, no W3SPR4, no CALCARRAY_*: the explicit block only advects.
-// The calls into Fortran are a Hooks object (see pdlib_explicit_block below); the
-// driver stops at each, in this order, per IK:
-//   :6599  MPI_ALLREDUCE(FIN,FOUT,1,rtype,MPI_MIN,MPI_COMM_WCMP), only when
-//          LCALC; rtype is MPI_REAL4 (PDLIB/yowdatapool.F90:77) on REAL FIN:
-//          hooks.allreduce_min(dtmaxout) returns DTMAXGL.
-//   :6626  PDLIB_exchange2DREAL(U)                   hooks.exchange_u()
-//   then per sub-step IT = 1..ITER(IK), after the update and the boundary:
-//   :6670  PDLIB_exchange2DREAL(U)                   hooks.exchange_u()
-// U is ExplWork::u (NTH,NPA); the hook exchanges it in place. There is no print.
-//
-// Order. Every pass is parallel over the index it writes, except:
-//   :6588-6596  DTMAX(ITH) is a running minimum over IP and DTMAXOUT is the
-//               MINVAL after the last node that passes the test: one thread, IP
-//               = 1..NPA in order (expl_dtmax).
-//   :6577-6584 (KKSUM) and :6630-6638 (ST) scatter element sums into nodes. The
-//               C++ gathers instead: node IP walks the elements that hold it in
-//               increasing IE (PDLIB_IE_CELL, the order check_cell_adjacency of
-//               pdlib_params.hpp verifies), so each node receives the same terms
-//               in the Fortran's order, rounded the same way; no atomics. UTILDE
-//               of an element is recomputed by each of its three nodes from the
-//               same operands: the same bits.
-//   :6660-6666  U(ITH,JX) = boundary value: parallel over ITH, serial over IBI
-//               (the last IBI wins, as in the Fortran).
-// A kernel here has no reduction and no atomic, so its bits do not depend on the
-// execution space or the thread count.
-//
-// Precision (REAL is float, REAL*8 double). double: KELEM1-3, FLALL1-3, NM,
-// DTSI. Everything else float. Mixed operations as the GIMPLE has them:
-//   :6544-6546  KELEM = LAMBDAX*IEN + LAMBDAY*IEN in float, stored widened;
-//   :6550       NM = -(1/DBLE(MIN(SUM,-THR))), SUM = ((MIN(K1,0)+0)+MIN(K2,0))
-//               +MIN(K3,0) in float (the +0 is kept: it turns -0 into +0);
-//   :6551-6553  KELEM = DBLE(MAX(K,0));
-//   :6563-6568  FL111 = REAL(2*DBLE(FL11) + DBLE(FL12)), double then narrowed;
-//   :6570-6572  FLALL = DBLE((FL311+FL212)*ONESIXTH) + KELEM, the sum in double;
-//   :6580-6582  KKSUM = REAL(DBLE(KKSUM) + KELEM);
-//   :6602       CFLXY = DBLE(DTG)/DTMAXGL into a REAL: the object divides in float
-//               (divss), the same bits since a double quotient of floats narrows to
-//               the float quotient;
-//   :6603       REST = ABS(REAL(fmod(DBLE(CFLXY),1d0))); NINT is lroundf;
-//   :6613       DTSI = (DBLE(DTMAXGL)/DBLE(ITER))/DBLE(SI), the first quotient once;
-//   :6633       UTILDE = REAL(NM*((FLALL1*U1 + FLALL2*U2) + FLALL3*U3)) in double;
-//   :6634-6636  ST = REAL(DBLE(ST) + KELEM*DBLE(U - UTILDE)), U - UTILDE in float;
-//   :6641       U = REAL(DBLE(IOBDP)*(MAX(DBLE(U) - (DBLE(ST)*DTSI)*DBLE(1-IOBPA),
-//               0)*DBLE(IOBPD))): the operand order of the GIMPLE, the same
-//               association as the source.
-// Constants: ONESIXTH = 1.0/6.0 as REAL (kOneSixth, 0x3e2aaaab); THR = 1.0E-12
-// as REAL (0x2b8cbccc), not W3PARALL's TINY; 1.E10; 0.001 (kRd2Floor);
-// HUGE(1.) for MINVAL of an empty DTMAX.
-//
-// Arithmetic checked against gfortran 16.2 -O3 GIMPLE and the object of
-// w3profsmd_pdlib.F90 (WW3's CMake flags, switch_PDLIB; the -fdump object equals
-// the CMake one byte for byte, v), and the REF1 object (switch of
-// regtests/ww3_tp2.17/input_deep, same check, v): no FMA; the one libm call is
-// lroundf (NINT); fmod is inlined as an x87 fprem loop, exact like the C++'s fmod
-// call, so the same bits. MIN/MAX in the operand order of the emitted
-// minss/maxss/minps/maxps/maxsd/maxpd (dest = dest OP src ? dest : src; min_ss(a,b)
-// below is a < b ? a : b with a the destination):
-//   :6550-6553  min_ss(K,0), max_ss(K,0), min_ss(SUM,-THR): vector and scalar alike;
-//   :6591       max_ss(KKSUM*IOBDP, THR): vector and scalar alike;
-//   :6592       vector body (minps): min_ss(DTMAX, DTMAXEXP); scalar tail (minss
-//               with DTMAX from memory): min_ss(DTMAXEXP, DTMAX). The tail is
-//               element ITH = NTH when NTH is odd (4-wide, then 2-wide, then one
-//               scalar; NTH = 1 all scalar). A NaN or a +0/-0 tie gives a
-//               different result in the two paths, so both are kept;
-//   :6594       MINVAL: the first DTMAX <= +Inf, then x < lim ? x : lim, NaN if
-//               all are NaN (GIMPLE, not a MIN_EXPR);
-//   :6641       max_sd(v, 0), vector and scalar alike;
-//   :6654       min_ss(max_ss(RD1/RD2, 0), 1).
-// The REF1 object has the same roles at every site (v); it computes :6641 only
-// where the restore does not hold and stores UOLD there instead.
-//
-// C++ object (openmp-release flags plus -ffp-contract=off, gcc 16.2): no FMA,
-// libm calls fmod and lroundf plus WAVNU3's powf, expf, sinhf; MIN(K,0) is
-// cmpnltss/andnps (K < 0 ? K : +0), the others minss/maxss with the operands
-// above, the +0 of :6550 kept (v).
-// CUDA (nvcc_wrapper, --fmad=false, sm_89, compiled, never run): no fma.rn
-// outside WAVNU3 (libdevice); divisions div.rn. nvcc emits min/max.f32 for the
-// MIN/MAX against 0 of :6550-6553 and max.f64 for :6641; PTX min(-0,+0) is -0
-// where SSE gives +0, harmless at :6550 (the sum turns it into +0), and whether
-// max.f64 keeps SSE's +0 for v = -0 at :6641 is not checked ⚠.
-//
-// What the Fortran leaves undefined (⚠, not reproducible bit for bit):
-//   - with LCALC false (UGDTUPDATE is reset at each W3WAVE call, :767, and set on
-//     every step with currents, :1188-1210, else on the first step of each call,
-//     :973, :1219-1220, and on water-level updates, :1436), the conversions :6623 and :6679 read CGSIG, an automatic array the
-//     object mallocs per call and never fills, and with FLBPI :6651 reads
-//     DTMAXGL, never assigned. The C++ keeps CGSIG (ExplWork) and DTMAXGL
-//     (ExplCarry) from the last call that computed them; the Fortran's are heap
-//     or stack contents;
-//   - DTMAXOUT (:6594) is assigned only at a node with IOBP_LOC = 1 or FSBCCFL; on
-//     a rank with none it keeps its value from the previous IK (the object
-//     carries it, a PHI), undefined on the first. ExplCarry keeps it;
-//   - with REF1, UOLD (:6493) is never assigned before :6643 reads it. The C++
-//     reads ExplWork::uold, zero-filled at allocation and never written.
+// PDLIB_EXPLICIT_BLOCK: the explicit N-scheme advection of every spectral component on the
+// unstructured mesh of this MPI rank, per frequency, with CFL sub-steps. Phase 1, translated,
+// not regtested.
+// WW3 heritage: WW3-noaa/model/src/w3profsmd_pdlib.F90:6408-6685 at NOAA-EMC/WW3 03adda91;
+// A. Roland, M. Dutour-Sikiric. Evidence: kokkos/port_report/PDLIB_EXPLICIT_BLOCK_KOKKOS.md.
+// kRef1 is W3_REF1 (:6471-6473, :6492-6494, :6642-6644). WAVNU3 (:6513) is disp_wavnu3.hpp.
+// Hook positions per IK: allreduce_min at :6599 (LCALC only), exchange_u at :6626, then
+// exchange_u at :6670 after each sub-step's update and boundary.
+// The module arrays of :119-123 (ExplArrays) persist between calls; with LCALC false they are reused.
+// KKSUM (:6577-6584) and ST (:6630-6638) are gathered per node over PDLIB_IE_CELL in increasing
+// IE: the Fortran's order of addition. DTMAX/DTMAXOUT (:6588-6596) run on one thread, IP in order.
+// :6592 MIN operand order: vector body min_ss(DTMAX, DTMAXEXP), scalar tail (ITH = NTH, NTH odd)
+// min_ss(DTMAXEXP, DTMAX); both kept. :6594 MINVAL is the GIMPLE's loop, not a MIN_EXPR.
+// Undefined in the Fortran (⚠, not reproducible bit for bit): with LCALC false, CGSIG (:6623,
+// :6679) and, with FLBPI, DTMAXGL (:6651) are never set; DTMAXOUT (:6594) on a rank with no
+// IOBP_LOC = 1 node; with REF1, UOLD (:6643). The C++ keeps CGSIG (ExplWork) and DTMAXGL,
+// DTMAXOUT (ExplCarry) from the last call that set them, and reads UOLD zero-filled.
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <Kokkos_Core.hpp>

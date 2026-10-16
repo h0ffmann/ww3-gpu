@@ -16,6 +16,7 @@
 #include "pdlib_jacobi_spectral.hpp"
 #include "pdlib_jacobi_vec.hpp"
 #include "pdlib_jgs_block.hpp"
+#include "pdlib_w3xypug.hpp"
 #include "prop_map3.hpp"
 #include "prop_mapt.hpp"
 #include "prop_freq_shift.hpp"

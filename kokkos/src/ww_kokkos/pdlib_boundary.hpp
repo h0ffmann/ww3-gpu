@@ -1,44 +1,12 @@
 // kokkos/src/ww_kokkos/pdlib_boundary.hpp
-// APPLY_BOUNDARY_CONDITION, ported to Kokkos: the open-boundary spectra
-// BBPI0/BBPIN, interpolated in time, times CLATS and the dry-node mask, written
-// as action density into VA on the boundary nodes of this rank. Phase 1,
-// translated, not regtested.
-//
-// WW3 heritage: WW3-noaa/model/src/w3profsmd_pdlib.F90:5150-5336 at NOAA-EMC/WW3
-// 03adda91, switch PDLIB (A. Roland, M. Dutour-Sikiric). Its one caller is
-// PDLIB_JACOBI_GAUSS_SEIDEL_BLOCK (:5788), which has already divided VA by CG
-// (:5692-5708), so VA holds action density per node JX = 1..npa here;
-// pdlib_jgs_block.hpp calls it through hooks.apply_boundary_condition().
-//
-// Host side, in the caller: IF (FLBPI), RD10 = DSEC21(TBPI0,TIME) and RD20 =
-// DSEC21(TBPI0,TBPIN) (:5251-5253), both REAL, DSEC21 called in that order on
-// packed copies of the time arrays. The ELSE (RD10=1., RD20=0., :5255-5256) is
-// dead, since the second IF (:5258) also needs FLBPI; the C++ returns at once
-// when b.flbpi is 0.
-//
-// Compile-time variants. The #ifdefs of :5150-5336 are W3_S (STRACE),
-// W3_DEBUGSOLVERCOH, W3_DEBUGSOLVER, W3_DEBUGIOBC and W3_DEBUGSOLVERALL: tracing
-// and diagnostic WRITEs and sums that never feed VA. None is defined by any switch
-// file with PDLIB of regtests/ww3_tp2.17/input*/, regtests/ww3_ufs1.1/input_unstr/
-// or model/bin/switch_NWS_rwps (11 files; 6 add REF1, 1 TRNK, none S or DEBUG*,
-// v, grep -w, 2026-10-16), and none touches the arithmetic. Not ported; no
-// template flag.
-//
-// Arithmetic checked against gfortran 16.2 -O3 GIMPLE and the object of
-// w3profsmd_pdlib.F90 (WW3's CMake flags, switch_PDLIB; the -fdump object equals
-// the CMake one byte for byte, v), all REAL:
-//   :5259-5266  rd20 > 0x1.0624dep-10f (comiss); divss rd10/rd20; maxss(.,0)
-//               then minss(.,1), the computed value the destination both times;
-//               subss 1 - rd2;
-//   :5286-5287  mulss BBPI0*RD1, mulss BBPIN*RD2, addss, mulss CLATS(ISEA), then
-//               mulss by REAL(IOBDP_LOC(JX)) (cvtsi2ss of the INTEGER*1): four
-//               roundings, no FMA.
-//
-// Parallel over ISP, serial over IBI. ISBPI can name one node for two IBI, so
-// VA(ISP,JX) can be written more than once and the last IBI wins. The Fortran
-// walks IBI, then ITH, then IK (ISP = ITH + (IK-1)*NTH covers 1..NSPEC once per
-// IBI); each thread here owns one ISP and walks IBI in order, so every element of
-// VA receives the same sequence of stores. Nothing is reduced, no atomics.
+// APPLY_BOUNDARY_CONDITION: the open-boundary spectra, interpolated in time, written into VA on
+// the boundary nodes of this rank. Phase 1, translated, not regtested.
+// WW3 heritage: WW3-noaa/model/src/w3profsmd_pdlib.F90:5150-5336 at NOAA-EMC/WW3 03adda91;
+// A. Roland, M. Dutour-Sikiric. Evidence: kokkos/port_report/APPLY_BOUNDARY_CONDITION_KOKKOS.md.
+// Called from PDLIB_JACOBI_GAUSS_SEIDEL_BLOCK (:5788) after VA was divided by CG (:5692-5708);
+// the caller computes RD10, RD20 = DSEC21(..) (:5251-5253) only when FLBPI.
+// ISBPI can name one node twice: each thread owns one ISP and walks IBI in order, last wins.
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <Kokkos_Core.hpp>
