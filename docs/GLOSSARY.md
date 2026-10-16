@@ -402,6 +402,10 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | IOBDP_LOC | `INTEGER*1` wet/dry depth flag per local PDLIB node `(v)` `w3gdatmd.F90:761` | The per-process copy of `IOBDP`. | [kokkos/port_report/PDLIB_IOBP_INIT_KOKKOS.md](../kokkos/port_report/PDLIB_IOBP_INIT_KOKKOS.md) |
 | npa / iplg | the number of local plus ghost nodes of a process and the local-to-global node map `(v)` `PDLIB/yownodepool.F90:99`, `:116` | PDLIB's decomposition, read by every per-process loop. | [kokkos/port_report/PDLIB_IOBP_INIT_KOKKOS.md](../kokkos/port_report/PDLIB_IOBP_INIT_KOKKOS.md) |
 | SET_IOBPA_PDLIB | sets `IOBPA_LOC` at active boundary nodes `(v)` `w3profsmd_pdlib.F90:6978-7061`; its header's "Set depth pointer" is copied from `SET_IOBDP_PDLIB` | Called at the end of `PDLIB_IOBP_INIT` and again by `W3INIT` (`w3initmd.F90:924`); a hook of the port. | [kokkos/port_report/PDLIB_IOBP_INIT_KOKKOS.md](../kokkos/port_report/PDLIB_IOBP_INIT_KOKKOS.md) |
+| PDLIB_INIT | "Init pdlib part" `(v)` `w3profsmd_pdlib.F90:143-399` | Calls the PDLIB library to decompose the unstructured mesh, then builds the per-process sea-point maps; the port returns `PDLIB_ABORT`'s istat or a code for gfortran's stops. | [kokkos/port_report/PDLIB_INIT_KOKKOS.md](../kokkos/port_report/PDLIB_INIT_KOKKOS.md) |
+| PDLIB_NSEAL / PDLIB_NSEALM / JX_TO_JSEA / ISEA_TO_JSEA | the local and largest local sea-point counts of PDLIB and its node-to-sea-point maps `(v)` `w3parall.F90:82-83` | Built by `PDLIB_INIT`. | [kokkos/port_report/PDLIB_INIT_KOKKOS.md](../kokkos/port_report/PDLIB_INIT_KOKKOS.md) |
+| COFRM4 / IS0_pdlib / FSGEOADVECT | `REAL COFRM4(:)`, `INTEGER IS0_pdlib(:)` and the geographic-advection flag of `W3PROFSMD_PDLIB` `(v)` `w3profsmd_pdlib.F90:118`, `:124`, `:126` | `PDLIB_INIT` computes `COFRM4` as `COEF4*GRAV/(SIG/TPI)**4` and the `IS0_pdlib` stride table. | [kokkos/port_report/PDLIB_INIT_KOKKOS.md](../kokkos/port_report/PDLIB_INIT_KOKKOS.md) |
+| initFromGridDim / ComputeListNP_ListNPA_ListIPLG | the PDLIB library's mesh decomposition entry and its node-list builder `(v)` `PDLIB/yowpdlibmain.F90:65`, `PDLIB/yowfunction.F90:198` | Under `switch_PDLIB` the partition is SCOTCH's ParMETIS interface (`PDLIB/yowpdlibmain.F90:679`); hooks of the port. | [kokkos/port_report/PDLIB_INIT_KOKKOS.md](../kokkos/port_report/PDLIB_INIT_KOKKOS.md) |
 
 ## HPC and software
 
@@ -741,6 +745,7 @@ Every term above, alphabetically, with the section it lives in.
 - CNPq: [Models, projects and institutions](#models-projects-and-institutions)
 - CNPq / MCTI / Finep: [Models, projects and institutions](#models-projects-and-institutions)
 - coding agent: [HPC and software](#hpc-and-software)
+- COFRM4 / IS0_pdlib / FSGEOADVECT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - comparador por campo: [This repository's own names](#this-repositorys-own-names)
 - comparador por campo / per-field comparator: [This repository's own names](#this-repositorys-own-names)
 - compute capability 8.9: [HPC and software](#hpc-and-software)
@@ -992,6 +997,7 @@ Every term above, alphabetically, with the section it lives in.
 - INFLD / SIG2WN / WND2SAT / TAIL_ID / TAILTYPE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - INFLD: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - INIT_GET_ISEA: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- initFromGridDim / ComputeListNP_ListNPA_ListIPLG: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - INPTAB / W3BETA / BETATB: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - INPTAB: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - INSIN3 / TABU_STRESS / TABU_TAUHF / TAUT / TAUHFT (ST3): [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1064,8 +1070,10 @@ Every term above, alphabetically, with the section it lives in.
 - optionCall: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - PDLIB_ABORT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - PDLIB_FIELD_VEC / DO_OUTPUT_EXCHANGES / GET_ARRAY_SIZE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- PDLIB_INIT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - PDLIB_IOBP_INIT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - PDLIB_NNZ / B_JGS_BLOCK_GAUSS_SEIDEL: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- PDLIB_NSEAL / PDLIB_NSEALM / JX_TO_JSEA / ISEA_TO_JSEA: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - PGMRES: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - `__powisf2`: [This repository's own names](#this-repositorys-own-names)
 - POS_TRICK / ListISPprevDir / ListISPnextDir / ListISPprevFreq / ListISPnextFreq: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
