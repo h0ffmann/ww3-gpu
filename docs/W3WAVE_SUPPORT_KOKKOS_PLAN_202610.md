@@ -1,6 +1,6 @@
 # W3WAVE's per-step support routines on Kokkos (phase 1, translation only)
 
-Status: **four of five translated, stopped on usage**, 2026-10-16, under [ADR-0011](ADRs/ADR-0011-port-in-units-regtest-at-checkpoints.md).
+Status: **four of five translated, merged with the propagation unit**, 2026-10-16, under [ADR-0011](ADRs/ADR-0011-port-in-units-regtest-at-checkpoints.md).
 Issue [#42](https://github.com/h0ffmann/ww3-gpu/issues/42), the port planner.
 
 The owner, 2026-10-16: "Start porting routines with discipline to Kokkos. Without any regtests.
@@ -69,8 +69,9 @@ The ST4, W3SRCE and propagation method:
 | `DISTAB`, `WAVNU2` | `disp_distab.hpp` | same operations and folded constants (v); compiles for CUDA, whose SASS has 87 FFMA not yet traced to CUDA's math library ⚠ | stopped before it reported ⚠ |
 | `W3UTRN` | not committed | translator stopped while writing | none |
 
-What is not done: the reviews of `W3UWND` and `DISTAB`, the translation of `W3UTRN`, the
-`kokkos/ports.tsv` rows with their port reports and `port_score.py --write`, the glossary entries
-(`W3UWND`, `W3DZXY`, `W3UTRN`, `DISTAB`, `WAVNU2`), and the CUDA compile of the three headers other
-than `disp_distab.hpp`. No header is wired into WW3 or included by a CMake target yet. Nothing
-was run: no ctest, no regtest.
+What is not done: the reviews of `W3UWND` and `DISTAB` (stopped on the session's usage limit),
+the translation of `W3UTRN`, and the CUDA compile of the three headers other than
+`disp_distab.hpp`. No header is wired into WW3 or included by a CMake target yet. Nothing
+was run: no ctest, no regtest. Done after the stop, on the combined branch
+(`kimi/42-combined-translation`, 2026-10-16): the `kokkos/ports.tsv` rows with their port
+reports and `port_score.py --write`, and the glossary entries (`W3DZXY`, `WAVNU2`).

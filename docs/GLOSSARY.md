@@ -262,6 +262,7 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | W3IOPOMD / W3IOPO, W3IORSMD / W3IORS, W3IOBCMD / W3IOBC, W3IOTRMD / W3IOTR | point output / restart files / boundary conditions / track output read-write `(v)` | The I/O bucket (`w3io*`) of the profile. | [course/09-benchmark-profile-compile-run.md](../course/09-benchmark-profile-compile-run.md) |
 | W3PARTMD / W3PART | "Spectral partitioning according to the watershed method" / "Interface to watershed partitioning routines" `(v)` | The wind-sea/swell partition behind `PHS`, `PTP`, `PDIR`. | [course/06-output.md](../course/06-output.md) |
 | W3UPDTMD (W3UPDT*): W3UWND / W3UCUR / W3ULEV / W3UICE / W3UINI / W3UTRN | "Bundles all input updating routines": interpolate wind / current / water level / ice map / fetch-limited initial field / cell transparencies `(v)` | Forcing interpolation, cheap but the trigger of host→device copies. | [docs/AGENTS_KOKKOS_202609.md](AGENTS_KOKKOS_202609.md) |
+| W3DZXY | "Calculate derivatives of a field" `(v)` `WW3-noaa/model/src/w3updtmd.F90:3225` | Gradients of a sea-point field on the rectilinear grid by centred differences, mapped by the grid metrics; in `w3updtmd.F90`, called by `W3WAVE`. | [docs/W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md](W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md) |
 | W3GDATMD | "Define data structures to set up wave model grids and aliases to use individual grids transparently" `(v)` | Grid data: `NK`, `NTH`, `NSPEC`, `XFR`, `SIG(0:NK+1)`, `DTH`, the DIA constants `LAM`, `SNLC1`, `KDCON`, `KDMN`, `SNLS1..3`, `FACHFE`, `IQTPE`; the largest source of hidden global state. | [course/12-porting-a-kernel-w3snl1.md](../course/12-porting-a-kernel-w3snl1.md) |
 | IMOD / IGRID | grid index: the argument of `W3INIT` and `W3SETG`, and `W3GDATMD`'s "Selected spatial grid, init. at -1" `(v)` `w3gdatmd.F90:119`, set by `W3SETG` (`:2278`) | `ww3_multi` runs several grids in one process; the Kokkos shim keeps one DIA context per grid, built at `W3INIT` with `IMOD` and selected at `W3SRCE` with `IGRID`. | [kokkos/src/fortran_iface/ww_kokkos_c.hpp](../kokkos/src/fortran_iface/ww_kokkos_c.hpp) |
 | W3NMOD / W3DIMS / W3SETG | "Set up the number of grids to be used" / "Initialize an individual spatial grid at the proper dimensions" / "Select one of the WAVEWATCH III grids / models" `(v)` `w3gdatmd.F90` | The pointer-swap idiom that retargets module-level `SIG`, `NK`, … per grid (`IMOD`). | [docs/KOKKOS_H100_PLAN_202609.md](KOKKOS_H100_PLAN_202609.md) |
@@ -272,7 +273,7 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | W3IDATMD | "wave model input data for several models" `(v)` | Forcing input arrays. | — |
 | CONSTANTS / constants.F90 | "Define some much-used constants for global use (all defined as PARAMETER)" `(v)` | `GRAV`, `PI`, `TPI`, `TPIINV`, `DWAT`, `DAIR`, `RADIUS`, … all default `REAL`. | [course/12-porting-a-kernel-w3snl1.md](../course/12-porting-a-kernel-w3snl1.md) |
 | W3SERVMD / EXTCDE / STRACE | service routines: "Perform a program stop with an exit code" / "Keep track of entered subroutines" `(v)` | `EXTCDE(1)` is the abort the patched caller must issue on a shim error; `STRACE` is the `S`-switch tracer. | [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md) |
-| W3DISPMD / DISTAB / WAVNU1 / WAVNU3 | dispersion-relation routines: fill interpolation tables / "wavenumber and group velocity from the interpolation array" / "from the improved Eckard's formula by Beji (2003)" `(v)` | How WW3 gets `WN` and `CG` from σ and depth. | [docs/KOKKOS_H100_PLAN_202609.md](KOKKOS_H100_PLAN_202609.md) |
+| W3DISPMD / DISTAB / WAVNU1 / WAVNU2 / WAVNU3 | dispersion-relation routines: fill interpolation tables / "wavenumber and group velocity from the interpolation array" / "calculation of wavenumber K from a given angular frequency W and waterdepth H" by Newton on W² = g·k·tanh(k·h) / "from the improved Eckard's formula by Beji (2003)" `(v)` | How WW3 gets `WN` and `CG` from σ and depth. | [docs/KOKKOS_H100_PLAN_202609.md](KOKKOS_H100_PLAN_202609.md) |
 | W3PROFSMD / w3profsmd_pdlib.F90 | "Propagation schemes for unstructured grids using fluctuation splitting" / its PDLIB, implicit version `(v)` | Unstructured propagation, deferred. | [docs/AGENTS_KOKKOS_202609.md](AGENTS_KOKKOS_202609.md) |
 | W3PARALL / W3TRIAMD / W3GSRUMD / W3CSPCMD / W3FLDSMD / W3TIMEMD | parallel routines for the implicit solver / unstructured grid reader / grid search & regrid utilities / spectral-grid conversion / forcing field I/O / time utilities `(v)` | Supporting modules named in the H100 plan's repository map. | [docs/KOKKOS_H100_PLAN_202609.md](KOKKOS_H100_PLAN_202609.md) |
 | wm*md.F90 (WMESMFMD, WMSCRPMD, …) | `ww3_multi` counterparts: ESMF interface module, SCRIP remapping, … `(v)` | Dropped from the port's scope. | [docs/KOKKOS_H100_PLAN_202609.md](KOKKOS_H100_PLAN_202609.md) |
@@ -1269,8 +1270,9 @@ Every term above, alphabetically, with the section it lives in.
 - W3DIMA: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3DIMS: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3DISPMD: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
-- W3DISPMD / DISTAB / WAVNU1 / WAVNU3: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3DISPMD / DISTAB / WAVNU1 / WAVNU2 / WAVNU3: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3DMNL: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3DZXY: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3FLDSMD: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3FLX2: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3FLX2MD: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1387,6 +1389,7 @@ Every term above, alphabetically, with the section it lives in.
 - WAM6-GPU: [Models, projects and institutions](#models-projects-and-institutions)
 - wavespectra: [HPC and software](#hpc-and-software)
 - WAVNU1: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- WAVNU2: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - WAVNU3: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - WCOR: [WW3 switches](#ww3-switches)
 - wind.ww3: [WW3 programs and files](#ww3-programs-and-files)
