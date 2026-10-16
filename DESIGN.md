@@ -31,8 +31,9 @@ because a measured number is evidence, at 30 %, 55 %, 80 % and 100 % for a speed
 under 10x, under 100x and from 100x. A step slower than its baseline is `--muted`, never green,
 and the words say "slower". The speed-up is computed from the report's numbers, never typed.
 Above the steps, the port's global numbers (`site/data/port_score.tsv`, written by
-`scripts/port_score.py`): the share of the run time, of the routines, of the files and of the
-lines of code, and the size of the Kokkos code, each value in the `--code` light. Under each
+`scripts/port_score.py`): for each level, translated, ported (called by WW3 at the pin) and
+regtested, the share of the run time and of the lines of code, and the size of the Kokkos code,
+each value in the `--code` light. Under each
 report's name, its record from `kokkos/ports.tsv`: regtested, a `--proof` chip for "yes" and a
 `--warn` chip for "no" (the googletest column went with the port's own tests, ADR-0010).
 

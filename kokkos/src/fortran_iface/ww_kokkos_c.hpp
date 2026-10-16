@@ -202,4 +202,38 @@ int ww_st4_enabled(int which);
 /// The status of the most recent ww_st4_* or ww_sds4/sin4/spr4 call.
 int ww_st4_last_error(void);
 
+// W3SRCE ------------------------------------------------------------------------
+// The source-term integration of one sea point (W3SRCE(srce_direct, ...)) with
+// every source term it calls on Kokkos: ST4, the DIA, W3SLN1, W3SBT1, W3SDB1.
+// ww_srce_init() needs ww_snl1_init() and ww_st4_commit() done for the grid: the
+// kernel reads their tables. Phase 1: one point per call, copied in and out.
+
+/// Configure grid `igrid`: rpar/ipar at the indices of srce_params.hpp; sig, dden
+/// (nk), ecos, esin, mapwn (nspec), copied. Returns WW_KOKKOS_OK,
+/// NOT_INITIALISED, BAD_SHAPE, or UNSUPPORTED when ipar[I_LAB_SWITCH] is not 1
+/// (a source-term switch the kernel does not translate).
+int ww_srce_init(int igrid, const float* rpar, int nrpar, const int* ipar, int nipar,
+                 const float* sig, const float* dden, const float* ecos, const float* esin,
+                 const int* mapwn);
+
+/// W3SRCE(srce_direct, ...) for one point, the arguments switch_lab_shrd reads,
+/// in the order of the Fortran dummy list. spec (nspec), whitecap (4), taubbl
+/// (2), tauice (2) and every pointer scalar are INOUT; wn1, cg1 (nk) IN;
+/// inflags24, flogrd57, flogrd58 are INFLAGS2(4), FLOGRD(5,7), FLOGRD(5,8) as
+/// 0/1; shave is SHAVEIO as 0/1. Status in ww_srce_last_error().
+void ww_srce(int igrid, int it, int inflags24, int flogrd57, int flogrd58, float* spec,
+             const float* wn1, const float* cg1, float d_inp, float u10abs, float u10dir,
+             float as, float ice, float dtg, float dair, float coef, float* ustar,
+             float* ustdir, float* tauwx, float* tauwy, float* dtdyn, float* fcut,
+             float* tauox, float* tauoy, float* tauwix, float* tauwiy, float* tauwnx,
+             float* tauwny, float* phiaw, float* charn, float* tws, float* phioc,
+             float* whitecap, float* phibbl, float* taubbl, float* tauice, float* phice,
+             float* tauocx, float* tauocy, float* wnmean, int* shave);
+
+/// 1 if WW_KOKKOS_SRCE=1 in the environment, else 0 (the default: the Fortran).
+int ww_srce_enabled(void);
+
+/// The status of the most recent ww_srce_init() or ww_srce() call.
+int ww_srce_last_error(void);
+
 }  // extern "C"

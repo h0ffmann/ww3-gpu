@@ -13,6 +13,7 @@
 //
 
 #include "fortran_iface/ww_kokkos_c.hpp"
+#include "fortran_iface/shim_state.hpp"
 
 #include <Kokkos_Core.hpp>
 
@@ -438,6 +439,14 @@ KOKKOS_INLINE_FUNCTION auto col(const V& v, int ip) {
 }
 
 }  // namespace
+
+bool grid_state(int igrid, Params& p, Fields& f) {
+  const auto it = grids().find(igrid);
+  if (it == grids().end() || !it->second.ready) return false;
+  current(it->second, p, f);
+  return true;
+}
+
 }  // namespace ww::st4
 
 using namespace ww::st4;

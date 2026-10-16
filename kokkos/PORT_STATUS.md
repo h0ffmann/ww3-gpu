@@ -27,26 +27,26 @@ Profile: full (bench_small, 120 x 80, 9 520 sea points, 12 h), Release -pg, swit
 | 1 | `w3snl1md:w3snl1` | 63.53 | 48.4 | 48.4 | L2 |
 | 2 | `w3src4md:w3sds4` | 30.52 | 23.2 | 71.6 | ported |
 | 3 | `w3src4md:w3sin4` | 16.63 | 12.7 | 84.2 | ported |
-| 4 | `w3srcemd:w3srce` | 7.36 | 5.6 | 89.8 | Fortran |
+| 4 | `w3srcemd:w3srce` | 7.36 | 5.6 | 89.8 | ported |
 | 5 | `w3src4md:w3spr4` | 4.10 | 3.1 | 93.0 | ported |
 | 6 | `w3pro3md:w3xyp3` | 3.92 | 3.0 | 95.9 | Fortran |
 | 7 | `w3uqckmd:w3qck3` | 1.50 | 1.1 | 97.1 | Fortran |
 | 8 | `w3uqckmd:w3qck1` | 1.19 | 0.9 | 98.0 | Fortran |
 | 9 | `init` | 0.86 | 0.7 | 98.6 | Fortran |
-| 10 | `w3sdb1md:w3sdb1` | 0.51 | 0.4 | 99.0 | Fortran |
+| 10 | `w3sdb1md:w3sdb1` | 0.51 | 0.4 | 99.0 | ported |
 | 11 | `w3pro3md:w3ktp3` | 0.40 | 0.3 | 99.3 | Fortran |
-| 12 | `w3sbt1md:w3sbt1` | 0.28 | 0.2 | 99.6 | Fortran |
+| 12 | `w3sbt1md:w3sbt1` | 0.28 | 0.2 | 99.6 | ported |
 | 13 | `w3wavemd:w3scat` | 0.21 | 0.2 | 99.7 | Fortran |
-| 14 | `w3sln1md:w3sln1` | 0.17 | 0.1 | 99.8 | Fortran |
+| 14 | `w3sln1md:w3sln1` | 0.17 | 0.1 | 99.8 | ported |
 | 15 | `w3wavemd:w3gath` | 0.15 | 0.1 | 100.0 | Fortran |
 
-| port score | value | what it counts |
-|---|---|---|
-| time | **48.4 %** | the profile's self time in routines that pass the WW3 replay (L2 or gpu) |
-| routines | 10 of 1023 (0.98 %) | ported routines over every SUBROUTINE and FUNCTION in model/src at WW3@03adda91 |
-| files | 2 of 147 (1.36 %) | WW3 .F90 files with a ported routine, over every .F90 file in model/src |
-| lines | 3082 of 263375 (1.17 %) | the ported routines' Fortran lines over model/src's |
-| the port | 4443 lines in 24 files | the C++ under kokkos/src (every .cpp and .hpp line) |
+| level | run time | lines | routines | files | what it counts (WW3@03adda91) |
+|---|---|---|---|---|---|
+| translated | **93.7 %** | 5946 of 263375 (2.26 %) | 14 of 1023 (1.37 %) | 6 of 147 | a Kokkos translation exists in kokkos/src |
+| ported | **48.4 %** | 663 of 263375 (0.25 %) | 2 of 1023 (0.20 %) | 1 of 147 | WW3 at the WW3/ pin calls the Kokkos code, behind its run-time flag |
+| regtested | **48.4 %** | 663 of 263375 (0.25 %) | 2 of 1023 (0.20 %) | 1 of 147 | WW3's regtests ran with it on Kokkos and agreed with the Fortran |
+
+The port itself: 5825 lines in 32 files, the C++ under kokkos/src (every .cpp and .hpp line).
 
 On a GPU: none yet. The CUDA build links; the RTX 4090 run, `just smoke-ww3-gpu gpu`, is the owner's, supervised.
 <!-- port-score:end -->

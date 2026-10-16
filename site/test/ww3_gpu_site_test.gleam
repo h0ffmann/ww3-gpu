@@ -135,7 +135,11 @@ pub fn a_slower_step_is_never_green_test() {
 
 pub fn the_global_numbers_and_each_record_are_on_the_page_test() {
   let page = html()
-  assert list.length(content.stats) == 5
+  // Translated, ported, regtested: each of the run time and of the lines, then the C++ size.
+  assert list.length(content.stats) == 7
+  assert list.any(content.stats, fn(s) {
+    s.name == "of the run time, regtested"
+  })
   list.each(content.stats, fn(s) {
     assert string.contains(page, s.name)
     assert string.contains(page, ">" <> s.share <> "<")
