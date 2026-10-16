@@ -20,7 +20,7 @@ Top MCP Servers:
 
 ### Codebases
 - [ ] ww3-gpu: https://github.com/h0ffmann/ww3-gpu (this repository; clone with `--recurse-submodules`)
-- [ ] h0ffmann/WW3, branch `hoff/kokkos-snl1`: https://github.com/h0ffmann/WW3 (submodule `WW3/`, read-only from here)
+- [ ] h0ffmann/WW3, branch `ww3-gpu/kokkos-st4`: https://github.com/h0ffmann/WW3 (submodule `WW3/`, read-only from here)
 - [ ] picasso (formerly nix-config), `labs/pratico`: https://github.com/h0ffmann/picasso (submodule `picasso/`, the pinned toolchain)
 
 ### MCP Servers to Activate
@@ -123,7 +123,7 @@ set of flags. So everything that can change a bit is pinned:
 | Compilers, MPI, NetCDF, Kokkos, CMake | one nixpkgs revision in picasso `labs/pratico/flake.lock` |
 | PT-Scotch, METIS/ParMETIS (PDLIB) | picasso packages `ptscotch-static`, `ww3-metis` |
 | WW3 regtest input data | picasso `ww3-regtest-data`, a fixed-output derivation with NOAA's SHA-256 |
-| WW3 source and the caller patch | the `WW3/` submodule commit (fork branch `hoff/kokkos-snl1`) |
+| WW3 source and the caller patch | the `WW3/` submodule commit (fork branch `ww3-gpu/kokkos-st4`) |
 | Build flags | WW3's CMake; contraction off in `kokkos/` presets |
 | Stale builds | every build directory records its toolchain and rebuilds when it changes |
 

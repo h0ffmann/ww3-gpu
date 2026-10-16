@@ -2,7 +2,7 @@
 # The boundary between WAVEWATCH III and the Kokkos kernels: the C ABI
 # (ww_kokkos_c.hpp + snl1_shim.cpp) here, and the Fortran module that binds it
 # (w3kokkosmd.F90), which lives in WW3 itself: the h0ffmann/WW3 branch
-# hoff/kokkos-snl1, at the commit the WW3/ submodule pins. This repository keeps
+# ww3-gpu/kokkos-st4, at the commit the WW3/ submodule pins. This repository keeps
 # no WW3 Fortran; this build compiles the module from WW3/model/src.
 #
 # The C++ half goes into ww_kokkos itself, so it is always built; the benchmark
@@ -20,14 +20,14 @@ target_sources(ww_kokkos PRIVATE
     srce_shim.cpp)
 
 set(WW_W3KOKKOSMD "${CMAKE_CURRENT_SOURCE_DIR}/../../../WW3/model/src/w3kokkosmd.F90"
-    CACHE FILEPATH "WW3's w3kokkosmd.F90 (the WW3/ submodule, branch hoff/kokkos-snl1)")
+    CACHE FILEPATH "WW3's w3kokkosmd.F90 (the WW3/ submodule, branch ww3-gpu/kokkos-st4)")
 
 if(WW_ENABLE_FORTRAN)
   # Loud, not skipped: a missing module means the WW3/ pin and this C ABI can drift
   # apart unseen.
   if(NOT EXISTS "${WW_W3KOKKOSMD}")
     message(FATAL_ERROR "No ${WW_W3KOKKOSMD}: run `git submodule update --init WW3` "
-        "(the hoff/kokkos-snl1 branch of h0ffmann/WW3), or set WW_W3KOKKOSMD, "
+        "(the ww3-gpu/kokkos-st4 branch of h0ffmann/WW3), or set WW_W3KOKKOSMD, "
         "or configure with -DWW_ENABLE_FORTRAN=OFF")
   endif()
   # A separate target, not sources of ww_kokkos: WW3 compiles the module in its own

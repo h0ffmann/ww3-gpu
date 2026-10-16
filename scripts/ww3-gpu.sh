@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
 # ww3-gpu — run WAVEWATCH three ways. WW3's Fortran comes from two submodules: WW3-noaa/ is pure
 # NOAA-EMC/WW3 at the commit the fork branched from, and WW3/ is the fork (the h0ffmann/WW3 branch
-# hoff/kokkos-snl1: WW3-noaa plus the KOKKOS switch and the shim call). WW4's C++ comes only from
+# ww3-gpu/kokkos-st4: WW3-noaa plus the KOKKOS switch and the shim calls). WW4's C++ comes only from
 # the WW4/ submodule (h0ffmann/WW4, develop); this repository holds the Kokkos port and nothing of
 # either model's source:
 #
 #   --ww3    WW3 as NOAA writes it, built from WW3-noaa/: the lab switch, the Fortran W3SNL1.
 #   --ww3-gpu   WW3 from the fork, built with the KOKKOS switch and linked to this repository's Kokkos port
-#            (kokkos/, installed as the ww_kokkos package); W3SNL1 runs on the Kokkos backend.
+#            (kokkos/, installed as the ww_kokkos package); the routines of WW3GPU_ROUTINES run on
+#            the Kokkos backend.
 #   --ww4    WAVEWATCH IV, built from the WW4/ submodule. It runs only when every part the case
 #            needs is ported to WW4 (scripts/ww4_parts.py): if one is not, it exits 5 and says
 #            which, before building anything.
@@ -36,11 +37,14 @@
 #   smoke  regtest ww3_ts1 (one point, ST4 + NL1, NK=36 NTH=24, 10 model days; seconds on a CPU)
 #   full   kokkos/tests/fixtures/bench_small (120 x 80, 9 520 sea points, NK=24 NTH=24, 12 hours)
 #
-# --ww3-gpu runs the case twice with the same executable, WW_KOKKOS_SNL1=0 (the Fortran DIA) and
-# WW_KOKKOS_SNL1=1 (the Kokkos DIA), and compares the gridded output with nccmp-tol: the L2
-# replay of kokkos/PORT_STATUS.md. It fails when a judged field fails or "Kokkos DIA (W3SNL1)
-# enabled." is missing from the second run's log. --ww3 runs the case once and fails when
-# ww3_shel does not reach "End of program".
+# --ww3-gpu runs the case twice with the same executable, every WW_KOKKOS_<R>=0 (the Fortran) and
+# WW_KOKKOS_<R>=1 for each routine R of WW3GPU_ROUTINES (the Kokkos), and compares the gridded
+# output with nccmp-tol: the L2 replay of kokkos/PORT_STATUS.md. WW3GPU_ROUTINES is a space- or
+# comma-separated subset of SNL1 SDS4 SIN4 SPR4, SNL1 by default; ADR-0011's ST4 checkpoint turns
+# one routine on at a time, then all. It fails when a judged field fails or the second run's log
+# lacks the line WW3's W3INIT writes for a selected routine ("Kokkos DIA (W3SNL1) enabled.",
+# "Kokkos ST4 (W3SDS4 W3SIN4 W3SPR4) enabled: SDS4=T ..."). --ww3 runs the case once and fails
+# when ww3_shel does not reach "End of program".
 #
 # --cpu is Kokkos' OpenMP backend, --gpu its CUDA backend. The script enters the pinned toolchain
 # itself (picasso/labs/pratico: #ww3, or #cuda for --gpu).
@@ -88,6 +92,8 @@ if [ "$mode" = self-test ]; then
     "${BASH_SOURCE[0]}" $bad </dev/null >/dev/null 2>&1 && rc=0 || rc=$?
     [ "$rc" = 64 ] || { echo "ww3-gpu: '$bad' gave exit $rc, not 64" >&2; exit 1; }
   done
+  WW3GPU_ROUTINES=SDS4,BOGUS "${BASH_SOURCE[0]}" --ww3-gpu smoke </dev/null >/dev/null 2>&1 && rc=0 || rc=$?
+  [ "$rc" = 64 ] || { echo "ww3-gpu: WW3GPU_ROUTINES=SDS4,BOGUS gave exit $rc, not 64" >&2; exit 1; }
   # Without a terminal --ww3-gpu --gpu never runs: 7 (no supervisor) or 4 (no driver), before any
   # build; with prebuilt programs (the Docker image, CPU only) it is refused outright, 64.
   "${BASH_SOURCE[0]}" --ww3-gpu smoke --gpu </dev/null >/dev/null 2>&1 && rc=0 || rc=$?
@@ -97,6 +103,12 @@ if [ "$mode" = self-test ]; then
   exit 0
 fi
 [ -n "$mode" ] && [ -n "$case_name" ] || usage
+all_routines=(SNL1 SDS4 SIN4 SPR4)
+IFS=', ' read -r -a routines <<<"${WW3GPU_ROUTINES:-SNL1}"
+[ "${#routines[@]}" -gt 0 ] || { echo "ww3-gpu: WW3GPU_ROUTINES is empty" >&2; exit 64; }
+for r in "${routines[@]}"; do
+  [[ " ${all_routines[*]} " == *" $r "* ]] || { echo "ww3-gpu: WW3GPU_ROUTINES: '$r' is not one of ${all_routines[*]}" >&2; exit 64; }
+done
 
 # gpu_doctor: a machine with an NVIDIA GPU whose driver does not answer is a fault to fix, not a
 # reason to fall back to the CPU. The usual cause on Ubuntu: a new kernel was booted and the
@@ -244,8 +256,8 @@ else
     fi
   fi
   if [ "$mode" = ww3-gpu ] && [ ! -f "$ww3/model/src/w3kokkosmd.F90" ]; then
-    echo "ww3-gpu: WW3/ is not the hoff/kokkos-snl1 branch of h0ffmann/WW3 (no model/src/w3kokkosmd.F90):" >&2
-    echo "      git -C WW3 fetch origin hoff/kokkos-snl1 && git -C WW3 switch hoff/kokkos-snl1" >&2
+    echo "ww3-gpu: WW3/ is not the ww3-gpu/kokkos-st4 branch of h0ffmann/WW3 (no model/src/w3kokkosmd.F90):" >&2
+    echo "      git -C WW3 fetch origin ww3-gpu/kokkos-st4 && git -C WW3 switch ww3-gpu/kokkos-st4" >&2
     exit 3
   fi
   jobs="${JOBS:-$(nproc)}"
@@ -321,15 +333,20 @@ prepare() { # <dir>: copy the case's inputs into <dir> and make their paths loca
     sed -i "s#^  DATE%FIELD = .*#  DATE%FIELD = '20200101 000000' '3600' '20200101 120000'#" "$d/ww3_shel.nml"
   fi
 }
-run_model() { # <dir> <WW_KOKKOS_SNL1>: grid, strt, shel, ounf; prints ww3_shel's wall time
+run_model() { # <dir> <0|1>: grid, strt, shel, ounf; prints ww3_shel's wall time
   # Called inside $(...): every diagnostic goes to stderr, or it would vanish into the variable.
-  local d="$1" k="$2" t0 t1
+  # <1> sets WW_KOKKOS_<R>=1 for each routine of WW3GPU_ROUTINES; every other flag is 0.
+  local d="$1" k="$2" t0 t1 r
+  local -a flags=()
+  for r in "${all_routines[@]}"; do
+    if [ "$k" = 1 ] && [[ " ${routines[*]} " == *" $r "* ]]; then flags+=("WW_KOKKOS_$r=1"); else flags+=("WW_KOKKOS_$r=0"); fi
+  done
   (cd "$d" && "$bin/ww3_grid" > ww3_grid.out 2>&1) || { tail -20 "$d/ww3_grid.out" >&2; return 1; }
   if [ -f "$d/ww3_strt.inp" ] || [ -f "$d/ww3_strt.nml" ]; then
     (cd "$d" && "$bin/ww3_strt" > ww3_strt.out 2>&1) || { tail -20 "$d/ww3_strt.out" >&2; return 1; }
   fi
   t0="$(date +%s.%N)"
-  (cd "$d" && OMP_PROC_BIND="${OMP_PROC_BIND:-false}" WW_KOKKOS_SNL1="$k" "$bin/ww3_shel" > ww3_shel.out 2>&1) \
+  (cd "$d" && env OMP_PROC_BIND="${OMP_PROC_BIND:-false}" "${flags[@]}" "$bin/ww3_shel" > ww3_shel.out 2>&1) \
     || { grep -h "ww_kokkos:\|Kokkos::" "$d/ww3_shel.out" >&2; tail -20 "$d/ww3_shel.out" >&2; return 1; }
   t1="$(date +%s.%N)"
   grep -q "End of program" "$d/ww3_shel.out" || { echo "ww3-gpu: ww3_shel did not finish in $d" >&2; return 1; }
@@ -352,12 +369,16 @@ d1="$runs/ww3-gpu-$case_name-$backend/kokkos"
 prepare "$d0"; prepare "$d1"
 w0="$(run_model "$d0" 0)"
 w1="$(run_model "$d1" 1)"
-grep -q "Kokkos DIA (W3SNL1) enabled" "$d1/log.ww3" \
-  || { echo "ww3-gpu: the Kokkos run did not enable the Kokkos DIA (see $d1/log.ww3)" >&2; exit 1; }
+for r in "${routines[@]}"; do
+  if [ "$r" = SNL1 ]; then re="Kokkos DIA \(W3SNL1\) enabled"; else re="Kokkos ST4 \(W3SDS4 W3SIN4 W3SPR4\) enabled:.* $r=T"; fi
+  grep -qE "$re" "$d1/log.ww3" \
+    || { echo "ww3-gpu: the Kokkos run did not enable W3$r (no '$re' in $d1/log.ww3)" >&2; exit 1; }
+done
+kname="Kokkos ${routines[*]}"
 nc0="$(cd "$d0" && find . -maxdepth 1 -name 'ww3.*.nc' -printf '%f\n' | sort | head -1)"
-echo ">> --ww3-gpu $case_name ($backend): ww3_shel ${w0} s with the Fortran DIA, ${w1} s with the Kokkos DIA"
+echo ">> --ww3-gpu $case_name ($backend): ww3_shel ${w0} s with the Fortran, ${w1} s with $kname"
 if cmp -s "$d0/$nc0" "$d1/$nc0"; then echo ">> the two outputs are byte-identical"; fi
-echo ">> the Kokkos DIA against the Fortran DIA, same executable:"
+echo ">> $kname against the Fortran, same executable:"
 "$nccmp" "$d0/$nc0" "$d1/$nc0" "${tols[@]}"
 # --ww3-gpu --cpu is the agents' regtest: pair to pair with --ww3, pure NOAA WW3 (WW3-noaa/) at
 # the fork's base, without the KOKKOS switch.
@@ -365,6 +386,6 @@ if [ "$device" = cpu ]; then
   bash "${BASH_SOURCE[0]}" --ww3 "$case_name" --cpu
   ref="$runs/ww3-$case_name/$nc0"
   [ -f "$ref" ] || { echo "ww3-gpu: the --ww3 run wrote no $nc0" >&2; exit 1; }
-  echo ">> the Kokkos DIA against --ww3 (pure NOAA WW3, WW3-noaa/), pair to pair:"
+  echo ">> $kname against --ww3 (pure NOAA WW3, WW3-noaa/), pair to pair:"
   "$nccmp" "$ref" "$d1/$nc0" "${tols[@]}"
 fi

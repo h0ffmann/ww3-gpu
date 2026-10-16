@@ -297,7 +297,7 @@ submódulos, e este repositório guarda só a reescrita em Kokkos:
 | Diretório | O que é | Usado por |
 |---|---|---|
 | `WW3-noaa/` | o WW3 puro: [NOAA-EMC/WW3](https://github.com/NOAA-EMC/WW3) em `03adda91`, sem mudança | `--ww3`, a referência |
-| `WW3/` | o seu fork, [h0ffmann/WW3](https://github.com/h0ffmann/WW3) branch `hoff/kokkos-snl1`: `WW3-noaa/` mais o patch KOKKOS, 5 arquivos em `model/src/` e 282 linhas acrescentadas | `--ww3-gpu` e a matriz de regtests |
+| `WW3/` | o seu fork, [h0ffmann/WW3](https://github.com/h0ffmann/WW3) branch `ww3-gpu/kokkos-st4`: `WW3-noaa/` mais o patch KOKKOS, 5 arquivos em `model/src/` e 813 linhas acrescentadas | `--ww3-gpu` e a matriz de regtests |
 | `WW4/` | [h0ffmann/WW4](https://github.com/h0ffmann/WW4), `develop` | `--ww4` |
 
 O fork existe por um motivo só: a chamada do WW3 para o código em Kokkos precisa estar dentro do

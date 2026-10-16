@@ -56,7 +56,9 @@ case "$cmd" in
       --build-arg "WW4_REV=$(rev "$root/WW4")" "$root" ;;
   run)
     # As the caller's uid, so the runs on the host belong to whoever started them.
+    # WW3GPU_ROUTINES picks the Kokkos routines of --ww3-gpu (scripts/ww3-gpu.sh), SNL1 by default.
     [ -n "$dry" ] || mkdir -p "$root/build/docker-runs"
-    do_or_say docker run --rm --user "$(id -u):$(id -g)" -v "$root/build/docker-runs:/work/runs" "$image" "$@" ;;
+    do_or_say docker run --rm --user "$(id -u):$(id -g)" -e "WW3GPU_ROUTINES=${WW3GPU_ROUTINES:-SNL1}" \
+      -v "$root/build/docker-runs:/work/runs" "$image" "$@" ;;
   *) echo "docker: unknown command: $cmd" >&2; usage ;;
 esac

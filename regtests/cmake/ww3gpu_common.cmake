@@ -48,12 +48,42 @@ function(ww3gpu_has_word out file alt)
   endif()
 endfunction()
 
-# ww3gpu_select_entries(<prefix> <matrix.base> <regtests dir> <serial|omp|mpi|all>): every kept
-# entry, in order, as two parallel lists <prefix>_TESTS and <prefix>_OPTS (the entry's options,
-# $ww3 and the test dropped, space-joined). Every entry whose switch has NL1 is in exactly one of
-# serial (none of MPI, OMPG, OMPH), omp (OMPG or OMPH, no MPI) and mpi (MPI); all is the three.
-# A line whose switch file is missing is dropped.
+# ww3gpu_routine_word(<out> <routine>): the physics switch a routine of WW3GPU_ROUTINES needs,
+# NL1 for SNL1 and ST4 for SDS4, SIN4 and SPR4; empty for any other name.
+function(ww3gpu_routine_word out r)
+  if(r STREQUAL "SNL1")
+    set(${out} NL1 PARENT_SCOPE)
+  elseif(r MATCHES "^(SDS4|SIN4|SPR4)$")
+    set(${out} ST4 PARENT_SCOPE)
+  else()
+    set(${out} "" PARENT_SCOPE)
+  endif()
+endfunction()
+
+# ww3gpu_physics(<out> <routines>): the physics switches of a routine list, sorted, no duplicate.
+function(ww3gpu_physics out)
+  set(w "")
+  foreach(r IN LISTS ARGN)
+    ww3gpu_routine_word(x "${r}")
+    list(APPEND w ${x})
+  endforeach()
+  list(REMOVE_DUPLICATES w)
+  list(SORT w)
+  set(${out} "${w}" PARENT_SCOPE)
+endfunction()
+
+# ww3gpu_select_entries(<prefix> <matrix.base> <regtests dir> <serial|omp|mpi|all> [<physics>]):
+# every kept entry, in order, as two parallel lists <prefix>_TESTS and <prefix>_OPTS (the entry's
+# options, $ww3 and the test dropped, space-joined). <physics> is a list of switch words, NL1 by
+# default; every entry whose switch has one of them is in exactly one of serial (none of MPI,
+# OMPG, OMPH), omp (OMPG or OMPH, no MPI) and mpi (MPI); all is the three. A line whose switch
+# file is missing is dropped.
 function(ww3gpu_select_entries prefix base rt kind)
+  set(phys "${ARGV4}")
+  if(phys STREQUAL "")
+    set(phys NL1)
+  endif()
+  list(JOIN phys "|" phys)
   file(STRINGS "${base}" lines REGEX "echo \"\\$rtst .*\" *>> *matrix\\.body")
   set(tests "")
   set(optl "")
@@ -85,7 +115,7 @@ function(ww3gpu_select_entries prefix base rt kind)
     if(NOT EXISTS "${f}" OR IS_DIRECTORY "${f}")
       continue()
     endif()
-    ww3gpu_has_word(nl1 "${f}" "NL1")
+    ww3gpu_has_word(nl1 "${f}" "${phys}")
     ww3gpu_has_word(mpi "${f}" "MPI")
     ww3gpu_has_word(omp "${f}" "OMPG|OMPH")
     if(NOT nl1)
@@ -109,16 +139,22 @@ function(ww3gpu_select_entries prefix base rt kind)
   set(${prefix}_OPTS "${optl}" PARENT_SCOPE)
 endfunction()
 
-# ww3gpu_sel_desc(<out> <serial|omp|mpi|all>): the selection rule, for the record's header.
+# ww3gpu_sel_desc(<out> <serial|omp|mpi|all> [<physics>]): the selection rule, for the record's
+# header; <physics> as in ww3gpu_select_entries, NL1 by default.
 function(ww3gpu_sel_desc out kind)
+  set(w "${ARGV2}")
+  if(w STREQUAL "")
+    set(w NL1)
+  endif()
+  list(JOIN w " or " w)
   if(kind STREQUAL "omp")
-    set(${out} "switch with NL1 and OMPG or OMPH, no MPI; $np = WW3GPU_OMP_THREADS" PARENT_SCOPE)
+    set(${out} "switch with ${w} and OMPG or OMPH, no MPI; $np = WW3GPU_OMP_THREADS" PARENT_SCOPE)
   elseif(kind STREQUAL "mpi")
-    set(${out} "switch with NL1 and MPI; $mpi = mpirun, $np = $nr = WW3GPU_MPI_RANKS, $nth = WW3GPU_OMP_THREADS" PARENT_SCOPE)
+    set(${out} "switch with ${w} and MPI; $mpi = mpirun, $np = $nr = WW3GPU_MPI_RANKS, $nth = WW3GPU_OMP_THREADS" PARENT_SCOPE)
   elseif(kind STREQUAL "all")
-    set(${out} "every entry whose switch has NL1" PARENT_SCOPE)
+    set(${out} "every entry whose switch has ${w}" PARENT_SCOPE)
   else()
-    set(${out} "switch with NL1, none of MPI, OMPG, OMPH" PARENT_SCOPE)
+    set(${out} "switch with ${w}, none of MPI, OMPG, OMPH" PARENT_SCOPE)
   endif()
 endfunction()
 
@@ -184,10 +220,11 @@ endfunction()
 
 # ww3gpu_row_verdict(<out> <row> <strict>): the failures of one summary row, empty when it passes.
 # A failure: nccmp-tol FAIL or MISSING; either run did not finish, so nothing was compared; the
-# Kokkos run without "Kokkos DIA (W3SNL1) enabled."; under <strict>, a file test.comp found
+# Kokkos run without the W3INIT log line of a selected routine its switch builds ("Kokkos DIA
+# (W3SNL1) enabled.", "Kokkos ST4 (...) enabled: ... SDS4=T"); under <strict>, a file test.comp found
 # different Fortran/Kokkos and identical Fortran/Fortran (run_entry.cmake). A row whose Kokkos
-# run computed no spectrum (kokkos_spectra 0: the grid calls GQM, IQTYPE <= 0) passes, and the
-# record says it did not exercise the port.
+# run computed no spectrum (kokkos_spectra 0, or <R>:0 for a routine: the grid calls GQM,
+# IQTYPE <= 0) passes, and the record says it did not exercise that routine.
 function(ww3gpu_row_verdict out row strict)
   string(REPLACE "\t" ";" c "${row}")
   list(GET c 4 ran)
@@ -206,7 +243,7 @@ function(ww3gpu_row_verdict out row strict)
     list(APPEND why "neither run finished")
   endif()
   if(ran STREQUAL "yes" AND NOT klog STREQUAL "yes")
-    list(APPEND why "no 'Kokkos DIA (W3SNL1) enabled.' in the Kokkos run")
+    list(APPEND why "no Kokkos log line of a selected routine in the Kokkos run")
   endif()
   if(strict AND tc MATCHES "^([0-9]+)/" AND NOT CMAKE_MATCH_1 EQUAL 0)
     list(APPEND why "test.comp: ${tc} files differ (WW3GPU_STRICT)")

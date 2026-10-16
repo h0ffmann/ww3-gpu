@@ -10,7 +10,7 @@
 | **Effort** | M: one shell script and one recipe; no kernel, no Fortran, no WW3 edit; most of the work is the first full run and reading its failures |
 | **Gain** | `proposal` (D4: WW3's own comparison, `test.comp`, beside the lab's comparator; D5: the Kokkos DIA validated against the Fortran on 100 WW3 configurations instead of 1); `lab/dev-loop` (every later port reuses the matrix) |
 | **Effort vs Gain** | do next: L2 rests on one regtest today, and the next port (`W3SDS4`, row 1 of `kokkos/PORT_RANKING.md`, #118) would inherit the same thin check |
-| **Depends on** | the `hoff/kokkos-snl1` branch of h0ffmann/WW3 at the pin; the owner's workstation for the full run (CPU only); nothing from other WFIPs |
+| **Depends on** | the `ww3-gpu/kokkos-st4` branch of h0ffmann/WW3 at the pin; the owner's workstation for the full run (CPU only); nothing from other WFIPs |
 | **Blocked by** | none |
 | **Risk** | `run_cmake_test` rebuilds WW3 for every entry, so 100 entries take hours, and a failure at that scale is hard to read; the selection is the lever (§11) |
 

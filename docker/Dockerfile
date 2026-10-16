@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 # A runtime image for WAVEWATCH III three ways (scripts/ww3-gpu.sh): --ww3 (pure NOAA WW3, from
-# WW3-noaa/), --ww3-gpu (the fork WW3/ with the Kokkos DIA, OpenMP backend) and --ww4 (WAVEWATCH IV). Ubuntu packages only, no
+# WW3-noaa/), --ww3-gpu (the fork WW3/ with the Kokkos port, W3SNL1 and ST4, OpenMP backend) and --ww4 (WAVEWATCH IV). Ubuntu packages only, no
 # Nix: the build stage compiles everything, and the final image keeps the programs, their
 # runtime libraries and the case inputs, not the sources. CPU only; there is no CUDA build here.
 #
@@ -8,7 +8,7 @@
 #   just dsmoke-ww3-gpu                   # scripts/ww3-gpu.sh --ww3-gpu smoke inside the image
 #
 # Bit for bit is judged inside one executable (AGENTS.md): --ww3-gpu runs the Fortran and the Kokkos
-# DIA of the same program here, so the verdict holds for this image's compiler too. Its numbers
+# routines of the same program here, so the verdict holds for this image's compiler too. Its numbers
 # are not the Nix toolchain's numbers: gfortran differs (Ubuntu's 15.2 against Nix's 16.2).
 
 # Ubuntu 26.04 LTS, by digest (2026-10-15): the same base for every stage, so the runtime has
@@ -108,7 +108,7 @@ RUN find "$P" -type f -perm -u+x -exec ldd {} + 2>/dev/null \
 ARG WW3_GPU_REV=?
 ARG WW3_REV=?
 ARG WW3_NOAA_REV=?
-RUN { echo "ww3-gpu ${WW3_GPU_REV}"; echo "WW3 ${WW3_REV} (h0ffmann/WW3 hoff/kokkos-snl1)"; \
+RUN { echo "ww3-gpu ${WW3_GPU_REV}"; echo "WW3 ${WW3_REV} (h0ffmann/WW3 ww3-gpu/kokkos-st4)"; \
       echo "WW3-noaa ${WW3_NOAA_REV} (NOAA-EMC/WW3)"; \
       echo "WW4 ${WW4_REV}"; echo "kokkos ${KOKKOS_VERSION}"; gfortran --version | head -1; \
       cmake --version | head -1; } > /opt/ww3-gpu/BUILD_INFO

@@ -43,7 +43,7 @@ Profile: full (bench_small, 120 x 80, 9 520 sea points, 12 h), Release -pg, swit
 | level | run time | lines | routines | files | what it counts (WW3@03adda91) |
 |---|---|---|---|---|---|
 | translated | **93.7 %** | 5946 of 263375 (2.26 %) | 14 of 1023 (1.37 %) | 6 of 147 | a Kokkos translation exists in kokkos/src |
-| ported | **48.4 %** | 663 of 263375 (0.25 %) | 2 of 1023 (0.20 %) | 1 of 147 | WW3 at the WW3/ pin calls the Kokkos code, behind its run-time flag |
+| ported | **87.4 %** | 3082 of 263375 (1.17 %) | 10 of 1023 (0.98 %) | 2 of 147 | WW3 at the WW3/ pin calls the Kokkos code, behind its run-time flag |
 | regtested | **48.4 %** | 663 of 263375 (0.25 %) | 2 of 1023 (0.20 %) | 1 of 147 | WW3's regtests ran with it on Kokkos and agreed with the Fortran |
 
 The port itself: 5825 lines in 32 files, the C++ under kokkos/src (every .cpp and .hpp line).
@@ -193,7 +193,7 @@ itself stays as the benchmark's frozen input
 runs WW3 from one executable with `WW_KOKKOS_SNL1` flipped, compares the NetCDF
 output field by field with `kokkos/tools/nccmp-tol`, then compares the Kokkos run
 pair to pair with `--ww3` (WW3 built without the KOKKOS switch). The caller patch
-lives on the h0ffmann/WW3 branch `hoff/kokkos-snl1` (`src/fortran_iface/PATCH.md`);
+lives on the h0ffmann/WW3 branch `ww3-gpu/kokkos-st4` (`src/fortran_iface/PATCH.md`);
 nothing in this repository modifies `WW3/`. The WW3 regtest matrix of WFIP-0003
 (`just ww3-gpu-matrix`, CTest in `regtests/` since 2026-10-15) extends the replay to WW3's own
 regtests: byte-identical on the 100 serial and the 25 shared-memory OpenMP `NL1` entries (v,
