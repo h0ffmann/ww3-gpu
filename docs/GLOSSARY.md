@@ -408,6 +408,8 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | initFromGridDim / ComputeListNP_ListNPA_ListIPLG | the PDLIB library's mesh decomposition entry and its node-list builder `(v)` `PDLIB/yowpdlibmain.F90:65`, `PDLIB/yowfunction.F90:198` | Under `switch_PDLIB` the partition is SCOTCH's ParMETIS interface (`PDLIB/yowpdlibmain.F90:679`); hooks of the port. | [kokkos/port_report/PDLIB_INIT_KOKKOS.md](../kokkos/port_report/PDLIB_INIT_KOKKOS.md) |
 | SET_IOBDP_PDLIB | "Set depth pointer" `(v)` `w3profsmd_pdlib.F90:6890`: sets `IOBDP_LOC` to 1 at local nodes whose depth `DW` reaches `DMIN` plus `10E-6`, compared in double | Called by `W3INIT` (`w3initmd.F90:1456-1460`) and `W3ULEV` (`w3updtmd.F90:2579-2581`); it indexes `DW` by global node, which assumes every mesh node is a sea point. | [kokkos/port_report/SET_IOBDP_PDLIB_KOKKOS.md](../kokkos/port_report/SET_IOBDP_PDLIB_KOKKOS.md) |
 | PDLIB_W3XYPUG_BLOCK_IMPLICIT | the driver of PDLIB's block-implicit propagation `(v)` `w3profsmd_pdlib.F90:2742-2813` | Calls `PDLIB_JACOBI_GAUSS_SEIDEL_BLOCK` under `B_JGS_USE_JACOBI`, otherwise writes a message and stops; `W3WAVE` passes it `FACX` twice (`w3wavemd.F90:1922`). | [kokkos/port_report/PDLIB_W3XYPUG_BLOCK_IMPLICIT_KOKKOS.md](../kokkos/port_report/PDLIB_W3XYPUG_BLOCK_IMPLICIT_KOKKOS.md) |
+| PDLIB_MAPSTA_INIT | "Init mapsta part for pdlib" `(v)` `w3profsmd_pdlib.F90:401-512` | Builds each process's status map `MAPSTA_LOC` and the list `INDEX_MAP` of its nodes with `MAPSTA < 1`; called by `W3INIT` (`w3initmd.F90:1127`); the port returns `PDLIB_ABORT`'s istat (5, 6). | [kokkos/port_report/PDLIB_MAPSTA_INIT_KOKKOS.md](../kokkos/port_report/PDLIB_MAPSTA_INIT_KOKKOS.md) |
+| MAPSTA_LOC / INDEX_MAP / NBND_MAP / MAPSTA_HACK | the per-process copy of `MAPSTA(1,:)`, the local indices of its nodes with `MAPSTA < 1`, their count, and the switch that would use them `(v)` `w3gdatmd.F90:756-758`, `w3profsmd_pdlib.F90:113` | `MAPSTA_HACK` is `.FALSE.` and never assigned, so only `NBND_MAP` is read at the pin: it sizes `AC_MAP` in `PDLIB_W3XYPUG` (`:731`). | [kokkos/port_report/PDLIB_MAPSTA_INIT_KOKKOS.md](../kokkos/port_report/PDLIB_MAPSTA_INIT_KOKKOS.md) |
 
 ## HPC and software
 
@@ -1054,6 +1056,7 @@ Every term above, alphabetically, with the section it lives in.
 - LUTSOL: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - MAPSMC: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - MAPST2 / MAPWN: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- MAPSTA_LOC / INDEX_MAP / NBND_MAP / MAPSTA_HACK: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - MAPSTA_SMC: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - MSC: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - MSR: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1074,6 +1077,7 @@ Every term above, alphabetically, with the section it lives in.
 - PDLIB_FIELD_VEC / DO_OUTPUT_EXCHANGES / GET_ARRAY_SIZE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - PDLIB_INIT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - PDLIB_IOBP_INIT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- PDLIB_MAPSTA_INIT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - PDLIB_NNZ / B_JGS_BLOCK_GAUSS_SEIDEL: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - PDLIB_NSEAL / PDLIB_NSEALM / JX_TO_JSEA / ISEA_TO_JSEA: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - PDLIB_W3XYPUG_BLOCK_IMPLICIT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
