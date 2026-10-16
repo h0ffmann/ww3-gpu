@@ -55,6 +55,7 @@ target_sources(ww_kokkos PRIVATE
     srce_tr1.hpp
     srce_bt4.hpp
     snl3_tables.hpp
+    snl3_gmd.hpp
     part_ptsort.hpp
     part_ptnghb.hpp
     part_fld.hpp

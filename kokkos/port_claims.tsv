@@ -5,4 +5,3 @@
 # file: model/src/<file>.F90:<first>-<last> at NOAA-EMC/WW3 03adda91
 # claim: the branch (and agent) that owns it; plan: the plan that names it
 routine	file	claim	plan
-w3snl3md:w3snl3	model/src/w3snl3md.F90:181-777	goal/42-port-noaa-ops (Claude Code, PR #152)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
