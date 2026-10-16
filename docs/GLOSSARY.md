@@ -393,6 +393,10 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | PDLIB_ABORT | `SUBROUTINE PDLIB_ABORT(istat)`, which prints `istat` and calls `yowerr`'s `abort`, ending in `STOP` `(v)` `PDLIB/yowfunction.F90:47-53`, `PDLIB/yowerr.F90:159` | The PDLIB ports return its `istat` as their exit code. | [kokkos/port_report/BLOCK_SOLVER_INIT_KOKKOS.md](../kokkos/port_report/BLOCK_SOLVER_INIT_KOKKOS.md) |
 | DEALLOCATE_PDLIB_GLOBAL | releases 19 unstructured-grid arrays of `GRIDS(IMOD)` `(v)` `w3profsmd_pdlib.F90:7345`, `:7415-7437`; its header's "Init jacobi solver" (`:7359`) is copied from the next routine and does not describe it | Called once by `W3INIT`; the port returns exit 2, as gfortran does, at the first unallocated array. | [kokkos/port_report/DEALLOCATE_PDLIB_GLOBAL_KOKKOS.md](../kokkos/port_report/DEALLOCATE_PDLIB_GLOBAL_KOKKOS.md) |
 | GUGINIT / AREA_SI | the `GRID` flag that the unstructured-grid arrays are allocated, and "Define optimized connection arrays (points and triangles) for spatial propagation schemes" `(v)` `w3gdatmd.F90:710`, `w3triamd.F90:1315`, `:1330` | `DEALLOCATE_PDLIB_GLOBAL` leaves `GUGINIT` set; `AREA_SI` re-allocates `JAA`, `IAA` and `POSI`. | [kokkos/port_report/DEALLOCATE_PDLIB_GLOBAL_KOKKOS.md](../kokkos/port_report/DEALLOCATE_PDLIB_GLOBAL_KOKKOS.md) |
+| JACOBI_INIT | "Init jacobi solver" `(v)` `w3profsmd_pdlib.F90:7515`, `:7529` | Allocates the Jacobi solver's arrays; called by `BLOCK_SOLVER_INIT`; the port returns `PDLIB_ABORT`'s istat (9 to 12). | [kokkos/port_report/JACOBI_INIT_KOKKOS.md](../kokkos/port_report/JACOBI_INIT_KOKKOS.md) |
+| ASPAR_JAC / B_JAC / CAD_THE / CAS_SIG / CWNB_SIG_M2 / U_JAC / ASPAR_DIAG_ALL | the `REAL, ALLOCATABLE` work arrays of the PDLIB Jacobi solver `(v)` `w3profsmd_pdlib.F90:114-117` | Allocated by `JACOBI_INIT`; `ASPAR_DIAG_ALL` only when `IMEM = 2`. | [kokkos/port_report/JACOBI_INIT_KOKKOS.md](../kokkos/port_report/JACOBI_INIT_KOKKOS.md) |
+| FreqShiftMethod / IMEM | `INTEGER :: FreqShiftMethod = 2` and `INTEGER, PARAMETER :: IMEM = 1` `(v)` `w3profsmd_pdlib.F90:125`, `w3parall.F90:90` | Select which Jacobi arrays `JACOBI_INIT` allocates; with `IMEM = 1` gfortran removes the `ASPAR_DIAG_ALL` branch. | [kokkos/port_report/JACOBI_INIT_KOKKOS.md](../kokkos/port_report/JACOBI_INIT_KOKKOS.md) |
+| PDLIB_NNZ / B_JGS_BLOCK_GAUSS_SEIDEL | the PDLIB matrix's non-zero count, and the block Gauss-Seidel choice of the solver (namelist `JGS_BLOCK_GAUSS_SEIDEL`) `(v)` `PDLIB/yownodepool.F90:90`, `w3gdatmd.F90:1057` | Extents and conditions of `JACOBI_INIT`'s allocations. | [kokkos/port_report/JACOBI_INIT_KOKKOS.md](../kokkos/port_report/JACOBI_INIT_KOKKOS.md) |
 
 ## HPC and software
 
@@ -655,6 +659,7 @@ Every term above, alphabetically, with the section it lives in.
 - ASan: [HPC and software](#hpc-and-software)
 - ASan / UBSan: [HPC and software](#hpc-and-software)
 - ASCII: [WW3 switches](#ww3-switches)
+- ASPAR_JAC / B_JAC / CAD_THE / CAS_SIG / CWNB_SIG_M2 / U_JAC / ASPAR_DIAG_ALL: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - ASTR / SETVUF_FAST / VUF / TIDE_SET_INDICES / TIDE_PREDICT / TIDE_PREDICT_ONLY: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - ASTR: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - ASymSmatTimVec: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -914,6 +919,7 @@ Every term above, alphabetically, with the section it lives in.
 - FP64: [HPC and software](#hpc-and-software)
 - FPI: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - FREQ1 (FR1): [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
+- FreqShiftMethod / IMEM: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - frozen reference run: [This repository's own names](#this-repositorys-own-names)
 - FSNIMP: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - FSTOTALIMP / B_JGS_USE_JACOBI: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -992,6 +998,7 @@ Every term above, alphabetically, with the section it lives in.
 - IRANGE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - IS2DISP: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - ISO/IEC 1539:1991: [HPC and software](#hpc-and-software)
+- JACOBI_INIT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - JAD: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - KDMAX / RDKMIN: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - KDPC: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1049,6 +1056,7 @@ Every term above, alphabetically, with the section it lives in.
 - optionCall: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - PDLIB_ABORT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - PDLIB_FIELD_VEC / DO_OUTPUT_EXCHANGES / GET_ARRAY_SIZE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- PDLIB_NNZ / B_JGS_BLOCK_GAUSS_SEIDEL: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - PGMRES: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - `__powisf2`: [This repository's own names](#this-repositorys-own-names)
 - POS_TRICK / ListISPprevDir / ListISPnextDir / ListISPprevFreq / ListISPnextFreq: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
