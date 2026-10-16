@@ -12,6 +12,7 @@
 #include "adat_w3dmnl.hpp"
 #include "adat_w3naux.hpp"
 #include "adat_w3seta.hpp"
+#include "adat_w3xdma.hpp"
 #include "adat_w3xeta.hpp"
 #include "bt8_ccosh.hpp"
 #include "bt8_csinh.hpp"
@@ -297,4 +298,5 @@ void ww_support_instantiate() {
   (void)&ww::flds::w3fldh<E>;
   (void)&ww::adat::w3seta<E>;
   (void)&ww::adat::w3xeta<E>;
+  (void)&ww::adat::w3xdma<E>;
 }

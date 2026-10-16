@@ -415,6 +415,8 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | NLINIT / NSPECX / IPnn / IMnn / ICnn | "Flag for initialization", "Auxiliary spectral counter" (NSPECX-Y) and the "Spectral address for Snl" tables `(v)` `w3adatmd.F90:276`, `:268`, `:269-271` | The `W3_NL1` block of `WADAT` that `W3DMNL` allocates (with `AF11`) and `W3NAUX` clears; one `NLINIT` per model in the port, `WadatNl1::nlinit`. | [kokkos/port_report/W3DMNL_KOKKOS.md](../kokkos/port_report/W3DMNL_KOKKOS.md) |
 | W3FLDH | "Update homogeneous input fields for the WAVEWATCH III generic shell" `(v)` `w3fldsmd.F90:2149-2504`, `:2169-2170` | Takes the next value of field J from the homogeneous lists `ww3_shel` read (`THO`, `HA`, `HD`, `HS`) and fills the whole field with it; called 14 times by `ww3_shel` (`:2134-2425`). | [kokkos/port_report/W3FLDH_KOKKOS.md](../kokkos/port_report/W3FLDH_KOKKOS.md) |
 | AINIT / AINIT2 / INFLAGS1 | "Flag for array initialization" (`AINIT(2)`) and "Array consolidating the above six" input flags `(v)` `w3adatmd.F90:318`, `w3idatmd.F90:99` | The conditions under which `W3SETA` re-points its alias groups. | [kokkos/port_report/W3SETA_KOKKOS.md](../kokkos/port_report/W3SETA_KOKKOS.md) |
+| NAPROC / UNDEF | "Number of processors for computation" / "Value for undefined parameters in gridded output fields" `(v)` `w3odatmd.F90:102`, `:82-83` | `W3XDMA` sizes the full-grid X arrays as `NSEALM*NAPROC` and fills most with `UNDEF`. | [kokkos/port_report/W3XDMA_KOKKOS.md](../kokkos/port_report/W3XDMA_KOKKOS.md) |
+| OUTFLAGS / NXXX / X* arrays | `W3XDMA`'s `LOGICAL OUTFLAGS(NOGRP,NGRPP)` argument, its local full-grid size `NSEALM*NAPROC`, and the 93 full-grid output copies of `WADAT` (`XHS` ... `XUSERO`) `(v)` `w3adatmd.F90:1555`, `:1560`, `:1596`, `:414-497` | Allocated by `W3XDMA`, gathered into by `DO_OUTPUT_EXCHANGES`, named by `W3XETA`'s aliases; `XUSERO`'s shape follows `OUTFLAGS(10,2)` alone, a WW3 defect kept as written. | [kokkos/port_report/W3XDMA_KOKKOS.md](../kokkos/port_report/W3XDMA_KOKKOS.md) |
 
 ## HPC and software
 
@@ -1070,6 +1072,7 @@ Every term above, alphabetically, with the section it lives in.
 - MSR: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - N1MAX: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - NAPFLD / FLOUT / NRQGO: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- NAPROC / UNDEF: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - NITTIN / CINXSI / CD_MAX / CAP_ID / FLX4A0: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - NITTIN: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - NK10Hz / IK10Hz / SIG10Hz / DSII10Hz: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1082,6 +1085,7 @@ Every term above, alphabetically, with the section it lives in.
 - NR_CORR: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - NRLv: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - optionCall: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- OUTFLAGS / NXXX / X* arrays: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - PDLIB_ABORT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - PDLIB_FIELD_VEC / DO_OUTPUT_EXCHANGES / GET_ARRAY_SIZE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - PDLIB_INIT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)

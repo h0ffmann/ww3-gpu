@@ -127,13 +127,11 @@ the pinned `ww3` shell, the Fortran flags of WW3's CMake Release build
   `::x` (uncommitted, read 2026-10-16; its `W3SETA` sets `base` always and `x = 0` in the `AINIT`
   branch, `:2826`). It has to be committed with or before this one.
 - ⚠ Committed headers still treat `Wadats::iadata` as the unconditional-alias target:
-  `adat_wadat.hpp` says a `W3XETA` port must not write it; `W3DIMA` reads `FL_ALL` through it
-  (`adat_w3dima.hpp`, `:960-964`) and `W3XDMA` reads `NSEALM` through it (`adat_w3xdma.hpp`,
-  `:1596`). After a `W3XETA(j)` with no `W3SETA(j)` they name `j`, the Fortran names `base`. Their
-  owners move them to `W3setaTargets::base`; not changed here.
-- ⚠ `AINIT2` has two homes in the port: `WadatScalars::ainit2` (W3NAUX, `:806`, read here) and the
-  `W3XDMA` port's own `ainit2` (`adat_w3xdma_wadat.hpp`, written at `:2375`), being moved to
-  `WadatScalars::ainit2`, the one home. Until that lands, this read never sees its `.TRUE.`.
+  `adat_wadat.hpp` says a `W3XETA` port must not write it, and `W3DIMA` reads `FL_ALL` through it
+  (`adat_w3dima.hpp`, `:960-964`). After a `W3XETA(j)` with no `W3SETA(j)` they name `j`, the
+  Fortran names `base`. `W3XDMA` already reads `NSEALM` through `W3setaTargets::base` (`:1596`).
+- (v) `AINIT2` has one home, `WadatScalars::ainit2`: `W3NAUX` clears it (`:806`), `W3XDMA` sets it
+  (`:2375`) and this routine reads it through `base`.
 - ⚠ As in the Fortran, `x` is set whether or not `W3XDMA` allocated `WADATS(IMOD)`'s X arrays;
   `W3MPIO` and `DO_OUTPUT_EXCHANGES` call `W3XDMA(IMOD)` first (`w3initmd.F90:3440-3442`,
   `pdlib_field_vec.F90:1324`), `W3MPIO`'s restart branch only when `NAPRST /= NAPFLD`
