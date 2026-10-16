@@ -61,6 +61,8 @@ target_sources(ww_kokkos PRIVATE
     pdlib_jacobi_spectral.hpp
     pdlib_jacobi_vec.hpp
     pdlib_jgs_block.hpp
+    pdlib_explicit_block.hpp
+    pdlib_boundary.hpp
     prop_parall.hpp
     prop_freq_shift.hpp
     wave_support.cpp

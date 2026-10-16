@@ -7,7 +7,9 @@
 // a shim calls them. Nothing calls ww_support_instantiate.
 #include "disp_distab.hpp"
 #include "disp_wavnu3.hpp"
+#include "pdlib_boundary.hpp"
 #include "pdlib_boundary_va.hpp"
+#include "pdlib_explicit_block.hpp"
 #include "pdlib_fsn2.hpp"
 #include "pdlib_fspsi2.hpp"
 #include "pdlib_jacobi_spectral.hpp"
