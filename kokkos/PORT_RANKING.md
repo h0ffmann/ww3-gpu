@@ -181,3 +181,4 @@ The record is the `regtested` column of `kokkos/ports.tsv`.
 | `w3flx3md:w3flx3` | ported | `srce_flx3.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs the fork branch pinned and WW3's regtests |
 | `w3flx4md:w3flx4` | ported | `srce_flx4.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs the fork branch pinned and WW3's regtests |
 | `w3flx5md:w3flx5` | ported | `srce_flx5.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs the fork branch pinned and WW3's regtests |
+| `w3src6md:w3sin6` | ported | `srce_st6_sin6.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs the fork branch pinned and WW3's regtests |

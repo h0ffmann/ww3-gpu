@@ -184,6 +184,7 @@ lab files are in that state and are flagged below.
 | T, T0, T1, S | "Enable test output throughout the program(s)" (`T`, `Tn`) and "Enable subroutine tracing … `strace`" (`S`) `(v man)`; `W3_T0`/`W3_T1` guards exist in 20/32 source files `(v)` | Debug keys; the `#ifdef W3_T` `WRITE` is what blocks `PURE` on `W3SNL1`. | [course/10-modern-fortran-refactoring.md](../course/10-modern-fortran-refactoring.md) |
 | KOKKOS (proposed) | new category "C++/Kokkos port of the source terms", `build_files: w3kokkosmd.F90`, requires `NL1` `(v)` [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md) | The switch the fork branch would add so `W3_KOKKOS` guards the shim calls; not applied in this repo. | [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md), [course/12-porting-a-kernel-w3snl1.md](../course/12-porting-a-kernel-w3snl1.md) |
 | switch_default, switch_Ifremer2, switch_NCEP_st4 | upstream reference switch files in `WW3/model/bin/` `(v)` | 30 upstream files exist; `NCEP_st4` and `Ifremer2` both pair `ST4` with `FLX0`. | [switches/README.md](../switches/README.md), [course/01-build.md](../course/01-build.md) |
+| switch_NCEP_st2 / switch_USACE_1 / switch_NRL3 | upstream reference switch files in `WW3-noaa/model/bin/` `(v)`: `ST2 STAB2 FLX3` with `NL1`, `PR3 UQ`, `DIST MPI` / `ST1 STAB0 FLX1` with `NL1`, `BT4`, `PDLIB SCOTCH` / `ST6 STAB0 FLX4` with `NL1`, `BT1`, `DB1`, `SEED` | The upstream sets that carry the `ST2`, `ST1` and `ST6` physics; the port reports translate against the lab switch with those keys swapped in. | [kokkos/port_report/INPTAB_KOKKOS.md](../kokkos/port_report/INPTAB_KOKKOS.md) |
 | switch_PR3_UQ, switch_MPI | per-regtest switch files under `WW3/regtests/<test>/input/` `(v)` | What `just rt ww3_tp1.1 PR3_UQ` builds with. | [course/09-benchmark-profile-compile-run.md](../course/09-benchmark-profile-compile-run.md) |
 
 ## WW3 programs and files
@@ -246,12 +247,33 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | W3SNL2 / W3SNL3 / W3SNL4 / W3SNL5 | interface to exact interactions / multiple DIA for arbitrary depths / TSA / GKE (`CalcQRSNL`) `(v)` | The other Snl modules, out of scope. | [kokkos/PORT_STATUS.md](../kokkos/PORT_STATUS.md) |
 | INSNL3 / EXPAND / EXPND2 | "Initialization for generalized multiple DIA routine"; W3SNL3's internal routines that "Expand spectrum" to "simplify indirect addressing" `(v)` (`w3snl3md.F90:644`, `:717`, `:788` at `03adda91`) | INSNL3 builds the quadruplet tables W3SNL3 reads per point. | [kokkos/port_report/W3SNL3_KOKKOS.md](../kokkos/port_report/W3SNL3_KOKKOS.md) |
 | W3SRCEMD / W3SRCE | "Source term integration routine" `(v)`, `w3srcemd.F90:190` | The per-point driver that sums Sin + Snl + Sds + …, sub-steps dynamically and applies the limiter; the profile's top routine and the OpenACC target of Ikuyajolu et al. | [course/09-benchmark-profile-compile-run.md](../course/09-benchmark-profile-compile-run.md), [docs/AGENTS_KOKKOS_202609.md](AGENTS_KOKKOS_202609.md) |
+| W3SRC0MD / W3SPR0 | "Mean wave parameter computation for case without input and dissipation" / "Calculate mean wave parameters." `(v)` `WW3-noaa/model/src/w3src0md.F90:15,81` at `03adda91` | The `ST0` package: no input and no whitecapping, only the mean energy, frequency and wavenumber (`EMEAN`, `FMEAN`, `WNMEAN`) and `AMAX` that `W3SRCE` needs for the other terms. | [kokkos/port_report/W3SPR0_KOKKOS.md](../kokkos/port_report/W3SPR0_KOKKOS.md) |
+| W3SRC1MD: W3SPR1 / W3SIN1 / W3SDS1 | "Bundle WAM cycle 3 input and dissipation source terms with their defining parameters": mean parameters "(WAM-3)" / "Calculate diagonal of input source (actual source term put together in W3SRCE)" / "Calculate whitecapping source term and diagonal term of derivative" `(v)` `WW3-noaa/model/src/w3src1md.F90:15,87,255,432` at `03adda91` | The `ST1` package: input after Snyder et al. (1981) with u* from Wu's drag law, whitecapping after Komen, Hasselmann and Hasselmann (1984), doi:10.1175/1520-0485(1984)014<1271:OTEOAF>2.0.CO;2 `(v) Crossref, 2026-10-16`; the manual's `eqs/ST1.tex` cites both `(v)`. Upstream in `switch_USACE_1`. | [kokkos/port_report/W3SPR1_KOKKOS.md](../kokkos/port_report/W3SPR1_KOKKOS.md), [kokkos/port_report/W3SIN1_KOKKOS.md](../kokkos/port_report/W3SIN1_KOKKOS.md), [kokkos/port_report/W3SDS1_KOKKOS.md](../kokkos/port_report/W3SDS1_KOKKOS.md) |
+| W3SRC2MD: W3SPR2 / W3SIN2 / W3SDS2 | "Tolman and Chalikov (1996) input and dissipation source terms": mean parameters "for the use in the source term routines (Tolman and Chalikov)" / "Calculate input source term" / "Calculate whitecapping source term and diagonal term of derivative" `(v)` `WW3-noaa/model/src/w3src2md.F90:16,125,308,582` at `03adda91` | The `ST2` package, doi:10.1175/1520-0485(1996)026<2497:STIATG>2.0.CO;2 `(v) Crossref, 2026-10-16`; NCEP's operational set `switch_NCEP_st2` pairs it with `STAB2` and `FLX3`. `W3SIN2` also returns `FPI`. | [kokkos/port_report/W3SPR2_KOKKOS.md](../kokkos/port_report/W3SPR2_KOKKOS.md), [kokkos/port_report/W3SIN2_KOKKOS.md](../kokkos/port_report/W3SIN2_KOKKOS.md), [kokkos/port_report/W3SDS2_KOKKOS.md](../kokkos/port_report/W3SDS2_KOKKOS.md) |
+| INPTAB / W3BETA / BETATB | "Generate an interpolation table for the air-sea interaction parameter of Chalikov and Belevich (1993)" / "Calculate wind-wave interaction parameter beta", a function internal to `INPTAB` / the table itself, "Interpolation table" `(v)` `WW3-noaa/model/src/w3src2md.F90:847,1081,99,53` at `03adda91` | `BETATB(-NRSIGA:NRSIGA+1,NRDRAG+1)` over the nondimensional apparent frequency and the drag coefficient, interpolated bilinearly by `W3SIN2` (`:471-474`). Built once per process: `W3IOGR` calls `INPTAB` on the first `mod_def.ww3` read only (`FLINP`, `w3iogrmd.F90:1493`). Chalikov and Belevich (1993), doi:10.1007/BF00705377 `(v) Crossref, 2026-10-16`. | [kokkos/port_report/INPTAB_KOKKOS.md](../kokkos/port_report/INPTAB_KOKKOS.md), [kokkos/port_report/W3BETA_KOKKOS.md](../kokkos/port_report/W3BETA_KOKKOS.md) |
+| W3SRC3MD: W3SPR3 / W3SIN3 / W3SDS3 | "The 'WAM4+' source terms based on P.A.E.M. Janssen's work, with extensions by him and by J.-R. Bidlot": mean parameters / "Calculate diagonal and input source term for WAM4+ approach" / "Calculate whitecapping source term and diagonal term of derivative" `(v)` `WW3-noaa/model/src/w3src3md.F90:30,134,384,1253` at `03adda91` | The `ST3` package; its input is the quasi-linear theory of Janssen (1991), doi:10.1175/1520-0485(1991)021<1631:QLTOWW>2.0.CO;2 `(v) Crossref, 2026-10-16`. `w3src4md.F90` has table routines of the same names (next rows). | [kokkos/port_report/W3SPR3_KOKKOS.md](../kokkos/port_report/W3SPR3_KOKKOS.md), [kokkos/port_report/W3SIN3_KOKKOS.md](../kokkos/port_report/W3SIN3_KOKKOS.md), [kokkos/port_report/W3SDS3_KOKKOS.md](../kokkos/port_report/W3SDS3_KOKKOS.md) |
+| INSIN3 / TABU_STRESS / TABU_TAUHF / TAUT / TAUHFT (ST3) | "Initialization for source term routine", which calls the other two / "To generate the friction velocity table, TAUT(TAUW,U10)=SQRT(TAU)" / "Tabulation of the high-frequency wave-supported stress" `(v)` `WW3-noaa/model/src/w3src3md.F90:726,822,958` at `03adda91`; the tables `TAUT(0:ITAUMAX,0:JUMAX)` and `TAUHFT(0:IUSTAR,0:IALPHA)` at `:97,99` | ST3's versions, fixed-size module arrays filled when `W3IOGR` calls `INSIN3` (`w3iogrmd.F90:1532`). `w3src4md.F90` has routines of the same names, `TABU_STRESS` (`:1290`), `TABU_TAUHF` (`:1427`) and `TABU_TAUHF2` (`:1598`), with an allocatable `TAUT` (`:95`), so the ST3 reports carry the module in their name. | [kokkos/port_report/INSIN3_KOKKOS.md](../kokkos/port_report/INSIN3_KOKKOS.md), [kokkos/port_report/W3SRC3MD_TABU_STRESS_KOKKOS.md](../kokkos/port_report/W3SRC3MD_TABU_STRESS_KOKKOS.md), [kokkos/port_report/W3SRC3MD_TABU_TAUHF_KOKKOS.md](../kokkos/port_report/W3SRC3MD_TABU_TAUHF_KOKKOS.md); ST4's: [kokkos/port_report/TABU_STRESS_KOKKOS.md](../kokkos/port_report/TABU_STRESS_KOKKOS.md), [kokkos/port_report/TABU_TAUHF_KOKKOS.md](../kokkos/port_report/TABU_TAUHF_KOKKOS.md) |
+| CALC_USTAR (ST3) | "Compute friction velocity based on wind speed U10", "based on Quasi-linear theory" `(v)` `WW3-noaa/model/src/w3src3md.F90:1135` at `03adda91` | Looks u* up in ST3's `TAUT`; ST4's `CALC_USTAR` (`w3src4md.F90:1849`) has the same name and arguments and is a different routine. | [kokkos/port_report/W3SRC3MD_CALC_USTAR_KOKKOS.md](../kokkos/port_report/W3SRC3MD_CALC_USTAR_KOKKOS.md); ST4's: [kokkos/port_report/CALC_USTAR_KOKKOS.md](../kokkos/port_report/CALC_USTAR_KOKKOS.md) |
 | W3SRC4MD: W3SPR4 / W3SIN4 / W3SDS4 | "SHOM/Ifremer source terms" after Janssen and Ardhuin et al. (2009, 2010): mean parameters / "diagonal and input source term for WAM4+ approach" / "wave dissipation source term" `(v)` | The `ST4` package, the next port candidate. | [course/07-physics-choices.md](../course/07-physics-choices.md), [kokkos/PORT_STATUS.md](../kokkos/PORT_STATUS.md) |
-| W3SRC6MD: W3SIN6 / W3SDS6 | observation-based input after Donelan et al. (2006) and dissipation after Babanin et al. (2010), Rogers et al. (2012) `(v)` | The `ST6` package. | [course/07-physics-choices.md](../course/07-physics-choices.md) |
+| W3SRC6MD: W3SPR6 / W3SIN6 / W3SDS6 | observation-based input after Donelan et al. (2006) and dissipation after Babanin et al. (2010), Rogers et al. (2012) `(v)`; "Calculate mean wave parameters" / "Observation-based source term for wind input" / "for dissipation" `(v)` `WW3-noaa/model/src/w3src6md.F90:27,129,298,566` at `03adda91` | The `ST6` package (BYDRZ); as implemented in WW3 by Zieger et al. (2015), doi:10.1016/j.ocemod.2015.07.014; Donelan et al. (2006) doi:10.1175/JPO2933.1, Babanin et al. (2010) doi:10.1175/2009JPO4370.1, Rogers et al. (2012) doi:10.1175/JTECH-D-11-00092.1 `(v) Crossref, 2026-10-16`. | [course/07-physics-choices.md](../course/07-physics-choices.md), [kokkos/port_report/W3SPR6_KOKKOS.md](../kokkos/port_report/W3SPR6_KOKKOS.md), [kokkos/port_report/W3SDS6_KOKKOS.md](../kokkos/port_report/W3SDS6_KOKKOS.md) |
+| LFACTOR / TAU_WAVE_ATMOS / TAUWINDS | private routines of `W3SRC6MD` called by `W3SIN6`: "Numerical approximation for the reduction factor LFACTOR(f) to reduce energy in the high-frequency part of the resolved part of the spectrum to meet the constraint on total stress (TAU)" / "Calculated the stress for the negative part of the input term, that is the stress from the waves to the atmosphere" / "Wind stress (tau) computation from wind-momentum-input", τ = g ρ_w ∫ Sin(f)/C(f) df `(v)` `WW3-noaa/model/src/w3src6md.F90:805,1157,1440` at `03adda91` | `LFACTOR` and `TAU_WAVE_ATMOS` extend the resolved spectrum to 10 Hz (`NK10Hz`) before integrating; `LFACTOR` reduces Sin(f) by `L(f)` until the total stress meets the constraint `TAU <= TAU_TOT`, `TAU_TOT = DAIR*USTAR**2`. | [kokkos/port_report/LFACTOR_KOKKOS.md](../kokkos/port_report/LFACTOR_KOKKOS.md), [kokkos/port_report/TAU_WAVE_ATMOS_KOKKOS.md](../kokkos/port_report/TAU_WAVE_ATMOS_KOKKOS.md), [kokkos/port_report/TAUWINDS_KOKKOS.md](../kokkos/port_report/TAUWINDS_KOKKOS.md) |
+| IRANGE / RRANGE | "Generate a sequence of linear-spaced integer numbers" / the same, returning `REAL` (its header says "integer" too) `(v)` `WW3-noaa/model/src/w3src6md.F90:1342,1387`, `w3swldmd.F90:456` at `03adda91` | Index helpers: `IRANGE(1,NSPEC,NTH)` gives `IKN`, `RRANGE(1,NK10Hz,1)` gives `IK10Hz`. `W3SRC6MD` and `W3SWLDMD` each have a private `IRANGE`, hence the reports `W3SRC6MD_IRANGE` and `W3SWLDMD_IRANGE`. | [kokkos/port_report/W3SRC6MD_IRANGE_KOKKOS.md](../kokkos/port_report/W3SRC6MD_IRANGE_KOKKOS.md), [kokkos/port_report/W3SWLDMD_IRANGE_KOKKOS.md](../kokkos/port_report/W3SWLDMD_IRANGE_KOKKOS.md), [kokkos/port_report/RRANGE_KOKKOS.md](../kokkos/port_report/RRANGE_KOKKOS.md) |
+| IKN | index vector `IRANGE(1,NSPEC,NTH)`, "such that e.g. SIG(1:NK) = SIG2(IKN)" `(v)` `WW3-noaa/model/src/w3src6md.F90:104,450-451` at `03adda91` | `ALLOCATABLE, SAVE`, allocated on the first call and never again: a module variable of `W3SRC6MD`, `THREADPRIVATE` under `OMPG`/`OMPH` (`:107`), and a local of each of `W3SWL4` and `W3SWL6` (`w3swldmd.F90:180,359`) without that attribute, the data race of `W3SWL6` under `OMPG` in [AGENTS.md](../AGENTS.md). A grid with another `NK` stops in `EXTCDE(2)`. | [kokkos/port_report/W3SWL6_KOKKOS.md](../kokkos/port_report/W3SWL6_KOKKOS.md) |
+| NK10Hz / IK10Hz / SIG10Hz / DSII10Hz | the number of frequencies that extends the grid "up to f=10Hz" (`FRQMAX = 10.`), `NK10Hz = MAX(NK, CEILING(ALOG(FRQMAX/(SIG(1)/TPI))/ALOG(XFR))+1)`, and the module arrays of the extended grid: index, σ and band width `(v)` `WW3-noaa/model/src/w3src6md.F90:927,952-953,105` at `03adda91` | `NK10Hz` is recomputed per call in `LFACTOR` and `TAU_WAVE_ATMOS`; the three arrays are `SAVE` and `THREADPRIVATE`, filled from the first call's `SIG` and `DSII` and kept, so WW3 builds them once per process and thread, not per grid. | [kokkos/port_report/LFACTOR_KOKKOS.md](../kokkos/port_report/LFACTOR_KOKKOS.md), [kokkos/port_report/TAU_WAVE_ATMOS_KOKKOS.md](../kokkos/port_report/TAU_WAVE_ATMOS_KOKKOS.md) |
+| W3SWLDMD (SWL): W3SWL4 / W3SWL6 | "Source term module for swell dissipation based on different physics that can be independently selected form the input and whitecapping dissipation terms" / `W3SWL4`'s header says only "FIXME" / "Turbulent dissipation of narrow-banded swell as described in Babanin (2011, Section 7.5)" `(v)` `WW3-noaa/model/src/w3swldmd.F90:18,93,264` at `03adda91` | No switch of its own: `ST6` builds it (`model/src/cmake/switches.json:258`). `W3SRCE` calls `W3SWL6` when `SWL6S6` (`w3srcemd.F90:1330-1334`); nothing in `model/src` calls `W3SWL4`, which switches between a turbulent and a laminar damping on an orbital Reynolds number. Babanin (2011), doi:10.1017/CBO9780511736162 `(v) Crossref, 2026-10-16`. | [kokkos/port_report/W3SWL4_KOKKOS.md](../kokkos/port_report/W3SWL4_KOKKOS.md), [kokkos/port_report/W3SWL6_KOKKOS.md](../kokkos/port_report/W3SWL6_KOKKOS.md) |
+| SWL6S6 / SWL6B1 / SWL6CSTB1 | `W3GDATMD` fields of `W3SWL6`, set by `ww3_grid` from the namelist `&SWL6 SWLB1, CSTB1`: `SWL6S6 = SWLB1 > 0` turns the term on, `SWL6B1 = SWLB1` is the coefficient B1, `SWL6CSTB1` makes B1 "(constant)" or "(steepness dependent)" `(v)` `WW3-noaa/model/src/w3gdatmd.F90:919-922`, `w3gridmd.F90:1067,2328-2335` at `03adda91` | `W3SWL4` reads `SWL6B1` as its `FE`. | [kokkos/port_report/W3SWL6_KOKKOS.md](../kokkos/port_report/W3SWL6_KOKKOS.md) |
 | W3SLN1, W3SBT1, W3SDB1, W3STR1, W3SIC1…5, W3REF1 | linear input / JONSWAP bottom friction / Battjes–Janssen breaking / LTA triads / ice source terms / shoreline reflection (`W3REF1MD`, whose routine is `W3SREF`) `(v)` module headers | The remaining per-point source-term routines, "trivial once `W3SRCE` exists" in the ranked list. | [course/13-bulk-porting-with-agents.md](../course/13-bulk-porting-with-agents.md) |
 | W3SBT4 / INSBT4 / TABU_ERF, W3SIS1, WAVNU_LOCAL, WAVNU3 | "SHOWEX bottom friction with movable bed effects" and its tables / "Spectral reflection due to ice" / wavenumber and group velocity "from the improved Eckard's formula by Beji (2003)" `(v)` `WW3-noaa/model/src/w3sbt4md.F90:340`, `w3sis1md.F90:74`, `w3dispmd.F90:456` | Small routines of the switches `BT4`, `IS1` and of `W3DISPMD`, in Batch B of the NOAA translation plan. | [docs/NOAA_OPS_KOKKOS_PLAN_202610.md](NOAA_OPS_KOKKOS_PLAN_202610.md) |
 | RWPS / GLWU | the NWS Regional Wave Prediction System / NCEP's Great Lakes Wave Unstructured model, named by WW3's switch files `switch_NWS_rwps` and `switch_NCEP_glwu` `(v)` `WW3-noaa/model/bin/` ⚠ (the expansions are not written in those files) | Operational NOAA configurations whose switches (`PDLIB`, `IC4`, `REF1`, `TR1`; `NL3`) go beyond the lab switch. | [docs/NOAA_OPS_KOKKOS_PLAN_202610.md](NOAA_OPS_KOKKOS_PLAN_202610.md) |
 | W3FLX2MD / W3FLX2 | "Flux/stress computations according Tolman and Chalikov (1996)" `(v)` | The `FLX2` friction-velocity routine, `ST2`'s companion. | [course/01-build.md](../course/01-build.md) |
+| W3FLX1MD / W3FLX1 | "Flux/stress computations according to Wu (1980)" `(v)` `WW3-noaa/model/src/w3flx1md.F90:21,88` at `03adda91` | `CD = 0.001*(0.8+0.065*U10)`, then z0 and u* from it (`:186-188`); stops in `EXTCDE(1)` unless the wind is at 10 m. doi:10.1175/1520-0485(1980)010<0727:WSCOSS>2.0.CO;2 is Wu's 1980 paper `(v) Crossref, 2026-10-16`; that it is the one the header means is ⚠ (the header names no journal, and the manual's `eqs/ST1.tex` cites Wu 1982). Upstream with `ST1` in `switch_USACE_1`. | [kokkos/port_report/W3FLX1_KOKKOS.md](../kokkos/port_report/W3FLX1_KOKKOS.md) |
+| W3FLX3MD / W3FLX3 | "FLux/stress computations according Tolman and Chalikov (1996). Cap on flux added compared to W3FLX2" `(v)` `WW3-noaa/model/src/w3flx3md.F90:23,95` at `03adda91` | The drag iteration of `W3FLX2`, then a cap: `MIN(CD_MAX, CD)` when `CAP_ID` is 0, `CD_MAX*TANH(CD/CD_MAX)` otherwise (`:232-235`). The stress of `switch_NCEP_st2`. | [kokkos/port_report/W3FLX3_KOKKOS.md](../kokkos/port_report/W3FLX3_KOKKOS.md) |
+| W3FLX4MD / W3FLX4 | "Flux/stress computations according to Hwang (JTECH, 2011)", "J Atmos Ocean Tech 28(3) 436-443" `(v)` `WW3-noaa/model/src/w3flx4md.F90:27,105` at `03adda91` | `CD = FLX4A0*(8.058+0.967*U10-0.016*U10**2)*1E-4`, with u* held at `2.026*SQRT(FLX4A0)` m/s from U10 = 50.33 m/s up (`:210-215`). doi:10.1175/2010JTECHO812.1 `(v) Crossref, 2026-10-16`, volume, issue and pages as the header cites them. Upstream with `ST6` in `switch_NRL3`. | [kokkos/port_report/W3FLX4_KOKKOS.md](../kokkos/port_report/W3FLX4_KOKKOS.md) |
+| W3FLX5MD / W3FLX5 | "Unified process to obtain friction velocity and drag when stresses are an input (from atmospheric model)" `(v)` `WW3-noaa/model/src/w3flx5md.F90:28,118` at `03adda91` | u*, z0, CD and the Charnock parameter from the atmospheric stress `TAUA` and the air density `RHOAIR`, for coupled runs. | [kokkos/port_report/W3FLX5_KOKKOS.md](../kokkos/port_report/W3FLX5_KOKKOS.md) |
+| NITTIN / CINXSI / CD_MAX / CAP_ID / FLX4A0 | `W3GDATMD`'s flux parameters (structure `SFLP`): "Number of itterations for drag calc." / "Constant in parametric description" / "Cap on Cd." / "Type of cap used." / "Scaling value in parametric description" `(v)` `WW3-noaa/model/src/w3gdatmd.F90:348-356` at `03adda91` | The first two for `FLX2` and `FLX3`, the next two for `FLX3`, the last for `FLX4`; read from `mod_def.ww3` (`w3iogrmd.F90:1420,1434`); `FLX4A0` is the namelist's `CDFAC` (`w3gridmd.F90:1668`). | [kokkos/port_report/W3FLX2_KOKKOS.md](../kokkos/port_report/W3FLX2_KOKKOS.md), [kokkos/port_report/W3FLX3_KOKKOS.md](../kokkos/port_report/W3FLX3_KOKKOS.md), [kokkos/port_report/W3FLX4_KOKKOS.md](../kokkos/port_report/W3FLX4_KOKKOS.md) |
+| EWN1 / DSIE / N1MAX | `W3DISPMD`'s dispersion table: "Wavenumber array" / "SI step" / "Actual maximum position in array" `(v)` `WW3-noaa/model/src/w3dispmd.F90:37-40,78-79` at `03adda91` | Filled by `DISTAB` (`:652-659`); `W3FLX2` and `W3FLX3` interpolate the peak wavenumber from it (`w3flx2md.F90:196-200`). | [kokkos/port_report/W3FLX2_KOKKOS.md](../kokkos/port_report/W3FLX2_KOKKOS.md), [kokkos/port_report/W3FLX3_KOKKOS.md](../kokkos/port_report/W3FLX3_KOKKOS.md) |
+| FTE / FTF / FTWN | "Factor in tail integration energy" / "Id. frequency" / "Id. wavenumber" `(v)` `WW3-noaa/model/src/w3gdatmd.F90:266-268` at `03adda91` | Set by `ww3_grid` from the last bin, `FTE = 0.25*SIG(NK)*DTH*SIG(NK)`, `FTF = 0.20*DTH*SIG(NK)`, `FTWN = 0.20*SQRT(GRAV)*DTH*SIG(NK)` (`w3gridmd.F90:3509-3511`): the parametric tail beyond `NK` that the mean-parameter routines add, as in `EMEAN = SUM(EB) + (EB(NK)/DDEN(NK))*FTE` (`w3swldmd.F90:207`). | [kokkos/port_report/W3SPR1_KOKKOS.md](../kokkos/port_report/W3SPR1_KOKKOS.md), [kokkos/port_report/W3SWL4_KOKKOS.md](../kokkos/port_report/W3SWL4_KOKKOS.md) |
+| FPI | "Input 'peak' frequency" `(v)` `WW3-noaa/model/src/w3src2md.F90:300,341` at `03adda91` | Returned by `W3SIN2` as `M0/M1`, moments of the positive wind input, or `XFR*SIG(NK)` when there is none (`:493-506`); `W3SPR2` makes it nondimensional, `FPISTR = MAX(0.008, FPI*UST/GRAV)` (`:280`), and `W3SDS2` reads it. | [kokkos/port_report/W3SIN2_KOKKOS.md](../kokkos/port_report/W3SIN2_KOKKOS.md), [kokkos/port_report/W3SPR2_KOKKOS.md](../kokkos/port_report/W3SPR2_KOKKOS.md), [kokkos/port_report/W3SDS2_KOKKOS.md](../kokkos/port_report/W3SDS2_KOKKOS.md) |
 | W3PRO2MD / W3PRO3MD | "third order propagation scheme" modules (`PR2` / `PR3`) `(v)` | Hold `W3XYP2`/`W3KTP2` and `W3XYP3`/`W3KTP3`. | [course/09-benchmark-profile-compile-run.md](../course/09-benchmark-profile-compile-run.md) |
 | W3XYP2 / W3XYP3 | "Propagation in physical space for a given spectral component" `(v)` | Spatial advection per spectral bin, the memory-bound bucket. | [docs/AGENTS_KOKKOS_202609.md](AGENTS_KOKKOS_202609.md) |
 | W3MAP3 / W3MAPT | "Generate 'map' arrays for the ULTIMATE QUICKEST scheme" / the same "to combine GSE alleviation with obstructions" `(v)` `WW3-noaa/model/src/w3pro3md.F90:139,527` | The index maps `W3XYP3` and `W3KTP3` read, rebuilt by `W3WAVE` around `W3UTRN` when the sea mask or the obstructions change (`w3wavemd.F90:1463-1467`). | [docs/W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md](W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md) |
@@ -279,6 +301,7 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | W3IDATMD | "wave model input data for several models" `(v)` | Forcing input arrays. | — |
 | CONSTANTS / constants.F90 | "Define some much-used constants for global use (all defined as PARAMETER)" `(v)` | `GRAV`, `PI`, `TPI`, `TPIINV`, `DWAT`, `DAIR`, `RADIUS`, … all default `REAL`. | [course/12-porting-a-kernel-w3snl1.md](../course/12-porting-a-kernel-w3snl1.md) |
 | W3SERVMD / EXTCDE / STRACE | service routines: "Perform a program stop with an exit code" / "Keep track of entered subroutines" `(v)` | `EXTCDE(1)` is the abort the patched caller must issue on a shim error; `STRACE` is the `S`-switch tracer. | [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md) |
+| STME21 | "Converts time to more readable string" `(v)` `WW3-noaa/model/src/w3timemd.F90:676` at `03adda91` | Called by `LFACTOR` (`w3src6md.F90:1047`) and, under `W3_T6`, by `W3SDS6` (`:757`), for a warning and test output only, so the port drops it. | [kokkos/port_report/LFACTOR_KOKKOS.md](../kokkos/port_report/LFACTOR_KOKKOS.md), [kokkos/port_report/W3SDS6_KOKKOS.md](../kokkos/port_report/W3SDS6_KOKKOS.md) |
 | W3DISPMD / DISTAB / WAVNU1 / WAVNU2 / WAVNU3 | dispersion-relation routines: fill interpolation tables / "wavenumber and group velocity from the interpolation array" / "calculation of wavenumber K from a given angular frequency W and waterdepth H" by Newton on W² = g·k·tanh(k·h) / "from the improved Eckard's formula by Beji (2003)" `(v)` | How WW3 gets `WN` and `CG` from σ and depth. | [docs/KOKKOS_H100_PLAN_202609.md](KOKKOS_H100_PLAN_202609.md) |
 | W3PROFSMD / w3profsmd_pdlib.F90 | "Propagation schemes for unstructured grids using fluctuation splitting" / its PDLIB, implicit version `(v)` | Unstructured propagation, deferred. | [docs/AGENTS_KOKKOS_202609.md](AGENTS_KOKKOS_202609.md) |
 | PDLIB_W3XYPFSN2 / PDLIB_W3XYPFSPSI2 / PDLIB_JACOBI_GAUSS_SEIDEL_BLOCK / CALCARRAY_JACOBI_VEC / APPLY_BOUNDARY_CONDITION_VA | routines of `w3profsmd_pdlib.F90` (gprof's module `pdlib_w3profsmd`): explicit N and PSI fluctuation-splitting advection / the implicit block Gauss-Seidel solver / the assembly of its sparse system / the open-boundary spectra `(v)` source read 2026-10-16, `WW3-noaa/model/src/w3profsmd_pdlib.F90:868,1202,5463,3531,5037` | The unstructured-grid propagation of NOAA's PDLIB configurations, batch A of the NOAA translation plan. | [docs/NOAA_OPS_KOKKOS_PLAN_202610.md](NOAA_OPS_KOKKOS_PLAN_202610.md) |
@@ -466,7 +489,8 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | `WW_KOKKOS_SDS4` / `WW_KOKKOS_SIN4` / `WW_KOKKOS_SPR4` / `WW_KOKKOS_ST4_TABLES` / `WW_KOKKOS_ST4_COUNT` | environment variables of the ST4 port, read once by `ww_st4_enabled()`, all default 0 or unset `(v)` [kokkos/src/fortran_iface/st4_shim.cpp](../kokkos/src/fortran_iface/st4_shim.cpp) | One flag per routine (`W3SDS4`, `W3SIN4`, `W3SPR4` with `CALC_USTAR`), so the regtests can switch on one routine at a time; `WW_KOKKOS_ST4_TABLES=1` builds the ST4 tables in C++ instead of copying them from the Fortran; `WW_KOKKOS_ST4_COUNT` prints the spectra each routine computed. Implemented, not regtested (2026-10-15). | [docs/ST4_KOKKOS_PLAN_202610.md](ST4_KOKKOS_PLAN_202610.md) |
 | `RPAR` / `IPAR` | real and integer parameter arrays `(v)` [kokkos/src/ww_kokkos/st4_params.hpp](../kokkos/src/ww_kokkos/st4_params.hpp) | The ST4 scalars of WW3's `SRCP` derived type, packed by the Fortran into a `REAL(C_FLOAT)` and an `INTEGER(C_INT)` array, because no derived type crosses the `bind(C)` boundary; each index is a named constant on both sides (`R_*`, `I_*`; the arrays travel separately under `A_*` ids). | [docs/ST4_KOKKOS_PLAN_202610.md](ST4_KOKKOS_PLAN_202610.md) |
 | `ww_st4_init` / `ww_st4_set_real` / `ww_st4_set_int` / `ww_st4_commit` / `ww_sds4` / `ww_sin4` / `ww_spr4` / `ww_st4_enabled` / `ww_st4_last_error` | the C entry points of the ST4 port: configure a grid (scalars, then each array with its LBOUND and SHAPE, then commit), run a routine on `npts` points, read a flag, read the last status `(v)` [kokkos/src/fortran_iface/ww_kokkos_c.hpp](../kokkos/src/fortran_iface/ww_kokkos_c.hpp) | Status codes 5 (`WW_KOKKOS_ERR_UNSUPPORTED`, `W3_FLX5`) and 6 (`WW_KOKKOS_ERR_TABLE`) extend the SNL1 ones. | [kokkos/port_report/W3SDS4_KOKKOS.md](../kokkos/port_report/W3SDS4_KOKKOS.md) |
-| libmvec | glibc's vector math library: SIMD versions of `powf`, `expf` and others (`_ZGVbN4vv_powf` takes four floats in one SSE register) that gfortran `-O3` calls inside vectorised loops `(v)` [kokkos/src/ww_kokkos/st4_libmvec.hpp](../kokkos/src/ww_kokkos/st4_libmvec.hpp) | Its results differ from scalar libm by up to 3 ULP, so five ST4 loops are bit for bit only when the port calls it with the same grouping of four; no device has it. | [kokkos/port_report/W3SDS4_KOKKOS.md](../kokkos/port_report/W3SDS4_KOKKOS.md) |
+| libmvec / `_ZGVbN4vv_powf` | glibc's vector math library: SIMD versions of `powf`, `expf` and others (`_ZGVbN4vv_powf` takes four floats in one SSE register) that gfortran `-O3` calls inside vectorised loops `(v)` [kokkos/src/ww_kokkos/st4_libmvec.hpp](../kokkos/src/ww_kokkos/st4_libmvec.hpp) | Its results differ from scalar libm by up to 3 ULP, so five ST4 loops are bit for bit only when the port calls it with the same grouping of four; no device has it. | [kokkos/port_report/W3SDS4_KOKKOS.md](../kokkos/port_report/W3SDS4_KOKKOS.md) |
+| `__powisf2` | libgcc's `float` raised to an `int` power, the call gfortran emits for `x**n` with a variable `INTEGER` `n` (`__builtin_powif`) `(v)` [kokkos/port_report/LFACTOR_KOKKOS.md](../kokkos/port_report/LFACTOR_KOKKOS.md) | Not `powf`: the port calls the same libgcc function on the host and writes its algorithm out for the device; for a small constant `n` at `-O3` gfortran expands the power into multiplications instead. | [kokkos/port_report/INSIN4_KOKKOS.md](../kokkos/port_report/INSIN4_KOKKOS.md), [kokkos/port_report/W3SREF_KOKKOS.md](../kokkos/port_report/W3SREF_KOKKOS.md) |
 | SLP | superword-level parallelism: GCC's vectoriser of straight-line code (`-fopt-info-vec` reports "basic block part vectorized"), as opposed to loop vectorisation `(v)` [kokkos/src/ww_kokkos/snl3_tables.hpp](../kokkos/src/ww_kokkos/snl3_tables.hpp) | In `INSNL3` it computes four `LOG`s with libmvec for the stored indices while keeping scalar `logf` for the exponents of the weights, so the port computes both. | [kokkos/port_report/INSNL3_KOKKOS.md](../kokkos/port_report/INSNL3_KOKKOS.md) |
 | `WW_KOKKOS_SRCE` / `WW_KOKKOS_SRCE_COUNT` | environment variables of the W3SRCE port: `=1` makes `ww_srce_enabled()` return 1 so `W3WAVE` calls the Kokkos `W3SRCE`, with every source term it calls; the count prints the spectra integrated at exit `(v)` [kokkos/src/fortran_iface/srce_shim.cpp](../kokkos/src/fortran_iface/srce_shim.cpp) | Default unset, so WW3 runs the Fortran |
 | `ww_srce_init` / `ww_srce` / `ww_srce_enabled` / `ww_srce_last_error` | the C entry points of the W3SRCE port `(v)` [kokkos/src/fortran_iface/ww_kokkos_c.hpp](../kokkos/src/fortran_iface/ww_kokkos_c.hpp) | `ww_srce_init` needs the DIA and ST4 contexts of the same grid |
@@ -562,6 +586,7 @@ Every term above, alphabetically, with the section it lives in.
 - `bench/results/`: [This repository's own names](#this-repositorys-own-names)
 - `bench_snl1.cpp`: [This repository's own names](#this-repositorys-own-names)
 - BETAMAX: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
+- BETATB: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - BIN2NC: [WW3 switches](#ww3-switches)
 - `bind(C)`: [HPC and software](#hpc-and-software)
 - `bind(C)` / ISO_C_BINDING / `extern "C"`: [HPC and software](#hpc-and-software)
@@ -577,12 +602,16 @@ Every term above, alphabetically, with the section it lives in.
 - BT8: [WW3 switches](#ww3-switches)
 - BT9: [WW3 switches](#ww3-switches)
 - BYDRZ: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
+- CALC_USTAR (ST3): [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- CAP_ID: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - card deck: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - cc89: [HPC and software](#hpc-and-software)
 - cc89 / sm_89 / compute capability 8.9: [HPC and software](#hpc-and-software)
+- CD_MAX: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - cdo: [HPC and software](#hpc-and-software)
 - CDS: [HPC and software](#hpc-and-software)
 - CFF / `CITATION.cff`: [Citation and licensing](#citation-and-licensing)
+- CINXSI: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - Claude Tag: [HPC and software](#hpc-and-software)
 - coarray: [HPC and software](#hpc-and-software)
 - codemeta / `codemeta.json`: [Citation and licensing](#citation-and-licensing)
@@ -662,6 +691,8 @@ Every term above, alphabetically, with the section it lives in.
 - dp (DIR: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - DP): [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - DPT: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
+- DSIE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- DSII10Hz: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - DSS0: [WW3 switches](#ww3-switches)
 - DTH: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - DTKTH: [WW3 programs and files](#ww3-programs-and-files)
@@ -685,6 +716,8 @@ Every term above, alphabetically, with the section it lives in.
 - ESMF: [Models, projects and institutions](#models-projects-and-institutions)
 - etapas 1–4: [This repository's own names](#this-repositorys-own-names)
 - etapas 1–4 / steps 1–4: [This repository's own names](#this-repositorys-own-names)
+- EWN1 / DSIE / N1MAX: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- EWN1: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - `examples/01-fetch-limited-growth`: [This repository's own names](#this-repositorys-own-names)
 - `examples/01-fetch-limited-growth` / `02-regional-real-forcing`: [This repository's own names](#this-repositorys-own-names)
 - execução de referência congelada: [This repository's own names](#this-repositorys-own-names)
@@ -729,6 +762,7 @@ Every term above, alphabetically, with the section it lives in.
 - FLX2: [WW3 switches](#ww3-switches)
 - FLX3: [WW3 switches](#ww3-switches)
 - FLX4: [WW3 switches](#ww3-switches)
+- FLX4A0: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - FLX5: [WW3 switches](#ww3-switches)
 - FMA: [HPC and software](#hpc-and-software)
 - FMA / `-ffp-contract` / `--fmad`: [HPC and software](#hpc-and-software)
@@ -741,8 +775,13 @@ Every term above, alphabetically, with the section it lives in.
 - FP32: [HPC and software](#hpc-and-software)
 - FP32 / FP64 / float32: [HPC and software](#hpc-and-software)
 - FP64: [HPC and software](#hpc-and-software)
+- FPI: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - FREQ1 (FR1): [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - frozen reference run: [This repository's own names](#this-repositorys-own-names)
+- FTE / FTF / FTWN: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- FTE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- FTF: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- FTWN: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - GEBCO: [HPC and software](#hpc-and-software)
 - GEFS: [HPC and software](#hpc-and-software)
 - `gen_snl1_fixture`: [This repository's own names](#this-repositorys-own-names)
@@ -770,7 +809,15 @@ Every term above, alphabetically, with the section it lives in.
 - i9-14900: [HPC and software](#hpc-and-software)
 - IBM 704: [HPC and software](#hpc-and-software)
 - ICL DAP: [HPC and software](#hpc-and-software)
+- IK10Hz: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- IKN: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - IMOD / IGRID: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- INPTAB / W3BETA / BETATB: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- INPTAB: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- INSIN3 / TABU_STRESS / TABU_TAUHF / TAUT / TAUHFT (ST3): [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- INSIN3: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- IRANGE / RRANGE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- IRANGE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - ISO/IEC 1539:1991: [HPC and software](#hpc-and-software)
 - `kokkos/PORT_RANKING.md` / `/port-next`: [This repository's own names](#this-repositorys-own-names)
 - `gpu/`: [This repository's own names](#this-repositorys-own-names)
@@ -795,6 +842,71 @@ Every term above, alphabetically, with the section it lives in.
 - HOMOG_COUNT: [WW3 programs and files](#ww3-programs-and-files)
 - HOMOG_COUNT / HOMOG_INPUT: [WW3 programs and files](#ww3-programs-and-files)
 - HOMOG_INPUT: [WW3 programs and files](#ww3-programs-and-files)
+- LFACTOR / TAU_WAVE_ATMOS / TAUWINDS: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- LFACTOR: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- libmvec / `_ZGVbN4vv_powf`: [This repository's own names](#this-repositorys-own-names)
+- N1MAX: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- NITTIN / CINXSI / CD_MAX / CAP_ID / FLX4A0: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- NITTIN: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- NK10Hz / IK10Hz / SIG10Hz / DSII10Hz: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- NK10Hz: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- `__powisf2`: [This repository's own names](#this-repositorys-own-names)
+- RRANGE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- SIG10Hz: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- STME21: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- switch_NCEP_st2 / switch_USACE_1 / switch_NRL3: [WW3 switches](#ww3-switches)
+- switch_NCEP_st2: [WW3 switches](#ww3-switches)
+- switch_NRL3: [WW3 switches](#ww3-switches)
+- switch_USACE_1: [WW3 switches](#ww3-switches)
+- SWL6B1: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- SWL6CSTB1: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- SWL6S6 / SWL6B1 / SWL6CSTB1: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- SWL6S6: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- TABU_STRESS: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- TABU_TAUHF: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- TAUHFT (ST3): [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- TAUT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- TAU_WAVE_ATMOS: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- TAUWINDS: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3BETA: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3FLX1: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3FLX1MD / W3FLX1: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3FLX1MD: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3FLX3: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3FLX3MD / W3FLX3: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3FLX3MD: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3FLX4: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3FLX4MD / W3FLX4: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3FLX4MD: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3FLX5: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3FLX5MD / W3FLX5: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3FLX5MD: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3SDS1: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3SDS2: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3SDS3: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3SIN1: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3SIN2: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3SIN3: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3SIN6: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3SPR0: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3SPR1: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3SPR2: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3SPR3: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3SPR6: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3SRC0MD / W3SPR0: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3SRC0MD: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3SRC1MD: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3SRC1MD: W3SPR1 / W3SIN1 / W3SDS1: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3SRC2MD: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3SRC2MD: W3SPR2 / W3SIN2 / W3SDS2: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3SRC3MD: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3SRC3MD: W3SPR3 / W3SIN3 / W3SDS3: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3SRC6MD: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3SRC6MD: W3SPR6 / W3SIN6 / W3SDS6: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3SWL4: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3SWL6: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3SWLDMD (SWL): [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3SWLDMD (SWL): W3SWL4 / W3SWL6: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - `WW3GPU_SELECTION` / `WW3GPU_WW3` / `WW3GPU_DATA` / `WW3GPU_STRICT` / `WW3GPU_OMP_THREADS`: [This repository's own names](#this-repositorys-own-names)
 - `hoff_matrix.sh`: [This repository's own names](#this-repositorys-own-names)
 - HOPPER90: [HPC and software](#hpc-and-software)
@@ -1170,6 +1282,7 @@ Every term above, alphabetically, with the section it lives in.
 - WFIP-0003: [This repository's own names](#this-repositorys-own-names)
 - Without Changing the Answer: [This repository's own names](#this-repositorys-own-names)
 - Zenodo: [Citation and licensing](#citation-and-licensing)
+- `_ZGVbN4vv_powf`: [This repository's own names](#this-repositorys-own-names)
 - σ (SIG): [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - Sin: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - Sin, Snl, Sds, Sbot/Sbt, Sdb, Sice, Str, Sln: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
@@ -1389,8 +1502,6 @@ Every term above, alphabetically, with the section it lives in.
 - W3SNLGQM: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3SRC4MD: W3SPR4: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3SRC4MD: W3SPR4 / W3SIN4 / W3SDS4: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
-- W3SRC6MD: W3SIN6: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
-- W3SRC6MD: W3SIN6 / W3SDS6: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3SRCE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3SRCEMD: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3SRCEMD / W3SRCE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)

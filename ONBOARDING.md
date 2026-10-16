@@ -94,8 +94,8 @@ Three words, three different claims (`kokkos/ports.tsv`, one row per routine):
 - **ported (wired)**: WW3 at the `WW3/` pin calls it, behind a run-time flag;
 - **regtested**: WW3's own regtests ran with it on Kokkos and gave the Fortran's bytes.
 
-(v) `just port-score` on 2026-10-16, after the source-term batch below: 90 of WW3's 1 023
-routines are translated (9.47 % of the lines of `model/src`, 99.3 % of the run time of the
+(v) `just port-score` on 2026-10-16, after the source-term batch below: 91 of WW3's 1 023
+routines are translated (9.56 % of the lines of `model/src`, 99.3 % of the run time of the
 `bench_small` profile), 10 are wired at the pin, and 2 are regtested (`W3SNL1`, `INSNL1`). The
 numbers move with every PR; `kokkos/PORT_STATUS.md` and `site/data/port_score.tsv` are the current
 ones. Nothing has run inside WW3 on a GPU.

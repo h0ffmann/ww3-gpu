@@ -49,6 +49,7 @@
 #include "srce_st3_tabu_tauhf.hpp"
 #include "srce_st6_lfactor.hpp"
 #include "srce_st6_sds6.hpp"
+#include "srce_st6_sin6.hpp"
 #include "srce_st6_spr6.hpp"
 #include "srce_st6_tau_wave_atmos.hpp"
 #include "srce_st6_util.hpp"

@@ -100,6 +100,7 @@ target_sources(ww_kokkos PRIVATE
     srce_st6_sds6.hpp
     srce_st6_lfactor.hpp
     srce_st6_tau_wave_atmos.hpp
+    srce_st6_sin6.hpp
     srce_swl_util.hpp
     srce_swl4.hpp
     srce_swl6.hpp

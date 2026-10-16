@@ -42,7 +42,8 @@ unit compiled with the `openmp-release` flags (warning-free), 2026-10-16.
 - (v) `DRTAU**SIGN_NEW` (`:1088`): `__builtin_powif`, one call of libgcc's `__powisf2` in both
   objects. `SIGN_NEW = INT(SIGN(1.0,ERR))` is `copysignf(1,ERR)` then a conversion, ±1 always.
 - (v) Other libm calls: `COS`/`SIN(USDIR)` (`:1030-1031`) are one `sincosf` in both objects;
-  `TANH` (`:1105`) `tanhf`; the four `SQRT` are inline `sqrtss`, no `sqrtf` call in either.
+  `TANH` (`:1105`) `tanhf`; the five `SQRT` (`:1037`, `:1042`, `:1070`, `:1074`, `:1108`) are
+  inline `sqrtss`, no `sqrtf` call in either.
 - (v) Reductions: `SUM(S,1)*DTH` and `SUM(MAX(0.,S)*RESHAPE(ECOS2,...),1)*DTH` (`:992-994`,
   `:1015-1017`) and every inlined `TAUWINDS` (11 copies in the object, `:1467`) add in index order
   from `0.0`: the vector loops add the lanes one at a time (`BIT_FIELD_REF` 0..3, no
@@ -63,11 +64,26 @@ unit compiled with the `openmp-release` flags (warning-free), 2026-10-16.
   `THREADPRIVATE` (`:106-108`): recompiled with `-fopenmp -DW3_OMPG`, `lfactor` has the same
   floating-point operations and libm calls; its four extra calls are the TLS accessors of
   `MK10Hz`, `IK10Hz`, `SIG10Hz`, `DSII10Hz`.
-- ⚠ When both addends of one `addss` in a sum are NaN the payload depends on operand order, which
-  the two compilers place differently; no other bit can differ.
+- ⚠ When both operands of one `addss` or `mulss` are NaN the payload depends on operand order, which
+  the two compilers place differently (sums, and the commuted products above); no other bit can
+  differ.
 - ⚠ CUDA compiled (`sm_89`, `--fmad=false`, pinned `#cuda` shell), never run. On a device there
   is no libmvec and `expf`, `logf`, `powf`, `tanhf`, `sincosf` are CUDA's (the SASS has `FFMA`
   from them); `powi` on the device is `__powisf2`'s algorithm written out. Not bit for bit there.
+- (v) Fresh review 2026-10-16: no arithmetic defect in the header. Recompiled `w3src6md.F90` from
+  `build_st6f4` and `build_st6f5` flags (disassembly identical to each CMake object, and to each
+  other) and the C++ unit with the `openmp-release` flags (warning-free); compared the GIMPLE and
+  assembly of `lfactor`: the libm/libmvec/libgcc call inventory (`logf` x2, `_ZGVbN4vv_powf` with
+  scalar `powf` tail and the `NK10Hz >= 4` threshold, `_ZGVbN4v_expf` with `expf` tail and the same
+  threshold, `sincosf`, `__powisf2`, `tanhf`, inline `sqrtss`), every folded constant (identical
+  decimal expansions in both GIMPLE dumps), the `minss`/`maxss`/`minps`/`maxps` operands per site,
+  the in-order lane chains of all 11 inlined `TAUWINDS` and of the `SUM(...,1)` reductions, the
+  loop exit (the object tests `ABS(ERR)` before `__powisf2`, `IK == 80` at `EXIT` or 81 at the end
+  both give the warning, as `ik >= kItermax` does), and the first-call blocks against
+  `lfactor_tables()` and `TAU_WAVE_ATMOS_KOKKOS.md` "The 10 Hz tables". `STME21`
+  (`w3timemd.F90:676-747`) only writes its string; `TAU_NND`, `TAU_INIT` only feed `WRITE`s. The
+  `OMPG` object of the translation has the same operation inventory. Fixed in this report only: five
+  `SQRT`, not four; the NaN-payload caveat covers products too.
 
 ## What it found in WW3
 
