@@ -142,8 +142,8 @@ KOKKOS_INLINE_FUNCTION Real w3uwnd_u10(Real ua) {
 
 /// W3UWND(FLFRST, VGX, VGY) under switch_lab_shrd. All 1-D Views have extent NSEA
 /// and element ISEA-1 (the caller passes UA(1:NSEA), CX(1:NSEA), ... of the 0:NSEA
-/// arrays of w3adatmd.F90:1008-1016; UA0..ASI, U10, U10D are 1:NSEA already,
-/// w3adatmd.F90:1344-1350). mapsf is MAPSF(NSEA,3) and wx0..dtn are WX0(NX,NY)
+/// arrays of w3adatmd.F90:1008-1016; U10, U10D are 1:NSEA already, w3adatmd.F90:1015,
+/// and so are UA0..ASI, w3adatmd.F90:1344-1350). mapsf is MAPSF(NSEA,3) and wx0..dtn are WX0(NX,NY)
 /// (w3idatmd.F90:684-689), LayoutLeft, Fortran order, Fortran 1-based IX, IY
 /// values in mapsf. dt0n, dt0t are DSEC21's results as REAL (:677-678).
 ///

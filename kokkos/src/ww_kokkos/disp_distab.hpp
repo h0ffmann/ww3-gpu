@@ -115,7 +115,7 @@ KOKKOS_INLINE_FUNCTION void wavnu2(Real w, Real h, Real& k, Real& cg, Real eps, 
     const Real rdif = dif / k;
     if (dif < eps && rdif < eps) icon = 1;
   }
-  // :330-334. 2*K*H is emitted as H*(K+K); W0/K*0.5*(...) as ((W0/K)*0.5)*(1+x/SINH(x)).
+  // :330-334. 2*K*H is emitted as H*(K*2), written H*(K+K) here (the same bits); W0/K*0.5*(...) as ((W0/K)*0.5)*(1+x/SINH(x)).
   const Real kh2 = h * (k + k);
   const Real cgd = w0 / k * static_cast<Real>(0.5);
   if (kh2 > static_cast<Real>(25)) {

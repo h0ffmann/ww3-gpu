@@ -33,8 +33,14 @@ byte-identical to the CMake build's inside the pinned `ww3` shell), read as GIMP
   `VGY` are unused), `SMC`, `WCOR`, `STAB2`, `OMPG`, `S`, `T`. `DSEC21` (`w3timemd.F90`) is
   integer and double time arithmetic on the host: the caller computes `DT0N` and `DT0T` and
   passes the `REAL`s the Fortran stores (`w3updtmd.F90:677-678`).
-- ⚠ The fresh reviewer was stopped before it reported (the session hit its usage limit); the
-  translator's comparison above stands, the independent check does not.
+- (v) Fresh review, 2026-10-16: the reviewer rebuilt the Fortran object (WW3's flags plus the
+  nix wrapper's hardening flags, without which the object differs) identical to the CMake
+  build's, and found no arithmetic defect: no loop of `:488-822` vectorised, no FMA, the
+  constants `1.E-7`, `0.001`, `PI`, `TPI` with the same bits, `MAX` operand order at `:684`,
+  `:753`, `:767` the same (a NaN gives the constant), every `UA0`/`UAI` branch the same. One
+  comment cited the wrong allocation line for `U10`, now `w3adatmd.F90:1015`.
+- ⚠ On CUDA, `atan2f`, `fmodf`, `sincosf` are CUDA's own; at `-O0` (`serial-debug`) `fmod` and
+  `sqrt` are libm calls, NaN payloads not compared.
 
 ## Benchmarks
 
@@ -43,5 +49,7 @@ None. No timing without parity (`AGENTS.md`).
 ## How it was regtested
 
 Not yet, and nothing was run. What was done, 2026-10-16 (v): a throwaway translation unit with
-the `openmp-release` flags compiled the header with no warning and no FMA. The header is not in
-a CMake target and was not compiled for CUDA yet ⚠.
+the `openmp-release` flags compiled the header with no warning and no FMA. Since then
+`wave_support.cpp` instantiates its launcher on the default execution space in the
+`serial-debug`, `openmp-release` and `cuda-release` builds (the CUDA one built, never run). Its CUDA SASS has 68 fused multiply-adds despite `--fmad=false`, taken to be CUDA's
+`atan2f`, `sincosf` and `fmodf` and not traced instruction by instruction ⚠.

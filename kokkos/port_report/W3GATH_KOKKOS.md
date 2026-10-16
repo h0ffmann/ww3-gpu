@@ -41,5 +41,6 @@ None. No timing without parity (`AGENTS.md`).
 ## How it was regtested
 
 Not yet, and nothing was run. What was done, 2026-10-16 (v): a throwaway translation unit with
-the `openmp-release` flags compiled the header with no warning and no FMA. The header is not in
-a CMake target and was not compiled for CUDA yet ⚠.
+the `openmp-release` flags compiled the header with no warning and no FMA. Since then
+`wave_support.cpp` instantiates its launcher on the default execution space in the
+`serial-debug`, `openmp-release` and `cuda-release` builds (the CUDA one built, never run).

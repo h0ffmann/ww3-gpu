@@ -1,7 +1,9 @@
 # kokkos/src/ww_kokkos/CMakeLists.txt
 # Sources of the portable kernel library: the DIA port (snl1_*), the ST4 port
 # (st4_*: W3SDS4, W3SIN4, W3SPR4, CALC_USTAR, INSIN4, TABU_*), the W3SRCE unit (srce_*), the
-# propagation unit (prop_*: W3XYP3, W3KTP3, W3QCK1-3, WAVNU1) and the binary
+# propagation unit (prop_*: W3XYP3, W3KTP3, W3QCK1-3, WAVNU1), W3WAVE's support routines
+# (wave_*, updt_*, disp_*: W3GATH, W3SCAT, W3DZXY, W3UWND, W3UTRN, DISTAB, WAVNU2; prop_map*:
+# W3MAP3, W3MAPT) and the binary
 # fixture reader its L1 tests read the Fortran reference answers with.
 #
 # SPDX-License-Identifier: MIT
@@ -37,6 +39,14 @@ target_sources(ww_kokkos PRIVATE
     prop_ktp3.hpp
     prop_xyp3.hpp
     prop.cpp
+    wave_gath_scat.hpp
+    updt_dzxy.hpp
+    updt_uwnd.hpp
+    updt_utrn.hpp
+    disp_distab.hpp
+    prop_map3.hpp
+    prop_mapt.hpp
+    wave_support.cpp
     srce_kernel.hpp
     srce_ln1.hpp
     srce_bt1.hpp
