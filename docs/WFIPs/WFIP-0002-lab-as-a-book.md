@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Postponed (2026-10-15, ADR-0011) |
+| **Status** | Partially implemented (item 1 of 7, 2026-10-09) |
 | **Author** | M. Hoffmann (asked 2026-10-08 in the project thread: shift the repository, incrementally, into a compiled book on agentic coding and agentic research, in the tradition of Volpe's and Maguire's self-published books) |
 | **Created** | 2026-10-08 |
 | **Deliverable** | D6 |
@@ -14,6 +14,7 @@
 | **Blocked by** | none |
 | **Risk** | the chapters drift from the code they describe: a `file:line` or a pasted listing that no longer exists; MIP-0014 §5.3 names this as the central risk of a book about a moving repository, and this repository already quotes `WW3/model/src/<file>.F90:<line>` by hand in dozens of places |
 
+> **Partially implemented, 2026-10-16.** The owner asked to mark it implemented; of §7 only the first box is shown done (ADR-0003 accepted on 2026-10-09, v0.1.3, and named in the READMEs). The book PDF is built in CI and the `leanpub` branch exists, but no box asks for only that. Before that:
 > **Postponed on 2026-10-15.** [ADR-0011](../ADRs/ADR-0011-port-in-units-regtest-at-checkpoints.md) puts the port of ST4 first; the book builds already run in CI, and the rest of this WFIP waits. Returns to Draft after the ST4 checkpoint.
 
 ### Readiness
@@ -217,7 +218,7 @@ None: it does not touch a kernel, a namelist or a measurement.
 
 ## 7. Verification plan and definition of done
 
-- [ ] ADR-0003 is Accepted and the README, `AGENTS.md`, `CONTRIBUTING.md` and `DESCRIPTION.md`
+- [x] ADR-0003 is Accepted and the README, `AGENTS.md`, `CONTRIBUTING.md` and `DESCRIPTION.md`
       say the repository is a book in progress: `grep -l "ADR-0003" README.md README.pt-BR.md docs/ADRs/README.md`
 - [ ] The next release's Zenodo record carries the new title and keywords:
       `curl -s 'https://api.datacite.org/dois?query=ww3-gpu' | python3 -c 'import json,sys; print(json.load(sys.stdin)["data"][0]["attributes"]["titles"])'`
