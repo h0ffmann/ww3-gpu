@@ -124,7 +124,7 @@ KOKKOS_INLINE_FUNCTION void w3sin4_point(const Params& p, const Fields& f, const
   // :662-675
   Real fw, fu, fud;
   if (p.sswellf[1] == static_cast<Real>(0)) {
-    fw = fmax_(Kokkos::fabs(p.sswellf[2]), static_cast<Real>(0.));
+    fw = Kokkos::fabs(p.sswellf[2]);  // -O3 drops the MAX(...,0.) of :663 (dump)
     fu = static_cast<Real>(0.);
     fud = static_cast<Real>(0.);
   } else {
@@ -132,7 +132,7 @@ KOKKOS_INLINE_FUNCTION void w3sin4_point(const Params& p, const Fields& f, const
     fud = p.sswellf[1];
     aorb = static_cast<Real>(2) * Kokkos::sqrt(aorb);
     const Real xi = (Kokkos::log10(fmax_(aorb / z0noz, static_cast<Real>(3.))) - kAbMin) / p.delab;
-    const int ind = imin_(kSizeFwTable - 1, static_cast<int>(xi));
+    const int ind = imin_(kSizeFwTable - 1, fint(xi));
     const Real deli1 = fmin_(static_cast<Real>(1.), xi - static_cast<Real>(ind));
     const Real deli2 = static_cast<Real>(1.) - deli1;
     fw = f.fwtable(ind) * deli2 + f.fwtable(ind + 1) * deli1;
@@ -334,18 +334,18 @@ KOKKOS_INLINE_FUNCTION void w3sin4_point(const Params& p, const Fields& f, const
   } else {
     // Tabulated tail stress TAUHFT / TAUHFT2 (:936-962); tables are 0-based like the Fortran.
     const Real xi = ust / p.delust;
-    const int ind = imax_(1, imin_(kIustar - 1, static_cast<int>(xi)));
+    const int ind = imax_(1, imin_(kIustar - 1, fint(xi)));
     const Real deli1 = fmax_(fmin_(static_cast<Real>(1.), xi - static_cast<Real>(ind)), static_cast<Real>(0.));
     const Real deli2 = static_cast<Real>(1.) - deli1;
     const Real ustm = fmax_(ust, static_cast<Real>(0.00001));
     const Real xj = fmax_(static_cast<Real>(0.), (kGrav * z0 / (ustm * ustm) - p.aalpha) / p.delalp);
-    const int j = imax_(1, imin_(kIalpha - 1, static_cast<int>(xj)));
+    const int j = imax_(1, imin_(kIalpha - 1, fint(xj)));
     const Real delj1 = fmax_(static_cast<Real>(0.), fmin_(static_cast<Real>(1.), xj - static_cast<Real>(j)));
     const Real delj2 = static_cast<Real>(1.) - delj1;
     Real tau1;
     if (p.ttauwshelter > static_cast<Real>(0)) {
       const Real xk = levtail0 / p.deltail;
-      const int i = imin_(kIlevTail - 1, static_cast<int>(xk));
+      const int i = imin_(kIlevTail - 1, fint(xk));
       const Real delk1 = fmin_(static_cast<Real>(1.), xk - static_cast<Real>(i));
       const Real delk2 = static_cast<Real>(1.) - delk1;
       const auto& t2 = f.tauhft2;

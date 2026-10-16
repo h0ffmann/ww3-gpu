@@ -48,6 +48,15 @@ inline constexpr Real kKdMax = static_cast<Real>(200000.);          // KDMAX
 // W3GDATMD's PARAMETERs (w3gdatmd.F90:637-638).
 inline constexpr int kNkhs = 2000, kNkd = 1300, kNdtab = 2000;  // NKHS, NKD, NDTAB
 
+/// INT(x) of a REAL as gfortran's cvttss2si gives it: truncation, and INT_MIN
+/// (0x80000000) for NaN or out of range, where a C++ cast is undefined and CUDA
+/// saturates.
+KOKKOS_INLINE_FUNCTION int fint(Real x) {
+  return (x > static_cast<Real>(-2147483904.) && x < static_cast<Real>(2147483648.))
+             ? static_cast<int>(x)
+             : static_cast<int>(0x80000000u);
+}
+
 /// RPAR indices (0-based). The comment names the Fortran variable packed there.
 enum Rpar : int {
   R_DTH = 0,      // SGRD DTH

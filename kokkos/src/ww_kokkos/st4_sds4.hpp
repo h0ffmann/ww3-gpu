@@ -51,11 +51,11 @@ KOKKOS_INLINE_FUNCTION int nint(Real x) {
   return static_cast<int>(static_cast<long>(Kokkos::round(x)));
 }
 
-/// FLOOR(x) as -O3 computes it at :2590: truncate, then correct by one.
+/// FLOOR(x) as the -O3 dump computes it at :2590: i = (int)x; (float)i <= x ? i : i-1,
+/// with the wrap of -fno-strict-overflow, so a NaN gives INT_MAX as in the Fortran.
 KOKKOS_INLINE_FUNCTION int ffloor(Real x) {
-  int i = static_cast<int>(x);
-  if (static_cast<Real>(i) > x) i -= 1;
-  return i;
+  const int i = fint(x);
+  return static_cast<Real>(i) <= x ? i : static_cast<int>(static_cast<unsigned>(i) - 1u);
 }
 
 /// Fortran MAX/MIN of two REALs. NaN and the sign of a zero are unspecified in
@@ -277,10 +277,9 @@ KOKKOS_INLINE_FUNCTION void w3sds4_point(const Params& p, const Fields& f, const
         const Real kb = kbar[ikl - 1];
         if (hs[ikl - 1] != zero && kb != zero) {
           // FAC_KD2 + ANINT(...) is REAL, truncated on assignment to INTEGER.
-          int ikd = static_cast<int>(
-              Kokkos::round(Kokkos::log(kb * depth) / sds4_detail::kLogFacKd1) +
-              static_cast<Real>(kFacKd2));
-          int ikhs = static_cast<int>(one + Kokkos::round((kb * hs[ikl - 1]) / sds4_detail::kDkhs));
+          int ikd = fint(Kokkos::round(Kokkos::log(kb * depth) / sds4_detail::kLogFacKd1) +
+                         static_cast<Real>(kFacKd2));
+          int ikhs = fint(one + Kokkos::round((kb * hs[ikl - 1]) / sds4_detail::kDkhs));
           if (ikd > kNkd) {
             ikd = kNkd;
           } else if (ikd < 1) {

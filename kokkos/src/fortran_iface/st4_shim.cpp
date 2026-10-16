@@ -296,14 +296,22 @@ void rebuild_tables(GridCtx& g, ModuleCtx& m) {
   allocate_tables(p, built);
   built.fwtable = m.h.fwtable;
   insin4(p, true, built);
-  const long long diff =
-      count_diff(g.h.satindices, built.satindices) + count_diff(g.h.satweights, built.satweights) +
-      count_diff(g.h.iktab, built.iktab) + count_diff(g.h.dcki, built.dcki) +
-      count_diff(g.h.qbi, built.qbi) + count_diff(g.h.cumulw, built.cumulw) +
-      (m.h.taut.data() ? count_diff(m.h.taut, built.taut) : 0) +
-      (m.h.tauhft.data() ? count_diff(m.h.tauhft, built.tauhft) : 0) +
-      (m.h.tauhft2.data() ? count_diff(m.h.tauhft2, built.tauhft2) : 0);
-  std::fprintf(stderr, "ww_kokkos: ST4 tables rebuilt in C++: %lld values differ from the Fortran's\n",
+  // TAUT/TAUHFT exist only when SINTAILPAR(1) > 0.5, TAUHFT2 only when also
+  // TTAUWSHELTER > 0 (w3src4md.F90:1118-1127); otherwise the module tables and
+  // DEL* of an earlier grid stay, as the Fortran's ALLOCATED module arrays do.
+  const bool tabs = p.sintailpar[0] > static_cast<Real>(0.5);
+  const bool tabs2 = tabs && p.ttauwshelter > 0;
+  long long diff = count_diff(g.h.satindices, built.satindices) +
+                   count_diff(g.h.satweights, built.satweights) +
+                   count_diff(g.h.iktab, built.iktab) + count_diff(g.h.dcki, built.dcki) +
+                   count_diff(g.h.qbi, built.qbi) + count_diff(g.h.cumulw, built.cumulw);
+  if (tabs) diff += count_diff(m.h.taut, built.taut) + count_diff(m.h.tauhft, built.tauhft);
+  if (tabs2) diff += count_diff(m.h.tauhft2, built.tauhft2);
+  // A difference in TAUHFT/TAUHFT2 can also mean ww3_grid read a stale
+  // ST4TABUHF2.bin (w3src4md.F90:1710-1725), which the C++ never reads.
+  std::fprintf(stderr,
+               "ww_kokkos: ST4 tables rebuilt in C++: %lld values differ from the Fortran's "
+               "(mod_def.ww3, ST4TABUHF2.bin)\n",
                diff);
   g.h.satindices = built.satindices;
   g.h.satweights = built.satweights;
@@ -311,14 +319,18 @@ void rebuild_tables(GridCtx& g, ModuleCtx& m) {
   g.h.dcki = built.dcki;
   g.h.qbi = built.qbi;
   g.h.cumulw = built.cumulw;
-  m.h.taut = built.taut;
-  m.h.tauhft = built.tauhft;
-  m.h.tauhft2 = built.tauhft2;
-  m.delu = p.delu;
-  m.deltauw = p.deltauw;
-  m.delust = p.delust;
-  m.delalp = p.delalp;
-  m.deltail = p.deltail;
+  if (tabs) {
+    m.h.taut = built.taut;
+    m.h.tauhft = built.tauhft;
+    m.delu = p.delu;
+    m.deltauw = p.deltauw;
+    m.delust = p.delust;
+    m.delalp = p.delalp;
+  }
+  if (tabs2) {
+    m.h.tauhft2 = built.tauhft2;
+    m.deltail = p.deltail;
+  }
 }
 
 /// The grid's Params and Fields with the module's current state merged in.

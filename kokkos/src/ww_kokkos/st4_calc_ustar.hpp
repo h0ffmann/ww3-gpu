@@ -45,11 +45,11 @@ KOKKOS_INLINE_FUNCTION void calc_ustar(const Params& p, const Fields& f, Real wi
   if (p.sintailpar[0] > static_cast<Real>(0.5)) {  // :1937, table of TABU_STRESS
     const Real tauw_local = fmax2(fmin2(tauw, kTauwMax), static_cast<Real>(0.));  // :1938
     const Real xi = Kokkos::sqrt(tauw_local) / p.deltauw;
-    const int ind = imin2(kItauMax - 1, static_cast<int>(xi));  // INT truncates
+    const int ind = imin2(kItauMax - 1, fint(xi));  // INT truncates
     const Real deli1 = fmin2(static_cast<Real>(1.), xi - static_cast<Real>(ind));
     const Real deli2 = static_cast<Real>(1.) - deli1;
     const Real xj = windspeed / p.delu;
-    const int j = imin2(kJuMax - 1, static_cast<int>(xj));
+    const int j = imin2(kJuMax - 1, fint(xj));
     const Real delj1 = fmin2(static_cast<Real>(1.), xj - static_cast<Real>(j));
     const Real delj2 = static_cast<Real>(1.) - delj1;
     // :1947-1948; TAUT(0:ITAUMAX,0:JUMAX) is 0-based, so (IND,J) is f.taut(ind,j).
