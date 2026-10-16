@@ -142,7 +142,8 @@ The owner asked for a third way, WAVEWATCH IV from the WW4/ submodule (h0ffmann/
 that is on (LN1, ST4, NL1, BT1, DB1), and for `full` the UQ propagation solver. A part counts as
 ported when its WW4 file has more than 60 lines of code, the threshold of `scripts/ww4_status.py`.
 Today only the time loop is there (148 lines), so `just smoke-ww4` and `just full-ww4` stop with
-exit 5 before any build `(v)`. Against the tree of NOAA-EMC/WW4 pull request #72, whose files are
+exit 5 before any build `(v)`. Against the tree of WW4's open factory branch
+(`FT-Runtime-Scheme-Selection-Design` of the `WW4_HLT` fork, at `afc40c2`), whose files are
 placeholders, the same check reports each of them as a stub, 7 and 29 lines `(v)`.
 
 `ww3-gpu.sh --ww4 smoke --build-only` builds WW4 from the fork in the pinned toolchain `(v)`. It needs

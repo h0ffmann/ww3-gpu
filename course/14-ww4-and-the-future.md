@@ -33,7 +33,7 @@ in the right-hand column):
 | Releases / tags | **none**; `VERSION` reads `0.0.0` | none; `0.0.0` |
 | Stars / forks / watchers | 3 / 7 / 4 ⚠ | 3 / 7 / 4 |
 | Open issues / open PRs | 34 / 1 ⚠ | 31 / 0 |
-| Last merge | 2026-10-01, PR #71, documentation style in `ww4_utils` | 2026-09-15, PR #66, "CMake-only compile system" |
+| Last merge | 2026-10-01, `74ea792`, documentation style in `ww4_utils` | 2026-09-15, `12f363f`, "CMake-only compile system" |
 | Top-level | `src/ tests/ tools/ templates/ externals/`, plus `AGENTS.md`, `ARCHITECTURE.md`, `INTENT.md` | same |
 | `src/` | `ww4_core/` (`w4core_init`, `w4core_wave`, `w4core_finalize`), `ww4_utils/`, `ww4_progs/ww4_standalone.cpp` | same |
 | `tests/` | GoogleTest; four declared levels, L1 and L2 present, L3 and L4 absent | same |
@@ -44,31 +44,34 @@ the same day; `git rev-list --count develop` is the number to trust. Reproduce t
 ```bash
 git clone --filter=blob:none https://github.com/NOAA-EMC/WW4 && cd WW4
 git rev-list --count develop; cat VERSION; git tag        # 39, 0.0.0, (nothing)
-git log --format='%h %cs | %s' --since=2026-09-10 develop  # PRs 66, 67, 71
-git fetch origin refs/pull/72/head:pr72                    # the open factory PR
-git grep -niI kokkos develop pr72                          # (nothing)
+git log --format='%h %cs | %s' --since=2026-09-10 develop  # 12f363f, bdf3761, 74ea792
+git fetch https://github.com/HendrikTolman-NOAA/WW4_HLT \
+  FT-Runtime-Scheme-Selection-Design:factory               # the open factory branch
+git grep -niI kokkos develop afc40c2                       # (nothing)
 ```
 
 Thirty-nine commits, eleven months in, and no release. This is scaffolding and early core
 work, an init/wave/finalize driver with a standalone program around it, not a model you
 can run. Treat it as a project to follow, not a tool to adopt.
 
-What has happened this year, in order `(v)`: PR #50 (2026-07-22) brought the unit (L1) and
-integration (L2) tests to full coverage of the code that exists; issue #43 (2026-07-15)
-proposed the **CPU–GPU architecture**, naming Kokkos as the data abstraction and MPI between
-nodes, and asked whether to keep one code base for CPU and GPU; PR #60 (2026-08-19) removed
-the Python dependence from the build; PR #66 (2026-09-15) made the build CMake-only.
+What has happened this year, in order `(v)`: `ca619d9` (merged 2026-07-22) brought the unit
+(L1) and integration (L2) tests to full coverage of the code that exists; an issue titled
+"CPU - GPU architecture" (opened 2026-07-15) proposed the **CPU–GPU architecture**, naming
+Kokkos as the data abstraction and MPI between nodes, and asked whether to keep one code base
+for CPU and GPU; `f719269` (merged 2026-08-19) removed the Python dependence from the build;
+`12f363f` (merged 2026-09-15) made the build CMake-only.
 
 Since 2026-09-15 `(v)`:
 
-- **PR #67** (merged 2026-09-25) defines the **spectral space** in the run-time YAML:
+- **`bdf3761`** (merged 2026-09-25) defines the **spectral space** in the run-time YAML:
   `SpectralConfig { numDirections = 36; numFrequencies = 50; freqIncrementFactor = 1.07;
   firstFrequency = 0.035; firstDirectionOffset = 0.5; }` in `src/ww4_utils/ww4_run_config.h`.
   Parameters only; no frequency or direction arrays are built yet. During review the default
   lowest frequency moved from 0.04118 Hz to 0.035 Hz.
-- **PR #71** (merged 2026-10-01) is documentation and naming in `src/ww4_utils`.
-- **PR #72** (open since 2026-09-30, 91 commits from the `WW4_HLT` fork, +4 037 / −322 over
-  75 files; the author asks for a merge by 2026-10-16) adds a `SchemeFactory` that picks
+- **`74ea792`** (merged 2026-10-01) is documentation and naming in `src/ww4_utils`.
+- **The factory branch** (`FT-Runtime-Scheme-Selection-Design` of the `WW4_HLT` fork, open for
+  merge since 2026-09-30, head `afc40c2` on 2026-10-07, 91 commits, +4 037 / −322 over 75 files;
+  the author asks for a merge by 2026-10-16) adds a `SchemeFactory` that picks
   solvers and source terms **at run time from the YAML**, "compile once, load only what you
   use", which is what replaces WW3's compile-time switches. It brings three solver
   placeholders (`SolverUQ`, `SolverTriangular`, `SolverSMC`) and ten source-term placeholders
@@ -86,12 +89,12 @@ Since 2026-09-15 `(v)`:
   ```
 
   and the bodies are stubs (`NL1` adds 0.001 to every element of the span). Its review
-  thread holds the first physics discussion from outside NOAA on a WW4 PR: J. Warner (USGS)
+  holds the first physics discussion from outside NOAA on a WW4 change: J. Warner (USGS)
   asks for depth-limited breaking and whitecapping as separate dissipation terms for
   vortex-force coupling, and F. Ardhuin questions the distinction.
-- **Issue #43 is closed**, with no comment, no linked PR, and "Done" on the "Initial WW4
+- **The "CPU - GPU architecture" issue was closed** on 2026-09-25, with no comment, no linked change, and "Done" on the "Initial WW4
   development" project board. ⚠ No written decision is attached, so whether Kokkos is
-  *adopted* cannot be read from it, and no file on `develop` or in PR #72 mentions Kokkos.
+  *adopted* cannot be read from it, and no file on `develop` or on the factory branch at `afc40c2` mentions Kokkos.
 - Nothing new on the [wiki](https://github.com/NOAA-EMC/WW4/wiki) (edited 2026-10-02, still
   "under construction", no dates past Phase II), in the
   [announcements](https://github.com/NOAA-EMC/WW4/discussions/categories/announcements)
@@ -151,7 +154,7 @@ The report says outright that language choice was the most contentious question,
 The chosen path is the **"dual approach"**: build a C++ core to an operations-ready state
 in roughly two years, while incrementally building Rust alternatives; a Rust-cored WW4 for
 operations is a roughly five-year target. What the repository shows in October 2026 is
-consistent with that: the core is C++, and issue #43 proposed Kokkos. That issue is now closed
+consistent with that: the core is C++, and the "CPU - GPU architecture" issue proposed Kokkos. That issue is now closed
 without a written decision, and the code does not use Kokkos yet, so the "likely" in the table
 above is still a likely `(v)`.
 
@@ -184,8 +187,8 @@ this are notoriously difficult, and a fourth column for what the repository actu
 |---|---|---|---|
 | I | Initial choices | complete (ON 525, Nov 2025) | Done. |
 | II | Language test, governance setup, architecture design | began 1 Oct 2025, 3–6 months | **Done**: reported in NCEP Office Note 528 (2026). |
-| III | Core code development (EMC) | open source, not yet open contribution | **In progress.** `src/ww4_core` init/wave/finalize, `ww4_standalone`, the utils library, the L1/L2 test framework, the CMake-only build, the spectral-space configuration (PR #67), and the run-time solver and source-term factory (PR #72, open). Issue #43, the CPU–GPU architecture, is closed without a recorded decision. |
-| IV | **Initial Model Capability**: single domain, CPU *and GPU* efficiency focus | active community engagement expected summer/autumn 2026 | **Not visibly begun** as of 2026-10-07: no physics, no data structure for the spectrum, no runnable single-domain model, no L3/L4 tests, no release. The first outside reviewers appeared on PR #72. The date has slipped; nobody has said by how much. |
+| III | Core code development (EMC) | open source, not yet open contribution | **In progress.** `src/ww4_core` init/wave/finalize, `ww4_standalone`, the utils library, the L1/L2 test framework, the CMake-only build, the spectral-space configuration (`bdf3761`), and the run-time solver and source-term factory (open, `afc40c2`). The CPU–GPU architecture issue is closed without a recorded decision. |
+| IV | **Initial Model Capability**: single domain, CPU *and GPU* efficiency focus | active community engagement expected summer/autumn 2026 | **Not visibly begun** as of 2026-10-07: no physics, no data structure for the spectrum, no runnable single-domain model, no L3/L4 tests, no release. The first outside reviewers appeared on the factory branch's review. The date has slipped; nobody has said by how much. |
 | V | Initial Operational Capability, multi-domain | | |
 | VI | Complete first full code | first public release hoped for summer 2027 | **First public release: expected January 2027** per the advisor communication behind this repo's proposal ⚠ no cited NOAA source; ON 525 said summer 2027, and the state of the repository makes January look ambitious: on 2026-10-07, three months before it, there is still no physics. |
 
@@ -209,7 +212,7 @@ this repo calls L2, in WW4's terms closer to L4: WW3's regtests rerun with the k
 `kokkos/tests/L2_replay.sh`, the regtest matrix of `regtests/`, run by CTest) and the netCDF output judged
 with `nccmp-tol`. So an L1 suite for a kernel
 handed to WW4 would have to be written on WW4's side.
-PR #72 already reserves the slot: `src/ww4_core/source_terms/ww4_NL1/` and
+The factory branch (`afc40c2`) already reserves the slot: `src/ww4_core/source_terms/ww4_NL1/` and
 `tests/ww4_core/L1_test_ww4_NL1.cpp`, behind a `calculate(std::span<double>)` that has no notion
 yet of a batch of points, a device memory space or the precomputed tables `ww_snl1_init`
 builds; how that signature changes once WW4 has data structures decides whether a Kokkos kernel

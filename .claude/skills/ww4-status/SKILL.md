@@ -37,13 +37,21 @@ repo's API scope, so read single pages:
 
 - each PR the script listed: `https://github.com/NOAA-EMC/WW4/pull/<n>`: state (open, merged,
   closed), description, review comments, linked issues;
-- issues those PRs name, and issue #43 (CPU–GPU architecture) whenever Kokkos moved;
+- issues those PRs name, and the issue titled "CPU - GPU architecture" (opened 2026-07-15,
+  closed 2026-09-25 without a written decision) whenever Kokkos moved;
 - `https://github.com/NOAA-EMC/WW4/discussions/categories/announcements` (newest date);
 - `https://github.com/NOAA-EMC/WW4/wiki` (last edit, any phase dates or release date);
 - a web search for a new NCEP Office Note after ON 528 (doi:10.25923/0wyp-9f39), a WW4 workshop
   or a release announcement.
 
 Open and closed issue counts come only from the repo page and are approximate; mark them `⚠`.
+
+Read upstream issues and PRs freely, but never write one's number or URL into this repository,
+its commits, issues or PRs (`AGENTS.md`, "Third-party issues and pull requests (hard rule)"):
+GitHub turns `NOAA-EMC/WW4#N` and the URL into a backlink its maintainers see. Name an item by
+what it contains at a fixed point: a merged change by its commit on `develop` (short SHA) and
+merge date, an open one by its branch and head commit, an issue by its title and the date it was
+opened or closed. `pr_heads` in `docs/ww4-status.json` is the script's state and stays as is.
 
 ## 3. Decide what it means for ww3-gpu
 
@@ -68,8 +76,9 @@ Branch per `CONTRIBUTING.md`, then:
 
 1. Open an issue "WW4 status update: what changed upstream since <snapshot date>" in the shape of
    #49: short version, what changed (merged, open PRs, issues, elsewhere), timeline against
-   ON 525, what this means for ww3-gpu, a Reproduce block, Sources. Refer to WW4 items as
-   `NOAA-EMC/WW4#N` so they do not link to this repo's issues.
+   ON 525, what this means for ww3-gpu, a Reproduce block, Sources. Refer to WW4 items by
+   commit, branch, title and date as in step 2, never `NOAA-EMC/WW4#N` or a URL; the Reproduce
+   block fetches commits and branches, not `refs/pull/<n>/head`.
 2. Update `course/14-ww4-and-the-future.md` (snapshot table with the new and previous dates, the
    "Since <date>" list, the timeline column), the date and commit count in `README.md` ("Two
    things worth knowing") and the snapshot date in `CONTRIBUTING.md` item 5.

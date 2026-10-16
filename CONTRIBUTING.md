@@ -106,6 +106,11 @@ A mistake in a figure is as welcome as one in the text: the gallery links an iss
 
 - Keep the `⚠` / `(v)` convention. Marking uncertainty honestly is the point.
 - Don't vendor WW3 source. Scripts fetch it.
+- Don't cite a third party's issues or pull requests: no `NOAA-EMC/WW4#72`, no link to a
+  NOAA-EMC/WW3 issue, no "WW4 PR #67", in a file, a commit, or an issue or pull request of this
+  repository: GitHub turns each one into a backlink on the upstream item. Describe what it contains
+  at a fixed point instead: the code at a commit, the merge date, a release, a DOI
+  (`AGENTS.md`, "Third-party issues and pull requests").
 - The third-party skills under `.claude/skills/` (`humanizer`, `humanizar`, `ponytail*`, `sharingan`) are pinned
   in `.claude/skills/skills.lock`, and the audience paragraph each one carries (for `sharingan`,
   also the paths that point at this repository's homes instead of marola's) is the

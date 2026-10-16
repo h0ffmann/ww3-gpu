@@ -128,8 +128,8 @@ CUDA row must not be read as "the model will be 34x faster".
 
 ## Level-0 scratch at WW4's default grid
 
-WW4 PR #67 (merged 2026-09-25) set WW4's default spectral space to 36 directions and 50
-frequencies, XFR 1.07, first frequency 0.035 Hz `(v)` (`templates/ww4_run_config.yaml`
+WW4's commit `bdf3761` on `develop` (merged 2026-09-25) set WW4's default spectral space to
+36 directions and 50 frequencies, XFR 1.07, first frequency 0.035 Hz `(v)` (`templates/ww4_run_config.yaml`
 in NOAA-EMC/WW4; ww3-gpu issue #49). The DIA's per-point level-0 scratch grows with the
 extended spectrum, and that grid crosses the RTX 4090's limit:
 

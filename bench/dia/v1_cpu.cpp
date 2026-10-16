@@ -1,6 +1,6 @@
 // bench/dia/v1_cpu.cpp
-// ww3-dia-gpu (v1, NOAA-EMC/WW3#1583) on the CPU, so it can be timed in Serial and OpenMP next to
-// WW3's W3SNL1 and the Kokkos port. The arithmetic is kernel_dia_sequential of
+// ww3-dia-gpu (v1, the GPU DIA kernel proposed upstream) on the CPU, so it can be timed in
+// Serial and OpenMP next to WW3's W3SNL1 and the Kokkos port. The arithmetic is kernel_dia_sequential of
 // ww3_dia_benchmark.cu (consigcody94/ww3-dia-gpu@38919d2, lines 92-126) line for line, and the
 // inputs are its own main()'s (lines 128-164): synthetic energies, four index arrays
 // (isp +- NTH [+1]) mod n, its eight weights, CONS/DAL constants. Its one-thread-per-point loop is
