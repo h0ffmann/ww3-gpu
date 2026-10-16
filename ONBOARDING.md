@@ -94,8 +94,8 @@ Three words, three different claims (`kokkos/ports.tsv`, one row per routine):
 - **ported (wired)**: WW3 at the `WW3/` pin calls it, behind a run-time flag;
 - **regtested**: WW3's own regtests ran with it on Kokkos and gave the Fortran's bytes.
 
-(v) `just port-score` on 2026-10-16, after the source-term batch below: 91 of WW3's 1 023
-routines are translated (9.56 % of the lines of `model/src`, 99.3 % of the run time of the
+(v) `just port-score` on 2026-10-16, after the easy batch below: 184 of WW3's 1 023
+routines are translated (11.59 % of the lines of `model/src`, 99.3 % of the run time of the
 `bench_small` profile), 10 are wired at the pin, and 2 are regtested (`W3SNL1`, `INSNL1`). The
 numbers move with every PR; `kokkos/PORT_STATUS.md` and `site/data/port_score.tsv` are the current
 ones. Nothing has run inside WW3 on a GPU.
@@ -108,6 +108,7 @@ ones. Nothing has run inside WW3 on a GPU.
 | Propagation (`PR3`, `UQ`), `W3WAVE` support, dispersion | 17 | translated and reviewed |
 | NOAA operational batches A to C (`PDLIB`, `IC4`, `REF1`, `TR1`, `BT4`, `IS1`, `IC1`, partitioning, `NL3`) | 28 | translated and reviewed |
 | Source terms `ST0`, `ST1`, `ST2`, `ST3`, `ST6`, fluxes `FLX1`-`FLX5`, swell `SWL` (issue #42, branch `goal/42-port-st-flx-swl`) | 32 | translated and reviewed, one agent per routine; `ST2` with `FLX3` is the physics of `switch_NCEP_st2`; shims and a fork branch in the same PR, not run |
+| The easy batch: the 92 smallest routines left (100 lines or less, no MPI, not file I/O), most of them the `w3profsmd` solver helpers, plus `FINDROOTS_NR` (issue #42, branch `goal/42-port-batch-easy`) | 93 | translated and reviewed once, one agent per routine; header-only, no shim, not run; many have no caller in WW3 |
 
 ## The workflow, from a Fortran routine to a faster model
 
