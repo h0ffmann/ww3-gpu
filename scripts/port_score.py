@@ -231,10 +231,14 @@ def render(meta_p, prof, meta_w, ports):
     return "\n".join(lines)
 
 
+# Modules whose file is not named after them (`grep -il "^ *module <name>" WW3/model/src/*.F90`).
+MODULE_FILE = {"pdlib_w3profsmd": "w3profsmd_pdlib"}
+
+
 def ww3_file(routine):
     """w3src4md:w3sds4 -> model/src/w3src4md.F90; a name without a module has no file here."""
     mod = routine.split(":")[0] if ":" in routine else ""
-    return f"model/src/{mod}.F90" if mod else "—"
+    return f"model/src/{MODULE_FILE.get(mod, mod)}.F90" if mod else "—"
 
 
 def ranking(meta_p, prof, meta_w, ports):
@@ -532,7 +536,8 @@ Each sample counts as 0.01 seconds.
     with tempfile.TemporaryDirectory() as tmp:
         (Path(tmp) / "W3SNL1_KOKKOS.md").write_text("x", encoding="utf-8")
         ok(missing_reports(ports[:2], Path(tmp)) == ["INSNL1_KOKKOS.md"], "a ported routine without a report is named")
-    ok(ww3_file("w3src4md:w3sds4") == "model/src/w3src4md.F90" and ww3_file("init") == "—",
+    ok(ww3_file("w3src4md:w3sds4") == "model/src/w3src4md.F90" and ww3_file("init") == "—"
+       and ww3_file("pdlib_w3profsmd:x") == "model/src/w3profsmd_pdlib.F90",
        "a module's routine maps to its file; a bare name has none")
     rk = ranking({"case": "t"}, rows, {"ww3_rev": "abc"},
                  [dict(ports[0], kokkos="kokkos/src/a.cpp, kokkos/src/s.cpp", regtested="yes: L2, ww3_ts1")])

@@ -5,14 +5,14 @@
 # file: model/src/<file>.F90:<first>-<last> at NOAA-EMC/WW3 03adda91
 # claim: the branch (and agent) that owns it; plan: the plan that names it
 routine	file	claim	plan
-w3profsmd_pdlib:pdlib_w3xypug	model/src/w3profsmd_pdlib.F90:626-866	goal/42-port-noaa-ops (Claude Code, batch A)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
-w3profsmd_pdlib:pdlib_w3xypfsn2	model/src/w3profsmd_pdlib.F90:868-1200	goal/42-port-noaa-ops (Claude Code, batch A)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
-w3profsmd_pdlib:pdlib_w3xypfspsi2	model/src/w3profsmd_pdlib.F90:1202-1502	goal/42-port-noaa-ops (Claude Code, batch A)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
-w3profsmd_pdlib:pdlib_w3xypfsfct2	model/src/w3profsmd_pdlib.F90:1504-1877	goal/42-port-noaa-ops (Claude Code, batch A)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
-w3profsmd_pdlib:calcarray_jacobi_vec	model/src/w3profsmd_pdlib.F90:3531-3787	goal/42-port-noaa-ops (Claude Code, batch A)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
-w3profsmd_pdlib:apply_boundary_condition	model/src/w3profsmd_pdlib.F90:5150-5336	goal/42-port-noaa-ops (Claude Code, batch A)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
-w3profsmd_pdlib:pdlib_jacobi_gauss_seidel_block	model/src/w3profsmd_pdlib.F90:5463-6406	goal/42-port-noaa-ops (Claude Code, batch A)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
-w3profsmd_pdlib:pdlib_explicit_block	model/src/w3profsmd_pdlib.F90:6408-6685	goal/42-port-noaa-ops (Claude Code, batch A)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
+pdlib_w3profsmd:pdlib_w3xypug	model/src/w3profsmd_pdlib.F90:626-866	goal/42-port-noaa-ops (Claude Code, batch A)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
+pdlib_w3profsmd:pdlib_w3xypfsn2	model/src/w3profsmd_pdlib.F90:868-1200	goal/42-port-noaa-ops (Claude Code, batch A)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
+pdlib_w3profsmd:pdlib_w3xypfspsi2	model/src/w3profsmd_pdlib.F90:1202-1502	goal/42-port-noaa-ops (Claude Code, batch A)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
+pdlib_w3profsmd:pdlib_w3xypfsfct2	model/src/w3profsmd_pdlib.F90:1504-1877	goal/42-port-noaa-ops (Claude Code, batch A)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
+pdlib_w3profsmd:calcarray_jacobi_vec	model/src/w3profsmd_pdlib.F90:3531-3787	goal/42-port-noaa-ops (Claude Code, batch A)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
+pdlib_w3profsmd:apply_boundary_condition	model/src/w3profsmd_pdlib.F90:5150-5336	goal/42-port-noaa-ops (Claude Code, batch A)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
+pdlib_w3profsmd:pdlib_jacobi_gauss_seidel_block	model/src/w3profsmd_pdlib.F90:5463-6406	goal/42-port-noaa-ops (Claude Code, batch A)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
+pdlib_w3profsmd:pdlib_explicit_block	model/src/w3profsmd_pdlib.F90:6408-6685	goal/42-port-noaa-ops (Claude Code, batch A)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
 w3sic4md:w3sic4	model/src/w3sic4md.F90:121-803	goal/42-port-noaa-ops (Claude Code, batch A)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
 w3ref1md:w3sref	model/src/w3ref1md.F90:111-670	goal/42-port-noaa-ops (Claude Code, batch A)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
 w3dispmd:wavnu3	model/src/w3dispmd.F90:348-454	Kimi Code, batch B	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
