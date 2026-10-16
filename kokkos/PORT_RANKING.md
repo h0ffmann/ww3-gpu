@@ -121,3 +121,4 @@ The record is the `regtested` column of `kokkos/ports.tsv`.
 | `w3pro3md:w3map3` | ported | `prop_map3.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run in this round); the W3WAVE support checkpoint (ADR-0011) runs it once a shim and the W3WAVE wiring exist |
 | `w3pro3md:w3mapt` | ported | `prop_mapt.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run in this round); the W3WAVE support checkpoint (ADR-0011) runs it once a shim and the W3WAVE wiring exist |
 | `w3ref1md:w3sref` | ported | `srce_ref1.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and the W3SRCE hunk |
+| `w3sic4md:w3sic4` | ported | `srce_ic4.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and the W3SRCE hunk |

@@ -204,7 +204,7 @@ KOKKOS_INLINE_FUNCTION void w3sref_point(const Ref1Params& p, const Real* sig, c
     emeana = emeana + eb;
     fmeana = fmeana + eb / sig[ik];
   }
-  fmeana = kTpiInv * (emeana / fmax2(k1em7, fmeana));
+  fmeana = ref1_detail::kTpiInv * (emeana / fmax2(k1em7, fmeana));
   fmeana = fmax2(sig[1], fmeana);
 
   // :317, :335.

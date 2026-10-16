@@ -8,6 +8,7 @@
 #include "disp_distab.hpp"
 #include "prop_map3.hpp"
 #include "prop_mapt.hpp"
+#include "srce_ic4.hpp"
 #include "srce_ref1.hpp"
 #include "updt_dzxy.hpp"
 #include "updt_utrn.hpp"
