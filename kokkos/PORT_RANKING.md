@@ -12,86 +12,81 @@ Profile: full (bench_small, 120 x 80, 9 520 sea points, 12 h), Release -pg, swit
 what the compiler inlined into it are in the caller's row; the shares are this case's and this
 switch's, not every model's.
 
-The profile names 87 routines, 11 of them ported, so this table has 76 rows, not 100. Rows 12 to 76 took less than one gprof sample (10 ms): their order is gprof's, not a cost order, and a longer case or `perf` is needed to rank them. A routine this case never calls (another switch, another grid) is not in the profile and not here.
+The profile names 87 routines, 16 of them ported, so this table has 71 rows, not 100. Rows 8 to 71 took less than one gprof sample (10 ms): their order is gprof's, not a cost order, and a longer case or `perf` is needed to rank them. A routine this case never calls (another switch, another grid) is not in the profile and not here.
 
 | # | routine | WW3 file | self s | self % | cumulative % |
 |---|---|---|---|---|---|
-| 1 | `w3pro3md:w3xyp3` | `model/src/w3pro3md.F90` | 3.92 | 2.98 | 96.7 |
-| 2 | `w3uqckmd:w3qck3` | `model/src/w3uqckmd.F90` | 1.50 | 1.14 | 97.8 |
-| 3 | `w3uqckmd:w3qck1` | `model/src/w3uqckmd.F90` | 1.19 | 0.91 | 98.7 |
-| 4 | `init` | `—` | 0.86 | 0.65 | 99.4 |
-| 5 | `w3pro3md:w3ktp3` | `model/src/w3pro3md.F90` | 0.40 | 0.30 | 99.7 |
-| 6 | `w3wavemd:w3scat` | `model/src/w3wavemd.F90` | 0.21 | 0.16 | 99.8 |
-| 7 | `w3wavemd:w3gath` | `model/src/w3wavemd.F90` | 0.15 | 0.11 | 100.0 |
-| 8 | `w3wavemd:w3wave` | `model/src/w3wavemd.F90` | 0.03 | 0.02 | 100.0 |
-| 9 | `w3updtmd:w3uwnd` | `model/src/w3updtmd.F90` | 0.01 | 0.01 | 100.0 |
-| 10 | `w3adatmd:w3dima` | `model/src/w3adatmd.F90` | 0.01 | 0.01 | 100.0 |
-| 11 | `w3gdatmd:w3dims` | `model/src/w3gdatmd.F90` | 0.01 | 0.01 | 100.0 |
-| 12 | `w3parall:init_get_isea` | `model/src/w3parall.F90` | < 0.01 | 0.00 | 100.0 |
-| 13 | `w3dispmd:wavnu1` | `model/src/w3dispmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 14 | `w3servmd:itrace` | `model/src/w3servmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 15 | `w3timemd:dsec21` | `model/src/w3timemd.F90` | < 0.01 | 0.00 | 100.0 |
-| 16 | `w3servmd:print_memcheck` | `model/src/w3servmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 17 | `w3dispmd:wavnu2` | `model/src/w3dispmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 18 | `w3gsrumd:w3fdwt_r8` | `model/src/w3gsrumd.F90` | < 0.01 | 0.00 | 100.0 |
-| 19 | `w3timemd:stme21` | `model/src/w3timemd.F90` | < 0.01 | 0.00 | 100.0 |
-| 20 | `w3servmd:wwtime` | `model/src/w3servmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 21 | `w3timemd:tick21` | `model/src/w3timemd.F90` | < 0.01 | 0.00 | 100.0 |
-| 22 | `w3gdatmd:w3setg` | `model/src/w3gdatmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 23 | `w3adatmd:w3seta` | `model/src/w3adatmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 24 | `w3odatmd:w3seto` | `model/src/w3odatmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 25 | `w3gsrumd:get_fdw3.constprop.0` | `model/src/w3gsrumd.F90` | < 0.01 | 0.00 | 100.0 |
-| 26 | `w3gsrumd:w3nnsc` | `model/src/w3gsrumd.F90` | < 0.01 | 0.00 | 100.0 |
-| 27 | `w3wdatmd:w3setw` | `model/src/w3wdatmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 28 | `w3idatmd:w3seti` | `model/src/w3idatmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 29 | `w3gdatmd:w3gntx` | `model/src/w3gdatmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 30 | `w3gsrumd:gsu_create` | `model/src/w3gsrumd.F90` | < 0.01 | 0.00 | 100.0 |
-| 31 | `w3gsrumd:w3cgdm_r4` | `model/src/w3gsrumd.F90` | < 0.01 | 0.00 | 100.0 |
-| 32 | `w3gsrumd:w3gsuc_ptr_r8` | `model/src/w3gsrumd.F90` | < 0.01 | 0.00 | 100.0 |
-| 33 | `w3iogrmd:w3iogr` | `model/src/w3iogrmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 34 | `w3parall:set_up_nseal_nsealm` | `model/src/w3parall.F90` | < 0.01 | 0.00 | 100.0 |
-| 35 | `w3timemd:d2j` | `model/src/w3timemd.F90` | < 0.01 | 0.00 | 100.0 |
-| 36 | `w3timemd:t2d` | `model/src/w3timemd.F90` | < 0.01 | 0.00 | 100.0 |
-| 37 | `w3timemd:tdiff` | `model/src/w3timemd.F90` | < 0.01 | 0.00 | 100.0 |
-| 38 | `main` | `—` | < 0.01 | 0.00 | 100.0 |
-| 39 | `w3adatmd:w3dmnl` | `model/src/w3adatmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 40 | `w3adatmd:w3naux` | `model/src/w3adatmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 41 | `w3dispmd:distab` | `model/src/w3dispmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 42 | `w3fldsmd:w3fldh` | `model/src/w3fldsmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 43 | `w3gdatmd:w3dimx` | `model/src/w3gdatmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 44 | `w3gdatmd:w3nmod` | `model/src/w3gdatmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 45 | `w3idatmd:w3dimi` | `model/src/w3idatmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 46 | `w3idatmd:w3ninp` | `model/src/w3idatmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 47 | `w3initmd:w3init` | `model/src/w3initmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 48 | `w3iogomd:w3fldtoij` | `model/src/w3iogomd.F90` | < 0.01 | 0.00 | 100.0 |
-| 49 | `w3iogomd:w3flgrdflag` | `model/src/w3iogomd.F90` | < 0.01 | 0.00 | 100.0 |
-| 50 | `w3iogomd:w3flgrdupdt` | `model/src/w3iogomd.F90` | < 0.01 | 0.00 | 100.0 |
-| 51 | `w3iorsmd:w3iors` | `model/src/w3iorsmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 52 | `w3nmlshelmd:read_domain_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 53 | `w3nmlshelmd:read_homogeneous_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 54 | `w3nmlshelmd:read_input_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 55 | `w3nmlshelmd:read_output_date_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 56 | `w3nmlshelmd:read_output_path_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 57 | `w3nmlshelmd:read_output_type_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 58 | `w3nmlshelmd:report_domain_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 59 | `w3nmlshelmd:report_homogeneous_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 60 | `w3nmlshelmd:report_input_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 61 | `w3nmlshelmd:report_output_date_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 62 | `w3nmlshelmd:report_output_path_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 63 | `w3nmlshelmd:report_output_type_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 64 | `w3nmlshelmd:w3nmlshel` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 65 | `w3odatmd:w3dmo5` | `model/src/w3odatmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 66 | `w3odatmd:w3nout` | `model/src/w3odatmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 67 | `w3pro3md:w3map3` | `model/src/w3pro3md.F90` | < 0.01 | 0.00 | 100.0 |
-| 68 | `w3pro3md:w3mapt` | `model/src/w3pro3md.F90` | < 0.01 | 0.00 | 100.0 |
-| 69 | `w3servmd:str_to_upper` | `model/src/w3servmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 70 | `w3servmd:strsplit` | `model/src/w3servmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 71 | `w3servmd:wwdate` | `model/src/w3servmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 72 | `w3updtmd:w3dzxy` | `model/src/w3updtmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 73 | `w3updtmd:w3utrn` | `model/src/w3updtmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 74 | `w3wdatmd:w3dimw` | `model/src/w3wdatmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 75 | `w3wdatmd:w3ndat` | `model/src/w3wdatmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 76 | `finalise.0.constprop.0` | `—` | < 0.01 | 0.00 | 100.0 |
+| 1 | `init` | `—` | 0.86 | 0.65 | 99.7 |
+| 2 | `w3wavemd:w3scat` | `model/src/w3wavemd.F90` | 0.21 | 0.16 | 99.8 |
+| 3 | `w3wavemd:w3gath` | `model/src/w3wavemd.F90` | 0.15 | 0.11 | 100.0 |
+| 4 | `w3wavemd:w3wave` | `model/src/w3wavemd.F90` | 0.03 | 0.02 | 100.0 |
+| 5 | `w3updtmd:w3uwnd` | `model/src/w3updtmd.F90` | 0.01 | 0.01 | 100.0 |
+| 6 | `w3adatmd:w3dima` | `model/src/w3adatmd.F90` | 0.01 | 0.01 | 100.0 |
+| 7 | `w3gdatmd:w3dims` | `model/src/w3gdatmd.F90` | 0.01 | 0.01 | 100.0 |
+| 8 | `w3parall:init_get_isea` | `model/src/w3parall.F90` | < 0.01 | 0.00 | 100.0 |
+| 9 | `w3servmd:itrace` | `model/src/w3servmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 10 | `w3timemd:dsec21` | `model/src/w3timemd.F90` | < 0.01 | 0.00 | 100.0 |
+| 11 | `w3servmd:print_memcheck` | `model/src/w3servmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 12 | `w3dispmd:wavnu2` | `model/src/w3dispmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 13 | `w3gsrumd:w3fdwt_r8` | `model/src/w3gsrumd.F90` | < 0.01 | 0.00 | 100.0 |
+| 14 | `w3timemd:stme21` | `model/src/w3timemd.F90` | < 0.01 | 0.00 | 100.0 |
+| 15 | `w3servmd:wwtime` | `model/src/w3servmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 16 | `w3timemd:tick21` | `model/src/w3timemd.F90` | < 0.01 | 0.00 | 100.0 |
+| 17 | `w3gdatmd:w3setg` | `model/src/w3gdatmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 18 | `w3adatmd:w3seta` | `model/src/w3adatmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 19 | `w3odatmd:w3seto` | `model/src/w3odatmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 20 | `w3gsrumd:get_fdw3.constprop.0` | `model/src/w3gsrumd.F90` | < 0.01 | 0.00 | 100.0 |
+| 21 | `w3gsrumd:w3nnsc` | `model/src/w3gsrumd.F90` | < 0.01 | 0.00 | 100.0 |
+| 22 | `w3wdatmd:w3setw` | `model/src/w3wdatmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 23 | `w3idatmd:w3seti` | `model/src/w3idatmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 24 | `w3gdatmd:w3gntx` | `model/src/w3gdatmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 25 | `w3gsrumd:gsu_create` | `model/src/w3gsrumd.F90` | < 0.01 | 0.00 | 100.0 |
+| 26 | `w3gsrumd:w3cgdm_r4` | `model/src/w3gsrumd.F90` | < 0.01 | 0.00 | 100.0 |
+| 27 | `w3gsrumd:w3gsuc_ptr_r8` | `model/src/w3gsrumd.F90` | < 0.01 | 0.00 | 100.0 |
+| 28 | `w3iogrmd:w3iogr` | `model/src/w3iogrmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 29 | `w3parall:set_up_nseal_nsealm` | `model/src/w3parall.F90` | < 0.01 | 0.00 | 100.0 |
+| 30 | `w3timemd:d2j` | `model/src/w3timemd.F90` | < 0.01 | 0.00 | 100.0 |
+| 31 | `w3timemd:t2d` | `model/src/w3timemd.F90` | < 0.01 | 0.00 | 100.0 |
+| 32 | `w3timemd:tdiff` | `model/src/w3timemd.F90` | < 0.01 | 0.00 | 100.0 |
+| 33 | `main` | `—` | < 0.01 | 0.00 | 100.0 |
+| 34 | `w3adatmd:w3dmnl` | `model/src/w3adatmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 35 | `w3adatmd:w3naux` | `model/src/w3adatmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 36 | `w3dispmd:distab` | `model/src/w3dispmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 37 | `w3fldsmd:w3fldh` | `model/src/w3fldsmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 38 | `w3gdatmd:w3dimx` | `model/src/w3gdatmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 39 | `w3gdatmd:w3nmod` | `model/src/w3gdatmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 40 | `w3idatmd:w3dimi` | `model/src/w3idatmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 41 | `w3idatmd:w3ninp` | `model/src/w3idatmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 42 | `w3initmd:w3init` | `model/src/w3initmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 43 | `w3iogomd:w3fldtoij` | `model/src/w3iogomd.F90` | < 0.01 | 0.00 | 100.0 |
+| 44 | `w3iogomd:w3flgrdflag` | `model/src/w3iogomd.F90` | < 0.01 | 0.00 | 100.0 |
+| 45 | `w3iogomd:w3flgrdupdt` | `model/src/w3iogomd.F90` | < 0.01 | 0.00 | 100.0 |
+| 46 | `w3iorsmd:w3iors` | `model/src/w3iorsmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 47 | `w3nmlshelmd:read_domain_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 48 | `w3nmlshelmd:read_homogeneous_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 49 | `w3nmlshelmd:read_input_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 50 | `w3nmlshelmd:read_output_date_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 51 | `w3nmlshelmd:read_output_path_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 52 | `w3nmlshelmd:read_output_type_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 53 | `w3nmlshelmd:report_domain_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 54 | `w3nmlshelmd:report_homogeneous_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 55 | `w3nmlshelmd:report_input_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 56 | `w3nmlshelmd:report_output_date_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 57 | `w3nmlshelmd:report_output_path_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 58 | `w3nmlshelmd:report_output_type_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 59 | `w3nmlshelmd:w3nmlshel` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 60 | `w3odatmd:w3dmo5` | `model/src/w3odatmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 61 | `w3odatmd:w3nout` | `model/src/w3odatmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 62 | `w3pro3md:w3map3` | `model/src/w3pro3md.F90` | < 0.01 | 0.00 | 100.0 |
+| 63 | `w3pro3md:w3mapt` | `model/src/w3pro3md.F90` | < 0.01 | 0.00 | 100.0 |
+| 64 | `w3servmd:str_to_upper` | `model/src/w3servmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 65 | `w3servmd:strsplit` | `model/src/w3servmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 66 | `w3servmd:wwdate` | `model/src/w3servmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 67 | `w3updtmd:w3dzxy` | `model/src/w3updtmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 68 | `w3updtmd:w3utrn` | `model/src/w3updtmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 69 | `w3wdatmd:w3dimw` | `model/src/w3wdatmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 70 | `w3wdatmd:w3ndat` | `model/src/w3wdatmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 71 | `finalise.0.constprop.0` | `—` | < 0.01 | 0.00 | 100.0 |
 
 The cumulative column starts from the ported routines' share, so it reads as the share of the run
 that would be in Kokkos once every row down to it is ported.
@@ -119,3 +114,9 @@ The record is the `regtested` column of `kokkos/ports.tsv`.
 | `w3sln1md:w3sln1` | ported | `srce_ln1.hpp` | no: waiting for the checkpoint of W3SRCE (ADR-0011); built on serial-debug, openmp-release and cuda-release only |
 | `w3sbt1md:w3sbt1` | ported | `srce_bt1.hpp` | no: waiting for the checkpoint of W3SRCE (ADR-0011); built on serial-debug, openmp-release and cuda-release only |
 | `w3sdb1md:w3sdb1` | ported | `srce_db1.hpp` | no: waiting for the checkpoint of W3SRCE (ADR-0011); built on serial-debug, openmp-release and cuda-release only |
+| `w3pro3md:w3xyp3` | ported | `prop_xyp3.hpp`, `prop_params.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run in this round); the propagation checkpoint (ADR-0011) runs it once a shim and the W3WAVE wiring exist |
+| `w3uqckmd:w3qck3` | ported | `prop_qck3.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run in this round); the propagation checkpoint (ADR-0011) runs it once a shim and the W3WAVE wiring exist |
+| `w3uqckmd:w3qck1` | ported | `prop_qck1.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run in this round); the propagation checkpoint (ADR-0011) runs it once a shim and the W3WAVE wiring exist |
+| `w3pro3md:w3ktp3` | ported | `prop_ktp3.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run in this round); the propagation checkpoint (ADR-0011) runs it once a shim and the W3WAVE wiring exist |
+| `w3dispmd:wavnu1` | ported | `prop_wavnu1.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run in this round); the propagation checkpoint (ADR-0011) runs it once a shim and the W3WAVE wiring exist |
+| `w3uqckmd:w3qck2` | ported | `prop_qck2.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run in this round); the propagation checkpoint (ADR-0011) runs it once a shim and the W3WAVE wiring exist |
