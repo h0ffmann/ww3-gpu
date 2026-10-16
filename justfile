@@ -296,6 +296,10 @@ uprd *args:
 wfip *args:
     python3 scripts/wfip.py "$@"
 
+# Reconcile the repo's GitHub labels with .github/labels.yml (ISSUE_LABELS.md): `--dry-run`, `--prune`.
+labels-sync *args:
+    scripts/labels_sync.sh {{args}}
+
 # One line per ADR (docs/ADRs): number, status, date, decision; `just adrs --status accepted`.
 adrs *args:
     python3 scripts/adrs.py "$@"

@@ -1,6 +1,7 @@
 name: Spike
 description: A time-boxed question whose answer decides what to build (SPIKE-NNN).
 title: "SPIKE-NNN: "
+labels: ["kind/research"]
 body:
   - type: markdown
     attributes:
