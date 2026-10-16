@@ -1,0 +1,31 @@
+/* style.css: the GTA report, on the site at /relatorio-gta/ and printed to pdf/relatorio-gta-pedro-cruz.pdf. */
+:root { --ink: #1b1f24; --muted: #5d6670; --line: #d9dde2; --link: #1a4f8b; --wave: #1682d4; --soft: #f3f6f9; }
+@media (prefers-color-scheme: dark) { :root { --ink: #e7eaee; --muted: #9aa3ad; --line: #2b3036; --link: #8ab4f8; --wave: #36b7ff; --soft: #1a1d21; } body { background: #121417; } }
+body { max-width: 46em; margin: 0 auto; padding: 1em 16px 3em; font: 17px/1.6 Georgia, serif; color: var(--ink); background: #fff; }
+h1, h2, h3, nav, header p, th { font-family: system-ui, sans-serif; line-height: 1.25; }
+header#title-block-header { border-bottom: 3px solid var(--wave); margin-bottom: 1.5em; padding-bottom: 0.5em; }
+h1.title { font-size: 2em; margin-bottom: 0.2em; }
+p.subtitle { font-size: 1.15em; color: var(--muted); margin: 0 0 0.6em; }
+p.author, p.date { margin: 0; color: var(--muted); }
+h2 { border-top: 1px solid var(--line); padding-top: 0.8em; margin-top: 1.8em; }
+a { color: var(--link); overflow-wrap: anywhere; }
+code { font-size: 0.88em; }
+blockquote { margin: 1em 0; padding: 0.6em 1em; background: var(--soft); border-left: 4px solid var(--wave); }
+blockquote ul { padding-left: 1.2em; }
+img { display: block; max-width: 100%; height: auto; margin: 0 auto; }
+figure { margin: 1.5em 0; }
+figcaption { font-size: 0.9em; color: var(--muted); text-align: center; margin-top: 0.4em; }
+table { border-collapse: collapse; display: block; overflow-x: auto; margin: 1em 0; font-size: 0.92em; }
+th, td { border: 1px solid var(--line); padding: 0.3em 0.6em; vertical-align: top; }
+th { background: var(--soft); text-align: left; }
+nav.site-links { font-size: 0.9em; margin-bottom: 1em; font-family: system-ui, sans-serif; }
+@page { size: A4; margin: 18mm 16mm; }
+@media print {
+  :root { --ink: #1b1f24; --muted: #5d6670; --line: #c9ced4; --link: #1a4f8b; --wave: #1682d4; --soft: #f3f6f9; }
+  body { max-width: none; padding: 0; font-size: 11pt; background: #fff; }
+  nav.site-links { display: none; }
+  table { display: table; }
+  h2 { break-after: avoid; }
+  figure, tr, blockquote { break-inside: avoid; }
+  img.tall { max-height: 230mm; width: auto; }
+}

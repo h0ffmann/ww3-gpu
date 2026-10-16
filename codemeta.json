@@ -25,6 +25,16 @@
         "@type": "Organization",
         "name": "LabECO, Departamento de Engenharia Mecânica, Universidade Federal de Santa Catarina"
       }
+    },
+    {
+      "@type": "Person",
+      "@id": "https://orcid.org/0000-0002-2019-133X",
+      "givenName": "Pedro Henrique Cruz",
+      "familyName": "Caminha",
+      "affiliation": {
+        "@type": "Organization",
+        "name": "Grupo de Teleinformática e Automação (GTA), Departamento de Engenharia Eletrônica e de Computação (DEL), Escola Politécnica, Universidade Federal do Rio de Janeiro"
+      }
     }
   ],
   "identifier": "https://doi.org/10.5281/zenodo.23221351",

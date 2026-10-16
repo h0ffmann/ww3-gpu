@@ -19,6 +19,11 @@ are a website at <https://h0ffmann.github.io/ww3-gpu/>: `just book-html` builds 
 `chunkedhtml` writer (one page per chapter, MathML for math, the committed figure renders) and
 `.github/workflows/pages.yml` deploys it on every merge that touches a lesson.
 
+A third, short document is a report in easy Brazilian Portuguese for Prof. Pedro Cruz (GTA,
+DEL/UFRJ), [`relatorio-gta/`](relatorio-gta/relatorio.easy.pt-BR.md): `scripts/build_relatorio.sh`
+turns it into the page `/relatorio-gta/`, and with `--pdf` prints `pdf/relatorio-gta-pedro-cruz.pdf`
+with Chromium, since it needs no TeX.
+
 The toolchain (pandoc, TeX Live, Python) comes from
 [`picasso/labs/publisher`](https://github.com/h0ffmann/picasso/tree/main/labs/publisher). The
 root `flake.nix` uses its `mkPdf` and `mkDocx` helpers, so `nix build .` produces the three PDFs and
