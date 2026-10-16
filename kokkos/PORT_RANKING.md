@@ -144,3 +144,4 @@ The record is the `regtested` column of `kokkos/ports.tsv`.
 | `pdlib_w3profsmd:pdlib_w3xypfsfct2` | ported | `pdlib_fsfct2.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); no regtest selects EXPFSFCT |
 | `pdlib_w3profsmd:pdlib_w3xypug` | ported | `pdlib_w3xypug.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and the W3WAVE hunk |
 | `w3partmd:ptnghb` | ported | `part_ptnghb.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and the W3PART hunk |
+| `w3partmd:pt_fld` | ported | `part_fld.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and the W3PART hunk |
