@@ -410,6 +410,8 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | PDLIB_W3XYPUG_BLOCK_IMPLICIT | the driver of PDLIB's block-implicit propagation `(v)` `w3profsmd_pdlib.F90:2742-2813` | Calls `PDLIB_JACOBI_GAUSS_SEIDEL_BLOCK` under `B_JGS_USE_JACOBI`, otherwise writes a message and stops; `W3WAVE` passes it `FACX` twice (`w3wavemd.F90:1922`). | [kokkos/port_report/PDLIB_W3XYPUG_BLOCK_IMPLICIT_KOKKOS.md](../kokkos/port_report/PDLIB_W3XYPUG_BLOCK_IMPLICIT_KOKKOS.md) |
 | PDLIB_MAPSTA_INIT | "Init mapsta part for pdlib" `(v)` `w3profsmd_pdlib.F90:401-512` | Builds each process's status map `MAPSTA_LOC` and the list `INDEX_MAP` of its nodes with `MAPSTA < 1`; called by `W3INIT` (`w3initmd.F90:1127`); the port returns `PDLIB_ABORT`'s istat (5, 6). | [kokkos/port_report/PDLIB_MAPSTA_INIT_KOKKOS.md](../kokkos/port_report/PDLIB_MAPSTA_INIT_KOKKOS.md) |
 | MAPSTA_LOC / INDEX_MAP / NBND_MAP / MAPSTA_HACK | the per-process copy of `MAPSTA(1,:)`, the local indices of its nodes with `MAPSTA < 1`, their count, and the switch that would use them `(v)` `w3gdatmd.F90:756-758`, `w3profsmd_pdlib.F90:113` | `MAPSTA_HACK` is `.FALSE.` and never assigned, so only `NBND_MAP` is read at the pin: it sizes `AC_MAP` in `PDLIB_W3XYPUG` (`:731`). | [kokkos/port_report/PDLIB_MAPSTA_INIT_KOKKOS.md](../kokkos/port_report/PDLIB_MAPSTA_INIT_KOKKOS.md) |
+| WADATS / NADATA / IADATA | "Array of data structures" / "Number of models in array dim." / "Selected model for output, init. at -1" `(v)` `w3adatmd.F90:87`, `:81`, `:82` | `W3NAUX` allocates `WADATS(NGRIDS)` and sets `NADATA`; `W3SETA` sets `IADATA`. | [kokkos/port_report/W3NAUX_KOKKOS.md](../kokkos/port_report/W3NAUX_KOKKOS.md) |
+| ITIME / IPASS / IDLAST / ITSTEP / FLCOLD / FLIWND | "Discrete time step counter", "Pass counter for log file", "Last day ID for log file", a step counter (no header entry, declared `:566`), "Flag for 'cold start' of model", "Flag for initialization of model based on wind" `(v)` `w3adatmd.F90:310-317` | Per-model scalars of `WADAT` that `W3NAUX` sets to 0 and `.FALSE.`. | [kokkos/port_report/W3NAUX_KOKKOS.md](../kokkos/port_report/W3NAUX_KOKKOS.md) |
 
 ## HPC and software
 
@@ -1015,6 +1017,7 @@ Every term above, alphabetically, with the section it lives in.
 - IRANGE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - IS2DISP: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - ISO/IEC 1539:1991: [HPC and software](#hpc-and-software)
+- ITIME / IPASS / IDLAST / ITSTEP / FLCOLD / FLIWND: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - JACOBI_INIT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - JAD: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - KDMAX / RDKMIN: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1228,6 +1231,7 @@ Every term above, alphabetically, with the section it lives in.
 - W3XYPFSNIMP / FSNIMP / IMPFSN: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3XYPFSNIMP: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - WADAT / FL_ALL / D_ONLY / NSEALM: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- WADATS / NADATA / IADATA: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - WithoutInitializing: [This repository's own names](#this-repositorys-own-names)
 - wkfnc / cgfnc / INSNL4 / shloxr: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - wkfnc: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)

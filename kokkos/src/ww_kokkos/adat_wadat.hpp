@@ -48,7 +48,7 @@ namespace ww::adat {
 /// @brief The W3ADATMD arrays and scalars of one model, TYPE WADAT
 ///        (w3adatmd.F90:384-570), as allocated by W3DIMA.
 /// @details Default-constructed Views are unallocated, which is the state W3NAUX
-///          leaves (w3adatmd.F90:795-808 sets only the scalars below).
+///          leaves (w3adatmd.F90:797-811 sets only the scalars below).
 template <class ExecSpace>
 struct Wadat {
   using Mem = typename ExecSpace::memory_space;

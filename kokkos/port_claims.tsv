@@ -6,7 +6,6 @@
 # claim: the branch (and agent) that owns it; plan: the plan that names it
 routine	file	claim	plan
 w3adatmd:w3dmnl	model/src/w3adatmd.F90:2426-2623	goal/42-port-w3wave-w3iogr	docs/W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md
-w3adatmd:w3naux	model/src/w3adatmd.F90:705-831	goal/42-port-w3wave-w3iogr	docs/W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md
 w3adatmd:w3seta	model/src/w3adatmd.F90:2638-3100	goal/42-port-w3wave-w3iogr	docs/W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md
 w3adatmd:w3xdma	model/src/w3adatmd.F90:1522-2409	goal/42-port-w3wave-w3iogr	docs/W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md
 w3adatmd:w3xeta	model/src/w3adatmd.F90:3112-3300	goal/42-port-w3wave-w3iogr	docs/W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md
