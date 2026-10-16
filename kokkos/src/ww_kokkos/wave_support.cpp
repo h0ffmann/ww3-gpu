@@ -92,6 +92,7 @@
 #include "pdlib_pdlib_iobp_init.hpp"
 #include "pdlib_pdlib_mapsta_init.hpp"
 #include "pdlib_set_iobdp_pdlib.hpp"
+#include "pdlib_set_iobpa_pdlib.hpp"
 #include "pdlib_w3xypug.hpp"
 #include "pdlib_w3xypug_block_implicit.hpp"
 #include "profs_amux.hpp"
@@ -285,4 +286,5 @@ void ww_support_instantiate() {
   (void)&ww::pdlib::pdlib_init;
   (void)&ww::pdlib::set_iobdp_pdlib<E>;
   (void)&ww::pdlib::pdlib_mapsta_init<E>;
+  (void)&ww::pdlib::set_iobpa_pdlib<E>;
 }
