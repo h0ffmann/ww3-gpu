@@ -1,12 +1,19 @@
 // kokkos/src/ww_kokkos/wave_support.cpp
 // W3WAVE's support headers (W3GATH, W3SCAT, W3DZXY, W3UWND, W3UTRN, DISTAB with WAVNU2, and the
-// PR3 maps W3MAP3, W3MAPT) are header-only device functions with no caller yet: the shims and the
-// W3WAVE and W3IOGR wiring come with the unit's checkpoint
+// PR3 maps W3MAP3, W3MAPT) are header-only device functions with no caller yet, and the host-side
+// W3WAVE driver, W3IOGR, W3OUTG, W3DIMA and W3DIMS have none either: the shims, their hook tables
+// and the W3WAVE and W3IOGR wiring come with the unit's checkpoint
 // (docs/W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md). This translation unit instantiates every launcher
 // on the default execution space, so each preset generates their code (device code on CUDA) until
 // a shim calls them. Nothing calls ww_support_instantiate. The headers of the source-term packages
 // and of the easy batch (docs/EASY_BATCH_KOKKOS_PLAN_202610.md) are included so every preset
 // compiles them together.
+#include "adat_w3dima.hpp"
+#include "adat_w3dmnl.hpp"
+#include "adat_w3naux.hpp"
+#include "adat_w3seta.hpp"
+#include "adat_w3xdma.hpp"
+#include "adat_w3xeta.hpp"
 #include "bt8_ccosh.hpp"
 #include "bt8_csinh.hpp"
 #include "bt9_calc_nd.hpp"
@@ -18,6 +25,9 @@
 #include "fld1_wnd2sat.hpp"
 #include "fld1_wnd2z0m.hpp"
 #include "fld2_wnd2sat.hpp"
+#include "flds_w3fldg.hpp"
+#include "flds_w3fldh.hpp"
+#include "gdat_w3dims.hpp"
 #include "gig1_df1f2theta.hpp"
 #include "gke_asymsmattimvec.hpp"
 #include "gke_biinterpwt.hpp"
@@ -59,6 +69,8 @@
 #include "iogo_skewness.hpp"
 #include "iogo_w3flgrdflag.hpp"
 #include "iogo_w3flgrdupdt.hpp"
+#include "iogo_w3outg.hpp"
+#include "iogr_w3iogr.hpp"
 #include "is2_funcd_fderiv.hpp"
 #include "is2_funcd_fval.hpp"
 #include "is2_w3fsd_dave.hpp"
@@ -69,16 +81,27 @@
 #include "parall_prop_refraction_pr1.hpp"
 #include "parall_set_up_nseal_nsealm.hpp"
 #include "part_fld.hpp"
+#include "pdlib_block_solver_init.hpp"
 #include "pdlib_boundary.hpp"
 #include "pdlib_boundary_va.hpp"
+#include "pdlib_deallocate_pdlib_global.hpp"
+#include "pdlib_do_output_exchanges.hpp"
 #include "pdlib_explicit_block.hpp"
 #include "pdlib_fsfct2.hpp"
 #include "pdlib_fsn2.hpp"
 #include "pdlib_fspsi2.hpp"
+#include "pdlib_get_array_size.hpp"
+#include "pdlib_jacobi_init.hpp"
 #include "pdlib_jacobi_spectral.hpp"
 #include "pdlib_jacobi_vec.hpp"
 #include "pdlib_jgs_block.hpp"
+#include "pdlib_pdlib_init.hpp"
+#include "pdlib_pdlib_iobp_init.hpp"
+#include "pdlib_pdlib_mapsta_init.hpp"
+#include "pdlib_set_iobdp_pdlib.hpp"
+#include "pdlib_set_iobpa_pdlib.hpp"
 #include "pdlib_w3xypug.hpp"
+#include "pdlib_w3xypug_block_implicit.hpp"
 #include "profs_amux.hpp"
 #include "profs_amuxd.hpp"
 #include "profs_amuxe.hpp"
@@ -216,8 +239,10 @@
 #include "updt_uwnd.hpp"
 #include "updt_w3uic1.hpp"
 #include "updt_w3uic5.hpp"
+#include "updt_w3ulev.hpp"
 #include "updt_w3urho.hpp"
 #include "wave_gath_scat.hpp"
+#include "wave_w3wave.hpp"
 #include "wavset_compute_active_node.hpp"
 #include "wavset_differentiate_xydir.hpp"
 #include "wavset_differentiate_xydir_mapsta.hpp"
@@ -249,4 +274,31 @@ void ww_support_instantiate() {
   (void)&ww::prop::w3mapt<E>;
   (void)&ww::srce::st3::w3sin3_point<false>;
   (void)&ww::srce::st3::w3sin3_point<true>;
+  (void)&ww::adat::w3dima<E>;
+  (void)&ww::gdat::w3dims<E>;
+  (void)&ww::iogo::w3outg<E>;
+  (void)&ww::iogr::iogr_rect_xy<E>;
+  (void)&ww::iogr::iogr_decode_maptmp<E>;
+  (void)&ww::iogr::iogr_encode_maptmp<E>;
+  (void)&ww::iogr::iogr_mapsf3<E>;
+  (void)&ww::iogr::w3iogr;
+  (void)&ww::wave::w3wave::w3wave<E>;
+  (void)&ww::updt::w3ulev<E>;
+  (void)&ww::pdlib::do_output_exchanges<E>;
+  (void)&ww::pdlib::get_array_size;
+  (void)&ww::pdlib::block_solver_init<E>;
+  (void)&ww::pdlib::deallocate_pdlib_global<E::memory_space>;
+  (void)&ww::pdlib::jacobi_init<E>;
+  (void)&ww::pdlib::pdlib_iobp_init<E>;
+  (void)&ww::pdlib::pdlib_init;
+  (void)&ww::pdlib::set_iobdp_pdlib<E>;
+  (void)&ww::pdlib::pdlib_mapsta_init<E>;
+  (void)&ww::pdlib::set_iobpa_pdlib<E>;
+  (void)&ww::adat::w3naux<E>;
+  (void)&ww::adat::w3dmnl<E>;
+  (void)&ww::flds::w3fldh<E>;
+  (void)&ww::adat::w3seta<E>;
+  (void)&ww::adat::w3xeta<E>;
+  (void)&ww::adat::w3xdma<E>;
+  (void)&ww::flds::w3fldg<E>;
 }
