@@ -406,6 +406,10 @@ How the channel was built and tested, its failure modes and the commands that ch
   open the PR from it. The first commit and the PR body name the goal id and link the Claude
   project thread it came from (the link the harness gives) or, outside a project, the session; an
   issue-numbered goal links its issue too.
+- **A worktree holds nothing that is not on GitHub** when its session ends: one branch per
+  worktree from `origin/main`, pushed from its first commit; `just worktrees` flags what is local
+  only and `just worktrees clean --apply` removes merged ones with a recovery log
+  (`CONTRIBUTING.md`, "Worktrees and parallel sessions").
 - **Never** rewrite history on someone else's branch, skip or quarantine a test to get green, or
   push an empty commit to kick CI.
 - **Releases** go through `just release X.Y.Z` and the `release` skill; a release needs a change

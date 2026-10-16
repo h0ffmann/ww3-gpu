@@ -281,6 +281,32 @@ first, and the hooks, subagents and slash commands it must do by hand. Lookups g
 its `scripts/route.py`: because the two auto-loaded files already pass the 32 KB warning,
 retrieval detail stays out of them.
 
+## Worktrees and parallel sessions
+
+Several sessions, people's and agents', work on this repository at once, each in its own git
+worktree: a sibling directory sharing one `.git` (`git worktree add`). A worktree is disposable
+only when everything in it is on GitHub. On 2026-10-16 a sweep of the owner's checkouts found a
+whole port unit (six propagation routines, about 2,160 lines) committed on a branch never pushed,
+and a translated routine and six port reports left untracked (v, `scripts/worktrees.sh list` on
+that machine); deleting either directory would have lost them.
+
+- **One branch per worktree, from `origin/main`**, named as below:
+  `git fetch origin && git worktree add ../ww3-gpu-<slug> -b goal/<id>-<slug> origin/main`. Git
+  refuses a branch another worktree has checked out; nothing refuses a second session on the same
+  routine, so look at the siblings first (`just worktrees`).
+- **Push from the first commit** (`git push -u origin HEAD`) and after every commit after it. A
+  pushed branch is a backup and needs no PR; unfinished work is a WIP commit on its own branch,
+  never a set of untracked files.
+- **End a session with nothing local**: `just worktrees` marks a worktree `LOCAL ONLY` when it
+  has a commit on no remote or a change not committed. Commit and push, or say in the hand-off
+  why not.
+- **Clean up merged work**: `just worktrees clean` lists the worktrees and local branches whose
+  branch is merged (an ancestor of `origin/main`, or the exact head of a merged pull request,
+  which covers squash merges), and `just worktrees clean --apply` removes them. A worktree with
+  changes, or with a process whose working directory is inside it, is kept. Each deleted branch
+  is logged in `.git/worktrees-clean.log` as the `git branch <name> <sha>` line that restores it.
+- A devcontainer needs a full clone, not a worktree (README.md, "the dev container").
+
 ## Opening a pull request
 
 Write the commit message properly (subject, a body paragraph saying what and why, and
