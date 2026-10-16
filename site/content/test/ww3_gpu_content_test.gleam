@@ -254,3 +254,16 @@ pub fn port_record_test() {
   assert c.port_record(ports, "W3SNL1_KOKKOS") == "yes: L2"
   assert c.port_record(ports, "W3SDS4_KOKKOS") == ""
 }
+
+const twin_ports =
+  "routine\tfile\tlines\tstatus\tevidence\tregtested\tkokkos
+w3src4md:tabu_stress\tf:1-2\t2\tported\te\tno: st4\tkokkos/src/a.cpp
+w3src3md:tabu_stress\tf:3-4\t2\tported\te\tno: st3\tkokkos/src/b.hpp
+"
+
+pub fn port_record_qualified_test() {
+  assert c.qualified_report_name("w3src3md:tabu_stress")
+    == "W3SRC3MD_TABU_STRESS_KOKKOS"
+  assert c.port_record(twin_ports, "W3SRC3MD_TABU_STRESS_KOKKOS") == "no: st3"
+  assert c.port_record(twin_ports, "TABU_STRESS_KOKKOS") == "no: st4"
+}
