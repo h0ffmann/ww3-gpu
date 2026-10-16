@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # pr — from a finished commit to a pushed PR with a filled description, in one command:
-#   1. refuse on main or with a dirty working tree (tracked changes; untracked files are ignored)
+#   1. refuse on main, on a branch scripts/branch_name.sh refuses, or with a dirty working tree (tracked changes; untracked files are ignored)
 #   2. push the branch
 #   3. scripts/uprd.sh — create the PR (or rewrite its body) from the commits
 #   just pr --dry-run   prints what would happen.
@@ -12,6 +12,7 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 branch="$(git branch --show-current)"
 [ -n "$branch" ] || { echo "pr: detached HEAD — check out a branch first" >&2; exit 1; }
 [ "$branch" != main ] || { echo "pr: refusing to open a PR from main" >&2; exit 1; }
+"$script_dir/branch_name.sh" "$branch" || exit 1
 if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
   echo "pr: working tree is dirty — commit or stash first" >&2
   exit 1
