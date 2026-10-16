@@ -413,6 +413,7 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | WADATS / NADATA / IADATA | "Array of data structures" / "Number of models in array dim." / "Selected model for output, init. at -1" `(v)` `w3adatmd.F90:87`, `:81`, `:82` | `W3NAUX` allocates `WADATS(NGRIDS)` and sets `NADATA`; `W3SETA` sets `IADATA`. | [kokkos/port_report/W3NAUX_KOKKOS.md](../kokkos/port_report/W3NAUX_KOKKOS.md) |
 | ITIME / IPASS / IDLAST / ITSTEP / FLCOLD / FLIWND | "Discrete time step counter", "Pass counter for log file", "Last day ID for log file", a step counter (no header entry, declared `:566`), "Flag for 'cold start' of model", "Flag for initialization of model based on wind" `(v)` `w3adatmd.F90:310-317` | Per-model scalars of `WADAT` that `W3NAUX` sets to 0 and `.FALSE.`. | [kokkos/port_report/W3NAUX_KOKKOS.md](../kokkos/port_report/W3NAUX_KOKKOS.md) |
 | NLINIT / NSPECX / IPnn / IMnn / ICnn | "Flag for initialization", "Auxiliary spectral counter" (NSPECX-Y) and the "Spectral address for Snl" tables `(v)` `w3adatmd.F90:276`, `:268`, `:269-271` | The `W3_NL1` block of `WADAT` that `W3DMNL` allocates (with `AF11`) and `W3NAUX` clears; one `NLINIT` per model in the port, `WadatNl1::nlinit`. | [kokkos/port_report/W3DMNL_KOKKOS.md](../kokkos/port_report/W3DMNL_KOKKOS.md) |
+| W3FLDH | "Update homogeneous input fields for the WAVEWATCH III generic shell" `(v)` `w3fldsmd.F90:2149-2504`, `:2169-2170` | Takes the next value of field J from the homogeneous lists `ww3_shel` read (`THO`, `HA`, `HD`, `HS`) and fills the whole field with it; called 14 times by `ww3_shel` (`:2134-2425`). | [kokkos/port_report/W3FLDH_KOKKOS.md](../kokkos/port_report/W3FLDH_KOKKOS.md) |
 
 ## HPC and software
 
@@ -1172,6 +1173,7 @@ Every term above, alphabetically, with the section it lives in.
 - W3CFLUG / UG_GRADIENTS: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3DIMX / W3DIMUG: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3DMO5: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3FLDH: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3FLX1: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3FLX1MD / W3FLX1: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3FLX1MD: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)

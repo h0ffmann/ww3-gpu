@@ -22,6 +22,7 @@
 #include "fld1_wnd2sat.hpp"
 #include "fld1_wnd2z0m.hpp"
 #include "fld2_wnd2sat.hpp"
+#include "flds_w3fldh.hpp"
 #include "gdat_w3dims.hpp"
 #include "gig1_df1f2theta.hpp"
 #include "gke_asymsmattimvec.hpp"
@@ -291,4 +292,5 @@ void ww_support_instantiate() {
   (void)&ww::pdlib::set_iobpa_pdlib<E>;
   (void)&ww::adat::w3naux<E>;
   (void)&ww::adat::w3dmnl<E>;
+  (void)&ww::flds::w3fldh<E>;
 }
