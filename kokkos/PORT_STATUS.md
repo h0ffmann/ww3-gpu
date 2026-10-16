@@ -46,7 +46,7 @@ Profile: full (bench_small, 120 x 80, 9 520 sea points, 12 h), Release -pg, swit
 | routines | 10 of 1023 (0.98 %) | ported routines over every SUBROUTINE and FUNCTION in model/src at WW3@03adda91 |
 | files | 2 of 147 (1.36 %) | WW3 .F90 files with a ported routine, over every .F90 file in model/src |
 | lines | 3082 of 263375 (1.17 %) | the ported routines' Fortran lines over model/src's |
-| the port | 4484 lines in 24 files | the C++ under kokkos/src (every .cpp and .hpp line) |
+| the port | 4443 lines in 24 files | the C++ under kokkos/src (every .cpp and .hpp line) |
 
 On a GPU: none yet. The CUDA build links; the RTX 4090 run, `just smoke-ww3-gpu gpu`, is the owner's, supervised.
 <!-- port-score:end -->
