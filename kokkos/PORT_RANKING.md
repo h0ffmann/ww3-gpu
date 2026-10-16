@@ -147,3 +147,4 @@ The record is the `regtested` column of `kokkos/ports.tsv`.
 | `w3partmd:pt_fld` | ported | `part_fld.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and the W3PART hunk |
 | `w3partmd:ptsort` | ported | `part_ptsort.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and the W3PART hunk |
 | `w3partmd:ptmean` | ported | `part_ptmean.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs W3PART and a shim |
+| `w3snl3md:insnl3` | ported | `snl3_tables.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and the W3IOGR hunk |
