@@ -126,7 +126,7 @@ Run the gates of what you changed before calling it done. CI (`.github/workflows
 | a kernel WW3 calls, or the `WW3/` pin | at a checkpoint of ADR-0011 (a finished port unit, the pin, the toolchain, before L2): `just smoke` (CPU); `just full-ww3-gpu` and `just ww3-gpu-matrix` (the WW3 regtest matrix, WFIP-0003, serial entries by default, `omp` for the OpenMP ones) before a status in `kokkos/ports.tsv` moves to L2. Never `--gpu` without the owner (hard rule) |
 | `scripts/ww3-gpu.sh` or `scripts/ww4_parts.py` | `bash scripts/ww3-gpu.sh --self-test`, `python3 scripts/ww4_parts.py --self-test`, shellcheck; `just smoke-ww3-gpu` (CPU, pair to pair with `--ww3`) |
 | `regtests/` | `just ww3-gpu-matrix-selftest` (the selection, the argument lists and the verdict on fixtures) and `just ww3-gpu-matrix-list` (the entry count at the pin) |
-| `kokkos/ports.tsv` or `docs/data/ww3_full_gprof.tsv` | `python3 scripts/port_score.py --write`, then `--check` (CI runs `--self-test` and `--check`) |
+| `kokkos/ports.tsv`, `kokkos/port_claims.tsv` or `docs/data/ww3_*_gprof.tsv` | `python3 scripts/port_score.py --write`, then `--check` (CI runs `--self-test` and `--check`) |
 | Fortran in `gpu/`, `examples/`, `exercises/` | they must compile with gfortran with directives ignored; the exercise parity test must pass |
 | a Mermaid fence or its page | `python3 scripts/figures.py check`, then `just figures` to re-render and `python3 -m unittest tests/test_figures.py` |
 | `pubs/proposal/` | `just proposal-lint`, the `revisor-proposta` review, `just proposal-review-record <parecer>`, `just proposal-review-check` |
@@ -246,8 +246,11 @@ broken most often:
   routine is never called ported or regtested on the strength of its translation. They are written by `scripts/port_score.py --write` into
   `kokkos/PORT_STATUS.md` and `site/data/port_score.tsv`, which the website reads, and the ranking of
   what is still in Fortran with each port's regtest record into `kokkos/PORT_RANKING.md`; `/port-next`
-  starts the next port from it. `--check` fails
-  when either is stale.
+  starts the next port from it. `kokkos/PORT_TABLE.tsv`, from the same command, is the one table an
+  agent reads first: every routine translated, claimed (`kokkos/port_claims.tsv`, hand-kept, so two
+  agents never port the same routine) or timed by a committed profile, the next port first, with its
+  checkpoint, `test.comp` and `nccmp-tol` record. `--check` fails
+  when any of them is stale.
 - **CI keeps h1 alive**: `--ww3-gpu --cpu` on `ww3_ts1`, pair to pair with `--ww3`
   ([`health.yml`](.github/workflows/health.yml)). It is the only combination in CI for now.
 - **Done means all of §1.5:** the kernel with its heritage header, the shim with its argument

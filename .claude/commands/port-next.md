@@ -13,7 +13,8 @@ Every WW3 fact you write cites `model/src/<file>.F90:<line>` at the pin, read fr
 - `$ARGUMENTS` is `module:routine`, and it has no row in `kokkos/ports.tsv`.
 - `git status` is clean, and `WW3/` is initialised at its pin (`just src-st`).
 
-**1. The order.** Run `python3 scripts/port_score.py --check`, then read `kokkos/PORT_RANKING.md`.
+**1. The order.** Run `python3 scripts/port_score.py --check`, then read `kokkos/PORT_TABLE.tsv` (a
+`claimed` row belongs to the branch in its `claim` column: skip it) and `kokkos/PORT_RANKING.md`.
 If `$ARGUMENTS` is not row 1, stop and ask the owner. A unit (ADR-0011) is ported with a plan
 in `docs/`, such as `docs/ST4_KOKKOS_PLAN_202610.md`: run this command once per routine of the
 unit, in the unit's order, and the first routine must be row 1; the others may sit lower. Name row 1 and both shares; the order is

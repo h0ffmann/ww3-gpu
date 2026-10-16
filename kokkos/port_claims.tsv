@@ -1,0 +1,25 @@
+# Who translates which WW3 routine next, so two agents never port the same one. Hand-kept: add a
+# row when a batch is claimed, delete it when the routine gets its kokkos/ports.tsv row.
+# scripts/port_score.py --write merges it into kokkos/PORT_TABLE.tsv.
+# routine: module:routine in lower case, as kokkos/ports.tsv and the gprof profiles name it
+# file: model/src/<file>.F90:<first>-<last> at NOAA-EMC/WW3 03adda91
+# claim: the branch (and agent) that owns it; plan: the plan that names it
+routine	file	claim	plan
+w3profsmd_pdlib:pdlib_w3xypug	model/src/w3profsmd_pdlib.F90:626-866	goal/42-port-noaa-ops (Claude Code, batch A)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
+w3profsmd_pdlib:pdlib_w3xypfsn2	model/src/w3profsmd_pdlib.F90:868-1200	goal/42-port-noaa-ops (Claude Code, batch A)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
+w3profsmd_pdlib:pdlib_w3xypfspsi2	model/src/w3profsmd_pdlib.F90:1202-1502	goal/42-port-noaa-ops (Claude Code, batch A)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
+w3profsmd_pdlib:pdlib_w3xypfsfct2	model/src/w3profsmd_pdlib.F90:1504-1877	goal/42-port-noaa-ops (Claude Code, batch A)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
+w3profsmd_pdlib:calcarray_jacobi_vec	model/src/w3profsmd_pdlib.F90:3531-3787	goal/42-port-noaa-ops (Claude Code, batch A)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
+w3profsmd_pdlib:apply_boundary_condition	model/src/w3profsmd_pdlib.F90:5150-5336	goal/42-port-noaa-ops (Claude Code, batch A)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
+w3profsmd_pdlib:pdlib_jacobi_gauss_seidel_block	model/src/w3profsmd_pdlib.F90:5463-6406	goal/42-port-noaa-ops (Claude Code, batch A)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
+w3profsmd_pdlib:pdlib_explicit_block	model/src/w3profsmd_pdlib.F90:6408-6685	goal/42-port-noaa-ops (Claude Code, batch A)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
+w3sic4md:w3sic4	model/src/w3sic4md.F90:121-803	goal/42-port-noaa-ops (Claude Code, batch A)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
+w3ref1md:w3sref	model/src/w3ref1md.F90:111-670	goal/42-port-noaa-ops (Claude Code, batch A)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
+w3dispmd:wavnu3	model/src/w3dispmd.F90:348-454	Kimi Code, batch B	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
+w3dispmd:wavnu_local	model/src/w3dispmd.F90:456-547	Kimi Code, batch B	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
+w3sbt4md:tabu_erf	model/src/w3sbt4md.F90:242-312	Kimi Code, batch B	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
+w3sbt4md:insbt4	model/src/w3sbt4md.F90:145-231	Kimi Code, batch B	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
+w3sbt4md:w3sbt4	model/src/w3sbt4md.F90:340-636	Kimi Code, batch B	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
+w3sis1md:w3sis1	model/src/w3sis1md.F90:74-227	Kimi Code, batch B	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
+w3sic1md:w3sic1	model/src/w3sic1md.F90:93-369	Kimi Code, batch B	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
+w3str1md:w3str1	model/src/w3str1md.F90:183-543	Kimi Code, batch B	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
