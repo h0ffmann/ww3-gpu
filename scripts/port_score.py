@@ -16,12 +16,13 @@
 Inputs: kokkos/ports.tsv (the ported routines and how far each was tested) and the committed
 profile, docs/data/ww3_full_gprof.tsv (self time per routine, from `just profile-case full`).
 
-Three scores, each with what it counts:
-  time      the share of the profile's self time spent in routines that pass the WW3 replay (L2
-            or gpu): what a run gains when those routines leave the Fortran
-  routines  ported routines over every SUBROUTINE and FUNCTION in WW3's model/src
-  files     WW3 files with a ported routine over every .F90 file in model/src
-  lines     the ported routines' lines over every Fortran line in model/src
+Three levels, each a set of rows of kokkos/ports.tsv:
+  translated  every row: a Kokkos translation of the routine exists in kokkos/src
+  ported      `wired` is yes: WW3 at the WW3/ pin calls the Kokkos code behind its run-time flag
+  regtested   `regtested` is yes: WW3's regtests ran with it on Kokkos and agreed with the Fortran
+and for each level two shares: of the profile's self time (what a run moves off the Fortran) and of
+every Fortran line in WW3's model/src. Beside them: the routines (over every SUBROUTINE and
+FUNCTION in model/src) and the files (over every .F90 file) of each level
 and, beside them, the size of the port itself: the C++ files and lines under kokkos/src.
 --write also writes site/data/port_score.tsv, which the website reads (site/content), and
 kokkos/PORT_RANKING.md: the routines still in Fortran by self time, up to RANK_TOP, and for each
@@ -110,20 +111,40 @@ def kokkos_size(src=None):
     return len(files), sum(p.read_text(encoding="utf-8").count("\n") for p in files)
 
 
+LEVELS = ("translated", "ported", "regtested")
+
+
+def is_yes(p, key):
+    return p.get(key, "").startswith("yes:")
+
+
+def at_level(ports, level):
+    """The rows of one level: every row, the wired ones, the regtested ones."""
+    if level == "ported":
+        return [p for p in ports if is_yes(p, "wired")]
+    if level == "regtested":
+        return [p for p in ports if is_yes(p, "regtested")]
+    return list(ports)
+
+
 def summary(meta_p, prof, meta_w, ports, kokkos=(0, 0)):
     """The global numbers, one dict, for the PORT_STATUS block and the website."""
     total = sum(float(r["self_s"]) for r in prof) or 1.0
-    passed = {p["routine"] for p in ports if status_rank(p["status"]) >= STEPS.index("L2")}
-    t_ported = sum(float(r["self_s"]) for r in prof if r["routine"] in passed)
-    files = sorted({p["file"].split(":")[0] for p in ports if p.get("file")})
-    lines = sum(int(p["lines"]) for p in ports)
     w_lines, w_rout, w_files = int(meta_w["ww3_lines"]), int(meta_w["ww3_routines"]), int(meta_w.get("ww3_files", 0) or 0)
-    return {
-        "time_pct": 100 * t_ported / total, "routines": len(ports), "ww3_routines": w_rout,
-        "files": len(files), "ww3_files": w_files, "lines": lines, "ww3_lines": w_lines,
+    out = {
+        "ww3_routines": w_rout, "ww3_files": w_files, "ww3_lines": w_lines,
         "kokkos_files": kokkos[0], "kokkos_lines": kokkos[1], "ww3_rev": meta_w["ww3_rev"],
         "case": meta_p.get("case", "?"),
     }
+    for lv in LEVELS:
+        rows = at_level(ports, lv)
+        names = {p["routine"] for p in rows}
+        out[lv] = {
+            "time_pct": 100 * sum(float(r["self_s"]) for r in prof if r["routine"] in names) / total,
+            "routines": len(rows), "lines": sum(int(p["lines"]) for p in rows),
+            "files": len({p["file"].split(":")[0] for p in rows if p.get("file")}),
+        }
+    return out
 
 
 def pct(a, b):
@@ -134,15 +155,31 @@ def grouped(n):
     return f"{n:,}".replace(",", " ")
 
 
+WHAT = {
+    "translated": "a Kokkos translation exists in kokkos/src",
+    "ported": "WW3 at the WW3/ pin calls the Kokkos code, behind its run-time flag",
+    "regtested": "WW3's regtests ran with it on Kokkos and agreed with the Fortran",
+}
+
+
 def site_rows(s):
-    """The rows of site/data/port_score.tsv: name, share (the big number), count, what it counts."""
-    return [
-        ("of the run time", f"{s['time_pct']:.1f} %", "", f"the profile's self time in routines that pass the WW3 replay; profile: {s['case']}"),
-        ("of the lines of code", pct(s['lines'], s['ww3_lines']), f"{grouped(s['lines'])} of {grouped(s['ww3_lines'])}", "the ported routines' Fortran lines, of every line in WW3's model/src"),
-        ("of the files", pct(s['files'], s['ww3_files']), f"{s['files']} of {s['ww3_files']}", "WW3 .F90 files with a ported routine"),
-        ("of the routines", pct(s['routines'], s['ww3_routines']), f"{s['routines']} of {grouped(s['ww3_routines'])}", "ported routines, of every SUBROUTINE and FUNCTION in model/src"),
-        ("lines of Kokkos C++", grouped(s['kokkos_lines']), f"in {s['kokkos_files']} files", "under kokkos/src: the port itself"),
-    ]
+    """The rows of site/data/port_score.tsv: name, share (the big number), count, what it counts.
+    For each level, its share of the run time, then of WW3's lines of code."""
+    rows = []
+    for lv in LEVELS:
+        v = s[lv]
+        rows.append((f"of the run time, {lv}", f"{v['time_pct']:.1f} %",
+                     f"{v['routines']} of {grouped(s['ww3_routines'])} routines",
+                     f"{WHAT[lv]}; the profile's self time, {s['case']}"))
+    for lv in LEVELS:
+        v = s[lv]
+        rows.append((f"of the lines of code, {lv}", pct(v['lines'], s['ww3_lines']),
+                     f"{grouped(v['lines'])} of {grouped(s['ww3_lines'])}",
+                     f"Fortran lines of the {lv} routines, of every line in WW3's model/src, in "
+                     f"{v['files']} of {s['ww3_files']} files"))
+    rows.append(("lines of Kokkos C++", grouped(s['kokkos_lines']), f"in {s['kokkos_files']} files",
+                 "under kokkos/src: the port itself"))
+    return rows
 
 
 def site_tsv(s):
@@ -172,13 +209,17 @@ def render(meta_p, prof, meta_w, ports):
     s = summary(meta_p, prof, meta_w, ports, kokkos_size() if KOKKOS_SRC.exists() else (0, 0))
     lines += [
         "",
-        "| port score | value | what it counts |",
-        "|---|---|---|",
-        f"| time | **{s['time_pct']:.1f} %** | the profile's self time in routines that pass the WW3 replay (L2 or gpu) |",
-        f"| routines | {s['routines']} of {s['ww3_routines']} ({pct(s['routines'], s['ww3_routines'])}) | ported routines over every SUBROUTINE and FUNCTION in model/src at WW3@{meta_w['ww3_rev']} |",
-        f"| files | {s['files']} of {s['ww3_files']} ({pct(s['files'], s['ww3_files'])}) | WW3 .F90 files with a ported routine, over every .F90 file in model/src |",
-        f"| lines | {s['lines']} of {s['ww3_lines']} ({pct(s['lines'], s['ww3_lines'])}) | the ported routines' Fortran lines over model/src's |",
-        f"| the port | {s['kokkos_lines']} lines in {s['kokkos_files']} files | the C++ under kokkos/src (every .cpp and .hpp line) |",
+        f"| level | run time | lines | routines | files | what it counts (WW3@{meta_w['ww3_rev']}) |",
+        "|---|---|---|---|---|---|",
+    ]
+    for lv in LEVELS:
+        v = s[lv]
+        lines.append(f"| {lv} | **{v['time_pct']:.1f} %** | {v['lines']} of {s['ww3_lines']} ({pct(v['lines'], s['ww3_lines'])}) | "
+                     f"{v['routines']} of {s['ww3_routines']} ({pct(v['routines'], s['ww3_routines'])}) | "
+                     f"{v['files']} of {s['ww3_files']} | {WHAT[lv]} |")
+    lines += [
+        "",
+        f"The port itself: {s['kokkos_lines']} lines in {s['kokkos_files']} files, the C++ under kokkos/src (every .cpp and .hpp line).",
         "",
         "On a GPU: " + (", ".join(f"`{p['routine']}`" for p in ports if p["status"] == "gpu") or
                         "none yet. The CUDA build links; the RTX 4090 run, `just smoke-ww3-gpu gpu`, is the owner's, supervised."),
@@ -268,8 +309,10 @@ def report_name(routine):
 
 
 def unrecorded(ports):
-    """Rows that do not say, yes or no, whether the Kokkos code was regtested inside WW3."""
-    return [f"{p['routine']} (regtested)" for p in ports if not re.match(r"^(yes|no): \S", p.get("regtested", ""))]
+    """Rows that do not say, yes or no, whether the Kokkos code was regtested inside WW3, or whether
+    WW3 at the pin calls it."""
+    return [f"{p['routine']} ({k})" for p in ports for k in ("regtested", "wired")
+            if not re.match(r"^(yes|no): \S", p.get(k, ""))]
 
 
 def missing_reports(ports, reports_dir):
@@ -284,7 +327,7 @@ def write_or_check(check):
         return 1
     bad = unrecorded(ports)
     if bad:
-        print(f"port_score: kokkos/ports.tsv must say 'yes: …' or 'no: …' for {', '.join(bad)}", file=sys.stderr)
+        print(f"port_score: kokkos/ports.tsv must say 'yes: …' or 'no: …' in {', '.join(bad)}", file=sys.stderr)
         return 1
     text = STATUS_MD.read_text(encoding="utf-8")
     if text.count(START) != 1 or text.count(END) != 1:
@@ -365,19 +408,24 @@ Each sample counts as 0.01 seconds.
        "gprof's flat profile is read in order, names as module:routine")
     ok(abs(prof[1][1] - 0.42) < 1e-9, "self seconds are the third column")
     rows = [{"routine": r, "self_s": str(s), "self_pct": str(p)} for r, s, p in prof]
-    ports = [{"routine": "w3snl1md:w3snl1", "lines": "359", "status": "L2"},
-             {"routine": "w3snl1md:insnl1", "lines": "304", "status": "ported"}]
-    out = render({"case": "t"}, rows, {"ww3_rev": "abc", "ww3_lines": "1000", "ww3_routines": "100"}, ports)
-    ok("**14.1 %**" in out, "the time score counts only L2 and beyond (0.42 of 2.98 s)")
+    ports = [{"routine": "w3snl1md:w3snl1", "lines": "359", "status": "L2", "regtested": "yes: L2", "wired": "yes: pin"},
+             {"routine": "w3snl1md:insnl1", "lines": "304", "status": "ported", "regtested": "no: x", "wired": "yes: pin"},
+             {"routine": "w3src4md:w3sds4", "lines": "600", "status": "ported", "regtested": "no: x", "wired": "no: branch"}]
+    out = render({"case": "t"}, rows, {"ww3_rev": "abc", "ww3_lines": "10000", "ww3_routines": "100"}, ports)
+    ok("| translated | **81.5 %** |" in out, "translated counts every row's self time (2.01 + 0.42 of 2.98 s)")
+    ok("| ported | **14.1 %** |" in out, "ported counts the wired rows only")
+    ok("| regtested | **14.1 %** | 359 of 10000 (3.59 %) |" in out, "regtested counts the regtested rows only")
     ok(status_rank("L1") == -1, "L1 is no longer a step (ADR-0010)")
     ok("| 2 | `w3snl1md:w3snl1` | 0.42 | 14.1 | 81.5 | L2 |" in out, "a ported routine shows its status in the ranking")
-    ok("| 1 | `w3src4md:w3sds4` | 2.01 | 67.4 | 67.4 | Fortran |" in out, "an unported routine is Fortran")
-    ok("2 of 100 (2.00 %)" in out and "663 of 1000 (66.30 %)" in out, "routines and lines count every ported row")
-    ports_f = [dict(p, file="model/src/w3snl1md.F90:1-2") for p in ports]
-    s = summary({"case": "t"}, rows, {"ww3_rev": "abc", "ww3_lines": "1000", "ww3_routines": "100", "ww3_files": "4"}, ports_f, (3, 120))
-    ok(s["files"] == 1 and s["ww3_files"] == 4, "two routines of one file are one file")
+    ok("| 4 | `w3srce` | 0.25 | 8.4 | 100.0 | Fortran |" in out, "an unported routine is Fortran")
+    ok("3 of 100 (3.00 %)" in out and "1263 of 10000 (12.63 %)" in out, "translated counts every row's routines and lines")
+    ports_f = [dict(p, file="model/src/w3snl1md.F90:1-2") for p in ports[:2]] + [dict(ports[2], file="model/src/w3src4md.F90:1-2")]
+    s = summary({"case": "t"}, rows, {"ww3_rev": "abc", "ww3_lines": "10000", "ww3_routines": "100", "ww3_files": "4"}, ports_f, (3, 120))
+    ok(s["translated"]["files"] == 2 and s["ported"]["files"] == 1, "two routines of one file are one file")
     t = site_tsv(s)
-    ok("of the files\t25.00 %\t1 of 4\tWW3 .F90 files with a ported routine" in t, "the site's file row says 25 %, 1 of 4")
+    ok("of the run time, ported\t14.1 %\t2 of 100 routines\t" in t, "the site's ported row: its share and routines")
+    ok("of the lines of code, translated\t12.63 %\t1 263 of 10 000\t" in t and "in 2 of 4 files" in t,
+       "the site's lines row for a level, with its files")
     ok("lines of Kokkos C++\t120\tin 3 files\t" in t, "the port's own size is a row")
     with tempfile.TemporaryDirectory() as tmp:
         (Path(tmp) / "a.cpp").write_text("x\ny\n", encoding="utf-8")
@@ -390,14 +438,15 @@ Each sample counts as 0.01 seconds.
         p.write_text("# about\n# ww3_rev\tabc\nroutine\tlines\nx\t3\n", encoding="utf-8")
         meta, rws = meta_and_rows(p)
         ok(meta == {"ww3_rev": "abc"} and rws == [{"routine": "x", "lines": "3"}], "metadata lines and rows are read apart")
-    ok(unrecorded([{"routine": "a", "regtested": "yes: L2"}, {"routine": "b", "regtested": "no: not built"}]) == [],
+    ok(unrecorded([{"routine": "a", "regtested": "yes: L2", "wired": "yes: pin"},
+                   {"routine": "b", "regtested": "no: not built", "wired": "no: branch"}]) == [],
        "yes and no, each with a reason, are records")
-    ok(unrecorded([{"routine": "a", "regtested": ""}, {"routine": "b", "regtested": "maybe"}]) == ["a (regtested)", "b (regtested)"],
-       "an empty or unclear record is refused")
+    ok(unrecorded([{"routine": "a", "regtested": "", "wired": "yes: pin"}, {"routine": "b", "regtested": "maybe", "wired": ""}])
+       == ["a (regtested)", "b (regtested)", "b (wired)"], "an empty or unclear record is refused")
     ok(report_name("w3snl1md:w3snl1") == "W3SNL1_KOKKOS.md", "a report is named after the routine, upper case")
     with tempfile.TemporaryDirectory() as tmp:
         (Path(tmp) / "W3SNL1_KOKKOS.md").write_text("x", encoding="utf-8")
-        ok(missing_reports(ports, Path(tmp)) == ["INSNL1_KOKKOS.md"], "a ported routine without a report is named")
+        ok(missing_reports(ports[:2], Path(tmp)) == ["INSNL1_KOKKOS.md"], "a ported routine without a report is named")
     ok(ww3_file("w3src4md:w3sds4") == "model/src/w3src4md.F90" and ww3_file("init") == "—",
        "a module's routine maps to its file; a bare name has none")
     rk = ranking({"case": "t"}, rows, {"ww3_rev": "abc"},

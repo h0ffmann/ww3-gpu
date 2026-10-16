@@ -236,8 +236,11 @@ broken most often:
 - **Every ported routine records whether its Kokkos code was regtested**: the `regtested` column
   of `kokkos/ports.tsv`, "yes: <how>" or "no: <why>" (the owner, 14 October 2026). `--check`
   refuses a row without it; the website shows it.
-- **The global numbers** (share of the run time, of the lines of code, of the files, of the
-  routines, and the size of the Kokkos code) are written by `scripts/port_score.py --write` into
+- **The global numbers** come in three levels, each a set of rows of `kokkos/ports.tsv`:
+  *translated* (every row: Kokkos code exists), *ported* (`wired` is yes: WW3 at the `WW3/` pin
+  calls it behind its flag) and *regtested* (`regtested` is yes). For each, the share of the run
+  time and of the lines of code, with its routines and files, and the size of the Kokkos code; a
+  routine is never called ported or regtested on the strength of its translation. They are written by `scripts/port_score.py --write` into
   `kokkos/PORT_STATUS.md` and `site/data/port_score.tsv`, which the website reads, and the ranking of
   what is still in Fortran with each port's regtest record into `kokkos/PORT_RANKING.md`; `/port-next`
   starts the next port from it. `--check` fails

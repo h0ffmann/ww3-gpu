@@ -12,6 +12,7 @@ target_sources(ww_kokkos PRIVATE
     snl1_tables.cpp
     snl1_dia.hpp
     snl1_dia.cpp
+    snl1_team.hpp
     fixture_io.hpp
     fixture_io.cpp
     st4_params.hpp
@@ -25,7 +26,12 @@ target_sources(ww_kokkos PRIVATE
     st4_insin4.cpp
     st4_tabu_stress.cpp
     st4_tabu_tauhf.cpp
-    st4_tabu_tauhf2.cpp)
+    st4_tabu_tauhf2.cpp
+    srce_params.hpp
+    srce_kernel.hpp
+    srce_ln1.hpp
+    srce_bt1.hpp
+    srce_db1.hpp)
 
 # No floating-point contraction in the ported kernels.
 #

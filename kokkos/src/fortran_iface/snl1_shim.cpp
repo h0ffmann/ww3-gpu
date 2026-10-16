@@ -28,6 +28,7 @@
 // SPDX-License-Identifier: MIT
 
 #include "fortran_iface/ww_kokkos_c.hpp"
+#include "fortran_iface/shim_state.hpp"
 
 #include <Kokkos_Core.hpp>
 
@@ -177,6 +178,15 @@ void grow(Ctx& c, int npts, const Space&... space) {
 }
 
 }  // namespace
+
+bool ww::snl1::grid_state(int igrid, Config& c, Tables& t, RealView1D& sig) {
+  const auto it = contexts().find(igrid);
+  if (it == contexts().end() || !it->second.ready) return false;
+  c = it->second.cfg;
+  t = it->second.tables;
+  sig = it->second.sig_d;
+  return true;
+}
 
 extern "C" {
 
