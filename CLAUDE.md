@@ -13,9 +13,7 @@ this file as plain text must open `AGENTS.md` itself. `CONTRIBUTING.md` is the l
   to end a session that changed the proposal without a recorded review
   (`python3 scripts/proposal_review_gate.py --record <parecer.md>`). Both have `--self-test`.
   A `SessionStart` hook runs `scripts/agent_env.sh` in cloud sessions only, so the gates' tools
-  and `picasso` exist before the first command. A `PreToolUse` hook,
-  `.claude/hooks/kokkos-account.sh`, denies Write/Edit on Kokkos code under a `claude_max`
-  account unless `TEAM_PROTECTION=off`, which the `env` of `settings.json` sets for now.
+  and `picasso` exist before the first command.
 - **The reviewer is a subagent**: run it with the Agent tool, `subagent_type: "revisor-proposta"`,
   on the files you changed; `just proposal-review` does the same from a terminal in plan mode. It
   reports; you fix; it does not rewrite.

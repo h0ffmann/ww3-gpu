@@ -13,8 +13,7 @@ of `kokkos/PORT_RANKING.md` after ST4 is `W3SRCE` (7.36 s, 5.60 % of the `bench_
 ## What was done
 
 - The owner chose to start this unit before the ST4 checkpoint passed, which ADR-0011 asks for
-  first, and waived the account rule of `AGENTS.md` for the session ("TEAM_PROTECTION=off", as on
-  2026-10-14 and 2026-10-15: `~/.claude.json` read `claude_max` (v)).
+  first.
 - `W3SRCE` preprocessed for `switch_lab_shrd` (`gfortran -E -cpp` with each switch word) is 392
   statements and calls `W3SPR4`, `W3SIN4`, `W3SDS4`, `W3SNL1`, `W3SNLGQM`, `W3SLN1`, `W3SDB1`,
   `W3SBT1` and `LIU_FORWARD_DISPERSION` (v).

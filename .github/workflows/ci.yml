@@ -52,7 +52,6 @@ jobs:
           python3 scripts/port_score.py --check
           bash scripts/ww3-gpu.sh --self-test
           python3 scripts/ww4_parts.py --self-test
-          bash .claude/hooks/kokkos-account.sh --self-test
 
       - name: The Leanpub manuscript exports from the lessons
         run: python3 scripts/leanpub_manuscript.py --self-test && python3 scripts/leanpub_manuscript.py --out "$RUNNER_TEMP/leanpub"

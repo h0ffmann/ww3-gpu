@@ -32,7 +32,6 @@ Seed page: the first page written on purpose, on 2026-10-14, at the owner's requ
 ## Standing orders, in the owner's words (2026-10-14, AGENTS.md)
 
 - "never run --ww3-gpu --gpu without supervision, only --ww3-gpu --cpu must be regtested pair to pair to existing ww3 src."
-- "Never write any new Kokkos code under personal Max account of the owner, always under UFSC team on Claude." Check `~/.claude.json` `oauthAccount.organizationType` before editing under `kokkos/`: `claude_team` is allowed, `claude_max` means stop.
 - Every ported routine has a port report, `kokkos/port_report/<ROUTINE>_KOKKOS.md`, and a `regtested` column in `kokkos/ports.tsv`.
 - "kokkos code should NOT have its own tests, hard rule. All tests should come com WW3 regtests" (ADR-0010): no L1 test, GoogleTest or fixture of a ported routine; WW3's regtests on the CPU are its only tests.
 

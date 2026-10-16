@@ -223,8 +223,7 @@ directory, `.kimi-code/AGENTS.md` and then `AGENTS.md`, and skills from `.kimi-c
 files together are past that. So the root `AGENTS.md` stays the rulebook, the skills reach Kimi
 Code through the same `.agents/skills` link Antigravity uses, and
 [`.kimi-code/AGENTS.md`](.kimi-code/AGENTS.md) holds only what Kimi Code lacks: where to read
-first, the hooks, subagents and slash commands it must do by hand, and that it never writes Kokkos
-code ("Which account writes Kokkos code" names a Claude team account).
+first, and the hooks, subagents and slash commands it must do by hand.
 
 ## Opening a pull request
 

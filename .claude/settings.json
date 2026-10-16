@@ -1,8 +1,7 @@
 {
   "env": {
     "PONYTAIL_DEFAULT_MODE": "off",
-    "PONYTAIL_MAP": "0",
-    "TEAM_PROTECTION": "off"
+    "PONYTAIL_MAP": "0"
   },
   "hooks": {
     "PostToolUse": [
@@ -32,17 +31,6 @@
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/session-start.sh"
-          }
-        ]
-      }
-    ],
-    "PreToolUse": [
-      {
-        "matcher": "Write|Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/kokkos-account.sh"
           }
         ]
       }

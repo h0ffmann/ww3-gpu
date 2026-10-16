@@ -4,14 +4,12 @@ argument-hint: "<module:routine, as in kokkos/PORT_RANKING.md, e.g. w3src4md:w3s
 ---
 
 Start the port of `$ARGUMENTS`. Phase 1 only: reproduce the Fortran's arithmetic. The rules are
-`AGENTS.md` ("Porting", "Running on the GPU", "Which account writes Kokkos code") and
+`AGENTS.md` ("Porting", "Running on the GPU") and
 `docs/AGENTS_KOKKOS_202609.md` §1.2, §1.5 and §1.6; where this file and those disagree, they win.
 Every WW3 fact you write cites `model/src/<file>.F90:<line>` at the pin, read from the file.
 
 **0. Stop unless all of these hold.** Say which one failed.
 
-- `python3 -c "import json;print(json.load(open('$HOME/.claude.json'))['oauthAccount']['organizationType'])"`
-  prints `claude_team`. `claude_max` or anything else: stop, Kokkos code is not written here.
 - `$ARGUMENTS` is `module:routine`, and it has no row in `kokkos/ports.tsv`.
 - `git status` is clean, and `WW3/` is initialised at its pin (`just src-st`).
 

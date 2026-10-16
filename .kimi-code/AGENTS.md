@@ -16,14 +16,6 @@ and where to look first. `CONTRIBUTING.md`, "Working with Kimi Code", has the ev
 | A diagram | the `figure` skill |
 | A commit or a PR | `AGENTS.md`, "Commits and pull requests" |
 
-## Kokkos code is not yours to write (hard rule)
-
-Kokkos code (C++, CUDA and CMake under `kokkos/`) is written only in a Claude Code session of the
-UFSC team account (`AGENTS.md`, "Which account writes Kokkos code"). A Kimi Code session is never
-that account. Read, review and explain Kokkos code; do not create or edit it. When a task needs
-it, stop and say so. Scripts, docs, CI and the ledgers (`kokkos/ports.tsv`,
-`kokkos/PORT_STATUS.md`) are not Kokkos code.
-
 ## What Claude Code does here that you do by hand
 
 - **Hooks do not run.** Nothing reminds you to review the proposal or stops you ending without a

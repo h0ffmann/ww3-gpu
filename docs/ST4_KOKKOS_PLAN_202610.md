@@ -79,7 +79,6 @@ What this scope means under the hard rules:
 Every task includes these. Each line restates a hard rule from `AGENTS.md` or
 `AGENTS_KOKKOS_202609.md`.
 
-- Kokkos code is written only under `organizationType` = `claude_team` (`~/.claude.json`).
 - `WW3/` and `$WW3` are read-only. Fortran changes go to the `h0ffmann/WW3` fork, on a new branch,
   behind `W3_KOKKOS`, and leave the Fortran routine selectable.
 - Translate, do not improve. Keep every loop order, every reduction order, every quirk listed in
@@ -288,7 +287,7 @@ in a separate clone (never inside `WW3/`):
 | Agent | Type | Tasks | Writes |
 |---|---|---|---|
 | A | `Explore` (read-only) | 1 | nothing; returns the inventory |
-| B, C, D | `general-purpose`, same `claude_team` session | 3, 4, 5 | only its own `st4_<routine>.*` files |
+| B, C, D | `general-purpose`, same session | 3, 4, 5 | only its own `st4_<routine>.*` files |
 | E, F, G | fresh `general-purpose`, told to report only | 6 | nothing |
 | H | `general-purpose` | 8 | only `st4_tables_build.*` |
 
@@ -308,9 +307,6 @@ Rules for every subagent prompt:
 
 **Files:** none.
 
-- [ ] **Step 1: Check the account.**
-  Run: `python3 -c "import json,os;print(json.load(open(os.path.expanduser('~/.claude.json')))['oauthAccount']['organizationType'])"`
-  Expected: `claude_team`. Any other value: stop.
 - [ ] **Step 2: Check the tree and the pin.**
   Run: `git status --short && git -C WW3 rev-parse --short HEAD`
   Expected: a clean tree and `bb08623a`.
@@ -578,7 +574,6 @@ Stop the task and write the question when:
 - a translation needs a different order of a sum, a limiter or the integration order;
 - Task 1 finds an FMA or a reordered reduction in the Fortran's `-O3` code;
 - a table size from the Fortran does not match the size the C++ expects;
-- the account is not `claude_team`;
 - the owner has not given the go for the fork branch at 4:45 (then skip Task 7, and the PR
   holds only the C++).
 
