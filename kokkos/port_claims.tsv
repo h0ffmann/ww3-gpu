@@ -5,8 +5,6 @@
 # file: model/src/<file>.F90:<first>-<last> at NOAA-EMC/WW3 03adda91
 # claim: the branch (and agent) that owns it; plan: the plan that names it
 routine	file	claim	plan
-pdlib_field_vec:do_output_exchanges	model/src/pdlib_field_vec.F90:784-1733	goal/42-port-w3wave-w3iogr	docs/W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md
-pdlib_field_vec:get_array_size	model/src/pdlib_field_vec.F90:53-393	goal/42-port-w3wave-w3iogr	docs/W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md
 pdlib_w3profsmd:block_solver_init	model/src/w3profsmd_pdlib.F90:6752-6888	goal/42-port-w3wave-w3iogr	docs/W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md
 pdlib_w3profsmd:deallocate_pdlib_global	model/src/w3profsmd_pdlib.F90:7345-7441	goal/42-port-w3wave-w3iogr	docs/W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md
 pdlib_w3profsmd:jacobi_init	model/src/w3profsmd_pdlib.F90:7515-7613	goal/42-port-w3wave-w3iogr	docs/W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md

@@ -380,6 +380,13 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | TLEV / TLN | "Valid time for water levels" / "Time for water level field" `(v)` `w3wdatmd.F90:73`, `w3idatmd.F90:61` | The water-level times `W3ULEV` advances. | [kokkos/port_report/W3ULEV_KOKKOS.md](../kokkos/port_report/W3ULEV_KOKKOS.md) |
 | KDMAX / RDKMIN | "Deep water cut-off for kd" and the band-width fraction the lowest wavenumber change must exceed `(v)` `w3updtmd.F90:2106`, `:2136`, values `4.` and `0.05` at `:2207` | `W3ULEV` updates a point's wavenumber grid only when both thresholds are passed. | [kokkos/port_report/W3ULEV_KOKKOS.md](../kokkos/port_report/W3ULEV_KOKKOS.md) |
 | GET_JSEA_IBELONG | "Set belongings of jsea in context of pdlib" `(v)` `w3parall.F90:1265` | Maps a global sea point to the local index and whether this process owns it; already translated, called by the Kokkos `W3ULEV`. | [kokkos/port_report/W3ULEV_KOKKOS.md](../kokkos/port_report/W3ULEV_KOKKOS.md) |
+| PDLIB_FIELD_VEC / DO_OUTPUT_EXCHANGES / GET_ARRAY_SIZE | "Provides parallel I/O in context of PDLIB" / "Do communication for PDLIB output" / "Estimate arrays size for communication" `(v)` `pdlib_field_vec.F90:20`, `:784`, `:53` | The PDLIB gather of the output fields of each process's nodes onto the output process, and the size of its exchange buffer. | [kokkos/port_report/DO_OUTPUT_EXCHANGES_KOKKOS.md](../kokkos/port_report/DO_OUTPUT_EXCHANGES_KOKKOS.md), [kokkos/port_report/GET_ARRAY_SIZE_KOKKOS.md](../kokkos/port_report/GET_ARRAY_SIZE_KOKKOS.md) |
+| W3XDMA / AINIT2 | "Version of W3DIMX for extended ouput arrays only" and the `WADAT` flag it sets `(v)` `w3adatmd.F90:1522`, `:1537`, `:568`, set at `:2375` | Allocates the `X*` output arrays `DO_OUTPUT_EXCHANGES` gathers into; a hook of its port. | [kokkos/port_report/DO_OUTPUT_EXCHANGES_KOKKOS.md](../kokkos/port_report/DO_OUTPUT_EXCHANGES_KOKKOS.md) |
+| NAPFLD / FLOUT / NRQGO | "Proc. dealing with raw field output" / "Output flags" / "Number of MPI handles W3IOGO" `(v)` `w3odatmd.F90:107`, `:124`, `:149` | Which process receives the gridded output, and when. | [kokkos/port_report/DO_OUTPUT_EXCHANGES_KOKKOS.md](../kokkos/port_report/DO_OUTPUT_EXCHANGES_KOKKOS.md) |
+| FLOGRD / FLOGR2 / FLGRDALL | "FLags for output fields" / "FLags for coupling fields" `(v)` `w3odatmd.F90:151-152`; `FLGRDALL` is their `.OR.`, a local `(v)` `pdlib_field_vec.F90:107` | Select which fields are exchanged and counted. | [kokkos/port_report/GET_ARRAY_SIZE_KOKKOS.md](../kokkos/port_report/GET_ARRAY_SIZE_KOKKOS.md) |
+| NOGRP / NGRPP / NOEXTR | "Number of output field groups" / "Max numb of parameters per output group" / "Number of extra (user available)" fields `(v)` `w3odatmd.F90:72-76` | The extents of the output flag arrays (10, 20 and 2). | [kokkos/port_report/GET_ARRAY_SIZE_KOKKOS.md](../kokkos/port_report/GET_ARRAY_SIZE_KOKKOS.md) |
+| E3DF / P2MSF | "freq. indices for 3D output" `(v)` `w3gdatmd.F90:715` | The frequency ranges of the 3-D spectral output fields and of `P2SMS`. | [kokkos/port_report/GET_ARRAY_SIZE_KOKKOS.md](../kokkos/port_report/GET_ARRAY_SIZE_KOKKOS.md) |
+| INIT_GET_ISEA | "Set ISEA for all schemes" `(v)` `w3parall.F90:1396` | The local-to-global sea index; already translated, called by the Kokkos `DO_OUTPUT_EXCHANGES`. | [kokkos/port_report/DO_OUTPUT_EXCHANGES_KOKKOS.md](../kokkos/port_report/DO_OUTPUT_EXCHANGES_KOKKOS.md) |
 
 ## HPC and software
 
@@ -816,6 +823,7 @@ Every term above, alphabetically, with the section it lives in.
 - DTMIN: [WW3 programs and files](#ww3-programs-and-files)
 - DTXY: [WW3 programs and files](#ww3-programs-and-files)
 - E-cores: [HPC and software](#hpc-and-software)
+- E3DF / P2MSF: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - E3SM: [Models, projects and institutions](#models-projects-and-institutions)
 - ecCodes: [HPC and software](#hpc-and-software)
 - ecCodes / grib_to_netcdf / grib_copy / grib_ls: [HPC and software](#hpc-and-software)
@@ -875,6 +883,7 @@ Every term above, alphabetically, with the section it lives in.
 - FLD1: [WW3 switches](#ww3-switches)
 - FLD2: [WW3 switches](#ww3-switches)
 - float32: [HPC and software](#hpc-and-software)
+- FLOGRD / FLOGR2 / FLGRDALL: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - FLOLOC / FLPART: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - FLX0: [WW3 switches](#ww3-switches)
 - FLX0–FLX5: [WW3 switches](#ww3-switches)
@@ -961,6 +970,7 @@ Every term above, alphabetically, with the section it lives in.
 - IMPLU: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - INFLD / SIG2WN / WND2SAT / TAIL_ID / TAILTYPE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - INFLD: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- INIT_GET_ISEA: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - INPTAB / W3BETA / BETATB: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - INPTAB: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - INSIN3 / TABU_STRESS / TABU_TAUHF / TAUT / TAUHFT (ST3): [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1016,15 +1026,18 @@ Every term above, alphabetically, with the section it lives in.
 - MSC: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - MSR: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - N1MAX: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- NAPFLD / FLOUT / NRQGO: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - NITTIN / CINXSI / CD_MAX / CAP_ID / FLX4A0: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - NITTIN: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - NK10Hz / IK10Hz / SIG10Hz / DSII10Hz: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - NK10Hz: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - NNIDX: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- NOGRP / NGRPP / NOEXTR: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - NOVAL: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - NR_CORR: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - NRLv: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - optionCall: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- PDLIB_FIELD_VEC / DO_OUTPUT_EXCHANGES / GET_ARRAY_SIZE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - PGMRES: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - `__powisf2`: [This repository's own names](#this-repositorys-own-names)
 - PRINT_MEMCHECK: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1165,6 +1178,7 @@ Every term above, alphabetically, with the section it lives in.
 - W3SWLDMD (SWL): W3SWL4 / W3SWL6: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3UBPT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3UTAU / W3URHO / W3UIC1: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3XDMA / AINIT2: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3XYPFSNIMP / FSNIMP / IMPFSN: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3XYPFSNIMP: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - WADAT / FL_ALL / D_ONLY / NSEALM: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)

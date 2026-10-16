@@ -76,10 +76,12 @@
 #include "part_fld.hpp"
 #include "pdlib_boundary.hpp"
 #include "pdlib_boundary_va.hpp"
+#include "pdlib_do_output_exchanges.hpp"
 #include "pdlib_explicit_block.hpp"
 #include "pdlib_fsfct2.hpp"
 #include "pdlib_fsn2.hpp"
 #include "pdlib_fspsi2.hpp"
+#include "pdlib_get_array_size.hpp"
 #include "pdlib_jacobi_spectral.hpp"
 #include "pdlib_jacobi_vec.hpp"
 #include "pdlib_jgs_block.hpp"
@@ -266,4 +268,6 @@ void ww_support_instantiate() {
   (void)&ww::iogr::w3iogr;
   (void)&ww::wave::w3wave::w3wave<E>;
   (void)&ww::updt::w3ulev<E>;
+  (void)&ww::pdlib::do_output_exchanges<E>;
+  (void)&ww::pdlib::get_array_size;
 }
