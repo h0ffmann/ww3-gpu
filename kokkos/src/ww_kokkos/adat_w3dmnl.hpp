@@ -29,8 +29,16 @@
 //    is stored through the module pointer after it, i.e. into WADATS(IMOD)%NSPECX.
 //
 // Not ported, by construction of a C++ library call: the WRITE(NDSE) messages and
-// EXTCDE (returned as the code EXTCDE would exit with, W3dmnlStatus); W3SETA's
-// pointer aliasing (:2584), except IADATA.
+// EXTCDE (returned as the code EXTCDE would exit with, W3dmnlStatus).
+//
+// W3SETA(IMOD) at :2584, partly, for the reasons of adat_w3dima.hpp: adat_w3seta.hpp
+// includes this header, and W3SETA's conditions read INPUTS(IMOD)%INFLAGS1 and
+// GTYPE, which W3DMNL does not take. The port does W3SETA's unconditional part,
+// IADATA = IMOD (:2746) and t.base = imod (:2751-2809). After an ok return the
+// caller must call w3seta(reg, nl1, t, imod, in) with the W3IDATMD and W3GDATMD
+// state of the call (W3DMNL calls no W3SETG); that leaves every alias group as
+// :2584 does, since NLINIT is already .TRUE. (:2574) and after :2584 the Fortran
+// names no alias but NSPECX (:2594, a store), which is in the unconditional group.
 #pragma once
 
 #include <cstddef>
@@ -93,6 +101,8 @@ enum class W3dmnlStatus : int {
 /// @brief W3DMNL(IMOD, NDSE, NDST, NSP, NSPX), W3_NL1 build.
 /// @param reg    WADATS counters NADATA and IADATA (in/out: IADATA = IMOD on ok).
 /// @param nl1    the NL1 parts of WADATS (in/out).
+/// @param t      W3SETA's alias targets (in/out: t.base = IMOD on ok; the other groups
+///               are not touched, see the header for the w3seta call the caller owes).
 /// @param imod   model number, 1-based as in the Fortran.
 /// @param ngrids W3GDATMD NGRIDS (-1 before W3NMOD).
 /// @param nsp    NSP, the extent of the ICnn tables (INSNL1 passes NSPEC).
@@ -103,8 +113,8 @@ enum class W3dmnlStatus : int {
 /// @author ww3-gpu; heritage H. L. Tolman (W3ADATMD)
 /// @date 2026-10-16
 template <class ExecSpace>
-W3dmnlStatus w3dmnl(Wadats<ExecSpace>& reg, WadatsNl1<ExecSpace>& nl1, int imod, int ngrids,
-                    int nsp, int nspx) {
+W3dmnlStatus w3dmnl(Wadats<ExecSpace>& reg, WadatsNl1<ExecSpace>& nl1, W3setaTargets& t,
+                    int imod, int ngrids, int nsp, int nspx) {
   using N = WadatNl1<ExecSpace>;
   using R1 = typename N::R1;
   using I1 = typename N::I1;
@@ -159,10 +169,12 @@ W3dmnlStatus w3dmnl(Wadats<ExecSpace>& reg, WadatsNl1<ExecSpace>& nl1, int imod,
   }
   w.nlinit = true;  // :2574, into WADATS(IMOD) directly, before W3SETA
 
-  // W3SETA(IMOD) :2584 -> :2746. Its own checks (:2729, :2734) cannot fire: IMOD is
-  // already in 1..NADATA, so NADATA /= -1.
+  // W3SETA(IMOD) :2584, its unconditional part (header): :2746, :2751-2809. Its own
+  // checks (:2729, :2734) cannot fire: IMOD is already in 1..NADATA, so NADATA /= -1.
   reg.iadata = imod;
-  w.nspecx = nspx;  // :2594, through the NSPECX alias W3SETA just set (:2788)
+  t.base = imod;
+  // :2594, through the NSPECX alias W3SETA just set (:2788); nl1.models[t.base-1] is w.
+  nl1.models[static_cast<std::size_t>(t.base - 1)].nspecx = nspx;
   return W3dmnlStatus::ok;
 }
 

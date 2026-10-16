@@ -15,10 +15,10 @@
 // w3adatmd.F90 with WW3's Release flags and the switch_lab_shrd defines:
 //  - FL_ALL is stored through the module pointer FL_ALL at :961, BEFORE the checks
 //    and before W3SETA(IMOD) at :994 retargets it (W3SETA :2760), so it lands in the
-//    model selected by the previous W3SETA. :1323 reloads the pointer and reads
-//    WADATS(IMOD)%FL_ALL. Both are reproduced through Wadats::iadata.
+//    model selected by the previous W3SETA, W3setaTargets::base. :1323 reloads the
+//    pointer and reads WADATS(IMOD)%FL_ALL. Both go through t.base here.
 //  - NSEALM at :1038-1039 is read and written through the pointer W3SETA :2754 set,
-//    i.e. WADATS(IMOD)%NSEALM.
+//    i.e. WADATS(IMOD)%NSEALM, here wadats[t.base-1] with t.base == imod.
 //  - Every fill (= 0. and = UNDEF) is a scalar loop of 4-byte stores of one value,
 //    no arithmetic; UNDEF is loaded from the module variable before each fill.
 //    Kokkos::deep_copy of a scalar stores the same bits.
@@ -28,8 +28,20 @@
 // Not ported, by construction of a C++ library call: the WRITE(NDSE) messages and
 // EXTCDE (returned as the code EXTCDE would exit with, W3dimaStatus); W3SETG(IMOD)
 // at :986 and W3SETG(JGRID) at :1485 (the caller passes IMOD's grid in
-// W3dimaGrid); W3SETA's pointer aliasing (:994, :1467), except IADATA and the
-// FL_ALL target it decides.
+// W3dimaGrid).
+//
+// W3SETA(IMOD) at :994 and :1467, partly. The port cannot call w3seta: adat_w3seta.hpp
+// includes this header (through adat_w3dmnl.hpp), and W3SETA's conditions read
+// WADATS(IMOD)%NLINIT (WadatsNl1) and INPUTS(IMOD)%INFLAGS1, which W3DIMA does not
+// take. So each call does W3SETA's unconditional part, IADATA = IMOD (:2746) and
+// the target of ITIME .. FL_ALL, NMX0 .. NCENT, NFR .. NLINIT (:2751-2809,
+// t.base = imod). After an ok return the caller must call
+// w3seta(reg, nl1, t, imod, in) with in.gtype the GTYPE of grid IMOD (W3SETG(IMOD)
+// at :986 is still in force at :1467) and INPUTS(IMOD)%INFLAGS1; that one call
+// leaves every alias group as the two Fortran calls do: at :994 AINIT of IMOD is
+// false (:976), so of the conditional groups only NLINIT (:3038) can move there,
+// W3DIMA does not change NLINIT, and :1467 tests it again. Between :994 and :1467
+// the Fortran reads no alias of a conditional group, only NSEALM and FL_ALL.
 #pragma once
 
 #include <array>
@@ -53,9 +65,10 @@ enum class W3dimaStatus : int {
   already_allocated = 3,      ///< WADATS(IMOD)%AINIT, :976-979
   alloc_failed = 99,          ///< CHECK_ALLOC_STATUS, w3macros.h:49-51
   /// Not a WW3 code: :961 would store through the FL_ALL pointer before any W3SETA
-  /// has associated it (IADATA still -1), undefined behaviour in the Fortran. No
-  /// caller at the pin does this (W3INIT calls W3SETA at w3initmd.F90:550, W3IOGO at
-  /// w3iogomd.F90:2605, ww3_gint at ww3_gint.F90:805, before W3DIMA).
+  /// has associated it (W3setaTargets::base still 0), undefined behaviour in the
+  /// Fortran. No caller at the pin does this (W3INIT calls W3SETA at
+  /// w3initmd.F90:550, W3IOGO at w3iogomd.F90:2605, ww3_gint at ww3_gint.F90:805,
+  /// before W3DIMA).
   fl_all_unassociated = -1,
 };
 
@@ -101,7 +114,10 @@ V alloc(const char* label, N... n) {
 /// @brief W3DIMA(IMOD, NDSE, NDST, D_ONLY), shared memory (W3_SHRD) build.
 /// @param exec   execution space instance the fills run on; fenced before the ok return
 ///               only (on an error code the fills may still be in flight).
-/// @param reg    WADATS, NADATA and IADATA (in/out).
+/// @param reg    WADATS, NADATA and IADATA (in/out: IADATA = IMOD once past the checks).
+/// @param t      W3SETA's alias targets (in/out): t.base is the FL_ALL target of :961
+///               (in) and is IMOD once past the checks; the other groups are not
+///               touched, see the header for the w3seta call the caller owes.
 /// @param imod   model number, 1-based as in the Fortran.
 /// @param g      the state of grid IMOD and of the other modules W3DIMA reads.
 /// @param d_only the OPTIONAL D_ONLY; absent means FL_ALL = .TRUE. (:960-964).
@@ -111,8 +127,9 @@ V alloc(const char* label, N... n) {
 /// @author ww3-gpu; heritage H. L. Tolman (W3ADATMD)
 /// @date 2026-10-16
 template <class ExecSpace>
-W3dimaStatus w3dima(const ExecSpace& exec, Wadats<ExecSpace>& reg, int imod,
-                    const W3dimaGrid& g, std::optional<bool> d_only = std::nullopt) {
+W3dimaStatus w3dima(const ExecSpace& exec, Wadats<ExecSpace>& reg, W3setaTargets& t,
+                    int imod, const W3dimaGrid& g,
+                    std::optional<bool> d_only = std::nullopt) {
   using W = Wadat<ExecSpace>;
   using R1 = typename W::R1;
   using R2 = typename W::R2;
@@ -122,10 +139,10 @@ W3dimaStatus w3dima(const ExecSpace& exec, Wadats<ExecSpace>& reg, int imod,
   using detail::alloc;
   using detail::fext;
 
-  // :960-964, through the alias of the model the previous W3SETA selected.
-  if (reg.iadata < 1 || reg.iadata > static_cast<int>(reg.wadats.size()))
+  // :960-964, through the FL_ALL alias of the model the previous W3SETA selected.
+  if (t.base < 1 || t.base > static_cast<int>(reg.wadats.size()))
     return W3dimaStatus::fl_all_unassociated;
-  reg.wadats[static_cast<std::size_t>(reg.iadata - 1)].fl_all =
+  reg.wadats[static_cast<std::size_t>(t.base - 1)].fl_all =
       d_only.has_value() ? !*d_only : true;
 
   if (g.ngrids == -1) return W3dimaStatus::grids_not_initialized;           // :966
@@ -133,7 +150,11 @@ W3dimaStatus w3dima(const ExecSpace& exec, Wadats<ExecSpace>& reg, int imod,
   W& w = reg.wadats[static_cast<std::size_t>(imod - 1)];
   if (w.ainit) return W3dimaStatus::already_allocated;                     // :976
 
-  reg.iadata = imod;  // W3SETA(IMOD) :994 -> :2746; FL_ALL, NSEALM now IMOD's
+  // W3SETA(IMOD) :994, its unconditional part (header): :2746, :2751-2809.
+  reg.iadata = imod;
+  t.base = imod;
+  // The target of the NSEALM and FL_ALL aliases from here on; the same struct as w.
+  W& alias = reg.wadats[static_cast<std::size_t>(t.base - 1)];
 
   // One ALLOCATE(..., STAT=ISTAT) statement; CHECK_ALLOC_STATUS on failure.
   auto stmt = [](auto&& body) -> bool {
@@ -179,8 +200,8 @@ W3dimaStatus w3dima(const ExecSpace& exec, Wadats<ExecSpace>& reg, int imod,
   fill(w.tauadir, Real(0));  // :1023
 
   // 2) Standard mean wave parameters
-  if (w.nsealm == 0) w.nsealm = g.nsea;  // :1038-1040
-  const std::size_t nl = fext(1, w.nsealm);
+  if (alias.nsealm == 0) alias.nsealm = g.nsea;  // :1038-1040
+  const std::size_t nl = fext(1, alias.nsealm);
   if (!stmt([&] {  // :1041-1053
         w.hs = alloc<R1>("ww::adat::HS", nl);
         w.wlm = alloc<R1>("ww::adat::WLM", nl);
@@ -379,7 +400,7 @@ W3dimaStatus w3dima(const ExecSpace& exec, Wadats<ExecSpace>& reg, int imod,
   if (!stmt([&] { w.wn = alloc<R2>("ww::adat::WN", k01, sea0); })) return fail;  // :1312
 
   // :1323, read through the alias W3SETA retargeted: WADATS(IMOD)%FL_ALL.
-  if (w.fl_all) {
+  if (alias.fl_all) {
     if (!stmt([&] { w.cg = alloc<R2>("ww::adat::CG", k01, sea0); })) return fail;  // :1325
     const std::size_t s1 = fext(1, nsea);
     if (g.flcur)  // :1334-1341
@@ -468,8 +489,10 @@ W3dimaStatus w3dima(const ExecSpace& exec, Wadats<ExecSpace>& reg, int imod,
   }
 
   w.ainit = true;  // :1456
-  // W3SETA(IMOD) again at :1467: IADATA is already IMOD. W3SETG(JGRID) at :1485 is
-  // the caller's.
+  // W3SETA(IMOD) at :1467, its unconditional part; the caller's w3seta does the rest
+  // (header). W3SETG(JGRID) at :1485 is the caller's.
+  reg.iadata = imod;
+  t.base = imod;
   exec.fence("ww::adat::w3dima fills");
   return W3dimaStatus::ok;
 }

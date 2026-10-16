@@ -123,13 +123,15 @@ the pinned `ww3` shell, the Fortran flags of WW3's CMake Release build
 - ⚠ The `AINIT2` read is of the last `W3SETA`'s model, not `IMOD`'s; the two coincide at
   `W3IOGO` (`W3SETA(IGRD)` at `w3iogomd.F90:2605` before `:2607`) and in `W3MPIO` only when
   `W3INIT`'s `W3SETA` (`w3initmd.F90:550`) selected the same `IMOD`. Kept as the Fortran does it.
-- ⚠ The header compiles only against the `adat_w3seta.hpp` that holds `W3setaTargets::base` and
-  `::x` (uncommitted, read 2026-10-16; its `W3SETA` sets `base` always and `x = 0` in the `AINIT`
-  branch, `:2826`). It has to be committed with or before this one.
-- ⚠ Committed headers still treat `Wadats::iadata` as the unconditional-alias target:
-  `adat_wadat.hpp` says a `W3XETA` port must not write it, and `W3DIMA` reads `FL_ALL` through it
-  (`adat_w3dima.hpp`, `:960-964`). After a `W3XETA(j)` with no `W3SETA(j)` they name `j`, the
-  Fortran names `base`. `W3XDMA` already reads `NSEALM` through `W3setaTargets::base` (`:1596`).
+- (v) The header needs `W3setaTargets::base` and `::x`, defined in `adat_wadat.hpp` (moved there
+  from `adat_w3seta.hpp` 2026-10-16, unchanged, so W3DIMA and W3DMNL can name it), and the
+  `adat_w3seta.hpp` whose `W3SETA` sets `base` always and `x = 0` in the `AINIT` branch
+  (`:2826`), committed with this one in `1547bc2`.
+- (v) No header treats `Wadats::iadata` as an alias target any more (checked 2026-10-16):
+  `adat_wadat.hpp` says it is the one Fortran `IADATA`, written by `W3SETA` and this routine;
+  `W3DIMA` stores and reads `FL_ALL` and `NSEALM` through `W3setaTargets::base` (`:960-964`,
+  `:1038-1039`, `:1323`), `W3DMNL` stores `NSPECX` through it (`:2594`), and `W3XDMA` reads
+  `NSEALM` through it (`:1596`).
 - (v) `AINIT2` has one home, `WadatScalars::ainit2`: `W3NAUX` clears it (`:806`), `W3XDMA` sets it
   (`:2375`) and this routine reads it through `base`.
 - ⚠ As in the Fortran, `x` is set whether or not `W3XDMA` allocated `WADATS(IMOD)`'s X arrays;

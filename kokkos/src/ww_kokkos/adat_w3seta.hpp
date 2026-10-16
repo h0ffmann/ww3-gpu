@@ -13,8 +13,9 @@
 // pointers, a consumer indexes the model vector instead. The aliases fall into
 // groups that W3SETA re-points together under one condition, and a group whose
 // condition is false keeps pointing at the model of an earlier W3SETA. So the
-// state W3SETA leaves is one model number per group, W3setaTargets below, 0 while
-// no W3SETA has associated the group (the Fortran declares these pointers without
+// state W3SETA leaves is one model number per group, W3setaTargets (in
+// adat_wadat.hpp, so that W3DIMA and W3DMNL can set it), 0 while no W3SETA
+// has associated the group (the Fortran declares these pointers without
 // => NULL(), w3adatmd.F90:578-690, so their status is undefined until then).
 // IADATA (:2746, Wadats::iadata) is not a group target: W3XETA writes it too
 // (:3174) and re-points only HS .. USERO, so after a W3XETA the unconditional
@@ -55,26 +56,6 @@ enum class W3setaStatus : int {
   /// Not a WW3 code: nl1.models has no entry imod-1, so NLINIT (:3038) cannot be
   /// read. In the Fortran NLINIT lives inside WADATS(IMOD).
   nl1_not_sized = -1,
-};
-
-/// @brief The model each group of W3SETA's pointer aliases points at,
-///        1-based; 0 = not associated by any W3SETA yet, except for x.
-/// @details One object for the module, as the Fortran module pointers are one set.
-struct W3setaTargets {
-  /// unconditional: ITIME .. FL_ALL :2751-2760, NMX0 .. NCENT :2774-2781, NFR .. NLINIT
-  /// :2785-2809
-  int base = 0;
-  int ainit = 0;   ///< AINIT true: DW .. TAUADIR :2828-2837, WN :2941; HS .. USERO while x == 0
-  /// HS .. USERO, :2839-2939 (93 aliases, the set W3XETA re-points, :3181-3280):
-  /// 0 = the plain arrays of model `ainit`, k = WADATS(k)%X* after W3XETA(k).
-  int x = 0;
-  int fl_all = 0;  ///< AINIT and FL_ALL: CG .. ALPHA :2949-2972, MAP* :3019-3025, IAPPRO, SPPNT :3030-3031
-  int cur = 0;     ///< and INFLAGS1(2): CA0, CAI, CD0, CDI, :2975-2978
-  int wind = 0;    ///< and INFLAGS1(3): UA0, UAI, UD0, UDI, AS0, ASI, :2982-2987
-  int taua = 0;    ///< and INFLAGS1(5): MA0, MAI, MD0, MDI, :2991-2994
-  int rhoa = 0;    ///< and INFLAGS1(6): RA0, RAI, :2998-2999
-  int iter = 0;    ///< and GTYPE == UNGTYPE: ITER, :3028
-  int nlinit = 0;  ///< NLINIT true: IP11 .. AF11, :3039-3071
 };
 
 /// @brief The state of other modules W3SETA reads.

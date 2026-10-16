@@ -129,16 +129,18 @@ assembly.
 
 ## ⚠
 
-- ⚠ The W3DIMA and W3DMNL ports set only `Wadats::iadata` where the Fortran calls `W3SETA`
-  (`:994`, `:1467`; `:2584`). Every one of those calls re-points the unconditional group
-  (`base`); the second call of W3DIMA (`:1467`, after `AINIT = .TRUE.`) and the one of W3DMNL
-  (after `NLINIT = .TRUE.`) also re-point the `AINIT`, `x`, `FL_ALL`, forcing, `ITER` and NL1
-  groups. Until those ports call `w3seta`, the shim must call `w3seta(imod)` after `w3dima` and
-  `w3dmnl` for `W3setaTargets` to match the Fortran.
-- ⚠ W3DIMA's port stores `FL_ALL` (`:960-964`) through `Wadats::iadata`, and `adat_wadat.hpp`
-  says `iadata` stands for the model the `W3SETA` aliases point at. The Fortran stores through
-  the `FL_ALL` alias, `W3setaTargets::base`; the two differ after a `W3XETA` of another model.
-  Not checked whether any caller at the pin runs `W3DIMA` after such a `W3XETA`.
+- ⚠ The W3DIMA and W3DMNL ports do the unconditional part of their `W3SETA` calls (`:994`,
+  `:1467`; `:2584`): `Wadats::iadata` and `W3setaTargets::base`. They cannot call `w3seta`
+  (this header includes theirs, and they lack `nl1` or `W3setaInputs`), so the caller must call
+  `w3seta(reg, nl1, t, imod, in)` after an `ok` return of `w3dima` and of `w3dmnl` for the
+  `AINIT`, `x`, `FL_ALL`, forcing, `ITER` and NL1 groups to match the Fortran; their reports
+  argue why one call is enough. Not run.
+- (v) W3DIMA's port stores `FL_ALL` (`:960-964`) and reads `NSEALM` (`:1038-1039`) and `FL_ALL`
+  (`:1323`) through `W3setaTargets::base`, as the Fortran does through the aliases (`:2754`,
+  `:2760`); `adat_wadat.hpp` says `iadata` is the Fortran `IADATA`, not an alias target.
+  `W3setaTargets` itself lives in `adat_wadat.hpp` so W3DIMA and W3DMNL can name it; this header
+  defines the groups. ⚠ Not checked whether any caller at the pin runs `W3DIMA` after a `W3XETA`
+  of another model, where `base` and `IADATA` differ.
 - ⚠ `W3setaStatus::nl1_not_sized` (-1) is not a WW3 code; in the Fortran `NLINIT` lives inside
   `WADATS(IMOD)`, so this cannot happen there, nor here after `w3naux`, which sizes
   `nl1.models` with `reg.wadats`. It guards a caller that built the two vectors apart, and is

@@ -16,6 +16,31 @@ and the `W3INIT`/`W3IOGO` wiring first.
   claimed on every return (only on `ok`). `fl_all_unassociated` kept: it replaces a store through
   an unassociated pointer, a path no caller at the pin takes. The header compiled again with an
   explicit instantiation on `Kokkos::DefaultExecutionSpace` (OpenMP), no warning.
+- (v) Consistency fix 2026-10-16: the `FL_ALL` store of `:961` and the reads of `NSEALM`
+  (`:1038-1039`) and `FL_ALL` (`:1323`) go through `W3setaTargets::base`, the target of the
+  unconditional aliases (`:2754`, `:2760`), not `Wadats::iadata`, which is the one Fortran
+  `IADATA` that `W3XETA` also writes (`:3174`). `w3dima` takes `W3setaTargets& t`; at `:994` and
+  `:1467` it does `W3SETA`'s unconditional part (`IADATA = IMOD`, `:2746`; `t.base = imod`,
+  `:2751-2809`) and leaves the conditional groups to one `w3seta` call by the caller after an
+  `ok` return (see "Not ported" for why that one call is equivalent). `W3setaTargets` moved to
+  `adat_wadat.hpp`, unchanged, so this header can name it without an include cycle. No allocation,
+  extent, order or fill changed. Compiled with `adat_w3dmnl.hpp`, `adat_w3naux.hpp`,
+  `adat_w3seta.hpp`, `adat_w3xeta.hpp` and `adat_w3xdma.hpp` in one unit, explicit instantiations
+  on `Kokkos::DefaultExecutionSpace` (OpenMP) and `Kokkos::Serial`, g++ 16.2 `-O3
+  -march=x86-64-v3` and `-O0 -g -fsanitize=address,undefined`, both `-std=c++20 -Wall -Wextra
+  -Wpedantic -Wshadow -Wconversion -ffp-contract=off -fopenmp`: no warning. Nothing was run.
+- (v) Fresh review of the consistency fix 2026-10-16: each changed statement checked against
+  `w3adatmd.F90` at `8e433f99` (`:961`, `:976`, `:994`, `:1038`, `:1323`, `:1456`, `:1467`,
+  `:2746`, `:2754`, `:2760`, `:2826`, `:3038`); the `:961` store still comes before the checks of
+  `:966-979`. The identifiers of `:995-1466`, comments and `%` components removed, intersected
+  with the 241 names `W3SETA` points (`:2746-3075`, every `#ifdef` branch counted): `FL_ALL` and
+  `NSEALM` only, so the equivalence argument below holds as stated; `W3DIMA` never names
+  `NLINIT`. The moved `W3setaTargets` is identical to the one it replaced (`diff` of the two
+  struct bodies), and `adat_w3seta.hpp`, `adat_w3xeta.hpp`, `adat_w3xdma.hpp` use it as before.
+  No defect in the code; two comments rewrapped (the 107-character `fl_all` line of
+  `adat_wadat.hpp`, a broken line in the `fl_all_unassociated` comment). The same one-unit
+  compile as above, with Kokkos 5.2.2 of the pinned `ww3` shell: no warning at `-O3` nor at
+  `-O0 -g -fsanitize=address,undefined`. Nothing was run.
 
 Sizes and allocates the W3ADATMD arrays of model `IMOD` (with `D_ONLY` only the data arrays,
 not the propagation work arrays of the `FL_ALL` block), and gives the ones the Fortran
@@ -37,14 +62,18 @@ initialises their first value. It does no floating-point arithmetic.
 As the Fortran, `w3adatmd.F90`:
 
 1. `FL_ALL = .NOT. D_ONLY` (`.TRUE.` when absent), `:960-964`, stored through the module pointer
-   `FL_ALL` *before* any check, so into the model the previous `W3SETA` selected (see below).
+   `FL_ALL` *before* any check, so into the model the previous `W3SETA` selected,
+   `W3setaTargets::base` (see below).
 2. `NGRIDS == -1` exits 1 (`:966`); `IMOD < 1` or `IMOD > NADATA` exits 2 (`:971`);
    `WADATS(IMOD)%AINIT` exits 3 (`:976`).
-3. `W3SETA(IMOD)` (`:994`): `IADATA = IMOD` (`:2746`), and `FL_ALL`, `NSEALM` now alias model `IMOD`.
+3. `W3SETA(IMOD)` (`:994`): `IADATA = IMOD` (`:2746`), and `FL_ALL`, `NSEALM` now alias model
+   `IMOD` (`t.base = imod`).
 4. Sections 1 to 10 and the `FL_ALL` block, each `ALLOCATE` statement followed by its
    `CHECK_ALLOC_STATUS` (exit 99, `w3macros.h:49-51`) and then its fills, in the order of the
    table below; `NSEALM = NSEA` when `NSEALM` is 0 (`:1038-1040`), before section 2.
 5. `AINIT = .TRUE.` (`:1456`), whatever `FL_ALL` was.
+6. `W3SETA(IMOD)` again (`:1467`): the port sets `IADATA` and `t.base` again; the conditional
+   groups are the caller's `w3seta` (see "Not ported").
 
 ## Arrays
 
@@ -115,10 +144,16 @@ the pinned `ww3` shell, the Fortran flags of WW3's CMake Release build
   `WADATS(IMOD)%FL_ALL`, which W3NAUX set to `.FALSE.` (`:807`). The two agree only when the
   caller selected `IMOD` first, as `W3INIT` (`w3initmd.F90:550`), `W3IOGO`
   (`w3iogomd.F90:2605`) and `ww3_gint` (`ww3_gint.F90:805`) do. The port keeps both through
-  `Wadats::iadata`, which stands for the target of the `W3SETA` aliases: `W3XETA` (`:3174`) also
-  writes the Fortran `IADATA` without retargeting `FL_ALL`, so a `W3XETA` port must leave it alone.
+  `W3setaTargets::base`, the target of the unconditional aliases (`:2760`), which only `W3SETA`
+  sets; `Wadats::iadata` is the Fortran `IADATA`, which `W3XETA` (`:3174`) also writes without
+  retargeting `FL_ALL`.
 - (v) `NSEALM` at `:1038-1039` is read and written through the pointer `W3SETA` set
-  (`:2754`), so it is `WADATS(IMOD)%NSEALM`; the port writes `wadats[imod-1].nsealm`.
+  (`:2754`), so it is `WADATS(IMOD)%NSEALM`; the port writes `wadats[t.base-1].nsealm`, with
+  `t.base == imod` there.
+- (v) Between `:994` and `:1467` the only W3ADATMD aliases `W3DIMA` names are `NSEALM` and
+  `FL_ALL`; every other array is named as `WADATS(IMOD)%...` (identifiers of `:995-1466` listed
+  2026-10-16 with the `WADATS(IMOD)%` components removed; the rest are W3GDATMD, W3ODATMD,
+  W3IDATMD, CONSTANTS and locals).
 - (v) Every fill (`= 0.`, `= UNDEF`, `MAPTH2 = 0`) is a scalar loop of 4-byte stores of one
   value, with no arithmetic. `UNDEF` is the variable `__constants_MOD_undef`, `0xc479f99a` in
   `constants.F90.o`'s `.data`, the bits of `-999.9f`; it is never assigned in `model/src`, and
@@ -147,8 +182,18 @@ the pinned `ww3` shell, the Fortran flags of WW3's CMake Release build
   `W3_PR2` (`:1422-1431`), `W3_S` STRACE and the `W3_T` prints: not compiled under the lab switch.
 - The `WRITE(NDSE)` messages and `EXTCDE`: returned as the code it would exit with.
 - `W3SETG(IMOD)` (`:986`) and `W3SETG(JGRID)` (`:1485`): the caller passes grid `IMOD`'s state in
-  `W3dimaGrid`. `W3SETA`'s pointer aliasing (`:994`, `:1467`) except `IADATA` and the `FL_ALL`
-  target it decides.
+  `W3dimaGrid`.
+- The conditional part of `W3SETA(IMOD)` at `:994` and `:1467`. The port cannot call `w3seta`:
+  `adat_w3seta.hpp` includes this header (through `adat_w3dmnl.hpp`), and `W3SETA`'s conditions
+  read `WADATS(IMOD)%NLINIT` (`WadatsNl1`) and `INPUTS(IMOD)%INFLAGS1`, which `W3DIMA` does not
+  take. Both calls do the unconditional part (`IADATA`, `t.base`). After an `ok` return the
+  caller must call `w3seta(reg, nl1, t, imod, in)` with `in.gtype` the `GTYPE` of grid `IMOD`
+  (`W3SETG(IMOD)` at `:986` is still in force at `:1467`; `W3SETG(JGRID)` is `:1485`) and the
+  `INFLAGS1` of `INPUTS(IMOD)`. ⚠ That one call is argued, not run, to leave every group as the
+  two Fortran calls do: at `:994` `AINIT` of `IMOD` is false (`:976`), so of the conditional
+  groups only `NLINIT` (`:3038`) can move; `W3DIMA` does not change `NLINIT`, `:1467` tests it
+  again, and between the two calls the routine reads no alias of a conditional group. On an
+  error return the Fortran has stopped, so the `NLINIT` move of `:994` is not reproduced there.
 
 ## Benchmarks
 

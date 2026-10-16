@@ -19,6 +19,24 @@ for translation only on 2026-10-16, with one review pass and no test run. Its ch
   and on `Kokkos::Cuda` (Kokkos 5.2.2 `nvcc_wrapper`, CUDA 12.9, `-arch=sm_89 --fmad=false
   -Xcompiler -fopenmp`, compile only, in the `#cuda` shell). One defect fixed: the disassembly has
   703 instructions, not 704 (the count had included the label line). The code needed no change.
+- (v) Consistency fix 2026-10-16: `w3dmnl` takes `W3setaTargets& t` and, at `W3SETA(IMOD)`
+  (`:2584`), does its unconditional part, `IADATA = IMOD` (`:2746`, `Wadats::iadata`, the one
+  Fortran `IADATA`) and `t.base = imod` (`:2751-2809`), then stores `NSPECX` (`:2594`) through
+  `t.base`, the target of the `NSPECX` alias (`:2788`). Before, it wrote only `reg.iadata`. The
+  conditional groups are left to one `w3seta` call by the caller (see "Not ported"). No
+  allocation or order changed. Compiled in one unit with `adat_w3dima.hpp`, `adat_w3naux.hpp`,
+  `adat_w3seta.hpp`, `adat_w3xeta.hpp` and `adat_w3xdma.hpp`, explicit instantiations on
+  `Kokkos::DefaultExecutionSpace` (OpenMP) and `Kokkos::Serial`, g++ 16.2 `-O3 -march=x86-64-v3`
+  and `-O0 -g -fsanitize=address,undefined`, both `-std=c++20 -Wall -Wextra -Wpedantic -Wshadow
+  -Wconversion -ffp-contract=off -fopenmp`: no warning. Nothing was run.
+- (v) Fresh review of the consistency fix 2026-10-16: each changed statement checked against
+  `w3adatmd.F90` at `8e433f99` (`:2574`, `:2584`, `:2594`, `:2746`, `:2788`, `:2809`, `:3038`);
+  `NLINIT` of `IMOD` is `.TRUE.` before `:2584`, and `:2585-2622` names no alias but `NSPECX`.
+  The moved `W3setaTargets` is identical to the one it replaced (`diff` of the two struct
+  bodies). No defect in the code; one wording fixed in the header and here (`NSPECX` at `:2594`
+  is stored, not read). The same one-unit compile as above, with Kokkos 5.2.2 of the pinned
+  `ww3` shell: no warning at `-O3` nor at `-O0 -g -fsanitize=address,undefined`. Nothing was
+  run.
 
 Allocates the address tables (`IPnn`, `IMnn`, `ICnn`) and the `f**11` scaling array `AF11` of
 the Discrete Interaction Approximation (`W3_NL1`) for model `IMOD`, and stores their extent
@@ -32,7 +50,7 @@ floating-point arithmetic and writes nothing into the arrays.
 |---|---|
 | WW3 routine | `W3DMNL`, `model/src/w3adatmd.F90:2426-2623` at the `WW3/` pin `8e433f99` (byte-identical to NOAA-EMC/WW3 `03adda91`), as `switches/switch_lab_shrd` compiles it (`NL1` set) |
 | Kokkos code | [`../src/ww_kokkos/adat_w3dmnl.hpp`](../src/ww_kokkos/adat_w3dmnl.hpp): the function template `ww::adat::w3dmnl`, the `#ifdef W3_NL1` components of `TYPE WADAT` (`w3adatmd.F90:531-547`) that it touches as `WadatNl1`, and their set `WadatsNl1` |
-| Relation to W3DIMA | `Wadat` ([`../src/ww_kokkos/adat_wadat.hpp`](../src/ww_kokkos/adat_wadat.hpp)) leaves the `W3_NL1` block out; `WadatsNl1::models[imod-1]` is the NL1 part of `Wadats::wadats[imod-1]`, and `NADATA`, `IADATA` are `Wadats`' (one set of module counters). The extent helper and the `WithoutInitializing` allocator are reused from `adat_w3dima.hpp` (`detail::fext`, `detail::alloc`); no W3DIMA file was edited |
+| Relation to W3DIMA | `Wadat` ([`../src/ww_kokkos/adat_wadat.hpp`](../src/ww_kokkos/adat_wadat.hpp)) leaves the `W3_NL1` block out; `WadatsNl1::models[imod-1]` is the NL1 part of `Wadats::wadats[imod-1]`, and `NADATA`, `IADATA` are `Wadats`' (one set of module counters); the alias targets are `W3setaTargets` (`adat_wadat.hpp`). The extent helper and the `WithoutInitializing` allocator are reused from `adat_w3dima.hpp` (`detail::fext`, `detail::alloc`); no W3DIMA file was edited |
 | Memory | every table a `Kokkos::View<..., Kokkos::LayoutLeft, ExecSpace::memory_space>`, created outside any kernel, `WithoutInitializing`; Fortran `X(i)` is `x(i-1)` |
 | Errors | the `EXTCDE` exit codes returned as `W3dmnlStatus` (1, 2, 3, 99) |
 | C shim | none yet |
@@ -48,8 +66,9 @@ As the Fortran, `w3adatmd.F90`:
    `:2573`, `w3macros.h:49-51`).
 3. `WADATS(IMOD)%NLINIT = .TRUE.` (`:2574`), stored into the model directly, before `W3SETA`.
 4. `W3SETA(IMOD)` (`:2584`): `IADATA = IMOD` (`:2746`) and the aliases, `NSPECX` among them
-   (`:2788`), now point at model `IMOD`.
-5. `NSPECX = NSPX` (`:2593-2595`), through that alias, so into `WADATS(IMOD)%NSPECX`.
+   (`:2788`), now point at model `IMOD` (`t.base = imod`).
+5. `NSPECX = NSPX` (`:2593-2595`), through that alias, so into `WADATS(IMOD)%NSPECX`
+   (`nl1.models[t.base-1]`).
 
 ## Arrays
 
@@ -69,6 +88,7 @@ As the Fortran, `w3adatmd.F90`:
 | `NLINIT` of model `IMOD` | `.TRUE.` | `:2574` |
 | `NSPECX` of model `IMOD` | `NSPX` | `:2594` |
 | `IADATA` | `IMOD` | `:2584` → `:2746` |
+| `W3setaTargets::base` | `IMOD` | `:2584` → `:2751-2809` |
 
 `NSP` or `NSPX` below 1 gives a zero-size array, as `ALLOCATE` does.
 
@@ -127,7 +147,13 @@ plus `-fdump-tree-optimized-lineno`; read as GIMPLE and as `objdump -d`.
 - The `W3_S` STRACE (`:2493-2495`, `:2506-2509`) and the `W3_T` prints: not compiled under the lab switch.
 - The build without `W3_NL1`, where `W3DMNL` is only the two checks and `W3SETA`.
 - The `WRITE(NDSE)` messages and `EXTCDE`: returned as the code it would exit with.
-- `W3SETA`'s pointer aliasing (`:2584`), except `IADATA` and the `NSPECX` target it decides.
+- The conditional part of `W3SETA(IMOD)` (`:2584`). The port cannot call `w3seta`:
+  `adat_w3seta.hpp` includes this header, and `W3SETA`'s conditions read
+  `INPUTS(IMOD)%INFLAGS1` and `GTYPE`, which `W3DMNL` does not take. After an `ok` return the
+  caller must call `w3seta(reg, nl1, t, imod, in)` with the `W3IDATMD` and `W3GDATMD` state of
+  the call (`W3DMNL` calls no `W3SETG`). ⚠ Argued, not run: that call leaves every group as
+  `:2584` does, since `NLINIT` is already `.TRUE.` (`:2574`) and after `:2584` the routine names
+  no alias but `NSPECX` (`:2594`, a store), which is in the unconditional group.
   `NDSE` and `NDST` are not parameters of the port.
 
 ## Benchmarks
