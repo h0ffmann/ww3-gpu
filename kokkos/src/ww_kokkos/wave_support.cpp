@@ -74,8 +74,10 @@
 #include "parall_prop_refraction_pr1.hpp"
 #include "parall_set_up_nseal_nsealm.hpp"
 #include "part_fld.hpp"
+#include "pdlib_block_solver_init.hpp"
 #include "pdlib_boundary.hpp"
 #include "pdlib_boundary_va.hpp"
+#include "pdlib_deallocate_pdlib_global.hpp"
 #include "pdlib_do_output_exchanges.hpp"
 #include "pdlib_explicit_block.hpp"
 #include "pdlib_fsfct2.hpp"
@@ -270,4 +272,6 @@ void ww_support_instantiate() {
   (void)&ww::updt::w3ulev<E>;
   (void)&ww::pdlib::do_output_exchanges<E>;
   (void)&ww::pdlib::get_array_size;
+  (void)&ww::pdlib::block_solver_init<E>;
+  (void)&ww::pdlib::deallocate_pdlib_global<E::memory_space>;
 }

@@ -387,6 +387,12 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | NOGRP / NGRPP / NOEXTR | "Number of output field groups" / "Max numb of parameters per output group" / "Number of extra (user available)" fields `(v)` `w3odatmd.F90:72-76` | The extents of the output flag arrays (10, 20 and 2). | [kokkos/port_report/GET_ARRAY_SIZE_KOKKOS.md](../kokkos/port_report/GET_ARRAY_SIZE_KOKKOS.md) |
 | E3DF / P2MSF | "freq. indices for 3D output" `(v)` `w3gdatmd.F90:715` | The frequency ranges of the 3-D spectral output fields and of `P2SMS`. | [kokkos/port_report/GET_ARRAY_SIZE_KOKKOS.md](../kokkos/port_report/GET_ARRAY_SIZE_KOKKOS.md) |
 | INIT_GET_ISEA | "Set ISEA for all schemes" `(v)` `w3parall.F90:1396` | The local-to-global sea index; already translated, called by the Kokkos `DO_OUTPUT_EXCHANGES`. | [kokkos/port_report/DO_OUTPUT_EXCHANGES_KOKKOS.md](../kokkos/port_report/DO_OUTPUT_EXCHANGES_KOKKOS.md) |
+| BLOCK_SOLVER_INIT | "Initialization of the block solver" `(v)` `w3profsmd_pdlib.F90:6752`, `:6766` | Builds the neighbour lists of the PDLIB block-implicit solver and, under `FSTOTALIMP` with `B_JGS_USE_JACOBI`, calls `JACOBI_INIT`. | [kokkos/port_report/BLOCK_SOLVER_INIT_KOKKOS.md](../kokkos/port_report/BLOCK_SOLVER_INIT_KOKKOS.md) |
+| POS_TRICK / ListISPprevDir / ListISPnextDir / ListISPprevFreq / ListISPnextFreq | `INTEGER POS_TRICK(3,2)`, the other two corners of a triangle, and the `W3PARALL` lists of each spectral component's neighbours in direction and frequency `(v)` `w3profsmd_pdlib.F90:129`, `w3parall.F90:86-87` | Allocated by `BLOCK_SOLVER_INIT`; nothing frees the lists, so a second call ends in `PDLIB_ABORT(8)`. | [kokkos/port_report/BLOCK_SOLVER_INIT_KOKKOS.md](../kokkos/port_report/BLOCK_SOLVER_INIT_KOKKOS.md) |
+| FSTOTALIMP / B_JGS_USE_JACOBI | the fully implicit unstructured scheme flag (namelist `IMPTOTAL`) and the Jacobi choice of the block solver (namelist `JGS_USE_JACOBI`) `(v)` `w3gdatmd.F90:1043`, `:1056` | Select the solver set-up `BLOCK_SOLVER_INIT` does. | [kokkos/port_report/BLOCK_SOLVER_INIT_KOKKOS.md](../kokkos/port_report/BLOCK_SOLVER_INIT_KOKKOS.md) |
+| PDLIB_ABORT | `SUBROUTINE PDLIB_ABORT(istat)`, which prints `istat` and calls `yowerr`'s `abort`, ending in `STOP` `(v)` `PDLIB/yowfunction.F90:47-53`, `PDLIB/yowerr.F90:159` | The PDLIB ports return its `istat` as their exit code. | [kokkos/port_report/BLOCK_SOLVER_INIT_KOKKOS.md](../kokkos/port_report/BLOCK_SOLVER_INIT_KOKKOS.md) |
+| DEALLOCATE_PDLIB_GLOBAL | releases 19 unstructured-grid arrays of `GRIDS(IMOD)` `(v)` `w3profsmd_pdlib.F90:7345`, `:7415-7437`; its header's "Init jacobi solver" (`:7359`) is copied from the next routine and does not describe it | Called once by `W3INIT`; the port returns exit 2, as gfortran does, at the first unallocated array. | [kokkos/port_report/DEALLOCATE_PDLIB_GLOBAL_KOKKOS.md](../kokkos/port_report/DEALLOCATE_PDLIB_GLOBAL_KOKKOS.md) |
+| GUGINIT / AREA_SI | the `GRID` flag that the unstructured-grid arrays are allocated, and "Define optimized connection arrays (points and triangles) for spatial propagation schemes" `(v)` `w3gdatmd.F90:710`, `w3triamd.F90:1315`, `:1330` | `DEALLOCATE_PDLIB_GLOBAL` leaves `GUGINIT` set; `AREA_SI` re-allocates `JAA`, `IAA` and `POSI`. | [kokkos/port_report/DEALLOCATE_PDLIB_GLOBAL_KOKKOS.md](../kokkos/port_report/DEALLOCATE_PDLIB_GLOBAL_KOKKOS.md) |
 
 ## HPC and software
 
@@ -671,6 +677,7 @@ Every term above, alphabetically, with the section it lives in.
 - `bind(C)` / ISO_C_BINDING / `extern "C"`: [HPC and software](#hpc-and-software)
 - BISINIT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - BITWISE_PROOF: [This repository's own names](#this-repositorys-own-names)
+- BLOCK_SOLVER_INIT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - bmi-wavewatch3: [HPC and software](#hpc-and-software)
 - BRKDN: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - BS0: [WW3 switches](#ww3-switches)
@@ -766,6 +773,7 @@ Every term above, alphabetically, with the section it lives in.
 - DAXPY: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - DDOT / DAXPY / DNRM2 / DLASSQ / PGMRES: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - DDOT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- DEALLOCATE_PDLIB_GLOBAL: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - DELTA / CGINIC3_CHENG / SMOOTH_K / IC3TABLE_CHENG / IC3PRECALC_CHENG: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - DELTA: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - Df1f2theta / W3ADDIG: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -908,6 +916,7 @@ Every term above, alphabetically, with the section it lives in.
 - FREQ1 (FR1): [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - frozen reference run: [This repository's own names](#this-repositorys-own-names)
 - FSNIMP: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- FSTOTALIMP / B_JGS_USE_JACOBI: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - FTE / FTF / FTWN: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - FTE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - FTF: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -947,6 +956,7 @@ Every term above, alphabetically, with the section it lives in.
 - `gprof_table.sh`: [This repository's own names](#this-repositorys-own-names)
 - `gprof_table.sh` / `perf_table.sh` / `just profile`: [This repository's own names](#this-repositorys-own-names)
 - GTYPE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- GUGINIT / AREA_SI: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - HasNaN: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - HIP: [HPC and software](#hpc-and-software)
 - HIP / SYCL / HPX: [HPC and software](#hpc-and-software)
@@ -1037,9 +1047,11 @@ Every term above, alphabetically, with the section it lives in.
 - NR_CORR: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - NRLv: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - optionCall: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- PDLIB_ABORT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - PDLIB_FIELD_VEC / DO_OUTPUT_EXCHANGES / GET_ARRAY_SIZE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - PGMRES: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - `__powisf2`: [This repository's own names](#this-repositorys-own-names)
+- POS_TRICK / ListISPprevDir / ListISPnextDir / ListISPprevFreq / ListISPnextFreq: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - PRINT_MEMCHECK: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - QFunc / VpFunc / VmFunc / UFunc / TFunc / ASymSmatTimVec: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - QFunc: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
