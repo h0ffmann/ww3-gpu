@@ -10,6 +10,7 @@
 #include "pdlib_fsn2.hpp"
 #include "pdlib_fspsi2.hpp"
 #include "pdlib_jacobi_spectral.hpp"
+#include "pdlib_jacobi_vec.hpp"
 #include "prop_map3.hpp"
 #include "prop_mapt.hpp"
 #include "prop_freq_shift.hpp"

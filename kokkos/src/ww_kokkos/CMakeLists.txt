@@ -54,6 +54,7 @@ target_sources(ww_kokkos PRIVATE
     pdlib_fspsi2.hpp
     pdlib_boundary_va.hpp
     pdlib_jacobi_spectral.hpp
+    pdlib_jacobi_vec.hpp
     prop_parall.hpp
     prop_freq_shift.hpp
     wave_support.cpp

@@ -7,7 +7,6 @@
 routine	file	claim	plan
 pdlib_w3profsmd:pdlib_w3xypug	model/src/w3profsmd_pdlib.F90:626-866	goal/42-port-noaa-ops (Claude Code, batch A)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
 pdlib_w3profsmd:pdlib_w3xypfsfct2	model/src/w3profsmd_pdlib.F90:1504-1877	goal/42-port-noaa-ops (Claude Code, batch A)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
-pdlib_w3profsmd:calcarray_jacobi_vec	model/src/w3profsmd_pdlib.F90:3531-3787	goal/42-port-noaa-ops (Claude Code, batch A)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
 pdlib_w3profsmd:apply_boundary_condition	model/src/w3profsmd_pdlib.F90:5150-5336	goal/42-port-noaa-ops (Claude Code, batch A)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
 pdlib_w3profsmd:pdlib_jacobi_gauss_seidel_block	model/src/w3profsmd_pdlib.F90:5463-6406	goal/42-port-noaa-ops (Claude Code, batch A)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
 pdlib_w3profsmd:pdlib_explicit_block	model/src/w3profsmd_pdlib.F90:6408-6685	goal/42-port-noaa-ops (Claude Code, batch A)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md

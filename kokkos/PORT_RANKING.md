@@ -129,3 +129,4 @@ The record is the `regtested` column of `kokkos/ports.tsv`.
 | `w3parall:prop_freq_shift_m2` | ported | `prop_parall.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and the PDLIB implicit solver wired |
 | `w3parall:prop_freq_shift` | ported | `prop_freq_shift.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and the PDLIB implicit solver wired |
 | `pdlib_w3profsmd:calcarray_jacobi_spectral_1` | ported | `pdlib_jacobi_spectral.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and the PDLIB implicit solver wired |
+| `pdlib_w3profsmd:calcarray_jacobi_vec` | ported | `pdlib_jacobi_vec.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and the PDLIB implicit solver wired |
