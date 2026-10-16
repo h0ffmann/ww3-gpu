@@ -40,9 +40,6 @@ Date, author, issue/PR/WFIP.
 | 2026-10-14 | [ai-memory 3.0.0 installed on the owner's workstation](2026-10-14-ai-memory-install.md) | ADR-0009 |
 | 2026-10-14 | [The Kokkos port's own tests removed; WW3's regtests are its only tests](2026-10-14-kokkos-regtests-only.md) | ADR-0010, WFIP-0003 |
 | 2026-10-14 | [Graphify on ww3-gpu's own code: build cost, query cost, what it misses](2026-10-14-graphify-on-ww3-gpu.md) | ADR-0007 revision |
-| 2026-10-14 | [First login to the Claude Team account, and the Kokkos account guard](2026-10-14-kokkos-account-team.md) | AGENTS.md hard rule |
-| 2026-10-14 | [A one-session exception to the Kokkos account rule, and what the hooks still refused](2026-10-14-kokkos-account-exception.md) | AGENTS.md hard rule, WFIP-0003 |
-| 2026-10-15 | [Kokkos ST4 written under the personal account, on the owner's word](2026-10-15-st4-kokkos-account-exception.md) | AGENTS.md hard rule, #45 |
 | 2026-10-15 | [ST4 translated to Kokkos, eight routines in parallel, not regtested](2026-10-15-st4-kokkos-translation.md) | #45 |
 | 2026-10-15 | [W3SRCE translated to Kokkos with its three Fortran source terms, not regtested](2026-10-15-w3srce-kokkos-translation.md) | #42 |
 | 2026-10-15 | [The ST4 checkpoint, first half: byte-identical on ww3_ts1 and bench_small, the matrix running](2026-10-15-st4-checkpoint.md) | #45, ADR-0011 |

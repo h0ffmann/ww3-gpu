@@ -321,29 +321,6 @@ be regtested pair to pair to existing ww3 src."
   status in `kokkos/ports.tsv` moves to L2.
 - `--ww3 --gpu` and `--ww4 --gpu` are refused (exit 64): neither has a GPU path here.
 
-## Which account writes Kokkos code (hard rule)
-
-The owner, 14 October 2026: "Never write any new Kokkos code under personal Max account of the
-owner, always under UFSC team on Claude. (enterprise account)"
-
-- Kokkos code (C++, CUDA and CMake under `kokkos/`) is written only in a session of the UFSC team
-  account on Claude, the enterprise account. Never in a session of the owner's personal Max
-  account.
-- Check before the first edit: `~/.claude.json`, `oauthAccount.organizationType`. `claude_max`
-  is the personal account: stop and say so. `claude_team` is the team account, the Claude Team
-  organisation shared by LOS/UFBA and LabECO/UFSC members by invitation (v) (read after the
-  owner's first `/login` to it, 14 October 2026; it is a Team plan, not Enterprise). Any other
-  value, or none, is a reason to ask.
-- `.claude/hooks/kokkos-account.sh` (PreToolUse on Write and Edit) denies an edit to Kokkos code
-  in a `claude_max` session (v) (live run with a `claude_max` `~/.claude.json` and with the
-  `claude_team` login, 14 October 2026; `docs/log/2026-10-14-kokkos-account-team.md`). It is a
-  guard, not the rule: the rule holds for any tool. `TEAM_PROTECTION=off` turns the guard off
-  (unset or any other value keeps it on); `.claude/settings.json` sets it `off` for now, at the
-  owner's request, so accounts can be switched (v) (self-test both ways, 14 October 2026;
-  `docs/log/2026-10-14-kokkos-account-exception.md`). An agent never changes that setting.
-- Scripts, documents, CI and the port's ledgers (`kokkos/ports.tsv`, `kokkos/PORT_STATUS.md`)
-  are not Kokkos code.
-
 ## The proposal (hard rule)
 
 `pubs/proposal/pt/` is the reference text and `en/` its mirror; `refs.bib` the bibliography. Every
@@ -371,8 +348,8 @@ the figure is the bug.
 ## Skills and agents
 
 Skills live in `.claude/skills/<name>/SKILL.md`, agents in `.claude/agents/`; `.agents/skills` is
-a symlink to the same directory so Antigravity loads the same files (`CONTRIBUTING.md`, "Working
-with Antigravity", says what it does not get). Each restates the
+a symlink to the same directory so Antigravity and Kimi Code load the same files (`CONTRIBUTING.md`,
+"Working with Antigravity" and "Working with Kimi Code", say what they do not get). Each restates the
 audience rule for its own job; a new one does too, and its YAML front matter must parse
 (`check_agent_frontmatter.py`: an unquoted description containing `: ` silently disables it).
 

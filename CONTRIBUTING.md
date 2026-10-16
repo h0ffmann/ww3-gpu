@@ -213,6 +213,18 @@ it must be activated there, and it does not cover a GPU for the Kokkos CUDA buil
 
 Running `agy` inside `just dev` or ai-jail has not been tried ⚠.
 
+## Working with Kimi Code
+
+Kimi Code (the desktop app, 1.1.0) loads, from the repository root down to the working
+directory, `.kimi-code/AGENTS.md` and then `AGENTS.md`, and skills from `.kimi-code/skills/` and
+`.agents/skills/` `(v)` 2026-10-16 (read in the app's own bundle, `resources/app.asar`:
+`loadAgentsMdForRoots`, `skillRoots.ts`). It does not read `CLAUDE.md`, `.claude/skills/` or
+`.claude/commands/`, and it warns when the loaded instructions pass 32 KB; this repository's two
+files together are past that. So the root `AGENTS.md` stays the rulebook, the skills reach Kimi
+Code through the same `.agents/skills` link Antigravity uses, and
+[`.kimi-code/AGENTS.md`](.kimi-code/AGENTS.md) holds only what Kimi Code lacks: where to read
+first, and the hooks, subagents and slash commands it must do by hand.
+
 ## Opening a pull request
 
 Write the commit message properly (subject, a body paragraph saying what and why, and

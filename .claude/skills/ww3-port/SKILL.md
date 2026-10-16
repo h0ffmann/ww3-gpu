@@ -8,7 +8,7 @@ description: "The WW3-specific traps of translating a WAVEWATCH III Fortran rout
 `/port-next` (`.claude/commands/port-next.md`) checks the port order, reads the routine at the pin
 and scaffolds the kernel, shim, report and ledger row. This skill is what to check while the body
 is translated and before the routine is called regtested. The rules it serves are `AGENTS.md`
-("Porting", "Running on the GPU", "Which account writes Kokkos code") and
+("Porting", "Running on the GPU") and
 `docs/AGENTS_KOKKOS_202609.md` §1.2, §1.5, §1.6; they win where this file disagrees.
 
 Readers are scientists: every WW3 fact you write cites `model/src/<file>.F90:<line>` at the pin,
