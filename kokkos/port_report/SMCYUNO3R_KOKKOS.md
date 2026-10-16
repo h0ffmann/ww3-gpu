@@ -72,7 +72,8 @@ flags (g++ 16.2). The two loop bodies were compared instruction by instruction.
   throwaway openmp-release unit; read the `minss` operands of both branches in the plain object,
   the `W3_OMPG` outlined body and the C++ object (positive `|CNST5|` first, negative `|CNST4|`
   first in all three), the `DBLE` product, the `0.6` and `/6.0` sites and every product's first
-  operand; the only swap reachable with two NaNs is `AKDif*CNST5`, as stated above. Nothing changed.
+  operand; the only swap reachable with two NaNs is `AKDif*CNST5`, and that swap changes only the
+  NaN payload. Nothing changed.
 
 ## Benchmarks
 
