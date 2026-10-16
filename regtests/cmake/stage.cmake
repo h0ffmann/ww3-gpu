@@ -4,7 +4,7 @@
 cmake_minimum_required(VERSION 3.21)
 include("${CONFIG}")
 include("${CMAKE_CURRENT_LIST_DIR}/ww3gpu_common.cmake")
-ww3gpu_select_entries(E "${WW3GPU_WW3}/regtests/bin/matrix.base" "${WW3GPU_WW3}/regtests" "${WW3GPU_SELECTION}")
+ww3gpu_select_entries(E "${WW3GPU_WW3}/regtests/bin/matrix.base" "${WW3GPU_WW3}/regtests" "${WW3GPU_SELECTION}" "${WW3GPU_PHYSICS}")
 file(REMOVE_RECURSE "${WW3GPU_OUT}/rows")
 file(MAKE_DIRECTORY "${WW3GPU_STAGE}" "${WW3GPU_OUT}/rows" "${WW3GPU_OUT}/logs")
 

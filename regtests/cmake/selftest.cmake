@@ -74,6 +74,14 @@ expect("${M_OPTS}" "-s MP -w work_MP;-s MH -w work_MH -f -p $mpi -n $nr -t $nth;
 ww3gpu_select_entries(A "${t}/rt/bin/matrix.base" "${t}/rt" all)
 list(LENGTH A_TESTS na)
 expect("${na}" "12" "all selection, the three together")
+ww3gpu_select_entries(T "${t}/rt/bin/matrix.base" "${t}/rt" serial ST4)
+expect("${T_TESTS}" "a;a;a;a;b;b;a;b" "serial selection by ST4, tests (NL3 and NL1X are in)")
+ww3gpu_physics(w SDS4 SNL1 SPR4 SIN4)
+expect("${w}" "NL1;ST4" "physics of SDS4 SNL1 SPR4 SIN4")
+ww3gpu_routine_word(w BOGUS)
+expect("${w}" "" "physics of an unknown routine")
+ww3gpu_sel_desc(d serial "ST4")
+expect("${d}" "switch with ST4, none of MPI, OMPG, OMPH" "selection text for ST4")
 
 # --- the run_cmake_test argument list, $np -> threads, -o netcdf ----------------------------
 ww3gpu_entry_args(a 1 K b "-s OG -w work_OG -f -O -n $np" "${t}" 3)

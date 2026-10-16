@@ -64,7 +64,7 @@ add_subdirectory(tools/fetch_analyse)
 add_subdirectory(tests)
 
 # The package WAVEWATCH III finds with `find_package(ww_kokkos)` when it is built with the
-# KOKKOS switch (-DWW_KOKKOS=ON, the h0ffmann/WW3 branch hoff/kokkos-snl1): the static
+# KOKKOS switch (-DWW_KOKKOS=ON, the h0ffmann/WW3 branch ww3-gpu/kokkos-st4): the static
 # library and its Kokkos dependency, installed with `cmake --install <build> --prefix <dir>`.
 # The Fortran module is compiled by WW3 itself, so only the C++ library is exported.
 include(CMakePackageConfigHelpers)

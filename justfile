@@ -62,7 +62,7 @@ toolchain-smoke:
 
 # ---------------------------------------------------------------------
 # WW3 two ways (scripts/ww3-gpu.sh): --ww3, pure NOAA WW3 from WW3-noaa/; --ww3-gpu, WW3 built
-# with the KOKKOS switch from the h0ffmann/WW3 branch hoff/kokkos-snl1 and linked to kokkos/.
+# with the KOKKOS switch from the h0ffmann/WW3 branch ww3-gpu/kokkos-st4 and linked to kokkos/.
 # --ww3-gpu runs on the CPU (Kokkos OpenMP) unless asked: `just smoke-ww3-gpu gpu` runs CUDA, and only
 # with a human supervising (AGENTS.md hard rule; it asks at the terminal).
 # ---------------------------------------------------------------------
@@ -94,7 +94,9 @@ full-ww3-gpu device="cpu":
 # rest goes to ctest: `just ww3-gpu-matrix 8 serial -R ww3_ts1`, `-L entry`, `-N`. jobs=N and
 # selection=S are accepted too. WW3GPU_OMP_NESTED=ON in the environment exports
 # OMP_MAX_ACTIVE_LEVELS=2 to every run (no longer needed: inside W3WAVE's parallel region the shim
-# runs the kernel on Kokkos::Serial). Record: build/ww3-gpu-matrix-<selection>/summary.tsv.
+# runs the kernel on Kokkos::Serial). WW3GPU_ROUTINES (SNL1 by default; SDS4, SIN4, SPR4 select the
+# ST4 entries; several with commas) names the routines the Kokkos run turns on.
+# Record: build/ww3-gpu-matrix-<selection>[-<routines>]/summary.tsv.
 ww3-gpu-matrix jobs="8" selection="serial" *ctest_args:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -112,15 +114,21 @@ ww3-gpu-matrix jobs="8" selection="serial" *ctest_args:
     [[ "$jobs" =~ ^[1-9][0-9]*$ ]] || { echo "ww3-gpu-matrix: jobs is a positive integer, not '$jobs'" >&2; exit 64; }
     t=$(( $(nproc --all) / jobs )); t=${WW3GPU_OMP_THREADS:-$(( t > 0 ? t : 1 ))}
     data=$(nix build --no-link --print-out-paths "{{pratico}}#ww3-regtest-data")
-    {{ww3_shell}} cmake -S regtests -B "{{ww3gpu_build}}$sel" -DWW3GPU_SELECTION="$sel" -DWW3GPU_OMP_THREADS="$t" \
-      -DWW3GPU_MPI_RANKS="${WW3GPU_MPI_RANKS:-4}" -DWW3GPU_DATA="$data" \
+    routines="${WW3GPU_ROUTINES:-SNL1}"; routines="${routines//[ ,]/;}"
+    b="{{ww3gpu_build}}$sel"; [ "$routines" = SNL1 ] || b="$b-${routines//;/-}"
+    {{ww3_shell}} cmake -S regtests -B "$b" -DWW3GPU_SELECTION="$sel" -DWW3GPU_OMP_THREADS="$t" \
+      -DWW3GPU_MPI_RANKS="${WW3GPU_MPI_RANKS:-4}" -DWW3GPU_DATA="$data" -DWW3GPU_ROUTINES="$routines" \
       -DWW3GPU_OMP_NESTED="${WW3GPU_OMP_NESTED:-OFF}" >/dev/null
-    WW3GPU_COMMAND="${WW3GPU_OMP_NESTED:+WW3GPU_OMP_NESTED=$WW3GPU_OMP_NESTED }just ww3-gpu-matrix $*" {{ww3_shell}} ctest --test-dir "{{ww3gpu_build}}$sel" -j "$jobs" --output-on-failure "${rest[@]}"
+    WW3GPU_COMMAND="${WW3GPU_ROUTINES:+WW3GPU_ROUTINES=$WW3GPU_ROUTINES }${WW3GPU_OMP_NESTED:+WW3GPU_OMP_NESTED=$WW3GPU_OMP_NESTED }just ww3-gpu-matrix $*" {{ww3_shell}} ctest --test-dir "$b" -j "$jobs" --output-on-failure "${rest[@]}"
 
 # The entries of a selection, as CTest test names (NNN:<test>:<switch>), without running them.
 ww3-gpu-matrix-list selection="serial":
-    {{ww3_shell}} cmake -S regtests -B "{{ww3gpu_build}}{{selection}}" -DWW3GPU_SELECTION="{{selection}}" >/dev/null
-    {{ww3_shell}} ctest --test-dir "{{ww3gpu_build}}{{selection}}" -N -L entry -FA ".*"
+    #!/usr/bin/env bash
+    set -euo pipefail
+    routines="${WW3GPU_ROUTINES:-SNL1}"; routines="${routines//[ ,]/;}"
+    b="{{ww3gpu_build}}{{selection}}"; [ "$routines" = SNL1 ] || b="$b-${routines//;/-}"
+    {{ww3_shell}} cmake -S regtests -B "$b" -DWW3GPU_SELECTION="{{selection}}" -DWW3GPU_ROUTINES="$routines" >/dev/null
+    {{ww3_shell}} ctest --test-dir "$b" -N -L entry -FA ".*"
 
 # WW3's regtest data kept on NOAA's ftp (ww3_tp2.15's wind.nc, ...), SHA-256 pinned: pratico's
 # ww3-regtest-data package (picasso/labs/pratico/flake.nix). Prints its store path.

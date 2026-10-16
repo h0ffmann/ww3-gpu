@@ -311,7 +311,7 @@ three submodules, and this repository holds only the Kokkos rewrite:
 | Directory | What it is | Used by |
 |---|---|---|
 | `WW3-noaa/` | pure WW3: [NOAA-EMC/WW3](https://github.com/NOAA-EMC/WW3) at `03adda91`, not changed | `--ww3`, the reference |
-| `WW3/` | your fork, [h0ffmann/WW3](https://github.com/h0ffmann/WW3) branch `hoff/kokkos-snl1`: `WW3-noaa/` plus the KOKKOS patch, 5 files under `model/src/` and 282 added lines | `--ww3-gpu` and the regtest matrix |
+| `WW3/` | your fork, [h0ffmann/WW3](https://github.com/h0ffmann/WW3) branch `ww3-gpu/kokkos-st4`: `WW3-noaa/` plus the KOKKOS patch, 5 files under `model/src/` and 813 added lines | `--ww3-gpu` and the regtest matrix |
 | `WW4/` | [h0ffmann/WW4](https://github.com/h0ffmann/WW4), `develop` | `--ww4` |
 
 The fork exists for one reason: the call from WW3 into the Kokkos code has to be inside WW3
