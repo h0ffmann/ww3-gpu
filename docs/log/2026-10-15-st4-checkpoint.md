@@ -37,7 +37,8 @@ together, at the checkpoint ADR-0011 asks for before the next unit?
   `docs/data/` and an update below.
 - No timing is quoted: the matrix has not passed, and no run was repeated three times.
 - `just ww3-gpu-matrix-selftest` ok (new fixtures for the `ST4` selection); `ww3-gpu-matrix-list`
-  gives 47 serial, 10 OpenMP, 80 MPI, 137 entries with `ST4` at `c9a6a0c6` (v), the plan's counts.
+  gave 47 serial, 10 OpenMP, 80 MPI, 137 entries with `ST4` at `c9a6a0c6` (v), the plan's counts, before
+  the `FLX5` entry was dropped (update below).
 
 ## What it changes
 
@@ -45,3 +46,12 @@ together, at the checkpoint ADR-0011 asks for before the next unit?
 until the matrix is recorded. The website's "ported" share moves from 48.4 % to 87.4 % of the run
 time; "regtested" stays 48.4 % (`scripts/port_score.py`). Next: the matrix record, then the ST4
 rows to `regtested`, then the W3SRCE checkpoint (PR #136).
+
+Update, the same evening: matrix entry 8, `ww3_tp2.15 -s ST4 -i input_rho`, has `FLX5` in its
+switch, and the fork refuses `KOKKOS` with `ST4` and `FLX5` at configure time ("The Kokkos ST4
+path does not support FLX5"), so neither of its runs built (v, its `build.log`). It is the only
+such entry of `matrix.base` at `c9a6a0c6` (v), and it has `NL1` too, so it would fail an `NL1`
+matrix at this pin as well. The selection now drops any switch with both `ST4` and `FLX5`: the
+counts are 46 serial and 136 in all for `ST4`, 99 serial and 310 in all for `NL1`
+(`just ww3-gpu-matrix-selftest`). The running matrix was configured before the fix, so its
+record will show entry 8 as "neither run finished"; that row is the selection's, not the port's.

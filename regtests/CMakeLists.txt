@@ -99,21 +99,21 @@ if(WW3GPU_DATA MATCHES "-ww3-regtest-data-([0-9.]+)$")
 endif()
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${_base}")
 
-# The number of entries the WW3 pin gives (NL1 at WW3@6d1bcdfe, ST4 at WW3@c9a6a0c6, where the
-# KOKKOS switch stopped requiring NL1): selection:count fails when a pin bump changes it, so the
+# The number of entries the WW3 pin gives at WW3@c9a6a0c6, where KOKKOS stopped requiring NL1
+# and refuses ST4 with FLX5 (ww3_tp2.15 -s ST4 -i input_rho, dropped from every selection): selection:count fails when a pin bump changes it, so the
 # change is read before its table is.
-set(_expected_NL1_serial 100)
+set(_expected_NL1_serial 99)
 set(_expected_NL1_omp 50)
 set(_expected_NL1_mpi 161)
-set(_expected_NL1_all 311)
-set(_expected_ST4_serial 47)
+set(_expected_NL1_all 310)
+set(_expected_ST4_serial 46)
 set(_expected_ST4_omp 10)
 set(_expected_ST4_mpi 80)
-set(_expected_ST4_all 137)
+set(_expected_ST4_all 136)
 set(_expected_NL1_ST4_serial 105)
 set(_expected_NL1_ST4_omp 50)
 set(_expected_NL1_ST4_mpi 164)
-set(_expected_NL1_ST4_all 319)
+set(_expected_NL1_ST4_all 318)
 list(JOIN WW3GPU_PHYSICS "_" _phys)
 set(WW3GPU_EXPECTED "${_expected_${_phys}_${WW3GPU_SELECTION}}")
 
