@@ -296,6 +296,14 @@ uprd *args:
 wfip *args:
     python3 scripts/wfip.py "$@"
 
+# Every worktree of this clone and what it would lose (scripts/worktrees.sh); `just worktrees clean [--apply]` removes merged ones.
+worktrees *args:
+    bash scripts/worktrees.sh "$@"
+
+# Where something is, in one bounded call (scripts/route.py): `just route term NL1`, `where W3SDS4`, `docs <file>`, `why "<words>"`, `section <file> <heading>`.
+route *args:
+    python3 scripts/route.py "$@"
+
 # Reconcile the repo's GitHub labels with .github/labels.yml (ISSUE_LABELS.md): `--dry-run`, `--prune`.
 labels-sync *args:
     scripts/labels_sync.sh {{args}}

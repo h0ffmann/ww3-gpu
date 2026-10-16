@@ -177,6 +177,59 @@ GitHub's Spec Kit when a spec (`specs/<NNN-slug>/spec.md`) is worth writing; the
 [`wfip` skill](.claude/skills/wfip/SKILL.md) has the steps, and `just wfip status --since <tag>`
 prints what moved for the release notes.
 
+## Is WW3 deterministic enough for bit for bit
+
+AGENTS.md, "Bit for bit with the Fortran", excuses only a file that two runs of the Fortran
+itself write differently. Is WW3 deterministic enough for this rule? Measured on the owner's
+workstation, CPU only:
+
+- (v) Serial, OpenMP and MPI runs reproduce: the Fortran and Kokkos DIA of one executable gave
+  byte-identical output on the 100 serial and 25 OpenMP `NL1` entries
+  ([`docs/data/hoff_matrix_2026-10-15.tsv`](docs/data/hoff_matrix_2026-10-15.tsv),
+  [`docs/data/hoff_matrix_omp_2026-10-15.tsv`](docs/data/hoff_matrix_omp_2026-10-15.tsv)), which
+  needs each run to be reproducible; `ww3_multi`, MPI and hybrid MPI/OpenMP entries were
+  byte-identical in the pilots of 2026-10-15 (`docs/log/2026-10-15-snl1-regtest-all.md`).
+- (v) Not everywhere: with PDLIB under MPI (`ww3_tp2.17 -g d`, 4 ranks), two runs of the same
+  Fortran executable wrote 25 of 67 files differently, all `restart.ww3`, while every field
+  output was identical. That is what `ww3_self` exists for. The cause is not traced ⚠; the
+  bytes look undefined rather than computed (one run wrote 0 where the other did not).
+- (v) WW3 has a data race of its own under `OMPG`: `IKN`, `ALLOCATABLE, SAVE`, allocated inside
+  the parallel region in `W3SWL6` (`model/src/w3swldmd.F90:359-377`). It aborts a run; it does not
+  change bits. Rerun, record, never edit WW3.
+
+## Skills and agents
+
+AGENTS.md, "Skills and agents", has the rules (front matter that parses, the audience paragraph,
+edit a vendored skill through its patch); this is what each one is for.
+
+| Name | Job |
+|---|---|
+| `figure` | add or change a Mermaid diagram and its reading card; `figures.py` is its harness |
+| `eli5` | explain a topic to someone from another field (the second audience exception) |
+| `release` | cut a citable release: tag, GitHub release, Zenodo DOI, `CITATION.cff`, `.zenodo.json` |
+| `ww4-status` | diff NOAA-EMC/WW4 against `docs/ww4-status.json` and refresh lesson 14 and the proposal |
+| `noaa-notices` | list NOAA notices (NWS PNS/SCN, NCEP model changes, NOAA-EMC/WW3 production branches) new since `docs/noaa-notices.json` and route each to the file it breaks or dates |
+| `ww3-port` | the WW3-specific traps of a Fortran-to-Kokkos translation (gfortran `-O3` powers, array bases, per-grid tables, OpenMP nesting) and of claiming a routine regtested; follows `/port-next` |
+| `wfip` | write, revise or report on a WFIP; `scripts/wfip.py` is its harness and `just specify` wires GitHub's Spec Kit (its `/speckit-*` skills are generated per clone and not tracked) |
+| `humanizar`, `humanizer` | remove AI tells from pt-BR and English prose without changing facts; third-party |
+| `ponytail`, `ponytail-review`, `ponytail-audit` | the laziest solution that works; over-engineering review and audit; third-party |
+| `routing` | find where something is in one bounded call (`scripts/route.py`): a glossary term, a definition, the pages that name a file, the paragraph that answers a why, one section of a plan |
+| `sharingan` | port a skill, workflow or pattern from another repository by URL: fetch it pinned, let the licence decide vendor, adapt or rewrite, map each upstream concept to a home here; third-party (marola-devkit) |
+| `revisor-proposta` (agent) | the proposal's scientific reviewer, read-only |
+| `security-reviewer` (agent) | security review of a branch's diff (secrets and personal data in git, hooks, prompts, workflows, scripts), read-only; run it before a PR that touches `.claude/`, `.github/workflows/` or `scripts/` is marked ready |
+
+ponytail is also enabled as a Claude Code plugin (`ponytail@ponytail`, `.claude/settings.json`,
+pinned to `v5.2.0`) for its commands (`/ponytail:ponytail-debt`, `-gain`, `-help`) and the
+statusline. Its mode is off by default (`PONYTAIL_DEFAULT_MODE=off` in the same file, the owner,
+14 October 2026): its rules cover a whole session and have no setting to limit them to some files
+or languages, and they pull against "Translate, don't improve" (v) (3536 characters injected with
+`full`, nothing with `off`; `docs/log/2026-10-14-ponytail-plugin.md`). A person turns it on for a
+session with `/ponytail`, for C++ around the port; even then "the smallest change" never licenses
+a refactor, a vectorisation or a "simplification" of a ported routine. `PONYTAIL_MAP=0` turns off
+its codebase map, which lists Python and JS only, never C++, CUDA or Fortran (v)
+(`hooks/ponytail-map.js:17` at 5.2.0). README.md, "ponytail, off by default", is the user's guide.
+The vendored skills above stay the ones that carry this repository's audience paragraph.
+
 ## Working with Antigravity
 
 Google's Antigravity (the IDE, Antigravity 2.0 and the `agy` CLI) reads the root `AGENTS.md` as an
@@ -228,10 +281,36 @@ directory, `.kimi-code/AGENTS.md` and then `AGENTS.md`, and skills from `.kimi-c
 files together are past that. So the root `AGENTS.md` stays the rulebook, the skills reach Kimi
 Code through the same `.agents/skills` link Antigravity uses, and
 [`.kimi-code/AGENTS.md`](.kimi-code/AGENTS.md) holds only what Kimi Code lacks: where to read
-first, and the hooks, subagents and slash commands it must do by hand. Lookups go through
-[`.kimi-code/RETRIEVAL.md`](.kimi-code/RETRIEVAL.md), a question-to-source map read on demand:
-because the two auto-loaded files already pass the 32 KB warning, retrieval detail stays out of
-them.
+first, and the hooks, subagents and slash commands it must do by hand. Lookups go through the
+[`routing`](.claude/skills/routing/SKILL.md) skill, a question-to-source map read on demand, and
+its `scripts/route.py`: because the two auto-loaded files already pass the 32 KB warning,
+retrieval detail stays out of them.
+
+## Worktrees and parallel sessions
+
+Several sessions, people's and agents', work on this repository at once, each in its own git
+worktree: a sibling directory sharing one `.git` (`git worktree add`). A worktree is disposable
+only when everything in it is on GitHub. On 2026-10-16 a sweep of the owner's checkouts found a
+whole port unit (six propagation routines, about 2,160 lines) committed on a branch never pushed,
+and a translated routine and six port reports left untracked (v, `scripts/worktrees.sh list` on
+that machine); deleting either directory would have lost them.
+
+- **One branch per worktree, from `origin/main`**, named as below:
+  `git fetch origin && git worktree add ../ww3-gpu-<slug> -b goal/<id>-<slug> origin/main`. Git
+  refuses a branch another worktree has checked out; nothing refuses a second session on the same
+  routine, so look at the siblings first (`just worktrees`).
+- **Push from the first commit** (`git push -u origin HEAD`) and after every commit after it. A
+  pushed branch is a backup and needs no PR; unfinished work is a WIP commit on its own branch,
+  never a set of untracked files.
+- **End a session with nothing local**: `just worktrees` marks a worktree `LOCAL ONLY` when it
+  has a commit on no remote or a change not committed. Commit and push, or say in the hand-off
+  why not.
+- **Clean up merged work**: `just worktrees clean` lists the worktrees and local branches whose
+  branch is merged (an ancestor of `origin/main`, or the exact head of a merged pull request,
+  which covers squash merges), and `just worktrees clean --apply` removes them. A worktree with
+  changes, or with a process whose working directory is inside it, is kept. Each deleted branch
+  is logged in `.git/worktrees-clean.log` as the `git branch <name> <sha>` line that restores it.
+- A devcontainer needs a full clone, not a worktree (README.md, "the dev container").
 
 ## Opening a pull request
 
