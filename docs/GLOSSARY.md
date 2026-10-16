@@ -371,6 +371,9 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | W3UBPT | "Update spectra at the active boundary points" `(v)` `w3updtmd.F90:1329` | Hooks of the Kokkos `W3WAVE`. | [kokkos/port_report/W3WAVE_KOKKOS.md](../kokkos/port_report/W3WAVE_KOKKOS.md) |
 | W3IOPE / W3IOSF / W3CPRT | "Extract point output data and store in output COMMONs", "Write partitioned spectral data to file", "Partitioning of spectra into fields for all grid points that are locally stored" `(v)` `w3iopomd.F90:873`, `w3iosfmd.F90:360`, `:109` | The output and boundary I/O `W3WAVE` calls; hooks of the Kokkos `W3WAVE`. | [kokkos/port_report/W3WAVE_KOKKOS.md](../kokkos/port_report/W3WAVE_KOKKOS.md) |
 | W3CFLUG / UG_GRADIENTS | "Computes the max CFL number for output purposes" / "Calculate gradients at a point via its connection" `(v)` `w3profsmd.F90:274`, `w3triamd.F90:2021` | Unstructured-grid callees of `W3WAVE`; hooks. | [kokkos/port_report/W3WAVE_KOKKOS.md](../kokkos/port_report/W3WAVE_KOKKOS.md) |
+| CALC_U3STOKES / CALC_WBT / SECONDHH | Stokes drift output parameters, "Estimate the dominant wave breaking probability b_T" (Babanin et al., 2001), "Computation of second order harmonics" `(v)` `w3iogomd.F90:4112`, `:4367`, `:4622` | Callees of `W3OUTG`; hooks or caller inputs of the Kokkos `W3OUTG`. `CALC_WBT` is not `CALC_WBTv2`. | [kokkos/port_report/W3OUTG_KOKKOS.md](../kokkos/port_report/W3OUTG_KOKKOS.md) |
+| FLOLOC / FLPART | `W3OUTG`'s local output flags and the partitioned-output argument `(v)` `w3iogomd.F90:1201-2380` | Select which output groups `W3OUTG` computes. | [kokkos/port_report/W3OUTG_KOKKOS.md](../kokkos/port_report/W3OUTG_KOKKOS.md) |
+| STEXU / STEYU / STEDU | Space-time extremes: the space and time extents and the duration of the window `(v)` `w3iogomd.F90:1694-1931` | Inputs to the space-time extreme wave heights in `W3OUTG`. | [kokkos/port_report/W3OUTG_KOKKOS.md](../kokkos/port_report/W3OUTG_KOKKOS.md) |
 | GTYPE | grid type: `RLGTYPE` 1 rectilinear, `CLGTYPE` 2 curvilinear, `UNGTYPE` 3 unstructured, `SMCTYPE` 4 SMC `(v)` `w3gdatmd.F90:627` | Selects the grid branch in `W3IOGR` and `W3WAVE`. | [kokkos/port_report/W3IOGR_KOKKOS.md](../kokkos/port_report/W3IOGR_KOKKOS.md) |
 
 ## HPC and software
@@ -583,7 +586,7 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | course book / the book / *Without Changing the Answer* | `course/*.md` assembled by `scripts/book_prep.py` into one PDF `(v)` [justfile](../justfile); *Without Changing the Answer* is its working title `(v)` [pubs/book/defaults.yaml](../pubs/book/defaults.yaml) | `just book [abnt|ieee]`. The repository's public form since ADR-0003: a book in progress on agentic coding and agentic research, whose parts, listings gate and new chapters WFIP-0002 plans. | [README.md](../README.md), [pubs/README.md](../pubs/README.md) |
 | pt-BR / `site/data/translations/pt-BR.tsv` | Brazilian Portuguese, as a language tag; the table of the website's sentences in it `(v)` [DESIGN.md](../DESIGN.md), "Two languages" | The front page is written once in English and built a second time at `/pt-BR/`, each sentence looked up by its English in the table; `site/content` stops `just site` when a sentence has no row or a row no sentence. The pattern is h0ffmann/h0ffmann#86. `README.pt-BR.md` is the README's Portuguese mirror. | [site/data/translations/pt-BR.tsv](../site/data/translations/pt-BR.tsv), [README.pt-BR.md](../README.pt-BR.md) |
 | Record marker | the 4-byte length gfortran writes before and after each record of a sequential unformatted file ⚠ gfortran manual | `mod_def.ww3` is written that way, big-endian; checked on two files WW3 wrote. | [kokkos/port_report/W3IOGR_KOKKOS.md](../kokkos/port_report/W3IOGR_KOKKOS.md) |
-| Hook table (`ww_w3wave_hooks`, `IogrHooks`) | this repository's C function-pointer tables `(v)` [kokkos/src/ww_kokkos/wave_w3wave_hooks.hpp](../kokkos/src/ww_kokkos/wave_w3wave_hooks.hpp) | How a translated driver calls the WW3 routines that are not translated; a shim fills it, and an empty hook on the path aborts. | [kokkos/port_report/W3WAVE_KOKKOS.md](../kokkos/port_report/W3WAVE_KOKKOS.md) |
+| Hook table (`ww_w3wave_hooks`, `IogrHooks`, `W3OutgHooks`) | this repository's C function-pointer tables `(v)` [kokkos/src/ww_kokkos/wave_w3wave_hooks.hpp](../kokkos/src/ww_kokkos/wave_w3wave_hooks.hpp) | How a translated driver calls the WW3 routines that are not translated; a shim fills it, and an empty hook on the path aborts. | [kokkos/port_report/W3WAVE_KOKKOS.md](../kokkos/port_report/W3WAVE_KOKKOS.md) |
 | WithoutInitializing | Kokkos allocation property `(v)` Kokkos 5.2.2 headers | Creates a View without filling it, as a Fortran `ALLOCATE` leaves memory unset. | [kokkos/port_report/W3DIMA_KOKKOS.md](../kokkos/port_report/W3DIMA_KOKKOS.md) |
 
 ## Citation and licensing
@@ -671,6 +674,7 @@ Every term above, alphabetically, with the section it lives in.
 - `cabs`: [This repository's own names](#this-repositorys-own-names)
 - CALC_INTERP: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - CALC_ND: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- CALC_U3STOKES / CALC_WBT / SECONDHH: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - CALC_USTAR (ST3): [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - CALDATT / DPYTHAG / DSVBKSB: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - CALDATT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -865,6 +869,7 @@ Every term above, alphabetically, with the section it lives in.
 - FLD1: [WW3 switches](#ww3-switches)
 - FLD2: [WW3 switches](#ww3-switches)
 - float32: [HPC and software](#hpc-and-software)
+- FLOLOC / FLPART: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - FLX0: [WW3 switches](#ww3-switches)
 - FLX0–FLX5: [WW3 switches](#ww3-switches)
 - FLX1: [WW3 switches](#ww3-switches)
@@ -929,7 +934,7 @@ Every term above, alphabetically, with the section it lives in.
 - HasNaN: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - HIP: [HPC and software](#hpc-and-software)
 - HIP / SYCL / HPX: [HPC and software](#hpc-and-software)
-- Hook table (`ww_w3wave_hooks`, `IogrHooks`): [This repository's own names](#this-repositorys-own-names)
+- Hook table (`ww_w3wave_hooks`, `IogrHooks`, `W3OutgHooks`): [This repository's own names](#this-repositorys-own-names)
 - HPX: [HPC and software](#hpc-and-software)
 - i9-14900: [HPC and software](#hpc-and-software)
 - IBM 704: [HPC and software](#hpc-and-software)
@@ -1045,6 +1050,7 @@ Every term above, alphabetically, with the section it lives in.
 - SMOOTH_K: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - SPARSKIT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - SRCTRM: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- STEXU / STEYU / STEDU: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - STME21: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - STOPBIS: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - switch_NCEP_st2 / switch_USACE_1 / switch_NRL3: [WW3 switches](#ww3-switches)
