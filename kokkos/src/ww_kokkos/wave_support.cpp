@@ -92,6 +92,7 @@
 #include "pdlib_pdlib_iobp_init.hpp"
 #include "pdlib_set_iobdp_pdlib.hpp"
 #include "pdlib_w3xypug.hpp"
+#include "pdlib_w3xypug_block_implicit.hpp"
 #include "profs_amux.hpp"
 #include "profs_amuxd.hpp"
 #include "profs_amuxe.hpp"

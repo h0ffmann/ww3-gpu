@@ -407,6 +407,7 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | COFRM4 / IS0_pdlib / FSGEOADVECT | `REAL COFRM4(:)`, `INTEGER IS0_pdlib(:)` and the geographic-advection flag of `W3PROFSMD_PDLIB` `(v)` `w3profsmd_pdlib.F90:118`, `:124`, `:126` | `PDLIB_INIT` computes `COFRM4` as `COEF4*GRAV/(SIG/TPI)**4` and the `IS0_pdlib` stride table. | [kokkos/port_report/PDLIB_INIT_KOKKOS.md](../kokkos/port_report/PDLIB_INIT_KOKKOS.md) |
 | initFromGridDim / ComputeListNP_ListNPA_ListIPLG | the PDLIB library's mesh decomposition entry and its node-list builder `(v)` `PDLIB/yowpdlibmain.F90:65`, `PDLIB/yowfunction.F90:198` | Under `switch_PDLIB` the partition is SCOTCH's ParMETIS interface (`PDLIB/yowpdlibmain.F90:679`); hooks of the port. | [kokkos/port_report/PDLIB_INIT_KOKKOS.md](../kokkos/port_report/PDLIB_INIT_KOKKOS.md) |
 | SET_IOBDP_PDLIB | "Set depth pointer" `(v)` `w3profsmd_pdlib.F90:6890`: sets `IOBDP_LOC` to 1 at local nodes whose depth `DW` reaches `DMIN` plus `10E-6`, compared in double | Called by `W3INIT` (`w3initmd.F90:1456-1460`) and `W3ULEV` (`w3updtmd.F90:2579-2581`); it indexes `DW` by global node, which assumes every mesh node is a sea point. | [kokkos/port_report/SET_IOBDP_PDLIB_KOKKOS.md](../kokkos/port_report/SET_IOBDP_PDLIB_KOKKOS.md) |
+| PDLIB_W3XYPUG_BLOCK_IMPLICIT | the driver of PDLIB's block-implicit propagation `(v)` `w3profsmd_pdlib.F90:2742-2813` | Calls `PDLIB_JACOBI_GAUSS_SEIDEL_BLOCK` under `B_JGS_USE_JACOBI`, otherwise writes a message and stops; `W3WAVE` passes it `FACX` twice (`w3wavemd.F90:1922`). | [kokkos/port_report/PDLIB_W3XYPUG_BLOCK_IMPLICIT_KOKKOS.md](../kokkos/port_report/PDLIB_W3XYPUG_BLOCK_IMPLICIT_KOKKOS.md) |
 
 ## HPC and software
 
@@ -1075,6 +1076,7 @@ Every term above, alphabetically, with the section it lives in.
 - PDLIB_IOBP_INIT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - PDLIB_NNZ / B_JGS_BLOCK_GAUSS_SEIDEL: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - PDLIB_NSEAL / PDLIB_NSEALM / JX_TO_JSEA / ISEA_TO_JSEA: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- PDLIB_W3XYPUG_BLOCK_IMPLICIT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - PGMRES: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - `__powisf2`: [This repository's own names](#this-repositorys-own-names)
 - POS_TRICK / ListISPprevDir / ListISPnextDir / ListISPprevFreq / ListISPnextFreq: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)

@@ -6,7 +6,6 @@
 # claim: the branch (and agent) that owns it; plan: the plan that names it
 routine	file	claim	plan
 pdlib_w3profsmd:pdlib_mapsta_init	model/src/w3profsmd_pdlib.F90:401-512	goal/42-port-w3wave-w3iogr	docs/W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md
-pdlib_w3profsmd:pdlib_w3xypug_block_implicit	model/src/w3profsmd_pdlib.F90:2742-2813	goal/42-port-w3wave-w3iogr	docs/W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md
 pdlib_w3profsmd:set_iobpa_pdlib	model/src/w3profsmd_pdlib.F90:6978-7061	goal/42-port-w3wave-w3iogr	docs/W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md
 w3adatmd:w3dmnl	model/src/w3adatmd.F90:2426-2623	goal/42-port-w3wave-w3iogr	docs/W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md
 w3adatmd:w3naux	model/src/w3adatmd.F90:705-831	goal/42-port-w3wave-w3iogr	docs/W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md
