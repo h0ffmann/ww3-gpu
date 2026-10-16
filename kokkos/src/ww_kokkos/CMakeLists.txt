@@ -49,6 +49,8 @@ target_sources(ww_kokkos PRIVATE
     prop_mapt.hpp
     srce_ref1.hpp
     srce_ic4.hpp
+    srce_ic1.hpp
+    srce_is1.hpp
     pdlib_params.hpp
     pdlib_fsn2.hpp
     pdlib_fspsi2.hpp

@@ -56,8 +56,8 @@ the owner moved it to this branch on 2026-10-16, before any work on it had start
 | `TABU_ERF` | `w3sbt4md.F90:242-312` | 71 | `BT4` | `st4_tabu_stress.cpp` |
 | `INSBT4` | `w3sbt4md.F90:145-231` | 87 | `BT4` | `st4_insin4.cpp` |
 | `W3SBT4` | `w3sbt4md.F90:340-636` | 297 | `BT4` (`ww3_tp2.17`) | `srce_bt1.hpp` |
-| `W3SIS1` | `w3sis1md.F90:74-227` | 154 | `IS1` | `srce_db1.hpp` |
-| `W3SIC1` | `w3sic1md.F90:93-369` | 277 | `IC1` | `srce_db1.hpp` |
+| `W3SIS1` | `w3sis1md.F90:74-227` | 154 | `IS1` (`ww3_ts1` regtests only) | `srce_db1.hpp` |
+| `W3SIC1` | `w3sic1md.F90:93-369` | 277 | `IC1` (`ww3_tic*`, `ww3_ts1`, `mww3_test_08` regtests only) | `srce_db1.hpp` |
 | `W3STR1` | `w3str1md.F90:183-543` | 361 | `TR1` (`switch_NWS_rwps`) | `srce_ln1.hpp` |
 
 Each is one header, one port report, one `kokkos/ports.tsv` row, then

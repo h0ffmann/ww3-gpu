@@ -15,6 +15,4 @@ w3dispmd:wavnu_local	model/src/w3dispmd.F90:456-547	goal/42-port-noaa-ops (Claud
 w3sbt4md:tabu_erf	model/src/w3sbt4md.F90:242-312	goal/42-port-noaa-ops (Claude Code, batch B; reassigned from Kimi Code 2026-10-16)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
 w3sbt4md:insbt4	model/src/w3sbt4md.F90:145-231	goal/42-port-noaa-ops (Claude Code, batch B; reassigned from Kimi Code 2026-10-16)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
 w3sbt4md:w3sbt4	model/src/w3sbt4md.F90:340-636	goal/42-port-noaa-ops (Claude Code, batch B; reassigned from Kimi Code 2026-10-16)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
-w3sis1md:w3sis1	model/src/w3sis1md.F90:74-227	goal/42-port-noaa-ops (Claude Code, batch B; reassigned from Kimi Code 2026-10-16)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
-w3sic1md:w3sic1	model/src/w3sic1md.F90:93-369	goal/42-port-noaa-ops (Claude Code, batch B; reassigned from Kimi Code 2026-10-16)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
 w3str1md:w3str1	model/src/w3str1md.F90:183-543	goal/42-port-noaa-ops (Claude Code, batch B; reassigned from Kimi Code 2026-10-16)	docs/NOAA_OPS_KOKKOS_PLAN_202610.md
