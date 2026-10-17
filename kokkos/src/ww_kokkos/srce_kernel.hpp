@@ -26,6 +26,7 @@
 
 #include <Kokkos_Core.hpp>
 
+#include "libm_device.hpp"
 #include "real.hpp"
 #include "snl1_config.hpp"
 #include "snl1_tables.hpp"
@@ -50,11 +51,11 @@ KOKKOS_INLINE_FUNCTION int mni(int a, int b) { return a < b ? a : b; }
 }  // namespace srce_detail
 
 /// COS and SIN of one argument as -O3 computes them, one sincosf
-/// (__builtin_cexpif). ⚠ On a device, Kokkos::cos/sin: not glibc's bits.
+/// (__builtin_cexpif); on a device, ww::dm's copy of glibc's sincosf.
 KOKKOS_INLINE_FUNCTION void sincos_r(Real x, Real& s, Real& c) {
 #if defined(__GLIBC__)
   KOKKOS_IF_ON_HOST((::sincosf(x, &s, &c);))
-  KOKKOS_IF_ON_DEVICE((c = Kokkos::cos(x); s = Kokkos::sin(x);))
+  KOKKOS_IF_ON_DEVICE((dm::dev::sincosf(x, &s, &c);))
 #else
   c = Kokkos::cos(x);
   s = Kokkos::sin(x);
@@ -284,7 +285,7 @@ KOKKOS_INLINE_FUNCTION void w3srce_team(const TeamMember& team, const Params& p,
       w3sbt1_point(p, g.sig, g.mapwn, spec, cg1, wn1, st.depth, vsbt, vdbt, cbeta);  // :1339
 
       // :1427-1437
-      st.nkh = mni(nk, st4::fint(p.facti1 * Kokkos::log(mx(static_cast<Real>(1.E-7), st.fhigh)) +
+      st.nkh = mni(nk, st4::fint(p.facti1 * dm::logf(mx(static_cast<Real>(1.E-7), st.fhigh)) +
                                  p.facti2));
       st.nkh1 = mni(nk, st.nkh + 1);
       st.nspech = st.nkh1 * nth;
@@ -361,18 +362,18 @@ KOKKOS_INLINE_FUNCTION void w3srce_team(const TeamMember& team, const Params& p,
 
       spr4();  // :1878
       // :1932-1937
-      st.fage = p.ffxfa * Kokkos::tanh((((in.u10abs * static_cast<Real>(0.3)) * st.fmeanws) *
+      st.fage = p.ffxfa * dm::tanhf((((in.u10abs * static_cast<Real>(0.3)) * st.fmeanws) *
                                         kTpi) / kGrav);
       const Real fh1 = (p.ffxfm + st.fage) * st.fmean1;
       const Real fh2 = p.ffxpm / o.ustar;
       st.fhigh = mn(mx(fh1, fh2), g.sig[nk - 1]);
       st.nkh = mxi(mni(st.nkh1, st4::fint(p.facti1 *
-                                              Kokkos::log(mx(static_cast<Real>(1.E-7), st.fhigh)) +
+                                              dm::logf(mx(static_cast<Real>(1.E-7), st.fhigh)) +
                                           p.facti2)),
                    2);
       // :1956-1965, MLIM
       if (st.dttot >= in.dtg * static_cast<Real>(0.9999)) {
-        const Real hm = (p.fhmax * Kokkos::tanh(mx(static_cast<Real>(0.), in.d_inp) * o.wnmean)) /
+        const Real hm = (p.fhmax * dm::tanhf(mx(static_cast<Real>(0.), in.d_inp) * o.wnmean)) /
                         mx(o.wnmean, static_cast<Real>(9.99999974737875163555145263671875e-5));
         const Real em = (hm * hm) * static_cast<Real>(6.25e-2);  // /16. as *0.0625
         if (st.emean > em && st.emean > static_cast<Real>(1.E-30)) {

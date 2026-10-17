@@ -121,7 +121,10 @@ def from_perf(perf):
         "what": (f"ww3_shel wall time, case {kv['case']}, {kv['switch']}: --ww3 is NOAA WW3 from WW3-noaa/, "
                  f"--ww3-gpu the fork with those parts on Kokkos {kv['backend']} and the rest in Fortran; "
                  f"{n} runs of each, alternated, every output byte-identical to run 1's"),
-        "machine": f"{kv['cpu']} ({kv['threads']} hardware threads){gpu}",
+        "machine": (f"{kv['cpu']} ({kv['threads']} hardware threads){gpu}"
+                    + (f"; {kv['omp_env']}" if kv.get("omp_env") else "")
+                    + (f"; load average (1 min) {kv['load_1min']}, before and after the timed runs"
+                       if kv.get("load_1min") else "")),
         "toolchain": "; ".join(x for x in (kv.get("toolchain"), kv.get("kokkos")) if x),
         "commit": kv["commit"] or None,
         "ww3_commit": kv["ww3_commit"],

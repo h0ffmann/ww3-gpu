@@ -86,6 +86,14 @@ full-ww3:
 full-ww3-gpu device="cpu":
     bash scripts/ww3-gpu.sh --ww3-gpu full --{{device}}
 
+# The forced case, as written: coast (80 x 50, currents, water levels, ice, boundary input, FLCK).
+coast-ww3:
+    bash scripts/ww3-gpu.sh --ww3 coast
+
+# The forced case with the Kokkos parts <parts> (resident: SRCE, XYP3, KTP3), against the Fortran.
+coast-ww3-gpu parts="resident" device="cpu":
+    bash scripts/ww3-gpu.sh --ww3-gpu coast --{{device}} --kokkos {{parts}}
+
 # The Kokkos DIA through WW3's own regtest harness (WFIP-0003), as CTest (regtests/CMakeLists.txt):
 # one test per NL1 entry of matrix.base, the Fortran and the Kokkos DIA of one executable, compared
 # by test.comp and nccmp-tol. CPU only. <selection> is serial (99 entries), omp (50 shared-memory

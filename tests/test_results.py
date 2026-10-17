@@ -82,6 +82,13 @@ class Results(unittest.TestCase):
         self.assertTrue(r["regtest"].startswith("passed: "))
         self.assertEqual(results.problems(self.write(r, name=r["study"] + ".json")), [])
 
+    def test_the_omp_environment_and_load_reach_the_machine_line(self):
+        env = "omp_env\tOMP_PROC_BIND=false OMP_PLACES=unset\nload_1min\t0.40 1.10\n"
+        r = results.from_perf(self.perf(self.PERF + env))
+        self.assertIn("OMP_PROC_BIND=false", r["machine"])
+        self.assertIn("load average (1 min) 0.40 1.10", r["machine"])
+        self.assertNotIn("load", results.from_perf(self.perf(self.PERF))["machine"])
+
     def test_a_perf_summary_of_fewer_than_three_runs_is_refused(self):
         with self.assertRaises(ValueError):
             results.from_perf(self.perf(self.PERF.replace("repeat\t3", "repeat\t2")))

@@ -15,8 +15,8 @@
 #            needs is ported to WW4 (scripts/ww4_parts.py): if one is not, it exits 5 and says
 #            which, before building anything.
 #
-#   scripts/ww3-gpu.sh --ww3  smoke|full [--cpu]
-#   scripts/ww3-gpu.sh --ww3-gpu smoke|full [--cpu|--gpu] [--kokkos all|none|<PART,...>]
+#   scripts/ww3-gpu.sh --ww3  smoke|full|coast [--cpu]
+#   scripts/ww3-gpu.sh --ww3-gpu smoke|full|coast [--cpu|--gpu] [--kokkos all|none|<PART,...>]
 #   scripts/ww3-gpu.sh --ww4  smoke|full [--cpu]
 #
 # --cpu is the default everywhere. --gpu exists for --ww3-gpu only (Kokkos on CUDA): WW3's Fortran
@@ -44,6 +44,11 @@
 # Cases:
 #   smoke  regtest ww3_ts1 (one point, ST4 + NL1, NK=36 NTH=24, 10 model days; seconds on a CPU)
 #   full   kokkos/tests/fixtures/bench_small (120 x 80, 9 520 sea points, NK=24 NTH=24, 12 hours)
+#   coast  kokkos/tests/fixtures/coast (80 x 50 cells of 5 km, 3 791 sea and 50 boundary points,
+#          NK=24 NTH=24, 12 hours): FLCK on, and hourly currents, water levels and ice
+#          concentration through ww3_prnc and boundary spectra through ww3_bounc, all written by
+#          scripts/coast_case.sh; the paths full and smoke never take (W3QCK2, W3UCUR, W3ULEV
+#          with drying, W3UICE, W3UBPT). No --ww4 and no prebuilt image for it yet.
 #
 # --ww3-gpu runs the case twice with the same executable, every WW_KOKKOS_<R>=0 (the Fortran) and
 # WW_KOKKOS_<R>=1 for each routine R of WW3GPU_ROUTINES (the Kokkos), and compares the gridded
@@ -68,9 +73,12 @@
 # each; GATH and SCAT are copies of the whole spectrum with no arithmetic to pay for the transfer,
 # and the other support parts run once or once per input field. W3INIT builds the DIA and ST4
 # tables for SRCE alone (WW3/model/src/w3initmd.F90:759,771). --kokkos resident adds the PR3/UQ
-# propagation (XYP3, KTP3, opt-in, kokkos/src/fortran_iface/PATCH.md §11 and §13): with SRCE on the
-# resident VA, the spectrum then crosses only at output times (WFIP-0005 units 1 to 3b). It is not a
-# default: XYP3 and KTP3 are not regtested. --kokkos gpu is the default of --gpu when
+# propagation (XYP3, KTP3, opt-in, kokkos/src/fortran_iface/PATCH.md §11 and §13) and W3OUTG (OUTG,
+# opt-in, §15), the partial read before the point output (IOPE, opt-in, §16) and W3UICE's zeroing
+# of VA repeated on the device (UPDV, opt-in, §17): with SRCE on the resident VA, the spectrum then
+# crosses only for the host readers of VA at output times, not for the gridded fields, the point
+# output copies back only the spectra it interpolates, and an ice update copies none (WFIP-0005
+# units 1 to 5). It is not a default: XYP3, KTP3, OUTG, IOPE and UPDV are not regtested. --kokkos gpu is the default of --gpu when
 # neither --kokkos nor WW3GPU_ROUTINES is given. The Fortran run of the pair is unchanged.
 #
 # --cpu is Kokkos' OpenMP backend, --gpu its CUDA backend. The script enters the pinned toolchain
@@ -124,7 +132,7 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --ww3|--ww3-gpu|--ww4) mode="${1#--}" ;;
     --hoff) mode="ww3-gpu" ;;  # the old name, as the dated records in docs/log and docs/data cite it
-    smoke|full) case_name="$1" ;;
+    smoke|full|coast) case_name="$1" ;;
     --cpu|--gpu) [ -z "$device" ] || [ "$device" = "${1#--}" ] || { echo "ww3-gpu: --cpu or --gpu, not both" >&2; exit 64; }
                  device="${1#--}" ;;
     --build-only) build_only=--build-only ;;
@@ -156,7 +164,7 @@ kokkos_env() {
 kokkos_preset() { # <all|none|gpu|resident|PART,...>: a preset's part list, anything else unchanged
   case "$1" in
     gpu) echo SRCE ;;
-    resident) echo SRCE,XYP3,KTP3 ;;
+    resident) echo SRCE,XYP3,KTP3,OUTG,IOPE,UPDV ;;
     *) echo "$1" ;;
   esac
 }
@@ -176,6 +184,11 @@ if [ -n "$timers" ]; then
   # The timers fence the device around every phase: a run with them is a breakdown, never a median.
   [ "$repeat" = 1 ] || { echo "ww3-gpu: --timers and --repeat do not go together: time with --repeat, break down with --timers" >&2; exit 64; }
 fi
+# KOKKOS_NUM_THREADS sizes Kokkos' pool alone, so it would time the two programs on different thread
+# counts; OMP_* settings reach both runs alike.
+if [ "$mode" = ww3-gpu ] && [ -n "${KOKKOS_NUM_THREADS:-}" ]; then
+  echo "ww3-gpu: KOKKOS_NUM_THREADS acts on the Kokkos run only; unset it (OMP_NUM_THREADS sets both)" >&2; exit 64
+fi
 if [ "$mode" = self-test ]; then
   out="$("${BASH_SOURCE[0]}" --help 2>&1 || true)"
   if ! grep -q -- "--ww3" <<<"$out" || ! grep -q -- "--ww3-gpu" <<<"$out" || ! grep -q -- "--ww4" <<<"$out"; then echo "ww3-gpu: help text lost" >&2; exit 1; fi
@@ -185,6 +198,8 @@ if [ "$mode" = self-test ]; then
     "${BASH_SOURCE[0]}" $bad </dev/null >/dev/null 2>&1 && rc=0 || rc=$?
     [ "$rc" = 64 ] || { echo "ww3-gpu: '$bad' gave exit $rc, not 64" >&2; exit 1; }
   done
+  KOKKOS_NUM_THREADS=16 "${BASH_SOURCE[0]}" --ww3-gpu smoke </dev/null >/dev/null 2>&1 && rc=0 || rc=$?
+  [ "$rc" = 64 ] || { echo "ww3-gpu: KOKKOS_NUM_THREADS=16 gave exit $rc, not 64" >&2; exit 1; }
   WW3GPU_ROUTINES=SDS4,BOGUS "${BASH_SOURCE[0]}" --ww3-gpu smoke </dev/null >/dev/null 2>&1 && rc=0 || rc=$?
   [ "$rc" = 64 ] || { echo "ww3-gpu: WW3GPU_ROUTINES=SDS4,BOGUS gave exit $rc, not 64" >&2; exit 1; }
   for bad in "--ww3-gpu smoke --kokkos" "--ww3-gpu smoke --kokkos SNL1,BOGUS" "--ww3-gpu smoke --kokkos all,SNL1" \
@@ -206,9 +221,19 @@ if [ "$mode" = self-test ]; then
   [ "$(kokkos_env 0 all)" = "WW_KOKKOS_ALL=0" ] || { echo "ww3-gpu: the Fortran run of --kokkos all: $(kokkos_env 0 all)" >&2; exit 1; }
   [ "$(kokkos_env 1 "$(kokkos_preset gpu)")" = "WW_KOKKOS_ALL=0 WW_KOKKOS_SRCE=1" ] \
     || { echo "ww3-gpu: --kokkos gpu: $(kokkos_env 1 "$(kokkos_preset gpu)")" >&2; exit 1; }
-  [ "$(kokkos_env 1 "$(kokkos_preset resident)")" = "WW_KOKKOS_ALL=0 WW_KOKKOS_SRCE=1 WW_KOKKOS_XYP3=1 WW_KOKKOS_KTP3=1" ] \
+  [ "$(kokkos_env 1 "$(kokkos_preset resident)")" = "WW_KOKKOS_ALL=0 WW_KOKKOS_SRCE=1 WW_KOKKOS_XYP3=1 WW_KOKKOS_KTP3=1 WW_KOKKOS_OUTG=1 WW_KOKKOS_IOPE=1 WW_KOKKOS_UPDV=1" ] \
     || { echo "ww3-gpu: --kokkos resident: $(kokkos_env 1 "$(kokkos_preset resident)")" >&2; exit 1; }
   [ "$(kokkos_preset SNL1,GATH)" = "SNL1,GATH" ] || { echo "ww3-gpu: kokkos_preset changed a part list" >&2; exit 1; }
+  # coast: no WW4 parts model for it, and every input the case reads is in the fixture or written
+  # by scripts/coast_case.sh (whose own self-test needs ncgen, so it runs only where ncgen is).
+  "${BASH_SOURCE[0]}" --ww4 coast </dev/null >/dev/null 2>&1 && rc=0 || rc=$?
+  [ "$rc" = 64 ] || { echo "ww3-gpu: '--ww4 coast' gave exit $rc, not 64" >&2; exit 1; }
+  for f in ww3_grid.nml namelists.nml ww3_shel.nml ww3_ounf.nml ww3_bounc.nml spec.list points.list \
+           ww3_prnc_current.nml ww3_prnc_level.nml ww3_prnc_ice.nml; do
+    [ -f "$root/kokkos/tests/fixtures/coast/$f" ] || { echo "ww3-gpu: the coast fixture lost $f" >&2; exit 1; }
+  done
+  grep -q "RUN%FLCK  = T" "$root/kokkos/tests/fixtures/coast/ww3_grid.nml" || { echo "ww3-gpu: the coast case lost FLCK" >&2; exit 1; }
+  if command -v ncgen >/dev/null; then bash "$root/scripts/coast_case.sh" --self-test >/dev/null || exit 1; fi
   # Without a terminal --ww3-gpu --gpu never runs: 7 (no supervisor) or 4 (no driver), before any
   # build; with prebuilt programs (the Docker image, CPU only) it is refused outright, 64.
   "${BASH_SOURCE[0]}" --ww3-gpu smoke --gpu </dev/null >/dev/null 2>&1 && rc=0 || rc=$?
@@ -218,6 +243,12 @@ if [ "$mode" = self-test ]; then
   exit 0
 fi
 [ -n "$mode" ] && [ -n "$case_name" ] || usage
+if [ "$case_name" = coast ] && [ "$mode" = ww4 ]; then
+  echo "ww3-gpu: --ww4 has no coast case (scripts/ww4_parts.py knows smoke and full)" >&2; exit 64
+fi
+if [ "$case_name" = coast ] && [ -n "$pre" ]; then
+  echo "ww3-gpu: the prebuilt image has no coast case yet; run it from the source tree" >&2; exit 64
+fi
 # A GPU run with no part list takes --kokkos gpu: the DIA alone, WW3GPU_ROUTINES' default, is the
 # part with the most round trips per unit of work (ADR-0013).
 if [ "$mode" = ww3-gpu ] && [ "$device" = gpu ] && [ -z "$kokkos" ] && [ -z "${WW3GPU_ROUTINES:-}" ]; then
@@ -309,6 +340,7 @@ if [ -n "$pre" ]; then
   smoke_in="$pre/cases/ww3_ts1/input" full_in="$pre/cases/bench_small" ww4_in="$pre/cases/ww4"
 else
   smoke_in="$root/WW3/regtests/ww3_ts1/input" full_in="$root/kokkos/tests/fixtures/bench_small"
+  coast_in="$root/kokkos/tests/fixtures/coast"
   ww4_in="$root/kokkos/tests/fixtures/ww4"
 fi
 
@@ -470,6 +502,9 @@ prepare() { # <dir>: copy the case's inputs into <dir> and make their paths loca
     cp "$smoke_in"/* "$d"/
     cp "$d/ww3_grid_ST4_T475.nml" "$d/ww3_grid.nml"   # the setup docs/data's profile used
     sed -i 's#\.\./input/#./#g' "$d"/*.nml "$d"/*.inp
+  elif [ "$case_name" = coast ]; then
+    cp "$coast_in"/* "$d"/
+    bash "$root/scripts/coast_case.sh" "$d" >/dev/null
   else
     cp "$full_in"/* "$d"/
     # The fixture writes no field (stride 0: it was made for timing); write HS every hour, so
@@ -495,6 +530,18 @@ run_model() { # <dir> <0|1>: grid, strt, shel, ounf; prints ww3_shel's wall time
   fi
   [ "$k" = 0 ] || [ -z "$timers" ] || flags+=(WW_KOKKOS_TIMERS=1)
   (cd "$d" && "$bin/ww3_grid" > ww3_grid.out 2>&1) || { tail -20 "$d/ww3_grid.out" >&2; return 1; }
+  # The forcing and the boundary spectra (the coast case), made by the Fortran in every run, so
+  # the two runs of a pair read the same files.
+  local p
+  for p in "$d"/ww3_prnc_*.nml; do
+    [ -f "$p" ] || continue
+    cp "$p" "$d/ww3_prnc.nml"
+    (cd "$d" && env "${unset[@]}" WW_KOKKOS_ALL=0 "$bin/ww3_prnc" > "$(basename "$p" .nml).out" 2>&1) \
+      || { tail -20 "$d/$(basename "$p" .nml).out" >&2; return 1; }
+  done
+  if [ -f "$d/ww3_bounc.nml" ]; then
+    (cd "$d" && env "${unset[@]}" WW_KOKKOS_ALL=0 "$bin/ww3_bounc" > ww3_bounc.out 2>&1) || { tail -20 "$d/ww3_bounc.out" >&2; return 1; }
+  fi
   if [ -f "$d/ww3_strt.inp" ] || [ -f "$d/ww3_strt.nml" ]; then
     (cd "$d" && "$bin/ww3_strt" > ww3_strt.out 2>&1) || { tail -20 "$d/ww3_strt.out" >&2; return 1; }
   fi
@@ -579,6 +626,7 @@ else
   if [ "$repeat" -gt 1 ]; then
     cp "$ref" "$runs/ww3-gpu-$case_name-$backend/ww3-ref.nc"
     w1s=("$w1") w3s=("$w3")
+    load0="$(cut -d' ' -f1 /proc/loadavg)"
     for i in $(seq 2 "$repeat"); do
       bash "${BASH_SOURCE[0]}" --ww3 "$case_name" --cpu >/dev/null
       cmp -s "$runs/ww3-gpu-$case_name-$backend/ww3-ref.nc" "$ref" \
@@ -591,10 +639,13 @@ else
     done
     median() { printf '%s\n' "$@" | sort -g | awk '{ a[NR] = $1 } END { if (NR % 2) print a[(NR + 1) / 2]; else printf "%.2f\n", (a[NR / 2] + a[NR / 2 + 1]) / 2 }'; }
     m3="$(median "${w3s[@]}")" m1="$(median "${w1s[@]}")"
+    load1="$(cut -d' ' -f1 /proc/loadavg)"
+    # Unset is libgomp's default; run_model makes OMP_PROC_BIND false when it is unset.
+    omp_env="OMP_PROC_BIND=${OMP_PROC_BIND:-false} OMP_PLACES=${OMP_PLACES:-unset} OMP_WAIT_POLICY=${OMP_WAIT_POLICY:-unset} GOMP_SPINCOUNT=${GOMP_SPINCOUNT:-unset}"
     echo ">> $repeat runs each, every output byte-identical to run 1's: --ww3 ${w3s[*]} s, median ${m3} s; --ww3-gpu ($backend, $kname) ${w1s[*]} s, median ${m1} s"
     awk -v a="$m3" -v b="$m1" -v c="$backend" -v t="$base_desc" 'BEGIN { if (b > 0) printf ">> median --ww3 (%s) / median --ww3-gpu (%s): %.2fx (above 1: the Kokkos run is faster; NOAA runs WW3 on many cores under MPI)\n", t, c, a / b }'
     cpu_name="$(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2- | sed 's/^ //')"
-    echo ">> machine: $cpu_name, $(nproc) threads${dev_name:+; $dev_name}; $lab_switch, OMP_NUM_THREADS=${OMP_NUM_THREADS:-unset, all threads}"
+    echo ">> machine: $cpu_name, $(nproc) threads${dev_name:+; $dev_name}; $lab_switch, OMP_NUM_THREADS=${OMP_NUM_THREADS:-unset, all threads}, $omp_env; load average (1 min) $load0 before the timed runs, $load1 after"
     # Written only here, after the parity above and the per-run output checks passed:
     # `python3 scripts/results.py record <file>` turns it into a bench/results/ record.
     perf="$runs/ww3-gpu-$case_name-$backend/perf.tsv"
@@ -616,6 +667,7 @@ else
       printf 'case\t%s\nbackend\t%s\nparts\t%s\nrepeat\t%s\n' "$case_name" "$backend" "$kname" "$repeat"
       printf 'ww3_s\t%s\nww3gpu_s\t%s\nww3_median_s\t%s\nww3gpu_median_s\t%s\n' "${w3s[*]}" "${w1s[*]}" "$m3" "$m1"
       printf 'baseline\t%s\nswitch\t%s\nomp_num_threads\t%s\n' "$base_desc" "$lab_switch" "${OMP_NUM_THREADS:-}"
+      printf 'omp_env\t%s\nload_1min\t%s %s\n' "$omp_env" "$load0" "$load1"
       printf 'cpu\t%s\nthreads\t%s\ngpu\t%s\ndriver\t%s\n' "$cpu_name" "$(nproc)" "$gpu_model" "$driver"
       printf 'toolchain\t%s\nkokkos\t%s\n' "$tool" "$kver"
       printf 'commit\t%s\nww3_commit\t%s\ndirty\t%s\ndate\t%s\n' "$c_gpu" "$c_ww3" "$dirty" "$(date -u +%F)"

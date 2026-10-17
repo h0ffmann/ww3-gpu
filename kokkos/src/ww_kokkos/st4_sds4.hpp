@@ -20,6 +20,7 @@
 
 #include <Kokkos_Core.hpp>
 
+#include "libm_device.hpp"
 #include "real.hpp"
 #include "st4_arrays.hpp"
 #include "st4_libmvec.hpp"
@@ -128,7 +129,7 @@ KOKKOS_INLINE_FUNCTION void w3sds4_point(const Params& p, const Fields& f, const
   if (ssdsc[7] > zero || ssdsc[10] > zero || ssdsc[17] > zero) {
     for (int ik = 1; ik <= nk; ++ik) {
       Real mssp = zero, msspc2 = zero, mssps2 = zero;
-      const Real kp = Kokkos::pow(k[ik - 1], ssdsc[19]);
+      const Real kp = dm::powf(k[ik - 1], ssdsc[19]);
       for (int ith = 1; ith <= nth; ++ith) {
         const int is = ith + (ik - 1) * nth;
         const Real msslong = ((kp * a[is - 1]) * f.dden(ik - 1)) / cg[ik - 1];
@@ -141,7 +142,7 @@ KOKKOS_INLINE_FUNCTION void w3sds4_point(const Params& p, const Fields& f, const
         MSS(i, 3) = MSS(i, 3) + msspc2;
         MSS(i, 4) = MSS(i, 4) + mssps2;
       }
-      Real mssd = Kokkos::atan2(MSS(ik, 4), MSS(ik, 3));
+      Real mssd = dm::atan2f(MSS(ik, 4), MSS(ik, 3));
       if (mssd < zero) mssd = mssd + kPi;
       MSS(ik, 2) = mssd;
     }
@@ -194,7 +195,7 @@ KOKKOS_INLINE_FUNCTION void w3sds4_point(const Params& p, const Fields& f, const
         if (p.ssdsbm[0] == one) {
           miche = one;
         } else {
-          const Real x = Kokkos::tanh(min_r(k[ik - 1] * depth, static_cast<Real>(10.)));
+          const Real x = dm::tanhf(min_r(k[ik - 1] * depth, static_cast<Real>(10.)));
           const Real t =
               x * (p.ssdsbm[1] + x * (p.ssdsbm[2] + x * (p.ssdsbm[3] + x * p.ssdsbm[4])));
           miche = t * t;
@@ -267,7 +268,7 @@ KOKKOS_INLINE_FUNCTION void w3sds4_point(const Params& p, const Fields& f, const
         const Real kb = kbar[ikl - 1];
         if (hs[ikl - 1] != zero && kb != zero) {
           // FAC_KD2 + ANINT(...) is REAL, truncated on assignment to INTEGER.
-          int ikd = fint(Kokkos::round(Kokkos::log(kb * depth) / sds4_detail::kLogFacKd1) +
+          int ikd = fint(Kokkos::round(dm::logf(kb * depth) / sds4_detail::kLogFacKd1) +
                          static_cast<Real>(kFacKd2));
           int ikhs = fint(one + Kokkos::round((kb * hs[ikl - 1]) / sds4_detail::kDkhs));
           if (ikd > kNkd) {
@@ -280,14 +281,14 @@ KOKKOS_INLINE_FUNCTION void w3sds4_point(const Params& p, const Fields& f, const
           } else if (ikhs < 1) {
             ikhs = 1;
           }
-          const Real xt = Kokkos::tanh(kb * depth);
+          const Real xt = dm::tanhf(kb * depth);
           // GAM (:2411) is computed and never used.
           const Real gam = ((((xt * xt) * xt) * static_cast<Real>(1.0314) -
                              (xt * xt) * static_cast<Real>(1.9958)) +
                             xt * static_cast<Real>(1.5522)) +
                            static_cast<Real>(0.1885);
           (void)gam;
-          dck[ikl - 1] = (Kokkos::pow(kb, static_cast<Real>(-2.5)) * (kb / sds4_detail::kTwoPi)) *
+          dck[ikl - 1] = (dm::powf(kb, static_cast<Real>(-2.5)) * (kb / sds4_detail::kTwoPi)) *
                          f.dcki(ikhs - 1, ikd - 1);
           qb[ikl - 1] = f.qbi(ikhs - 1, ikd - 1);
         } else {
@@ -348,7 +349,7 @@ KOKKOS_INLINE_FUNCTION void w3sds4_point(const Params& p, const Fields& f, const
       for (int ik = 1; ik <= nk; ++ik) {
         const int is0 = (ik - 1) * nth;
         const Real kk = k[ik - 1];
-        const Real kloc = Kokkos::pow(kk, static_cast<Real>(2.) - ssdsc[19]);
+        const Real kloc = dm::powf(kk, static_cast<Real>(2.) - ssdsc[19]);
         const Real k3 = (kk * kk) * kk;
         // BTH(1:NTH) is the scratch of this IK.
         for (int ith = 1; ith <= nth; ++ith)
@@ -361,8 +362,9 @@ KOKKOS_INLINE_FUNCTION void w3sds4_point(const Params& p, const Fields& f, const
         for (int ith = 1; ith <= nth; ++ith) sb = sb + bth[ith - 1] * dth;
         bth0[ik - 1] = sb;
         if (ssdsc[17] > zero) {
-          const Real cd = Kokkos::cos(dirforcum), sd = Kokkos::sin(dirforcum);
-          const Real pm = Kokkos::pow(MSS(ik, 1) * kloc, ssdsc[13]);
+          Real cd, sd;
+          dm::sincosf(dirforcum, sd, cd);
+          const Real pm = dm::powf(MSS(ik, 1) * kloc, ssdsc[13]);
           for (int ith = 1; ith <= nth; ++ith) {
             const Real q = f.ecos(ith - 1) * cd + f.esin(ith - 1) * sd;
             lmodulation[ith - 1] = one + ssdsc[17] * (pm * (q * q));  // FACSTRAINL
@@ -376,7 +378,7 @@ KOKKOS_INLINE_FUNCTION void w3sds4_point(const Params& p, const Fields& f, const
           for (int ith = 1; ith <= nth; ++ith) lmodulation[ith - 1] = one;
         }
         // Lambda (:2507-2509).
-        const Real fk = one + ssdsc[12] * Kokkos::pow(max_r(kk / ko, one), ssdsc[14]);
+        const Real fk = one + ssdsc[12] * dm::powf(max_r(kk / ko, one), ssdsc[14]);
         // LIBMVEC SITE: -O3 uses _ZGVbN4v_expf here (INVENTORY.md, :2509), lane i = ITH-1;
         // the exponential first, then (((e*SSDSC(9))*F)/(SSDSC(13)+1))*LMODULATION per element.
         const Real ssdsbr = p.ssdsbr, c9 = ssdsc[8], c13p1 = ssdsc[12] + one;
@@ -387,7 +389,7 @@ KOKKOS_INLINE_FUNCTION void w3sds4_point(const Params& p, const Fields& f, const
         const Real btover = Kokkos::sqrt(bth0[ik - 1]) - Kokkos::sqrt(p.ssdsbt);
         // MAX(0.,BTOVER) computes 0 > b ? 0 : b (INVENTORY.md, :2512 assembly).
         brm12[ik - 1] =
-            ssdsc[1] * Kokkos::pow(zero > btover ? zero : btover, static_cast<Real>(2.5));
+            ssdsc[1] * dm::powf(zero > btover ? zero : btover, static_cast<Real>(2.5));
         // MAX(0.,SIGN(x,BTOVER)) computes x > 0 ? x : +0. (INVENTORY.md, :2514 assembly).
         for (int ith = 1; ith <= nth; ++ith) {
           const Real x = Kokkos::copysign(brlambda[is0 + ith - 1], btover);
@@ -444,8 +446,9 @@ KOKKOS_INLINE_FUNCTION void w3sds4_point(const Params& p, const Fields& f, const
           }
         }
         // Wave-turbulence interaction; COS/SIN(USDIR) recomputed per ITH as written (:2567).
-        const Real coswind =
-            f.ecos(ith - 1) * Kokkos::cos(usdir) + f.esin(ith - 1) * Kokkos::sin(usdir);
+        Real cu, su;
+        dm::sincosf(usdir, su, cu);
+        const Real coswind = f.ecos(ith - 1) * cu + f.esin(ith - 1) * su;
         const Real dturb = facturb2 * max_r(coswind, zero);
         const Real diag2 = (ssdsc[2] * renewalfreq + dturb) + dvisc;
         ddiag[is - 1] = ddiag[is - 1] + diag2;
@@ -468,7 +471,7 @@ KOKKOS_INLINE_FUNCTION void w3sds4_point(const Params& p, const Fields& f, const
     for (int i = is0; i < is0 + nth; ++i) v = v + brlambda[i];
     coef4[ik - 1] = ((((((c * c) * v) * static_cast<Real>(2.)) * kPi) / kGrav) * ssdsc[6]) *
                     f.dden(ik - 1) / (f.sig(ik) * cg[ik - 1]);
-    const Real pw = Kokkos::pow(brm12[ik - 1] / ssdsc[1], static_cast<Real>(3.) / static_cast<Real>(5.));
+    const Real pw = dm::powf(brm12[ik - 1] / ssdsc[1], static_cast<Real>(3.) / static_cast<Real>(5.));
     Real w = zero;
     for (int i = is0; i < is0 + nth; ++i) w = w + (brlambda[i] * (-ssdsc[1])) * pw;
     coef5[ik - 1] = ((((c * c) * c) * w) * p.aairgb / kGrav) * f.dden(ik - 1) /
@@ -499,7 +502,7 @@ KOKKOS_INLINE_FUNCTION void w3sds4_point(const Params& p, const Fields& f, const
           mft = mft + ((static_cast<Real>(0.4) / (k[ik - 1] * tstr)) * t) * dt;
         } else {
           mft = mft + ((static_cast<Real>(0.4) / k[ik - 1]) *
-                       Kokkos::exp(-((t - tstr) / static_cast<Real>(3.8)))) *
+                       dm::expf(-((t - tstr) / static_cast<Real>(3.8)))) *
                           dt;
         }
       }

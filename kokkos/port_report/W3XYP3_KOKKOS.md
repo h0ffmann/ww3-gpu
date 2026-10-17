@@ -62,8 +62,8 @@ the NetCDF field byte-identical (`cmp`) to the Fortran of the same executable, `
 byte-identical to `--ww3` (the NetCDF differs from it only in the `WAVEWATCH_III_switches`
 attribute), `nccmp-tol` PASS. The counters: `W3XYP3` 13 824 spectra in 24 calls, `W3KTP3` 441 792
 point calls in 48 calls. The smoke case (one point) makes no call of either. Not exercised by
-`bench_small` ⚠: currents (`FLCUR`), the wavenumber shift (`FLCK`, so `W3QCK2`), index closure
-and boundary input. The CUDA build compiles (`--gpu --build-only`), never run. The regtest matrix
+`bench_small`: currents (`FLCUR`), the wavenumber shift (`FLCK`, so `W3QCK2`), index closure
+and boundary input; all but index closure ran in the coast case of 2026-10-17, below (v). The CUDA build compiles (`--gpu --build-only`), never run. The regtest matrix
 did not run.
 
 ## Resident spectrum (WFIP-0005 unit 3b)
@@ -84,7 +84,53 @@ to the Fortran of the same executable, `out_grd.ww3` `cmp`-equal to `--ww3`, `nc
 both. The traffic of `VA` in the full case with `XYP3,KTP3,SRCE` (`WW_KOKKOS_VA_COUNT=1`) went
 from H2D 25 / D2H 25 (one copy each way per step) to H2D 1 / D2H 13, the D2H only at the host reads
 of the output block and of the return of `W3WAVE`. The `bench_small` branches listed above as not
-exercised are still not exercised ⚠. The same command with `--repeat 3` after the replay, on the same commit,
+exercised are not exercised by `bench_small`; the coast case below runs them, index closure apart. The same command with `--repeat 3` after the replay, on the same commit,
 gave the row "on the resident `VA`" of the table above, a quieter machine than the earlier rows,
 so the rows are not a before/after comparison ⚠. The CUDA build compiles (`--gpu --build-only`),
 never run ⚠. The regtest matrix did not run ⚠.
+
+## The coast case, 2026-10-17
+
+`bench_small` has no current, no wavenumber shift and no boundary input, so `scripts/ww3-gpu.sh`
+gained a third case, `coast` (`kokkos/tests/fixtures/coast/`, `scripts/coast_case.sh`,
+[bench/README.md](../../bench/README.md#the-forced-case-coast)): 80 x 50 cells of 5 km, `FLCK` on,
+hourly currents, water levels (with an intertidal strip that falls dry) and ice concentration
+through `ww3_prnc`, and boundary spectra on the west edge through `ww3_bounc`. `log.ww3` lists
+"Prescribed curents", "Prescribed water levels" and "Prescribed ice fields", `ww3_grid.out`
+"Current-induced k-shift : YES" and 50 input boundary points. The Kokkos kernel reads `FLCK` and
+`FLCUR` from the Fortran (`ipar`, `prop3_shim.cpp:638`) and calls `w3qck2` under `FLCK`
+(`prop_ktp3.hpp:324-344`). The same `--ww3` case with `RUN%FLCK = F` changes `hs` by up to 0.073 m,
+so the wavenumber shift reaches the output that is compared (v).
+
+Checked on the CPU (OpenMP backend, Kokkos 5.2.2, gfortran/g++ 16.2.0, Intel Core i9-14900, 32
+threads, shared with other sessions), never on the GPU (v): `bash scripts/ww3-gpu.sh --ww3-gpu coast
+--cpu --kokkos <parts>` for `resident` (SRCE, XYP3, KTP3), `SRCE` and `all`, each on
+`switch_lab_ompg` and `WW3GPU_SWITCH=switch_lab_shrd`, with and without `WW_KOKKOS_VA_RESIDENT=1`,
+and `KTP3,SRCE` and `XYP3,SRCE` with `WW_KOKKOS_VA_RESIDENT=1` on `switch_lab_ompg`: 14 runs. In
+every one, `out_grd.ww3`, `out_pnt.ww3` and the NetCDF field are `cmp`-equal to the Fortran of the
+same executable, `out_grd.ww3` and `out_pnt.ww3` are `cmp`-equal to `--ww3`, whose NetCDF differs
+only in the `WAVEWATCH_III_switches` attribute (`diff` of the two `ncdump`, read on the first run), and `nccmp-tol` PASS both. With `resident`, on both
+switches: `W3XYP3` 41 472 spectra in 72 calls, `W3KTP3` 517 660 point calls in 144 calls, all on the
+resident `VA`; `W3SRCE` 258 830 spectra; `VA` H2D 13, D2H 36 (host writes 26; that they are the 13 hourly `W3ULEV` and 13 `W3UICE`
+sites is inferred from the forcing, not counted ⚠). Index closure never ran ⚠. The regtest matrix did not run ⚠.
+
+## One team per component (`WW_KOKKOS_XYP3_TEAM`), 2026-10-17
+
+A diagnostic for the device: with `WW_KOKKOS_XYP3_TEAM=AUTO` or a team size N, `ww_xyp3_batch`
+runs each spectral component on a Kokkos team instead of one thread, the team's threads splitting
+every loop of `W3XYP3` and `W3QCK3` in which each iteration writes its own elements, with a barrier
+between loops; the averaging scatter, the boundary update and the `MINVAL`/`MAXVAL` scans stay on
+one thread in source order. No statement of a loop body changed (the loops are written once,
+`w3xyp3_loops` and `w3qck3_loops`, for both ways of running them, `prop_loops.hpp`). Unset, the
+per-component kernel of the sections above runs. The dependency reading with `file:line`, the
+`ptxas` registers and the parity table are in
+[PATCH.md section 16](../src/fortran_iface/PATCH.md#16-w3xyp3-one-team-per-component-ww_kokkos_xyp3_team).
+
+Checked on the CPU, never on the GPU (v): full and coast, `--kokkos resident`, both lab switches,
+the flag unset, `AUTO`, 1, 4 and 16, 20 runs: every output `cmp`-equal to the Fortran of the same
+executable and to `--ww3`, `nccmp-tol` PASS. On the CPU the team version is slower (`xyp3.kernel`
+1.2 to 1.6 s unset, up to 36.5 s with teams of 16, one fenced run each, shared machine), so it is
+not the default. `ptxas` for `sm_89`: the per-component kernel 96 registers (unchanged), the team
+kernel 80 registers, no spill; it would put 576 teams on the device instead of 576 threads. Whether
+that is faster on a GPU, and whether CUDA gives the CPU's bits, is not known: nothing ran there ⚠.
+The regtest matrix did not run ⚠.

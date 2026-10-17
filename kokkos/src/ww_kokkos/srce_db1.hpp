@@ -18,6 +18,7 @@
 
 #include <Kokkos_Core.hpp>
 
+#include "libm_device.hpp"
 #include "real.hpp"
 #include "srce_params.hpp"
 
@@ -78,7 +79,7 @@ KOKKOS_INLINE_FUNCTION void w3sdb1_point(const Params& p, const Real* sig, const
   } else {
     const Real dpos = (depth > static_cast<Real>(0.)) ? depth : static_cast<Real>(0.);  // MAX_EXPR
     const double wnm = static_cast<double>(wnmean);
-    hm = static_cast<double>(p.sdbc2) / wnm * Kokkos::tanh(wnm * static_cast<double>(dpos));
+    hm = static_cast<double>(p.sdbc2) / wnm * dm::tanh(wnm * static_cast<double>(dpos));
   }
 
   // :284-291.
@@ -109,10 +110,10 @@ KOKKOS_INLINE_FUNCTION void w3sdb1_point(const Params& p, const Real* sig, const
   if (b <= 0.2) {
     qb = 0.;
   } else if (b < 1.) {
-    const double arg = Kokkos::exp((q0 - 1.) / bb);
+    const double arg = dm::exp((q0 - 1.) / bb);
     qb = q0 - bb * (q0 - arg) / (bb - arg);
     for (int is = 1; is <= 3; ++is) {
-      qb = Kokkos::exp((qb - 1.) / bb);
+      qb = dm::exp((qb - 1.) / bb);
     }
   } else {
     qb = static_cast<double>(static_cast<Real>(1.0) - kThr);

@@ -36,6 +36,17 @@ Nothing calls the function yet, so the compilers parse and type-check it without
 code; code generation, CUDA's included, comes with the shim ⚠.
 
 Update 2026-10-17, the wiring (v): `W3KTP3` calls it only when `FLCK` is true. The full case
-(`bench_small`) has `FLCK` false and the smoke case is one point, so `W3KTP3`'s runs (byte-identical,
-see its report) never reached this routine ⚠. It compiles for CUDA inside the shim
+(`bench_small`) has `FLCK` false and the smoke case is one point, so `W3KTP3`'s runs there
+(byte-identical, see its report) never reached this routine. It compiles for CUDA inside the shim
 (`--gpu --build-only`).
+
+Update 2026-10-17, the coast case (v): `bash scripts/ww3-gpu.sh --ww3-gpu coast --cpu --kokkos
+resident` (and `KTP3,SRCE` under `WW_KOKKOS_VA_RESIDENT=1`) has `FLCK` and `FLCUR` on, so the Kokkos
+`W3KTP3` calls this routine for the wavenumber shift inside its 517 660 point calls
+(`prop_ktp3.hpp:324-344`, `WW_KOKKOS_PROP3_COUNT=1`). `out_grd.ww3`, `out_pnt.ww3` and the NetCDF field
+are `cmp`-equal to the Fortran of the same executable and `out_grd.ww3` and `out_pnt.ww3` to
+`--ww3`, on `switch_lab_ompg` and `switch_lab_shrd`, with and without `WW_KOKKOS_VA_RESIDENT=1`;
+`nccmp-tol` PASS. With `RUN%FLCK = F` the same case gives an `hs` up to 0.073 m different, so the
+shift reaches the compared output. The rows and the case are in [W3KTP3_KOKKOS.md](W3KTP3_KOKKOS.md),
+"The coast case". There is no counter of this routine's own calls ⚠; the count above is of
+`W3KTP3`'s. Never run on the GPU ⚠; the regtest matrix did not run ⚠.

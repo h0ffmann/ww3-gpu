@@ -15,6 +15,7 @@
 
 #include <Kokkos_Core.hpp>
 
+#include "libm_device.hpp"
 #include "real.hpp"
 #include "st4_arrays.hpp"
 #include "st4_params.hpp"
@@ -66,22 +67,28 @@ KOKKOS_INLINE_FUNCTION void w3spr4_point(const Params& p, const Fields& f, const
 
   // 1.  Integral over directions and maximum (:293-305).
   // Quirk 11 (:300-301): ELCS and ELSN run over IK, then ITH, into one scalar each.
+  // EB(IK), EB2(IK) and AMAX are summed in locals and stored once per IK: through `work` and
+  // the reference every term was a store and a reload (a Real* may alias them). Same order.
+  Real amaxl = amax;
   for (int ik = 1; ik <= nk; ++ik) {
-    eb[ik - 1] = 0;
-    eb2[ik - 1] = 0;
-    const Real sigfac = Kokkos::pow(f.sig(ik), p.ssdsc[11]) * f.dden(ik - 1) / cg[ik - 1];
+    Real ebk = 0;
+    Real eb2k = 0;
+    const Real sigfac = dm::powf(f.sig(ik), p.ssdsc[11]) * f.dden(ik - 1) / cg[ik - 1];
     for (int ith = 1; ith <= nth; ++ith) {
       const int is = ith + (ik - 1) * nth;
       const Real aa = a[(ik - 1) * nth + ith - 1];
-      eb[ik - 1] = eb[ik - 1] + aa;
+      ebk = ebk + aa;
       elcs = elcs + aa * f.ecos(is - 1) * sigfac;
       elsn = elsn + aa * f.esin(is - 1) * sigfac;
-      if (llws[is - 1] != 0) eb2[ik - 1] = eb2[ik - 1] + aa;
-      amax = max_r(amax, aa);  // MAX(AMAX, A): -O3 MAX_EXPR <A, AMAX>
+      if (llws[is - 1] != 0) eb2k = eb2k + aa;
+      amaxl = max_r(amaxl, aa);  // MAX(AMAX, A): -O3 MAX_EXPR <A, AMAX>
     }
+    eb[ik - 1] = ebk;
+    eb2[ik - 1] = eb2k;
   }
+  amax = amaxl;
 
-  dlwmean = Kokkos::atan2(elsn, elcs);  // :307
+  dlwmean = dm::atan2f(elsn, elcs);  // :307
 
   // 2.  Integrate over directions (:311-320).
   // The powers are computed before the sum loop (mvec_powf); the values
@@ -96,16 +103,25 @@ KOKKOS_INLINE_FUNCTION void w3spr4_point(const Params& p, const Fields& f, const
   mvec_powf(
       nk, [&](int l) { return wn[l]; }, [&](int) { return p.wwnmeanp; },
       [&](int l, Real v) { pwwn[l] = v; });
+  // The sums in locals, stored once after the loop, for the reason of section 1.
+  Real emeanl = emean, fmeanl = fmean, fmean1l = fmean1, wnmeanl = wnmean, fmeanwsl = fmeanws;
   for (int ik = 1; ik <= nk; ++ik) {
-    eb[ik - 1] = eb[ik - 1] * f.dden(ik - 1) / cg[ik - 1];
-    eb2[ik - 1] = eb2[ik - 1] * f.dden(ik - 1) / cg[ik - 1];
-    emean = emean + eb[ik - 1];
-    fmean = fmean + eb[ik - 1] / f.sig(ik);
-    fmean1 = fmean1 + eb[ik - 1] * pwsig[ik - 1];
-    wnmean = wnmean + eb[ik - 1] * pwwn[ik - 1];
-    emeanws = emeanws + eb2[ik - 1];
-    fmeanws = fmeanws + eb2[ik - 1] * pwsig[ik - 1];  // :319 reuses :316 (CSE)
+    const Real ebk = eb[ik - 1] * f.dden(ik - 1) / cg[ik - 1];
+    const Real eb2k = eb2[ik - 1] * f.dden(ik - 1) / cg[ik - 1];
+    eb[ik - 1] = ebk;
+    eb2[ik - 1] = eb2k;
+    emeanl = emeanl + ebk;
+    fmeanl = fmeanl + ebk / f.sig(ik);
+    fmean1l = fmean1l + ebk * pwsig[ik - 1];
+    wnmeanl = wnmeanl + ebk * pwwn[ik - 1];
+    emeanws = emeanws + eb2k;
+    fmeanwsl = fmeanwsl + eb2k * pwsig[ik - 1];  // :319 reuses :316 (CSE)
   }
+  emean = emeanl;
+  fmean = fmeanl;
+  fmean1 = fmean1l;
+  wnmean = wnmeanl;
+  fmeanws = fmeanwsl;
 
   // 3.  Add tail beyond discrete spectrum and get mean pars (:325-331).
   Real eband = eb[nk - 1] / f.dden(nk - 1);
@@ -122,15 +138,15 @@ KOKKOS_INLINE_FUNCTION void w3spr4_point(const Params& p, const Fields& f, const
   if (fmean1 < eps) {
     fmean1 = kTpiInv * f.sig(nk);
   } else {
-    fmean1 = kTpiInv * Kokkos::pow(max_r(eps, fmean1) / max_r(eps, emean),
+    fmean1 = kTpiInv * dm::powf(max_r(eps, fmean1) / max_r(eps, emean),
                                    static_cast<Real>(1) / (static_cast<Real>(2.) * p.wwnmeanptail));
   }
-  wnmean = Kokkos::pow(max_r(eps, wnmean) / max_r(eps, emean),
+  wnmean = dm::powf(max_r(eps, wnmean) / max_r(eps, emean),
                        static_cast<Real>(1) / p.wwnmeanp);
   if (fmeanws < eps || emeanws < eps) {
     fmeanws = kTpiInv * f.sig(nk);
   } else {
-    fmeanws = kTpiInv * Kokkos::pow(max_r(eps, fmeanws) / max_r(eps, emeanws),
+    fmeanws = kTpiInv * dm::powf(max_r(eps, fmeanws) / max_r(eps, emeanws),
                                     static_cast<Real>(1) / (static_cast<Real>(2.) * p.wwnmeanptail));
   }
 

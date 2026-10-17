@@ -37,6 +37,7 @@
 
 #include <Kokkos_Core.hpp>
 
+#include "libm_device.hpp"
 #include "real.hpp"
 
 namespace ww::updt {
@@ -54,7 +55,7 @@ KOKKOS_INLINE_FUNCTION Real fmax2(Real a, Real b) { return (b > a) ? b : a; }
 KOKKOS_INLINE_FUNCTION Real atan2_r(Real y, Real x) {
   Real r = 0;
   KOKKOS_IF_ON_HOST((r = ::atan2f(y, x);))
-  KOKKOS_IF_ON_DEVICE((r = Kokkos::atan2(y, x);))
+  KOKKOS_IF_ON_DEVICE((r = dm::dev::atan2f(y, x);))
   return r;
 }
 
@@ -69,7 +70,7 @@ KOKKOS_INLINE_FUNCTION Real mod_tpi(Real a) {
 KOKKOS_INLINE_FUNCTION void sincos_r(Real x, Real* s, Real* c) {
 #if defined(__GLIBC__)
   KOKKOS_IF_ON_HOST((::sincosf(x, s, c);))
-  KOKKOS_IF_ON_DEVICE((*c = Kokkos::cos(x); *s = Kokkos::sin(x);))
+  KOKKOS_IF_ON_DEVICE((dm::dev::sincosf(x, s, c);))
 #else
   *c = Kokkos::cos(x);
   *s = Kokkos::sin(x);

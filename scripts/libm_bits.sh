@@ -11,7 +11,7 @@
 #   scripts/libm_bits.sh --nvcc           compile device_check.cu for sm_89 and sm_90, run nothing
 #   scripts/libm_bits.sh --device [fn]    run device_check on GPU 0 (every transcribed function, or
 #                                         one: expf logf sincosf powf mvec_expf mvec_powf tanhf
-#                                         log10f atan2f exp tanh): the owner only, at a terminal
+#                                         log10f atan2f coshf sinhf exp tanh): the owner only, at a terminal
 #   scripts/libm_bits.sh --self-test      build, the probe, one host check that must pass
 #
 # Host checks run under nice: they take every thread they are given for tens of minutes.
@@ -33,14 +33,10 @@ if [ -z "${LIBM_BITS_IN_SHELL:-}" ]; then
 fi
 
 mkdir -p "$out"
-# libmvec powf's tables, read from the libmvec.so.1 beside the libc this toolchain links, and
-# this CPU's rcpps (gen_tables.cpp).
-g++ -std=c++20 -O2 -Wall -Wextra -o "$out/gen_tables" "$src/gen_tables.cpp"
-libc=$(ldd "$out/gen_tables" | awk '/libc\.so\.6/ {print $3}')
-mvec="$(dirname "$libc")/libmvec.so.1"
-mvec_off=$(readelf -Ws "$mvec" | awk '$8 == "__svml_spow_data" {print $2}')
-[ -n "$mvec_off" ] || { echo "libm_bits: no __svml_spow_data in $mvec" >&2; exit 3; }
-nice -n 19 "$out/gen_tables" "$mvec" "$mvec_off" "$out/svml_tables.hpp"
+# libmvec powf's tables, read from the libmvec.so.1 beside the libc this toolchain links, this
+# CPU's rcpps and glibc's fma or sse2 choice (gen_tables.cpp).
+g++ -std=c++20 -O2 -ffp-contract=off -Wall -Wextra -o "$out/gen_tables" "$src/gen_tables.cpp" -lmvec -lm
+nice -n 19 "$out/gen_tables" "$out/svml_tables.hpp"
 
 nvcc_build() {
   # --fmad=false: glibc_mathf.hpp fuses only where it calls ::fma.

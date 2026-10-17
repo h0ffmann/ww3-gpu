@@ -1,8 +1,11 @@
 # W3OUTG_KOKKOS
 
-**Status:** ported, phase 1 (translated). Not wired into WW3, not regtested: the owner asked for
-translation only, with no test run (2026-10-16). Its checkpoint (ADR-0011) needs a shim, the
-`W3WAVE` wiring and the two hooks below.
+**Status:** ported, phase 2 (on the resident spectrum), wired (WFIP-0005 unit 5, 2026-10-17):
+`W3KOKKOS_OUTG` on the fork branch `ww3-gpu/kokkos-outg` calls it in place of `W3WAVE`'s `CALL
+W3OUTG` under `WW_KOKKOS_OUTG=1` (opt-in, not under `WW_KOKKOS_ALL`), and calls the Fortran
+`W3OUTG` whole when a field this port leaves to it is requested. Not regtested by the matrix; the
+CPU replay ran it byte-identical (below). The `switch_lab_ompg` object was read against the
+translation on 2026-10-17 and two choices fixed (below).
 
 - (v) Fresh review 2026-10-16: every statement `switch_lab_shrd` compiles in `:1201-2380`, read
   against a fresh `-O3` GIMPLE, `-fverbose-asm` assembly and `objdump` of `w3iogomd.F90` from a
@@ -29,10 +32,10 @@ before every gridded output.
 | WW3 routine | `W3OUTG`, `model/src/w3iogomd.F90:1201-2380` at h0ffmann/WW3 `8e433f99` (the `WW3/` pin), as `switches/switch_lab_shrd` compiles it. The text of `W3OUTG`, `SKEWNESS` and `SECONDHH` is identical at NOAA-EMC/WW3 `03adda91` (v, `diff` of the subroutines, 2026-10-16) |
 | Kokkos code | [`../src/ww_kokkos/iogo_w3outg.hpp`](../src/ww_kokkos/iogo_w3outg.hpp): `ww::iogo::w3outg<ExecSpace>`, five `parallel_for` over the points (the whole-array fills of section 1, sections 2-4 per point, the partition fill and copy of section 6, `SKEWNESS`) |
 | Callees | `SKEWNESS` (`:2355-2357`) through `skewness_point` of [`iogo_skewness.hpp`](../src/ww_kokkos/iogo_skewness.hpp), with `SECONDHH`'s `FAC0..FAC3` as inputs as that port requires. `CALC_U3STOKES` (`:4112-4341`, called at `:2347-2353`) and `CALC_WBT` (`:4367-4607`, `:2362`) are not translated: they are host hooks of `W3OutgHooks`, called after a fence in the Fortran's order, and a hook whose `FLOLOC` flag is set and that is missing aborts. `CALC_WBTv2` of `W3SNL5` (`snl5_calc_wbtv2.hpp`) is not `CALC_WBT`: it has a fixed `BETA = 1.2` where `CALC_WBT` reads `BTBETA`, no `MAX(DW,DMIN)`, no `MAPSTA` test and another `SIGP` threshold |
-| Not ported, by switch | `W3_IG1` `HSIG` (`:1556-1558`), `W3_O9` negative Hs (`:1995-2003`), `W3_O8` filter (`:2058-2068`), `W3_T` prints (`:2219-2237`, `:2368-2375`), `W3_S` STRACE, the `W3_OMPG` directives. `switch_lab_shrd` sets none of them |
+| Not ported, by switch | `W3_IG1` `HSIG` (`:1556-1558`), `W3_O9` negative Hs (`:1995-2003`), `W3_O8` filter (`:2058-2068`), `W3_T` prints (`:2219-2237`, `:2368-2375`), `W3_S` STRACE. Neither lab switch sets them; `W3KOKKOS_OUTG_SETUP` refuses `WW_KOKKOS_OUTG=1` under any of them and under `MPI`. The `W3_OMPG` directives are covered: `W3OutgScalars::ompg` selects the object's two choices that differ (below) |
 | Not computed | Locals that reach no output: `NKH` (`:1512-1513`), `FXPMC` (`:1388`), `ETMSSL`, `ETMSSCL` (`:1577-1589`), `ETUSCX`, `ETUSCY` (`:1617-1618`), `UBS` (`:1590`, `:1975`), `SCREST` (`:1809-1811`). The object keeps the arrays as stores that nothing reads (`NKH` with its `logf`) and folds the scalar `FXPMC` away; none of them has an effect a Release build can observe (no `errno` in Fortran, no trapping: `-ffpe-trap` is in WW3's Debug flags only) |
 | Structural changes | The Fortran runs each section as a loop over `JSEA`; here one thread runs sections 2-4 for one point, which reads only that point's data. The local `EBD(NK,NSEAL)` is a caller work view; `SKEWNESS`'s `F2`, `SIGHF`, `DFIMHF`, `FAK` are work views with one column per point. `FLOLOC` is computed on the host and passed as booleans |
-| C shim | none yet |
+| C shim | [`../src/fortran_iface/outg_shim.cpp`](../src/fortran_iface/outg_shim.cpp), `ww_outg_va` of [`outg_c.hpp`](../src/fortran_iface/outg_c.hpp) (ABI `ww_kokkos` 0.7): `A` is the resident `VA` (`ww::resident::device_va`), the fields are W3ADATMD's arrays in place on Serial and OpenMP, device buffers on a device with only the fields a host reader needs copied back; the Fortran side is `W3KOKKOS_OUTG` of `model/src/w3kokkos_outgmd.F90` on `ww3-gpu/kokkos-outg` ([`PATCH.md` section 15](../src/fortran_iface/PATCH.md#15-w3outg-on-the-resident-spectrum-ww3-gpukokkos-outg)). The Fortran `W3OUTG` runs instead when `FLPART` (section 6, which reads `W3CPRT`'s table), `CALC_U3STOKES` (`FLOLOC(6,8)`, `(6,12)`), `SKEWNESS` (`FLOLOC(8,7:9)`, translated, not wired) or `CALC_WBT` (`FLOLOC(2,17)`) is requested, or a requested 3-D field is not allocated |
 | Plan | [`W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md`](../../docs/W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md), issue #42 |
 
 ## Arithmetic
@@ -76,6 +79,27 @@ flags, read the same way. 2026-10-16.
   position with other neighbours; the broadcast form on one input in 64). The fresh review's own
   run compared, for every 2^32 input, the four lanes of the broadcast form and the input in lane
   `i mod 4` among neighbours `1e30`, NaN or `0.5`: no difference.
+- (v) `switch_lab_ompg`, read 2026-10-17. The object of `w3iogomd.F90` recompiled with the
+  flags and defines of `build/ww3-gpu-openmp/ww3/model/src/CMakeFiles/ww3_lib.dir/flags.make`
+  (`-O3 -fopenmp`, `W3_OMPG`, in the pinned `ww3` shell) has a disassembly identical to the CMake
+  object (addresses stripped); its `-fdump-tree-optimized` GIMPLE and `objdump -dlr` were read for
+  `W3OUTG` and its sixteen outlined `_omp_fn` bodies. Two choices differ from `switch_lab_shrd`'s,
+  and the translation now takes them under `W3OutgScalars::ompg`, which the shim sets from
+  `W3_OMPG`. (1) No libmvec: the object references no `_ZGV` symbol; the loop of `:1733-1745` is
+  `_omp_fn.2`, which calls `__builtin_cexpif` (the scalar `sincosf`) for every point, so
+  `thmp_sincos` takes the scalar path for every `JSEA` (`lane` false). (2) `MAX(1E-20,AB)` of
+  `:1678` and `:1683`: `_omp_fn.1` keeps one copy of the `JSEA` loop and computes `M1` and `M2`
+  only under their `FLOLOC` test, each `maxss .LC42,%xmm` with `AB` the destination, so the
+  translation takes `gt_sel(ab, 1E-20)` for both whatever `FLOLOC(3,5)`. The other 11 live `maxss`
+  (one more, `:1513`, feeds the dead `NKH`) and the `minss` of `:1904` have the operand order of `switch_lab_shrd` (`:1530`, `:1639`,
+  `:1655`, `:2009` twice, `:2144`, `:2277` the expression as destination; `:1656`, `:2024`, `:2031`
+  `0.` as destination; `STED` of `:1823-1831` `STEDU` as destination; `MINVAL` the first non-NaN
+  start, then `phi < min ? phi : min`), the expression trees of `_omp_fn.2` are those of the
+  translation (`(u*u)*aj` and `aj*(u*u)` commute exactly, `(aj*u)*v`), and every other libm call is
+  the scalar one of the translation (`atan2f`, `sinhf`, `coshf`, `sincosf`, `logf`, `cosf`,
+  `powf`). The vectorised `PHI(:,JSEA)/ET` (`divps`) divides element by element. Choice (2)
+  changes bits only when `AB` is NaN, choice (1) only where libmvec and `sincosf` differ; the
+  byte-identical runs below do not separate them from the old translation, the object read does.
 - (v) Sums keep the Fortran's order per point. g++ vectorises the `ITH` sums of the space-time
   block as in-order fold-left reductions (lane by lane into the accumulator); gfortran's loops
   over `JSEA` do not mix points. No FMA in the C++ object (`objdump`, no `vfmadd`/`vfmsub`).
@@ -107,7 +131,20 @@ None. No timing without parity (`AGENTS.md`).
 
 ## How it was regtested
 
-Not yet: no WW3 regtest, and the port's code was never run. Test code was run, not the port: the
+Not by the regtest matrix. The CPU replay ran it inside WW3, 2026-10-17 (v; OpenMP backend, Kokkos
+5.2.2, gfortran/g++ 16.2.0, fork `e0cc8ee9`): `bash scripts/ww3-gpu.sh --ww3-gpu full|smoke|coast
+--cpu --kokkos SRCE,XYP3,KTP3,OUTG`, plain and with `WW_KOKKOS_VA_RESIDENT=1`, on `switch_lab_ompg`
+and `WW3GPU_SWITCH=switch_lab_shrd`: every output file `cmp`-equal to the Fortran of the same
+executable and to `--ww3` (the NetCDF only differs from `--ww3` in `WAVEWATCH_III_switches`), 13
+Kokkos calls in full and coast; the smoke requests `WBT` and `SKW` and ran the Fortran fallback.
+`full` writes `HS` alone and coast `HS FP DIR DP T0M1`, so a diagnostic `bench_small` beside the
+script asked for 36 output names (every field this port computes, the 3-D ones and `P2SMS` with
+their `OUTS` flags) with the space-time extremes in each of their three modes and off: `out_grd.ww3`
+byte-identical to the Fortran on both switches (eight runs). The device copy-back path and a GPU
+never ran ⚠. `kokkos/src/fortran_iface/PATCH.md` section 15 has the commands and the traffic.
+
+
+Before the wiring, 2026-10-16: test code was run, not the port: the
 translator linked and ran a throwaway program that checked two `sqrtf` results against the folded
 constants, and an exhaustive check program of glibc's `sincosf` and libmvec lanes; the fresh review
 ran its own exhaustive libmvec/`sincosf` program (above). Compiled, 2026-10-16 (v):

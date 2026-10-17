@@ -1,0 +1,37 @@
+! ww3-gpu coast case: time-varying currents, water levels and ice concentration from
+! ww3_prnc_*.nml, boundary spectra on the west edge from ww3_bounc.nml (nest.ww3), and a
+! homogeneous wind that veers and strengthens. The forcing files are written by
+! scripts/coast_case.sh.
+&DOMAIN_NML
+  DOMAIN%START = '20200101 000000'
+  DOMAIN%STOP  = '20200101 120000'
+/
+&INPUT_NML
+  INPUT%FORCING%WATER_LEVELS = 'T'
+  INPUT%FORCING%CURRENTS     = 'T'
+  INPUT%FORCING%WINDS        = 'H'
+  INPUT%FORCING%ICE_CONC     = 'T'
+/
+&OUTPUT_TYPE_NML
+  TYPE%FIELD%LIST = 'HS FP DIR DP T0M1 CUR WLV ICE DPT'
+  TYPE%POINT%FILE = 'points.list'
+/
+&OUTPUT_DATE_NML
+  DATE%FIELD = '20200101 000000' '3600' '20200101 120000'
+  DATE%POINT = '20200101 000000' '1800' '20200101 120000'
+/
+&HOMOG_COUNT_NML
+  HOMOG_COUNT%N_WND = 2
+/
+&HOMOG_INPUT_NML
+  HOMOG_INPUT(1)%NAME   = 'WND'
+  HOMOG_INPUT(1)%DATE   = '20200101 000000'
+  HOMOG_INPUT(1)%VALUE1 = 10.
+  HOMOG_INPUT(1)%VALUE2 = 250.
+  HOMOG_INPUT(1)%VALUE3 = 0.
+  HOMOG_INPUT(2)%NAME   = 'WND'
+  HOMOG_INPUT(2)%DATE   = '20200101 120000'
+  HOMOG_INPUT(2)%VALUE1 = 15.
+  HOMOG_INPUT(2)%VALUE2 = 220.
+  HOMOG_INPUT(2)%VALUE3 = 0.
+/

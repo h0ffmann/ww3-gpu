@@ -1,0 +1,15 @@
+! ww3-gpu coast case: every hourly field ww3_shel writes, into one NetCDF file.
+&FIELD_NML
+  FIELD%TIMESTART  = '20200101 000000'
+  FIELD%TIMESTRIDE = '3600'
+  FIELD%TIMECOUNT  = '13'
+  FIELD%TIMESPLIT  = 0
+  FIELD%LIST       = 'HS FP DIR DP T0M1 CUR WLV ICE DPT'
+  FIELD%PARTITION  = '0'
+  FIELD%SAMEFILE   = T
+  FIELD%TYPE       = 4
+/
+&FILE_NML
+  FILE%PREFIX = 'ww3.'
+  FILE%NETCDF = 4
+/

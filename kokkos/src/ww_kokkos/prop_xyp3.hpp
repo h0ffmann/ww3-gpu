@@ -23,6 +23,7 @@
 
 #include <Kokkos_Core.hpp>
 
+#include "prop_loops.hpp"
 #include "prop_params.hpp"
 #include "prop_qck3.hpp"
 #include "real.hpp"
@@ -113,6 +114,11 @@ KOKKOS_INLINE_FUNCTION void corner(Real dxcgc, Real dycgc, int ny, int& iixa, in
   }
 }
 
+/// CXMIN, CXMAX, CYMIN, CYMAX (:896-899), broadcast from the thread that scans.
+struct CRange {
+  Real cxmin, cxmax, cymin, cymax;
+};
+
 }  // namespace xyp3_detail
 
 /// W3XYP3(ISP, DTG, MAPSTA, MAPFS, VQ, VGX, VGY) for one spectral bin. MAPFS
@@ -131,12 +137,23 @@ KOKKOS_INLINE_FUNCTION void corner(Real dxcgc, Real dycgc, int ny, int& iixa, in
 /// (:868-874, EXTCDE), checks s.nbi > 0 only when s.flbpi, and computes the
 /// three DSEC21 values of Step.
 ///
-/// Scatter loops with coinciding targets (:1154-1276), a fold in IY order
-/// (:1286-1291) and two sweeps that share VQ: the store order is binding, so
-/// the routine runs as one serial body per ISP. A parallel version over ISEA
-/// is a reduction-order change: ask the owner, own PR.
-KOKKOS_INLINE_FUNCTION void w3xyp3(const Params& p, const Grid& g, const Step& s, int isp,
-                                   Real dtg, const int* mapsta, Real* vq, Real* wr, int* wi) {
+/// The averaging scatters into coinciding targets (:1154-1276) and the
+/// boundary update takes the last write of a point listed twice (:1406-1414):
+/// their store order is binding, so they run on one thread, in source order,
+/// in both forms below (one()). Every other loop writes one element per
+/// iteration, of an array no other iteration of that loop reads: the per-ISEA
+/// loops through MAPSF(:,3), injective because MAPFS(MAPSF(ISEA,3)) = ISEA; the
+/// per-cell copies; the global fold per IY (its indices are IY modulo NY); and
+/// the W3QCK3 sweeps (prop_qck3.hpp). Those are the loops W3_OMPH runs as
+/// PARALLEL DO (:978, :1077, :1106, :1126, :1298, :1365, :1427), plus the copies
+/// and the fold. w3xyp3_loops with TeamLoops splits them over a team, a barrier
+/// between loops (PATCH.md section 16); w3xyp3 runs the whole body on the calling
+/// thread, as translated. Parallelising the averaging over ISEA would reorder
+/// its sums: ask the owner, own PR.
+template <class L>
+KOKKOS_INLINE_FUNCTION void w3xyp3_loops(const L& lp, const Params& p, const Grid& g,
+                                         const Step& s, int isp, Real dtg, const int* mapsta,
+                                         Real* vq, Real* wr, int* wi) {
   using ww::st4::fint;
   using ww::st4::max_r;
   using ww::st4::min_r;
@@ -199,10 +216,20 @@ KOKKOS_INLINE_FUNCTION void w3xyp3(const Params& p, const Grid& g, const Step& s
   Real cxc;
   Real cyc;
   if (p.flcur != 0) {
-    const Real cxmin = xyp3_detail::minval_in_order(s.cx + 1, nsea);  // :896
-    const Real cxmax = xyp3_detail::maxval_in_order(s.cx + 1, nsea);  // :897
-    const Real cymin = xyp3_detail::minval_in_order(s.cy + 1, nsea);  // :898
-    const Real cymax = xyp3_detail::maxval_in_order(s.cy + 1, nsea);  // :899
+    // The four in-order scans on one thread, broadcast to the team.
+    xyp3_detail::CRange cr{};
+    lp.one_value(
+        [&](xyp3_detail::CRange& v) {
+          v.cxmin = xyp3_detail::minval_in_order(s.cx + 1, nsea);  // :896
+          v.cxmax = xyp3_detail::maxval_in_order(s.cx + 1, nsea);  // :897
+          v.cymin = xyp3_detail::minval_in_order(s.cy + 1, nsea);  // :898
+          v.cymax = xyp3_detail::maxval_in_order(s.cy + 1, nsea);  // :899
+        },
+        cr);
+    const Real cxmin = cr.cxmin;
+    const Real cxmax = cr.cxmax;
+    const Real cymin = cr.cymin;
+    const Real cymax = cr.cymax;
     // :900-909 as emitted: addss, andps, then maxss %b,%a: a > b ? a : b, so a
     // tie or a NaN picks the CXMAX branch, as the Fortran's IF does.
     const Real ax = Kokkos::fabs(cgx + cxmin);
@@ -241,23 +268,24 @@ KOKKOS_INLINE_FUNCTION void w3xyp3(const Params& p, const Grid& g, const Step& s
   bool yfirst = (nint(static_cast<Real>(dttst) / dtg) % 2) == 0;
 
   // 1.b Initialize arrays (:944-957).
-  for (int i = 0; i < nxy1; ++i) vlcflx[i] = r0;  // :944
-  for (int i = 0; i < nxy1; ++i) vlcfly[i] = r0;  // :945
-  for (int i = 0; i < nxy1; ++i) cxtot[i] = r0;   // :946
-  for (int i = 0; i < nxy; ++i) cytot[i] = r0;    // :947
-  for (int i = 1; i <= nxy; ++i) mapstx[i + moff] = mapsta[i - 1];  // :949
+  lp.par(0, nxy1, [&](int i) { vlcflx[i] = r0; });  // :944
+  lp.par(0, nxy1, [&](int i) { vlcfly[i] = r0; });  // :945
+  lp.par(0, nxy1, [&](int i) { cxtot[i] = r0; });   // :946
+  lp.par(0, nxy, [&](int i) { cytot[i] = r0; });    // :947
+  lp.par(1, nxy + 1, [&](int i) { mapstx[i + moff] = mapsta[i - 1]; });  // :949
+  // The ghost columns, MAPSTX(1-2*NY:0) and (NX*NY+1:NX*NY+2*NY), outside :949's range.
   if (global) {
     // :952-953, two ghost columns each side copied from the far side.
-    for (int j = 0; j < 2 * ny; ++j) {
+    lp.par(0, 2 * ny, [&](int j) {
       mapstx[(1 - 2 * ny + j) + moff] = mapsta[(nx - 2) * ny + j];
       mapstx[(nxy + 1 + j) + moff] = mapsta[j];
-    }
+    });
   } else {
     // :955-956.
-    for (int j = 0; j < 2 * ny; ++j) {
+    lp.par(0, 2 * ny, [&](int j) {
       mapstx[(1 - 2 * ny + j) + moff] = 0;
       mapstx[(nxy + 1 + j) + moff] = 0;
-    }
+    });
   }
 
   // 1.c Pre-calculate interpolation info (:961-971). FGSE = 1 (:841) is
@@ -277,7 +305,7 @@ KOKKOS_INLINE_FUNCTION void w3xyp3(const Params& p, const Grid& g, const Step& s
   const Real fcgy = esini * fcg;     // :971
 
   // :983-1059, the averaging stencil per sea point.
-  for (int isea = 1; isea <= nsea; ++isea) {
+  lp.par(1, nsea + 1, [&](int isea) {
     const int ix = g.mapsf[isea - 1];
     const int iy = g.mapsf[nsea + isea - 1];
     const Real clat = g.clats[isea];
@@ -300,25 +328,25 @@ KOKKOS_INLINE_FUNCTION void w3xyp3(const Params& p, const Grid& g, const Step& s
     // :1031-1052, the "difference" corner.
     corner(dxcgn - dxcgs, dycgn - dycgs, ny, iixy3[isea - 1], iixy4[isea - 1], rdi3[isea - 1],
            rdi4[isea - 1]);
-  }
+  });
 
   // 2.a Velocities (:1080-1137). CXTOT, CYTOT by cell IXY; CG, CX, CLATS by ISEA.
-  for (int isea = 1; isea <= nsea; ++isea) {
+  lp.par(1, nsea + 1, [&](int isea) {
     const int ixy = g.mapsf[2 * nsea + isea - 1];
     const Real cgi = s.cg[isea * cgld + ik];
     const Real clat = g.clats[isea];
     vq[ixy + qoff] = (vq[ixy + qoff] / cgi) * clat;  // :1082, divide then multiply
     cxtot[ixy - 1] = (ecosi * cgi) / clat;            // :1083
     cytot[ixy - 1] = esini * cgi;                     // :1084
-  }
+  });
   if (p.flcur != 0) {
-    for (int isea = 1; isea <= nsea; ++isea) {
+    lp.par(1, nsea + 1, [&](int isea) {
       const int ixy = g.mapsf[2 * nsea + isea - 1];
       cxtot[ixy - 1] = cxtot[ixy - 1] + (s.cx[isea] / g.clats[isea]);  // :1111
       cytot[ixy - 1] = cytot[ixy - 1] + s.cy[isea];                     // :1112
-    }
+    });
   }
-  for (int isea = 1; isea <= nsea; ++isea) {
+  lp.par(1, nsea + 1, [&](int isea) {
     const int ix = g.mapsf[isea - 1];
     const int iy = g.mapsf[nsea + isea - 1];
     const int ixy = g.mapsf[2 * nsea + isea - 1];
@@ -328,7 +356,7 @@ KOKKOS_INLINE_FUNCTION void w3xyp3(const Params& p, const Grid& g, const Step& s
     const Real cq = cxt * grid2(g.dqdx, ny, iy, ix) + cyt * grid2(g.dqdy, ny, iy, ix);  // :1134
     vlcflx[ixy - 1] = dtrad * cp;  // :1135, emitted DTRAD*CP
     vlcfly[ixy - 1] = dtrad * cq;  // :1136
-  }
+  });
   // The extension column NX*NY+1..(NX+1)*NY of VLCFLX stays 0 until W3QCK3
   // with CLOSE copies column 1 into it (w3uqckmd.F90:1105); it then persists
   // across sub-steps, as here. VLCFLY's is never written.
@@ -337,200 +365,206 @@ KOKKOS_INLINE_FUNCTION void w3xyp3(const Params& p, const Grid& g, const Step& s
   for (int itloc = 1; itloc <= ntloc; ++itloc) {
     // 3.a Average. :1149-1150, over the full bounds, ghost columns included
     // (a memcpy and a memset in the object).
-    for (int i = 0; i < nq; ++i) aq[i] = vq[i];
-    for (int i = 0; i < nq; ++i) vq[i] = r0;
+    lp.par(0, nq, [&](int i) { aq[i] = vq[i]; });
+    lp.par(0, nq, [&](int i) { vq[i] = r0; });
 
-    // 3.a.1 Central points (:1154-1183): all eight neighbours sea, as W3MAP3
-    // listed them, so the stencil scatters without a map test, into the ghost
-    // columns too for a point on column 1 or NX (W3MAP3 wraps IX0/IX2 whether
-    // or not the grid is global, :410-411). Store order: centre, +1, +2, +3,
-    // +4, -1, -2, -3, -4; targets can coincide, so each += reads the previous
-    // store.
-    for (int ip = 1; ip <= g.ncent; ++ip) {
-      const int isea = g.mapcxy[ip - 1];
-      const int ixy = g.mapsf[2 * nsea + isea - 1];
-      if (g.maptrn[ixy - 1] != 0) {
-        vq[ixy + qoff] = aq[ixy + qoff];  // :1157-1158, averaging off next to an obstruction
-      } else {
-        const Real cgi = s.cg[isea * cgld + ik];
-        const Real rd1 = rdi1[isea - 1];                   // :1160
-        const Real rd2 = min_r(rdi2[isea - 1] * cgi, r1);  // :1161, minss %1.0,%x: x < 1 ? x : 1, NaN -> 1
-        const Real rd3 = rdi3[isea - 1];                   // :1162
-        const Real rd4 = min_r(cgi * rdi4[isea - 1], r1);  // :1163, emitted CG*RDI4
-        const Real a = aq[ixy + qoff];
-        const int i1 = iixy1[isea - 1];
-        const int i2 = iixy2[isea - 1];
-        const int i3 = iixy3[isea - 1];
-        const int i4 = iixy4[isea - 1];
-        // :1164-1165, (3.-RD2-RD4) is a paren node, then *AQ, then /3.
-        vq[ixy + qoff] = vq[ixy + qoff] + (((r3 - rd2) - rd4) * a) / r3;
-        // :1167-1173. AQ*RD2*RD1/6. is ((AQ*RD2)*RD1)/6, emitted with the
-        // products commuted (same bits); computed once, reused for the - side
-        // as the object does (CSE of identical expressions).
-        const Real c1 = ((rd2 * a) * rd1) / r6;
-        const Real c2 = (((r1 - rd1) * a) * rd2) / r6;
-        const Real c3 = ((rd4 * a) * rd3) / r6;
-        const Real c4 = (((r1 - rd3) * a) * rd4) / r6;
-        vq[ixy + i1 + qoff] = vq[ixy + i1 + qoff] + c1;  // :1166
-        vq[ixy + i2 + qoff] = vq[ixy + i2 + qoff] + c2;  // :1168
-        vq[ixy + i3 + qoff] = vq[ixy + i3 + qoff] + c3;  // :1170
-        vq[ixy + i4 + qoff] = vq[ixy + i4 + qoff] + c4;  // :1172
-        vq[ixy - i1 + qoff] = vq[ixy - i1 + qoff] + c1;  // :1174
-        vq[ixy - i2 + qoff] = vq[ixy - i2 + qoff] + c2;  // :1176
-        vq[ixy - i3 + qoff] = vq[ixy - i3 + qoff] + c3;  // :1178
-        vq[ixy - i4 + qoff] = vq[ixy - i4 + qoff] + c4;  // :1180
-      }
-    }
-
-    // 3.a.2 Near-coast points (:1187-1276): a contribution whose target cell
-    // is not sea in MAPSTX (ghost columns: the far side when global, 0 else)
-    // goes back to the centre. Store order: centre, +1, -1, +2, -2, +3, -3,
-    // +4, -4, different from the central loop's; both binding.
-    for (int ip = g.ncent + 1; ip <= nsea; ++ip) {
-      const int isea = g.mapcxy[ip - 1];
-      const int ixy = g.mapsf[2 * nsea + isea - 1];
-      if (mapsta[ixy - 1] <= 0) continue;  // :1191, the dummy MAPSTA, not MAPSTX
-      if (g.maptrn[ixy - 1] != 0) {
-        vq[ixy + qoff] = aq[ixy + qoff];  // :1192-1193
-      } else {
-        const Real cgi = s.cg[isea * cgld + ik];
-        const Real rd1 = rdi1[isea - 1];                   // :1195
-        const Real rd3 = rdi3[isea - 1];                   // :1196
-        const Real rd2 = min_r(rdi2[isea - 1] * cgi, r1);  // :1197
-        const Real rd4 = min_r(cgi * rdi4[isea - 1], r1);  // :1198
-        const Real a = aq[ixy + qoff];
-        const int i1 = iixy1[isea - 1];
-        const int i2 = iixy2[isea - 1];
-        const int i3 = iixy3[isea - 1];
-        const int i4 = iixy4[isea - 1];
-        vq[ixy + qoff] = vq[ixy + qoff] + (((r3 - rd2) - rd4) * a) / r3;  // :1199-1200
-        // :1208 etc. The object emits c2 here as RD2*((1.-RD1)*AQ), the central
-        // loop's product set commuted: the same bits.
-        const Real c1 = ((rd2 * a) * rd1) / r6;
-        const Real c2 = (((r1 - rd1) * a) * rd2) / r6;
-        const Real c3 = ((rd4 * a) * rd3) / r6;
-        const Real c4 = (((r1 - rd3) * a) * rd4) / r6;
-        // :1202-1203, SIGN(NY, IIXY1) as integer sign transfer.
-        int ixc = isign(ny, i1);
-        int iyc = i1 - ixc;
-        {  // :1204-1212, the diagonal needs the target sea and one of its two axial cells sea
-          const bool ok = mapstx[ixy + i1 + moff] >= 1 &&
-                          !(mapstx[ixy + ixc + moff] <= 0 && mapstx[ixy + iyc + moff] <= 0);
-          const int t = ok ? ixy + i1 : ixy;
-          vq[t + qoff] = vq[t + qoff] + c1;
-        }
-        {  // :1213-1221
-          const bool ok = mapstx[ixy - i1 + moff] >= 1 &&
-                          !(mapstx[ixy - ixc + moff] <= 0 && mapstx[ixy - iyc + moff] <= 0);
-          const int t = ok ? ixy - i1 : ixy;
-          vq[t + qoff] = vq[t + qoff] + c1;
-        }
-        {  // :1223-1229, the axial neighbour needs only itself sea
-          const int t = (mapstx[ixy + i2 + moff] >= 1) ? ixy + i2 : ixy;
-          vq[t + qoff] = vq[t + qoff] + c2;
-        }
-        {  // :1230-1236
-          const int t = (mapstx[ixy - i2 + moff] >= 1) ? ixy - i2 : ixy;
-          vq[t + qoff] = vq[t + qoff] + c2;
-        }
-        // :1238-1239.
-        ixc = isign(ny, i3);
-        iyc = i3 - ixc;
-        {  // :1240-1248
-          const bool ok = mapstx[ixy + i3 + moff] >= 1 &&
-                          !(mapstx[ixy + ixc + moff] <= 0 && mapstx[ixy + iyc + moff] <= 0);
-          const int t = ok ? ixy + i3 : ixy;
-          vq[t + qoff] = vq[t + qoff] + c3;
-        }
-        {  // :1249-1257
-          const bool ok = mapstx[ixy - i3 + moff] >= 1 &&
-                          !(mapstx[ixy - ixc + moff] <= 0 && mapstx[ixy - iyc + moff] <= 0);
-          const int t = ok ? ixy - i3 : ixy;
-          vq[t + qoff] = vq[t + qoff] + c3;
-        }
-        {  // :1259-1265
-          const int t = (mapstx[ixy + i4 + moff] >= 1) ? ixy + i4 : ixy;
-          vq[t + qoff] = vq[t + qoff] + c4;
-        }
-        {  // :1266-1272
-          const int t = (mapstx[ixy - i4 + moff] >= 1) ? ixy - i4 : ixy;
-          vq[t + qoff] = vq[t + qoff] + c4;
+    // 3.a.1 and 3.a.2 on one thread, in source order (the store order is binding).
+    lp.one([&]() {
+      // 3.a.1 Central points (:1154-1183): all eight neighbours sea, as W3MAP3
+      // listed them, so the stencil scatters without a map test, into the ghost
+      // columns too for a point on column 1 or NX (W3MAP3 wraps IX0/IX2 whether
+      // or not the grid is global, :410-411). Store order: centre, +1, +2, +3,
+      // +4, -1, -2, -3, -4; targets can coincide, so each += reads the previous
+      // store.
+      for (int ip = 1; ip <= g.ncent; ++ip) {
+        const int isea = g.mapcxy[ip - 1];
+        const int ixy = g.mapsf[2 * nsea + isea - 1];
+        if (g.maptrn[ixy - 1] != 0) {
+          vq[ixy + qoff] = aq[ixy + qoff];  // :1157-1158, averaging off next to an obstruction
+        } else {
+          const Real cgi = s.cg[isea * cgld + ik];
+          const Real rd1 = rdi1[isea - 1];                   // :1160
+          const Real rd2 = min_r(rdi2[isea - 1] * cgi, r1);  // :1161, minss %1.0,%x: x < 1 ? x : 1, NaN -> 1
+          const Real rd3 = rdi3[isea - 1];                   // :1162
+          const Real rd4 = min_r(cgi * rdi4[isea - 1], r1);  // :1163, emitted CG*RDI4
+          const Real a = aq[ixy + qoff];
+          const int i1 = iixy1[isea - 1];
+          const int i2 = iixy2[isea - 1];
+          const int i3 = iixy3[isea - 1];
+          const int i4 = iixy4[isea - 1];
+          // :1164-1165, (3.-RD2-RD4) is a paren node, then *AQ, then /3.
+          vq[ixy + qoff] = vq[ixy + qoff] + (((r3 - rd2) - rd4) * a) / r3;
+          // :1167-1173. AQ*RD2*RD1/6. is ((AQ*RD2)*RD1)/6, emitted with the
+          // products commuted (same bits); computed once, reused for the - side
+          // as the object does (CSE of identical expressions).
+          const Real c1 = ((rd2 * a) * rd1) / r6;
+          const Real c2 = (((r1 - rd1) * a) * rd2) / r6;
+          const Real c3 = ((rd4 * a) * rd3) / r6;
+          const Real c4 = (((r1 - rd3) * a) * rd4) / r6;
+          vq[ixy + i1 + qoff] = vq[ixy + i1 + qoff] + c1;  // :1166
+          vq[ixy + i2 + qoff] = vq[ixy + i2 + qoff] + c2;  // :1168
+          vq[ixy + i3 + qoff] = vq[ixy + i3 + qoff] + c3;  // :1170
+          vq[ixy + i4 + qoff] = vq[ixy + i4 + qoff] + c4;  // :1172
+          vq[ixy - i1 + qoff] = vq[ixy - i1 + qoff] + c1;  // :1174
+          vq[ixy - i2 + qoff] = vq[ixy - i2 + qoff] + c2;  // :1176
+          vq[ixy - i3 + qoff] = vq[ixy - i3 + qoff] + c3;  // :1178
+          vq[ixy - i4 + qoff] = vq[ixy - i4 + qoff] + c4;  // :1180
         }
       }
-    }
+
+      // 3.a.2 Near-coast points (:1187-1276): a contribution whose target cell
+      // is not sea in MAPSTX (ghost columns: the far side when global, 0 else)
+      // goes back to the centre. Store order: centre, +1, -1, +2, -2, +3, -3,
+      // +4, -4, different from the central loop's; both binding.
+      for (int ip = g.ncent + 1; ip <= nsea; ++ip) {
+        const int isea = g.mapcxy[ip - 1];
+        const int ixy = g.mapsf[2 * nsea + isea - 1];
+        if (mapsta[ixy - 1] <= 0) continue;  // :1191, the dummy MAPSTA, not MAPSTX
+        if (g.maptrn[ixy - 1] != 0) {
+          vq[ixy + qoff] = aq[ixy + qoff];  // :1192-1193
+        } else {
+          const Real cgi = s.cg[isea * cgld + ik];
+          const Real rd1 = rdi1[isea - 1];                   // :1195
+          const Real rd3 = rdi3[isea - 1];                   // :1196
+          const Real rd2 = min_r(rdi2[isea - 1] * cgi, r1);  // :1197
+          const Real rd4 = min_r(cgi * rdi4[isea - 1], r1);  // :1198
+          const Real a = aq[ixy + qoff];
+          const int i1 = iixy1[isea - 1];
+          const int i2 = iixy2[isea - 1];
+          const int i3 = iixy3[isea - 1];
+          const int i4 = iixy4[isea - 1];
+          vq[ixy + qoff] = vq[ixy + qoff] + (((r3 - rd2) - rd4) * a) / r3;  // :1199-1200
+          // :1208 etc. The object emits c2 here as RD2*((1.-RD1)*AQ), the central
+          // loop's product set commuted: the same bits.
+          const Real c1 = ((rd2 * a) * rd1) / r6;
+          const Real c2 = (((r1 - rd1) * a) * rd2) / r6;
+          const Real c3 = ((rd4 * a) * rd3) / r6;
+          const Real c4 = (((r1 - rd3) * a) * rd4) / r6;
+          // :1202-1203, SIGN(NY, IIXY1) as integer sign transfer.
+          int ixc = isign(ny, i1);
+          int iyc = i1 - ixc;
+          {  // :1204-1212, the diagonal needs the target sea and one of its two axial cells sea
+            const bool ok = mapstx[ixy + i1 + moff] >= 1 &&
+                            !(mapstx[ixy + ixc + moff] <= 0 && mapstx[ixy + iyc + moff] <= 0);
+            const int t = ok ? ixy + i1 : ixy;
+            vq[t + qoff] = vq[t + qoff] + c1;
+          }
+          {  // :1213-1221
+            const bool ok = mapstx[ixy - i1 + moff] >= 1 &&
+                            !(mapstx[ixy - ixc + moff] <= 0 && mapstx[ixy - iyc + moff] <= 0);
+            const int t = ok ? ixy - i1 : ixy;
+            vq[t + qoff] = vq[t + qoff] + c1;
+          }
+          {  // :1223-1229, the axial neighbour needs only itself sea
+            const int t = (mapstx[ixy + i2 + moff] >= 1) ? ixy + i2 : ixy;
+            vq[t + qoff] = vq[t + qoff] + c2;
+          }
+          {  // :1230-1236
+            const int t = (mapstx[ixy - i2 + moff] >= 1) ? ixy - i2 : ixy;
+            vq[t + qoff] = vq[t + qoff] + c2;
+          }
+          // :1238-1239.
+          ixc = isign(ny, i3);
+          iyc = i3 - ixc;
+          {  // :1240-1248
+            const bool ok = mapstx[ixy + i3 + moff] >= 1 &&
+                            !(mapstx[ixy + ixc + moff] <= 0 && mapstx[ixy + iyc + moff] <= 0);
+            const int t = ok ? ixy + i3 : ixy;
+            vq[t + qoff] = vq[t + qoff] + c3;
+          }
+          {  // :1249-1257
+            const bool ok = mapstx[ixy - i3 + moff] >= 1 &&
+                            !(mapstx[ixy - ixc + moff] <= 0 && mapstx[ixy - iyc + moff] <= 0);
+            const int t = ok ? ixy - i3 : ixy;
+            vq[t + qoff] = vq[t + qoff] + c3;
+          }
+          {  // :1259-1265
+            const int t = (mapstx[ixy + i4 + moff] >= 1) ? ixy + i4 : ixy;
+            vq[t + qoff] = vq[t + qoff] + c4;
+          }
+          {  // :1266-1272
+            const int t = (mapstx[ixy - i4 + moff] >= 1) ? ixy - i4 : ixy;
+            vq[t + qoff] = vq[t + qoff] + c4;
+          }
+        }
+      }
+    });
 
     // 3.a.3 Restore boundary data (:1280-1282): active boundary points keep
     // AQ through the averaging, still go through the sweeps.
-    for (int ixy = 1; ixy <= nxy; ++ixy) {
+    lp.par(1, nxy + 1, [&](int ixy) {
       if (mapsta[ixy - 1] == 2) vq[ixy + qoff] = aq[ixy + qoff];
-    }
+    });
 
     // 3.a.4 Global closure of the averaging (:1286-1291), IY in order: the
     // first right ghost column into column 1, the left one into column NX;
-    // the second right ghost column is not folded and none is cleared.
+    // the second right ghost column is not folded and none is cleared. Every
+    // index of one IY is IY modulo NY: two IY never touch the same element.
     if (global) {
-      for (int iy = 1; iy <= ny; ++iy) {
+      lp.par(1, ny + 1, [&](int iy) {
         vq[iy + qoff] = vq[iy + qoff] + vq[nxy + iy + qoff];
         vq[(nx - 1) * ny + iy + qoff] = vq[(nx - 1) * ny + iy + qoff] + vq[iy - ny + qoff];
-      }
+      });
     }
 
     // 3.b Propagate. :1301-1306, VQ to straightened space.
-    for (int isea = 1; isea <= nsea; ++isea) {
+    lp.par(1, nsea + 1, [&](int isea) {
       const int ix = g.mapsf[isea - 1];
       const int iy = g.mapsf[nsea + isea - 1];
       const int ixy = g.mapsf[2 * nsea + isea - 1];
       vq[ixy + qoff] = vq[ixy + qoff] * grid2(g.gsqrt, ny, iy, ix);
-    }
+    });
     // :1312-1360, the two W3QCK3 sweeps of w3pro3md.F90:1315-1322 and
     // :1339-1346, VQ with its ghost columns shared between them. NDSE, NDST are
     // not read by W3QCK3 in this build and have no C++ counterpart.
     if (yfirst) {
       if (p.flcy != 0)
-        w3qck3(nx, ny, nx, ny, vlcfly, g.atrny, vq, false, 1, g.mapaxy, g.nact, g.mapy2, g.nmy0,
-               g.nmy1, g.nmy2, fla);
+        w3qck3_loops(lp, nx, ny, nx, ny, vlcfly, g.atrny, vq, false, 1, g.mapaxy, g.nact, g.mapy2,
+                     g.nmy0, g.nmy1, g.nmy2, fla);
       if (p.flcx != 0)
-        w3qck3(nx, ny, nx, ny, vlcflx, g.atrnx, vq, global, ny, g.mapaxy, g.nact, g.mapx2,
-               g.nmx0, g.nmx1, g.nmx2, fla);
+        w3qck3_loops(lp, nx, ny, nx, ny, vlcflx, g.atrnx, vq, global, ny, g.mapaxy, g.nact,
+                     g.mapx2, g.nmx0, g.nmx1, g.nmx2, fla);
     } else {
       if (p.flcx != 0)
-        w3qck3(nx, ny, nx, ny, vlcflx, g.atrnx, vq, global, ny, g.mapaxy, g.nact, g.mapx2,
-               g.nmx0, g.nmx1, g.nmx2, fla);
+        w3qck3_loops(lp, nx, ny, nx, ny, vlcflx, g.atrnx, vq, global, ny, g.mapaxy, g.nact,
+                     g.mapx2, g.nmx0, g.nmx1, g.nmx2, fla);
       if (p.flcy != 0)
-        w3qck3(nx, ny, nx, ny, vlcfly, g.atrny, vq, false, 1, g.mapaxy, g.nact, g.mapy2, g.nmy0,
-               g.nmy1, g.nmy2, fla);
+        w3qck3_loops(lp, nx, ny, nx, ny, vlcfly, g.atrny, vq, false, 1, g.mapaxy, g.nact, g.mapy2,
+                     g.nmy0, g.nmy1, g.nmy2, fla);
     }
     // :1368-1373, back to normal space.
-    for (int isea = 1; isea <= nsea; ++isea) {
+    lp.par(1, nsea + 1, [&](int isea) {
       const int ix = g.mapsf[isea - 1];
       const int iy = g.mapsf[nsea + isea - 1];
       const int ixy = g.mapsf[2 * nsea + isea - 1];
       vq[ixy + qoff] = vq[ixy + qoff] / grid2(g.gsqrt, ny, iy, ix);
-    }
+    });
 
     // 3.c Update boundaries (:1395-1415), the live #else branch of :1410-1413.
     if (s.flbpi != 0) {
-      // :1396-1397, DTG*REAL(NTLOC-ITLOC) then /REAL(NTLOC) then subtracted.
-      Real rd1 = s.dsec_bpi0 - ((dtg * static_cast<Real>(ntloc - itloc)) / rntloc);
-      Real rd2 = s.dsec_bpin;  // :1398
-      if (rd2 > r1em3) {       // :1399
-        // :1400, maxss %0,%q: q > 0 ? q : 0 (NaN -> 0); minss %1,%t: t < 1 ? t : 1.
-        const Real q = rd1 / rd2;
-        rd2 = min_r(max_r(q, r0), r1);
-        rd1 = r1 - rd2;  // :1401
-      } else {
-        rd1 = r0;  // :1403
-        rd2 = r1;  // :1404
-      }
-      // :1406-1414, in IBI order: a point listed twice takes the last write.
-      // The paren wraps the sum; divide by CG, then multiply by CLATS.
-      for (int ibi = 1; ibi <= s.nbi; ++ibi) {
-        const int ib = s.isbpi[ibi - 1];
-        const int ixy = g.mapsf[2 * nsea + ib - 1];
-        const Real b0 = s.bbpi0[ibi * p.nspec + isp - 1];
-        const Real bn = s.bbpin[ibi * p.nspec + isp - 1];
-        vq[ixy + qoff] = (((b0 * rd1) + (bn * rd2)) / s.cg[ib * cgld + ik]) * g.clats[ib];
-      }
+      lp.one([&]() {
+        // :1396-1397, DTG*REAL(NTLOC-ITLOC) then /REAL(NTLOC) then subtracted.
+        Real rd1 = s.dsec_bpi0 - ((dtg * static_cast<Real>(ntloc - itloc)) / rntloc);
+        Real rd2 = s.dsec_bpin;  // :1398
+        if (rd2 > r1em3) {       // :1399
+          // :1400, maxss %0,%q: q > 0 ? q : 0 (NaN -> 0); minss %1,%t: t < 1 ? t : 1.
+          const Real q = rd1 / rd2;
+          rd2 = min_r(max_r(q, r0), r1);
+          rd1 = r1 - rd2;  // :1401
+        } else {
+          rd1 = r0;  // :1403
+          rd2 = r1;  // :1404
+        }
+        // :1406-1414, in IBI order: a point listed twice takes the last write.
+        // The paren wraps the sum; divide by CG, then multiply by CLATS.
+        for (int ibi = 1; ibi <= s.nbi; ++ibi) {
+          const int ib = s.isbpi[ibi - 1];
+          const int ixy = g.mapsf[2 * nsea + ib - 1];
+          const Real b0 = s.bbpi0[ibi * p.nspec + isp - 1];
+          const Real bn = s.bbpin[ibi * p.nspec + isp - 1];
+          vq[ixy + qoff] = (((b0 * rd1) + (bn * rd2)) / s.cg[ib * cgld + ik]) * g.clats[ib];
+        }
+      });
     }
     yfirst = !yfirst;  // :1417
   }
@@ -538,13 +572,19 @@ KOKKOS_INLINE_FUNCTION void w3xyp3(const Params& p, const Grid& g, const Step& s
   // 4. Store results (:1430-1438): CG/CLATS first, then *VQ, then
   // maxss %0,%x: x > 0 ? x : 0, so -0.0 and NaN become +0.0. Cells with
   // MAPSTA <= 0 keep what the sweeps left there (W3SCAT reads back MAPSTA /= 0).
-  for (int isea = 1; isea <= nsea; ++isea) {
+  lp.par(1, nsea + 1, [&](int isea) {
     const int ixy = g.mapsf[2 * nsea + isea - 1];
     if (mapsta[ixy - 1] > 0) {
       const Real x = (s.cg[isea * cgld + ik] / g.clats[isea]) * vq[ixy + qoff];
       vq[ixy + qoff] = max_r(x, r0);
     }
-  }
+  });
+}
+
+/// W3XYP3 as translated: the whole body on the calling thread, in source order.
+KOKKOS_INLINE_FUNCTION void w3xyp3(const Params& p, const Grid& g, const Step& s, int isp,
+                                   Real dtg, const int* mapsta, Real* vq, Real* wr, int* wi) {
+  w3xyp3_loops(SerialLoops{}, p, g, s, isp, dtg, mapsta, vq, wr, wi);
 }
 
 }  // namespace ww::prop
