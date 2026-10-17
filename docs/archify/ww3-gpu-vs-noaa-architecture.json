@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "NOAA WW3 and ww3-gpu Builds",
+    "output": "docs/archify/ww3-gpu-vs-noaa-architecture.html",
+    "quality_profile": "showcase",
+    "locale": "en",
+    "repository": {
+      "url": "git@github.com:h0ffmann/ww3-gpu.git",
+      "link_mode": "local-only",
+      "revision": "b38b5fc81924284d62eaf453db30f8c2986f80e2"
+    }
+  },
+  "components": [
+    { "id": "noaa_src", "type": "external", "label": "WW3-noaa/", "sublabel": "NOAA WW3 @ 03adda91", "pos": [40, 60], "size": [160, 60],
+      "sources": [ { "path": "scripts/ww3-gpu.sh", "line": 2, "end_line": 8, "label": "two submodules" } ] },
+    { "id": "noaa_build", "type": "backend", "label": "--ww3 build", "sublabel": "lab switch, Fortran only", "pos": [300, 60], "size": [190, 60],
+      "sources": [ { "path": "scripts/ww3-gpu.sh", "line": 397, "end_line": 398, "label": "--ww3 builds WW3-noaa" }, { "path": "scripts/ww3-gpu.sh", "line": 474, "end_line": 482 } ] },
+    { "id": "noaa_exe", "type": "backend", "label": "ww3_shel (NOAA)", "sublabel": "every routine Fortran", "pos": [630, 60], "size": [180, 60],
+      "sources": [ { "path": "scripts/ww3-gpu.sh", "line": 557, "end_line": 565 } ] },
+    { "id": "guard", "type": "security", "label": "Fork guard", "sublabel": "diff outside patch", "tag": "exit 3", "pos": [40, 200], "size": [160, 64],
+      "sources": [ { "path": "scripts/ww3-gpu.sh", "line": 401, "end_line": 431, "label": "kokkos_patch check" } ] },
+    { "id": "toolchain", "type": "cloud", "label": "picasso / Nix", "sublabel": "pratico #ww3, #cuda", "pos": [300, 200], "size": [190, 60],
+      "sources": [ { "path": "scripts/ww3-gpu.sh", "line": 330, "end_line": 336, "label": "nix develop pratico" }, { "path": "docs/TOOLCHAIN.md", "line": 3, "end_line": 10 } ] },
+    { "id": "flags", "type": "security", "label": "WW_KOKKOS_* flags", "sublabel": "unset or 0: Fortran", "pos": [630, 200], "size": [180, 60],
+      "sources": [ { "path": "kokkos/src/fortran_iface/part_flags.cpp", "line": 1, "end_line": 11 }, { "path": "kokkos/src/fortran_iface/PATCH.md", "line": 658, "end_line": 673, "label": "run-time flags" } ] },
+    { "id": "fork_src", "type": "external", "label": "WW3/ fork", "sublabel": "same Fortran @ 769c44f0", "pos": [40, 340], "size": [160, 60],
+      "sources": [ { "path": "scripts/ww3-gpu.sh", "line": 2, "end_line": 4 } ] },
+    { "id": "gpu_build", "type": "backend", "label": "--ww3-gpu build", "sublabel": "switch + KOKKOS", "tag": "-DWW_KOKKOS=ON", "pos": [300, 340], "size": [190, 64],
+      "sources": [ { "path": "scripts/ww3-gpu.sh", "line": 475, "end_line": 487, "label": "KOKKOS switch, link" }, { "path": "kokkos/src/fortran_iface/PATCH.md", "line": 369, "end_line": 421 } ] },
+    { "id": "gpu_exe", "type": "backend", "label": "ww3_shel (ww3-gpu)", "sublabel": "caller patch, behind KOKKOS", "pos": [630, 340], "size": [180, 60],
+      "sources": [ { "path": "kokkos/src/fortran_iface/PATCH.md", "line": 97, "end_line": 140, "label": "W3SRCE call site" } ] },
+    { "id": "fortran_rt", "type": "backend", "label": "Fortran routine", "sublabel": "still compiled, selectable", "pos": [630, 480], "size": [180, 60],
+      "sources": [ { "path": "kokkos/src/fortran_iface/PATCH.md", "line": 439, "end_line": 459, "label": "same binary, two answers" } ] },
+    { "id": "shims", "type": "messagebus", "label": "bind(C) shims", "sublabel": "w3kokkosmd, fortran_iface", "pos": [920, 340], "size": [180, 60],
+      "sources": [ { "path": "kokkos/src/fortran_iface/PATCH.md", "line": 395, "end_line": 404 }, { "path": "kokkos/src/fortran_iface/snl1_shim.cpp", "line": 1, "end_line": 20 } ] },
+    { "id": "lib", "type": "backend", "label": "libww_kokkos", "sublabel": "C++/Kokkos port", "pos": [1180, 340], "size": [170, 60],
+      "sources": [ { "path": "kokkos/src/fortran_iface/PATCH.md", "line": 406, "end_line": 421, "label": "find_package(ww_kokkos)" } ] },
+    { "id": "host", "type": "backend", "label": "Host backend", "sublabel": "OpenMP, Serial; glibc", "tag": "--cpu", "pos": [1180, 196], "size": [170, 64],
+      "sources": [ { "path": "kokkos/CMakePresets.json", "line": 19, "end_line": 28 }, { "path": "scripts/ww3-gpu.sh", "line": 84, "end_line": 85 } ] },
+    { "id": "device", "type": "cloud", "label": "CUDA backend", "sublabel": "nvcc_wrapper, sm_89", "tag": "--gpu", "pos": [1180, 480], "size": [170, 64],
+      "sources": [ { "path": "kokkos/CMakePresets.json", "line": 30, "end_line": 40 }, { "path": "scripts/ww3-gpu.sh", "line": 317, "end_line": 328, "label": "typed yes, else exit 7" } ] },
+    { "id": "libm", "type": "database", "label": "ww::libm copies", "sublabel": "glibc 2.44 algorithms", "pos": [1180, 624], "size": [170, 60],
+      "sources": [ { "path": "kokkos/src/ww_kokkos/libm_device.hpp", "line": 1, "end_line": 12 }, { "path": "docs/GPU_LIBM_BITS_202610.md", "line": 31, "end_line": 35 } ] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "NOAA reference: Fortran only", "wraps": ["noaa_src", "noaa_build", "noaa_exe"] },
+    { "kind": "security-group", "label": "Kokkos port (kokkos/, this repository)", "wraps": ["shims", "lib", "host", "device", "libm"] }
+  ],
+  "connections": [
+    { "id": "noaa-source", "from": "noaa_src", "to": "noaa_build", "label": "source" },
+    { "id": "noaa-link", "from": "noaa_build", "to": "noaa_exe", "label": "CMake Release" },
+    { "id": "guard-noaa", "from": "noaa_src", "to": "guard", "label": "diff -rq", "variant": "security" },
+    { "id": "guard-fork", "from": "fork_src", "to": "guard", "label": "diff -rq", "variant": "security" },
+    { "id": "tool-noaa", "from": "toolchain", "to": "noaa_build", "label": "pinned compilers", "variant": "dashed" },
+    { "id": "tool-gpu", "from": "toolchain", "to": "gpu_build", "label": "pinned compilers", "variant": "dashed" },
+    { "id": "fork-source", "from": "fork_src", "to": "gpu_build", "label": "source", "variant": "emphasis" },
+    { "id": "gpu-link", "from": "gpu_build", "to": "gpu_exe", "label": "links ww_kokkos", "variant": "emphasis" },
+    { "id": "flags-read", "from": "flags", "to": "gpu_exe", "label": "read per part" },
+    { "id": "to-fortran", "from": "gpu_exe", "to": "fortran_rt", "label": "flag 0 or unset" },
+    { "id": "to-shim", "from": "gpu_exe", "to": "shims", "label": "flag = 1", "variant": "emphasis" },
+    { "id": "shim-lib", "from": "shims", "to": "lib", "label": "calls", "variant": "emphasis" },
+    { "id": "lib-host", "from": "lib", "to": "host", "label": "OpenMP build" },
+    { "id": "lib-device", "from": "lib", "to": "device", "label": "CUDA build", "variant": "security" },
+    { "id": "device-libm", "from": "device", "to": "libm", "label": "WW_KOKKOS_LIBM", "variant": "dashed" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Same", "items": [
+      "Fortran physics: the fork is WW3-noaa plus the KOKKOS patch, checked by diff before --ww3 builds",
+      "Lab switch (switch_lab_ompg by default), CMake Release, pinned pratico toolchain",
+      "Every WW_KOKKOS_<PART> unset or 0 runs the Fortran routine in the ww3-gpu binary"
+    ] },
+    { "dot": "emerald", "title": "Differs", "items": [
+      "KOKKOS switch adds w3kokkosmd.F90 and #ifdef W3_KOKKOS branches at the call sites",
+      "-DWW_KOKKOS=ON links libww_kokkos through bind(C) shims",
+      "A flag set to 1 sends that part to Kokkos; WW_KOKKOS_ALL=1 sends every wired part"
+    ] },
+    { "dot": "rose", "title": "GPU", "items": [
+      "CUDA backend only for --ww3-gpu; --ww3 --gpu is refused (exit 64)",
+      "--gpu runs only after the owner types yes at a terminal (exit 7 otherwise)",
+      "Device math: ww::libm copies of glibc with WW_KOKKOS_LIBM; device bits not yet compared on a GPU (unverified)"
+    ] }
+  ]
+}

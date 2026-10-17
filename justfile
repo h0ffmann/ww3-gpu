@@ -361,6 +361,10 @@ results *args:
 refs *args:
     python3 scripts/refs_check.py "$@"
 
+# Archify, a pinned submodule: `just archify init` checks it out, `just archify render` draws docs/archify/*.html.
+archify *args:
+    bash scripts/archify.sh "$@"
+
 # The slip box (NOTES.md): front matter, ids, links, the index.
 notes *args:
     python3 scripts/notes_check.py "$@"

@@ -1,0 +1,469 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "ww3-gpu Time Step Sequence",
+    "output": "docs/archify/ww3-gpu-step-sequence.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/h0ffmann/ww3-gpu",
+      "revision": "b38b5fc81924284d62eaf453db30f8c2986f80e2"
+    }
+  },
+  "participants": [
+    {
+      "id": "wave",
+      "type": "backend",
+      "label": "W3WAVE",
+      "sublabel": "time step",
+      "sources": [
+        {
+          "path": "kokkos/src/fortran_iface/PATCH.md",
+          "line": 228,
+          "end_line": 243,
+          "label": "W3WAVE calls W3SRCE"
+        }
+      ]
+    },
+    {
+      "id": "srce",
+      "type": "backend",
+      "label": "W3SRCE",
+      "sublabel": "one sea point",
+      "sources": [
+        {
+          "path": "kokkos/src/fortran_iface/PATCH.md",
+          "line": 97,
+          "end_line": 121,
+          "label": "W3SRCE call site"
+        }
+      ]
+    },
+    {
+      "id": "ftn",
+      "type": "backend",
+      "label": "ST4 + DIA",
+      "sublabel": "Fortran",
+      "sources": [
+        {
+          "path": "kokkos/src/fortran_iface/PATCH.md",
+          "line": 75,
+          "end_line": 79,
+          "label": "Fortran kept selectable"
+        }
+      ]
+    },
+    {
+      "id": "mod",
+      "type": "security",
+      "label": "W3KOKKOSMD",
+      "sublabel": "bind(C) interfaces",
+      "sources": [
+        {
+          "path": "kokkos/src/fortran_iface/PATCH.md",
+          "line": 142,
+          "end_line": 155,
+          "label": "USE W3KOKKOSMD"
+        },
+        {
+          "path": "kokkos/src/fortran_iface/PATCH.md",
+          "line": 188,
+          "end_line": 221,
+          "label": "flag branch"
+        }
+      ]
+    },
+    {
+      "id": "flags",
+      "type": "messagebus",
+      "label": "part_flags",
+      "sublabel": "ww_kokkos_flag",
+      "sources": [
+        {
+          "path": "kokkos/src/fortran_iface/part_flags.cpp",
+          "line": 1,
+          "end_line": 12,
+          "label": "flag rule"
+        },
+        {
+          "path": "kokkos/src/fortran_iface/part_flags.cpp",
+          "line": 39,
+          "end_line": 46,
+          "label": "ww_kokkos_flag"
+        }
+      ]
+    },
+    {
+      "id": "shim",
+      "type": "frontend",
+      "label": "C++ shims",
+      "sublabel": "fortran_iface/*.cpp",
+      "sources": [
+        {
+          "path": "kokkos/src/fortran_iface/snl1_shim.cpp",
+          "line": 308,
+          "end_line": 409,
+          "label": "ww_snl1 copies"
+        },
+        {
+          "path": "kokkos/src/fortran_iface/srce_shim.cpp",
+          "line": 1,
+          "end_line": 14,
+          "label": "phase 1 and batch"
+        },
+        {
+          "path": "kokkos/src/fortran_iface/srce_shim.cpp",
+          "line": 831,
+          "end_line": 834,
+          "label": "ww_srce_batch_va"
+        }
+      ]
+    },
+    {
+      "id": "dev",
+      "type": "database",
+      "label": "Kokkos kernel",
+      "sublabel": "device copy of VA",
+      "sources": [
+        {
+          "path": "kokkos/src/fortran_iface/resident_shim.cpp",
+          "line": 324,
+          "end_line": 360,
+          "label": "VA sync entry points"
+        },
+        {
+          "path": "kokkos/src/fortran_iface/outg_shim.cpp",
+          "line": 383,
+          "end_line": 387,
+          "label": "ww_outg_va"
+        }
+      ]
+    }
+  ],
+  "segments": [
+    {
+      "from": 150,
+      "to": 262,
+      "label": "NOAA WW3 03adda91"
+    },
+    {
+      "from": 272,
+      "to": 600,
+      "label": "Fork 769c44f0, phase 1"
+    },
+    {
+      "from": 610,
+      "to": 930,
+      "label": "Fork, --kokkos resident"
+    }
+  ],
+  "messages": [
+    {
+      "id": "n-call",
+      "from": "wave",
+      "to": "srce",
+      "y": 165,
+      "label": "CALL W3SRCE :2311",
+      "variant": "default",
+      "note": "w3wavemd.F90:2311 at 03adda91, inside DO JSEA=1, NSEAL (:2246)"
+    },
+    {
+      "id": "n-terms",
+      "from": "srce",
+      "to": "ftn",
+      "y": 192,
+      "label": "SIN4 :1239, SNL1 :1260, SDS4 :1303",
+      "variant": "default",
+      "note": "w3srcemd.F90 at 03adda91"
+    },
+    {
+      "id": "n-ret",
+      "from": "ftn",
+      "to": "srce",
+      "y": 220,
+      "label": "S_in, S_nl, S_ds",
+      "variant": "return"
+    },
+    {
+      "id": "n-done",
+      "from": "srce",
+      "to": "wave",
+      "y": 246,
+      "label": "VA(:,JSEA) updated",
+      "variant": "return"
+    },
+    {
+      "id": "f-setup",
+      "from": "mod",
+      "to": "flags",
+      "y": 288,
+      "label": "WW_KOKKOS_<PART>?",
+      "variant": "security",
+      "note": "W3KOKKOS_SETUP asks ww_kokkos_flag once; unset means off"
+    },
+    {
+      "id": "f-on",
+      "from": "flags",
+      "to": "mod",
+      "y": 316,
+      "label": "on or off",
+      "variant": "return"
+    },
+    {
+      "id": "f-call",
+      "from": "wave",
+      "to": "srce",
+      "y": 342,
+      "label": "CALL W3SRCE :2500",
+      "variant": "default",
+      "note": "w3wavemd.F90:2500 at 769c44f0, inside DO JSEA (:2417)"
+    },
+    {
+      "id": "f-off",
+      "from": "srce",
+      "to": "ftn",
+      "y": 370,
+      "label": "flag off: :1244, :1544, :1622",
+      "variant": "dashed",
+      "note": "W3SIN4, W3SNL1, W3SDS4 in w3srcemd.F90 at 769c44f0"
+    },
+    {
+      "id": "f-kok",
+      "from": "srce",
+      "to": "mod",
+      "y": 400,
+      "label": "flag on: SIN4 :1240, WW_SNL1 :1535, SDS4 :1619",
+      "variant": "emphasis",
+      "note": "WW_SNL1 inside !$OMP CRITICAL (WW_KOKKOS_SNL1)"
+    },
+    {
+      "id": "f-bind",
+      "from": "mod",
+      "to": "shim",
+      "y": 428,
+      "label": "bind(C) ww_snl1, ww_sin4, ww_sds4",
+      "variant": "emphasis"
+    },
+    {
+      "id": "f-h2d",
+      "from": "shim",
+      "to": "dev",
+      "y": 456,
+      "label": "copy in one point",
+      "variant": "default"
+    },
+    {
+      "id": "f-d2h",
+      "from": "dev",
+      "to": "shim",
+      "y": 484,
+      "label": "kernel, fence, copy out",
+      "variant": "return"
+    },
+    {
+      "id": "f-res",
+      "from": "shim",
+      "to": "srce",
+      "y": 512,
+      "label": "VSNL, VDNL; LAST_ERROR",
+      "variant": "return"
+    },
+    {
+      "id": "f-whole",
+      "from": "wave",
+      "to": "mod",
+      "y": 542,
+      "label": "WW_KOKKOS_SRCE: W3KOKKOS_SRCE :2486",
+      "variant": "emphasis",
+      "note": "whole W3SRCE for one point, when W3KOKKOS_SRCE_ON(IT)"
+    },
+    {
+      "id": "f-wret",
+      "from": "mod",
+      "to": "wave",
+      "y": 572,
+      "label": "VA(:,JSEA), fluxes",
+      "variant": "return"
+    },
+    {
+      "id": "r-batch",
+      "from": "wave",
+      "to": "mod",
+      "y": 624,
+      "label": "W3KOKKOS_SRCE_BATCH :2408",
+      "variant": "emphasis",
+      "note": "replaces the sea-point loop for this step"
+    },
+    {
+      "id": "r-va",
+      "from": "mod",
+      "to": "shim",
+      "y": 652,
+      "label": "ww_srce_batch_va, all sea points",
+      "variant": "emphasis"
+    },
+    {
+      "id": "r-run",
+      "from": "shim",
+      "to": "dev",
+      "y": 680,
+      "label": "batched kernel on device VA",
+      "variant": "emphasis"
+    },
+    {
+      "id": "r-psc",
+      "from": "shim",
+      "to": "mod",
+      "y": 708,
+      "label": "UST, TAUW, WHITECAP unpacked",
+      "variant": "return"
+    },
+    {
+      "id": "r-outg",
+      "from": "wave",
+      "to": "mod",
+      "y": 744,
+      "label": "W3KOKKOS_OUTG :2699",
+      "variant": "emphasis",
+      "note": "NOAA calls W3OUTG ( VA, ... ) at w3wavemd.F90:2490"
+    },
+    {
+      "id": "r-outgc",
+      "from": "mod",
+      "to": "dev",
+      "y": 772,
+      "label": "ww_outg_va on device VA",
+      "variant": "emphasis"
+    },
+    {
+      "id": "r-fields",
+      "from": "dev",
+      "to": "wave",
+      "y": 800,
+      "label": "gridded fields, no VA copy",
+      "variant": "return"
+    },
+    {
+      "id": "r-read",
+      "from": "wave",
+      "to": "mod",
+      "y": 836,
+      "label": "W3KOKKOS_VA_HOST_READ",
+      "variant": "dashed",
+      "note": "before each host reader of VA, e.g. w3wavemd.F90:2691"
+    },
+    {
+      "id": "r-sync",
+      "from": "mod",
+      "to": "dev",
+      "y": 864,
+      "label": "ww_va_host_read",
+      "variant": "dashed"
+    },
+    {
+      "id": "r-back",
+      "from": "dev",
+      "to": "wave",
+      "y": 892,
+      "label": "VA copied back if device newer",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "wave",
+      "from": 160,
+      "to": 900,
+      "type": "backend"
+    },
+    {
+      "participant": "srce",
+      "from": 165,
+      "to": 252,
+      "type": "backend"
+    },
+    {
+      "participant": "ftn",
+      "from": 192,
+      "to": 226,
+      "type": "backend"
+    },
+    {
+      "participant": "srce",
+      "from": 342,
+      "to": 518,
+      "type": "backend"
+    },
+    {
+      "participant": "mod",
+      "from": 288,
+      "to": 320,
+      "type": "security"
+    },
+    {
+      "participant": "shim",
+      "from": 428,
+      "to": 518,
+      "type": "frontend"
+    },
+    {
+      "participant": "dev",
+      "from": 456,
+      "to": 490,
+      "type": "database"
+    },
+    {
+      "participant": "mod",
+      "from": 542,
+      "to": 578,
+      "type": "security"
+    },
+    {
+      "participant": "dev",
+      "from": 680,
+      "to": 708,
+      "type": "database"
+    },
+    {
+      "participant": "dev",
+      "from": 772,
+      "to": 806,
+      "type": "database"
+    },
+    {
+      "participant": "dev",
+      "from": 864,
+      "to": 898,
+      "type": "database"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "slate",
+      "title": "NOAA WW3 (03adda91)",
+      "items": [
+        "W3WAVE loops DO JSEA=1, NSEAL at w3wavemd.F90:2246 and calls W3SRCE at :2311",
+        "W3SRCE calls W3SIN4 :1239, W3SNL1 :1260, W3SDS4 :1303 in w3srcemd.F90",
+        "Output: W3OUTG ( VA, ... ) at w3wavemd.F90:2490"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Fork, phase 1 (769c44f0)",
+      "items": [
+        "Each flag is resolved once by ww_kokkos_flag; WW_KOKKOS_<PART>=1 on, unset follows WW_KOKKOS_ALL, default off",
+        "Phase 1 copies one sea point in, runs the kernel, copies it out",
+        "Flag off runs the same Fortran call as NOAA, in the same executable"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Resident (--kokkos resident)",
+      "items": [
+        "Preset SRCE,XYP3,KTP3,OUTG,IOPE,UPDV (scripts/ww3-gpu.sh:167)",
+        "VA stays on the device; host readers call W3KOKKOS_VA_HOST_READ first",
+        "XYP3, KTP3, OUTG, IOPE, UPDV are opt-in and not regtested"
+      ]
+    }
+  ]
+}

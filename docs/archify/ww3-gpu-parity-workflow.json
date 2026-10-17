@@ -1,0 +1,482 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "ww3-gpu Parity Workflow",
+    "output": "docs/archify/ww3-gpu-parity-workflow.html",
+    "quality_profile": "showcase",
+    "locale": "en",
+    "repository": {
+      "url": "git@github.com:h0ffmann/ww3-gpu.git",
+      "link_mode": "local-only",
+      "revision": "b38b5fc81924284d62eaf453db30f8c2986f80e2"
+    }
+  },
+  "lanes": [
+    {
+      "id": "runs",
+      "label": "Runs (CPU) and timing"
+    },
+    {
+      "id": "verdict",
+      "label": "Verdict"
+    },
+    {
+      "id": "exception",
+      "label": "Difference found",
+      "variant": "exception"
+    },
+    {
+      "id": "gpu",
+      "label": "GPU (owner only)",
+      "variant": "exception"
+    }
+  ],
+  "phases": [
+    {
+      "id": "run",
+      "label": "Run the pair",
+      "fromCol": 0,
+      "toCol": 1
+    },
+    {
+      "id": "judge",
+      "label": "Judge",
+      "fromCol": 2,
+      "toCol": 3,
+      "variant": "emphasis"
+    },
+    {
+      "id": "time",
+      "label": "Time and record",
+      "fromCol": 4,
+      "toCol": 5,
+      "variant": "dashed"
+    }
+  ],
+  "mainPath": [
+    "case",
+    "fortran",
+    "kokkos",
+    "testcomp",
+    "nccmp",
+    "parity",
+    "timing",
+    "record"
+  ],
+  "nodes": [
+    {
+      "id": "case",
+      "lane": "runs",
+      "col": 0,
+      "type": "external",
+      "label": "Regtest case",
+      "sublabel": "ww3_ts1, matrix entry",
+      "width": 132,
+      "sources": [
+        {
+          "path": "scripts/ww3-gpu.sh",
+          "line": 44,
+          "end_line": 51,
+          "label": "cases"
+        },
+        {
+          "path": "regtests/CMakeLists.txt",
+          "line": 1,
+          "end_line": 7
+        }
+      ]
+    },
+    {
+      "id": "fortran",
+      "lane": "runs",
+      "col": 1,
+      "type": "backend",
+      "label": "Fortran run",
+      "sublabel": "WW_KOKKOS_ALL=0",
+      "width": 132,
+      "sources": [
+        {
+          "path": "scripts/ww3-gpu.sh",
+          "line": 53,
+          "end_line": 60
+        },
+        {
+          "path": "regtests/cmake/run_entry.cmake",
+          "line": 1,
+          "end_line": 6,
+          "label": "work_F"
+        }
+      ]
+    },
+    {
+      "id": "kokkos",
+      "lane": "runs",
+      "col": 2,
+      "type": "backend",
+      "label": "Kokkos run",
+      "sublabel": "--ww3-gpu --cpu",
+      "width": 132,
+      "sources": [
+        {
+          "path": "scripts/ww3-gpu.sh",
+          "line": 567,
+          "end_line": 572
+        },
+        {
+          "path": "regtests/cmake/run_entry.cmake",
+          "line": 165,
+          "end_line": 166,
+          "label": "work_K"
+        }
+      ]
+    },
+    {
+      "id": "noaa",
+      "lane": "runs",
+      "col": 3,
+      "type": "external",
+      "label": "--ww3 run",
+      "sublabel": "WW3-noaa, no KOKKOS",
+      "width": 132,
+      "sources": [
+        {
+          "path": "scripts/ww3-gpu.sh",
+          "line": 607,
+          "end_line": 615,
+          "label": "pair to pair"
+        }
+      ]
+    },
+    {
+      "id": "testcomp",
+      "lane": "verdict",
+      "col": 2,
+      "type": "security",
+      "label": "test.comp",
+      "sublabel": "cmp, file by file",
+      "tag": "matrix, STRICT",
+      "width": 132,
+      "sources": [
+        {
+          "path": "regtests/cmake/run_entry.cmake",
+          "line": 149,
+          "end_line": 162,
+          "label": "compare()"
+        },
+        {
+          "path": "regtests/CMakeLists.txt",
+          "line": 29,
+          "end_line": 30
+        }
+      ]
+    },
+    {
+      "id": "nccmp",
+      "lane": "verdict",
+      "col": 3,
+      "type": "security",
+      "label": "nccmp-tol",
+      "sublabel": "tolerances.txt, max|d|",
+      "width": 132,
+      "sources": [
+        {
+          "path": "scripts/ww3-gpu.sh",
+          "line": 604,
+          "end_line": 617
+        },
+        {
+          "path": "regtests/cmake/ww3gpu_common.cmake",
+          "line": 259,
+          "end_line": 285,
+          "label": "row verdict"
+        }
+      ]
+    },
+    {
+      "id": "parity",
+      "lane": "verdict",
+      "col": 4,
+      "type": "backend",
+      "label": "Parity passed",
+      "sublabel": "on this commit",
+      "width": 132,
+      "sources": [
+        {
+          "path": "scripts/results.py",
+          "line": 42,
+          "end_line": 48,
+          "label": "no timing without it"
+        }
+      ]
+    },
+    {
+      "id": "rerun",
+      "lane": "exception",
+      "col": 2,
+      "type": "messagebus",
+      "label": "Fortran rerun",
+      "sublabel": "work_G: F against G",
+      "width": 132,
+      "sources": [
+        {
+          "path": "regtests/cmake/run_entry.cmake",
+          "line": 231,
+          "end_line": 249,
+          "label": "ww3_self"
+        }
+      ]
+    },
+    {
+      "id": "defect",
+      "lane": "exception",
+      "col": 4,
+      "type": "security",
+      "label": "Port defect",
+      "sublabel": "fails; never widen",
+      "width": 132,
+      "sources": [
+        {
+          "path": "regtests/cmake/ww3gpu_common.cmake",
+          "line": 259,
+          "end_line": 285
+        },
+        {
+          "path": "docs/ADRs/ADR-0014-gpu-runs-judged-by-tolerance.md",
+          "line": 36,
+          "end_line": 38
+        }
+      ]
+    },
+    {
+      "id": "timing",
+      "lane": "runs",
+      "col": 4,
+      "type": "backend",
+      "label": "Timed runs",
+      "sublabel": "--repeat N, median",
+      "tag": "N >= 3",
+      "width": 132,
+      "sources": [
+        {
+          "path": "scripts/ww3-gpu.sh",
+          "line": 623,
+          "end_line": 646
+        },
+        {
+          "path": "scripts/results.py",
+          "line": 108,
+          "end_line": 113
+        }
+      ]
+    },
+    {
+      "id": "record",
+      "lane": "runs",
+      "col": 5,
+      "type": "database",
+      "label": "bench/results/",
+      "sublabel": "results.py record",
+      "width": 132,
+      "sources": [
+        {
+          "path": "scripts/results.py",
+          "line": 104,
+          "end_line": 134
+        },
+        {
+          "path": "bench/README.md",
+          "line": 33,
+          "end_line": 47
+        }
+      ]
+    },
+    {
+      "id": "gpurun",
+      "lane": "gpu",
+      "col": 0,
+      "type": "security",
+      "label": "--gpu run",
+      "sublabel": "typed yes, else exit 7",
+      "width": 132,
+      "sources": [
+        {
+          "path": "scripts/ww3-gpu.sh",
+          "line": 317,
+          "end_line": 328
+        },
+        {
+          "path": "scripts/gpu_supervised.sh",
+          "line": 1,
+          "end_line": 9
+        }
+      ]
+    },
+    {
+      "id": "gpuverdict",
+      "lane": "gpu",
+      "col": 5,
+      "type": "security",
+      "label": "Tolerance verdict",
+      "sublabel": "CUDA: nccmp-tol",
+      "tag": "ADR-0014",
+      "width": 132,
+      "sources": [
+        {
+          "path": "docs/ADRs/ADR-0014-gpu-runs-judged-by-tolerance.md",
+          "line": 27,
+          "end_line": 41
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": "case-fortran",
+      "from": "case",
+      "to": "fortran",
+      "variant": "emphasis"
+    },
+    {
+      "id": "fortran-kokkos",
+      "from": "fortran",
+      "to": "kokkos",
+      "label": "same build",
+      "variant": "emphasis"
+    },
+    {
+      "id": "kokkos-noaa",
+      "from": "kokkos",
+      "to": "noaa",
+      "label": "then"
+    },
+    {
+      "id": "kokkos-testcomp",
+      "from": "kokkos",
+      "to": "testcomp",
+      "label": "F vs K",
+      "variant": "emphasis"
+    },
+    {
+      "id": "testcomp-nccmp",
+      "from": "testcomp",
+      "to": "nccmp",
+      "label": "identical",
+      "variant": "emphasis"
+    },
+    {
+      "id": "noaa-nccmp",
+      "from": "noaa",
+      "to": "nccmp",
+      "label": "K vs --ww3"
+    },
+    {
+      "id": "nccmp-parity",
+      "from": "nccmp",
+      "to": "parity",
+      "label": "PASS",
+      "variant": "emphasis"
+    },
+    {
+      "id": "testcomp-rerun",
+      "from": "testcomp",
+      "to": "rerun",
+      "label": "differs",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "id": "rerun-defect",
+      "from": "rerun",
+      "to": "defect",
+      "label": "F/G identical",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "id": "rerun-nccmp",
+      "from": "rerun",
+      "to": "nccmp",
+      "label": "ww3_self only",
+      "variant": "dashed",
+      "role": "branch"
+    },
+    {
+      "id": "nccmp-defect",
+      "from": "nccmp",
+      "to": "defect",
+      "label": "FAIL",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "id": "parity-timing",
+      "from": "parity",
+      "to": "timing",
+      "variant": "emphasis"
+    },
+    {
+      "id": "timing-record",
+      "from": "timing",
+      "to": "record",
+      "variant": "emphasis"
+    },
+    {
+      "id": "case-gpu",
+      "from": "case",
+      "to": "gpurun",
+      "label": "--gpu",
+      "variant": "dashed",
+      "role": "branch",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "route": "drop"
+    },
+    {
+      "id": "gpu-verdict",
+      "from": "gpurun",
+      "to": "gpuverdict",
+      "label": "pair on CUDA",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left",
+      "route": "straight"
+    },
+    {
+      "id": "gpu-timing",
+      "from": "gpuverdict",
+      "to": "record",
+      "label": "PASS, then timed",
+      "variant": "dashed",
+      "role": "branch"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "CPU rule",
+      "items": [
+        "Bit for bit with the Fortran of the same executable: test.comp finding a file different fails the entry",
+        "Only files that two Fortran runs already write differently (ww3_self) are excused",
+        "nccmp-tol FAIL also fails; its PASS never excuses a byte difference"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "GPU rule (ADR-0014)",
+      "items": [
+        "CUDA verdict is nccmp-tol with tolerances.txt, against the Fortran and --ww3",
+        "Its timing record says: GPU: judged by tolerance, not bits",
+        "Runs only under the owner; none has been recorded yet"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Timing",
+      "items": [
+        "Only bench/results/ record is the 2026-09-15 kernel study, kept under the older l1 rule",
+        "No end-to-end ww3-gpu speed figure has passed this workflow yet"
+      ]
+    }
+  ]
+}

@@ -17,9 +17,11 @@ this file as plain text must open `AGENTS.md` itself. `CONTRIBUTING.md` is the l
 - **The reviewer is a subagent**: run it with the Agent tool, `subagent_type: "revisor-proposta"`,
   on the files you changed; `just proposal-review` does the same from a terminal in plan mode. It
   reports; you fix; it does not rewrite.
-- **Skills are invoked by name** (`/eli5 <topic>`, `/ww4-status`, `/noaa-notices`, `figure`, `release`, `ww3-port`, `humanizar`,
+- **Skills are invoked by name** (`/eli5 <topic>`, `/ww4-status`, `/noaa-notices`, `figure`, `archify`, `release`, `ww3-port`, `humanizar`,
   `humanizer`, `ste`, `ponytail*`, `/sharingan <url>`, `routing`); each one's `SKILL.md` restates the audience rule for its job, and the
-  vendored ones are edited through their `.patch`, never in the copy.
+  vendored ones are edited through their `.patch`, never in the copy. The engineering loop is the
+  Compound Engineering plugin's `/ce-*` skills, sized as AGENTS.md, "Engineering work", says; Context7
+  (plugin) answers library-documentation questions.
 - **Attribution**: the harness appends `Co-Authored-By` and a `Claude-Session` link to commits and a
   "Generated with" line to PR bodies. They stay in the trailer block and the PR footer; never put a
   model name or session link in code, comments, PR titles or documents.

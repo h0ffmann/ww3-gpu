@@ -133,6 +133,49 @@ Três meses divididos em quatro blocos: preparar as ferramentas, construir a res
 `triton-g-doze-semanas` · [source](../../docs/W3SDS4_TRITON_PLANO_202610.pt.md) · [PDF](mermaid/triton-g-doze-semanas.pdf) · [report a mistake](https://github.com/h0ffmann/ww3-gpu/issues/new?title=Figure%20triton-g-doze-semanas%3A%20)
 
 
+## [`docs/WW3_GPU_VS_NOAA_202610.md`](../../docs/WW3_GPU_VS_NOAA_202610.md)
+
+### What is the same and what differs between NOAA's WW3 and ww3-gpu?
+
+Both executables compile the same Fortran physics. ww3-gpu adds a `KOKKOS` switch, call-site branches and `bind(C)` shims into a C++/Kokkos library, and every Kokkos part can be switched back to the Fortran routine at run time inside the same binary.
+
+<img src="mermaid/ww3-gpu-vs-noaa-architecture.png" alt="Both executables compile the same Fortran physics. ww3-gpu adds a `KOKKOS` switch, call-site branches and `bind(C)` shims into a C++/Kokkos library, and every Kokkos part can be switched back to the Fortran routine at run time inside the same binary." width="560" />
+
+`ww3-gpu-vs-noaa-architecture` · [source](../../docs/WW3_GPU_VS_NOAA_202610.md) · [PDF](mermaid/ww3-gpu-vs-noaa-architecture.pdf) · [report a mistake](https://github.com/h0ffmann/ww3-gpu/issues/new?title=Figure%20ww3-gpu-vs-noaa-architecture%3A%20)
+
+### How is a ww3-gpu result judged against NOAA's WW3 before a timing may be recorded?
+
+On the CPU a ported routine passes only when its output files are byte-identical to the Fortran routine of the same executable, apart from files two Fortran runs already write differently. A GPU run is judged by `nccmp-tol`'s tolerances instead (ADR-0014). A timing enters `bench/results/` only after one of these verdicts passed on the same commit.
+
+<img src="mermaid/ww3-gpu-parity-workflow.png" alt="On the CPU a ported routine passes only when its output files are byte-identical to the Fortran routine of the same executable, apart from files two Fortran runs already write differently. A GPU run is judged by `nccmp-tol`'s tolerances instead (ADR-0014). A timing enters `bench/results/` only after one of these verdicts passed on the same commit." width="560" />
+
+`ww3-gpu-parity-workflow` · [source](../../docs/WW3_GPU_VS_NOAA_202610.md) · [PDF](mermaid/ww3-gpu-parity-workflow.pdf) · [report a mistake](https://github.com/h0ffmann/ww3-gpu/issues/new?title=Figure%20ww3-gpu-parity-workflow%3A%20)
+
+### Where does a time step leave the Fortran in ww3-gpu, and what does NOAA's WW3 do at the same place?
+
+In NOAA's WW3, W3WAVE calls W3SRCE once per sea point and W3SRCE calls the Fortran source terms. The ww3-gpu fork keeps those same calls in the same executable and adds a branch at each one: when a `WW_KOKKOS_<PART>` flag is on, the call goes through a `bind(C)` interface in `w3kokkosmd.F90` to a C++ shim and a Kokkos kernel. In phase 1 the shim copies one sea point to the device and back for every call. The `--kokkos resident` preset keeps the spectrum `VA` on the device, replaces the sea-point loop with one batched launch, computes W3OUTG's fields there, and copies `VA` back only before a host statement reads it.
+
+<img src="mermaid/ww3-gpu-step-sequence.png" alt="In NOAA's WW3, W3WAVE calls W3SRCE once per sea point and W3SRCE calls the Fortran source terms. The ww3-gpu fork keeps those same calls in the same executable and adds a branch at each one: when a `WW_KOKKOS_<PART>` flag is on, the call goes through a `bind(C)` interface in `w3kokkosmd.F90` to a C++ shim and a Kokkos kernel. In phase 1 the shim copies one sea point to the device and back for every call. The `--kokkos resident` preset keeps the spectrum `VA` on the device, replaces the sea-point loop with one batched launch, computes W3OUTG's fields there, and copies `VA` back only before a host statement reads it." width="560" />
+
+`ww3-gpu-step-sequence` · [source](../../docs/WW3_GPU_VS_NOAA_202610.md) · [PDF](mermaid/ww3-gpu-step-sequence.pdf) · [report a mistake](https://github.com/h0ffmann/ww3-gpu/issues/new?title=Figure%20ww3-gpu-step-sequence%3A%20)
+
+### Which states does a WW3 routine pass through in ww3-gpu, and how many routines are in each?
+
+A WW3 routine starts in Fortran, as in NOAA's code. In this repository it can be claimed, translated to Kokkos, wired into the fork behind a run-time flag, and regtested by WW3's own regtests, which compare the Fortran and the Kokkos routine in the same executable. At this commit 310 of WW3's 1023 routines are translated, 60 are wired and 10 are regtested. Two of them (W3SNL1, INSNL1) have passed the L2 replay. None has passed on CUDA, and no part is on by default.
+
+<img src="mermaid/ww3-gpu-port-lifecycle.png" alt="A WW3 routine starts in Fortran, as in NOAA's code. In this repository it can be claimed, translated to Kokkos, wired into the fork behind a run-time flag, and regtested by WW3's own regtests, which compare the Fortran and the Kokkos routine in the same executable. At this commit 310 of WW3's 1023 routines are translated, 60 are wired and 10 are regtested. Two of them (W3SNL1, INSNL1) have passed the L2 replay. None has passed on CUDA, and no part is on by default." width="560" />
+
+`ww3-gpu-port-lifecycle` · [source](../../docs/WW3_GPU_VS_NOAA_202610.md) · [PDF](mermaid/ww3-gpu-port-lifecycle.pdf) · [report a mistake](https://github.com/h0ffmann/ww3-gpu/issues/new?title=Figure%20ww3-gpu-port-lifecycle%3A%20)
+
+### How does a kernel's expf or logf get the bits of NOAA's CPU build on a GPU, and what has been checked?
+
+Every transcendental call in the ported kernels goes through `ww::dm`. On the host it is the same Kokkos call as before, so the CPU build still calls glibc and its regtest record stands. On a CUDA device built with `WW_KOKKOS_LIBM` (on by default) it calls `ww::libm`, copies of the algorithms glibc 2.44 uses (ARM optimized-routines for `expf`, `logf`, `powf`, `sincosf`, `exp`; CORE-MATH for `tanhf`, `log10f`, `atan2f`, `tanh`; libmvec's SSE4 lanes), instead of CUDA's libdevice, which uses other algorithms. On the host these copies equal glibc on every float for the unary functions. Whether the device gives the same bits has not been run.
+
+<img src="mermaid/ww3-gpu-device-math-dataflow.png" alt="Every transcendental call in the ported kernels goes through `ww::dm`. On the host it is the same Kokkos call as before, so the CPU build still calls glibc and its regtest record stands. On a CUDA device built with `WW_KOKKOS_LIBM` (on by default) it calls `ww::libm`, copies of the algorithms glibc 2.44 uses (ARM optimized-routines for `expf`, `logf`, `powf`, `sincosf`, `exp`; CORE-MATH for `tanhf`, `log10f`, `atan2f`, `tanh`; libmvec's SSE4 lanes), instead of CUDA's libdevice, which uses other algorithms. On the host these copies equal glibc on every float for the unary functions. Whether the device gives the same bits has not been run." width="560" />
+
+`ww3-gpu-device-math-dataflow` · [source](../../docs/WW3_GPU_VS_NOAA_202610.md) · [PDF](mermaid/ww3-gpu-device-math-dataflow.pdf) · [report a mistake](https://github.com/h0ffmann/ww3-gpu/issues/new?title=Figure%20ww3-gpu-device-math-dataflow%3A%20)
+
+
 ## [`kokkos/README.md`](../../kokkos/README.md)
 
 ### How does one Kokkos source reach the CPU and the GPU of the lab's workstation?
