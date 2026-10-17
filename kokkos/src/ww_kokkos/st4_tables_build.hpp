@@ -1,6 +1,8 @@
 // kokkos/src/ww_kokkos/st4_tables_build.hpp
 // INSIN4 and the TABU_* tables of ST4, translated as host code: they run once per
-// grid at initialisation, so they are not kernels. Selected at run time by
+// grid at initialisation, so they are not kernels. The three TABU_* run a host
+// parallel_for over their independent table elements, each element with the
+// Fortran's loops and sums in order (see each file). Selected at run time by
 // WW_KOKKOS_ST4_TABLES=1; otherwise the shim uses the tables the Fortran built
 // and registered, which have the same bits by construction.
 //

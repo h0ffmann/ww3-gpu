@@ -14,12 +14,11 @@
 // as the dump shows; ZLOG**4 as (z*z)*(z*z), gfortran's -O3 power tree).
 #include <cmath>
 
+#include <Kokkos_Core.hpp>
+
 #include "st4_tables_build.hpp"
 
 namespace ww::st4 {
-
-namespace {
-}  // namespace
 
 void tabu_tauhf2(Params& p, Real sigmax, HostArrays& a) {
   constexpr int kJtot = 250;  // JTOT :1692
@@ -33,8 +32,8 @@ void tabu_tauhf2(Params& p, Real sigmax, HostArrays& a) {
   const Real const1 = p.bbeta / kKappa2;                      // :1733
   const Real omegac = sigmax;                                 // :1734
 
-  auto& tauhft = a.tauhft;
-  auto& tauhft2 = a.tauhft2;
+  const auto tauhft = a.tauhft;
+  const auto tauhft2 = a.tauhft2;
   // :1741 TAUHFT(0:IUSTAR,0:IALPHA)=0.
   for (int l = 0; l <= kIalpha; ++l)
     for (int k = 0; k <= kIustar; ++k) tauhft(k, l) = static_cast<Real>(0.);
@@ -46,47 +45,57 @@ void tabu_tauhf2(Params& p, Real sigmax, HostArrays& a) {
   w[kJtot - 1] = static_cast<Real>(0.5);
   const Real x0 = static_cast<Real>(0.05);  // :1747
 
-  for (int k = 0; k <= kIustar; ++k) {
-    const Real ust0 = max_r(static_cast<Real>(k) * p.delust, static_cast<Real>(0.000001));  // :1750
-    for (int l = 0; l <= kIalpha; ++l) {
-      Real ust = ust0;  // :1752, not reset per I: each I starts from the previous I's final UST
-      const Real zz0 = ((p.aalpha + static_cast<Real>(l) * p.delalp) * (ust0 * ust0)) / g;  // :1753
-      const Real omegacc = max_r((x0 * g) / ust, omegac);  // :1754
-      const Real yc = std::sqrt(zz0 / g) * omegacc;        // :1755
-      const Real dely = max_r((static_cast<Real>(1.) - yc) / static_cast<Real>(kJtot), static_cast<Real>(0.));  // :1756
-      for (int i = 0; i <= kIlevTail; ++i) {
-        const Real levtail = static_cast<Real>(i) * p.deltail;  // :1761
-        // :1762 TAUHFT(K,L) is reset for every I; its integrand uses UST0 only, so
-        // the value left is the same for every I.
-        tauhft(k, l) = static_cast<Real>(0.);
-        tauhft2(k, l, i) = static_cast<Real>(0.);
-        const Real tauw0 = ust0 * ust0;  // :1764
-        Real tauw = tauw0;
-        for (int j = 1; j <= kJtot; ++j) {
-          const Real y = static_cast<Real>(j - 1) * dely + yc;  // :1767
-          const Real omega = std::sqrt(g / zz0) * y;            // :1768
-          const Real cm = g / omega;                            // :1770
-          Real zx = ust0 / cm + p.zzalp;                        // :1772
-          Real zarg = min_r(kKappa / zx, static_cast<Real>(20.));
-          Real zmu = min_r(((zz0 * g) / (cm * cm)) * std::exp(zarg), static_cast<Real>(1.));
-          Real zlog = min_r(std::log(zmu), static_cast<Real>(0.));
-          Real zl2 = zlog * zlog;
-          Real zbeta = (const1 * zmu) * (zl2 * zl2);
-          tauhft(k, l) = tauhft(k, l) + ((w[j - 1] * zbeta) / y) * dely;  // :1778
-          zx = ust / cm + p.zzalp;                                        // :1779
-          zarg = min_r(kKappa / zx, static_cast<Real>(20.));
-          zmu = min_r(((zz0 * g) / (cm * cm)) * std::exp(zarg), static_cast<Real>(1.));
-          zlog = min_r(std::log(zmu), static_cast<Real>(0.));
-          zl2 = zlog * zlog;
-          zbeta = (const1 * zmu) * (zl2 * zl2);
-          const Real r = ust / ust0;
-          tauhft2(k, l, i) = tauhft2(k, l, i) + (((w[j - 1] * zbeta) * (r * r)) / y) * dely;  // :1785
-          tauw = tauw - (((((w[j - 1] * (ust * ust)) * zbeta) * levtail) / y) * dely);      // :1786
-          ust = std::sqrt(max_r(tauw, static_cast<Real>(0.)));                               // :1787
+  // Each (K,L) is independent (:1749-1794): UST is set to UST0 per L (:1752) and carried
+  // only across I within that (K,L), J is summed in order per element, and nothing else
+  // is written. So the (K,L) pairs run in parallel on the host, each with the Fortran's
+  // I and J loops unchanged. Host only: the bits need glibc's expf/logf (AGENTS.md).
+  const Real delust = p.delust, delalp = p.delalp, deltail = p.deltail;
+  const Real aalpha = p.aalpha, zzalp = p.zzalp;
+  constexpr int kNl = kIalpha + 1;
+  using Host = Kokkos::DefaultHostExecutionSpace;
+  Kokkos::parallel_for(
+      "ww_st4.tabu_tauhf2", Kokkos::RangePolicy<Host>(0, (kIustar + 1) * kNl), [=](const int n) {
+        const int k = n / kNl;
+        const int l = n % kNl;
+        const Real ust0 = max_r(static_cast<Real>(k) * delust, static_cast<Real>(0.000001));  // :1750
+        Real ust = ust0;  // :1752, not reset per I: each I starts from the previous I's final UST
+        const Real zz0 = ((aalpha + static_cast<Real>(l) * delalp) * (ust0 * ust0)) / g;  // :1753
+        const Real omegacc = max_r((x0 * g) / ust, omegac);  // :1754
+        const Real yc = std::sqrt(zz0 / g) * omegacc;        // :1755
+        const Real dely = max_r((static_cast<Real>(1.) - yc) / static_cast<Real>(kJtot), static_cast<Real>(0.));  // :1756
+        for (int i = 0; i <= kIlevTail; ++i) {
+          const Real levtail = static_cast<Real>(i) * deltail;  // :1761
+          // :1762 TAUHFT(K,L) is reset for every I; its integrand uses UST0 only, so
+          // the value left is the same for every I.
+          tauhft(k, l) = static_cast<Real>(0.);
+          tauhft2(k, l, i) = static_cast<Real>(0.);
+          const Real tauw0 = ust0 * ust0;  // :1764
+          Real tauw = tauw0;
+          for (int j = 1; j <= kJtot; ++j) {
+            const Real y = static_cast<Real>(j - 1) * dely + yc;  // :1767
+            const Real omega = std::sqrt(g / zz0) * y;            // :1768
+            const Real cm = g / omega;                            // :1770
+            Real zx = ust0 / cm + zzalp;                          // :1772
+            Real zarg = min_r(kKappa / zx, static_cast<Real>(20.));
+            Real zmu = min_r(((zz0 * g) / (cm * cm)) * std::exp(zarg), static_cast<Real>(1.));
+            Real zlog = min_r(std::log(zmu), static_cast<Real>(0.));
+            Real zl2 = zlog * zlog;
+            Real zbeta = (const1 * zmu) * (zl2 * zl2);
+            tauhft(k, l) = tauhft(k, l) + ((w[j - 1] * zbeta) / y) * dely;  // :1778
+            zx = ust / cm + zzalp;                                          // :1779
+            zarg = min_r(kKappa / zx, static_cast<Real>(20.));
+            zmu = min_r(((zz0 * g) / (cm * cm)) * std::exp(zarg), static_cast<Real>(1.));
+            zlog = min_r(std::log(zmu), static_cast<Real>(0.));
+            zl2 = zlog * zlog;
+            zbeta = (const1 * zmu) * (zl2 * zl2);
+            const Real r = ust / ust0;
+            tauhft2(k, l, i) = tauhft2(k, l, i) + (((w[j - 1] * zbeta) * (r * r)) / y) * dely;  // :1785
+            tauw = tauw - (((((w[j - 1] * (ust * ust)) * zbeta) * levtail) / y) * dely);      // :1786
+            ust = std::sqrt(max_r(tauw, static_cast<Real>(0.)));                               // :1787
+          }
         }
-      }
-    }
-  }
+      });
+  Kokkos::fence("ww_st4.tabu_tauhf2");
 }
 
 }  // namespace ww::st4

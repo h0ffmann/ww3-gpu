@@ -9,6 +9,8 @@
 #include <algorithm>
 #include <cmath>
 
+#include <Kokkos_Core.hpp>
+
 #include "st4_tables_build.hpp"
 
 namespace ww::st4 {
@@ -24,35 +26,44 @@ void tabu_stress(Params& p, HostArrays& a) {
   const Real delu = p.delu;
   const Real deltauw = p.deltauw;
 
-  for (int i = 0; i <= kItauMax; ++i) {
-    const Real ztauw = sqr(static_cast<Real>(i) * deltauw);  // **2 :1377
-    for (int j = 0; j <= kJuMax; ++j) {
-      const Real utop = static_cast<Real>(j) * delu;
-      const Real cdrag = static_cast<Real>(0.0012875);
-      const Real wcd = std::sqrt(cdrag);
-      const Real ustold = utop * wcd;
-      // MAX(USTOLD**2, ZTAUW+EPS1) :1383
-      Real tauold = std::max(sqr(ustold), ztauw + kEps1);
-      for (int iter = 1; iter <= kNiter; ++iter) {
-        const Real x = ztauw / tauold;
-        Real ust = std::sqrt(tauold);
-        Real zz00 = p.aalpha * tauold / kGrav;
-        if (p.zz0max != static_cast<Real>(0)) zz00 = std::min(zz00, p.zz0max);
-        // (1.-X)**XM with REAL XM=0.5: a pow call, not sqrt (:1390)
-        const Real zz0 = zz00 / std::pow(one - x, kXm);
-        // ALOG(ZZWND/ZZ0) appears twice; -O3 calls logf once (same value).
-        const Real lg = std::log(p.zzwnd / zz0);
-        const Real f = ust - kKappa * utop / lg;
-        // Left to right as written :1394-1395; (XM+1) folds to 1.5.
-        const Real delf = one - kKappa * utop / sqr(lg) * static_cast<Real>(2.) / ust *
-                                    (one - (kXm + one) * x) / (one - x);
-        ust = ust - f / delf;
-        // UST**2. with a REAL exponent 2.0: folded to UST*UST (:1397)
-        tauold = std::max(sqr(ust), ztauw + kEps1);
-      }
-      a.taut(i, j) = std::sqrt(tauold);
-    }
-  }
+  // Each (I,J) is independent (:1376-1401): it reads only scalars, and only TAUT(I,J)
+  // is written, after its own NITER iterations. So the pairs run in parallel on the
+  // host, each with the Fortran's ITER loop unchanged; TAUT(I,0)=0 follows, as written.
+  const Real aalpha = p.aalpha, zz0max = p.zz0max, zzwnd = p.zzwnd;
+  const auto taut = a.taut;
+  constexpr int kNj = kJuMax + 1;
+  using Host = Kokkos::DefaultHostExecutionSpace;
+  Kokkos::parallel_for(
+      "ww_st4.tabu_stress", Kokkos::RangePolicy<Host>(0, (kItauMax + 1) * kNj), [=](const int n) {
+        const int i = n / kNj;
+        const int j = n % kNj;
+        const Real ztauw = sqr(static_cast<Real>(i) * deltauw);  // **2 :1377
+        const Real utop = static_cast<Real>(j) * delu;
+        const Real cdrag = static_cast<Real>(0.0012875);
+        const Real wcd = std::sqrt(cdrag);
+        const Real ustold = utop * wcd;
+        // MAX(USTOLD**2, ZTAUW+EPS1) :1383
+        Real tauold = std::max(sqr(ustold), ztauw + kEps1);
+        for (int iter = 1; iter <= kNiter; ++iter) {
+          const Real x = ztauw / tauold;
+          Real ust = std::sqrt(tauold);
+          Real zz00 = aalpha * tauold / kGrav;
+          if (zz0max != static_cast<Real>(0)) zz00 = std::min(zz00, zz0max);
+          // (1.-X)**XM with REAL XM=0.5: a pow call, not sqrt (:1390)
+          const Real zz0 = zz00 / std::pow(one - x, kXm);
+          // ALOG(ZZWND/ZZ0) appears twice; -O3 calls logf once (same value).
+          const Real lg = std::log(zzwnd / zz0);
+          const Real f = ust - kKappa * utop / lg;
+          // Left to right as written :1394-1395; (XM+1) folds to 1.5.
+          const Real delf = one - kKappa * utop / sqr(lg) * static_cast<Real>(2.) / ust *
+                                      (one - (kXm + one) * x) / (one - x);
+          ust = ust - f / delf;
+          // UST**2. with a REAL exponent 2.0: folded to UST*UST (:1397)
+          tauold = std::max(sqr(ust), ztauw + kEps1);
+        }
+        taut(i, j) = std::sqrt(tauold);
+      });
+  Kokkos::fence("ww_st4.tabu_stress");
   // Force zero wind to have zero stress (Bidlot 1996) :1405-1409
   for (int i = 0; i <= kItauMax; ++i) {
     a.taut(i, 0) = static_cast<Real>(0.0);

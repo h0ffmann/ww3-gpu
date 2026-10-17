@@ -19,6 +19,7 @@
 // with WW_KOKKOS_FLX_TABLES=1, which also reports how many values differ.
 
 #include "fortran_iface/ww_kokkos_c.hpp"
+#include "fortran_iface/timers.hpp"
 
 #include <Kokkos_Core.hpp>
 
@@ -462,7 +463,10 @@ int ww_flx_commit(int igrid) {
         set_error(WW_KOKKOS_ERR_TABLE, "ww_flx_commit: EWN1 not registered");
         return WW_KOKKOS_ERR_TABLE;
       }
-      if (flags().tables) rebuild_distab(m);
+      if (flags().tables) {
+        ww::timers::Region t("flx.tables.call");  // once per grid; .call: counted as Kokkos time
+        rebuild_distab(m);
+      }
       // The kernels read EWN1(I1+1) for I1 <= N1MAX (w3flx2md.F90:198-200).
       if (m.n1max < 0 || m.n1max + 1 > ww::disp::kNar1d || !(m.dsie > 0)) {
         set_error(WW_KOKKOS_ERR_TABLE, "ww_flx_commit: N1MAX or DSIE out of range");
