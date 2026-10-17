@@ -1,0 +1,17 @@
+# The calls each Kokkos part makes in `scripts/ww3-gpu.sh --ww3-gpu coast --kokkos resident`, one
+# "ww_kokkos: <counter>: <n>" line of the Kokkos run's ww3_shel.out each (the *_COUNT flags).
+# They do not depend on WW_KOKKOS_VA_RESIDENT, _VA_CHECK, _VA_POISON, _SRCE_STAGED, _OUTG_STAGED
+# or _XYP3_TEAM, and the script skips them when a batch cap is set. A part that falls back to the
+# Fortran, or a cache that never skips, writes the same bits and only these lines show it
+# (docs/log/2026-10-17-mutation-audit.md). A change of the case or of a part's call pattern
+# changes them: re-read them from a run, never edit one to pass.
+VA partial host reads: 25
+VA host updates repeated on the device: 13
+VA device columns zeroed: 91
+W3SRCE batched points: 258830
+W3SRCE batch inputs unchanged, not copied: 422
+W3XYP3 batched calls on the resident VA: 72
+W3XYP3 spectra: 41472
+W3KTP3 batched calls on the resident VA: 144
+W3KTP3 point calls: 517660
+W3OUTG Kokkos calls: 13
