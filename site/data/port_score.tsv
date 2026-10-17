@@ -7,4 +7,4 @@ of the run time, regtested	48.6 %	10 of 1 023 routines	WW3's regtests ran with i
 of the lines of code, translated	25.70 %	67 699 of 263 375	Fortran lines of the translated routines, of every line in WW3's model/src, in 63 of 147 files
 of the lines of code, ported	6.01 %	15 842 of 263 375	Fortran lines of the ported routines, of every line in WW3's model/src, in 22 of 147 files
 of the lines of code, regtested	1.02 %	2 677 of 263 375	Fortran lines of the regtested routines, of every line in WW3's model/src, in 5 of 147 files
-lines of Kokkos C++	56 435	in 343 files	under kokkos/src: the port itself
+lines of Kokkos C++	56 461	in 343 files	under kokkos/src: the port itself
