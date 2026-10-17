@@ -34,4 +34,6 @@ target_link_libraries(L1_test_nccmp_tol PRIVATE nccmp_tol_lib)
 ww_add_test(L1_test_bench_case)
 target_link_libraries(L1_test_bench_case PRIVATE bench_case_lib)
 ww_add_test(L1_test_fetch_analyse)
+# A tool of the shims (fortran_iface/timers.hpp), not a ported routine.
+ww_add_test(L1_test_timers)
 target_link_libraries(L1_test_fetch_analyse PRIVATE fetch_analyse_lib)
