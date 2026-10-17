@@ -7,35 +7,37 @@ Read with `git -C WW3 fetch origin && git -C WW3 branch -r` and `git rev-list --
 
 | h0ffmann/WW3 branch | Head | Against the `WW3/` pin | What it wires |
 |---|---|---|---|
-| `ww3-gpu/kokkos-st4` | `c9a6a0c6` | **the pin** | the DIA (`W3SNL1`, `INSNL1`) and ST4 (`W3SDS4`, `W3SIN4`, `W3SPR4` and their tables) in `w3srcemd.F90` and `w3initmd.F90`, behind the `KOKKOS` switch |
-| `ww3-gpu/kokkos-srce` | `e062ff0b` | one commit ahead | `W3SRCE` itself (`WW_KOKKOS_SRCE`, with `LN1`, `BT1`, `DB1`): `w3wavemd.F90` +24, `w3initmd.F90` +23, `w3kokkosmd.F90` +212 lines |
-| `ww3-gpu/kokkos-st-flx-swl` | `8e433f99` | seven commits on `ww3-gpu/kokkos-srce`; local, not pushed on 2026-10-16 ⚠ | ST0, ST1, ST2, ST3, ST6 (`W3SPRn`, `W3SINn`, `W3SDSn`), `W3FLX1` to `W3FLX5` and `W3SWL6`, one commit per unit, compiled and not run ([section 6](#6-the-source-term-units-on-ww3-gpukokkos-st-flx-swl)) |
+| `ww3-gpu/kokkos-wave-support` | `357f575c` | **the pin** since this change; one commit on `ww3-gpu/kokkos-st-flx-swl`, pushed 2026-10-16 | `W3GATH`, `W3SCAT`, `W3UWND`, `W3UTRN`, `W3DZXY`, `W3MAP3`, `W3MAPT`, `DISTAB`, the master flag `WW_KOKKOS_ALL` and the parts line in `log.ww3` ([sections 7](#7-run-time-flags-one-per-part-and-a-master) and [8](#8-w3waves-support-routines-on-ww3-gpukokkos-wave-support)) |
+| `ww3-gpu/kokkos-st4` | `c9a6a0c6` | contained in the pin | the DIA (`W3SNL1`, `INSNL1`) and ST4 (`W3SDS4`, `W3SIN4`, `W3SPR4` and their tables) in `w3srcemd.F90` and `w3initmd.F90`, behind the `KOKKOS` switch |
+| `ww3-gpu/kokkos-srce` | `e062ff0b` | contained in the pin | `W3SRCE` itself (`WW_KOKKOS_SRCE`, with `LN1`, `BT1`, `DB1`): `w3wavemd.F90` +24, `w3initmd.F90` +23, `w3kokkosmd.F90` +212 lines |
+| `ww3-gpu/kokkos-st-flx-swl` | `8e433f99` | the pin's parent; seven commits on `ww3-gpu/kokkos-srce`, pushed (`git ls-remote`, v 2026-10-16) | ST0, ST1, ST2, ST3, ST6 (`W3SPRn`, `W3SINn`, `W3SDSn`), `W3FLX1` to `W3FLX5` and `W3SWL6`, one commit per unit, compiled; ST4 and `W3SRCE` from it ran in this change's checkpoint, the other units not ([section 6](#6-the-source-term-units-on-ww3-gpukokkos-st-flx-swl)) |
 | `hoff/kokkos-snl1` | `bb08623a` | two commits behind, contained in the pin | the DIA alone; superseded |
 | `develop` | `03adda91` | the fork's base | none; equal to NOAA-EMC/WW3 `develop` on 2026-10-16, so there is no upstream change to take |
 
 What the next plug-ins need from the fork:
 
-- **`W3SRCE`, `W3SLN1`, `W3SBT1`, `W3SDB1`**: moving the pin to `e062ff0b`. That is a checkpoint
-  under ADR-0011 (`just smoke-ww3-gpu`, `just full-ww3-gpu`, `just ww3-gpu-matrix`) before
-  `kokkos/ports.tsv` may say `wired` yes.
-- **Propagation and the `W3WAVE` support routines** (`W3XYP3`, `W3KTP3`, `W3QCK1-3`, `W3GATH`,
-  `W3SCAT`, `W3UWND`, `W3DZXY`, `W3UTRN`, `W3MAP3`, `W3MAPT`, `DISTAB`): nothing on the fork yet.
-  Each needs a `bind(C)` interface in `w3kokkosmd.F90`, a C shim in `kokkos/src/fortran_iface/`,
-  and a hunk in `w3wavemd.F90` (or `w3iogrmd.F90` for `DISTAB`) that keeps the Fortran call
-  selectable at run time, on a new fork branch from `ww3-gpu/kokkos-srce`. The shared-memory
+- **`W3SRCE`, `W3SLN1`, `W3SBT1`, `W3SDB1`**: at the pin since `8e433f99`. This change's
+  checkpoint ran the Kokkos `W3SRCE` byte-identical (section 8); `kokkos/ports.tsv` still says
+  `wired` no for those rows and for the ST0 to ST6, FLX and SWL rows, which this change does not
+  edit ⚠.
+- **Propagation** (`W3XYP3`, `W3KTP3`, `W3QCK1-3`): nothing on the fork yet; the `W3WAVE`
+  support routines are wired (section 8). Each needs a `bind(C)` interface in `w3kokkosmd.F90`, a C shim in `kokkos/src/fortran_iface/`,
+  and a hunk in `w3wavemd.F90` that keeps the Fortran call selectable at run time, on a new fork
+  branch from `ww3-gpu/kokkos-wave-support`. The shared-memory
   `W3GATH`/`W3SCAT` path is the only one ported; NOAA's operational switches are `DIST MPI`
   (`WW3-noaa/model/bin/switch_NCEP_st4`), whose branches are not.
 - The fork's `model/src/CMakeLists.txt` already links `ww_kokkos` under `KOKKOS`, and a new shim
   is one more source in this repository's `fortran_iface` target. What has to move with each new
-  set of entry points is the ABI version: the fork asks for `find_package(ww_kokkos 0.2)` and
-  `kokkos/CMakeLists.txt` declares `0.2.0`. `ww3-gpu/kokkos-srce` adds the `W3SRCE` entry points
-  and still asks for `0.2`, so an install of `ww_kokkos` from before them satisfies the version
-  check and fails only at link ⚠; the next fork branch should raise both sides to `0.3`.
+  set of entry points is the ABI version: since `357f575c` the fork asks for
+  `find_package(ww_kokkos 0.3)` and `kokkos/CMakeLists.txt` declares `0.3.0` (`SameMinorVersion`),
+  so an install from before `ww_kokkos_flag` and `ww_wave_*` is refused at configure time; the
+  next set of entry points raises both sides to `0.4`.
 - The source-term path runs per sea point, so it works under `DIST MPI` as under `SHRD` (the
   regtest matrix's MPI entries ran it, `AGENTS.md`, "Bit for bit"). A propagation path is
   different: `W3GATH`/`W3SCAT` and the `PDLIB` solver exchange data between ranks, so their
-  hunks must keep the Fortran under those switches until a port of that branch exists, and the
-  fork's only switch guard today is `KOKKOS` with `ST4` and `FLX5`.
+  hunks keep the Fortran under those switches until a port of that branch exists: the
+  `W3GATH`/`W3SCAT` wrappers compile only under `SHRD`, and `WW_KOKKOS_GATH=1` under `MPI` stops
+  the model (section 7).
 
 ## How the first patch was made
 
@@ -637,3 +639,153 @@ each header ⚠ (`W3SDS2` states rad/s for `FPI` and m/s for `USTAR`). `igrid` i
 | `s`, `d` | `S` ← `VSIN`, `D` ← `VDIN` | `float*` | out | NSPEC | source term, its diagonal derivative |
 | `info` | none | `int*` | out | 2 | the integers of the stopping FORMAT, or the first `ITERMAX` point |
 | return | none | `int` | | | 0, a `WwSt6Code` the wrapper turns into the Fortran's FORMAT and `EXTCDE`, or `LF_ITERMAX`: that point is computed again by the Fortran `W3SIN6`, which writes the warning |
+
+## 7. Run-time flags: one per part, and a master
+
+Every part of WW3 that the fork can run on Kokkos has its own run-time flag `WW_KOKKOS_<PART>`,
+and every flag defaults to the Fortran. Since `ww3-gpu/kokkos-wave-support` (`357f575c`) one
+function resolves all of them, `ww_kokkos_flag` in
+[`part_flags.cpp`](part_flags.cpp): every shim's `ww_*_enabled()` and `W3KOKKOS_SETUP` in
+`w3kokkosmd.F90` ask it, so the Fortran `LOGICAL`s and the shims cannot disagree (v, read in
+the code 2026-10-16).
+
+| `WW_KOKKOS_<PART>` | `WW_KOKKOS_ALL` | The part runs on |
+|---|---|---|
+| `1` | any | Kokkos (explicit) |
+| set, not `1` (`0`) | any | Fortran (explicit) |
+| unset | `1` | Kokkos, where its translation covers the switch file; the Fortran otherwise |
+| unset | unset, or not `1` | Fortran (the default since 2026-10-14) |
+
+So `WW_KOKKOS_ALL=1` is "100 % Kokkos" and `WW_KOKKOS_ALL=0` "0 % Kokkos" in one place, and a
+per-part flag set explicitly wins over the master. **100 % means 100 % of the wired parts, not
+of WW3.** At the `WW3/` pin of this change, `kokkos/PORT_STATUS.md` (`port_score.py --write`,
+2026-10-16) gives the wired rows ("ported" level) **87.6 %** of the run time of the
+committed profile (`bench_small`, 1 thread, `WW3@6d1bcdfe`, 2026-10-14) (v); the rest of WW3,
+the propagation (`W3XYP3`, `W3KTP3`, `W3QCK*`), the I/O and the set-up, stays Fortran whatever
+the master says. Two rules keep the master safe on any switch file: a part whose translation does
+not cover the switch file stays Fortran under `WW_KOKKOS_ALL=1` and stops the model under
+`WW_KOKKOS_<PART>=1` (`KOKKOS_PART` in `w3kokkosmd.F90`); `W3SRCE` does the same outside
+`ST4 NL1` and the lab switch (`W3INIT`, `W3KOKKOS_SRCE_SETUP`). The `*_COUNT` and `*_TABLES`
+rows differ: `*_COUNT` are diagnostics and ignore the master; `*_TABLES` follow it.
+
+`W3INIT` writes one line to `log.ww3` after every set-up, the parts this build can run and where
+each runs (v, smoke 2026-10-16):
+
+```text
+  Kokkos parts (K Kokkos, F Fortran): SNL1=K SDS4=K SIN4=K SPR4=K ST4_TABLES=K SRCE=K GATH=K SCAT=K UWND=K UTRN=K DZXY=K MAP3=K MAPT=K DISTAB=K (14 of 14 on Kokkos)
+```
+
+`scripts/ww3-gpu.sh --ww3-gpu <case> --kokkos all|none|<PART,...>` runs the Kokkos case with
+`WW_KOKKOS_ALL=1`, `=0`, or `=0` plus the listed parts, unsets every `WW_KOKKOS_<PART>` in both
+runs, gives the Fortran run `WW_KOKKOS_ALL=0`, sets every counter in the Kokkos run and prints
+the parts line and the counters. Without `--kokkos` it keeps `WW3GPU_ROUTINES` as before, now
+with `WW_KOKKOS_ALL=0` in both runs.
+
+The parity column is a judgement (⚠) from the port report's evidence unless it names a
+measurement: what decides bit parity is the compile flags (`-O3`, `-ffp-contract=off` /
+`--fmad=false`), `REAL(4)` kept as `float`, the reduction order, the libm calls (glibc on the host;
+CUDA's libdevice on a GPU, whose bits against glibc are not known), the `MIN`/`MAX` operand order
+for NaN and `-0.0`, the `!$OMP CRITICAL` around one caller, the per-call copies (bitwise), and the
+shim's strides and lower bounds. "smoke" is `scripts/ww3-gpu.sh --ww3-gpu smoke --cpu` on
+2026-10-16 (`ww3_ts1`, one point, 10 days, Kokkos 5.2.2 OpenMP, gfortran/g++ 16.2.0, the pinned
+`ww3` shell, an Intel Core i9-14900 with 32 threads); "full" is the same on `bench_small` (120 x 80, 9 520 sea points, 12 h).
+"byte-identical" means `cmp` found `out_grd.ww3`, `out_pnt.ww3`, `restart.ww3` and the
+`ww3_ounf` NetCDF file equal to the Fortran run of the same executable, and the first three equal
+to `--ww3` (pure NOAA WW3 at `WW3-noaa/`); the NetCDF file against `--ww3` differs only in its
+`WAVEWATCH_III_switches` attribute, which names `KOKKOS` (`ncdump` diff, v).
+
+| Part | Flag | Switch it needs | Replaces | Counter (at exit) | Parity |
+|---|---|---|---|---|---|
+| SNL1 | `WW_KOKKOS_SNL1` | `NL1` | `W3SNL1` in `W3SRCE` | `WW_KOKKOS_SNL1_COUNT` | measured, CPU: byte-identical, smoke, full and the 100-entry matrix 2026-10-15 (v, `port_report/W3SNL1_KOKKOS.md`), and smoke 2026-10-16 with ST4 on (2 339 spectra) (v); GPU ⚠, never run in WW3 |
+| SDS4, SIN4, SPR4 | `WW_KOKKOS_SDS4`, `_SIN4`, `_SPR4` | `ST4` | the three in `W3SRCE` | `WW_KOKKOS_ST4_COUNT` | measured, CPU: byte-identical in the smoke 2026-10-16 with `SNL1,SDS4,SIN4,SPR4,ST4_TABLES` (2 339, 6 838, 6 660 spectra) (v) and the ST4 checkpoint of 2026-10-15 (v); GPU ⚠: `expf`, `logf`, `tanhf`, `powf`, `atan2f` and the reproduced libmvec loops become libdevice |
+| ST4_TABLES | `WW_KOKKOS_ST4_TABLES` | `ST4` | the ST4 tables read from `mod_def.ww3` and `ST4TABUHF2.bin`, rebuilt in C++ | (prints the count of differing values) | measured: "0 values differ from the Fortran's" in the smoke 2026-10-16 (v) |
+| SRCE | `WW_KOKKOS_SRCE` | `ST4 NL1` and exactly the lab switch's source terms | `W3SRCE(srce_direct)` in `W3WAVE`, with ST4, `W3SNL1`, `W3SLN1`, `W3SBT1`, `W3SDB1` inside | `WW_KOKKOS_SRCE_COUNT` | measured, CPU: byte-identical in the smoke 2026-10-16 with `WW_KOKKOS_ALL=1` (2 161 spectra, all of them; the per-routine ST4 and DIA counters were 0 there) (v), and in the full  (230 100 spectra, v); GPU ⚠ (`logf`, `tanhf`, `sincosf`) |
+| SPR0 | `WW_KOKKOS_SPR0` | `ST0` | `W3SPR0` | `WW_KOKKOS_ST0_COUNT` | judgement ⚠: likely on any backend, `sqrtf` only (IEEE), sums kept in the Fortran's order (`port_report/W3SPR0_KOKKOS.md`); never run |
+| SPR1, SIN1, SDS1 | `WW_KOKKOS_SPR1`, `_SIN1`, `_SDS1` | `ST1` | the three in `W3SRCE` | `WW_KOKKOS_ST1_COUNT` | judgement ⚠: CPU likely (`sincosf`, libmvec loops reproduced); GPU unlikely (libdevice `sincosf`); never run |
+| SPR2, SIN2, SDS2 | `WW_KOKKOS_SPR2`, `_SIN2`, `_SDS2` | `ST2` | the three in `W3SRCE` | `WW_KOKKOS_ST2_COUNT` | judgement ⚠: CPU likely (`logf`, `sincosf`, `powf`, the x87 `fprem` of `MOD`, libmvec); GPU unlikely; never run |
+| SPR3, SIN3, SDS3 | `WW_KOKKOS_SPR3`, `_SIN3`, `_SDS3` | `ST3` | the three in `W3SRCE` | `WW_KOKKOS_ST3_COUNT` | judgement ⚠: CPU likely (`expf`, `logf`, `powf`, `sincosf`, libmvec); GPU unlikely; never run |
+| SPR6, SIN6, SDS6 | `WW_KOKKOS_SPR6`, `_SIN6`, `_SDS6` | `ST6` | the three in `W3SRCE` | `WW_KOKKOS_ST6_COUNT` | judgement ⚠: CPU likely (`expf`, `logf`, `tanhf`, `powf`, `__powisf2` kept, libmvec); GPU unlikely; never run |
+| SWL6 | `WW_KOKKOS_SWL6` | `ST6` | `W3SWL6` | `WW_KOKKOS_SWL_COUNT` | judgement ⚠: likely on CPU (`sqrtf`, one libmvec loop reproduced); never run |
+| FLX1 .. FLX5 | `WW_KOKKOS_FLX1` .. `_FLX5` | the matching `FLXn` | `W3FLXn` in `W3SRCE` | `WW_KOKKOS_FLX_COUNT` | judgement ⚠: CPU likely (`expf`, `logf`, `powf`, `tanhf`, `__powisf2` kept, libmvec); GPU unlikely; never run |
+| FLX_TABLES | `WW_KOKKOS_FLX_TABLES` | `FLX2` or `FLX3` | `W3DISPMD`'s `EWN1`, `DSIE`, `N1MAX` as the FLX shim reads them, rebuilt in C++ | (prints the count of differing values) | judgement ⚠: the same `distab` as DISTAB below, so as DISTAB; never run |
+| GATH, SCAT | `WW_KOKKOS_GATH`, `_SCAT` | `SHRD` | `W3GATH`, `W3SCAT` in `W3WAVE` | `WW_KOKKOS_WAVE_COUNT` | measured, CPU: byte-identical in the full 2026-10-16, alone with the other support parts and under `WW_KOKKOS_ALL=1` (13 824 calls each) (v); 0 calls in the smoke (one point, no spatial propagation). Pure copies (`movss`, no arithmetic, `port_report/W3GATH_KOKKOS.md`), so any backend gives the bits; GPU ⚠ never run. Only the `SHRD` branch exists |
+| UWND | `WW_KOKKOS_UWND` | `WNT1` (with or without `RWND`), none of `WNT0 WNT2 OASACM MGW SMC WCOR STAB2` | `W3UWND` in `W3WAVE` | `WW_KOKKOS_WAVE_COUNT` | measured, CPU: byte-identical in the smoke 2026-10-16, alone with the other support parts (2 161 calls) and under `WW_KOKKOS_ALL=1` (v) and in the full (25 calls) (v); GPU ⚠ (`atan2f`, `fmodf`, `sincosf` from libdevice, `port_report/W3UWND_KOKKOS.md`) |
+| UTRN | `WW_KOKKOS_UTRN` | `IC0` | `W3UTRN` in `W3WAVE` | `WW_KOKKOS_WAVE_COUNT` | judgement ⚠: likely on CPU (`expf`, `minss`/`maxss` operand order read from the object); the smoke and the full ran only `TRFLAG = 0` (`ATRNX = ATRNY = 1`), byte-identical (v); GPU ⚠ (`expf`); the `NX` or `NY` = 1 edge reads past the array go past the shim's copy instead of WW3's memory ⚠ |
+| DZXY | `WW_KOKKOS_DZXY` | any (the `REFRX` call keeps the Fortran) | `W3DZXY` in `W3WAVE` | `WW_KOKKOS_WAVE_COUNT` | measured, CPU: byte-identical in the full 2026-10-16 (1 call, the depth gradient; the case has no current) (v); 0 calls in the smoke. No libm call; three products commuted in the assembly change only which NaN payload survives when two NaN meet (`port_report/W3DZXY_KOKKOS.md`) ⚠; GPU ⚠ never run, needs `--fmad=false` |
+| MAP3, MAPT | `WW_KOKKOS_MAP3`, `_MAPT` | `PR3` (`MAP3` only where `GTYPE < 3`) | `W3MAP3`, `W3MAPT` in `W3WAVE` | `WW_KOKKOS_WAVE_COUNT` | measured, CPU: byte-identical in the full 2026-10-16 (1 call each on the 120 x 80 grid; the smoke grid is one cell) (v). `W3MAP3` is integer only, `W3MAPT` three `minss` and a compare with their operand order kept (port reports); GPU ⚠ never run. `W3MAP3`'s out-of-bounds read at `IX = 2, IY = 1` or `IX = NX-1, IY = NY` would read past the shim's copy, not WW3's memory ⚠ |
+| DISTAB | `WW_KOKKOS_DISTAB` | any | `DISTAB` (with `WAVNU2`), run by `W3IOGR('READ')`: the Kokkos tables overwrite the Fortran's in `W3INIT` | `WW_KOKKOS_WAVE_COUNT`, and the count of differing values | measured, CPU: "0 of EWN1, ECG1(0:121), DSIE, N1MAX differ from the Fortran's" and byte-identical output in the smoke 2026-10-16 (v); GPU ⚠ (`tanhf`, `coshf`, `sinhf` from libdevice, `port_report/DISTAB_KOKKOS.md`) |
+
+## 8. W3WAVE's support routines on `ww3-gpu/kokkos-wave-support`
+
+One commit on `ww3-gpu/kokkos-st-flx-swl` (`8e433f99`): `357f575c`, pushed to h0ffmann/WW3 on
+2026-10-16. The shim is [`wave_support_shim.cpp`](wave_support_shim.cpp), whose comments carry
+the argument table of each entry point (`ww_wave_gath`, `_scat`, `_uwnd`, `_utrn`, `_dzxy`,
+`_map3`, `_mapt`, `_distab`), declared in `ww_kokkos_c.hpp`; the ABI is `ww_kokkos` 0.3 on both
+sides (`kokkos/CMakeLists.txt`, the fork's `find_package(ww_kokkos 0.3)`), so an install from
+before these entry points is refused at configure time, not at link.
+
+- **`w3kokkosmd.F90`**: the `bind(C)` interfaces, the flags (read in `W3KOKKOS_SETUP` through
+  `KOKKOS_PART`), `W3KOKKOS_REPORT`, and one wrapper `W3KOKKOS_<R>` per routine with the Fortran
+  routine's dummy list (`W3KOKKOS_UWND` takes only `FLFRST`: `VGX`, `VGY` are read only under
+  `MGW`). A wrapper passes the module arrays the Fortran routine reads, by reference, calls the
+  shim inside `!$OMP CRITICAL (WW_KOKKOS_WAVE)` and stops with `EXTCDE` on a non-zero status.
+  It associates no pointer and allocates no module array; it writes the arrays the Fortran
+  routine writes (and `NMX0` .. `NCENT` through their pointers, as `W3MAP3` does).
+- **`w3wavemd.F90`**: seven hunks under `#ifdef W3_KOKKOS`, each `IF (KOKKOS_X) THEN CALL
+  W3KOKKOS_X (...) ELSE` with the original call unchanged in the `ELSE`: `W3DZXY` for the current
+  and depth gradients, `W3UWND`, `W3MAP3` (also `GTYPE < 3`), `W3UTRN`, `W3MAPT`, `W3GATH`,
+  `W3SCAT`. The `W3DZXY` call under `REFRX` passes the strided section `DCDX(IK,:,:)` and keeps
+  the Fortran.
+- **`w3initmd.F90`**: after the source-term set-ups, `IF (KOKKOS_DISTAB) CALL W3KOKKOS_DISTAB`,
+  then `CALL W3KOKKOS_REPORT (NDSO)`; the `W3SRCE` refusal outside `ST4 NL1` now applies only to
+  an explicit `WW_KOKKOS_SRCE=1`. `DISTAB` cannot be hooked in `w3iogrmd.F90`: `W3IOGR('READ')`
+  runs it inside `W3INIT` before `WW_KOKKOS_INIT`, and 20 other files call `W3IOGR`, most of them
+  programs that never start Kokkos (`grep -l "CALL W3IOGR" WW3/model/src/*.F90`, 21 files), so the hunk rebuilds the tables after
+  Kokkos is up, once per process as `W3IOGR`'s `SAVE` flag `FLDISP` does.
+- **Memory contract**: phase 1, copy per call, no Unified Memory. `W3GATH`/`W3SCAT` copy one row
+  `VA(ISPEC, 0:NSEA)` per call into a `(1, NSEA+1)` View and call the launcher with `ISPEC = 1`, so
+  a call moves `O(NSEA)` values, not the whole `VA`; the kernel is a copy and the row holds VA's
+  bits. `W3UTRN`'s `TRNY(0)` read (`w3updtmd.F90:2954` at the pin, `TRFLAG` 1, 3 or 5 with a sea
+  point at `IXY = 1`) is done by the shim at `trny[-1]`, the address the Fortran reads.
+- **Without `KOKKOS`**: the hunks are not compiled, so the routines are the Fortran's. With
+  `KOKKOS` and every flag off, the built binary ran `ww3_ts1` byte-identical to `--ww3` (smoke
+  with `--kokkos none`, v 2026-10-16).
+
+Not wired, one line each (the six host-side translations of goal 42, read in
+`/home/hoffmann/code/ww3-gpu-six/kokkos/src/ww_kokkos/` and this tree on 2026-10-16):
+
+- `W3MPIO`: under `SHRD` its body compiles to nothing (the `W3_MPI` blocks are the routine), so there is nothing to call on the lab switch; under `MPI` it builds MPI requests, which phase 1 does not own.
+- `W3SETG`: it is Fortran pointer association (`MAPSF => GRIDS(IMOD)%MAPSF`, ...); C++ cannot point a Fortran module pointer without taking ownership of that state.
+- `W3INIT`: it allocates the module arrays and associates their pointers (`W3DIMX`, `W3SETG`, `W3SETW`, ...), opens the files and calls `W3IOGR`/`W3IORS`; it is the owner of the state the shims borrow.
+- `W3IORS`: it reads and writes the restart file with Fortran unformatted I/O into module arrays it may allocate; phase 1 has no C++ I/O path.
+- `W3IOGO`: it writes the gridded output file with Fortran unformatted I/O, record by record; same reason.
+- `W3IOBC`: it reads and writes the boundary file with Fortran unformatted I/O and allocates its module buffers; same reason.
+
+Not covered, and kept on the Fortran by the switch guards or the hunk conditions: the `MPI`
+branches of `W3GATH`/`W3SCAT` and `PDLIB`, SMC grids (`W3GATHSMC`, `FSWND`), unstructured
+grids (`W3MAP3` with `GTYPE >= 3`), and the `W3UWND` variants `WNT0`, `WNT2`, `OASACM`, `MGW`,
+`WCOR`, `STAB2`.
+
+### The checkpoint, 2026-10-16
+
+ADR-0011's pin-move checkpoint on the CPU (OpenMP backend; never `--gpu`). The commands and
+their output are in this change's `Tested:` record.
+
+| Run | Parts on Kokkos | Calls made (counters) | Against the Fortran, same executable | Against `--ww3` |
+|---|---|---|---|---|
+| `just smoke-ww3-gpu` (default, `WW3GPU_ROUTINES=SNL1`) | SNL1 | (no counter set) | byte-identical | byte-identical; `nccmp-tol` PASS |
+| smoke `--kokkos none` (`WW_KOKKOS_ALL=0`) | none (0 of 14) | none | byte-identical | byte-identical |
+| smoke `--kokkos all` (`WW_KOKKOS_ALL=1`) | all 14 | `W3SRCE` 2 161; `W3UWND` 2 161; `W3UTRN`, `W3MAP3`, `W3MAPT`, `DISTAB` 1 each; `W3GATH`, `W3SCAT`, `W3DZXY` 0; `W3SNL1`, `W3SDS4`, `W3SIN4`, `W3SPR4` 0 (inside the Kokkos `W3SRCE`) | byte-identical | byte-identical |
+| smoke `--kokkos SNL1,SDS4,SIN4,SPR4,ST4_TABLES` | 5 | `W3SNL1` 2 339, `W3SDS4` 2 339, `W3SIN4` 6 838, `W3SPR4` 6 660; ST4 tables 0 values differ | byte-identical | byte-identical |
+| smoke `--kokkos UWND,UTRN,MAP3,MAPT,DISTAB` | 5 | `W3UWND` 2 161, the rest 1; `W3GATH`, `W3SCAT`, `W3DZXY` 0 | byte-identical | byte-identical |
+| smoke `--kokkos DISTAB` | 1 | 1; 0 of 246 table values differ | byte-identical | byte-identical |
+| full `--kokkos GATH,SCAT,UWND,UTRN,DZXY,MAP3,MAPT,DISTAB` | 8 | `W3GATH`, `W3SCAT` 13 824 each; `W3UWND` 25; `W3UTRN`, `W3DZXY`, `W3MAP3`, `W3MAPT`, `DISTAB` 1 each | byte-identical | byte-identical (`out_grd.ww3`) |
+| full `--kokkos all` | all 14 | `W3SRCE` 230 100; `W3GATH`, `W3SCAT` 13 824 each; `W3UWND` 25; the rest 1; the per-routine ST4 and DIA counters 0 | byte-identical | byte-identical (`out_grd.ww3`) |
+
+No bisection was needed: no run differed. A part whose counter is 0 did not exercise the port
+in that run and is reported as such: in the smoke, `ww3_ts1` is one point, so there is no
+spatial propagation (`W3GATH`, `W3SCAT`) and no gradient (`W3DZXY`); `W3UTRN` ran only its
+`TRFLAG = 0` branch and `W3MAP3`, `W3MAPT` a one-cell grid; the full case (`bench_small`)
+exercises them, but its `FLAGTR` is 0 too (`ww3_grid.out` of both cases), so `W3UTRN` stays
+`regtested` no. `just ww3-gpu-matrix` and the OpenMP (`OMPG`) entries are the next checkpoint
+steps before any of these rows may move to L2 ⚠.

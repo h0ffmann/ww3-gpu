@@ -1,8 +1,6 @@
 # W3UWND_KOKKOS
 
-**Status:** ported, phase 1 (translated). Not wired into WW3, not regtested: the owner asked
-for translation only on 2026-10-16, with no test run. Its checkpoint (ADR-0011) needs the shim
-and the `W3WAVE` wiring first.
+**Status:** ported, phase 1, wired and regtested on the CPU (2026-10-16). WW3 calls it under `WW_KOKKOS_UWND=1` (or `WW_KOKKOS_ALL=1`) at h0ffmann/WW3 `357f575c` (`ww3-gpu/kokkos-wave-support`); the WW3 regtest matrix has not run it ⚠.
 
 Wind at the model time by linear interpolation of speed, direction and air-sea temperature
 difference between the two input fields, then the 10 m wind relative to the surface current.
@@ -13,7 +11,7 @@ difference between the two input fields, then the 10 m wind relative to the surf
 |---|---|
 | WW3 routine | `W3UWND`, `model/src/w3updtmd.F90:488-822` at NOAA-EMC/WW3 `03adda91`, as `switches/switch_lab_shrd` compiles it (`WNT1` and `RWND` branches, `w3updtmd.F90:684,746-770`) |
 | Kokkos code | [`../src/ww_kokkos/updt_uwnd.hpp`](../src/ww_kokkos/updt_uwnd.hpp), a header-only device function |
-| C shim | none yet |
+| C shim | [`../src/fortran_iface/wave_support_shim.cpp`](../src/fortran_iface/wave_support_shim.cpp), `ww_wave_uwnd`, wired by `W3KOKKOS_UWND` in the fork's `w3kokkosmd.F90` ([`PATCH.md`](../src/fortran_iface/PATCH.md), section 8) |
 | Plan | [`W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md`](../../docs/W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md), issue #42 |
 
 ## Arithmetic
@@ -48,8 +46,15 @@ None. No timing without parity (`AGENTS.md`).
 
 ## How it was regtested
 
-Not yet, and nothing was run. What was done, 2026-10-16 (v): a throwaway translation unit with
-the `openmp-release` flags compiled the header with no warning and no FMA. Since then
-`wave_support.cpp` instantiates its launcher on the default execution space in the
-`serial-debug`, `openmp-release` and `cuda-release` builds (the CUDA one built, never run). Its CUDA SASS has 68 fused multiply-adds despite `--fmad=false`, taken to be CUDA's
-`atan2f`, `sincosf` and `fmodf` and not traced instruction by instruction ⚠.
+2026-10-16, on the CPU (Kokkos 5.2.2 OpenMP backend, gfortran/g++ 16.2.0, the pinned `ww3`
+shell), never on the GPU: `scripts/ww3-gpu.sh --ww3-gpu smoke|full --cpu` with
+`--kokkos all` (`WW_KOKKOS_ALL=1`) and with the W3WAVE support parts alone (PATCH.md, section 8,
+"The checkpoint"). Calls (`WW_KOKKOS_WAVE_COUNT=1`): 2 161 calls in the smoke, 25 in the full. `out_grd.ww3` (and in the smoke
+`out_pnt.ww3`, `restart.ww3`) and the `ww3_ounf` NetCDF file were byte-identical (`cmp`) to the
+Fortran of the same executable, and the binary files to `--ww3`, pure NOAA WW3 (v). ⚠ Not run:
+the WW3 regtest matrix (`just ww3-gpu-matrix`), the OpenMP (`OMPG`) entries, the GPU; `out_grd.ww3`
+holds only the fields each case requests.
+
+Before the wiring, 2026-10-16 (v): a throwaway translation unit with the `openmp-release` flags
+compiled the header with no warning and no FMA, and `wave_support.cpp` instantiates its launcher
+on the default execution space in the `serial-debug`, `openmp-release` and `cuda-release` builds.

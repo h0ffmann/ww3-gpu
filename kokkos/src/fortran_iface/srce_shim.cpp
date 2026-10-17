@@ -77,7 +77,7 @@ struct Flags {
   bool srce, count;
 };
 const Flags& flags() {
-  static const Flags f{env_is_one("WW_KOKKOS_SRCE"), env_is_one("WW_KOKKOS_SRCE_COUNT")};
+  static const Flags f{(ww_kokkos_flag("WW_KOKKOS_SRCE") != 0), env_is_one("WW_KOKKOS_SRCE_COUNT")};
   return f;
 }
 void print_count() {

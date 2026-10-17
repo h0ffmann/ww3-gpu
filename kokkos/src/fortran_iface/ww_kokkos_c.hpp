@@ -826,4 +826,46 @@ int ww_st6_enabled(int which);
 /// The status of the most recent ww_st6_*, ww_spr6, ww_sin6 or ww_sds6 call.
 int ww_st6_last_error(void);
 
+// ---------------------------------------------------------------------------
+// Run-time flags (part_flags.cpp). Every ww_*_enabled() above and W3KOKKOS_SETUP
+// resolve WW_KOKKOS_<PART> through this one function.
+
+/// The state of the flag `name` (e.g. "WW_KOKKOS_SNL1"): 0 off, 1 on because the
+/// variable is "1", 2 on because it is unset and WW_KOKKOS_ALL is "1". A set
+/// variable other than "1" is off whatever WW_KOKKOS_ALL says.
+int ww_kokkos_flag(const char* name);
+
+// ---------------------------------------------------------------------------
+// W3WAVE's per-step support routines (wave_support_shim.cpp): W3GATH, W3SCAT
+// (W3_SHRD), W3UWND (WNT1, RWND), W3UTRN (IC0), W3DZXY, W3MAP3, W3MAPT (PR3), and
+// DISTAB. No per-grid state: every call passes its sizes, copies its arrays in and
+// its results out (phase 1). Each returns WW_KOKKOS_OK, NOT_INITIALISED, BAD_SHAPE,
+// KERNEL or RUNTIME. Not thread-safe: the Fortran wrappers serialise them in
+// !$OMP CRITICAL (WW_KOKKOS_WAVE). The argument tables are in the .cpp.
+// WW_KOKKOS_WAVE_COUNT=1 prints "ww_kokkos: W3<R> calls: N" per routine at exit.
+
+int ww_wave_gath(int ispec, int nspec, int nsea, int ncol, int msea, int nx, int ny,
+                 const float* va, const int* mapsf, float* field);
+int ww_wave_scat(int ispec, int nspec, int nsea, int ncol, int msea, int nx, int ny,
+                 const int* mapsta, const float* field, const int* mapsf, float* va);
+int ww_wave_uwnd(int flfrst, float dt0n, float dt0t, int flcur, float rwindc, int nsea, int msea,
+                 int nx, int ny, const int* mapsf, const float* wx0, const float* wy0,
+                 const float* dt0, const float* wxn, const float* wyn, const float* dtn,
+                 const float* cx, const float* cy, float* ua0, float* uai, float* ud0,
+                 float* udi, float* as0, float* asi, float* ua, float* ud, float* as,
+                 float* u10, float* u10d);
+int ww_wave_utrn(int nx, int ny, int nsea, int msea, int trflag, float fice0, float ficen,
+                 float ficel, float ffacberg, int flagll, const float* trnx, const float* trny,
+                 const int* mapsf, const int* mapsta, const float* hpfac, const float* hqfac,
+                 const float* ice, const float* berg, float* atrnx, float* atrny);
+int ww_wave_dzxy(int nsea, int nx, int ny, const float* zz, const int* mapsta, const int* mapfs,
+                 const float* dpdx, const float* dpdy, const float* dqdx, const float* dqdy,
+                 int flagll, int iclose, float* dzzdx, float* dzzdy);
+int ww_wave_map3(int nx, int ny, int nsea, int msea, int nk, int nth, int gtype, const int* mapsta,
+                 const int* mapsf, int* mapx2, int* mapy2, int* mapaxy, int* mapcxy, int* mapth2,
+                 int* mapwn2, int* counts);
+int ww_wave_mapt(int nsea, int msea, int ncell, const int* mapsf, const float* atrnx,
+                 const float* atrny, int* maptrn);
+int ww_wave_distab(int nar1d, float* ewn1, float* ecg1, int* n1max, float* dsie);
+
 }  // extern "C"

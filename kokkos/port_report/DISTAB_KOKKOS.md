@@ -1,8 +1,6 @@
 # DISTAB_KOKKOS
 
-**Status:** ported, phase 1 (translated). Not wired into WW3, not regtested: the owner asked
-for translation only on 2026-10-16, with no test run. Its checkpoint (ADR-0011) needs the shim
-and the `W3IOGR` wiring first.
+**Status:** ported, phase 1, wired and regtested on the CPU (2026-10-16). WW3 calls it under `WW_KOKKOS_DISTAB=1` (or `WW_KOKKOS_ALL=1`) at h0ffmann/WW3 `357f575c` (`ww3-gpu/kokkos-wave-support`); the WW3 regtest matrix has not run it ⚠.
 
 Fills the interpolation tables of nondimensional wavenumber `EWN1` and group velocity `ECG1`
 against nondimensional frequency that `WAVNU1` reads, each entry a Newton solution of the linear
@@ -14,7 +12,7 @@ dispersion relation at depth `h = 1` through `WAVNU2`.
 |---|---|
 | WW3 routine | `DISTAB`, `model/src/w3dispmd.F90:552-683` at NOAA-EMC/WW3 `03adda91`, called from `W3IOGR` (`w3iogrmd.F90:2019`) |
 | Kokkos code | [`../src/ww_kokkos/disp_distab.hpp`](../src/ww_kokkos/disp_distab.hpp), a header-only device function |
-| C shim | none yet |
+| C shim | [`../src/fortran_iface/wave_support_shim.cpp`](../src/fortran_iface/wave_support_shim.cpp), `ww_wave_distab`, wired by `W3KOKKOS_DISTAB` in the fork's `w3kokkosmd.F90` ([`PATCH.md`](../src/fortran_iface/PATCH.md), section 8) |
 | Plan | [`W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md`](../../docs/W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md), issue #42 |
 
 ## Arithmetic
@@ -55,8 +53,15 @@ None. No timing without parity (`AGENTS.md`).
 
 ## How it was regtested
 
-Not yet. What was done, 2026-10-16 (v): a throwaway translation unit with
-the `openmp-release` flags compiled the header with no warning and no FMA, and the header
-compiled for CUDA (the FFMA finding above). Since then `wave_support.cpp` instantiates
-`distab` on the default execution space in the `serial-debug`, `openmp-release` and
-`cuda-release` builds (the CUDA one built, never run).
+2026-10-16, on the CPU (Kokkos 5.2.2 OpenMP backend, gfortran/g++ 16.2.0, the pinned `ww3`
+shell), never on the GPU: `scripts/ww3-gpu.sh --ww3-gpu smoke --cpu` with
+`--kokkos all` (`WW_KOKKOS_ALL=1`) and with the W3WAVE support parts alone (PATCH.md, section 8,
+"The checkpoint"). Calls (`WW_KOKKOS_WAVE_COUNT=1`): 1 call; the shim compared the tables it wrote with the Fortran DISTAB's that W3IOGR had built: 0 of the 246 `EWN1`, `ECG1` values and neither `DSIE` nor `N1MAX` differ. `out_grd.ww3` (and in the smoke
+`out_pnt.ww3`, `restart.ww3`) and the `ww3_ounf` NetCDF file were byte-identical (`cmp`) to the
+Fortran of the same executable, and the binary files to `--ww3`, pure NOAA WW3 (v). ⚠ Not run:
+the WW3 regtest matrix (`just ww3-gpu-matrix`), the OpenMP (`OMPG`) entries, the GPU; `out_grd.ww3`
+holds only the fields each case requests.
+
+Before the wiring, 2026-10-16 (v): a throwaway translation unit with the `openmp-release` flags
+compiled the header with no warning and no FMA, and `wave_support.cpp` instantiates its launcher
+on the default execution space in the `serial-debug`, `openmp-release` and `cuda-release` builds.

@@ -9,6 +9,7 @@ Every note of the slip box, by theme. The rules are in [`NOTES.md`](../NOTES.md)
 - [[202610141903-no-timing-without-parity]]
 - [[202610141905-phase-one-copies-per-call]]
 - [[202610150226-a-partial-distillation-of-ww3-on-my-own]]
+- [[202610170112-fesom2-went-through-c-ww3-goes-straight-to-kokkos]]
 
 ## WW3 and WW4
 

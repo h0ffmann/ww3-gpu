@@ -107,7 +107,7 @@ struct Flags {
   bool swl6, count;
 };
 const Flags& flags() {
-  static const Flags f{env_is_one("WW_KOKKOS_SWL6"), env_is_one("WW_KOKKOS_SWL_COUNT")};
+  static const Flags f{(ww_kokkos_flag("WW_KOKKOS_SWL6") != 0), env_is_one("WW_KOKKOS_SWL_COUNT")};
   return f;
 }
 

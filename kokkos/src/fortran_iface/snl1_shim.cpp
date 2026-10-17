@@ -211,7 +211,7 @@ int ww_kokkos_init(int comm_f) {
       Kokkos::push_finalize_hook(release_on_finalize);
       g_hook_pushed = true;
     }
-    g_enabled = env_is_one("WW_KOKKOS_SNL1");
+    g_enabled = (ww_kokkos_flag("WW_KOKKOS_SNL1") != 0);
     if (g_enabled && !g_count_registered && env_is_one("WW_KOKKOS_SNL1_COUNT")) {
       std::atexit(print_count);
       g_count_registered = true;

@@ -118,8 +118,8 @@ struct Flags {
   bool spr2, sin2, sds2, count;
 };
 const Flags& flags() {
-  static const Flags f{env_is_one("WW_KOKKOS_SPR2"), env_is_one("WW_KOKKOS_SIN2"),
-                       env_is_one("WW_KOKKOS_SDS2"), env_is_one("WW_KOKKOS_ST2_COUNT")};
+  static const Flags f{(ww_kokkos_flag("WW_KOKKOS_SPR2") != 0), (ww_kokkos_flag("WW_KOKKOS_SIN2") != 0),
+                       (ww_kokkos_flag("WW_KOKKOS_SDS2") != 0), env_is_one("WW_KOKKOS_ST2_COUNT")};
   return f;
 }
 

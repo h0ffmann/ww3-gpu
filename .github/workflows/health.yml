@@ -1,6 +1,6 @@
 # health — the combinations of scripts/ww3-gpu.sh that CI keeps alive. For now one, by the owner's
 # word (2026-10-14): "h1 - --ww3-gpu + --cpu ... this combination is the only one that needs to be
-# present in CI for now". h1 builds WW3 from the WW3/ submodule (h0ffmann/WW3, ww3-gpu/kokkos-st4)
+# present in CI for now". h1 builds WW3 from the WW3/ submodule (h0ffmann/WW3, ww3-gpu/kokkos-wave-support)
 # with the KOKKOS switch and the ww_kokkos package on OpenMP, runs regtest ww3_ts1 with the
 # Fortran and the Kokkos DIA, then builds --ww3 and compares pair to pair (nccmp-tol). The other
 # combinations and why they are not here: README.md, "Health".

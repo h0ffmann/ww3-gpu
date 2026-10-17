@@ -120,10 +120,10 @@ struct Flags {
   bool tables, count;
 };
 const Flags& flags() {
-  static const Flags f{{false, env_is_one("WW_KOKKOS_FLX1"), env_is_one("WW_KOKKOS_FLX2"),
-                        env_is_one("WW_KOKKOS_FLX3"), env_is_one("WW_KOKKOS_FLX4"),
-                        env_is_one("WW_KOKKOS_FLX5")},
-                       env_is_one("WW_KOKKOS_FLX_TABLES"),
+  static const Flags f{{false, (ww_kokkos_flag("WW_KOKKOS_FLX1") != 0), (ww_kokkos_flag("WW_KOKKOS_FLX2") != 0),
+                        (ww_kokkos_flag("WW_KOKKOS_FLX3") != 0), (ww_kokkos_flag("WW_KOKKOS_FLX4") != 0),
+                        (ww_kokkos_flag("WW_KOKKOS_FLX5") != 0)},
+                       (ww_kokkos_flag("WW_KOKKOS_FLX_TABLES") != 0),
                        env_is_one("WW_KOKKOS_FLX_COUNT")};
   return f;
 }

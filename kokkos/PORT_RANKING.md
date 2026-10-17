@@ -12,7 +12,7 @@ Profile: full (bench_small, 120 x 80, 9 520 sea points, 12 h), Release -pg, swit
 what the compiler inlined into it are in the caller's row; the shares are this case's and this
 switch's, not every model's.
 
-The profile names 87 routines, 37 of them ported, so this table has 50 rows, not 100. Rows 2 to 50 took less than one gprof sample (10 ms): their order is gprof's, not a cost order, and a longer case or `perf` is needed to rank them. A routine this case never calls (another switch, another grid) is not in the profile and not here.
+The profile names 87 routines, 42 of them ported, so this table has 45 rows, not 100. Rows 2 to 45 took less than one gprof sample (10 ms): their order is gprof's, not a cost order, and a longer case or `perf` is needed to rank them. A routine this case never calls (another switch, another grid) is not in the profile and not here.
 
 | # | routine | WW3 file | self s | self % | cumulative % |
 |---|---|---|---|---|---|
@@ -24,48 +24,43 @@ The profile names 87 routines, 37 of them ported, so this table has 50 rows, not
 | 6 | `w3timemd:stme21` | `model/src/w3timemd.F90` | < 0.01 | 0.00 | 100.0 |
 | 7 | `w3servmd:wwtime` | `model/src/w3servmd.F90` | < 0.01 | 0.00 | 100.0 |
 | 8 | `w3timemd:tick21` | `model/src/w3timemd.F90` | < 0.01 | 0.00 | 100.0 |
-| 9 | `w3gdatmd:w3setg` | `model/src/w3gdatmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 10 | `w3odatmd:w3seto` | `model/src/w3odatmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 11 | `w3gsrumd:get_fdw3.constprop.0` | `model/src/w3gsrumd.F90` | < 0.01 | 0.00 | 100.0 |
-| 12 | `w3gsrumd:w3nnsc` | `model/src/w3gsrumd.F90` | < 0.01 | 0.00 | 100.0 |
-| 13 | `w3wdatmd:w3setw` | `model/src/w3wdatmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 14 | `w3idatmd:w3seti` | `model/src/w3idatmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 15 | `w3gdatmd:w3gntx` | `model/src/w3gdatmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 16 | `w3gsrumd:gsu_create` | `model/src/w3gsrumd.F90` | < 0.01 | 0.00 | 100.0 |
-| 17 | `w3gsrumd:w3cgdm_r4` | `model/src/w3gsrumd.F90` | < 0.01 | 0.00 | 100.0 |
-| 18 | `w3gsrumd:w3gsuc_ptr_r8` | `model/src/w3gsrumd.F90` | < 0.01 | 0.00 | 100.0 |
-| 19 | `w3timemd:d2j` | `model/src/w3timemd.F90` | < 0.01 | 0.00 | 100.0 |
-| 20 | `w3timemd:t2d` | `model/src/w3timemd.F90` | < 0.01 | 0.00 | 100.0 |
-| 21 | `w3timemd:tdiff` | `model/src/w3timemd.F90` | < 0.01 | 0.00 | 100.0 |
-| 22 | `main` | `—` | < 0.01 | 0.00 | 100.0 |
-| 23 | `w3gdatmd:w3dimx` | `model/src/w3gdatmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 24 | `w3gdatmd:w3nmod` | `model/src/w3gdatmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 25 | `w3idatmd:w3dimi` | `model/src/w3idatmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 26 | `w3idatmd:w3ninp` | `model/src/w3idatmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 27 | `w3initmd:w3init` | `model/src/w3initmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 28 | `w3iogomd:w3fldtoij` | `model/src/w3iogomd.F90` | < 0.01 | 0.00 | 100.0 |
-| 29 | `w3iorsmd:w3iors` | `model/src/w3iorsmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 30 | `w3nmlshelmd:read_domain_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 31 | `w3nmlshelmd:read_homogeneous_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 32 | `w3nmlshelmd:read_input_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 33 | `w3nmlshelmd:read_output_date_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 34 | `w3nmlshelmd:read_output_path_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 35 | `w3nmlshelmd:read_output_type_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 36 | `w3nmlshelmd:report_domain_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 37 | `w3nmlshelmd:report_homogeneous_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 38 | `w3nmlshelmd:report_input_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 39 | `w3nmlshelmd:report_output_date_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 40 | `w3nmlshelmd:report_output_path_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 41 | `w3nmlshelmd:report_output_type_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 42 | `w3nmlshelmd:w3nmlshel` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 43 | `w3odatmd:w3dmo5` | `model/src/w3odatmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 44 | `w3odatmd:w3nout` | `model/src/w3odatmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 45 | `w3servmd:str_to_upper` | `model/src/w3servmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 46 | `w3servmd:strsplit` | `model/src/w3servmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 47 | `w3servmd:wwdate` | `model/src/w3servmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 48 | `w3wdatmd:w3dimw` | `model/src/w3wdatmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 49 | `w3wdatmd:w3ndat` | `model/src/w3wdatmd.F90` | < 0.01 | 0.00 | 100.0 |
-| 50 | `finalise.0.constprop.0` | `—` | < 0.01 | 0.00 | 100.0 |
+| 9 | `w3odatmd:w3seto` | `model/src/w3odatmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 10 | `w3gsrumd:get_fdw3.constprop.0` | `model/src/w3gsrumd.F90` | < 0.01 | 0.00 | 100.0 |
+| 11 | `w3gsrumd:w3nnsc` | `model/src/w3gsrumd.F90` | < 0.01 | 0.00 | 100.0 |
+| 12 | `w3wdatmd:w3setw` | `model/src/w3wdatmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 13 | `w3idatmd:w3seti` | `model/src/w3idatmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 14 | `w3gdatmd:w3gntx` | `model/src/w3gdatmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 15 | `w3gsrumd:w3cgdm_r4` | `model/src/w3gsrumd.F90` | < 0.01 | 0.00 | 100.0 |
+| 16 | `w3gsrumd:w3gsuc_ptr_r8` | `model/src/w3gsrumd.F90` | < 0.01 | 0.00 | 100.0 |
+| 17 | `w3timemd:d2j` | `model/src/w3timemd.F90` | < 0.01 | 0.00 | 100.0 |
+| 18 | `w3timemd:t2d` | `model/src/w3timemd.F90` | < 0.01 | 0.00 | 100.0 |
+| 19 | `w3timemd:tdiff` | `model/src/w3timemd.F90` | < 0.01 | 0.00 | 100.0 |
+| 20 | `main` | `—` | < 0.01 | 0.00 | 100.0 |
+| 21 | `w3gdatmd:w3dimx` | `model/src/w3gdatmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 22 | `w3gdatmd:w3nmod` | `model/src/w3gdatmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 23 | `w3idatmd:w3dimi` | `model/src/w3idatmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 24 | `w3idatmd:w3ninp` | `model/src/w3idatmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 25 | `w3nmlshelmd:read_domain_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 26 | `w3nmlshelmd:read_homogeneous_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 27 | `w3nmlshelmd:read_input_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 28 | `w3nmlshelmd:read_output_date_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 29 | `w3nmlshelmd:read_output_path_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 30 | `w3nmlshelmd:read_output_type_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 31 | `w3nmlshelmd:report_domain_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 32 | `w3nmlshelmd:report_homogeneous_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 33 | `w3nmlshelmd:report_input_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 34 | `w3nmlshelmd:report_output_date_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 35 | `w3nmlshelmd:report_output_path_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 36 | `w3nmlshelmd:report_output_type_nml` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 37 | `w3nmlshelmd:w3nmlshel` | `model/src/w3nmlshelmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 38 | `w3odatmd:w3dmo5` | `model/src/w3odatmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 39 | `w3odatmd:w3nout` | `model/src/w3odatmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 40 | `w3servmd:str_to_upper` | `model/src/w3servmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 41 | `w3servmd:strsplit` | `model/src/w3servmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 42 | `w3servmd:wwdate` | `model/src/w3servmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 43 | `w3wdatmd:w3dimw` | `model/src/w3wdatmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 44 | `w3wdatmd:w3ndat` | `model/src/w3wdatmd.F90` | < 0.01 | 0.00 | 100.0 |
+| 45 | `finalise.0.constprop.0` | `—` | < 0.01 | 0.00 | 100.0 |
 
 The cumulative column starts from the ported routines' share, so it reads as the share of the run
 that would be in Kokkos once every row down to it is ported.
@@ -99,15 +94,15 @@ The record is the `regtested` column of `kokkos/ports.tsv`.
 | `w3pro3md:w3ktp3` | ported | `prop_ktp3.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run in this round); the propagation checkpoint (ADR-0011) runs it once a shim and the W3WAVE wiring exist |
 | `w3dispmd:wavnu1` | ported | `prop_wavnu1.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run in this round); the propagation checkpoint (ADR-0011) runs it once a shim and the W3WAVE wiring exist |
 | `w3uqckmd:w3qck2` | ported | `prop_qck2.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run in this round); the propagation checkpoint (ADR-0011) runs it once a shim and the W3WAVE wiring exist |
-| `w3wavemd:w3gath` | ported | `wave_gath_scat.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run in this round); the W3WAVE support checkpoint (ADR-0011) runs it once a shim and the W3WAVE wiring exist |
-| `w3wavemd:w3scat` | ported | `wave_gath_scat.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run in this round); the W3WAVE support checkpoint (ADR-0011) runs it once a shim and the W3WAVE wiring exist |
-| `w3updtmd:w3uwnd` | ported | `updt_uwnd.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run in this round); the W3WAVE support checkpoint (ADR-0011) runs it once a shim and the W3WAVE wiring exist |
-| `w3updtmd:w3dzxy` | ported | `updt_dzxy.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run in this round); the W3WAVE support checkpoint (ADR-0011) runs it once a shim and the W3WAVE wiring exist |
-| `w3dispmd:wavnu2` | ported | `disp_distab.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run in this round); the W3WAVE support checkpoint (ADR-0011) runs it once a shim and the W3IOGR wiring exist |
-| `w3dispmd:distab` | ported | `disp_distab.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run in this round); the W3WAVE support checkpoint (ADR-0011) runs it once a shim and the W3IOGR wiring exist |
-| `w3updtmd:w3utrn` | ported | `updt_utrn.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run in this round); the W3WAVE support checkpoint (ADR-0011) runs it once a shim and the W3WAVE wiring exist |
-| `w3pro3md:w3map3` | ported | `prop_map3.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run in this round); the W3WAVE support checkpoint (ADR-0011) runs it once a shim and the W3WAVE wiring exist |
-| `w3pro3md:w3mapt` | ported | `prop_mapt.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run in this round); the W3WAVE support checkpoint (ADR-0011) runs it once a shim and the W3WAVE wiring exist |
+| `w3wavemd:w3gath` | ported | `wave_gath_scat.hpp`, `wave_support_shim.cpp` | yes: scripts/ww3-gpu.sh --ww3-gpu full (bench_small) --cpu on 2026-10-16 (OpenMP backend, gfortran/g++ 16.2.0), with WW_KOKKOS_ALL=1 and with the W3WAVE support parts alone: out_grd.ww3 and the NetCDF field byte-identical (cmp) to the Fortran of the same executable, the binary files byte-identical to --ww3, 13 824 calls (kokkos/src/fortran_iface/PATCH.md, section 8) |
+| `w3wavemd:w3scat` | ported | `wave_gath_scat.hpp`, `wave_support_shim.cpp` | yes: scripts/ww3-gpu.sh --ww3-gpu full (bench_small) --cpu on 2026-10-16 (OpenMP backend, gfortran/g++ 16.2.0), with WW_KOKKOS_ALL=1 and with the W3WAVE support parts alone: out_grd.ww3 and the NetCDF field byte-identical (cmp) to the Fortran of the same executable, the binary files byte-identical to --ww3, 13 824 calls (kokkos/src/fortran_iface/PATCH.md, section 8) |
+| `w3updtmd:w3uwnd` | ported | `updt_uwnd.hpp`, `wave_support_shim.cpp` | yes: scripts/ww3-gpu.sh --ww3-gpu smoke (ww3_ts1) and full (bench_small) --cpu on 2026-10-16 (OpenMP backend, gfortran/g++ 16.2.0), with WW_KOKKOS_ALL=1 and with the W3WAVE support parts alone: out_grd.ww3 (and out_pnt.ww3, restart.ww3 in the smoke) and the NetCDF field byte-identical (cmp) to the Fortran of the same executable, the binary files byte-identical to --ww3, 2 161 calls (smoke) and 25 (full); just smoke-ww3-gpu and the full case (kokkos/src/fortran_iface/PATCH.md, section 8) |
+| `w3updtmd:w3dzxy` | ported | `updt_dzxy.hpp`, `wave_support_shim.cpp` | yes: scripts/ww3-gpu.sh --ww3-gpu full (bench_small) --cpu on 2026-10-16 (OpenMP backend, gfortran/g++ 16.2.0), with WW_KOKKOS_ALL=1 and with the W3WAVE support parts alone: out_grd.ww3 and the NetCDF field byte-identical (cmp) to the Fortran of the same executable, the binary files byte-identical to --ww3, 1 call (the depth gradient; no current in the case) (kokkos/src/fortran_iface/PATCH.md, section 8) |
+| `w3dispmd:wavnu2` | ported | `disp_distab.hpp`, `wave_support_shim.cpp` | yes: through DISTAB (121 calls per DISTAB call), scripts/ww3-gpu.sh --ww3-gpu smoke (ww3_ts1) --cpu on 2026-10-16 (OpenMP backend, gfortran/g++ 16.2.0), with WW_KOKKOS_ALL=1 and with the W3WAVE support parts alone: out_grd.ww3, out_pnt.ww3, restart.ww3 and the NetCDF field byte-identical (cmp) to the Fortran of the same executable, the binary files byte-identical to --ww3, 0 of the 246 table values differ from the Fortran's (kokkos/src/fortran_iface/PATCH.md, section 8) |
+| `w3dispmd:distab` | ported | `disp_distab.hpp`, `wave_support_shim.cpp` | yes: scripts/ww3-gpu.sh --ww3-gpu smoke (ww3_ts1) --cpu on 2026-10-16 (OpenMP backend, gfortran/g++ 16.2.0), with WW_KOKKOS_ALL=1 and with the W3WAVE support parts alone: out_grd.ww3, out_pnt.ww3, restart.ww3 and the NetCDF field byte-identical (cmp) to the Fortran of the same executable, the binary files byte-identical to --ww3, 1 call; 0 of the 246 EWN1, ECG1 values and neither DSIE nor N1MAX differ from the Fortran DISTAB's (kokkos/src/fortran_iface/PATCH.md, section 8) |
+| `w3updtmd:w3utrn` | ported | `updt_utrn.hpp`, `wave_support_shim.cpp` | no: wired and run (1 call in smoke and full, byte-identical, 2026-10-16), but both cases have TRFLAG = 0, so only the ATRNX = ATRNY = 1 initialisation ran; the obstruction and ice branches need a case with FLAGTR above 0 |
+| `w3pro3md:w3map3` | ported | `prop_map3.hpp`, `wave_support_shim.cpp` | yes: scripts/ww3-gpu.sh --ww3-gpu full (bench_small) --cpu on 2026-10-16 (OpenMP backend, gfortran/g++ 16.2.0), with WW_KOKKOS_ALL=1 and with the W3WAVE support parts alone: out_grd.ww3 and the NetCDF field byte-identical (cmp) to the Fortran of the same executable, the binary files byte-identical to --ww3, 1 call on the 120 x 80 grid (kokkos/src/fortran_iface/PATCH.md, section 8) |
+| `w3pro3md:w3mapt` | ported | `prop_mapt.hpp`, `wave_support_shim.cpp` | yes: scripts/ww3-gpu.sh --ww3-gpu full (bench_small) --cpu on 2026-10-16 (OpenMP backend, gfortran/g++ 16.2.0), with WW_KOKKOS_ALL=1 and with the W3WAVE support parts alone: out_grd.ww3 and the NetCDF field byte-identical (cmp) to the Fortran of the same executable, the binary files byte-identical to --ww3, 1 call on the 120 x 80 grid (kokkos/src/fortran_iface/PATCH.md, section 8) |
 | `w3ref1md:w3sref` | ported | `srce_ref1.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and the W3SRCE hunk |
 | `w3sic4md:w3sic4` | ported | `srce_ic4.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim and the W3SRCE hunk |
 | `pdlib_w3profsmd:pdlib_w3xypfsn2` | ported | `pdlib_fsn2.hpp`, `pdlib_params.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run); its checkpoint (ADR-0011) needs a shim, the MPI callables and the PDLIB_W3XYPUG hunk |
@@ -372,3 +367,15 @@ The record is the `regtested` column of `kokkos/ports.tsv`.
 | `w3adatmd:w3xeta` | ported | `adat_w3xeta.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run in this round); every caller at the pin is under W3_MPI or PDLIB, so its checkpoint (ADR-0011) needs an MPI regtest once a shim and the W3IOGO/W3MPIO wiring exist |
 | `w3adatmd:w3xdma` | ported | `adat_w3xdma.hpp`, `adat_w3xdma_wadat.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run in this round); the W3WAVE support checkpoint (ADR-0011) runs it once a shim and the W3INIT/DO_OUTPUT_EXCHANGES wiring exist |
 | `w3fldsmd:w3fldg` | ported | `flds_w3fldg.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run in this round); the W3WAVE support checkpoint (ADR-0011) runs it once a shim, W3FLDO and the ww3_shel wiring exist |
+| `w3initmd:w3mpio` | ported | `init_w3mpio.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run in this round); its only caller, W3INIT (w3initmd.F90:1559-1563), is under W3_MPI, so no lab-switch regtest reaches it and its checkpoint (ADR-0011) needs the W3_MPI body ported and an MPI regtest |
+| `w3gdatmd:w3setg` | ported | `gdat_w3setg.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run in this round); the W3WAVE support checkpoint (ADR-0011) runs it once a shim and the W3INIT/W3IOGR/W3WAVE wiring exist |
+| `w3iorsmd:w3iors` | ported | `iors_w3iors.hpp`, `iors_stream.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run in this round); its checkpoint (ADR-0011) needs the W3DIMW hook filled, a shim and the W3INIT/W3WAVE hunks |
+| `w3iobcmd:w3iobc` | ported | `iobc_w3iobc.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run in this round); its checkpoint (ADR-0011) needs a shim filling the W3DMO5, W3NESTUG, W3GFPT and W3CSPC hooks and the W3IOBC hooks of the Kokkos W3WAVE, and the W3WAVE hunk |
+| `w3initmd:w3init` | ported | `init_w3init.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run in this round); its checkpoint (ADR-0011) needs a shim that fills InitHooks and owns the per-grid state, and a W3INIT hunk on the fork |
+| `w3iogomd:w3iogo` | ported | `iogo_w3iogo.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run in this round); its checkpoint (ADR-0011) needs a shim, the W3SETO/W3SETG/W3SETW/W3DIMW hooks filled and the W3WAVE wiring |
+| `w3iopomd:w3iopp` | ported | `iopo_w3iopp.hpp`, `iopo_state.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run in this round); its checkpoint (ADR-0011) needs a shim filling the W3DMO2, W3GRMP, IS_IN_UNGRID and NetCDF hooks and the w3iopp hook of the Kokkos W3INIT, and the W3INIT hunk |
+| `w3iogomd:w3fldtoij` | ported | `iogo_w3fldtoij.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run in this round); its checkpoint (ADR-0011) needs the W3FLGRDFLAG shim that binds it into the fldtoij hook |
+| `w3fldsmd:w3fldo` | ported | `flds_w3fldo.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run in this round); the W3WAVE support checkpoint (ADR-0011) runs it with W3FLDG once a shim and the ww3_shel wiring exist |
+| `w3gsrumd:gsu_create` | ported | `gsru_gsu_create.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run in this round); the checkpoint (ADR-0011) runs it once a shim, the W3GNTX hunk and the W3NNSC hook exist; every matrix.base entry with a structured grid exercises it through W3IOGR |
+| `w3iopomd:w3iope` | ported | `iopo_w3iope.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run in this round); its checkpoint (ADR-0011) needs a shim passing the module arrays and OUTPTS(IMOD)%OUT2, and the W3IOPE hook of the Kokkos W3WAVE or a W3WAVE hunk |
+| `w3iopomd:w3iopo` | ported | `iopo_w3iopo.hpp`, `iopo_state.hpp` | no: translated only, as the owner asked on 2026-10-16 (no test run in this round); its checkpoint (ADR-0011) needs a shim filling the W3SETO/W3SETG/W3SETW and W3DMO2 hooks and a W3IOPO hook of the Kokkos W3WAVE, and the W3WAVE hunk |

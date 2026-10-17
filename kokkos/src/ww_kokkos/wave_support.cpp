@@ -27,7 +27,9 @@
 #include "fld2_wnd2sat.hpp"
 #include "flds_w3fldg.hpp"
 #include "flds_w3fldh.hpp"
+#include "flds_w3fldo.hpp"
 #include "gdat_w3dims.hpp"
+#include "gdat_w3setg.hpp"
 #include "gig1_df1f2theta.hpp"
 #include "gke_asymsmattimvec.hpp"
 #include "gke_biinterpwt.hpp"
@@ -39,6 +41,7 @@
 #include "gke_ufunc.hpp"
 #include "gke_vmfunc.hpp"
 #include "gke_vpfunc.hpp"
+#include "gsru_gsu_create.hpp"
 #include "ic3_bsdet.hpp"
 #include "ic3_cginic3_cheng.hpp"
 #include "ic3_cmplx_root_muller_cheng.hpp"
@@ -64,13 +67,22 @@
 #include "ic5_nr_root.hpp"
 #include "ic5_polyroots.hpp"
 #include "ic5_w3ic5wncg.hpp"
+#include "init_w3init.hpp"
+#include "init_w3mpio.hpp"
+#include "iobc_w3iobc.hpp"
 #include "iogo_vmin_d.hpp"
 #include "iogo_vplus_d.hpp"
 #include "iogo_skewness.hpp"
+#include "iogo_w3fldtoij.hpp"
 #include "iogo_w3flgrdflag.hpp"
 #include "iogo_w3flgrdupdt.hpp"
+#include "iogo_w3iogo.hpp"
 #include "iogo_w3outg.hpp"
 #include "iogr_w3iogr.hpp"
+#include "iopo_w3iope.hpp"
+#include "iopo_w3iopo.hpp"
+#include "iopo_w3iopp.hpp"
+#include "iors_w3iors.hpp"
 #include "is2_funcd_fderiv.hpp"
 #include "is2_funcd_fval.hpp"
 #include "is2_w3fsd_dave.hpp"
@@ -276,12 +288,18 @@ void ww_support_instantiate() {
   (void)&ww::srce::st3::w3sin3_point<true>;
   (void)&ww::adat::w3dima<E>;
   (void)&ww::gdat::w3dims<E>;
+  (void)&ww::gdat::w3setg;
+  (void)&ww::gdat::selected<ww::gdat::Sgrd<E::memory_space>>;
+  (void)&ww::gdat::w3setg_message;
   (void)&ww::iogo::w3outg<E>;
   (void)&ww::iogr::iogr_rect_xy<E>;
   (void)&ww::iogr::iogr_decode_maptmp<E>;
   (void)&ww::iogr::iogr_encode_maptmp<E>;
   (void)&ww::iogr::iogr_mapsf3<E>;
   (void)&ww::iogr::w3iogr;
+  (void)&ww::iors::iors_va_clamp<E>;
+  (void)&ww::iors::iors_va_col0_zero<E>;
+  (void)&ww::iors::w3iors<E>;
   (void)&ww::wave::w3wave::w3wave<E>;
   (void)&ww::updt::w3ulev<E>;
   (void)&ww::pdlib::do_output_exchanges<E>;
@@ -301,4 +319,17 @@ void ww_support_instantiate() {
   (void)&ww::adat::w3xeta<E>;
   (void)&ww::adat::w3xdma<E>;
   (void)&ww::flds::w3fldg<E>;
+  (void)&ww::gsru::gsu_create;
+  (void)&ww::init::w3mpio;
+  (void)&ww::init::w3init<E>;
+  (void)&ww::init::init_wavenumbers<E>;
+  (void)&ww::init::init_zero_dry<E>;
+  (void)&ww::iobc::iobc_gather_shrd<E>;
+  (void)&ww::iobc::w3iobc<E>;
+  (void)&ww::iogo::w3iogo<E>;
+  (void)&ww::iopo::w3iopp;
+  (void)&ww::iogo::w3fldtoij;
+  (void)&ww::flds::w3fldo;
+  (void)&ww::iopo::w3iope;
+  (void)&ww::iopo::w3iopo;
 }

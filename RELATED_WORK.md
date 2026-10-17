@@ -26,6 +26,7 @@ v0.1.3, the latest, carries only the first and the marola one.
 | `references` | [10.5281/zenodo.23356739](https://doi.org/10.5281/zenodo.23356739) (book), *next release* | *Nashkell: Rhizomatic experiments*, the open book whose site shape this one follows | the author |
 | `references` | [10.5281/zenodo.23352630](https://doi.org/10.5281/zenodo.23352630), *next release* | h0ffmann: the author's profile, whose site, notes and translation rules this one follows | the author |
 | `references` | [github.com/akitaonrails/ai-memory](https://github.com/akitaonrails/ai-memory) (software), *next release* | ai-memory, the long-term memory this repository adopts ([ADR-0009](docs/ADRs/ADR-0009-ww3-gpu-adopts-ai-memory-from-fabio-akita.md)) | Fabio Akita, MIT |
+| `references` | [10.48550/arXiv.2606.11356](https://doi.org/10.48550/arXiv.2606.11356) (preprint), *next release* | Koldunov et al. 2026, *An Ocean Model Ported by a Large Language Model: Experience and Lessons from FESOM2 (Fortran to C to C++/Kokkos)*, the closest published method to this port, compared in [notes/](notes/index.md) (v, DataCite record read 2026-10-16) | Koldunov, Cheedela, Danilov, Sidorenko, Beyer, Jung |
 
 ## What points back at this record
 
