@@ -60,18 +60,20 @@ long symbol_offset(const std::string& path, const char* name) {
   unsigned char buf[65536];
   for (size_t n; (n = std::fread(buf, 1, sizeof buf, f)) > 0;) b.insert(b.end(), buf, buf + n);
   std::fclose(f);
+  // Every range check in subtracted form, so a crafted size cannot wrap around 2^64.
+  const auto fits = [&](uint64_t off, uint64_t size) { return off <= b.size() && size <= b.size() - off; };
   if (b.size() < sizeof(Elf64_Ehdr) || std::memcmp(b.data(), ELFMAG, SELFMAG) != 0) return -1;
   Elf64_Ehdr eh;
   std::memcpy(&eh, b.data(), sizeof eh);
   if (eh.e_ident[EI_CLASS] != ELFCLASS64 || eh.e_shentsize != sizeof(Elf64_Shdr) ||
-      eh.e_shoff + static_cast<uint64_t>(eh.e_shnum) * sizeof(Elf64_Shdr) > b.size())
+      !fits(eh.e_shoff, static_cast<uint64_t>(eh.e_shnum) * sizeof(Elf64_Shdr)))
     return -1;
   std::vector<Elf64_Shdr> sh(eh.e_shnum);
   std::memcpy(sh.data(), b.data() + eh.e_shoff, eh.e_shnum * sizeof(Elf64_Shdr));
   for (const auto& tab : sh) {
     if ((tab.sh_type != SHT_SYMTAB && tab.sh_type != SHT_DYNSYM) || tab.sh_link >= sh.size()) continue;
     const auto& str = sh[tab.sh_link];
-    if (tab.sh_offset + tab.sh_size > b.size() || str.sh_offset + str.sh_size > b.size()) return -1;
+    if (!fits(tab.sh_offset, tab.sh_size) || !fits(str.sh_offset, str.sh_size)) return -1;
     for (uint64_t o = 0; o + sizeof(Elf64_Sym) <= tab.sh_size; o += sizeof(Elf64_Sym)) {
       Elf64_Sym sym;
       std::memcpy(&sym, b.data() + tab.sh_offset + o, sizeof sym);
@@ -80,8 +82,11 @@ long symbol_offset(const std::string& path, const char* name) {
       const size_t len = strnlen(nm, str.sh_size - sym.st_name);
       if (len != std::strlen(name) || std::memcmp(nm, name, len) != 0) continue;
       const auto& sec = sh[sym.st_shndx];
-      if (sym.st_value < sec.sh_addr || sym.st_value - sec.sh_addr + sym.st_size > sec.sh_size) return -1;
-      return static_cast<long>(sec.sh_offset + (sym.st_value - sec.sh_addr));
+      const uint64_t rel = sym.st_value - sec.sh_addr;
+      if (sym.st_value < sec.sh_addr || rel > sec.sh_size || sym.st_size > sec.sh_size - rel ||
+          !fits(sec.sh_offset, sec.sh_size))
+        return -1;
+      return static_cast<long>(sec.sh_offset + rel);
     }
   }
   return -1;
