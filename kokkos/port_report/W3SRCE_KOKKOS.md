@@ -6,7 +6,8 @@ defaults to 0, so WW3 runs the Fortran. Wired: WW3 at the `WW3/` pin (`513954a6`
 `ww3-gpu/kokkos-resident`) calls it for every sea point of a time step in one call at
 `w3wavemd.F90:2383-2384` (`W3KOKKOS_SRCE_BATCH`, set-up `w3initmd.F90:825`) behind
 `WW_KOKKOS_SRCE` (default off), on the resident spectrum; see
-[Batched path](#batched-path-phase-2-step-4) and [Resident spectrum](#resident-spectrum-wfip-0005-units-1-and-2).
+[Batched path](#batched-path-phase-2-step-4), [Resident spectrum](#resident-spectrum-wfip-0005-units-1-and-2)
+and [Inputs kept on the device](#inputs-kept-on-the-device-wfip-0005-unit-4).
 
 The source-term integration of one sea point: the semi-implicit dynamic time step with its
 limiter, the MLIM shallow-water cap, the high-frequency tail, and the flux diagnostics, with every
@@ -147,6 +148,42 @@ one per `W3WAVE` call (`ww3_ts1` returns from `W3WAVE` every step, and the retur
 | `srce.batch.h2d` / `.d2h` | 0.160 / 0.151 s | 0.064 / 0.032 s |
 | `va.h2d` / `va.d2h` / `va.host.call` | none / none / 0.000 s | 0.032 / 0.031 / 0.031 s |
 | outside Kokkos | 23.955 s (34.0 %) | 13.946 s (31.1 %) |
+
+
+## Inputs kept on the device (WFIP-0005 unit 4)
+
+Since this change (`srce_shim.cpp` only; the fork pin `90631fad` and the ABI 0.6 unchanged,
+`PATCH.md` section 14), `ww_srce_batch_va` reads and writes the arrays `W3KOKKOS_SRCE_BATCH`
+packs (`BJSEA`, `BWN1`, `BCG1`, `BPIN`, `BPSC`, `BWC`, `BTB`, `BTI`, `BSH`) in place on Serial and
+OpenMP, and on a device copies an input only when its bits differ from a host shadow of its
+buffer. The kernel and its arithmetic are unchanged; the values it reads are the same bits.
+
+Checked 2026-10-17 on the CPU (the machine above, never the GPU) (v): 15 runs of
+`bash scripts/ww3-gpu.sh --ww3-gpu full|smoke --cpu --kokkos resident` and `smoke --kokkos all`, on
+`switch_lab_ompg` and `switch_lab_shrd`, plain, with `WW_KOKKOS_VA_RESIDENT=1` and with
+`WW_KOKKOS_SRCE_STAGED=1` (the device's copy-and-skip run on the host), each byte-identical to the
+Fortran of the same executable and to `--ww3` (`ww3_ounf` NetCDF but its switches attribute,
+`out_grd.ww3`, and in the smoke `out_pnt.ww3`, `restart.ww3`). Source-term input traffic from
+`WW_KOKKOS_SRCE_COUNT=1`, per run (on the CPU, projected for a device ⚠):
+
+| Run | H2D before (every call) | H2D after | D2H (both) |
+|---|---|---|---|
+| full, 25 calls | 78.23 MB (3.13 MB per step) | 3.13 MB, all at the first call | 27.61 MB (1.10 MB per step) |
+| smoke, 2 161 calls | 0.94 MB (436 B per step) | 41 092 B (`BPIN` changes 1 441 times, `BPSC` 5) | 0.26 MB |
+
+`--timers`, full, `switch_lab_ompg`, one fenced run each on the same tree with and without the
+change, the machine shared (not a timing) ⚠:
+
+| Region | Before (`5eca265`) | After |
+|---|---|---|
+| `ww3_shel` | 27.86 s | 24.66 s |
+| `srce.batch.kernel` | 23.452 s | 21.295 s |
+| `srce.batch.h2d` / `.d2h` | 0.035 / 0.024 s | 0.010 / 0.000 s |
+| outside Kokkos | 1.974 s | 1.368 s |
+
+The copies removed are about 0.05 s of host `memcpy` per run on this CPU; the kernel and wall time
+differences are the machine's load, not the change. What the change exists for is a device, where
+3.13 MB per step no longer crosses PCIe ⚠ (never run).
 
 ## Benchmarks
 

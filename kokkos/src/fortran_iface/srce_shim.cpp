@@ -7,7 +7,11 @@
 // an OpenMP parallel region (W3WAVE's source-term loop under W3_OMPG) the kernel
 // runs on Kokkos::Serial. Phase 1 copies one point in, runs, copies it out, and
 // the caller serialises the calls (!$OMP CRITICAL (WW_KOKKOS_SRCE)). The kernel
-// reads the W3SNL1 and ST4 tables of the same grid (shim_state.hpp).
+// reads the W3SNL1 and ST4 tables of the same grid (shim_state.hpp). The batched
+// entry on the resident VA keeps its per-step inputs on the device and copies one
+// only when its bits change (ww_srce_batch_va, WFIP-0005 unit 4); with
+// WW_KOKKOS_SRCE_COUNT=1 it counts those copies, and on a host backend what a
+// device would copy.
 
 #include "fortran_iface/ww_kokkos_c.hpp"
 #include "fortran_iface/resident_c.hpp"
@@ -18,6 +22,7 @@
 
 #include <type_traits>
 
+#include <array>
 #include <atomic>
 #include <cstdio>
 #include <cstdlib>
@@ -28,6 +33,7 @@
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "ww_kokkos/real.hpp"
 #include "ww_kokkos/resident_state.hpp"
@@ -47,6 +53,19 @@ using DevReal1D = Kokkos::View<Real*, DeviceSpace>;
 using DevInt1D = Kokkos::View<int*, DeviceSpace>;
 using DevDouble1D = Kokkos::View<double*, DeviceSpace>;
 
+/// The per-step inputs of ww_srce_batch_va, in the order run_batch stages them (WFIP-0005
+/// unit 4). PSC, WC, TB, TI are inout: the kernel writes them, and they are copied back.
+enum BatchIn { kInJsea, kInWn1, kInCg1, kInPin, kInPsc, kInWc, kInTb, kInTi, kNumIn };
+constexpr const char* kInName[kNumIn] = {"BJSEA", "BWN1", "BCG1", "BPIN",
+                                         "BPSC",  "BWC",  "BTB",  "BTI"};
+
+/// The bits of one input as its device buffer holds them: what was last copied in, or for an
+/// inout input what was last copied back.
+struct Shadow {
+  bool valid = false;
+  std::vector<unsigned char> bytes;
+};
+
 struct GridCtx {
   Params p{};
   DevReal1D sig, dden, ecos, esin;
@@ -65,6 +84,9 @@ struct GridCtx {
   DevDouble1D b_dw;
   Kokkos::View<PointScalars*, DeviceSpace> b_scal;
   Kokkos::View<State*, DeviceSpace> b_state;
+  // ww_srce_batch_va, a step in one launch: the bits each b_* input buffer holds (BatchIn).
+  // Invalidated when the buffers are reallocated or another path writes them.
+  std::array<Shadow, kNumIn> shadow;
 };
 
 // Never destroyed: ww_kokkos_finalize runs from atexit, after the static destructors of
@@ -77,6 +99,14 @@ std::map<int, GridCtx>& grids() {
 std::atomic<int> g_last_error{WW_KOKKOS_OK};
 std::atomic<long long> g_count{0};
 std::atomic<long long> g_batch_calls{0}, g_batch_launches{0}, g_batch_points{0};
+// ww_srce_batch_va's per-step inputs (BatchIn): copies to the device and their bytes, inputs
+// whose bits had not changed and were not copied, and the copies back of the inout ones. On a
+// backend that reads host memory nothing is copied; with WW_KOKKOS_SRCE_COUNT=1 the same
+// comparison runs there and these say what a device would have copied (g_in_projected).
+std::array<std::atomic<long long>, kNumIn> g_in_copies{}, g_in_copy_bytes{}, g_in_same{},
+    g_in_same_bytes{};
+std::atomic<long long> g_out_copies{0}, g_out_bytes{0};
+std::atomic<bool> g_in_projected{false};
 bool g_hook_pushed = false;
 
 void set_error(int code, const char* what) {
@@ -91,10 +121,15 @@ bool env_is_one(const char* name) {
   return v != nullptr && std::strcmp(v, "1") == 0;
 }
 struct Flags {
-  bool srce, count;
+  bool srce, count, staged;
 };
+// WW_KOKKOS_SRCE_STAGED=1, a diagnostic read once: on a host backend ww_srce_batch_va stages its
+// inputs into the batch buffers and skips unchanged ones, as on a device, instead of reading the
+// caller's arrays in place, so the skip is exercised on the CPU (a wrong skip shows as stale
+// inputs in the output).
 const Flags& flags() {
-  static const Flags f{(ww_kokkos_flag("WW_KOKKOS_SRCE") != 0), env_is_one("WW_KOKKOS_SRCE_COUNT")};
+  static const Flags f{(ww_kokkos_flag("WW_KOKKOS_SRCE") != 0), env_is_one("WW_KOKKOS_SRCE_COUNT"),
+                       env_is_one("WW_KOKKOS_SRCE_STAGED")};
   return f;
 }
 void print_count() {
@@ -103,6 +138,27 @@ void print_count() {
   std::fprintf(stderr, "ww_kokkos: W3SRCE batched calls: %lld\n", g_batch_calls.load());
   std::fprintf(stderr, "ww_kokkos: W3SRCE batched launches: %lld\n", g_batch_launches.load());
   std::fprintf(stderr, "ww_kokkos: W3SRCE batched points: %lld\n", g_batch_points.load());
+  long long nc = 0, bc = 0, ns = 0, bs = 0;
+  for (int k = 0; k < kNumIn; ++k) {
+    nc += g_in_copies[k].load();
+    bc += g_in_copy_bytes[k].load();
+    ns += g_in_same[k].load();
+    bs += g_in_same_bytes[k].load();
+  }
+  if (nc + ns == 0) return;
+  const char* how = g_in_projected.load() ? " (host backend: projected for a device, none made)"
+                                           : "";
+  std::fprintf(stderr, "ww_kokkos: W3SRCE batch input copies H2D%s: %lld\n", how, nc);
+  std::fprintf(stderr, "ww_kokkos: W3SRCE batch input bytes H2D%s: %lld\n", how, bc);
+  std::fprintf(stderr, "ww_kokkos: W3SRCE batch inputs unchanged, not copied: %lld\n", ns);
+  std::fprintf(stderr, "ww_kokkos: W3SRCE batch input bytes unchanged, not copied: %lld\n", bs);
+  std::fprintf(stderr, "ww_kokkos: W3SRCE batch output copies D2H%s: %lld\n", how,
+               g_out_copies.load());
+  std::fprintf(stderr, "ww_kokkos: W3SRCE batch output bytes D2H%s: %lld\n", how,
+               g_out_bytes.load());
+  for (int k = 0; k < kNumIn; ++k)
+    std::fprintf(stderr, "ww_kokkos: W3SRCE batch input %s copied %lld (%lld B), unchanged %lld\n",
+                 kInName[k], g_in_copies[k].load(), g_in_copy_bytes[k].load(), g_in_same[k].load());
 }
 
 constexpr long long kBatchMibDefault = 1024;
@@ -147,6 +203,7 @@ void batch_reserve(GridCtx& g, int n, bool spec) {
     g.spec_cap = n;
   }
   if (n <= g.batch_cap) return;
+  for (Shadow& s : g.shadow) s.valid = false;
   g.b_wn1 = DevReal1D("ww_srce.b_wn1", m * p.nk);
   g.b_cg1 = DevReal1D("ww_srce.b_cg1", m * p.nk);
   g.b_pin = DevReal1D("ww_srce.b_pin", m * WW_SRCE_NPIN);
@@ -238,6 +295,63 @@ void run(GridCtx& g, const st4::Params& q, const st4::Fields& f, const snl1::Con
   ex.fence();
 }
 
+template <class T>
+using DevUnmanaged = Kokkos::View<T*, DeviceSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
+
+/// Whether `nbytes` at `p` differ from the bits of shadow `s`.
+bool differs(const Shadow& s, const void* p, size_t nbytes) {
+  return !s.valid || s.bytes.size() != nbytes ||
+         (nbytes > 0 && std::memcmp(s.bytes.data(), p, nbytes) != 0);
+}
+void remember(Shadow& s, const void* p, size_t nbytes) {
+  const auto* b = static_cast<const unsigned char*>(p);
+  s.bytes.assign(b, b + nbytes);
+  s.valid = true;
+}
+
+/// How run_batch stages ww_srce_batch_va's inputs (WFIP-0005 unit 4).
+struct Staging {
+  bool in_place;  ///< the backend reads host memory: the kernel uses the caller's arrays
+  bool keep;      ///< the shadows are kept (a step in one launch; on a host backend only to count)
+};
+
+/// Where the kernel reads input `slot` (n elements at `host`, offset to the chunk): `host` itself
+/// in place, else device buffer `dev`, copied into only when the bits differ from those it holds
+/// (its shadow). The comparison is the guarantee: a writer of the input missed in WW3 cannot
+/// leave stale bits on the device. A copy, or its skip, moves bits and computes nothing.
+template <class ExecSpace, class T>
+T* stage_in(const ExecSpace& ex, GridCtx& g, const Staging& st, int slot, T* host,
+            std::remove_const_t<T>* dev, size_t n) {
+  using U = std::remove_const_t<T>;
+  const size_t nbytes = n * sizeof(U);
+  Shadow& sh = g.shadow[static_cast<size_t>(slot)];
+  const bool copy = !st.keep || differs(sh, host, nbytes);
+  if (st.in_place && !st.keep) {
+    // nothing copied, nothing counted
+  } else if (copy) {
+    g_in_copies[slot].fetch_add(1, std::memory_order_relaxed);
+    g_in_copy_bytes[slot].fetch_add(static_cast<long long>(nbytes), std::memory_order_relaxed);
+  } else {
+    g_in_same[slot].fetch_add(1, std::memory_order_relaxed);
+    g_in_same_bytes[slot].fetch_add(static_cast<long long>(nbytes), std::memory_order_relaxed);
+  }
+  // A read-only input's buffer now holds the host's bits; an inout one's holds them only after
+  // the kernel and the copy back (remember_out), so until then its shadow is void.
+  if (!st.keep || !std::is_const_v<T>)
+    sh.valid = false;
+  else if (copy)
+    remember(sh, host, nbytes);
+  if (st.in_place) return host;
+  if (copy && n > 0) Kokkos::deep_copy(ex, DevUnmanaged<U>(dev, n), HostUnmanaged<const U>(host, n));
+  return dev;
+}
+
+/// After the kernel (and on a device the copy back): an inout input's shadow takes the bits the
+/// device buffer now holds, which are the host's.
+void remember_out(GridCtx& g, const Staging& st, int slot, const void* host, size_t nbytes) {
+  if (st.keep) remember(g.shadow[static_cast<size_t>(slot)], host, nbytes);
+}
+
 /// The time-step arguments of ww_srce_batch, shared by every point.
 struct BatchStep {
   int it, inflags24, flogrd57, flogrd58;
@@ -253,7 +367,8 @@ void run_batch(GridCtx& g, const st4::Params& q, const st4::Fields& f, const snl
                const snl1::Tables& nt, const snl1::RealView1D& nsig, const BatchStep& c,
                int n0, int n, float* spec, const float* wn1, const float* cg1,
                const float* pin, float* psc, float* whitecap, float* taubbl, float* tauice,
-               int* shave, const ww::resident::DevVa* va = nullptr, const int* jsea = nullptr) {
+               int* shave, const ww::resident::DevVa* va = nullptr, const int* jsea = nullptr,
+               bool whole = false) {
   const ExecSpace ex;
   const Params p = g.p;
   const size_t o0 = static_cast<size_t>(n0), m = static_cast<size_t>(n);
@@ -263,21 +378,41 @@ void run_batch(GridCtx& g, const st4::Params& q, const st4::Fields& f, const snl
   };
   constexpr bool fence = !std::is_same_v<ExecSpace, Kokkos::Serial>;
   const bool resident = va != nullptr;
+  // On a host backend the shadows are kept only to count what a device would copy.
+  const bool in_place =
+      Kokkos::SpaceAccessibility<ExecSpace, Kokkos::HostSpace>::accessible && !flags().staged;
+  const Staging st{in_place, whole && (!in_place || flags().count)};
+  if (resident && st.in_place && st.keep) g_in_projected.store(true, std::memory_order_relaxed);
   ww::timers::Region t_in("srce.batch.h2d", fence);
-  if (resident)
-    Kokkos::deep_copy(ex, head(g.b_jsea, m), HostUnmanaged<const int>(jsea + o0, m));
-  else
+  const int* js_p = g.b_jsea.data();
+  const Real *w1_p = g.b_wn1.data(), *c1_p = g.b_cg1.data(), *pi_p = g.b_pin.data();
+  Real *ps_p = g.b_psc.data(), *wc_p = g.b_whitecap.data(), *tb_p = g.b_taubbl.data(),
+       *ti_p = g.b_tauice.data();
+  int* sh_p = g.b_shave.data();
+  if (resident) {
+    js_p = stage_in(ex, g, st, kInJsea, jsea + o0, g.b_jsea.data(), m);
+    w1_p = stage_in(ex, g, st, kInWn1, wn1 + o0 * nk, g.b_wn1.data(), m * nk);
+    c1_p = stage_in(ex, g, st, kInCg1, cg1 + o0 * nk, g.b_cg1.data(), m * nk);
+    pi_p = stage_in(ex, g, st, kInPin, pin + o0 * WW_SRCE_NPIN, g.b_pin.data(), m * WW_SRCE_NPIN);
+    ps_p = stage_in(ex, g, st, kInPsc, psc + o0 * WW_SRCE_NPSC, g.b_psc.data(), m * WW_SRCE_NPSC);
+    wc_p = stage_in(ex, g, st, kInWc, whitecap + o0 * 4, g.b_whitecap.data(), m * 4);
+    tb_p = stage_in(ex, g, st, kInTb, taubbl + o0 * 2, g.b_taubbl.data(), m * 2);
+    ti_p = stage_in(ex, g, st, kInTi, tauice + o0 * 2, g.b_tauice.data(), m * 2);
+    if (st.in_place) sh_p = shave + o0;
+  } else {
+    for (Shadow& x : g.shadow) x.valid = false;
     Kokkos::deep_copy(ex, head(g.b_spec, m * nspec),
                       HostUnmanaged<float>(spec + o0 * nspec, m * nspec));
-  Kokkos::deep_copy(ex, head(g.b_wn1, m * nk), HostUnmanaged<const float>(wn1 + o0 * nk, m * nk));
-  Kokkos::deep_copy(ex, head(g.b_cg1, m * nk), HostUnmanaged<const float>(cg1 + o0 * nk, m * nk));
-  Kokkos::deep_copy(ex, head(g.b_pin, m * WW_SRCE_NPIN),
-                    HostUnmanaged<const float>(pin + o0 * WW_SRCE_NPIN, m * WW_SRCE_NPIN));
-  Kokkos::deep_copy(ex, head(g.b_psc, m * WW_SRCE_NPSC),
-                    HostUnmanaged<float>(psc + o0 * WW_SRCE_NPSC, m * WW_SRCE_NPSC));
-  Kokkos::deep_copy(ex, head(g.b_whitecap, m * 4), HostUnmanaged<float>(whitecap + o0 * 4, m * 4));
-  Kokkos::deep_copy(ex, head(g.b_taubbl, m * 2), HostUnmanaged<float>(taubbl + o0 * 2, m * 2));
-  Kokkos::deep_copy(ex, head(g.b_tauice, m * 2), HostUnmanaged<float>(tauice + o0 * 2, m * 2));
+    Kokkos::deep_copy(ex, head(g.b_wn1, m * nk), HostUnmanaged<const float>(wn1 + o0 * nk, m * nk));
+    Kokkos::deep_copy(ex, head(g.b_cg1, m * nk), HostUnmanaged<const float>(cg1 + o0 * nk, m * nk));
+    Kokkos::deep_copy(ex, head(g.b_pin, m * WW_SRCE_NPIN),
+                      HostUnmanaged<const float>(pin + o0 * WW_SRCE_NPIN, m * WW_SRCE_NPIN));
+    Kokkos::deep_copy(ex, head(g.b_psc, m * WW_SRCE_NPSC),
+                      HostUnmanaged<float>(psc + o0 * WW_SRCE_NPSC, m * WW_SRCE_NPSC));
+    Kokkos::deep_copy(ex, head(g.b_whitecap, m * 4), HostUnmanaged<float>(whitecap + o0 * 4, m * 4));
+    Kokkos::deep_copy(ex, head(g.b_taubbl, m * 2), HostUnmanaged<float>(taubbl + o0 * 2, m * 2));
+    Kokkos::deep_copy(ex, head(g.b_tauice, m * 2), HostUnmanaged<float>(tauice + o0 * 2, m * 2));
+  }
   t_in.stop();
 
   // Dynamic, as W3WAVE's own loop over the sea points (SCHEDULE (DYNAMIC,1)): the cost of a point
@@ -299,9 +434,13 @@ void run_batch(GridCtx& g, const st4::Params& q, const st4::Fields& f, const snl
   policy.set_chunk_size(1);
 
   const Grid grid{g.sig.data(), g.dden.data(), g.ecos.data(), g.esin.data(), g.mapwn.data()};
-  const auto SP = g.b_spec, W1 = g.b_wn1, C1 = g.b_cg1, PI = g.b_pin, PS = g.b_psc,
-             WC = g.b_whitecap, TB = g.b_taubbl, TI = g.b_tauice, RW = g.b_rw;
-  const auto SH = g.b_shave, IW = g.b_iw, JS = g.b_jsea;
+  const auto SP = g.b_spec, RW = g.b_rw;
+  const DevUnmanaged<const Real> W1(w1_p, m * nk), C1(c1_p, m * nk), PI(pi_p, m * WW_SRCE_NPIN);
+  const DevUnmanaged<Real> PS(ps_p, m * WW_SRCE_NPSC), WC(wc_p, m * 4), TB(tb_p, m * 2),
+      TI(ti_p, m * 2);
+  const DevUnmanaged<int> SH(sh_p, m);
+  const DevUnmanaged<const int> JS(js_p, m);
+  const auto IW = g.b_iw;
   const auto DW = g.b_dw;
   const auto SC = g.b_scal;
   const auto ST = g.b_state;
@@ -384,17 +523,31 @@ void run_batch(GridCtx& g, const st4::Params& q, const st4::Fields& f, const snl
   t_k.stop();
 
   ww::timers::Region t_out("srce.batch.d2h", fence);
-  if (!resident)
-    Kokkos::deep_copy(ex, HostUnmanaged<float>(spec + o0 * nspec, m * nspec),
-                      head(g.b_spec, m * nspec));
-  Kokkos::deep_copy(ex, HostUnmanaged<float>(psc + o0 * WW_SRCE_NPSC, m * WW_SRCE_NPSC),
-                    head(g.b_psc, m * WW_SRCE_NPSC));
-  Kokkos::deep_copy(ex, HostUnmanaged<float>(whitecap + o0 * 4, m * 4), head(g.b_whitecap, m * 4));
-  Kokkos::deep_copy(ex, HostUnmanaged<float>(taubbl + o0 * 2, m * 2), head(g.b_taubbl, m * 2));
-  Kokkos::deep_copy(ex, HostUnmanaged<float>(tauice + o0 * 2, m * 2), head(g.b_tauice, m * 2));
-  Kokkos::deep_copy(ex, HostUnmanaged<int>(shave + o0, m), head(g.b_shave, m));
+  if (!(resident && st.in_place)) {
+    if (!resident)
+      Kokkos::deep_copy(ex, HostUnmanaged<float>(spec + o0 * nspec, m * nspec),
+                        head(g.b_spec, m * nspec));
+    Kokkos::deep_copy(ex, HostUnmanaged<float>(psc + o0 * WW_SRCE_NPSC, m * WW_SRCE_NPSC),
+                      head(g.b_psc, m * WW_SRCE_NPSC));
+    Kokkos::deep_copy(ex, HostUnmanaged<float>(whitecap + o0 * 4, m * 4), head(g.b_whitecap, m * 4));
+    Kokkos::deep_copy(ex, HostUnmanaged<float>(taubbl + o0 * 2, m * 2), head(g.b_taubbl, m * 2));
+    Kokkos::deep_copy(ex, HostUnmanaged<float>(tauice + o0 * 2, m * 2), head(g.b_tauice, m * 2));
+    Kokkos::deep_copy(ex, HostUnmanaged<int>(shave + o0, m), head(g.b_shave, m));
+  }
   ex.fence();
   t_out.stop();
+  if (resident) {
+    if (!st.in_place || st.keep) {
+      g_out_copies.fetch_add(5, std::memory_order_relaxed);
+      g_out_bytes.fetch_add(static_cast<long long>(m * (WW_SRCE_NPSC + 4 + 2 + 2) * sizeof(float) +
+                                                   m * sizeof(int)),
+                            std::memory_order_relaxed);
+    }
+    remember_out(g, st, kInPsc, psc + o0 * WW_SRCE_NPSC, m * WW_SRCE_NPSC * sizeof(float));
+    remember_out(g, st, kInWc, whitecap + o0 * 4, m * 4 * sizeof(float));
+    remember_out(g, st, kInTb, taubbl + o0 * 2, m * 2 * sizeof(float));
+    remember_out(g, st, kInTi, tauice + o0 * 2, m * 2 * sizeof(float));
+  }
 }
 
 }  // namespace
@@ -666,6 +819,15 @@ void ww_srce_batch(int igrid, int it, int inflags24, int flogrd57, int flogrd58,
 // | jsea      | BJSEA(IP) = JSEA of point IP     | const int*    | in     | npts             |
 // The host VA is neither read nor written here: ww::resident::device_va copies it to the
 // device only when the host holds the newer bits, and the state is DEVICE afterwards.
+// The other arrays (WFIP-0005 unit 4): on a backend that reads host memory (Serial, OpenMP)
+// the kernel reads and writes them in place, with no copy. On a device each keeps its batch
+// buffer between calls and, when the step runs in one launch, is copied in only when its bits
+// differ from those the buffer holds (a host shadow compared with memcmp; for PSC, WC, TB, TI,
+// which the kernel writes, the bits copied back). So WN, CG (rewritten by W3ULEV), the
+// forcing of BPIN and the packed state cross only on the steps where the host changed them,
+// and no writer of them in WW3 has to be listed for the device copy to stay current. PSC, WC,
+// TB, TI and SHAVE still come back at every call: W3KOKKOS_SRCE_BATCH unpacks them into
+// W3ADATMD, which the output and the next step read on the host.
 void ww_srce_batch_va(int igrid, int it, int inflags24, int flogrd57, int flogrd58, float dtg,
                       float* va, int nspec, int nsealm, int npts, const int* jsea,
                       const float* wn1, const float* cg1, const float* pin, float* psc,
@@ -741,7 +903,7 @@ void ww_srce_batch_va(int igrid, int it, int inflags24, int flogrd57, int flogrd
 #endif
         run_batch<Kokkos::DefaultExecutionSpace>(g, q, f, nc, nt, nsig, c, n0, n, nullptr, wn1,
                                                  cg1, pin, psc, whitecap, taubbl, tauice, shave,
-                                                 &dva, jsea);
+                                                 &dva, jsea, n0 == 0 && n == npts);
       g_batch_launches.fetch_add(1, std::memory_order_relaxed);
     }
     ww::resident::device_written(igrid);

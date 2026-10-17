@@ -1230,3 +1230,64 @@ timing after the change, `--repeat 3`, is in the port reports of `W3XYP3` and `W
 shim and the fork for CUDA with no warning from `prop3_shim.cpp`; nothing ran on the GPU, and
 whether CUDA gives the CPU's bits is not known ⚠. The regtest matrix did not run ⚠. Not covered:
 `ww3_multi`, `PDLIB`, `MPI`, SMC; `W3_SMC` and `W3_DEBUGCOH` with `KOKKOS` were not compiled ⚠.
+
+## 14. The source-term inputs kept on the device (WFIP-0005 unit 4)
+
+No fork change: the `WW3/` pin stays at `ww3-gpu/kokkos-prop3dev` `90631fad` (section 13), and the
+ABI stays `ww_kokkos` 0.6.0 (no entry point added). Unit 4 of
+[WFIP-0005](../../../docs/WFIPs/WFIP-0005-device-resident-step.md) is a change of
+[`srce_shim.cpp`](srce_shim.cpp) alone: `ww_srce_batch_va` (section 12) no longer copies its
+per-step inputs at every call. `W3KOKKOS_SRCE_BATCH` packs them as before
+(`w3kokkosmd.F90:1907-1950` at `90631fad`): `BJSEA`, `BWN1 = WN(1:NK,ISEA)`,
+`BCG1 = CG(1:NK,ISEA)`, the forcing `BPIN` (`DW`, `U10`, `U10D`, `AS`, `ICE`, `RHOAIR`, `ASF`),
+and the inout `BPSC` (`UST`, `USTDIR`, `TAUWX` .. `WNMEAN`), `BWC`, `BTB`, `BTI`.
+
+- **On Serial and OpenMP** the kernel reads and writes those packed arrays in place: nothing is
+  copied either way, where section 12 made a host `memcpy` of each into the batch buffers and back.
+  Team *i* reads row *i* of each and writes rows *i* of `BPSC`, `BWC`, `BTB`, `BTI`, `BSH`, which
+  no other team touches, so the bits are those of the buffers before.
+- **On a device** each input keeps its batch buffer between calls and a host *shadow* of the bits
+  the buffer holds; a call compares the packed array with the shadow (`memcmp`) and copies only
+  when a byte or the length differs. For the inout ones the shadow is taken after the copy back,
+  so an array the host repacked unchanged is not sent again. The comparison is the guarantee, the
+  pattern of `prop3_shim.cpp` (section 13) extended to inout arrays: a writer of `WN`, `CG` (for
+  example `W3ULEV` after a level change, `w3updtmd.F90:2378-2380` in `:2066-2614`), of the forcing (`W3UWND`,
+  `W3UICE`, `W3URHO`) or of the packed state that this list misses cannot leave stale bits on the
+  device. The shadows are kept only when the step runs in one launch (`WW_KOKKOS_SRCE_BATCH_MIB`
+  large enough, the default on `bench_small`), and voided when the buffers are reallocated or the
+  unpacked entry `ww_srce_batch` writes them. `BPSC`, `BWC`, `BTB`, `BTI` and `BSH` still come back
+  at every call: `W3KOKKOS_SRCE_BATCH` unpacks them into `W3ADATMD` and `W3WDATMD`, which the output
+  and the next step read on the host (`w3kokkosmd.F90:1967-1995`).
+- **Diagnostic** `WW_KOKKOS_SRCE_STAGED=1`: on a host backend the shim stages and skips as on a
+  device, into its own buffers, so a wrong skip would feed the kernel stale inputs and show in the
+  output. **Counters** (`WW_KOKKOS_SRCE_COUNT=1`): input copies and bytes H2D, inputs unchanged and
+  not copied, copies back D2H, and one line per input; on a host backend without the diagnostic
+  they are labelled "projected for a device, none made", the same comparison run only to count.
+- **Memory contract**: phase 2. The batch buffers live for the run and are refreshed by content;
+  no Unified Memory.
+
+The checkpoint on the CPU, 2026-10-17 (OpenMP backend, Kokkos 5.2.2, gfortran/g++ 16.2.0, Intel
+Core i9-14900, 32 threads, shared with other sessions; never `--gpu`). Each run below gave
+`out_grd.ww3` and the `ww3_ounf` NetCDF (full) or `out_grd.ww3`, `out_pnt.ww3`, `restart.ww3`
+(smoke) `cmp`-equal to the Fortran of the same executable and to `--ww3`, whose NetCDF differs only
+in `WAVEWATCH_III_switches`, `nccmp-tol` PASS both (v): `bash scripts/ww3-gpu.sh --ww3-gpu full
+--cpu --kokkos resident` and `... smoke ... --kokkos resident`, each plain, with
+`WW_KOKKOS_VA_RESIDENT=1` and with `WW_KOKKOS_SRCE_STAGED=1` (smoke staged on `switch_lab_ompg`
+only), and `... smoke ... --kokkos all` plain and with `WW_KOKKOS_VA_RESIDENT=1`, on
+`switch_lab_ompg` and `WW3GPU_SWITCH=switch_lab_shrd`: 15 runs. `VA` traffic is unchanged
+(H2D 1, D2H 13 on the full; 1 / 2 161 on the smoke). The source-term inputs, from
+`WW_KOKKOS_SRCE_COUNT=1` (the same on both switches and with every flag):
+
+| Run | Section 13, per call on a device | This section | Copies back D2H |
+|---|---|---|---|
+| full (`bench_small`, 25 calls, 9 204 active points) | 8 inputs, 3 129 360 B per step (78.23 MB in the run) | 8 copies, 3 129 360 B, all at the first call; 192 of 192 later inputs unchanged | 1 104 480 B per step (27.61 MB), unchanged |
+| smoke (`ww3_ts1`, 2 161 calls, one point, NK 36) | 8 inputs, 436 B per step (0.94 MB in the run) | 1 452 copies, 41 092 B: `BPIN` 1 441 times (the forcing changes), `BPSC` 5 times, the six others once | 120 B per step (0.26 MB), unchanged |
+
+Per input in the full run: `BJSEA` 36 816 B, `BWN1` and `BCG1` 883 584 B each, `BPIN` 257 712 B,
+`BPSC` 773 136 B, `BWC` 147 264 B, `BTB` and `BTI` 73 632 B each, each copied once and unchanged
+24 times. `bench_small` has a homogeneous wind (`ww3_shel.nml`, `HOMOG_INPUT`) and no level, ice
+or current input, so its forcing never changes after the first step; on a forcing that does, `BPIN`
+crosses on each step that changed it, as in the smoke. The numbers on a host backend are the
+projection described above; nothing of this ran on a GPU ⚠. `bash scripts/ww3-gpu.sh --ww3-gpu full
+--gpu --kokkos resident --build-only` compiled the shim and the fork for CUDA; whether CUDA gives the
+CPU's bits is not known ⚠. The regtest matrix did not run ⚠.
