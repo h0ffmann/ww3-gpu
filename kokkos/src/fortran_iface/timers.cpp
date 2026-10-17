@@ -11,6 +11,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <exception>
 #include <map>
 #include <mutex>
 #include <string>
@@ -74,7 +75,9 @@ Region::Region(const char* name, bool fence) : name_(name), fence_(fence), on_(e
 void Region::stop() {
   if (!on_) return;
   on_ = false;
-  if (fence_) Kokkos::fence("ww_kokkos.timers.stop");
+  // A destructor is noexcept: while a CUDA error unwinds the shim, a second fence would throw
+  // again and terminate the run before the shim reports the error to WW3 (EXTCDE).
+  if (fence_ && std::uncaught_exceptions() == 0) Kokkos::fence("ww_kokkos.timers.stop");
   const double s = std::chrono::duration<double>(std::chrono::steady_clock::now() - t0_).count();
   Kokkos::Profiling::popRegion();
   add(name_, s);
