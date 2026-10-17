@@ -57,6 +57,13 @@ The manual chapter behind most switch rows is `WW3/manual/impl/switch.tex`.
 | WeatherNext 3 | Google DeepMind's ML weather forecast model, announced 2026-09-03 `(v)` [issue #45](https://github.com/h0ffmann/ww3-gpu/issues/45) | Predicts wind, temperature, pressure and SST in 64 ensemble members, with no wave variable; planned here as an alternative 10 m wind input to `ww3_prnc`. | [README.md](../README.md) |
 | AIFS Single Wave | ECMWF's ML wave forecast, operational since 2026-05-12 `(v)` [issue #45](https://github.com/h0ffmann/ww3-gpu/issues/45) | 0.25°, 15-day Hs, period, direction and swell partitions; the ML wave reference in the Triton benchmark. | [README.md](../README.md) |
 | marola | an open, non-profit platform for sea conditions and bathing-water quality at Brazilian beaches, built on public data (`marola-dev/marola`, DOI `10.5281/zenodo.23224155`) `(v)` [README.md](../README.md#related-work) | Related work by the same author; its MIP-0052 plans to run a spectral wave model for its own bays on this repo's groundwork. | [README.md](../README.md#related-work) |
+| GFS-Wave | the WW3 wave component of GFS v16, in operations since 2021-03-22: three grids in a `ww3_multi` mosaic (global 10 arcmin, Southern Ocean 15 arcmin, Arctic 9 km), 50 x 36 spectral components, ST4 and the DIA, to 384 h `(v)` SCN 21-20 and NCO `gfs.v16.3.33` `parm/config/config.wave`, read 2026-10-16 | NOAA's production wave run, MPI on CPU nodes; its spectral grid is WW4's default. | [docs/H100_OPTIMIZATION_STRATEGY_202610.md](H100_OPTIMIZATION_STRATEGY_202610.md) |
+| GEFS-Wave | the WW3 wave component of GEFS v12, since 2020-09-23: 31 members, 0.25°, 16 days, 33 x 36 spectral components `(v)` SCN 20-75 and NCO `gefs.v12.3.22` `parm/gefs_wave.parm`, read 2026-10-16 | NOAA's operational wave ensemble. | [docs/H100_OPTIMIZATION_STRATEGY_202610.md](H100_OPTIMIZATION_STRATEGY_202610.md) |
+| GLWU | Great Lakes Wave Unstructured, WW3 on an unstructured mesh of the Great Lakes (253 010 nodes in `glwu.v2.0.7`) `(v)` SCN 17-75, read 2026-10-16 | NOAA's operational unstructured-grid WW3; `switch_NCEP_glwu` in `WW3-noaa/model/bin/`. | [docs/H100_OPTIMIZATION_STRATEGY_202610.md](H100_OPTIMIZATION_STRATEGY_202610.md) |
+| GFS v17 | the proposed fully coupled upgrade of GFS (FV3 C1152, MOM6, CICE6), with WW3 on an unstructured grid, proposed for October 2026 `(v)` PNS 26-29, 2026-04-15, read 2026-10-16 | No Service Change Notice for it on 2026-10-16. | [docs/H100_OPTIMIZATION_STRATEGY_202610.md](H100_OPTIMIZATION_STRATEGY_202610.md) |
+| WCOSS2 | Weather and Climate Operational Supercomputing System 2: NOAA's twin HPE Cray EX production machines, Cactus and Dogwood, AMD EPYC 7742, no GPUs `(v)` TOP500 system 179944 and NOAA releases of 2022-06-28 and 2026-07-27, read 2026-10-16 | Where GFS-Wave and GEFS-Wave run; moving to Google Cloud by December 2027. | [docs/H100_OPTIMIZATION_STRATEGY_202610.md](H100_OPTIMIZATION_STRATEGY_202610.md) |
+| RDHPCS / Ursa / Rhea | NOAA's Research and Development High Performance Computing System; Ursa (58 nodes with two H100 NVL each) and Rhea (GPUs for AI and machine learning) are its machines `(v)` Ursa user guide and NOAA release of 2024-09-03, read 2026-10-16 | Where NOAA's GPUs are: research, not production. | [docs/H100_OPTIMIZATION_STRATEGY_202610.md](H100_OPTIMIZATION_STRATEGY_202610.md) |
+| SENA | Software Engineering for Novel Architectures, NOAA's 2015 project to re-architect applications for GPUs and many-core CPUs `(v)` Hart, NOAA OCIO, HPC User Forum, 2015-09-09 | Its priority models did not include waves. | [docs/H100_OPTIMIZATION_STRATEGY_202610.md](H100_OPTIMIZATION_STRATEGY_202610.md) |
 
 ## Wave physics and the spectrum
 
@@ -494,7 +501,7 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | cc89 / sm_89 / compute capability 8.9 | the RTX 4090's (Ada) architecture target, `-gpu=cc89` for `nvfortran` `(v)` [README.md](../README.md), `CMAKE_CUDA_ARCHITECTURES=89` for Kokkos `(v)` [kokkos/CMakePresets.json](../kokkos/CMakePresets.json) | `sm_89` is ⚠ nvcc's spelling of the same target (not used in the repo); `cc90` is the H100. | [gpu/README.md](../gpu/README.md) |
 | ADA89 / HOPPER90 | `Kokkos_ARCH_ADA89` (RTX 4090) / `HOPPER90` (H100) Kokkos architecture keys `(v)` [kokkos/CMakePresets.json](../kokkos/CMakePresets.json) | The pinned CUDA Kokkos is built for ADA89 only; an H100 needs a Kokkos rebuild in `picasso`. | [course/11-kokkos-and-modern-cpp.md](../course/11-kokkos-and-modern-cpp.md) |
 | H100 / RTX 4090 | NVIDIA data-centre (Hopper) and consumer (Ada) GPUs `(v)` [pubs/proposal/pt/04-scope.md](../pubs/proposal/pt/04-scope.md), [README.md](../README.md) | The proposal's target and the owner's workstation card; the 4090 runs FP64 at 1/64 of FP32. | [bench/README.md](../bench/README.md), [kokkos/PORT_STATUS.md](../kokkos/PORT_STATUS.md) |
-| PCIe / NVLink | ⚠ Peripheral Component Interconnect Express / NVIDIA's GPU interconnect (not expanded in the repo) | The host↔device link whose bandwidth bounds every phase-1 port; consumer cards have PCIe only. | [README.md](../README.md), [bench/README.md](../bench/README.md) |
+| PCIe / NVLink | Peripheral Component Interconnect Express, the host-device bus (Gen5: 128 GB/s both directions together, NVIDIA H100 datasheet, Cisco copy, read 2026-10-16 `(v)`) / NVIDIA's GPU-to-GPU interconnect | The host↔device link whose bandwidth bounds every phase-1 port; consumer cards have PCIe only. | [README.md](../README.md), [bench/README.md](../bench/README.md), [docs/CPU_GPU_SPLIT_202610.md](CPU_GPU_SPLIT_202610.md) |
 | GH200 / NVLink-C2C | NVIDIA Grace Hopper Superchip: a Grace CPU and a Hopper GPU joined by NVLink-C2C, a "900 gigabytes per second (GB/s) of coherent interface" `(v)` (NVIDIA GH200 page, read 2026-10-16) | A different product from an H100 card in an x86 server, where the CPU and the GPU memories meet over PCIe Gen5. | [docs/CPU_GPU_SPLIT_202610.md](CPU_GPU_SPLIT_202610.md) |
 | HBM | High Bandwidth Memory: the GPU's stacked memory, about 2 TB/s on the H100 PCIe and 3.35 TB/s on the SXM `(v)` (NVIDIA H100 datasheet, Cisco copy, read 2026-10-16) | Sets how fast the GPU reads the spectrum, against the PCIe link that moves it between memories. | [docs/CPU_GPU_SPLIT_202610.md](CPU_GPU_SPLIT_202610.md) |
 | NVMe | ⚠ Non-Volatile Memory Express (not expanded in the repo) | Fast local storage named among today's lab-machine features. | [pubs/proposal/pt/05-justification.md](../pubs/proposal/pt/05-justification.md) |
@@ -522,7 +529,7 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | ScopeGuard / `Kokkos::initialize` / `finalize` / `push_finalize_hook` | RAII runtime lifetime, once per process; a hook that drops Views before `finalize` `(v)` [kokkos/README.md](../kokkos/README.md) | The shim finalises Kokkos only if it started it. | [kokkos/src/fortran_iface/snl1_shim.cpp](../kokkos/src/fortran_iface/snl1_shim.cpp) |
 | `Kokkos_ENABLE_DEBUG_BOUNDS_CHECK` | a Kokkos *build* option, fixed by the pinned derivation `(v)` [kokkos/README.md](../kokkos/README.md) | Cannot be switched on from the presets; sanitizers are the net. | [course/11-kokkos-and-modern-cpp.md](../course/11-kokkos-and-modern-cpp.md) |
 | RAII | ⚠ Resource Acquisition Is Initialization (not expanded in the repo) | The C++ ownership discipline both WW4's `AGENTS.md` and this repo mandate: no raw `new`/`delete`. | [docs/AGENTS_KOKKOS_202609.md](AGENTS_KOKKOS_202609.md), [course/11-kokkos-and-modern-cpp.md](../course/11-kokkos-and-modern-cpp.md) |
-| `bind(C)` / ISO_C_BINDING / `extern "C"` | Fortran 2003 C interoperability (`BIND(C, NAME=…)`, `c_int`, `c_float`, `VALUE`) and its C++ side `(v)` [course/11-kokkos-and-modern-cpp.md](../course/11-kokkos-and-modern-cpp.md), [kokkos/src/fortran_iface/w3kokkosmd.F90](../kokkos/src/fortran_iface/w3kokkosmd.F90) | The only boundary between WW3 and the kernels: assumed-size arrays, no mangling, nothing throws. | [kokkos/src/fortran_iface/ww_kokkos_c.hpp](../kokkos/src/fortran_iface/ww_kokkos_c.hpp) |
+| `bind(C)` / ISO_C_BINDING / `extern "C"` | Fortran 2003 C interoperability (`BIND(C, NAME=…)`, `c_int`, `c_float`, `VALUE`) and its C++ side `(v)` [course/11-kokkos-and-modern-cpp.md](../course/11-kokkos-and-modern-cpp.md), `model/src/w3kokkosmd.F90` of the `WW3/` fork | The only boundary between WW3 and the kernels: assumed-size arrays, no mangling, nothing throws. | [kokkos/src/fortran_iface/ww_kokkos_c.hpp](../kokkos/src/fortran_iface/ww_kokkos_c.hpp) |
 | `do concurrent` | Fortran 2008 loop whose iterations are independent, with Fortran 2018 `LOCAL()` locality `(v)` [course/10-modern-fortran-refactoring.md](../course/10-modern-fortran-refactoring.md) | One source, three targets with `nvfortran -stdpar=gpu`; the standard-Fortran route to parallelism. | [gpu/README.md](../gpu/README.md) |
 | `CONTIGUOUS` / `INTENT` / `PURE` / explicit interface | modern-Fortran attributes of the refactoring checklist `(v)` [course/10-modern-fortran-refactoring.md](../course/10-modern-fortran-refactoring.md) | What makes a routine replaceable by a kernel; `PURE` is blocked on `W3SNL1` by the `W3_T` `WRITE`. | [course/10-modern-fortran-refactoring.md](../course/10-modern-fortran-refactoring.md) |
 | automatic array | a local array sized at run time from module variables, e.g. `UE(1-NTH:NSPECY)` `(v)` [course/10-modern-fortran-refactoring.md](../course/10-modern-fortran-refactoring.md) | The per-call stack workspace the port moves into team scratch. | [course/12-porting-a-kernel-w3snl1.md](../course/12-porting-a-kernel-w3snl1.md) |
@@ -551,7 +558,7 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | cdo | Climate Data Operators; cdo 2.5.1 in the pinned toolchain `(v)` | `cdo mergetime` is how `get_gfs.sh` concatenates the GRIB forecast hours before `grib_to_netcdf`. | [course/04-forcing.md](../course/04-forcing.md) |
 | ecCodes / grib_to_netcdf / grib_copy / grib_ls | ECMWF's GRIB library (2.48.0 pinned) and its command-line tools `(v)` [course/01-build.md](../course/01-build.md), [course/04-forcing.md](../course/04-forcing.md) | GRIB → netCDF for the GFS winds; renames `10u`/`10v` to `u10`/`v10` ⚠. | [course/04-forcing.md](../course/04-forcing.md) |
 | GRIB / GRIB2 | ⚠ GRIdded Binary, the WMO meteorological format (not expanded in the repo) | What NOMADS serves; the `NOGRB`/`NCEP2` switches concern GRIB *output*. | [course/04-forcing.md](../course/04-forcing.md) |
-| GFS / GEFS | ⚠ Global Forecast System / Global Ensemble Forecast System (NOAA; not expanded in the repo) | NOAA's operational 0.25° winds used by example 02; 3-hourly forecast output. | [course/04-forcing.md](../course/04-forcing.md), [docs/AWESOME-WW3_202609.md](AWESOME-WW3_202609.md) |
+| GFS / GEFS | Global Forecast System / Global Ensemble Forecast System, NOAA's deterministic and ensemble global forecasts `(v)` SCN 21-20 and SCN 20-75, <https://www.weather.gov/notification/>, read 2026-10-16 | NOAA's operational 0.25° winds used by example 02; each carries a WW3 wave component (GFS-Wave, GEFS-Wave). | [course/04-forcing.md](../course/04-forcing.md), [docs/AWESOME-WW3_202609.md](AWESOME-WW3_202609.md), [docs/H100_OPTIMIZATION_STRATEGY_202610.md](H100_OPTIMIZATION_STRATEGY_202610.md) |
 | NOMADS | ⚠ NOAA Operational Model Archive and Distribution System (not expanded in the repo) | Serves GFS GRIB2; `filter_gfs_0p25.pl` subsets it by box and variable. | [course/04-forcing.md](../course/04-forcing.md) |
 | PNS / SCN / TIN | Public Information Statement / Service Change Notice / Technical Implementation Notice `(v)` <https://www.weather.gov/notification/>, fetched 2026-10-09 | The NWS notices that announce changes: a PNS proposes one and opens comments, an SCN schedules it (usually 30 days ahead); TIN appears only in the 1996–2022 archive. `just noaa-notices` lists the new ones that touch this repository. | [.claude/skills/noaa-notices/SKILL.md](../.claude/skills/noaa-notices/SKILL.md) |
 | ERA5 / CDS | ECMWF's reanalysis and the Copernicus Climate Data Store that serves it `(v)` [course/04-forcing.md](../course/04-forcing.md) | The better hindcast product, not used because fetching it needs the Python `cdsapi` client. | [course/08-python.md](../course/08-python.md) |
@@ -578,6 +585,8 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | `ACCESS='STREAM'` | Fortran 2003 stream access: an unformatted file as a byte sequence with no record markers, positioned by `POS=` in bytes from 1 `(v)` gfortran 16.2 program, 2026-10-16 | How `W3IORS` opens `restart.<ext>`; libgfortran does not truncate an existing file on `OPEN` without `STATUS` or after a `WRITE`. | [kokkos/src/ww_kokkos/iors_stream.hpp](../kokkos/src/ww_kokkos/iors_stream.hpp), [kokkos/port_report/W3IORS_KOKKOS.md](../kokkos/port_report/W3IORS_KOKKOS.md) |
 | IOSTAT / `LIBERROR_*` | the Fortran I/O status specifier, and libgfortran's codes for it (`LIBERROR_END` -1, `LIBERROR_BAD_OPTION` 5002, `LIBERROR_BAD_ACTION` 5007; an OS error gives `errno`) `(v)` `gcc/fortran/libgfortran.h`, gcc 16.2.0, and the gfortran program | `EXTIOF` exits with `ERRCODE+1` for IOSTAT > 0 and `ERRCODE` for < 0 on a READ, `ERRCODE` for any nonzero IOSTAT on a WRITE (`w3servmd.F90:895-923`). | [kokkos/src/ww_kokkos/iors_stream.hpp](../kokkos/src/ww_kokkos/iors_stream.hpp), [kokkos/src/ww_kokkos/iogr_unformatted.hpp](../kokkos/src/ww_kokkos/iogr_unformatted.hpp) |
 | `FMNMX` | the SASS minimum/maximum instruction of NVIDIA GPUs ⚠ (from `cuobjdump -sass` output, not NVIDIA's documentation) | What `nvcc` makes of `v > 0 ? v : 0` in `iors_va_clamp`; a NaN gives the other operand. | [kokkos/port_report/W3IORS_KOKKOS.md](../kokkos/port_report/W3IORS_KOKKOS.md) |
+| libdevice | NVIDIA's device math library, the bitcode that implements `expf`, `logf`, `powf`, `tanhf`, `sincosf` and the other math functions in CUDA device code ⚠ (general knowledge, not read today) | Its results are not glibc's, so a CUDA kernel that calls them may not give the Fortran's bits; unmeasured. | [docs/H100_OPTIMIZATION_STRATEGY_202610.md](H100_OPTIMIZATION_STRATEGY_202610.md), [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md) |
+| H100 NVL | an H100 variant with 94 GB of memory per GPU `(v)` RDHPCS Ursa user guide, read 2026-10-16; that it is a PCIe card is general knowledge ⚠ | The GPU of NOAA's Ursa nodes; whether the UFSC node has an NVL, PCIe or SXM H100 is not recorded ⚠. | [docs/H100_OPTIMIZATION_STRATEGY_202610.md](H100_OPTIMIZATION_STRATEGY_202610.md) |
 
 ## This repository's own names
 
@@ -632,7 +641,7 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | `spectrum_fixtures.hpp` / `ww::jonswap` | the JONSWAP × cos² synthetic spectrum as a `KOKKOS_INLINE_FUNCTION` `(v)` [course/11-kokkos-and-modern-cpp.md](../course/11-kokkos-and-modern-cpp.md) | The JONSWAP sea state on the C++ side, used by the lesson-11 intro programs; the port's L1 tests that also used it were removed (ADR-0010). | [kokkos/src/ww_kokkos/spectrum_fixtures.hpp](../kokkos/src/ww_kokkos/spectrum_fixtures.hpp) |
 | `fixture_io.{hpp,cpp}` / `ww::fixture::load()` | the one reader of the binary fixture layout; subtracts one from every 1-based index `(v)` [kokkos/tests/fixtures/README.md](../kokkos/tests/fixtures/README.md) | Used by `ww_bench_snl1` since the port's tests were removed (ADR-0010). | [kokkos/src/ww_kokkos/fixture_io.hpp](../kokkos/src/ww_kokkos/fixture_io.hpp) |
 | `ww_kokkos_c.hpp` / `snl1_shim.cpp` / `w3kokkosmd.F90` | the C ABI declarations / their implementation (ownership, lifetime, errors) / the `ISO_C_BINDING` mirror `MODULE W3KOKKOSMD` `(v)` [kokkos/README.md](../kokkos/README.md) | The `bind(C)` boundary; nothing in it can throw. | [course/12-porting-a-kernel-w3snl1.md](../course/12-porting-a-kernel-w3snl1.md) |
-| W3KOKKOSMD / W3KOKKOS_SETUP / KOKKOS_SNL1 | the Fortran module, its set-up routine, and the `LOGICAL` the inner loop reads `(v)` [kokkos/src/fortran_iface/w3kokkosmd.F90](../kokkos/src/fortran_iface/w3kokkosmd.F90) | Written to be dropped into `WW3/model/src` unchanged. | [course/10-modern-fortran-refactoring.md](../course/10-modern-fortran-refactoring.md) |
+| W3KOKKOSMD / W3KOKKOS_SETUP / KOKKOS_SNL1 | the Fortran module, its set-up routine, and the `LOGICAL` the inner loop reads `(v)` `model/src/w3kokkosmd.F90` of the `WW3/` fork | Written to be dropped into `WW3/model/src` unchanged. | [course/10-modern-fortran-refactoring.md](../course/10-modern-fortran-refactoring.md) |
 | `ww_kokkos_init` / `ww_kokkos_finalize` / `ww_snl1_init` / `ww_snl1` / `ww_snl1_enabled` / `ww_snl1_last_error` | the six C entry points: start the runtime (idempotent) / release buffers / build tables once per grid / run `W3SNL1` for `npts` points / report the env switch / status of the last call `(v)` [kokkos/src/fortran_iface/ww_kokkos_c.hpp](../kokkos/src/fortran_iface/ww_kokkos_c.hpp) | `ww_snl1` is `void` because a Fortran `CALL` cannot read a return value. | [course/12-porting-a-kernel-w3snl1.md](../course/12-porting-a-kernel-w3snl1.md) |
 | `WW_KOKKOS_OK` … `WW_KOKKOS_ERR_RUNTIME` | the `WwKokkosStatus` codes 0–4: ok / not initialised / bad shape / kernel threw / Kokkos failed `(v)` [kokkos/src/fortran_iface/ww_kokkos_c.hpp](../kokkos/src/fortran_iface/ww_kokkos_c.hpp) | What `ww_snl1_last_error()` returns. | [kokkos/README.md](../kokkos/README.md) |
 | `WW_KOKKOS_SNL1` | environment variable, `=1` makes `ww_snl1_enabled()` return 1 so the patched `W3SRCE` calls the port `(v)` [kokkos/README.md](../kokkos/README.md) | The runtime switch; `L2_replay.sh` flips it between the two runs. | [course/12-porting-a-kernel-w3snl1.md](../course/12-porting-a-kernel-w3snl1.md) |
@@ -691,6 +700,8 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | Hook table (`ww_w3wave_hooks`, `IogrHooks`, `W3OutgHooks`) | this repository's C function-pointer tables `(v)` [kokkos/src/ww_kokkos/wave_w3wave_hooks.hpp](../kokkos/src/ww_kokkos/wave_w3wave_hooks.hpp) | How a translated driver calls the WW3 routines that are not translated; a shim fills it, and an empty hook on the path aborts. | [kokkos/port_report/W3WAVE_KOKKOS.md](../kokkos/port_report/W3WAVE_KOKKOS.md) |
 | WithoutInitializing | Kokkos allocation property `(v)` Kokkos 5.2.2 headers | Creates a View without filling it, as a Fortran `ALLOCATE` leaves memory unset. | [kokkos/port_report/W3DIMA_KOKKOS.md](../kokkos/port_report/W3DIMA_KOKKOS.md) |
 | W3setaTargets | this repository's record of which model each W3SETA/W3XETA pointer group names (`base`, `ainit`, `x`, `fl_all`, `cur`, `wind`, `taua`, `rhoa`, `iter`, `nlinit`) `(v)`, defined in [kokkos/src/ww_kokkos/adat_wadat.hpp](../kokkos/src/ww_kokkos/adat_wadat.hpp), set by [kokkos/src/ww_kokkos/adat_w3seta.hpp](../kokkos/src/ww_kokkos/adat_w3seta.hpp) | Stands for Fortran pointer association that persists across calls; `IADATA` itself is `Wadats::iadata`. | [kokkos/port_report/W3SETA_KOKKOS.md](../kokkos/port_report/W3SETA_KOKKOS.md), [kokkos/port_report/W3XETA_KOKKOS.md](../kokkos/port_report/W3XETA_KOKKOS.md) |
+| FULL / PARTIAL / default (Kokkos modes) | FULL: `WW_KOKKOS_ALL=1`, every wired part on Kokkos where its translation covers the switch file; PARTIAL: `WW_KOKKOS_<PART>=1` for a list of parts, or `WW3GPU_ROUTINES=<R>,...` in the matrix; default: no flag set, every part the Fortran `(v)` `kokkos/src/fortran_iface/PATCH.md` §7 on the wiring branch, `regtests/CMakeLists.txt:19-22` | `scripts/ww3-gpu.sh --kokkos all|none|<PART,...>`; a FULL matrix mode is planned, not implemented; FULL on wired-but-unregtested parts is for development only (ADR-0012). | [docs/ADRs/ADR-0012-translate-and-wire-now-regtest-matrix-on-the-h100.md](ADRs/ADR-0012-translate-and-wire-now-regtest-matrix-on-the-h100.md) |
+| static parity | the bit-parity argument made without running WW3: the `-O3` GIMPLE and object code of the Fortran routine and of the C++ kernel compared operation by operation `(v)` ADR-0011, "The discipline", item 4 | What a translated routine carries until the regtest matrix judges it; recorded as ⚠ in its port report. | [docs/ADRs/ADR-0011-port-in-units-regtest-at-checkpoints.md](ADRs/ADR-0011-port-in-units-regtest-at-checkpoints.md), [docs/ADRs/ADR-0012-translate-and-wire-now-regtest-matrix-on-the-h100.md](ADRs/ADR-0012-translate-and-wire-now-regtest-matrix-on-the-h100.md) |
 
 ## Citation and licensing
 
@@ -1021,6 +1032,7 @@ Every term above, alphabetically, with the section it lives in.
 - FTE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - FTF: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - FTWN: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- FULL / PARTIAL / default (Kokkos modes): [This repository's own names](#this-repositorys-own-names)
 - FUNC0_ZHAO: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - FUNC1_ZHAO: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - FUNCD_FDERIV: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1031,6 +1043,7 @@ Every term above, alphabetically, with the section it lives in.
 - GAULEG / INSNLGQM: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - GAULEG: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - GEBCO: [HPC and software](#hpc-and-software)
+- GEFS-Wave: [Models, projects and institutions](#models-projects-and-institutions)
 - GEFS: [HPC and software](#hpc-and-software)
 - `gen_snl1_fixture`: [This repository's own names](#this-repositorys-own-names)
 - `gen_snl1_fixture` / `snl1_nk25_nth24.bin` / `snl1-fixtures`: [This repository's own names](#this-repositorys-own-names)
@@ -1039,6 +1052,8 @@ Every term above, alphabetically, with the section it lives in.
 - genes_gmd: [HPC and software](#hpc-and-software)
 - `_gfortran_pow_c8_i4`: [This repository's own names](#this-repositorys-own-names)
 - GET_JSEA_IBELONG: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- GFS v17: [Models, projects and institutions](#models-projects-and-institutions)
+- GFS-Wave: [Models, projects and institutions](#models-projects-and-institutions)
 - GFS: [HPC and software](#hpc-and-software)
 - GFS / GEFS: [HPC and software](#hpc-and-software)
 - GH200: [HPC and software](#hpc-and-software)
@@ -1048,6 +1063,7 @@ Every term above, alphabetically, with the section it lives in.
 - GIVENS / IMPLU / UPPDIR: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - GIVENS: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - GKE (NL5): [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
+- GLWU: [Models, projects and institutions](#models-projects-and-institutions)
 - GMD (journal): [Models, projects and institutions](#models-projects-and-institutions)
 - GMD (NL3): [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - GMSH: [HPC and software](#hpc-and-software)
@@ -1059,6 +1075,7 @@ Every term above, alphabetically, with the section it lives in.
 - GRIDS / SGRDS / MPARS / NGRIDS / NAUXGR: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - GTYPE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - GUGINIT / AREA_SI: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- H100 NVL: [HPC and software](#hpc-and-software)
 - HasNaN: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - HIP: [HPC and software](#hpc-and-software)
 - HIP / SYCL / HPX: [HPC and software](#hpc-and-software)
@@ -1144,6 +1161,7 @@ Every term above, alphabetically, with the section it lives in.
 - LDSOLL: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - LFACTOR / TAU_WAVE_ATMOS / TAUWINDS: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - LFACTOR: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- libdevice: [HPC and software](#hpc-and-software)
 - libmvec / `_ZGVbN4vv_powf`: [This repository's own names](#this-repositorys-own-names)
 - LPDLIB: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - LRECL: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1203,12 +1221,14 @@ Every term above, alphabetically, with the section it lives in.
 - QFunc / VpFunc / VmFunc / UFunc / TFunc / ASymSmatTimVec: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - QFunc: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - QSPLIT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- RDHPCS / Ursa / Rhea: [Models, projects and institutions](#models-projects-and-institutions)
 - Record marker: [This repository's own names](#this-repositorys-own-names)
 - RRANGE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - RSTYPE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - RUNRC: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - SECONDHH / VMIN_D / VPLUS_D: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - SECONDHH: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- SENA: [Models, projects and institutions](#models-projects-and-institutions)
 - SET_IOBDP_PDLIB: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - SET_IOBPA_PDLIB: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - SET_UP_NSEAL_NSEALM: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1237,6 +1257,7 @@ Every term above, alphabetically, with the section it lives in.
 - SPATIAL_GRID / NVECTRI / COORDMAX: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - SPPNT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - SRCTRM: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- static parity: [This repository's own names](#this-repositorys-own-names)
 - STEXU / STEYU / STEDU: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - STME21: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - STOPBIS: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1366,6 +1387,7 @@ Every term above, alphabetically, with the section it lives in.
 - W3XYPFSNIMP: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - WADAT / FL_ALL / D_ONLY / NSEALM: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - WADATS / NADATA / IADATA: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- WCOSS2: [Models, projects and institutions](#models-projects-and-institutions)
 - WithoutInitializing: [This repository's own names](#this-repositorys-own-names)
 - wkfnc / cgfnc / INSNL4 / shloxr: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - wkfnc: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
