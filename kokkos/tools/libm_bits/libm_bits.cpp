@@ -3,10 +3,16 @@
 // device would compute (docs/GPU_LIBM_BITS_202610.md). Host only; it tests glibc and the
 // transcription in glibc_mathf.hpp, not a ported routine (ADR-0010 is about the port).
 //
-//   libm_bits ww <expf|logf|sincosf|powf> <fma|plain> [threads]
+//   libm_bits ww <expf|logf|sincosf|powf|mvec_expf|mvec_powf|tanhf|log10f|atan2f|exp|tanh> <fma|plain> [threads]
 //       glibc_mathf.hpp against this process's glibc: every float input for the unary
 //       functions; for powf every positive x with fixed y, every y with fixed x, and
-//       random pairs.
+//       random pairs. mvec_expf and mvec_powf are checked against libmvec's
+//       _ZGVbN4v_expf and _ZGVbN4vv_powf, the same inputs four lanes at a time. tanhf, log10f
+//       and atan2f are coremath_f.hpp's (one build: the variant argument is ignored); atan2f
+//       takes every y at fixed x and random pairs. exp (double) takes every float as a
+//       double, random bit patterns and random values in [-750, 710].
+//       tanh (double, coremath_d.hpp, one build) takes every float as a double, random bit
+//       patterns and random values in [-25, 25].
 //   libm_bits cr <tanhf|log10f|atan2f> [threads]
 //       glibc against the correctly rounded result (double, then __float128 near a
 //       midpoint): every input for the unary ones, random pairs for atan2f.
@@ -40,6 +46,8 @@
 #include <thread>
 #include <vector>
 
+#include "coremath_d.hpp"
+#include "coremath_f.hpp"
 #include "glibc_mathf.hpp"
 
 extern "C" __m128 _ZGVbN4vv_powf(__m128, __m128);
@@ -114,6 +122,15 @@ void ww_unary(const std::string& fn, int threads, Tally& t) {
       const float x = asfloat(static_cast<uint32_t>(u));
       if (fn == "expf") {
         compare(t, ww::libm::expf<Fma>(x), ::expf(x), "", x);
+      } else if (fn == "mvec_expf") {
+        // One input per call, in lane 0, beside three neighbours: lanes are independent.
+        alignas(16) float a[4] = {x, -x, x * 0.5f, 1.0f}, r[4];
+        _mm_store_ps(r, _ZGVbN4v_expf(_mm_load_ps(a)));
+        for (int l = 0; l < 4; ++l) compare(t, ww::libm::mvec_expf<Fma>(a[l]), r[l], "", a[l]);
+      } else if (fn == "tanhf") {
+        compare(t, ww::libm::tanhf(x), ::tanhf(x), "", x);
+      } else if (fn == "log10f") {
+        compare(t, ww::libm::log10f(x), ::log10f(x), "", x);
       } else if (fn == "logf") {
         compare(t, ww::libm::logf<Fma>(x), ::logf(x), "", x);
       } else {
@@ -129,15 +146,28 @@ void ww_unary(const std::string& fn, int threads, Tally& t) {
   });
 }
 
-template <bool Fma>
+float sys_mvec_powf(float x, float y) {
+  alignas(16) float a[4] = {x, x, x, x}, b[4] = {y, y, y, y}, r[4];
+  _mm_store_ps(r, _ZGVbN4vv_powf(_mm_load_ps(a), _mm_load_ps(b)));
+  return r[0];
+}
+
+template <bool Fma, bool Mvec>
+float ww_pow(float x, float y) {
+  if constexpr (Mvec) return ww::libm::mvec_powf<Fma>(x, y);
+  else return ww::libm::powf<Fma>(x, y);
+}
+
+template <bool Fma, bool Mvec = false>
 void ww_powf(int threads, Tally& t) {
+  float (*sys)(float, float) = Mvec ? sys_mvec_powf : static_cast<float (*)(float, float)>(::powf);
   // Every positive x (and every negative one for an integer y) with fixed exponents.
   const float ys[] = {0.5f, 1.5f, 2.0f, -0.5f, -1.0f, 0.25f, 1.0f / 3.0f, 2.5f, 3.0f, 4.0f};
   for (float y : ys) {
     parallel(threads, 1ULL << 32, [&](uint64_t lo, uint64_t hi) {
       for (uint64_t u = lo; u < hi; ++u) {
         const float x = asfloat(static_cast<uint32_t>(u));
-        compare2(t, ww::libm::powf<Fma>(x, y), ::powf(x, y), x, y);
+        compare2(t, ww_pow<Fma, Mvec>(x, y), sys(x, y), x, y);
       }
       t.inputs += hi - lo;
     });
@@ -148,7 +178,7 @@ void ww_powf(int threads, Tally& t) {
     parallel(threads, 1ULL << 32, [&](uint64_t lo, uint64_t hi) {
       for (uint64_t u = lo; u < hi; ++u) {
         const float y = asfloat(static_cast<uint32_t>(u));
-        compare2(t, ww::libm::powf<Fma>(x, y), ::powf(x, y), x, y);
+        compare2(t, ww_pow<Fma, Mvec>(x, y), sys(x, y), x, y);
       }
       t.inputs += hi - lo;
     });
@@ -163,7 +193,83 @@ void ww_powf(int threads, Tally& t) {
         x = std::ldexp(1.0f + (r & 0xffffff) * 0x1p-24f, static_cast<int>((r >> 24) % 40) - 20);
         y = ((r >> 32) & 0xffffff) * 0x1p-20f - 8.0f;
       }
-      compare2(t, ww::libm::powf<Fma>(x, y), ::powf(x, y), x, y);
+      compare2(t, ww_pow<Fma, Mvec>(x, y), sys(x, y), x, y);
+    }
+    t.inputs += hi - lo;
+  });
+}
+
+void compare_d(Tally& t, double got, double want, double a) {
+  uint64_t g, w, x;
+  std::memcpy(&g, &got, 8); std::memcpy(&w, &want, 8); std::memcpy(&x, &a, 8);
+  if (g == w) return;
+  if (std::isnan(got) && std::isnan(want)) { t.nan_payload++; return; }
+  t.differ++;
+  char buf[160];
+  std::snprintf(buf, sizeof buf, "x=%016" PRIx64 " got=%016" PRIx64 " want=%016" PRIx64, x, g, w);
+  t.note(buf);
+}
+
+template <bool Fma>
+void ww_exp(int threads, Tally& t) {
+  parallel(threads, 1ULL << 32, [&](uint64_t lo, uint64_t hi) {
+    for (uint64_t u = lo; u < hi; ++u) {
+      const double x = asfloat(static_cast<uint32_t>(u));
+      compare_d(t, ww::libm::exp<Fma>(x), std::exp(x), x);
+    }
+    t.inputs += hi - lo;
+  });
+  parallel(threads, 1ULL << 32, [&](uint64_t lo, uint64_t hi) {
+    uint64_t s = 0xe4b0000ULL + lo;
+    for (uint64_t i = lo; i < hi; ++i) {
+      const uint64_t r = splitmix(s);
+      double x;
+      if (i & 1) x = -750.0 + 1460.0 * static_cast<double>(r >> 11) * 0x1p-53;
+      else std::memcpy(&x, &r, 8);
+      compare_d(t, ww::libm::exp<Fma>(x), std::exp(x), x);
+    }
+    t.inputs += hi - lo;
+  });
+}
+
+void ww_tanh(int threads, Tally& t) {
+  parallel(threads, 1ULL << 32, [&](uint64_t lo, uint64_t hi) {
+    for (uint64_t u = lo; u < hi; ++u) {
+      const double x = asfloat(static_cast<uint32_t>(u));
+      compare_d(t, ww::libm::tanh(x), std::tanh(x), x);
+    }
+    t.inputs += hi - lo;
+  });
+  parallel(threads, 1ULL << 32, [&](uint64_t lo, uint64_t hi) {
+    uint64_t s = 0x7a40000ULL + lo;
+    for (uint64_t i = lo; i < hi; ++i) {
+      const uint64_t r = splitmix(s);
+      double x;
+      if (i & 1) x = -25.0 + 50.0 * static_cast<double>(r >> 11) * 0x1p-53;
+      else std::memcpy(&x, &r, 8);
+      compare_d(t, ww::libm::tanh(x), std::tanh(x), x);
+    }
+    t.inputs += hi - lo;
+  });
+}
+
+void ww_atan2f(int threads, Tally& t) {
+  const float xs[] = {1.0f, -1.0f, 0.5f, -3.0f, 1e-30f, 1e30f, 7.0f, -0.0f};
+  for (float x : xs) {
+    parallel(threads, 1ULL << 32, [&](uint64_t lo, uint64_t hi) {
+      for (uint64_t u = lo; u < hi; ++u) {
+        const float y = asfloat(static_cast<uint32_t>(u));
+        compare2(t, ww::libm::atan2f(y, x), ::atan2f(y, x), y, x);
+      }
+      t.inputs += hi - lo;
+    });
+  }
+  parallel(threads, 1ULL << 31, [&](uint64_t lo, uint64_t hi) {
+    uint64_t s = 0xa7a2f00ULL + lo;
+    for (uint64_t i = lo; i < hi; ++i) {
+      const uint64_t r = splitmix(s);
+      const float y = asfloat(static_cast<uint32_t>(r)), x = asfloat(static_cast<uint32_t>(r >> 32));
+      compare2(t, ww::libm::atan2f(y, x), ::atan2f(y, x), y, x);
     }
     t.inputs += hi - lo;
   });
@@ -376,7 +482,13 @@ int main(int argc, char** argv) {
     const int threads = argc > 4 ? std::atoi(argv[4]) : 4;
     const bool fma = var == "fma";
     if (fn == "powf") fma ? ww_powf<true>(threads, t) : ww_powf<false>(threads, t);
-    else if (fn == "expf" || fn == "logf" || fn == "sincosf")
+    else if (fn == "mvec_powf")
+      fma ? ww_powf<true, true>(threads, t) : ww_powf<false, true>(threads, t);
+    else if (fn == "atan2f") ww_atan2f(threads, t);
+    else if (fn == "exp") fma ? ww_exp<true>(threads, t) : ww_exp<false>(threads, t);
+    else if (fn == "tanh") ww_tanh(threads, t);
+    else if (fn == "expf" || fn == "logf" || fn == "sincosf" || fn == "mvec_expf" ||
+             fn == "tanhf" || fn == "log10f")
       fma ? ww_unary<true>(fn, threads, t) : ww_unary<false>(fn, threads, t);
     else return 64;
     print("ww", fn.c_str(), var.c_str(), t);

@@ -7,8 +7,8 @@ known sites: libdevice's `expf`, `logf`, `powf`, `sincosf` and `tanhf`, and ST4'
 loops. The ADR is to be revisited when "a device math library with glibc's bits, or a
 reimplementation of the five libmvec loops and the libdevice calls with glibc's algorithms,
 exists". This page measures how far that is: which libm functions the `W3SRCE` unit calls per
-sea point, which of them glibc rounds correctly, and a device transcription of the four it does
-not, checked on the host. It also answers the owner's question of 2026-10-17 on how the host
+sea point, which of them glibc rounds correctly, and a host-and-device transcription of all
+eleven, libmvec's two included, checked against glibc and libmvec on the host. It also answers the owner's question of 2026-10-17 on how the host
 CPU's FMA enters the Fortran's bits, here and on the H100 node.
 
 Nothing here ran on a GPU (`AGENTS.md`, "Running on the GPU"). Every device statement is a
@@ -19,21 +19,27 @@ compile-time fact read from the SASS, or reasoning marked ⚠.
 - Per sea point, the `W3SRCE` unit calls eleven libm entry points: `expf`, `logf`, `powf`,
   `sincosf`, `tanhf`, `atan2f`, `log10f`, libmvec's `_ZGVbN4v_expf` and `_ZGVbN4vv_powf`, and
   double `exp` and `tanh` ([table](#what-the-fortran-calls-per-sea-point)).
+- `kokkos/tools/libm_bits` transcribes all eleven for host and device code, and on the host each
+  equals what WW3's Fortran gets, bit for bit, on every input checked: all 2^32 floats for the
+  unary float functions, 8.6 × 10^9 doubles for `exp` and `tanh`, 3.6 × 10^10 to 7.9 × 10^10
+  pairs for `powf`, `atan2f` and libmvec's `powf` (v, [results](#results-on-the-host)). The device
+  builds have the same fused and unfused operations as glibc's x86 builds (v, SASS). That they
+  give the same bits on a device is ⚠ until `scripts/libm_bits.sh --device` runs under the owner.
 - Four of them are correctly rounded in glibc 2.44 (`tanhf`, `atan2f`, `log10f`, double `tanh`):
-  any correctly rounded device implementation gives the same bits. `tanhf` and `log10f` were
-  checked on all 2^32 inputs, `atan2f` on 2^30 pairs (v).
-- Four are not (`expf`, `logf`, `powf`, `sincosf`). `kokkos/tools/libm_bits/glibc_mathf.hpp`
-  transcribes them so that host and device code compute glibc's bits: 0 differences on all
-  2^32 inputs of `expf`, `logf` and `sincosf` and on 7.9 × 10^10 pairs of `powf` (v, host). The
-  device build has the same fused and unfused operations as glibc's (v, SASS); that it gives the
-  same bits on a device is ⚠ until `scripts/libm_bits.sh --device` runs under the owner.
+  their copies are CORE-MATH's own code (MIT), and `tanhf`, `log10f` and
+  `atan2f` were checked correctly rounded on their own (v).
 - glibc picks a build of `expf`, `logf`, `powf`, `sincosf`, `exp` and `tanh` per CPU: an fma build
   when the CPU has FMA and AVX2, an sse2 build otherwise. The two differ on 2 inputs of `expf`,
-  34 outputs of `sincosf`, 15 of 7.9 × 10^10 pairs of `powf` and none of `logf` (v). WW3's own
-  output did not change between them on `ww3_ts1` and `bench_small` (v).
-- libmvec is the open item: its `expf` and `powf` differ from the scalar ones on 2.21 % and
-  5.14 % of inputs (v), it has no device version here, and its SSE4 `powf` uses `rcpps`, an
-  instruction whose bits the CPU vendor chooses ⚠.
+  34 outputs of `sincosf`, 15 of 7.9 × 10^10 pairs of `powf`, 1 485 995 of 8.6 × 10^9 inputs of
+  double `exp`, and none of `logf` (v). WW3's own output did not change between them on
+  `ww3_ts1` and `bench_small` (v). The transcriptions carry both builds; the device must use the
+  one the host CPU got.
+- libmvec's `powf` depends on the CPU's `rcpps`: on this CPU its rounded reciprocal differs from
+  the exact one's for 661 269 of the 8 388 608 mantissas (v), so another vendor's `rcpps` very
+  probably gives other bits ⚠. Its transcription takes `rcpps` and libmvec's tables from the
+  build host, at build time, and so reproduces that host.
+- What remains is wiring: no kernel of `kokkos/src` calls these yet.
+  [WFIP-0006](WFIPs/WFIP-0006-device-libm-bits.md) designs it, after WFIP-0005's work merges.
 
 ## What the Fortran calls per sea point
 
@@ -46,30 +52,38 @@ once on the host and their tables are copied, so they do not enter the device qu
 
 | Entry point | Called per point by | glibc 2.44 | fma and sse2 builds | Device |
 |---|---|---|---|---|
-| `expf` | `W3SDS4`, `W3SIN4`, `W3SNL1`, `W3SLN1`, `CALC_USTAR` | not correctly rounded (ARM algorithm) | differ on 2 of 2^32 inputs | `ww::libm::expf` |
-| `logf` | `W3SDS4`, `W3SIN4`, `W3SRCE`, `CALC_USTAR` | not correctly rounded | identical on all 2^32 | `ww::libm::logf` |
-| `powf` | `W3SDS4`, `W3SIN4`, `W3SPR4`, `CALC_USTAR` | not correctly rounded | differ on 15 of 7.9 × 10^10 pairs | `ww::libm::powf` |
-| `sincosf` | `W3SDS4`, `W3SIN4`, `W3SRCE`, `W3SLN1` | not correctly rounded | differ on 34 of 2 × 2^32 outputs | `ww::libm::sincosf` |
-| `tanhf` | `W3SDS4`, `W3SIN4`, `W3SRCE`, `CALC_USTAR` | correctly rounded (CORE-MATH, 2.41) | one build | any correctly rounded `tanhf` |
-| `atan2f` | `W3SDS4`, `W3SIN4`, `W3SPR4` | correctly rounded (CORE-MATH, 2.41) | one build | any correctly rounded `atan2f` |
-| `log10f` | `W3SIN4` | correctly rounded (CORE-MATH, 2.41) | one build | any correctly rounded `log10f` |
-| `_ZGVbN4v_expf` | `W3SDS4` (`w3src4md.F90:2509`) | libmvec, SSE4 build | not ifunc-fma; sse4 or sse2 by SSE4.1 ⚠ | none yet |
-| `_ZGVbN4vv_powf` | `W3SDS4`, `W3SPR4` (`:316`, `:317`, `:2315`, `:2500`) | libmvec, SSE4 build, uses `rcpps` | as above | none yet |
-| `exp` (double) | `W3SDB1` | not correctly rounded (ARM algorithm) | differ (fingerprint below) | not written |
-| `tanh` (double) | `W3SDB1` | correctly rounded (CORE-MATH, 2.44) | fma and sse2 builds, same fingerprint | any correctly rounded `tanh` |
+| `expf` | `W3SDS4`, `W3SIN4`, `W3SNL1`, `W3SLN1`, `CALC_USTAR` | not correctly rounded (ARM algorithm) | differ on 2 of 2^32 inputs | `ww::libm::expf<Fma>` |
+| `logf` | `W3SDS4`, `W3SIN4`, `W3SRCE`, `CALC_USTAR` | not correctly rounded | identical on all 2^32 | `ww::libm::logf<Fma>` |
+| `powf` | `W3SDS4`, `W3SIN4`, `W3SPR4`, `CALC_USTAR` | not correctly rounded | differ on 15 of 7.9 × 10^10 pairs | `ww::libm::powf<Fma>` |
+| `sincosf` | `W3SDS4`, `W3SIN4`, `W3SRCE`, `W3SLN1` | not correctly rounded | differ on 34 of 2 × 2^32 outputs | `ww::libm::sincosf<Fma>` |
+| `tanhf` | `W3SDS4`, `W3SIN4`, `W3SRCE`, `CALC_USTAR` | correctly rounded (CORE-MATH, 2.41) | one build | `ww::libm::tanhf` (CORE-MATH's code) |
+| `atan2f` | `W3SDS4`, `W3SIN4`, `W3SPR4` | correctly rounded (CORE-MATH, 2.41) | one build | `ww::libm::atan2f` (CORE-MATH's code) |
+| `log10f` | `W3SIN4` | correctly rounded (CORE-MATH, 2.41) | one build | `ww::libm::log10f` (CORE-MATH's code) |
+| `_ZGVbN4v_expf` | `W3SDS4` (`w3src4md.F90:2509`) | libmvec, SSE4 build | not ifunc-fma; sse4 or sse2 by SSE4.1 ⚠ | `ww::libm::mvec_expf<Fma>` (its fallback lanes call `expf<Fma>`) |
+| `_ZGVbN4vv_powf` | `W3SDS4`, `W3SPR4` (`:316`, `:317`, `:2315`, `:2500`) | libmvec, SSE4 build, uses `rcpps` | as above | `ww::libm::mvec_powf<Fma>`, tables and `rcpps` from the build host |
+| `exp` (double) | `W3SDB1` | not correctly rounded (ARM algorithm) | differ on 1 485 995 of 8.6 × 10^9 | `ww::libm::exp<Fma>` |
+| `tanh` (double) | `W3SDB1` | correctly rounded (CORE-MATH, 2.44) | fma and sse2 builds, same bits | `ww::libm::tanh` (CORE-MATH's code) |
 
 The libmvec line numbers are those of `kokkos/src/ww_kokkos/st4_libmvec.hpp`, from its GIMPLE
 inventory. Correct rounding is from glibc 2.44's `NEWS` (v, the release tarball, sha256
 `37f600f2...`, read 2026-10-17) and, for `tanhf`, `log10f` and `atan2f`, from the check below. The
 fma/sse2 rows come from `ww <fn> plain` below. The CUDA math library's `tanhf` and others are
-not correctly rounded ⚠ (general knowledge), so "any correctly rounded" means a transcription
-of CORE-MATH, not CUDA's own function.
+not correctly rounded ⚠ (general knowledge), which is why the device copies are CORE-MATH's code
+and not CUDA's own functions.
 
 ## The transcription
 
-`glibc_mathf.hpp` takes the algorithm and the tables of `expf`, `logf`, `powf` and `sincosf` from
-ARM optimized-routines at `f67e7daa` ("MIT OR Apache-2.0 WITH LLVM-exception"), the code glibc
-imports. The configuration is glibc's x86-64 one: `TOINT_INTRINSICS` 0, `POWF_SCALE_BITS` 0,
+Four headers in `kokkos/tools/libm_bits/`, each usable in host and device code:
+
+| Header | Functions | Source |
+|---|---|---|
+| `glibc_mathf.hpp` | `expf`, `logf`, `powf`, `sincosf`, double `exp` | ARM optimized-routines at `f67e7daa` ("MIT OR Apache-2.0 WITH LLVM-exception"), the code glibc imports; fused sites from glibc's disassembly |
+| `glibc_mathf.hpp` | `mvec_expf`, `mvec_powf` | written from glibc's SSE4 libmvec algorithms and constants; `mvec_powf`'s tables and `rcpps` runs generated at build time by `gen_tables.cpp` from the host's `libmvec.so.1` and CPU, never committed (the tables are glibc's, LGPL) |
+| `coremath_f.hpp` | `tanhf`, `log10f`, `atan2f` | CORE-MATH's code as glibc 2.44 carries it, MIT, notices kept |
+| `coremath_d.hpp` | double `tanh` | the same, with the double-double helpers it needs; its five tables equal glibc's `libm.so.6` bytes (v) |
+
+For `expf`, `logf`, `powf`, `sincosf` and `exp`, `glibc_mathf.hpp` takes the algorithm and the
+tables from ARM optimized-routines. The configuration is glibc's x86-64 one: `TOINT_INTRINSICS` 0, `POWF_SCALE_BITS` 0,
 the error paths' return values of `math_errf.c`. One template parameter chooses the build:
 
 - **fma** (`Fma = true`): a call to `::fma` at every site where GCC fused when it compiled
@@ -79,6 +93,12 @@ the error paths' return values of `math_errf.c`. One template parameter chooses 
   `r = fma(InvLn2N, xd, -kd)`; in `sincosf` it pairs the sine and the cosine in one SIMD register,
   each lane the scalar arithmetic.
 - **plain** (`Fma = false`): every product rounded, then added, as the sse2 build does.
+
+`mvec_expf` and `mvec_powf` also take the parameter, for the lanes libmvec sends to scalar `expf`
+and `powf`. Their own arithmetic is fixed: single precision for `mvec_expf` (9 `mulps`, 6 `addps`,
+3 `subps`), double for `mvec_powf`, with `rcpps` rounded to a 10-bit integer R in [512, 1024]
+that picks a log table entry. On this CPU R is a strictly decreasing step function of the
+mantissa with 513 runs, which a device reads by binary search in a 513-entry table.
 
 `::fma` is correctly rounded on the host and on a CUDA device, so the explicit fusions are
 deterministic. Implicit contraction is not: the file is compiled with `-ffp-contract=off` and
@@ -106,6 +126,18 @@ glibc 2.44-25), 4 threads under `nice -n 19`. Command: `scripts/libm_bits.sh all
 | `cr atan2f` | 1 073 741 824 random pairs | **0** | 1 pair unresolved, 16 356 NaN outputs |
 | `mvec expf` | 4 294 967 296 | 94 794 290 (2.21 %) | libmvec's `expf` is not the scalar `expf` |
 | `mvec powf` | 1 073 741 824 random pairs | 55 228 991 (5.14 %) | libmvec's `powf` is not the scalar `powf` |
+| `ww mvec_expf fma` | 4 294 967 296, four lanes each | **0** | the transcription is libmvec's `_ZGVbN4v_expf` |
+| `ww mvec_powf fma` | 79 456 894 976 | **0** | against libmvec's `_ZGVbN4vv_powf`, the same inputs as `ww powf` |
+| `ww tanhf` | 4 294 967 296 | **0** | CORE-MATH's code equals glibc |
+| `ww log10f` | 4 294 967 296 | **0** | |
+| `ww atan2f` | 36 507 222 016 | **0** | every y with 8 fixed x, 2^31 random pairs |
+| `ww exp fma` | 8 589 934 592 | **0** | every float as a double, 2^31 random bit patterns, 2^31 values in [-750, 710] |
+| `ww exp plain` | 8 589 934 592 | 1 485 995 | glibc's two builds of double `exp` |
+| `ww tanh` | 8 589 934 592 | **0** | every float as a double, 2^31 random bit patterns, 2^31 values in [-25, 25] |
+
+The rows from `ww mvec_expf` down ran on 2026-10-17 as single checks (`scripts/libm_bits.sh ww
+<fn> fma 4` or 6) on the final headers; `atan2f` and `exp` were run again after the last change
+to their code.
 
 That the plain transcription is glibc's sse2 build was checked at the probe's distinguishing
 inputs: with `GLIBC_TUNABLES=glibc.cpu.hwcaps=-AVX2,-FMA` the probe answers sse2 for `expf` and
@@ -127,7 +159,14 @@ compiled alone for sm_90 and read with `cuobjdump -sass` (v, 2026-10-17):
 | `logf<true>` | 5 | 1 | 1 | 5 fused, 1 `vmulsd`, 1 `vaddsd` |
 | `powf<true>` | 9 | 5 | 4 | 9 fused, 5 `vmulsd`, 4 `vaddsd`/`vsubsd` |
 | `sincosf<true>` | 22 | 19 | 0 | 7 fused per polynomial (inlined at 3 sites) and 1 in the reduction |
+| `exp<true>` | 9 | 5 | 13 | 9 `vfmadd` in `__ieee754_exp_fma` |
+| `mvec_expf<true>` | 5 | 2 | 1 | its own path: 0 FFMA, 9 FMUL; the doubles are the inlined `expf<true>` fallback |
+| `mvec_powf<true>` | 18 | 19 | 19 | its own path: 0 DFMA; 18 = two inlined `powf<true>` fallbacks |
 | any `<false>` | 0 | | | the sse2 build fuses nothing |
+
+`mvec_powf<true>`'s 26 FFMA are most likely nvcc's sequence for the float division `1 / x2` in
+`powf`'s special path ⚠ (not traced); CUDA's division is correctly rounded by default
+(`-prec-div=true`) ⚠, so it gives the IEEE quotient whatever instructions compute it.
 
 IEEE 754 double addition, multiplication and fused multiply-add are correctly rounded on both
 sides, so the same operations on the same operands give the same bits. Whether they do on the
@@ -207,33 +246,34 @@ evaluates `sincosf` or `exp` at one of those inputs changes.
 The device side has no such choice: CUDA's `--fmad=false` stops nvcc from fusing, and
 `glibc_mathf.hpp` fuses exactly where glibc's fma build does.
 
-## libmvec, the open item
+## libmvec
 
 gfortran `-O3` turns five loops of `W3SDS4` and `W3SPR4` into calls of `_ZGVbN4v_expf` and
 `_ZGVbN4vv_powf` four lanes at a time, and their bits differ from the scalar functions on 2.21 %
 and 5.14 % of inputs (table above). The port reproduces them on the host by calling libmvec
 (`st4_libmvec.hpp`); on a device that header falls back to scalar `Kokkos::exp` and
-`Kokkos::pow`, and says so. Ways forward, each a decision for the owner:
+`Kokkos::pow`, and says so. `mvec_expf` and `mvec_powf` are the device versions, equal to
+libmvec on the host (results above).
 
-- Transcribe glibc's `svml_s_expf4_core_sse4.S` (212 lines, packed single `mulps`/`addps`/`subps`
-  only) and `svml_s_powf4_core_sse4.S` (374 lines, double arithmetic and two `rcpps`) the way
-  `glibc_mathf.hpp` transcribes the scalar ones, and check them with `libm_bits` against
-  libmvec. `expf4` looks direct ⚠. `powf4` needs `rcpps`'s bits for the CPU the Fortran runs
-  on: a table of Intel's results is a fact about one microarchitecture ⚠.
-- Build WW3 so that gfortran calls the scalar functions there (for example without loop
-  vectorisation of those loops). That changes the Fortran's bits against every record so far
-  and against WW3's own build: a change of the reference, not of the port.
+`mvec_powf` reproduces the build host, not every host. Its `rcpps` table and libmvec's tables are
+generated when it is built, from the CPU and the `libmvec.so.1` of that machine, and
+`gen_tables` refuses a library whose constants differ from those the transcription writes as
+literals. On this i9-14900 the rounded `rcpps` differs from the rounded exact reciprocal for
+661 269 of 8 388 608 mantissas, and the exact reciprocal comes within 1.2 × 10^-7 of a rounding
+boundary (`gen_tables` prints both). A CPU whose `rcpps` gives other bits there selects other
+table entries: the device must then be built on, and follow, the CPU its Fortran runs on.
+
+The other way, building WW3 so that gfortran calls the scalar functions in those loops, changes
+the Fortran's bits against every record so far and against WW3's own build: a change of the
+reference, not of the port. It is not needed now.
 
 ## What is not shown
 
 - No device run: that the device's bits equal the host's is ⚠ until `--device` runs.
-- Double `exp` (`W3SDB1`) is not transcribed; it differs between glibc's builds (fingerprint).
-- `tanhf`, `atan2f`, `log10f` and double `tanh` have no device implementation here; CORE-MATH's
-  code in glibc carries the MIT licence and is the candidate ⚠.
+- No kernel of `kokkos/src` calls these headers yet; [WFIP-0006](WFIPs/WFIP-0006-device-libm-bits.md)
+  is the design, and until it is done ADR-0014's verdict by tolerance stands.
+- `mvec_powf` was checked against one CPU's libmvec; a second vendor's `rcpps` was not seen ⚠.
 - The NaN outputs are not judged: their payloads differ between x86 and a CUDA device in
-  general, and the regtests compare fields, not payloads (`kokkos/port_report/`, the open
-  NaN-payload notes).
-- No kernel of `kokkos/src` calls `glibc_mathf.hpp` yet. Wiring it in changes what the CUDA
-  build computes and is its own pull request, after the WFIP-0005 work in progress has merged.
-  With libmvec still open, it would bring the device closer to the Fortran's bits but not to
-  them, so ADR-0014's verdict by tolerance stands until both are done.
+  general (`kokkos/port_report/`, the open NaN-payload notes).
+- The set-up routines' functions (`acosf`, `asinf`, `cos`, `acos`, `log`, `pow`,
+  `_ZGVbN2v_cos`) are not transcribed: they run on the host.
