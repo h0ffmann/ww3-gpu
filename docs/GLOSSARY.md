@@ -322,6 +322,8 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | MAPTMP / AUX1 / AUX2 / TIMETAG | `W3IOGO`'s locals: the packed map `MAPSTA + 8*MAPST2`, the two Cartesian components of a vector field, and the `YYYYMMDD.HHMMSS` string of `TIME` `(v)` `w3iogomd.F90:2563`, `:2573-2577`, `:2833`, `:2734` | `MAPTMP` is written with `IX` fastest, the transpose of its storage; `AUX1`/`AUX2` have the `NSEA` of the grid selected before the call. | [kokkos/port_report/W3IOGO_KOKKOS.md](../kokkos/port_report/W3IOGO_KOKKOS.md) |
 | AFTER_ENDFILE / IOSTAT 5001 | libgfortran's state of a sequential unit after a READ met the end of the file, and the IOSTAT of the next READ on it (LIBERROR_OPTION_CONFLICT, [kokkos/port_report/W3FLDG_KOKKOS.md](../kokkos/port_report/W3FLDG_KOKKOS.md)); 5001 measured with gfortran 16.2 and WW3's flags, cleared by a REWIND `(v)` [kokkos/port_report/W3IOGO_KOKKOS.md](../kokkos/port_report/W3IOGO_KOKKOS.md) | A reader that calls `W3IOGO` again after `IOTST = -1` stops with exit 43; the port keeps the state in `W3IogoUnit`. | [kokkos/port_report/W3IOGO_KOKKOS.md](../kokkos/port_report/W3IOGO_KOKKOS.md) |
 | W3IOPOMD / W3IOPO, W3IORSMD / W3IORS, W3IOBCMD / W3IOBC, W3IOTRMD / W3IOTR | point output / restart files / boundary conditions / track output read-write `(v)` | The I/O bucket (`w3io*`) of the profile. | [course/09-benchmark-profile-compile-run.md](../course/09-benchmark-profile-compile-run.md) |
+| OFILES / FNMPNT | "Output in one or several files" `(v)` `w3odatmd.F90:137`; `FNMPNT`, `CHARACTER(LEN=256)`, default `'./'` (no header entry, `:341`) | `OFILES(2) = 1` makes `W3IOPO` write one `<YYYYMMDD>.<HHMMSS>.out_pnt.<ext>` per output time instead of one `out_pnt.<ext>`; `FNMPNT`, when not blank, replaces `FNMPRE` as the directory of the point output files. | [kokkos/port_report/W3IOPO_KOKKOS.md](../kokkos/port_report/W3IOPO_KOKKOS.md) |
+| IPASS2 / IOTST | `IPASS2`, the pass counter of `OUTPTS(IMOD)%OUT2` that `W3IOPO` uses as `IPASS` (`w3iopomd.F90:2216`); `IOTST` "Test indictor for reading" `(v)` `w3iopomd.F90:2165-2167` | `W3IOPO` writes the header and point table when `IPASS2` is 1; `IOTST = -1` tells `ww3_outp` that the file has no further time. | [kokkos/port_report/W3IOPO_KOKKOS.md](../kokkos/port_report/W3IOPO_KOKKOS.md) |
 | W3DMO2 | "Initialize an individual data storage for point output" `(v)` `w3odatmd.F90:984` | Allocates the point-output arrays of `OUTPTS(IMOD)%OUT2` with `NPT` points and sets `NOPTS = NPT`; a hook of the Kokkos `W3IOPP`. | [kokkos/port_report/W3IOPP_KOKKOS.md](../kokkos/port_report/W3IOPP_KOKKOS.md) |
 | W3GRMP / GSU (T_GSU) | "Compute bilinear remapping for target point (xtin,ytin) from source grid associated with the input grid search utility object (GSU)"; `T_GSU` "Grid-search-utility type (opaque)" `(v)` `w3gsrumd.F90:2443-2444`, `:169` | Returns the four corner indices and weights of the cell holding a point; `W3IOPP` calls the `REAL(4)` specific `W3GRMP_R4`; a hook of the Kokkos `W3IOPP`. | [kokkos/port_report/W3IOPP_KOKKOS.md](../kokkos/port_report/W3IOPP_KOKKOS.md) |
 | IS_IN_UNGRID | "Determine whether a point is inside or outside an unstructured grid, and returns index of triangle and interpolation weights" `(v)` `w3triamd.F90:1600-1601` | The unstructured-grid analogue of `W3GRMP`; a hook of the Kokkos `W3IOPP`. | [kokkos/port_report/W3IOPP_KOKKOS.md](../kokkos/port_report/W3IOPP_KOKKOS.md) |
@@ -1097,6 +1099,7 @@ Every term above, alphabetically, with the section it lives in.
 - IOBP / IOBPD / IOBPA (and their `_LOC` copies): [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - IOSTAT: [HPC and software](#hpc-and-software)
 - IOSTYP: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- IPASS2 / IOTST: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - IPBPI / ISBPI / RDBPI / XBPI / YBPI (and IPBPO, ISBPO, RDBPO, XBPO, YBPO): [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - IRANGE / RRANGE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - IRANGE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1178,6 +1181,7 @@ Every term above, alphabetically, with the section it lives in.
 - NSIZE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - NTPROC / NAPLOG / NAPERR / IOSTYP: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - OARST: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- OFILES / FNMPNT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - OFILES / IPASS1 / WRITE1 / FNMGRD: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - optionCall: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - OUTFLAGS / NXXX / X* arrays: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
