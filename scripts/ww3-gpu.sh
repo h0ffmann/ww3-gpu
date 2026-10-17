@@ -74,9 +74,10 @@
 # and the other support parts run once or once per input field. W3INIT builds the DIA and ST4
 # tables for SRCE alone (WW3/model/src/w3initmd.F90:759,771). --kokkos resident adds the PR3/UQ
 # propagation (XYP3, KTP3, opt-in, kokkos/src/fortran_iface/PATCH.md §11 and §13) and W3OUTG (OUTG,
-# opt-in, §15): with SRCE on the resident VA, the spectrum then crosses only for the host readers
-# of VA at output times, not for the gridded fields (WFIP-0005 units 1 to 5). It is not a
-# default: XYP3, KTP3 and OUTG are not regtested. --kokkos gpu is the default of --gpu when
+# opt-in, §15) and the partial read before the point output (IOPE, opt-in, §16): with SRCE on the
+# resident VA, the spectrum then crosses only for the host readers of VA at output times, not for
+# the gridded fields, and the point output copies back only the spectra it interpolates (WFIP-0005
+# units 1 to 5). It is not a default: XYP3, KTP3, OUTG and IOPE are not regtested. --kokkos gpu is the default of --gpu when
 # neither --kokkos nor WW3GPU_ROUTINES is given. The Fortran run of the pair is unchanged.
 #
 # --cpu is Kokkos' OpenMP backend, --gpu its CUDA backend. The script enters the pinned toolchain
@@ -162,7 +163,7 @@ kokkos_env() {
 kokkos_preset() { # <all|none|gpu|resident|PART,...>: a preset's part list, anything else unchanged
   case "$1" in
     gpu) echo SRCE ;;
-    resident) echo SRCE,XYP3,KTP3,OUTG ;;
+    resident) echo SRCE,XYP3,KTP3,OUTG,IOPE ;;
     *) echo "$1" ;;
   esac
 }
@@ -219,7 +220,7 @@ if [ "$mode" = self-test ]; then
   [ "$(kokkos_env 0 all)" = "WW_KOKKOS_ALL=0" ] || { echo "ww3-gpu: the Fortran run of --kokkos all: $(kokkos_env 0 all)" >&2; exit 1; }
   [ "$(kokkos_env 1 "$(kokkos_preset gpu)")" = "WW_KOKKOS_ALL=0 WW_KOKKOS_SRCE=1" ] \
     || { echo "ww3-gpu: --kokkos gpu: $(kokkos_env 1 "$(kokkos_preset gpu)")" >&2; exit 1; }
-  [ "$(kokkos_env 1 "$(kokkos_preset resident)")" = "WW_KOKKOS_ALL=0 WW_KOKKOS_SRCE=1 WW_KOKKOS_XYP3=1 WW_KOKKOS_KTP3=1 WW_KOKKOS_OUTG=1" ] \
+  [ "$(kokkos_env 1 "$(kokkos_preset resident)")" = "WW_KOKKOS_ALL=0 WW_KOKKOS_SRCE=1 WW_KOKKOS_XYP3=1 WW_KOKKOS_KTP3=1 WW_KOKKOS_OUTG=1 WW_KOKKOS_IOPE=1" ] \
     || { echo "ww3-gpu: --kokkos resident: $(kokkos_env 1 "$(kokkos_preset resident)")" >&2; exit 1; }
   [ "$(kokkos_preset SNL1,GATH)" = "SNL1,GATH" ] || { echo "ww3-gpu: kokkos_preset changed a part list" >&2; exit 1; }
   # coast: no WW4 parts model for it, and every input the case reads is in the fixture or written

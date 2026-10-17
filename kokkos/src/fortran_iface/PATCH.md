@@ -736,6 +736,7 @@ to `--ww3` (pure NOAA WW3 at `WW3-noaa/`); the NetCDF file against `--ww3` diffe
 | MAP3, MAPT | `WW_KOKKOS_MAP3`, `_MAPT` | `PR3` (`MAP3` only where `GTYPE < 3`) | `W3MAP3`, `W3MAPT` in `W3WAVE` | `WW_KOKKOS_WAVE_COUNT` | measured, CPU: byte-identical in the full 2026-10-16 (1 call each on the 120 x 80 grid; the smoke grid is one cell) (v), and in the coast case 2026-10-17 under `WW_KOKKOS_ALL=1`, both lab switches (13 calls each, the maps rebuilt after the hourly ice and level updates) (v). `W3MAP3` is integer only, `W3MAPT` three `minss` and a compare with their operand order kept (port reports); GPU ⚠ never run. `W3MAP3`'s out-of-bounds read at `IX = 2, IY = 1` or `IX = NX-1, IY = NY` would read past the shim's copy, not WW3's memory ⚠ |
 | DISTAB | `WW_KOKKOS_DISTAB` | any | `DISTAB` (with `WAVNU2`), run by `W3IOGR('READ')`: the Kokkos tables overwrite the Fortran's in `W3INIT` | `WW_KOKKOS_WAVE_COUNT`, and the count of differing values | measured, CPU: "0 of EWN1, ECG1(0:121), DSIE, N1MAX differ from the Fortran's" and byte-identical output in the smoke 2026-10-16 (v); GPU ⚠ (`tanhf`, `coshf`, `sinhf` from libdevice, `port_report/DISTAB_KOKKOS.md`) |
 | XYP3, KTP3 | `WW_KOKKOS_XYP3`, `_KTP3`, opt-in only (`WW_KOKKOS_ALL` does not set them) | `PR3` `UQ`, a regular or curvilinear grid, no `PDLIB` `MGP` `MGG`; `XYP3` also `SHRD` and not tripole, `KTP3` no `REFRX` | the `DO ISPEC` loop of `W3GATH`, `W3XYP3`, `W3SCAT` and the two `DO ITLOC` loops of `W3KTP3` in `W3WAVE`, one call each (section 11) | `WW_KOKKOS_PROP3_COUNT` | measured, CPU: byte-identical in the full 2026-10-17 with `switch_lab_ompg` and `switch_lab_shrd` (13 824 spectra, 441 792 point calls) (v); 0 calls in the smoke; `W3QCK2`, `FLCUR` and boundary input byte-identical in the coast case 2026-10-17 with `--kokkos resident`, both switches, with and without `WW_KOKKOS_VA_RESIDENT=1` (41 472 spectra, 517 660 point calls) (v); closure never ran ⚠; GPU ⚠ never run |
+| IOPE | `WW_KOKKOS_IOPE`, opt-in only | `SHRD`, no `MPI` | the host read of `VA` before `W3IOPE` in `W3WAVE`: only the columns `W3IOPE` reads come back from the resident `VA` (section 16); `W3IOPE` itself stays Fortran | `WW_KOKKOS_VA_COUNT` (`VA partial ...`) | measured, CPU: smoke, full and coast byte-identical, `out_pnt.ww3` included, 2026-10-17, `switch_lab_ompg` and `switch_lab_shrd`, with and without `WW_KOKKOS_VA_RESIDENT=1` (v); copies bits only, so any backend gives them; GPU ⚠ never run |
 
 ## 8. W3WAVE's support routines on `ww3-gpu/kokkos-wave-support`
 
@@ -1397,3 +1398,87 @@ breakdown and not a timing): `outg.call` 13 calls, 0.358 s of 30.20 s, all of it
 warning from `outg_shim.cpp`; whether CUDA gives the CPU's bits is not known ⚠. The device
 copy-back path never ran ⚠. The regtest matrix did not run ⚠. The preset `--kokkos resident` of
 `scripts/ww3-gpu.sh` now includes `OUTG`.
+
+## 16. The point output's spectra alone, `ww3-gpu/kokkos-pnt`
+
+One commit on `ww3-gpu/kokkos-outg` (`e0cc8ee9`, section 15): `2f35368a`, pushed to h0ffmann/WW3 on
+2026-10-17. A follow-up of [WFIP-0005](../../../docs/WFIPs/WFIP-0005-device-resident-step.md) unit 5:
+before `W3IOPE` (point output) only the spectra it reads come back from the device copy `d_va` of
+section 12, not the whole `VA`. The ABI is `ww_kokkos` 0.8.0 (one entry point added,
+`SameMajorVersion`); the fork asks for `0.8` (`model/src/CMakeLists.txt`).
+
+- **What `W3IOPE` reads of `VA`.** Its dummy `A(NTH,NK,0:NSEAL)` (`w3iopomd.F90:1003`) is read in one
+  statement, `SP(ITH,IK,J) = A(ITH,IK,IS(J))` (`:1214`, in the `W3_SHRD` loop `:1210-1217`), with
+  `IS(J) = MAPFS(IY(J),IX(J))` (`:1069`) and `IX(:) = IPTINT(1,:,I)`, `IY(:) = IPTINT(2,:,I)`
+  (`:1051-1052`), for the four interpolation corners `J` of each output point `I = 1..NOPTS`
+  (`:1043`); no other line of `:873-1293` names `A`, and `W3IOPO ('WRITE')`, which follows, reads
+  `W3ODATMD` and no `VA` (the module uses `W3WDATMD` only for `ICE`, `ICEH`, `ICEF`, `RHOAIR`,
+  `ZETA_SETUP`, `TIME`, `W3SETW`, read at the pin, v). A land corner has `MAPFS = 0`, so column 0 is
+  read too (its weight is 0, `:1083`). Under `W3_SHRD` `JSEA = ISEA` (`NAPROC = 1`,
+  `w3parall.F90:1236`), so those `IS(J)` are the columns of `VA`. `IPTINT` is set once, by `W3IOPP`
+  at set-up (`w3iopomd.F90:543-544`).
+- **The fork** adds the unit file `model/src/w3kokkos_pntmd.F90` (`W3KOKKOS_PNTMD`).
+  `W3KOKKOS_PNT_SETUP` sets `KOKKOS_IOPE` from `WW_KOKKOS_IOPE`, opt-in (`kOptInOnly` of
+  [`part_flags.cpp`](part_flags.cpp)), and refuses it outside `SHRD` and under `MPI`, where the
+  spectra reach `W3IOPE` through `W3MPIO`'s requests and section 4.b keeps its single host read.
+  At the point-output site (`w3wavemd.F90:2899-2909` at `2f35368a`) `CALL W3KOKKOS_VA_HOST_READ`
+  becomes `IF ( KOKKOS_IOPE ) CALL W3KOKKOS_IOPE_READ ELSE CALL W3KOKKOS_VA_HOST_READ`;
+  `CALL W3IOPE ( VA )` after it is unchanged. `W3KOKKOS_IOPE_READ` lists the `4 NOPTS` values
+  `MAPFS(IPTINT(2,J,I),IPTINT(1,J,I))` and calls `ww_va_host_read_cols`.
+- **The entry point** ([`resident_c.hpp`](resident_c.hpp), [`resident_shim.cpp`](resident_shim.cpp)):
+  `ww_va_host_read_cols(igrid, va, nspec, nsealm, ncol, cols)`. The columns are sorted and made
+  unique, and a column outside `0..NSEALM` is refused (`WW_KOKKOS_ERR_BAD_SHAPE`). With the state
+  `DEVICE` a kernel gathers `d_va(:,cols)` into a device buffer, one `deep_copy` brings it back,
+  and each column is stored into WW3's `VA` at its place; with `HOST` or `BOTH` the host already
+  holds the bits and nothing is copied. The list and its buffers are kept between calls, since
+  `W3IOPE` asks for the same columns every time. Bits move and nothing is computed, so each column
+  copied holds what a full `ww_va_host_read` would have put there.
+- **Why the state does not change.** After the partial read only the listed columns of the host
+  `VA` are current; the others are as stale as before. So the call leaves the state `DEVICE`: the
+  next host reader (`W3WAVE`'s return, an update before `W3ULEV` or `W3UICE`, a restart, `W3CPRT`,
+  the Fortran `W3OUTG`) still calls `ww_va_host_read` or `_write`, which copies the whole array, and
+  the next kernel reads `d_va`, which the partial read did not touch. `W3IOPE` writes no `VA`
+  (`INTENT(IN)`, `:1003`), so no host write needs a sync. Under `WW_KOKKOS_VA_RESIDENT=1` a `HOST`
+  array is pushed first, as every host call does, and the gather then always runs, so the
+  diagnostic exercises the copy at every point-output time; the rest of the host `VA` is not
+  refreshed, so a column `W3IOPE` reads and the list missed would keep stale bits and show in
+  `out_pnt.ww3`.
+- **Counters** (`WW_KOKKOS_VA_COUNT=1`): `VA partial host reads`, `VA partial device-to-host
+  copies`, `VA partial columns copied`, and the partial reads in the traffic line. **Timers**:
+  `va.host.cols`, `va.d2h.cols`.
+- **Not covered.** `W3IOTR` (track output) still reads the whole `VA`: the columns it reads come from
+  the track positions it reads from its input file inside the routine (`w3iotrmd.F90:264`, `:819`),
+  so listing them before the call means reproducing that reading; none of the cases writes tracks.
+  `ww3_multi` (`wmwavemd.F90:1367` calls `W3IOPE` with no sync) is not supported by the resident
+  `VA` at all (section 12).
+- **Memory contract**: phase 2. A device buffer of `NSPEC` floats per distinct column and a host one
+  of the same size, for the run. No Unified Memory.
+
+The checkpoint on the CPU, 2026-10-17 (OpenMP backend, Kokkos 5.2.2, gfortran/g++ 16.2.0, Intel Core
+i9-14900, 32 threads, shared with other sessions; never `--gpu`). `bash scripts/ww3-gpu.sh --ww3-gpu
+smoke|full|coast --cpu --kokkos SRCE,XYP3,KTP3,OUTG,IOPE` and `... smoke ... --kokkos all`, on
+`switch_lab_ompg` and `WW3GPU_SWITCH=switch_lab_shrd`, each plain and with `WW_KOKKOS_VA_RESIDENT=1`:
+16 runs. In each, every file the run wrote, `out_grd.ww3`, the `ww3_ounf` NetCDF, and in the smoke
+`out_pnt.ww3` and `restart.ww3`, in the coast `out_pnt.ww3`, was `cmp`-equal to the Fortran of the
+same executable, and `out_grd.ww3`, `out_pnt.ww3`, `restart.ww3` to `--ww3`, whose NetCDF differs only
+in `WAVEWATCH_III_switches` (`ncdump` diff); `nccmp-tol` PASS both, every `max|d|` 0 (v). `--kokkos
+all` leaves `IOPE` off (opt-in), so its 4 runs check that the default path is unchanged.
+
+`VA` traffic, `WW_KOKKOS_VA_COUNT=1` (the same on both switches; "before" is section 15):
+
+| Run | Before (`SRCE,XYP3,KTP3,OUTG`) | With `IOPE` | With `IOPE`, `WW_KOKKOS_VA_RESIDENT=1` |
+|---|---|---|---|
+| smoke (`ww3_ts1`, one point, 2 161 point outputs) | H2D 1, D2H 2 161 | H2D 1, D2H 37; 2 161 partial reads, 2 124 of them copying 2 columns (the sea point and column 0) | H2D 1, D2H 42; 2 161 partial copies, 4 322 columns |
+| full (`bench_small`, no point output) | H2D 1, D2H 1 | the same; 0 partial reads | the same |
+| coast (5 points, every 1 800 s) | H2D 13, D2H 36 | H2D 13, D2H 24; 25 partial reads, 24 copying 20 columns each (480 in all, 46 kB each time) | H2D 27, D2H 39; 25 partial copies, 500 columns |
+
+The D2H left are full host reads and writes that found the device newer: in the smoke 37 of 42
+host sync calls (the field-output times, where `W3OUTG` falls back to the Fortran because the case
+asks for `WBT` and `SKW`, section 15, the restart, and the returns of `W3WAVE`), in the coast case 24
+of 39 (13 host reads, among them the returns of `W3WAVE`, and 26 host writes, the `W3UICE` and
+`W3ULEV` updates, `WW_KOKKOS_VA_COUNT` of the diagnostic run); which site made each copy was not
+counted ⚠. In the coast case a point-output time now copies 20 columns of 2 304 B (46 kB) where it
+copied the whole `VA` (8.50 MB). Nothing of this ran on a GPU ⚠. `bash scripts/ww3-gpu.sh
+--ww3-gpu full --gpu --kokkos resident --build-only` compiled the shim and the fork for CUDA; the
+gather kernel never ran on a device ⚠. The regtest matrix did not run ⚠. The preset `--kokkos
+resident` of `scripts/ww3-gpu.sh` now includes `IOPE`.
