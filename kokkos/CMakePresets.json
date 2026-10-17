@@ -37,12 +37,24 @@
         "CMAKE_CXX_COMPILER": "nvcc_wrapper",
         "CMAKE_CUDA_ARCHITECTURES": "89"
       }
+    },
+    {
+      "name": "cuda-h100-release",
+      "displayName": "Release on the CUDA backend for an H100 (sm_90; needs a Kokkos built with HOPPER90)",
+      "$comment": "Not the default and not what scripts/ww3-gpu.sh --gpu builds. The architecture is the one the Kokkos package was built for (Kokkos::kokkos carries its -arch flag), so this preset needs a shell whose Kokkos has Kokkos_ARCH_HOPPER90 in place of ADA89 (picasso/labs/pratico/flake.nix, kokkosCuda); WW_KOKKOS_ARCH makes the configure stop when the Kokkos found was built for another architecture, instead of building sm_89 code under an H100 name.",
+      "inherits": "cuda-release",
+      "binaryDir": "${sourceDir}/build/cuda-h100-release",
+      "cacheVariables": {
+        "CMAKE_CUDA_ARCHITECTURES": "90",
+        "WW_KOKKOS_ARCH": "HOPPER90"
+      }
     }
   ],
   "buildPresets": [
     { "name": "serial-debug", "configurePreset": "serial-debug" },
     { "name": "openmp-release", "configurePreset": "openmp-release" },
-    { "name": "cuda-release", "configurePreset": "cuda-release" }
+    { "name": "cuda-release", "configurePreset": "cuda-release" },
+    { "name": "cuda-h100-release", "configurePreset": "cuda-h100-release" }
   ],
   "testPresets": [
     {
@@ -58,6 +70,11 @@
     {
       "name": "cuda-release",
       "configurePreset": "cuda-release",
+      "output": { "outputOnFailure": true }
+    },
+    {
+      "name": "cuda-h100-release",
+      "configurePreset": "cuda-h100-release",
       "output": { "outputOnFailure": true }
     }
   ]

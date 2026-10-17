@@ -14,6 +14,7 @@ what put Kokkos, GoogleTest, CMake, Ninja and NetCDF on the search path:
 |---|---|---|
 | `nix develop ./picasso/labs/pratico#ww3` | Serial + OpenMP | `serial-debug`, `openmp-release`, CI |
 | `nix develop ./picasso/labs/pratico#cuda` | CUDA (ADA89) + Serial | `cuda-release`, this host only |
+| none yet: `#cuda` with `Kokkos_ARCH_HOPPER90` in place of `ADA89` | CUDA (HOPPER90) + Serial | `cuda-h100-release`, an H100 |
 
 Pins: Kokkos 5.2.2, GoogleTest 1.18.0, CMake 4.4.3, gfortran 16.2 (`just toolchain`, 2026-10-15; nixpkgs `6510408`).
 
@@ -152,7 +153,7 @@ Trans. Parallel Distrib. Syst.* 33(4), 805–817, 2022,
 
 ```
 CMakeLists.txt        top level: options, find_package, the ww_kokkos target
-CMakePresets.json     serial-debug, openmp-release, cuda-release
+CMakePresets.json     serial-debug, openmp-release, cuda-release, cuda-h100-release
 cmake/                CompilerWarnings.cmake -- the one warning policy
 src/ww_kokkos/        real.hpp (float32 + helpers), spectrum_fixtures.hpp (JONSWAP, cos^2),
                       snl1_{config,tables,dia} (the DIA port), fixture_io (fixture reader)
@@ -195,6 +196,17 @@ Builds land in `kokkos/build/<preset>/` (git-ignored).
 | `serial-debug` | Debug | AddressSanitizer + UndefinedBehaviorSanitizer, `WW_DETERMINISTIC=ON` |
 | `openmp-release` | Release | `-O3 -march=x86-64-v3` |
 | `cuda-release` | Release | `CMAKE_CXX_COMPILER=nvcc_wrapper`, `CMAKE_CUDA_ARCHITECTURES=89` |
+| `cuda-h100-release` | Release | `cuda-release` with `CMAKE_CUDA_ARCHITECTURES=90` and `WW_KOKKOS_ARCH=HOPPER90` |
+
+**The H100 preset needs a Kokkos the lab does not build yet.** A Kokkos build takes one GPU
+architecture, and `Kokkos::kokkos` hands its `-arch` flag to everything that links it, so the
+architecture of the code is the Kokkos package's, not the preset's. The `#cuda` shell's Kokkos
+is built with `-DKokkos_ARCH_ADA89=ON` (`picasso/labs/pratico/flake.nix`, `kokkosCuda`); an H100
+needs a second derivation with `-DKokkos_ARCH_HOPPER90=ON` in its place, and a shell that puts it
+on the search path. `WW_KOKKOS_ARCH=HOPPER90` makes the configure call Kokkos' `kokkos_check`, so
+`cmake --preset cuda-h100-release` in today's `#cuda` shell stops with "Kokkos does NOT provide all
+backends and/or architectures requested" (v, 2026-10-17) instead of building `sm_89` code under
+an H100 name. `scripts/ww3-gpu.sh --gpu` still builds `cuda-release`.
 
 Two things the names do *not* promise:
 
