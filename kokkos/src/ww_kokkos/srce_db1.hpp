@@ -20,6 +20,7 @@
 
 #include "real.hpp"
 #include "srce_params.hpp"
+#include "srce_team.hpp"
 
 namespace ww::srce {
 
@@ -38,10 +39,18 @@ inline constexpr double kTinyD = 0x1p-1022;
 /// Quirk (:238-240): when EMEAN < TINY(1.d0) the routine returns before writing
 /// s, d or lbreak. The caller passes W3SRCE's VSDB, VDDB and its LBREAK, which
 /// then keep the previous sub-step's values.
-KOKKOS_INLINE_FUNCTION void w3sdb1_point(const Params& p, const Real* sig, const Real* dden,
-                                         const Real* a, Real depth, Real emean, Real fmean,
-                                         Real wnmean, const Real* cg, bool& lbreak, Real* s,
-                                         Real* d, double* eb) {
+///
+/// Written against an executor (srce_team.hpp): EB(IK) is split over the team
+/// one IK per iteration (its sum over ITH in order); ETOT and FMEAN2 are sums
+/// over IK, on one thread; CBJ reads only scalar arguments, and every thread
+/// computes it; D and S = D*A are split element by element. LBREAK is a
+/// reference each thread may own (W3SRCE does not read it). A team caller puts
+/// a barrier after.
+template <class X>
+KOKKOS_INLINE_FUNCTION void w3sdb1_body(const X& ex, const Params& p, const Real* sig,
+                                        const Real* dden, const Real* a, Real depth, Real emean,
+                                        Real fmean, Real wnmean, const Real* cg, bool& lbreak,
+                                        Real* s, Real* d, double* eb) {
   const int nk = p.nk;
   const int nth = p.nth;
   const int nspec = p.nspec;
@@ -53,23 +62,27 @@ KOKKOS_INLINE_FUNCTION void w3sdb1_point(const Params& p, const Real* sig, const
   // :250-265. Under IWB == 1 only EB is live: -O3 drops ETOT and FMEAN2 (they feed
   // the dead IWB == 2 branch and the W3_DEBUGRUN print). Kept as the source has
   // them; the compiler drops them here too.
-  double etot = 0.;
-  double fmean2 = 0.;
-  for (int ik = 1; ik <= nk; ++ik) {
+  ex.for_(nk, [&](int ik0) {
+    const int ik = ik0 + 1;
     eb[ik - 1] = 0.;
     for (int ith = 1; ith <= nth; ++ith) {
       eb[ik - 1] = eb[ik - 1] + static_cast<double>(a[ith + (ik - 1) * nth - 1]);
     }
-  }
-  for (int ik = 1; ik <= nk; ++ik) {
-    eb[ik - 1] = eb[ik - 1] * static_cast<double>(dden[ik - 1]) / static_cast<double>(cg[ik - 1]);
-    etot = etot + eb[ik - 1];
-  }
-  for (int ik = 1; ik <= nk; ++ik) {
-    fmean2 = fmean2 + eb[ik - 1] * static_cast<double>(sig[ik - 1]);
-  }
-  fmean2 = fmean2 / etot * static_cast<double>(kTpiInv);
-  (void)fmean2;
+  });
+  ex.sync();
+  ex.one([&]() {
+    double etot = 0.;
+    double fmean2 = 0.;
+    for (int ik = 1; ik <= nk; ++ik) {
+      eb[ik - 1] = eb[ik - 1] * static_cast<double>(dden[ik - 1]) / static_cast<double>(cg[ik - 1]);
+      etot = etot + eb[ik - 1];
+    }
+    for (int ik = 1; ik <= nk; ++ik) {
+      fmean2 = fmean2 + eb[ik - 1] * static_cast<double>(sig[ik - 1]);
+    }
+    fmean2 = fmean2 / etot * static_cast<double>(kTpiInv);
+    (void)fmean2;
+  });
 
   // :272-279. MAX(DEPTH,0.) is a REAL MAX before the conversion.
   double hm;
@@ -138,11 +151,31 @@ KOKKOS_INLINE_FUNCTION void w3sdb1_point(const Params& p, const Real* sig, const
   }
   // D = REAL(-CBJ,4): CBJ = 0 gives -0.0f, as in the Fortran.
   const Real dval = static_cast<Real>(-cbj);
-  for (int is = 0; is < nspec; ++is) d[is] = dval;
-  for (int is = 0; is < nspec; ++is) s[is] = d[is] * a[is];
+  ex.for_(nspec, [&](int is) {
+    d[is] = dval;
+    s[is] = d[is] * a[is];
+  });
 
   // :343-347.
   lbreak = (cbj > 0.);
+}
+
+/// W3SDB1 for one point, on one thread.
+KOKKOS_INLINE_FUNCTION void w3sdb1_point(const Params& p, const Real* sig, const Real* dden,
+                                         const Real* a, Real depth, Real emean, Real fmean,
+                                         Real wnmean, const Real* cg, bool& lbreak, Real* s,
+                                         Real* d, double* eb) {
+  w3sdb1_body(SerialExec{}, p, sig, dden, a, depth, emean, fmean, wnmean, cg, lbreak, s, d, eb);
+}
+
+/// W3SDB1 for one point, by the whole team.
+template <class Member>
+KOKKOS_INLINE_FUNCTION void w3sdb1_team(const Member& team, const Params& p, const Real* sig,
+                                        const Real* dden, const Real* a, Real depth, Real emean,
+                                        Real fmean, Real wnmean, const Real* cg, bool& lbreak,
+                                        Real* s, Real* d, double* eb) {
+  w3sdb1_body(TeamExec<Member>{team}, p, sig, dden, a, depth, emean, fmean, wnmean, cg, lbreak,
+              s, d, eb);
 }
 
 }  // namespace ww::srce

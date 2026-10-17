@@ -947,9 +947,21 @@ source terms of a time step reach Kokkos in one call, without a copy per point a
   unchanged `w3srce_team` on point *i* with its own `PointScalars`, `State` and work slice. The
   teams share only tables that every callee reads and none writes (the list is in the shim's
   header comment, v read 2026-10-17). `WW_KOKKOS_SRCE_BATCH_MIB` caps the batch buffers (default
-  1024 MiB, about 56 KB per point at NK = NTH = 24, so about 19 000 points per launch); the buffers
+  1024 MiB, about 63 KB per point at NK = NTH = 24 since the team-parallel work arrays, so about
+  17 000 points per launch); the buffers
   are kept between calls and grown on demand. Inside an OpenMP region it runs on Kokkos::Serial,
   as `ww_srce`; W3WAVE calls it outside one.
+- **Inside a team** (2026-10-17, the owner's sign-off on condition of parity): `w3srce_team`
+  and its callees split their element-wise loops over the team's threads (`TeamThreadRange`) and
+  keep every sum, `MIN`/`MAX` over `IS` and running value on one thread (`Kokkos::single`), in
+  the Fortran's order; [`W3SRCE_KOKKOS.md`](../../port_report/W3SRCE_KOKKOS.md#team-parallel-loops)
+  lists which loop is which. The launch is `TeamPolicy(n, Kokkos::AUTO)` as before, unless the
+  diagnostic `WW_KOKKOS_SRCE_TEAM=<N>` asks for teams of *N* threads (capped at the execution
+  space's concurrency, so the Kokkos::Serial path keeps 1); `AUTO` or unset is the default, and
+  any other value stops the run with status 3. It exists so the team-parallel paths run with more
+  than one thread on the OpenMP backend; the result must not depend on it
+  ([`srce_team.hpp`](../ww_kokkos/srce_team.hpp)). The only change to `srce_shim.cpp` is that
+  `TeamPolicy` line of `run_batch`; nothing on the Fortran side.
 - **Memory contract**: phase 2 delivery, still phase 1 residency. One host-to-device copy of each
   packed array and one copy back per chunk; the spectrum does not stay on the device between time
   steps. No Unified Memory.

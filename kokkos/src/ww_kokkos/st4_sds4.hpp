@@ -24,6 +24,7 @@
 #include "st4_arrays.hpp"
 #include "st4_libmvec.hpp"
 #include "st4_params.hpp"
+#include "srce_team.hpp"
 
 namespace ww::st4 {
 
@@ -68,11 +69,23 @@ inline int sds4_work_ints(const Params& p) { return 2 * p.nk; }
 /// flogrd57, flogrd58 are FLOGRD(5,7), FLOGRD(5,8) as 0/1. IX, IY are not
 /// read and not passed. The OUT arrays arrive holding the caller's values:
 /// the early return at w3src4md.F90:2581 leaves WHITECAP as it was.
-KOKKOS_INLINE_FUNCTION void w3sds4_point(const Params& p, const Fields& f, const Real* a,
-                                         const Real* k, const Real* cg, Real ustar, Real usdir,
-                                         Real depth, Real dair, Real dlwmean, int flogrd57,
-                                         int flogrd58, Real* srhs, Real* ddiag, Real* brlambda,
-                                         Real* whitecap, Real* work, int* iwork) {
+///
+/// Written against an executor (srce_team.hpp): w3sds4_point runs it on one
+/// thread, w3sds4_team on a team. Split over the team: the zeroing, the
+/// saturation and the 2.a.2 diagonal of SDSBCHOICE = 1 per IK (each IK writes its
+/// own row, its sums and MAXVAL on one thread in ITH order; the libmvec grouping
+/// is per row, so unchanged), the element-wise PB/BRLAMBDA/SRHS of 2.a, and the
+/// cumulative term per (IK, ITH) when SSDSC(3) < 0 (each element's sums are its
+/// own, in IK2 then J order) or per IK otherwise. On one thread (one()): the
+/// MSSSUM prefix sums, SDSBCHOICE = 2 and 3 (3 reuses BTH(1:NTH) and LMODULATION
+/// as scratch for every IK) and the whitecap recurrences. A caller of the team
+/// form provides a barrier after it; arrays are the team's shared memory.
+template <class X>
+KOKKOS_INLINE_FUNCTION void w3sds4_body(const X& ex, const Params& p, const Fields& f,
+                                        const Real* a, const Real* k, const Real* cg, Real ustar,
+                                        Real usdir, Real depth, Real dair, Real dlwmean,
+                                        int flogrd57, int flogrd58, Real* srhs, Real* ddiag,
+                                        Real* brlambda, Real* whitecap, Real* work, int* iwork) {
   using ww::st4::max_r;
   using ww::st4::min_r;
   using ww::st4::nint;
@@ -106,26 +119,29 @@ KOKKOS_INLINE_FUNCTION void w3sds4_point(const Params& p, const Fields& f, const
   auto MSS = [&](int ik, int j) -> Real& { return msssum[(j - 1) * nk + (ik - 1)]; };
 
   // 0. Pre-initialization (:2203-2213).
-  for (int i = 0; i < nk; ++i) {
+  ex.for_(nk, [&](int i) {
     s1[i] = zero; e1[i] = zero; ntimes[i] = 0; iksup[i] = 0;
     dk[i] = zero; hs[i] = zero; kbar[i] = zero; dck[i] = zero; efdf[i] = zero;
     bth0[i] = zero; qb[i] = zero; s2[i] = zero; brm12[i] = zero;
-  }
-  for (int i = 0; i < nspec; ++i) {
+  });
+  ex.for_(nspec, [&](int i) {
     bth[i] = zero; ddiag[i] = zero; srhs[i] = zero; pb[i] = zero; pb2[i] = zero;
-  }
-  for (int i = 0; i < 5 * nk; ++i) msssum[i] = zero;
+  });
+  ex.for_(5 * nk, [&](int i) { msssum[i] = zero; });
+  ex.sync();
 
-  // 1. Initialization and numerical factors (:2217-2224).
+  // 1. Initialization and numerical factors (:2217-2224). Scalars of the
+  // arguments only: every thread computes them, as W3SNL1's team code does.
   const Real facturb = (((ssdsc[4] * (ustar * ustar)) / kGrav) * dair) / kDwat;
   // DIKCUMUL is a W3SRC4MD module variable written here (:2218); kept local, not written back.
   const int dikcumul = nint(p.ssdsbrf1 / (p.xfr - one));
-  Real renewalfreq = zero;
   int ik1 = 1;
   if (p.ig1) ik1 = nint(p.igpars5) + 1;  // W3_IG1, :2223
+  const int nik = nk >= ik1 ? nk - ik1 + 1 : 0;  // trips of DO IK = IK1, NK
 
   // 1.b MSS parameters for the modulation of lambda, Romero (:2228-2254).
   if (ssdsc[7] > zero || ssdsc[10] > zero || ssdsc[17] > zero) {
+  ex.one([&]() {
     for (int ik = 1; ik <= nk; ++ik) {
       Real mssp = zero, msspc2 = zero, mssps2 = zero;
       const Real kp = Kokkos::pow(k[ik - 1], ssdsc[19]);
@@ -145,6 +161,8 @@ KOKKOS_INLINE_FUNCTION void w3sds4_point(const Params& p, const Fields& f, const
       if (mssd < zero) mssd = mssd + kPi;
       MSS(ik, 2) = mssd;
     }
+  });
+  ex.sync();
   }
 
   // 2. Spontaneous breaking from local saturation (:2259).
@@ -152,10 +170,12 @@ KOKKOS_INLINE_FUNCTION void w3sds4_point(const Params& p, const Fields& f, const
     case 1: {
       // 2.a Direction-dependent breaking, Ardhuin et al. 2010 (:2260-2331).
       const Real epsr = Kokkos::sqrt(p.ssdsbr);
-      for (int i = 0; i < nspec; ++i) bth[i] = zero;
-      // 2.a.1 Saturation.
+      ex.for_(nspec, [&](int i) { bth[i] = zero; });
+      ex.sync();
+      // 2.a.1 Saturation, one IK per iteration: its row of BTH, BTH0(IK).
       const int nsat = static_cast<int>(f.satweights.extent(0));
-      for (int ik = ik1; ik <= nk; ++ik) {
+      ex.for_(nik, [&](int iik) {
+        const int ik = ik1 + iik;
         const Real kk = k[ik - 1];
         const Real facsat = (f.sig(ik) * ((kk * kk) * kk)) * dth;
         const int is0 = (ik - 1) * nth;
@@ -187,9 +207,12 @@ KOKKOS_INLINE_FUNCTION void w3sds4_point(const Params& p, const Fields& f, const
             if (bth[i] > lim) lim = bth[i];
           bth0[ik - 1] = lim;
         }
-      }
-      // 2.a.2 Spontaneous breaking dissipation rate.
-      for (int ik = ik1; ik <= nk; ++ik) {
+      });
+      ex.sync();
+      // 2.a.2 Spontaneous breaking dissipation rate, one IK per iteration: the
+      // libmvec groups start at ITH = 1 of each row, as in the build.
+      ex.for_(nik, [&](int iik) {
+        const int ik = ik1 + iik;
         Real miche;
         if (p.ssdsbm[0] == one) {
           miche = one;
@@ -210,19 +233,23 @@ KOKKOS_INLINE_FUNCTION void w3sds4_point(const Params& p, const Fields& f, const
             nth, [&](int i) { return max_r(bth[is0 + i] - coef1, zero); },
             [&](int) { return ssdsp; },
             [&](int i, Real v) { ddiag[is0 + i] = sdiagiso + coef2 * v; });
-      }
-      // Breaking probability (:2320-2327), lambda (:2330), source (:2331).
-      for (int i = 0; i < nspec; ++i) {
+      });
+      ex.sync();
+      // Breaking probability (:2320-2327), lambda (:2330), source (:2331): four
+      // element-wise array statements, each element's chain in their order.
+      ex.for_(nspec, [&](int i) {
         const Real m = max_r(Kokkos::sqrt(bth[i]) - epsr, zero);
         pb[i] = m * m;
-      }
-      for (int i = 0; i < nspec; ++i) pb[i] = pb[i] * static_cast<Real>(28.16);
-      for (int i = 0; i < nspec; ++i) brlambda[i] = pb[i] / sds4_detail::kTwoPiSq;
-      for (int i = 0; i < nspec; ++i) srhs[i] = ddiag[i] * a[i];
+        pb[i] = pb[i] * static_cast<Real>(28.16);
+        brlambda[i] = pb[i] / sds4_detail::kTwoPiSq;
+        srhs[i] = ddiag[i] * a[i];
+      });
+      ex.sync();
       break;
     }
     case 2: {
       // 2.b Spontaneous breaking for T500, Filipot et al. JGR 2010 (:2338-2477).
+      ex.one([&]() {
       for (int i = 0; i < nk; ++i) { e1[i] = zero; hs[i] = zero; }
       for (int i = 0; i < nspec; ++i) { srhs[i] = zero; ddiag[i] = zero; pb2[i] = zero; }
       for (int ik = ik1; ik <= nk; ++ik) {
@@ -339,10 +366,14 @@ KOKKOS_INLINE_FUNCTION void w3sds4_point(const Params& p, const Fields& f, const
         pb[i] = ((one - ssdsc[0]) * pb2[i]) * a[i] + ssdsc[0] * pb[i];
       for (int i = 0; i < nspec; ++i) brlambda[i] = pb[i] / sds4_detail::kTwoPiSq;
       for (int i = 0; i < nspec; ++i) srhs[i] = ddiag[i] * a[i];
+      });
+      ex.sync();
       break;
     }
     case 3: {
       // 2.c Romero (GRL 2019) (:2481-2520). Division by USTAR**2 kept: Inf at USTAR = 0 (:2485).
+      // BTH(1:NTH) and LMODULATION are scratch shared by every IK: one thread.
+      ex.one([&]() {
       const Real t28 = static_cast<Real>(28.) / ssdsc[15];
       const Real ko = (kGrav / (ustar * ustar)) / (t28 * t28);
       for (int ik = 1; ik <= nk; ++ik) {
@@ -403,6 +434,8 @@ KOKKOS_INLINE_FUNCTION void w3sds4_point(const Params& p, const Fields& f, const
               ((srhs[is0 + ith - 1] * p.ssdsbr) / max_r(bth[ith - 1], static_cast<Real>(1.e-20))) /
               max_r(a[is0 + ith - 1], static_cast<Real>(1e-20));
       }
+      });
+      ex.sync();
       break;
     }
     default:
@@ -410,9 +443,43 @@ KOKKOS_INLINE_FUNCTION void w3sds4_point(const Params& p, const Fields& f, const
   }
 
   // Wave-turbulence interaction and cumulative effect (:2533-2575).
-  if ((ssdsc[2] != zero) || (ssdsc[4] != zero) || (ssdsc[20] != zero)) {
-    for (int ik = ik1; ik <= nk; ++ik) {
-      renewalfreq = zero;
+  if (((ssdsc[2] != zero) || (ssdsc[4] != zero) || (ssdsc[20] != zero)) && ssdsc[2] < zero) {
+    // The default (SSDSC(3) < 0): no IK-level sum, so each (IK, ITH) is
+    // independent; RENEWALFREQ is that element's, zero when IK <= DIKCUMUL.
+    ex.for_(nik * nth, [&](int e) {
+      const int ik = ik1 + e / nth;
+      const int ith = 1 + e % nth;
+      Real renewalfreq = zero;
+      const Real facturb2 = -(((f.sig(ik) * static_cast<Real>(2.)) * k[ik - 1]) * facturb);
+      const Real dvisc = -(((ssdsc[20] * static_cast<Real>(4.)) * k[ik - 1]) * k[ik - 1]);
+      const int is = ith + (ik - 1) * nth;
+      if (ik > dikcumul) {
+        // The default, O(NK^2 NTH^2) branch, kept (:2554-2563).
+        renewalfreq = zero;
+        for (int ik2 = ik1; ik2 <= ik - dikcumul; ++ik2) {
+          if (bth0[ik2 - 1] > p.ssdsbr) {
+            const int is2 = (ik2 - 1) * nth;
+            Real v = zero;
+            for (int j = 1; j <= nth; ++j)
+              v = v + f.cumulw(is2 + j - 1, is - 1) * brlambda[is2 + j - 1];
+            renewalfreq = renewalfreq + v;
+          }
+        }
+      }
+      // Wave-turbulence interaction; COS/SIN(USDIR) recomputed per ITH as written (:2567).
+      const Real coswind =
+          f.ecos(ith - 1) * Kokkos::cos(usdir) + f.esin(ith - 1) * Kokkos::sin(usdir);
+      const Real dturb = facturb2 * max_r(coswind, zero);
+      const Real diag2 = (ssdsc[2] * renewalfreq + dturb) + dvisc;
+      ddiag[is - 1] = ddiag[is - 1] + diag2;
+      srhs[is - 1] = srhs[is - 1] + a[is - 1] * diag2;
+    });
+    ex.sync();
+  } else if ((ssdsc[2] != zero) || (ssdsc[4] != zero) || (ssdsc[20] != zero)) {
+    // SSDSC(3) >= 0: the cheap isotropic sum is per IK, one IK per iteration.
+    ex.for_(nik, [&](int iik) {
+      const int ik = ik1 + iik;
+      Real renewalfreq = zero;
       const Real facturb2 = -(((f.sig(ik) * static_cast<Real>(2.)) * k[ik - 1]) * facturb);
       const Real dvisc = -(((ssdsc[20] * static_cast<Real>(4.)) * k[ik - 1]) * k[ik - 1]);
       const Real c = f.sig(ik) / k[ik - 1];
@@ -451,12 +518,14 @@ KOKKOS_INLINE_FUNCTION void w3sds4_point(const Params& p, const Fields& f, const
         ddiag[is - 1] = ddiag[is - 1] + diag2;
         srhs[is - 1] = srhs[is - 1] + a[is - 1] * diag2;
       }
-    }
+    });
+    ex.sync();
   }
 
   // Whitecap parameters. Early return (:2581): WHITECAP keeps the caller's values;
   // WHITECAP(3) is never set.
   if (!(flogrd57 || flogrd58)) return;
+  ex.one([&]() {
   for (int i = 0; i < 4; ++i) whitecap[i] = zero;
 
   // COEF4: whitecap coverage; COEF5: air entrainment rate, Romero 2019 (:2589-2604).
@@ -507,6 +576,29 @@ KOKKOS_INLINE_FUNCTION void w3sds4_point(const Params& p, const Fields& f, const
       whitecap[1] = whitecap[1] + coef4[ik - 1] * mft;
     }
   }
+  });
+}
+
+/// W3SDS4 for one point, on one thread.
+KOKKOS_INLINE_FUNCTION void w3sds4_point(const Params& p, const Fields& f, const Real* a,
+                                         const Real* k, const Real* cg, Real ustar, Real usdir,
+                                         Real depth, Real dair, Real dlwmean, int flogrd57,
+                                         int flogrd58, Real* srhs, Real* ddiag, Real* brlambda,
+                                         Real* whitecap, Real* work, int* iwork) {
+  w3sds4_body(SerialExec{}, p, f, a, k, cg, ustar, usdir, depth, dair, dlwmean, flogrd57,
+              flogrd58, srhs, ddiag, brlambda, whitecap, work, iwork);
+}
+
+/// W3SDS4 for one point, by the whole team; the caller puts a barrier before
+/// (A is read at once) and after (the outputs are written without one).
+template <class Member>
+KOKKOS_INLINE_FUNCTION void w3sds4_team(const Member& team, const Params& p, const Fields& f,
+                                        const Real* a, const Real* k, const Real* cg, Real ustar,
+                                        Real usdir, Real depth, Real dair, Real dlwmean,
+                                        int flogrd57, int flogrd58, Real* srhs, Real* ddiag,
+                                        Real* brlambda, Real* whitecap, Real* work, int* iwork) {
+  w3sds4_body(TeamExec<Member>{team}, p, f, a, k, cg, ustar, usdir, depth, dair, dlwmean,
+              flogrd57, flogrd58, srhs, ddiag, brlambda, whitecap, work, iwork);
 }
 
 }  // namespace ww::st4

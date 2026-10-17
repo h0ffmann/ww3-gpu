@@ -16,6 +16,7 @@
 #include "real.hpp"
 #include "st4_arrays.hpp"
 #include "st4_params.hpp"
+#include "srce_team.hpp"
 
 namespace ww::st4 {
 
@@ -43,30 +44,54 @@ inline constexpr Real kCmm = static_cast<Real>(0.2325);     // CMM, :575
 }  // namespace sin4_detail
 
 /// Reals and ints of per-point work storage w3sin4_point needs (no allocation in a kernel).
-/// DSTAB(3,NSPEC), w3src4md.F90:567 (declared), :600 (zeroed), stored as dstab[(ISTAB-1)*NSPEC + IS-1].
-inline int sin4_work_reals(const Params& p) { return 3 * p.nspec; }
+/// DSTAB(3,NSPEC), w3src4md.F90:567 (declared), :600 (zeroed), stored as dstab[(ISTAB-1)*NSPEC + IS-1],
+/// then the values a team shares: UORB and AORB as summed, STRESSSTAB(3,2), STRESSSTABN(3,2).
+inline constexpr int kSin4Shared = 14;
+inline int sin4_work_reals(const Params& p) { return 3 * p.nspec + kSin4Shared; }
 inline int sin4_work_ints(const Params& p) { (void)p; return 0; }
 
 /// W3SIN4 for one point. a = A(1:NSPEC), cg = CG(1:NK), k = K(1:NSPEC) (WN2),
 /// s, d = S, D(1:NSPEC), llws = LLWS(1:NSPEC) as 0/1, all 0-based. IX, IY and
 /// BRLAMBDA are not read by the routine and are not passed. The OUT arguments
 /// arrive holding the caller's values.
-KOKKOS_INLINE_FUNCTION void w3sin4_point(const Params& p, const Fields& f, const Real* a,
-                                         const Real* cg, const Real* k, Real u, Real ustar,
-                                         Real drat, Real as, Real usdir, Real z0, Real cd,
-                                         Real& tauwx, Real& tauwy, Real& tauwnx, Real& tauwny,
-                                         Real* s, Real* d, int* llws, Real* work, int* iwork) {
+///
+/// Written against an executor (srce_team.hpp): w3sin4_point runs it on one
+/// thread, w3sin4_team on a team. Split over the team: the zeroing of DSTAB,
+/// the DSTAB/LLWS of each ITH of a row (:740-783: every element reads only the
+/// row's scalars, which come from the stress of the rows before), and the
+/// element-wise D and S. On one thread, in the Fortran's order: the UORB/AORB
+/// sums, the stress sums of each row after its DSTAB (the same TEMP2 = CONST2*
+/// DSTAB*A as at :785, accumulated in ITH order), and the tail (:847-976). The
+/// row scalars (USTP, COSU, ...) are functions of the shared stress and the
+/// arguments, which every thread computes alike after the barrier. Outputs by
+/// reference are written by one thread; a team caller puts a barrier after.
+template <class X>
+KOKKOS_INLINE_FUNCTION void w3sin4_body(const X& ex, const Params& p, const Fields& f,
+                                        const Real* a, const Real* cg, const Real* k, Real u,
+                                        Real ustar, Real drat, Real as, Real usdir, Real z0,
+                                        Real cd, Real& tauwx, Real& tauwy, Real& tauwnx,
+                                        Real& tauwny, Real* s, Real* d, int* llws, Real* work,
+                                        int* iwork) {
   using namespace sin4_detail;
   (void)cd;     // CD is an argument of W3SIN4 but never read.
   (void)iwork;
   const int nk = p.nk, nth = p.nth, nspec = p.nspec;
   Real* dstab = work;
   auto DSTAB = [&](int istab, int is) -> Real& { return dstab[(istab - 1) * nspec + (is - 1)]; };
+  Real* const sh = work + 3 * nspec;  // kSin4Shared values the team shares
+  Real& sh_uorb = sh[0];
+  Real& sh_aorb = sh[1];
+  Real(&stressstab)[3][2] = *reinterpret_cast<Real(*)[3][2]>(sh + 2);
+  Real(&stressstabn)[3][2] = *reinterpret_cast<Real(*)[3][2]>(sh + 8);
 
   // 1.  Preparations (:600-602)
-  for (int i = 0; i < 3 * nspec; ++i) dstab[i] = static_cast<Real>(0.);
-  Real stressstab[3][2] = {{0, 0}, {0, 0}, {0, 0}};
-  Real stressstabn[3][2] = {{0, 0}, {0, 0}, {0, 0}};
+  ex.for_(3 * nspec, [&](int i) { dstab[i] = static_cast<Real>(0.); });
+  ex.one([&]() {
+    for (int i = 0; i < 3; ++i) {
+      stressstab[i][0] = 0; stressstab[i][1] = 0;
+      stressstabn[i][0] = 0; stressstabn[i][1] = 0;
+    }
+  });
 
   const Real const1 = p.bbeta / kKappa2;  // :606
   Real const0 = const1 * drat;            // :607
@@ -76,18 +101,25 @@ KOKKOS_INLINE_FUNCTION void w3sin4_point(const Params& p, const Fields& f, const
   const Real z0noz = max_r(z0visc, p.zz0rat * z0);
 
   // 1.b  orbital velocity and displacement (:618-638)
-  Real uorb = static_cast<Real>(0.);
-  Real aorb = static_cast<Real>(0.);
-  for (int ik = 1; ik <= nk; ++ik) {
-    Real eb = static_cast<Real>(0.);
-    for (int ith = 1; ith <= nth; ++ith) {
-      const int is = ith + (ik - 1) * nth;
-      eb = eb + a[is - 1];
+  ex.one([&]() {
+    Real uorb = static_cast<Real>(0.);
+    Real aorb = static_cast<Real>(0.);
+    for (int ik = 1; ik <= nk; ++ik) {
+      Real eb = static_cast<Real>(0.);
+      for (int ith = 1; ith <= nth; ++ith) {
+        const int is = ith + (ik - 1) * nth;
+        eb = eb + a[is - 1];
+      }
+      const Real sigk = f.sig(ik);
+      uorb = uorb + eb * (sigk * sigk) * f.dden(ik - 1) / cg[ik - 1];
+      aorb = aorb + eb * f.dden(ik - 1) / cg[ik - 1];
     }
-    const Real sigk = f.sig(ik);
-    uorb = uorb + eb * (sigk * sigk) * f.dden(ik - 1) / cg[ik - 1];
-    aorb = aorb + eb * f.dden(ik - 1) / cg[ik - 1];
-  }
+    sh_uorb = uorb;
+    sh_aorb = aorb;
+  });
+  ex.sync();
+  Real uorb = sh_uorb;
+  Real aorb = sh_aorb;
   uorb = static_cast<Real>(2) * Kokkos::sqrt(uorb);
   // AORB**(1-0.5*SSWELLF(6)): REAL exponent, powf in the dump (:637).
   const Real aorb1 = static_cast<Real>(2) *
@@ -155,10 +187,7 @@ KOKKOS_INLINE_FUNCTION void w3sin4_point(const Params& p, const Fields& f, const
     if (istab == 2) ust = ustar * (static_cast<Real>(1.) + ustarsigma);
     taux = (ust * ust) * Kokkos::cos(usdir);
     tauy = (ust * ust) * Kokkos::sin(usdir);
-    stressstab[istab - 1][0] = static_cast<Real>(0.);
-    stressstab[istab - 1][1] = static_cast<Real>(0.);
-    stressstabn[istab - 1][0] = static_cast<Real>(0.);
-    stressstabn[istab - 1][1] = static_cast<Real>(0.);
+    // STRESSSTAB(ISTAB,:) = 0 (:706-709): zeroed above, written by no pass before this one.
     // Sequential scan over IK: each IK reads the stress of the earlier ones (:713-797).
     for (int ik = 1; ik <= nk; ++ik) {
       const Real taupx = taux - Kokkos::fabs(p.ttauwshelter) * stressstab[istab - 1][0];
@@ -169,12 +198,12 @@ KOKKOS_INLINE_FUNCTION void w3sin4_point(const Params& p, const Fields& f, const
       usdirp = Kokkos::atan2(taupy, taupx);
       cosu = Kokkos::cos(usdirp);
       sinu = Kokkos::sin(usdirp);
-      int is = 1 + (ik - 1) * nth;
-      const Real kis = k[is - 1];
-      const Real sig2is = f.sig2(is - 1);
+      const int is1 = 1 + (ik - 1) * nth;  // IS = 1+(IK-1)*NTH before the ITH loop (:721)
+      const Real kis = k[is1 - 1];
+      const Real sig2is = f.sig2(is1 - 1);
       const Real cm = kis / sig2is;
       const Real ucn = ustp * cm + p.zzalp;
-      const Real const2 = f.dden2(is - 1) / cg[ik - 1] * kGrav / (f.sig(ik) / kis * drat);
+      const Real const2 = f.dden2(is1 - 1) / cg[ik - 1] * kGrav / (f.sig(ik) / kis * drat);
       const Real cnst = sig2is * const0;
       const Real zcn = Kokkos::log(kis * z0);
       // -(...) of the whole product (:737-738); sqrt(2*NU_AIR*SIG2) with 2*NU_AIR folded.
@@ -182,8 +211,9 @@ KOKKOS_INLINE_FUNCTION void w3sin4_point(const Params& p, const Fields& f, const
           -(p.sswellf[4] * drat * static_cast<Real>(2) * kis * Kokkos::sqrt(kTwoNuAir * sig2is));
       const Real swellcoeft =
           -(drat * p.sswellf[0] * static_cast<Real>(16) * (sig2is * sig2is) / kGrav);
-      for (int ith = 1; ith <= nth; ++ith) {
-        is = ith + (ik - 1) * nth;
+      ex.for_(nth, [&](int ith0) {
+        const int ith = ith0 + 1;
+        const int is = ith + (ik - 1) * nth;
         const Real ecos = f.ecos(is - 1), esin = f.esin(is - 1);
         const Real coswind = (ecos * cosu + esin * sinu);
         if (coswind > static_cast<Real>(0.01)) {
@@ -216,35 +246,54 @@ KOKKOS_INLINE_FUNCTION void w3sin4_point(const Params& p, const Fields& f, const
           const Real dturb = swellcoeft * (fw * uorb + (fu + fud * coswind) * ustp);
           DSTAB(istab, is) = DSTAB(istab, is) + pturb * dturb + pvisc * dvisc;
         }
-        // Wave-supported stress, "direction to", hence the plus sign (:785-795).
-        const Real temp2 = const2 * DSTAB(istab, is) * a[is - 1];
-        if (DSTAB(istab, is) < static_cast<Real>(0)) {
-          stressstabn[istab - 1][0] = stressstabn[istab - 1][0] + temp2 * ecos;
-          stressstabn[istab - 1][1] = stressstabn[istab - 1][1] + temp2 * esin;
-        } else {
-          stressstab[istab - 1][0] = stressstab[istab - 1][0] + temp2 * ecos;
-          stressstab[istab - 1][1] = stressstab[istab - 1][1] + temp2 * esin;
+      });
+      ex.sync();
+      // Wave-supported stress, "direction to", hence the plus sign (:785-795), in ITH order.
+      ex.one([&]() {
+        for (int ith = 1; ith <= nth; ++ith) {
+          const int is = ith + (ik - 1) * nth;
+          const Real ecos = f.ecos(is - 1), esin = f.esin(is - 1);
+          const Real temp2 = const2 * DSTAB(istab, is) * a[is - 1];
+          if (DSTAB(istab, is) < static_cast<Real>(0)) {
+            stressstabn[istab - 1][0] = stressstabn[istab - 1][0] + temp2 * ecos;
+            stressstabn[istab - 1][1] = stressstabn[istab - 1][1] + temp2 * esin;
+          } else {
+            stressstab[istab - 1][0] = stressstab[istab - 1][0] + temp2 * ecos;
+            stressstab[istab - 1][1] = stressstab[istab - 1][1] + temp2 * esin;
+          }
         }
-      }
+      });
+      ex.sync();
     }
   }
+  // D, then S = D*A (:817), element by element.
   Real xstress, ystress;
   if (!p.stab3) {  // :799-803
-    for (int is = 1; is <= nspec; ++is) d[is - 1] = DSTAB(3, is);
+    ex.for_(nspec, [&](int i) {
+      const int is = i + 1;
+      d[is - 1] = DSTAB(3, is);
+      s[is - 1] = d[is - 1] * a[is - 1];
+    });
     xstress = stressstab[2][0];
     ystress = stressstab[2][1];
-    tauwnx = stressstabn[2][0];
-    tauwny = stressstabn[2][1];
+    ex.one([&]() {
+      tauwnx = stressstabn[2][0];
+      tauwny = stressstabn[2][1];
+    });
   } else {
     // :806-812; the in-loop copy of row 3 (:799-803) is overwritten here, so it is skipped.
-    for (int is = 1; is <= nspec; ++is)
+    ex.for_(nspec, [&](int i) {
+      const int is = i + 1;
       d[is - 1] = static_cast<Real>(0.5) * (DSTAB(1, is) + DSTAB(2, is));
+      s[is - 1] = d[is - 1] * a[is - 1];
+    });
     xstress = static_cast<Real>(0.5) * (stressstab[0][0] + stressstab[1][0]);
     ystress = static_cast<Real>(0.5) * (stressstab[0][1] + stressstab[1][1]);
-    tauwnx = static_cast<Real>(0.5) * (stressstabn[0][0] + stressstabn[1][0]);
-    tauwny = static_cast<Real>(0.5) * (stressstabn[0][1] + stressstabn[1][1]);
+    ex.one([&]() {
+      tauwnx = static_cast<Real>(0.5) * (stressstabn[0][0] + stressstabn[1][0]);
+      tauwny = static_cast<Real>(0.5) * (stressstabn[0][1] + stressstabn[1][1]);
+    });
   }
-  for (int is = 1; is <= nspec; ++is) s[is - 1] = d[is - 1] * a[is - 1];  // :817
 
   // TAUX, TAUY are those of the last ISTAB pass (:835-836); USTP has no MIN here (:837).
   {
@@ -255,7 +304,8 @@ KOKKOS_INLINE_FUNCTION void w3sin4_point(const Params& p, const Fields& f, const
   }
   ust = ustp;
 
-  // High-frequency tail (:847-854)
+  // High-frequency tail (:847-976), one thread: TEMP and the J recurrence are sums.
+  ex.one([&]() {
   {
     const Real signk = f.sig(nk);
     const Real s2 = signk * signk;
@@ -367,6 +417,29 @@ KOKKOS_INLINE_FUNCTION void w3sin4_point(const Params& p, const Fields& f, const
     tauwx = tauwx * tauwb / tauw;
     tauwy = tauwy * tauwb / tauw;
   }
+  });
+}
+
+/// W3SIN4 for one point, on one thread.
+KOKKOS_INLINE_FUNCTION void w3sin4_point(const Params& p, const Fields& f, const Real* a,
+                                         const Real* cg, const Real* k, Real u, Real ustar,
+                                         Real drat, Real as, Real usdir, Real z0, Real cd,
+                                         Real& tauwx, Real& tauwy, Real& tauwnx, Real& tauwny,
+                                         Real* s, Real* d, int* llws, Real* work, int* iwork) {
+  w3sin4_body(SerialExec{}, p, f, a, cg, k, u, ustar, drat, as, usdir, z0, cd, tauwx, tauwy,
+              tauwnx, tauwny, s, d, llws, work, iwork);
+}
+
+/// W3SIN4 for one point, by the whole team; the caller puts a barrier before and after.
+template <class Member>
+KOKKOS_INLINE_FUNCTION void w3sin4_team(const Member& team, const Params& p, const Fields& f,
+                                        const Real* a, const Real* cg, const Real* k, Real u,
+                                        Real ustar, Real drat, Real as, Real usdir, Real z0,
+                                        Real cd, Real& tauwx, Real& tauwy, Real& tauwnx,
+                                        Real& tauwny, Real* s, Real* d, int* llws, Real* work,
+                                        int* iwork) {
+  w3sin4_body(TeamExec<Member>{team}, p, f, a, cg, k, u, ustar, drat, as, usdir, z0, cd, tauwx,
+              tauwy, tauwnx, tauwny, s, d, llws, work, iwork);
 }
 
 }  // namespace ww::st4

@@ -20,6 +20,7 @@
 #include "st4_params.hpp"
 #include "st4_calc_ustar.hpp"
 #include "st4_libmvec.hpp"
+#include "srce_team.hpp"
 
 namespace ww::st4 {
 
@@ -34,13 +35,21 @@ inline int spr4_work_ints(const Params& p) { (void)p; return 0; }
 /// A(NSPEC), cg = CG(1:NK), wn = WN(1:NK), llws = LLWS(1:NSPEC) as 0/1.
 /// ustar, usdir are INOUT; the other references are OUT and arrive holding the
 /// caller's values, so a path that leaves one unassigned keeps it.
-KOKKOS_INLINE_FUNCTION void w3spr4_point(const Params& p, const Fields& f, const Real* a,
-                                         const Real* cg, const Real* wn, Real u, Real udir,
-                                         Real tauwx, Real tauwy, const int* llws, Real& ustar,
-                                         Real& usdir, Real& emean, Real& fmean, Real& fmean1,
-                                         Real& wnmean, Real& amax, Real& cd, Real& z0,
-                                         Real& charn, Real& fmeanws, Real& dlwmean, Real* work,
-                                         int* iwork) {
+///
+/// Written against an executor (srce_team.hpp): w3spr4_point runs it on one
+/// thread, w3spr4_team on a team. Only EB(IK), EB2(IK) of section 1 are split
+/// over the team, one IK per iteration (each sums its own row in ITH order);
+/// ELCS, ELSN and AMAX run over IK then ITH into one scalar each, so they and
+/// everything after them (the libmvec powers, the sums over IK, CALC_USTAR) run
+/// on one thread. A team caller puts a barrier before and after.
+template <class X>
+KOKKOS_INLINE_FUNCTION void w3spr4_body(const X& ex, const Params& p, const Fields& f,
+                                        const Real* a, const Real* cg, const Real* wn, Real u,
+                                        Real udir, Real tauwx, Real tauwy, const int* llws,
+                                        Real& ustar, Real& usdir, Real& emean, Real& fmean,
+                                        Real& fmean1, Real& wnmean, Real& amax, Real& cd,
+                                        Real& z0, Real& charn, Real& fmeanws, Real& dlwmean,
+                                        Real* work, int* iwork) {
   (void)iwork;
   const int nk = p.nk;
   const int nth = p.nth;
@@ -50,6 +59,21 @@ KOKKOS_INLINE_FUNCTION void w3spr4_point(const Params& p, const Fields& f, const
   Real* pwsig = work + 2 * nk;  // SIG(IK)**(2.*WWNMEANPTAIL), :316 and :319
   Real* pwwn = work + 3 * nk;   // WN(IK)**WWNMEANP, :317
 
+  // 1.  EB, EB2: the sums of each IK over ITH (:293-305).
+  ex.for_(nk, [&](int ik0) {
+    const int ik = ik0 + 1;
+    eb[ik - 1] = 0;
+    eb2[ik - 1] = 0;
+    for (int ith = 1; ith <= nth; ++ith) {
+      const int is = ith + (ik - 1) * nth;
+      const Real aa = a[(ik - 1) * nth + ith - 1];
+      eb[ik - 1] = eb[ik - 1] + aa;
+      if (llws[is - 1] != 0) eb2[ik - 1] = eb2[ik - 1] + aa;
+    }
+  });
+  ex.sync();
+
+  ex.one([&]() {
   Real unz = max_r(static_cast<Real>(0.01), u);  // :280
   ustar = max_r(static_cast<Real>(0.0001), ustar);  // :278
 
@@ -64,19 +88,15 @@ KOKKOS_INLINE_FUNCTION void w3spr4_point(const Params& p, const Fields& f, const
   Real elcs = 0;
   Real elsn = 0;
 
-  // 1.  Integral over directions and maximum (:293-305).
+  // 1.  Integral over directions and maximum (:293-305), EB and EB2 summed above.
   // Quirk 11 (:300-301): ELCS and ELSN run over IK, then ITH, into one scalar each.
   for (int ik = 1; ik <= nk; ++ik) {
-    eb[ik - 1] = 0;
-    eb2[ik - 1] = 0;
     const Real sigfac = Kokkos::pow(f.sig(ik), p.ssdsc[11]) * f.dden(ik - 1) / cg[ik - 1];
     for (int ith = 1; ith <= nth; ++ith) {
       const int is = ith + (ik - 1) * nth;
       const Real aa = a[(ik - 1) * nth + ith - 1];
-      eb[ik - 1] = eb[ik - 1] + aa;
       elcs = elcs + aa * f.ecos(is - 1) * sigfac;
       elsn = elsn + aa * f.esin(is - 1) * sigfac;
-      if (llws[is - 1] != 0) eb2[ik - 1] = eb2[ik - 1] + aa;
       amax = max_r(amax, aa);  // MAX(AMAX, A): -O3 MAX_EXPR <A, AMAX>
     }
   }
@@ -141,6 +161,32 @@ KOKKOS_INLINE_FUNCTION void w3spr4_point(const Params& p, const Fields& f, const
   const Real r = ustar / unz;
   cd = r * r;  // (USTAR/UNZ)**2: one division, squared, at -O3
   usdir = udir;
+  });
+}
+
+/// W3SPR4 for one point, on one thread.
+KOKKOS_INLINE_FUNCTION void w3spr4_point(const Params& p, const Fields& f, const Real* a,
+                                         const Real* cg, const Real* wn, Real u, Real udir,
+                                         Real tauwx, Real tauwy, const int* llws, Real& ustar,
+                                         Real& usdir, Real& emean, Real& fmean, Real& fmean1,
+                                         Real& wnmean, Real& amax, Real& cd, Real& z0,
+                                         Real& charn, Real& fmeanws, Real& dlwmean, Real* work,
+                                         int* iwork) {
+  w3spr4_body(SerialExec{}, p, f, a, cg, wn, u, udir, tauwx, tauwy, llws, ustar, usdir, emean,
+              fmean, fmean1, wnmean, amax, cd, z0, charn, fmeanws, dlwmean, work, iwork);
+}
+
+/// W3SPR4 for one point, by the whole team.
+template <class Member>
+KOKKOS_INLINE_FUNCTION void w3spr4_team(const Member& team, const Params& p, const Fields& f,
+                                        const Real* a, const Real* cg, const Real* wn, Real u,
+                                        Real udir, Real tauwx, Real tauwy, const int* llws,
+                                        Real& ustar, Real& usdir, Real& emean, Real& fmean,
+                                        Real& fmean1, Real& wnmean, Real& amax, Real& cd,
+                                        Real& z0, Real& charn, Real& fmeanws, Real& dlwmean,
+                                        Real* work, int* iwork) {
+  w3spr4_body(TeamExec<Member>{team}, p, f, a, cg, wn, u, udir, tauwx, tauwy, llws, ustar, usdir,
+              emean, fmean, fmean1, wnmean, amax, cd, z0, charn, fmeanws, dlwmean, work, iwork);
 }
 
 }  // namespace ww::st4

@@ -268,7 +268,7 @@ void run_batch(GridCtx& g, const st4::Params& q, const st4::Fields& f, const snl
   using Policy = Kokkos::TeamPolicy<ExecSpace>;
   using Member = typename Policy::member_type;
   const size_t scratch = snl1::snl1_team_scratch_bytes<ExecSpace>(nc, nt);
-  Policy policy(n, Kokkos::AUTO);
+  Policy policy = srce_team_policy<Policy>(n);
   const int level = scratch <= static_cast<size_t>(policy.scratch_size_max(0)) ? 0 : 1;
   if (scratch > static_cast<size_t>(policy.scratch_size_max(level)))
     throw std::runtime_error("ww_srce_batch: W3SNL1 needs " + std::to_string(scratch) +

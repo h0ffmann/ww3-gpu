@@ -19,6 +19,7 @@
 
 #include "real.hpp"
 #include "srce_params.hpp"
+#include "srce_team.hpp"
 
 namespace ww::srce {
 
@@ -35,10 +36,16 @@ KOKKOS_INLINE_FUNCTION Real fmax2(Real a, Real b) { return (b > a) ? b : a; }
 /// k = K(1:NK), all 0-based. s = S(NTH,NK) column-major: S(ITH,IK) is
 /// s[(IK-1)*NTH + ITH-1]. dirf (NTH) and wnf (NK) are caller-provided work for
 /// the Fortran locals DIRF and WNF (w3sln1md.F90:160-161).
-KOKKOS_INLINE_FUNCTION void w3sln1_point(const Params& p, const Real* sig, const Real* ecos,
-                                         const Real* esin, const Real* k, Real fhigh,
-                                         Real ustar, Real usdir, Real* s, Real* dirf,
-                                         Real* wnf) {
+///
+/// Written against an executor (srce_team.hpp): no sum anywhere, so DIRF, WNF
+/// and S are each split over the team element by element; the scalars are of
+/// the arguments only and every thread computes them. A team caller puts a
+/// barrier after.
+template <class X>
+KOKKOS_INLINE_FUNCTION void w3sln1_body(const X& ex, const Params& p, const Real* sig,
+                                        const Real* ecos, const Real* esin, const Real* k,
+                                        Real fhigh, Real ustar, Real usdir, Real* s, Real* dirf,
+                                        Real* wnf) {
   using ln1_detail::fmax2;
   using ln1_detail::fmin2;
   const int nk = p.nk;
@@ -57,12 +64,13 @@ KOKKOS_INLINE_FUNCTION void w3sln1_point(const Params& p, const Real* sig, const
 #endif
 
   // :178-180. MAX(0., x)**4 as -O3: t = MAX_EXPR <x, 0.>, (t*t)*(t*t).
-  for (int ith = 1; ith <= nth; ++ith) {
+  ex.for_(nth, [&](int ith0) {
+    const int ith = ith0 + 1;
     const Real m = fmax2(static_cast<Real>(0.),
                          ecos[ith - 1] * cosu + esin[ith - 1] * sinu);
     const Real m2 = m * m;
     dirf[ith - 1] = m2 * m2;
-  }
+  });
 
   // :182. USTAR**4 as (u*u)*(u*u).
   const Real u2 = ustar * ustar;
@@ -75,7 +83,8 @@ KOKKOS_INLINE_FUNCTION void w3sln1_point(const Params& p, const Real* sig, const
   const Real ffilt = fmin2(static_cast<Real>(2.) * sig[nk - 1], fmax2(ff2, ff1));
 
   // :186-193; the FAC/K(IK) quotient is formed before the EXP product.
-  for (int ik = 1; ik <= nk; ++ik) {
+  ex.for_(nk, [&](int ik0) {
+    const int ik = ik0 + 1;
     const Real rfr = sig[ik - 1] / ffilt;
     if (rfr < static_cast<Real>(0.5)) {
       wnf[ik - 1] = 0;
@@ -85,14 +94,32 @@ KOKKOS_INLINE_FUNCTION void w3sln1_point(const Params& p, const Real* sig, const
       const Real rm4 = static_cast<Real>(1.) / (r2 * r2);
       wnf[ik - 1] = fac / k[ik - 1] * Kokkos::exp(-rm4);
     }
-  }
+  });
+  ex.sync();
 
-  // :197-199.
-  for (int ik = 1; ik <= nk; ++ik) {
-    for (int ith = 1; ith <= nth; ++ith) {
-      s[(ik - 1) * nth + ith - 1] = wnf[ik - 1] * dirf[ith - 1];
-    }
-  }
+  // :197-199, one (IK, ITH) per iteration.
+  ex.for_(nk * nth, [&](int e) {
+    const int ik = 1 + e / nth;
+    const int ith = 1 + e % nth;
+    s[(ik - 1) * nth + ith - 1] = wnf[ik - 1] * dirf[ith - 1];
+  });
+}
+
+/// W3SLN1 for one point, on one thread.
+KOKKOS_INLINE_FUNCTION void w3sln1_point(const Params& p, const Real* sig, const Real* ecos,
+                                         const Real* esin, const Real* k, Real fhigh,
+                                         Real ustar, Real usdir, Real* s, Real* dirf,
+                                         Real* wnf) {
+  w3sln1_body(SerialExec{}, p, sig, ecos, esin, k, fhigh, ustar, usdir, s, dirf, wnf);
+}
+
+/// W3SLN1 for one point, by the whole team.
+template <class Member>
+KOKKOS_INLINE_FUNCTION void w3sln1_team(const Member& team, const Params& p, const Real* sig,
+                                        const Real* ecos, const Real* esin, const Real* k,
+                                        Real fhigh, Real ustar, Real usdir, Real* s, Real* dirf,
+                                        Real* wnf) {
+  w3sln1_body(TeamExec<Member>{team}, p, sig, ecos, esin, k, fhigh, ustar, usdir, s, dirf, wnf);
 }
 
 }  // namespace ww::srce
