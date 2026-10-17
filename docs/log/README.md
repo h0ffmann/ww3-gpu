@@ -60,3 +60,4 @@ Date, author, issue/PR/WFIP.
 | 2026-10-17 | [WW3's Fortran with glibc's fma builds and with its sse2 builds: byte-identical on two cases](2026-10-17-glibc-fma-builds-ww3.md) | #42 |
 | 2026-10-17 | [W3XYP3 and W3KTP3 wired into WW3, batched, byte-identical on the CPU](2026-10-17-prop3-wiring.md) | #42, PR #173 |
 | 2026-10-17 | [The source-term inputs kept on the device (WFIP-0005 unit 4), and why unit 5 waits](2026-10-17-resident-unit4.md) | #42, WFIP-0005 |
+| 2026-10-17 | [A mutation audit of the resident-step pieces: which deliberate breakages the CPU checks catch](2026-10-17-mutation-audit.md) | #42, WFIP-0005 |

@@ -1669,3 +1669,41 @@ Nothing of this ran on a GPU ⚠. `bash scripts/ww3-gpu.sh --ww3-gpu full --gpu 
 --build-only` compiled the shim and the fork for CUDA; the zeroing kernel never ran on a device ⚠.
 The regtest matrix did not run ⚠. The preset `--kokkos resident` of `scripts/ww3-gpu.sh` now
 includes `UPDV`.
+
+## 21. Diagnostics from the mutation audit (no fork change)
+
+No fork change and no ABI change: [`resident_shim.cpp`](resident_shim.cpp),
+[`outg_shim.cpp`](outg_shim.cpp), `scripts/ww3-gpu.sh` and the coast fixture. Each piece of
+sections 12 to 18 was broken on purpose in a scratch tree, and the checks that let a broken piece
+pass were tightened ([the audit](../../../docs/log/2026-10-17-mutation-audit.md), 2026-10-17, with
+the table of mutants). Every flag below is read once, ignores `WW_KOKKOS_ALL`, is off by default,
+and leaves a correct run's bits unchanged (v: coast, smoke and full byte-identical with each).
+
+- **`WW_KOKKOS_VA_CHECK=1`**: every sync call (`ww_va_host_read`, `_write`, `_read_cols`,
+  `_update`, a kernel's `device_va`) first checks what the state claims, by `memcmp` against a host
+  snapshot taken whenever the two copies were made equal and updated by the declared column
+  writes (the partial read, the zeroed columns): unless the state is `HOST`, the host `VA` must
+  still hold those bits, so a host write with no `W3KOKKOS_VA_HOST_WRITE` before it stops the model
+  at the next call; with `BOTH`, `d_va` must too, so a kernel that wrote `d_va` without
+  `device_written` stops it. Unlike `WW_KOKKOS_VA_RESIDENT=1` it adds no copy, which would hide a
+  missing mark. Counter: `VA consistency checks run`.
+- **`WW_KOKKOS_VA_POISON=1`**: after every `device_written` the host `VA`, stale from then on, is
+  filled with a quiet NaN (`0x7FC0BAD0`), so a host read that lacks its sync, or a column the
+  partial read misses, puts NaN into the output. The next full sync copies `d_va` back over it.
+  Counter: `VA host copies poisoned`.
+- **`WW_KOKKOS_OUTG_STAGED=1`**: on a host backend `ww_outg_va` takes the device's path: inputs
+  copied into the shim's buffers, fields computed into buffers, and only the fields the selection
+  of section 15 wants copied back into WW3's arrays, so a field the selection misses keeps its old
+  bits and shows in `out_grd.ww3`.
+- **`scripts/ww3-gpu.sh`**: every model file (`out_grd.*`, `out_pnt.*`, `restart*.ww3`, every
+  NetCDF) is compared byte for byte with the Fortran run's, the binary ones with `--ww3`'s; on the
+  CPU a difference fails the run, where before `nccmp-tol` judged one NetCDF within its tolerances.
+  A run whose `VA` is still newer on the device at finalize fails. For `--kokkos resident` on the
+  coast case the calls per part must match `kokkos/tests/fixtures/coast/counts_resident.txt`, so a
+  part that falls back to the Fortran without a word fails.
+- **The coast case** asks for every field the Kokkos `W3OUTG` computes and writes restarts at 05:30
+  and 11:30, inside a `W3WAVE` call.
+
+Not provable on the CPU by any of these: the device copies themselves, the prop3 input cache
+(section 13; a staged diagnostic in `prop3_shim.cpp` would do what `WW_KOKKOS_SRCE_STAGED` does),
+and every CUDA bit ⚠. The regtest matrix did not run ⚠.
