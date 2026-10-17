@@ -23,6 +23,7 @@
 #include <new>
 #include <stdexcept>
 #include <string>
+#include <utility>
 
 #include "ww_kokkos/real.hpp"
 #include "ww_kokkos/snl1_team.hpp"
@@ -51,6 +52,13 @@ struct GridCtx {
   Kokkos::View<PointScalars*, DeviceSpace> scal;
   Kokkos::View<State*, DeviceSpace> state;
   int work_reals = -1, work_ints = -1;
+  // ww_srce_batch: the same arrays for batch_cap points, point index slowest.
+  int batch_cap = 0;
+  DevReal1D b_spec, b_wn1, b_cg1, b_pin, b_psc, b_whitecap, b_taubbl, b_tauice, b_rw;
+  DevInt1D b_shave, b_iw;
+  DevDouble1D b_dw;
+  Kokkos::View<PointScalars*, DeviceSpace> b_scal;
+  Kokkos::View<State*, DeviceSpace> b_state;
 };
 
 // Never destroyed: ww_kokkos_finalize runs from atexit, after the static destructors of
@@ -62,6 +70,7 @@ std::map<int, GridCtx>& grids() {
 
 std::atomic<int> g_last_error{WW_KOKKOS_OK};
 std::atomic<long long> g_count{0};
+std::atomic<long long> g_batch_calls{0}, g_batch_launches{0}, g_batch_points{0};
 bool g_hook_pushed = false;
 
 void set_error(int code, const char* what) {
@@ -84,6 +93,64 @@ const Flags& flags() {
 }
 void print_count() {
   std::fprintf(stderr, "ww_kokkos: W3SRCE spectra computed: %lld\n", g_count.load());
+  // One count per line, "<name>: <n>", the form scripts/ww3-gpu.sh prints.
+  std::fprintf(stderr, "ww_kokkos: W3SRCE batched calls: %lld\n", g_batch_calls.load());
+  std::fprintf(stderr, "ww_kokkos: W3SRCE batched launches: %lld\n", g_batch_launches.load());
+  std::fprintf(stderr, "ww_kokkos: W3SRCE batched points: %lld\n", g_batch_points.load());
+}
+
+constexpr long long kBatchMibDefault = 1024;
+
+/// The batch buffers' cap in bytes: WW_KOKKOS_SRCE_BATCH_MIB, a positive
+/// integer, else the default (a value that does not parse is reported once).
+long long batch_cap_bytes() {
+  static const long long cap = [] {
+    long long mib = kBatchMibDefault;
+    if (const char* v = std::getenv("WW_KOKKOS_SRCE_BATCH_MIB")) {
+      char* end = nullptr;
+      const long long x = std::strtoll(v, &end, 10);
+      if (end != v && *end == '\0' && x > 0 && x <= (1LL << 30))
+        mib = x;
+      else
+        std::fprintf(stderr, "ww_kokkos: WW_KOKKOS_SRCE_BATCH_MIB='%s' ignored, using %lld\n", v,
+                     kBatchMibDefault);
+    }
+    return mib * 1024 * 1024;
+  }();
+  return cap;
+}
+
+/// Device bytes one point takes in the batch buffers.
+long long batch_bytes_per_point(const GridCtx& g) {
+  const Params& p = g.p;
+  const long long reals = static_cast<long long>(p.nspec) + 2LL * p.nk + WW_SRCE_NPIN +
+                          WW_SRCE_NPSC + 4 + 2 + 2 + g.work_reals;
+  const long long ints = 1LL + g.work_ints;
+  return reals * static_cast<long long>(sizeof(Real)) + ints * static_cast<long long>(sizeof(int)) +
+         static_cast<long long>(srce_work_doubles(p)) * static_cast<long long>(sizeof(double)) +
+         static_cast<long long>(sizeof(PointScalars) + sizeof(State));
+}
+
+/// Grow the batch buffers of `g` to `n` points; they never shrink.
+void batch_reserve(GridCtx& g, int n) {
+  if (n <= g.batch_cap) return;
+  const Params& p = g.p;
+  const size_t m = static_cast<size_t>(n);
+  g.b_spec = DevReal1D("ww_srce.b_spec", m * p.nspec);
+  g.b_wn1 = DevReal1D("ww_srce.b_wn1", m * p.nk);
+  g.b_cg1 = DevReal1D("ww_srce.b_cg1", m * p.nk);
+  g.b_pin = DevReal1D("ww_srce.b_pin", m * WW_SRCE_NPIN);
+  g.b_psc = DevReal1D("ww_srce.b_psc", m * WW_SRCE_NPSC);
+  g.b_whitecap = DevReal1D("ww_srce.b_whitecap", m * 4);
+  g.b_taubbl = DevReal1D("ww_srce.b_taubbl", m * 2);
+  g.b_tauice = DevReal1D("ww_srce.b_tauice", m * 2);
+  g.b_rw = DevReal1D("ww_srce.b_rw", m * g.work_reals);
+  g.b_shave = DevInt1D("ww_srce.b_shave", m);
+  g.b_iw = DevInt1D("ww_srce.b_iw", m * g.work_ints);
+  g.b_dw = DevDouble1D("ww_srce.b_dw", m * srce_work_doubles(p));
+  g.b_scal = Kokkos::View<PointScalars*, DeviceSpace>("ww_srce.b_scal", m);
+  g.b_state = Kokkos::View<State*, DeviceSpace>("ww_srce.b_state", m);
+  g.batch_cap = n;
 }
 
 #if defined(WW_SRCE_SERIAL_NESTED)
@@ -150,6 +217,131 @@ void run(GridCtx& g, const st4::Params& q, const st4::Fields& f, const snl1::Con
   Kokkos::deep_copy(ex, HostUnmanaged<float>(taubbl, 2), g.taubbl);
   Kokkos::deep_copy(ex, HostUnmanaged<float>(tauice, 2), g.tauice);
   Kokkos::deep_copy(ex, HostUnmanaged<PointScalars>(&o, 1), g.scal);
+  ex.fence();
+}
+
+/// The time-step arguments of ww_srce_batch, shared by every point.
+struct BatchStep {
+  int it, inflags24, flogrd57, flogrd58;
+  Real dtg;
+};
+
+/// Points [n0, n0+n) of a ww_srce_batch call on ExecSpace: one copy of each
+/// array in, one launch of n teams, team i on point n0+i, one copy out.
+template <class ExecSpace>
+void run_batch(GridCtx& g, const st4::Params& q, const st4::Fields& f, const snl1::Config& nc,
+               const snl1::Tables& nt, const snl1::RealView1D& nsig, const BatchStep& c,
+               int n0, int n, float* spec, const float* wn1, const float* cg1,
+               const float* pin, float* psc, float* whitecap, float* taubbl, float* tauice,
+               int* shave) {
+  const ExecSpace ex;
+  const Params p = g.p;
+  const size_t o0 = static_cast<size_t>(n0), m = static_cast<size_t>(n);
+  const size_t nspec = static_cast<size_t>(p.nspec), nk = static_cast<size_t>(p.nk);
+  const auto head = [](const auto& v, size_t len) {
+    return Kokkos::subview(v, std::make_pair(static_cast<size_t>(0), len));
+  };
+  Kokkos::deep_copy(ex, head(g.b_spec, m * nspec), HostUnmanaged<float>(spec + o0 * nspec, m * nspec));
+  Kokkos::deep_copy(ex, head(g.b_wn1, m * nk), HostUnmanaged<const float>(wn1 + o0 * nk, m * nk));
+  Kokkos::deep_copy(ex, head(g.b_cg1, m * nk), HostUnmanaged<const float>(cg1 + o0 * nk, m * nk));
+  Kokkos::deep_copy(ex, head(g.b_pin, m * WW_SRCE_NPIN),
+                    HostUnmanaged<const float>(pin + o0 * WW_SRCE_NPIN, m * WW_SRCE_NPIN));
+  Kokkos::deep_copy(ex, head(g.b_psc, m * WW_SRCE_NPSC),
+                    HostUnmanaged<float>(psc + o0 * WW_SRCE_NPSC, m * WW_SRCE_NPSC));
+  Kokkos::deep_copy(ex, head(g.b_whitecap, m * 4), HostUnmanaged<float>(whitecap + o0 * 4, m * 4));
+  Kokkos::deep_copy(ex, head(g.b_taubbl, m * 2), HostUnmanaged<float>(taubbl + o0 * 2, m * 2));
+  Kokkos::deep_copy(ex, head(g.b_tauice, m * 2), HostUnmanaged<float>(tauice + o0 * 2, m * 2));
+
+  using Policy = Kokkos::TeamPolicy<ExecSpace>;
+  using Member = typename Policy::member_type;
+  const size_t scratch = snl1::snl1_team_scratch_bytes<ExecSpace>(nc, nt);
+  Policy policy(n, Kokkos::AUTO);
+  const int level = scratch <= static_cast<size_t>(policy.scratch_size_max(0)) ? 0 : 1;
+  if (scratch > static_cast<size_t>(policy.scratch_size_max(level)))
+    throw std::runtime_error("ww_srce_batch: W3SNL1 needs " + std::to_string(scratch) +
+                             " B of team scratch, more than this backend offers");
+  policy.set_scratch_size(level, Kokkos::PerTeam(scratch));
+
+  const Grid grid{g.sig.data(), g.dden.data(), g.ecos.data(), g.esin.data(), g.mapwn.data()};
+  const auto SP = g.b_spec, W1 = g.b_wn1, C1 = g.b_cg1, PI = g.b_pin, PS = g.b_psc,
+             WC = g.b_whitecap, TB = g.b_taubbl, TI = g.b_tauice, RW = g.b_rw;
+  const auto SH = g.b_shave, IW = g.b_iw;
+  const auto DW = g.b_dw;
+  const auto SC = g.b_scal;
+  const auto ST = g.b_state;
+  const size_t nrw = static_cast<size_t>(g.work_reals), niw = static_cast<size_t>(g.work_ints),
+               ndw = static_cast<size_t>(srce_work_doubles(p));
+  const Real* ns = nsig.data();
+  Kokkos::parallel_for(
+      "ww_srce_batch", policy, KOKKOS_LAMBDA(const Member& team) {
+        const int i = team.league_rank();
+        const size_t ii = static_cast<size_t>(i);
+        const Real* x = PI.data() + ii * WW_SRCE_NPIN;
+        const PointIn in{c.it,
+                         c.inflags24,
+                         c.flogrd57,
+                         c.flogrd58,
+                         x[WW_SRCE_IN_D_INP],
+                         x[WW_SRCE_IN_U10ABS],
+                         x[WW_SRCE_IN_U10DIR],
+                         x[WW_SRCE_IN_AS],
+                         x[WW_SRCE_IN_ICE],
+                         c.dtg,
+                         x[WW_SRCE_IN_DAIR],
+                         x[WW_SRCE_IN_COEF]};
+        Real* y = PS.data() + ii * WW_SRCE_NPSC;
+        PointScalars& o = SC(i);
+        Kokkos::single(Kokkos::PerTeam(team), [&]() {
+          o = PointScalars{y[WW_SRCE_SC_USTAR],  y[WW_SRCE_SC_USTDIR], y[WW_SRCE_SC_TAUWX],
+                           y[WW_SRCE_SC_TAUWY],  y[WW_SRCE_SC_DTDYN],  y[WW_SRCE_SC_FCUT],
+                           y[WW_SRCE_SC_TAUOX],  y[WW_SRCE_SC_TAUOY],  y[WW_SRCE_SC_TAUWIX],
+                           y[WW_SRCE_SC_TAUWIY], y[WW_SRCE_SC_TAUWNX], y[WW_SRCE_SC_TAUWNY],
+                           y[WW_SRCE_SC_PHIAW],  y[WW_SRCE_SC_CHARN],  y[WW_SRCE_SC_TWS],
+                           y[WW_SRCE_SC_PHIOC],  y[WW_SRCE_SC_PHIBBL], y[WW_SRCE_SC_PHICE],
+                           y[WW_SRCE_SC_TAUOCX], y[WW_SRCE_SC_TAUOCY], y[WW_SRCE_SC_WNMEAN],
+                           SH(i)};
+        });
+        team.team_barrier();
+        const snl1::TeamScratch w = snl1::snl1_team_scratch(team, level, nc, nt);
+        w3srce_team(team, p, grid, q, f, nc, nt, ns, w, in, SP.data() + ii * p.nspec,
+                    W1.data() + ii * p.nk, C1.data() + ii * p.nk, o, WC.data() + ii * 4,
+                    TB.data() + ii * 2, TI.data() + ii * 2, ST(i), RW.data() + ii * nrw,
+                    IW.data() + ii * niw, DW.data() + ii * ndw);
+        team.team_barrier();
+        Kokkos::single(Kokkos::PerTeam(team), [&]() {
+          y[WW_SRCE_SC_USTAR] = o.ustar;
+          y[WW_SRCE_SC_USTDIR] = o.ustdir;
+          y[WW_SRCE_SC_TAUWX] = o.tauwx;
+          y[WW_SRCE_SC_TAUWY] = o.tauwy;
+          y[WW_SRCE_SC_DTDYN] = o.dtdyn;
+          y[WW_SRCE_SC_FCUT] = o.fcut;
+          y[WW_SRCE_SC_TAUOX] = o.tauox;
+          y[WW_SRCE_SC_TAUOY] = o.tauoy;
+          y[WW_SRCE_SC_TAUWIX] = o.tauwix;
+          y[WW_SRCE_SC_TAUWIY] = o.tauwiy;
+          y[WW_SRCE_SC_TAUWNX] = o.tauwnx;
+          y[WW_SRCE_SC_TAUWNY] = o.tauwny;
+          y[WW_SRCE_SC_PHIAW] = o.phiaw;
+          y[WW_SRCE_SC_CHARN] = o.charn;
+          y[WW_SRCE_SC_TWS] = o.tws;
+          y[WW_SRCE_SC_PHIOC] = o.phioc;
+          y[WW_SRCE_SC_PHIBBL] = o.phibbl;
+          y[WW_SRCE_SC_PHICE] = o.phice;
+          y[WW_SRCE_SC_TAUOCX] = o.tauocx;
+          y[WW_SRCE_SC_TAUOCY] = o.tauocy;
+          y[WW_SRCE_SC_WNMEAN] = o.wnmean;
+          SH(i) = o.shave;
+        });
+      });
+  ex.fence();
+
+  Kokkos::deep_copy(ex, HostUnmanaged<float>(spec + o0 * nspec, m * nspec), head(g.b_spec, m * nspec));
+  Kokkos::deep_copy(ex, HostUnmanaged<float>(psc + o0 * WW_SRCE_NPSC, m * WW_SRCE_NPSC),
+                    head(g.b_psc, m * WW_SRCE_NPSC));
+  Kokkos::deep_copy(ex, HostUnmanaged<float>(whitecap + o0 * 4, m * 4), head(g.b_whitecap, m * 4));
+  Kokkos::deep_copy(ex, HostUnmanaged<float>(taubbl + o0 * 2, m * 2), head(g.b_taubbl, m * 2));
+  Kokkos::deep_copy(ex, HostUnmanaged<float>(tauice + o0 * 2, m * 2), head(g.b_tauice, m * 2));
+  Kokkos::deep_copy(ex, HostUnmanaged<int>(shave + o0, m), head(g.b_shave, m));
   ex.fence();
 }
 
@@ -313,6 +505,92 @@ void ww_srce(int igrid, int it, int inflags24, int flogrd57, int flogrd58, float
     set_error(WW_KOKKOS_ERR_KERNEL, e.what());
   } catch (...) {
     set_error(WW_KOKKOS_ERR_KERNEL, "ww_srce: unknown exception");
+  }
+}
+
+// ww_srce_batch, called by W3KOKKOS_SRCE_BATCH (w3kokkosmd.F90 on the fork) with
+// its pack buffers; IP is the packed index of sea point JSEA (ISEA from
+// INIT_GET_ISEA), the points in JSEA order.
+// | C         | Fortran                          | Type          | Intent | Shape            |
+// | igrid     | IGRID                            | int           | in     |                  |
+// | it        | IT                               | int           | in     |                  |
+// | inflags24 | INFLAGS2(4) as 0/1               | int           | in     |                  |
+// | flogrd57  | FLOGRD(5,7) as 0/1               | int           | in     |                  |
+// | flogrd58  | FLOGRD(5,8) as 0/1               | int           | in     |                  |
+// | dtg       | DTG (W3WAVE's, 1. when IT = 0)   | float         | in     |                  |
+// | npts      | active points of the step        | int           | in     |                  |
+// | spec      | BSPEC(:,IP)  = VA(:,JSEA)        | float*        | inout  | nspec x npts     |
+// | wn1       | BWN1(:,IP)   = WN(1:NK,ISEA)     | const float*  | in     | nk x npts        |
+// | cg1       | BCG1(:,IP)   = CG(1:NK,ISEA)     | const float*  | in     | nk x npts        |
+// | pin       | BPIN(:,IP): DW, U10, U10D, AS,   | const float*  | in     | NPIN x npts      |
+// |           |   ICE, RHOAIR, ASF of ISEA       |               |        |                  |
+// | psc       | BPSC(:,IP): UST, USTDIR (ISEA);  | float*        | inout  | NPSC x npts      |
+// |           |   TAUWX .. WNMEAN (JSEA), in the |               |        |                  |
+// |           |   order of WwSrceBatchScal       |               |        |                  |
+// | whitecap  | BWC(:,IP) = WHITECAP(JSEA,1:4)   | float*        | inout  | 4 x npts         |
+// | taubbl    | BTB(:,IP) = TAUBBL(JSEA,1:2)     | float*        | inout  | 2 x npts         |
+// | tauice    | BTI(:,IP) = TAUICE(JSEA,1:2)     | float*        | inout  | 2 x npts         |
+// | shave     | BSH(IP), SHAVEIO as 0/1          | int*          | out    | npts             |
+void ww_srce_batch(int igrid, int it, int inflags24, int flogrd57, int flogrd58, float dtg,
+                   int npts, float* spec, const float* wn1, const float* cg1,
+                   const float* pin, float* psc, float* whitecap, float* taubbl,
+                   float* tauice, int* shave) {
+  try {
+    const auto it_g = grids().find(igrid);
+    if (it_g == grids().end() || !Kokkos::is_initialized()) {
+      set_error(WW_KOKKOS_ERR_NOT_INITIALISED, "ww_srce_batch before ww_srce_init for this grid");
+      return;
+    }
+    if (npts < 0 || (npts > 0 && (spec == nullptr || wn1 == nullptr || cg1 == nullptr ||
+                                  pin == nullptr || psc == nullptr || whitecap == nullptr ||
+                                  taubbl == nullptr || tauice == nullptr || shave == nullptr))) {
+      set_error(WW_KOKKOS_ERR_BAD_SHAPE, "ww_srce_batch: npts < 0 or a null array");
+      return;
+    }
+    g_batch_calls.fetch_add(1, std::memory_order_relaxed);
+    if (npts == 0) {
+      ok();
+      return;
+    }
+    GridCtx& g = it_g->second;
+    snl1::Config nc;
+    snl1::Tables nt;
+    snl1::RealView1D nsig;
+    st4::Params q;
+    st4::Fields f;
+    // Read at every call, as ww_srce() does (the ST4 module state).
+    if (!snl1::grid_state(igrid, nc, nt, nsig) || !st4::grid_state(igrid, q, f)) {
+      set_error(WW_KOKKOS_ERR_NOT_INITIALISED,
+                "ww_srce_batch: the DIA or ST4 context of this grid is gone");
+      return;
+    }
+    const long long per_point = batch_bytes_per_point(g);
+    long long fit = batch_cap_bytes() / per_point;
+    if (fit < 1) fit = 1;
+    const int chunk = static_cast<int>(fit < npts ? fit : npts);
+    batch_reserve(g, chunk);
+    const BatchStep c{it, inflags24, flogrd57, flogrd58, dtg};
+    for (int n0 = 0; n0 < npts; n0 += chunk) {
+      const int n = (npts - n0 < chunk) ? npts - n0 : chunk;
+#if defined(WW_SRCE_SERIAL_NESTED)
+      if (nested_in_openmp())
+        run_batch<Kokkos::Serial>(g, q, f, nc, nt, nsig, c, n0, n, spec, wn1, cg1, pin, psc,
+                                  whitecap, taubbl, tauice, shave);
+      else
+#endif
+        run_batch<Kokkos::DefaultExecutionSpace>(g, q, f, nc, nt, nsig, c, n0, n, spec, wn1,
+                                                 cg1, pin, psc, whitecap, taubbl, tauice, shave);
+      g_batch_launches.fetch_add(1, std::memory_order_relaxed);
+    }
+    g_batch_points.fetch_add(npts, std::memory_order_relaxed);
+    g_count.fetch_add(npts, std::memory_order_relaxed);
+    ok();
+  } catch (const std::bad_alloc& e) {
+    set_error(WW_KOKKOS_ERR_RUNTIME, e.what());
+  } catch (const std::exception& e) {
+    set_error(WW_KOKKOS_ERR_KERNEL, e.what());
+  } catch (...) {
+    set_error(WW_KOKKOS_ERR_KERNEL, "ww_srce_batch: unknown exception");
   }
 }
 

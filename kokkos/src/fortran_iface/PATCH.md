@@ -7,6 +7,7 @@ Read with `git -C WW3 fetch origin && git -C WW3 branch -r` and `git rev-list --
 
 | h0ffmann/WW3 branch | Head | Against the `WW3/` pin | What it wires |
 |---|---|---|---|
+| `ww3-gpu/kokkos-srce-batch` | `caa5da36` | the `WW3/` pin of h0ffmann/ww3-gpu `goal/42-srce-batch`; one commit on `ww3-gpu/kokkos-wire-base`, pushed 2026-10-17 (v) | `W3SRCE` for every sea point of a time step in one call (`W3KOKKOS_SRCE_BATCH`, `ww_srce_batch`), the ABI `0.4` ([section 10](#10-w3srce-batched-on-ww3-gpukokkos-srce-batch)) |
 | `ww3-gpu/kokkos-wire-base` | `4a94a8f6` | **the pin** since this change; one commit on `ww3-gpu/kokkos-wave-support`, pushed 2026-10-16 | no routine: the part registry, the per-unit module files and the generated `W3KOKKOS_UNITSMD` every wiring unit builds on ([section 9](#9-wiring-units-in-parallel)) |
 | `ww3-gpu/kokkos-wave-support` | `357f575c` | the pin's parent; one commit on `ww3-gpu/kokkos-st-flx-swl`, pushed 2026-10-16 | `W3GATH`, `W3SCAT`, `W3UWND`, `W3UTRN`, `W3DZXY`, `W3MAP3`, `W3MAPT`, `DISTAB`, the master flag `WW_KOKKOS_ALL` and the parts line in `log.ww3` ([sections 7](#7-run-time-flags-one-per-part-and-a-master) and [8](#8-w3waves-support-routines-on-ww3-gpukokkos-wave-support)) |
 | `ww3-gpu/kokkos-st4` | `c9a6a0c6` | contained in the pin | the DIA (`W3SNL1`, `INSNL1`) and ST4 (`W3SDS4`, `W3SIN4`, `W3SPR4` and their tables) in `w3srcemd.F90` and `w3initmd.F90`, behind the `KOKKOS` switch |
@@ -30,11 +31,17 @@ What the next plug-ins need from the fork:
   (`WW3-noaa/model/bin/switch_NCEP_st4`), whose branches are not.
 - The fork's `model/src/CMakeLists.txt` already links `ww_kokkos` under `KOKKOS`, and a new shim
   is one more source in this repository's `fortran_iface` target. What has to move with each new
-  set of entry points is the ABI version: since `357f575c` the fork asks for
-  `find_package(ww_kokkos 0.3)` and `kokkos/CMakeLists.txt` declares `0.3.0` (`SameMinorVersion`),
-  so an install from before `ww_kokkos_flag` and `ww_wave_*` is refused at configure time. The
-  registry of `ww3-gpu/kokkos-wire-base` is Fortran only and leaves the C ABI at `0.3`; the
-  integrator raises both sides to `0.4` once, when the wiring units are merged (section 9).
+  set of entry points is the ABI version. `kokkos/CMakeLists.txt` declares `0.4.0` since
+  `ww_srce_batch` (section 10), with `SameMajorVersion` compatibility: an install satisfies a
+  `find_package(ww_kokkos 0.x)` up to its own minor, so a fork branch that asks for `0.3` (the
+  wiring base `4a94a8f6` and the units built on it) still configures against `0.4.0`, and only a
+  branch that calls a new entry point asks for the new minor (`ww3-gpu/kokkos-srce-batch` asks
+  for `0.4`). The rule that keeps this safe: entry points are only added; **removing or changing
+  an entry point needs a major bump**, which every fork branch then has to ask for (v, 2026-10-17:
+  the fork at `4a94a8f6`, `find_package(ww_kokkos 0.3)`, configured and built against the 0.4.0
+  install, `bash scripts/ww3-gpu.sh --ww3-gpu smoke --cpu --build-only`). Before 0.4.0 the
+  compatibility was `SameMinorVersion`, and `0.3.0` (`357f575c`) refused an install from before
+  `ww_kokkos_flag` and `ww_wave_*`.
 - The source-term path runs per sea point, so it works under `DIST MPI` as under `SHRD` (the
   regtest matrix's MPI entries ran it, `AGENTS.md`, "Bit for bit"). A propagation path is
   different: `W3GATH`/`W3SCAT` and the `PDLIB` solver exchange data between ranks, so their
@@ -909,3 +916,50 @@ bash scripts/ww3-gpu.sh --self-test                           # parts.d parses, 
 
 No regtest, smoke run, matrix or `--gpu` run. Every row of a unit stays `regtested` no:
 "compiled, never run inside WW3".
+
+## 10. `W3SRCE` batched on `ww3-gpu/kokkos-srce-batch`
+
+One commit on `ww3-gpu/kokkos-wire-base` (`4a94a8f6`): `caa5da36`, pushed to h0ffmann/WW3 on
+2026-10-17. It is phase 2, step 4 of
+[`H100_OPTIMIZATION_STRATEGY_202610.md`](../../../docs/H100_OPTIMIZATION_STRATEGY_202610.md): the
+source terms of a time step reach Kokkos in one call, without a copy per point and without the
+`!$OMP CRITICAL (WW_KOKKOS_SRCE)`. The argument table is in the comment above `ww_srce_batch` in
+[`srce_shim.cpp`](srce_shim.cpp); the packet rows are `WwSrceBatchIn` and `WwSrceBatchScal` in
+`ww_kokkos_c.hpp`, mirrored by the `SRCEB_*` parameters of `w3kokkosmd.F90` (v, read in both).
+
+- **`w3wavemd.F90`**: one hunk before the `!$OMP PARALLEL` of the source-term loop (section 3.7
+  of W3WAVE, `:2325-2331`, and its `END IF` at `:2469-2471` at `caa5da36`), under
+  `W3_KOKKOS`, `W3_ST4`, `W3_NL1` and not `W3_PDLIB`: `IF (W3KOKKOS_SRCE_ON(IT)) THEN CALL
+  W3KOKKOS_SRCE_BATCH (IT, DTG, TAUWX, TAUWY) ELSE` the loop, unchanged, `END IF`; plus one `USE`
+  line (`:452-454`). `TAUWX`, `TAUWY` are W3WAVE's own arrays (`w3wavemd.F90:660`), so they are
+  passed. `W3KOKKOS_SRCE_ON` reads no point, so it decides for the whole step. The per-point call
+  in the loop is kept, but no build reaches it any more: without `PDLIB` the batch takes the step,
+  and `W3KOKKOS_SRCE_SETUP` refuses `PDLIB`.
+- **`w3kokkosmd.F90`**: the `bind(C)` interface `WW_SRCE_BATCH`, the `SRCEB_*` row indices and
+  `W3KOKKOS_SRCE_BATCH`. It loops `JSEA = 1, NSEAL` (`INIT_GET_ISEA`), packs every point with
+  `MAPSTA(IY,IX) == 1 .AND. FLAGST(ISEA)` as `W3KOKKOS_SRCE` receives it, calls the shim once,
+  stops with `EXTCDE` on a non-zero status, unpacks, and writes `UNDEF` to `UST`, `USTDIR`,
+  `DTDYN`, `FCUT` of the other points, as the loop's `ELSE` does. `VSioDummy`, `VDioDummy` and
+  `SHAVETOTioDummy`, which the per-point call also writes, are not written: W3WAVE reads them only
+  under `PDLIB` (`w3wavemd.F90:1710-1711`, inside the `#ifdef W3_PDLIB` of `:1640`). The pack
+  buffers are `SAVE`, sized `NSEAL`, reallocated only when `NSEAL`, `NK` or `NSPEC` changes.
+- **The shim**: chunks of points, one `TeamPolicy(n)` launch per chunk, team *i* running the
+  unchanged `w3srce_team` on point *i* with its own `PointScalars`, `State` and work slice. The
+  teams share only tables that every callee reads and none writes (the list is in the shim's
+  header comment, v read 2026-10-17). `WW_KOKKOS_SRCE_BATCH_MIB` caps the batch buffers (default
+  1024 MiB, about 56 KB per point at NK = NTH = 24, so about 19 000 points per launch); the buffers
+  are kept between calls and grown on demand. Inside an OpenMP region it runs on Kokkos::Serial,
+  as `ww_srce`; W3WAVE calls it outside one.
+- **Memory contract**: phase 2 delivery, still phase 1 residency. One host-to-device copy of each
+  packed array and one copy back per chunk; the spectrum does not stay on the device between time
+  steps. No Unified Memory.
+- **Without `KOKKOS`**, the hunk is not compiled: `gfortran -E -P` of `w3wavemd.F90` with
+  `switch_lab_shrd` and with `switch_lab_ompg` is identical to `WW3-noaa/`'s, blank lines dropped
+  (v, 2026-10-17).
+
+The checkpoint on the CPU, 2026-10-17 (OpenMP backend; never `--gpu`; `kokkos/port_report/W3SRCE_KOKKOS.md` has the table):
+`--kokkos SRCE` smoke and full, with `switch_lab_ompg` and `switch_lab_shrd`, byte-identical to
+the Fortran of the same executable and to `--ww3`, `nccmp-tol` PASS both; the full also with
+`WW_KOKKOS_SRCE_BATCH_MIB=64` (200 launches instead of 25), byte-identical (v). The CUDA build
+compiles (`--gpu --build-only`); whether it gives the CPU's bits is not known ⚠. The regtest matrix
+did not run ⚠.

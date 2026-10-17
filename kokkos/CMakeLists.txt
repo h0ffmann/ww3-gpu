@@ -9,7 +9,7 @@
 #
 # SPDX-License-Identifier: MIT
 cmake_minimum_required(VERSION 3.25)
-project(ww3_gpu_kokkos VERSION 0.3.0 LANGUAGES C CXX Fortran)
+project(ww3_gpu_kokkos VERSION 0.4.0 LANGUAGES C CXX Fortran)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -77,8 +77,11 @@ install(EXPORT ww_kokkosTargets NAMESPACE ww_kokkos::
 file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/ww_kokkosConfig.cmake
     "include(CMakeFindDependencyMacro)\nfind_dependency(Kokkos)\n"
     "include(\"\${CMAKE_CURRENT_LIST_DIR}/ww_kokkosTargets.cmake\")\n")
+# Entry points are only added, never removed or changed, so an install satisfies any
+# request of the same major version up to its own (0.4.0 accepts find_package(ww_kokkos
+# 0.3)). Removing or changing an entry point needs a major bump (PATCH.md, "The fork today").
 write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/ww_kokkosConfigVersion.cmake
-    COMPATIBILITY SameMinorVersion)
+    COMPATIBILITY SameMajorVersion)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/ww_kokkosConfig.cmake
     ${CMAKE_CURRENT_BINARY_DIR}/ww_kokkosConfigVersion.cmake
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ww_kokkos)

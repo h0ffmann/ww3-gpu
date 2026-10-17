@@ -206,7 +206,8 @@ int ww_st4_last_error(void);
 // The source-term integration of one sea point (W3SRCE(srce_direct, ...)) with
 // every source term it calls on Kokkos: ST4, the DIA, W3SLN1, W3SBT1, W3SDB1.
 // ww_srce_init() needs ww_snl1_init() and ww_st4_commit() done for the grid: the
-// kernel reads their tables. Phase 1: one point per call, copied in and out.
+// kernel reads their tables. ww_srce(): one point per call, copied in and out
+// (phase 1). ww_srce_batch(): every active point of a time step in one call.
 
 /// Configure grid `igrid`: rpar/ipar at the indices of srce_params.hpp; sig, dden
 /// (nk), ecos, esin, mapwn (nspec), copied. Returns WW_KOKKOS_OK,
@@ -230,10 +231,48 @@ void ww_srce(int igrid, int it, int inflags24, int flogrd57, int flogrd58, float
              float* whitecap, float* phibbl, float* taubbl, float* tauice, float* phice,
              float* tauocx, float* tauocy, float* wnmean, int* shave);
 
+/// Row indices of ww_srce_batch()'s per-point input packet pin(WW_SRCE_NPIN, npts):
+/// the by-value scalars of ww_srce() that differ from point to point.
+enum WwSrceBatchIn {
+  WW_SRCE_IN_D_INP = 0,  ///< D_INP  = DW(ISEA)
+  WW_SRCE_IN_U10ABS,     ///< U10ABS = U10(ISEA)
+  WW_SRCE_IN_U10DIR,     ///< U10DIR = U10D(ISEA)
+  WW_SRCE_IN_AS,         ///< AS     = AS(ISEA)
+  WW_SRCE_IN_ICE,        ///< ICE    = ICE(ISEA)
+  WW_SRCE_IN_DAIR,       ///< DAIR   = RHOAIR(ISEA)
+  WW_SRCE_IN_COEF,       ///< COEF   = ASF(ISEA)
+  WW_SRCE_NPIN
+};
+
+/// Row indices of ww_srce_batch()'s INOUT packet psc(WW_SRCE_NPSC, npts): the
+/// pointer scalars of ww_srce() in its argument order, shave excepted.
+enum WwSrceBatchScal {
+  WW_SRCE_SC_USTAR = 0, WW_SRCE_SC_USTDIR, WW_SRCE_SC_TAUWX, WW_SRCE_SC_TAUWY,
+  WW_SRCE_SC_DTDYN, WW_SRCE_SC_FCUT, WW_SRCE_SC_TAUOX, WW_SRCE_SC_TAUOY,
+  WW_SRCE_SC_TAUWIX, WW_SRCE_SC_TAUWIY, WW_SRCE_SC_TAUWNX, WW_SRCE_SC_TAUWNY,
+  WW_SRCE_SC_PHIAW, WW_SRCE_SC_CHARN, WW_SRCE_SC_TWS, WW_SRCE_SC_PHIOC,
+  WW_SRCE_SC_PHIBBL, WW_SRCE_SC_PHICE, WW_SRCE_SC_TAUOCX, WW_SRCE_SC_TAUOCY,
+  WW_SRCE_SC_WNMEAN, WW_SRCE_NPSC
+};
+
+/// ww_srce() for `npts` points in one call (phase 2, one launch per time step):
+/// every array is packed point by point, the point index slowest, i.e. a
+/// Fortran (rows, npts) array. spec (nspec, npts), psc (WW_SRCE_NPSC, npts),
+/// whitecap (4, npts), taubbl (2, npts), tauice (2, npts) INOUT; wn1, cg1 (nk,
+/// npts) and pin (WW_SRCE_NPIN, npts) IN; shave (npts) OUT as 0/1. it, the
+/// three flags and dtg belong to the time step and are shared by every point.
+/// Per chunk of points (srce_shim.cpp, WW_KOKKOS_SRCE_BATCH_MIB): one copy of
+/// each array in, one launch of one team per point, one copy out. npts = 0 is
+/// a no-op. Status in ww_srce_last_error().
+void ww_srce_batch(int igrid, int it, int inflags24, int flogrd57, int flogrd58, float dtg,
+                   int npts, float* spec, const float* wn1, const float* cg1,
+                   const float* pin, float* psc, float* whitecap, float* taubbl,
+                   float* tauice, int* shave);
+
 /// 1 if WW_KOKKOS_SRCE=1 in the environment, else 0 (the default: the Fortran).
 int ww_srce_enabled(void);
 
-/// The status of the most recent ww_srce_init() or ww_srce() call.
+/// The status of the most recent ww_srce_init(), ww_srce() or ww_srce_batch() call.
 int ww_srce_last_error(void);
 
 // ---------------------------------------------------------------------------
