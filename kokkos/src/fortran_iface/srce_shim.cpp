@@ -294,8 +294,7 @@ void run_batch(GridCtx& g, const st4::Params& q, const st4::Fields& f, const snl
                ndw = static_cast<size_t>(srce_work_doubles(p));
   const Real* ns = nsig.data();
   ww::timers::Region t_k("srce.batch.kernel", fence);
-  Kokkos::parallel_for(
-      "ww_srce_batch", policy, KOKKOS_LAMBDA(const Member& team) {
+  const auto body = KOKKOS_LAMBDA(const Member& team) {
         const int i = team.league_rank();
         const size_t ii = static_cast<size_t>(i);
         const Real* x = PI.data() + ii * WW_SRCE_NPIN;
@@ -354,7 +353,15 @@ void run_batch(GridCtx& g, const st4::Params& q, const st4::Fields& f, const snl
           y[WW_SRCE_SC_WNMEAN] = o.wnmean;
           SH(i) = o.shave;
         });
-      });
+      };
+  // With no more points than threads no thread gets a second point under either schedule, and
+  // the dynamic one costs a rendezvous of every thread per launch (ww3_ts1, one sea point, 2 161
+  // launches: srce.batch.kernel 0.51-0.53 s static, 0.80-0.97 s dynamic, 32 threads). The
+  // schedule decides only which thread runs a point, never the point's arithmetic.
+  if (n > ex.concurrency())
+    Kokkos::parallel_for("ww_srce_batch", policy, body);
+  else
+    Kokkos::parallel_for("ww_srce_batch", Kokkos::TeamPolicy<ExecSpace>(policy), body);
   ex.fence();
   t_k.stop();
 
