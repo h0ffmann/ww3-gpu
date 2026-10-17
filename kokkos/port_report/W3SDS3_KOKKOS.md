@@ -1,7 +1,6 @@
 # W3SDS3_KOKKOS
 
-**Status:** ported, phase 1 (translated). Not wired into WW3, not regtested: translation only,
-no test run (the owner, 2026-10-16).
+**Status:** ported, phase 1 (translated). Wired: WW3 at the `WW3/` pin (`357f575c`) calls it at `w3srcemd.F90:1601` behind `WW_KOKKOS_SDS3` (default off); not regtested: compiled, never run inside WW3 (the owner, 2026-10-16).
 
 The WAM4/WAM4+ whitecapping dissipation of the `ST3` source-term package (Bidlot et al. 2005
 mean wavenumber), a source term `W3SRCE` calls per sea point (`w3srcemd.F90:1298-1301`);

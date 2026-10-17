@@ -1,7 +1,6 @@
 # W3SRC3MD_TABU_STRESS_KOKKOS
 
-**Status:** ported, phase 1 (translated). Not wired into WW3, not regtested: translation only,
-no test run (the owner, 2026-10-16).
+**Status:** ported, phase 1 (translated). Wired: WW3 at the `WW3/` pin (`357f575c`) runs it inside the Kokkos `W3KOKKOS_ST3_SETUP (INSIN3)`, behind `WW_KOKKOS_SPR3, SIN3 or SDS3` (default off); not regtested: compiled, never run inside WW3 (the owner, 2026-10-16).
 
 The ST3 (WAM4+) friction velocity table `TAUT(0:ITAUMAX,0:JUMAX)` = `SQRT(TAU)` as a function of
 the wave-supported stress and the 10 m wind, and its steps `DELU`, `DELTAUW`, built once by

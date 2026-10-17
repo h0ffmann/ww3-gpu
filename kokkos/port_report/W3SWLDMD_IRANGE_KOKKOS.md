@@ -1,7 +1,6 @@
 # W3SWLDMD_IRANGE_KOKKOS
 
-**Status:** ported, phase 1 (translated). Not wired into WW3, not regtested: translation only,
-no test run (the owner, 2026-10-16).
+**Status:** ported, phase 1 (translated). Wired: WW3 at the `WW3/` pin (`357f575c`) runs it inside the Kokkos `W3SWL6`, behind `WW_KOKKOS_SWL6` (default off); not regtested: compiled, never run inside WW3 (the owner, 2026-10-16).
 
 `IRANGE(X0,X1,DX)`, the private helper of the swell dissipation module `W3SWLDMD` that builds an
 integer index vector. `W3SWL6` (`w3swldmd.F90:371`) and `W3SWL4` (`:192`) call it once each, as

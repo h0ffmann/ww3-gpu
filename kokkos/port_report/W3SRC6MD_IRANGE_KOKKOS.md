@@ -1,7 +1,6 @@
 # W3SRC6MD_IRANGE_KOKKOS
 
-**Status:** ported, phase 1 (translated). Not wired into WW3, not regtested: translation only,
-no test run (the owner, 2026-10-16).
+**Status:** ported, phase 1 (translated). Wired: WW3 at the `WW3/` pin (`357f575c`) runs it inside the Kokkos `W3SDS6`, behind `WW_KOKKOS_SDS6` (default off); not regtested: compiled, never run inside WW3 (the owner, 2026-10-16).
 
 `IRANGE(X0,X1,DX)`, a private helper of the ST6 source-term module `W3SRC6MD` that builds an
 integer index vector. `W3SIN6` (`w3src6md.F90:450`) and `W3SDS6` (`:697`) call it as

@@ -146,6 +146,8 @@ RUN apt-get update && apt-get upgrade -y \
 RUN useradd --create-home --shell /bin/bash wave
 # The entry point: the same scripts/ww3-gpu.sh the host runs, with WW3GPU_PREBUILT set.
 COPY --chmod=755 scripts/ww3-gpu.sh /opt/ww3-gpu/scripts/ww3-gpu.sh
+# Its list of Kokkos parts, one file per wiring unit.
+COPY kokkos/src/fortran_iface/parts.d/ /opt/ww3-gpu/kokkos/src/fortran_iface/parts.d/
 ENV WW3GPU_PREBUILT=/opt/ww3-gpu/prebuilt \
     WW3GPU_RUNS=/work/runs \
     OMP_PROC_BIND=false

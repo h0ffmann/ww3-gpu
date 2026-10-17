@@ -1,7 +1,7 @@
 # W3SDB1_KOKKOS
 
 **Status:** ported, phase 1 (translated). Not regtested: called only by the Kokkos `W3SRCE`, and
-regtested with it at the checkpoint of that unit (ADR-0011).
+regtested with it at the checkpoint of that unit (ADR-0011). Wired: WW3 at the `WW3/` pin (`357f575c`) runs it inside the Kokkos `W3SRCE`, behind `WW_KOKKOS_SRCE` (default off).
 
 Battjes and Janssen (1978) depth-induced breaking (`DB1`).
 

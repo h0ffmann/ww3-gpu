@@ -1,7 +1,6 @@
 # W3SDS6_KOKKOS
 
-**Status:** ported, phase 1 (translated). Not wired into WW3, not regtested: translation only,
-no test run (the owner, 2026-10-16).
+**Status:** ported, phase 1 (translated). Wired: WW3 at the `WW3/` pin (`357f575c`) calls it at `w3srcemd.F90:1636` behind `WW_KOKKOS_SDS6` (default off); not regtested: compiled, never run inside WW3 (the owner, 2026-10-16).
 
 Observation-based whitecapping dissipation of the ST6 package (switch `ST6`), after Babanin et
 al. (2010, JPO 40(4) 667-683) as implemented by Rogers et al. (2012, JTECH 29(9) 1329-1346;

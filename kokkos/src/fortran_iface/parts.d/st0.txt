@@ -1,0 +1,4 @@
+# W3SPR0 (st0_shim.cpp)
+# Read by scripts/ww3-gpu.sh: PART <name> (WW_KOKKOS_<name>), COUNT <variable>, FILE <fork path>; PATCH.md section 9.
+PART SPR0
+COUNT WW_KOKKOS_ST0_COUNT

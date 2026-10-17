@@ -1,0 +1,11 @@
+# W3WAVE's support routines (wave_support_shim.cpp)
+# Read by scripts/ww3-gpu.sh: PART <name> (WW_KOKKOS_<name>), COUNT <variable>, FILE <fork path>; PATCH.md section 9.
+PART GATH
+PART SCAT
+PART UWND
+PART UTRN
+PART DZXY
+PART MAP3
+PART MAPT
+PART DISTAB
+COUNT WW_KOKKOS_WAVE_COUNT

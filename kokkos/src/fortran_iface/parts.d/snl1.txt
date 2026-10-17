@@ -1,0 +1,4 @@
+# W3SNL1, the DIA (snl1_shim.cpp)
+# Read by scripts/ww3-gpu.sh: PART <name> (WW_KOKKOS_<name>), COUNT <variable>, FILE <fork path>; PATCH.md section 9.
+PART SNL1
+COUNT WW_KOKKOS_SNL1_COUNT

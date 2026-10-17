@@ -1,7 +1,6 @@
 # W3FLX5_KOKKOS
 
-**Status:** ported, phase 1 (translated). Not wired into WW3, not regtested: translation only,
-no test run (the owner, 2026-10-16).
+**Status:** ported, phase 1 (translated). Wired: WW3 at the `WW3/` pin (`357f575c`) calls it at `w3srcemd.F90:1358` behind `WW_KOKKOS_FLX5` (default off); not regtested: compiled, never run inside WW3 (the owner, 2026-10-16).
 
 Friction velocity `UST`, drag coefficient `CD`, roughness length `Z0` and Charnock coefficient
 `CHARN` from the total stress `TAUA` of an atmospheric model rather than from the wind alone:

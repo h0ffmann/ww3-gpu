@@ -1,7 +1,6 @@
 # W3SPR0_KOKKOS
 
-**Status:** ported, phase 1 (translated). Not wired into WW3, not regtested: translation only,
-no test run (the owner, 2026-10-16).
+**Status:** ported, phase 1 (translated). Wired: WW3 at the `WW3/` pin (`357f575c`) calls it at `w3srcemd.F90:1086, :2201` behind `WW_KOKKOS_SPR0` (default off); not regtested: compiled, never run inside WW3 (the owner, 2026-10-16).
 
 Mean wave parameters of one spectral point for the case without input and dissipation (switch
 `ST0`): the mean energy, the mean frequency and the mean wavenumber, with the high-frequency tail

@@ -1,0 +1,9 @@
+# W3FLX1 to W3FLX5 and the FLX2/FLX3 tables (flx_shim.cpp)
+# Read by scripts/ww3-gpu.sh: PART <name> (WW_KOKKOS_<name>), COUNT <variable>, FILE <fork path>; PATCH.md section 9.
+PART FLX1
+PART FLX2
+PART FLX3
+PART FLX4
+PART FLX5
+PART FLX_TABLES
+COUNT WW_KOKKOS_FLX_COUNT

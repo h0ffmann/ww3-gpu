@@ -6,7 +6,7 @@
 [submodule "WW3"]
 	path = WW3
 	url = git@github.com:h0ffmann/WW3.git
-	branch = ww3-gpu/kokkos-wave-support
+	branch = ww3-gpu/kokkos-wire-base
 [submodule "WW4"]
 	path = WW4
 	url = git@github.com:h0ffmann/WW4.git

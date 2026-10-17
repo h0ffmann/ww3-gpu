@@ -1,7 +1,6 @@
 # W3FLX1_KOKKOS
 
-**Status:** ported, phase 1 (translated). Not wired into WW3, not regtested: translation only,
-no test run (the owner, 2026-10-16).
+**Status:** ported, phase 1 (translated). Wired: WW3 at the `WW3/` pin (`357f575c`) calls it at `w3srcemd.F90:1308` behind `WW_KOKKOS_FLX1` (default off); not regtested: compiled, never run inside WW3 (the owner, 2026-10-16).
 
 Friction velocity, roughness length and drag coefficient from the 10 m wind after Wu (1980)
 (switch `FLX1`): `CD = 0.001*(0.8+0.065*U10)`, `Z0 = ZWND*EXP(-0.4/SQRT(CD))`,
