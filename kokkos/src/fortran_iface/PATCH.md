@@ -1661,3 +1661,111 @@ Nothing of this ran on a GPU ⚠. `bash scripts/ww3-gpu.sh --ww3-gpu full --gpu 
 --build-only` compiled the shim and the fork for CUDA; the zeroing kernel never ran on a device ⚠.
 The regtest matrix did not run ⚠. The preset `--kokkos resident` of `scripts/ww3-gpu.sh` now
 includes `UPDV`.
+
+## 19. Device defaults: `W3XYP3` teams and `W3SRCE` chunks on CUDA
+
+No fork change: two defaults of the shims that now depend on the backend, so that `--ww3-gpu
+--gpu --kokkos resident` runs the launch shapes meant for a GPU without a flag, and a CPU build
+runs exactly what it ran before.
+
+- **`WW_KOKKOS_XYP3_TEAM` unset** now lets the execution space decide (`xyp3_team<E>()` in
+  [`prop3_shim.cpp`](prop3_shim.cpp)): a space that reads host memory (Serial, OpenMP) runs the
+  per-component kernel as before; a device (CUDA) runs the team kernel of section 16 with teams of
+  `kXyp3DeviceTeam` = 128 threads. The new value `0` forces the per-component kernel on any
+  backend; `AUTO` and a positive N are as in section 16. The default is clamped to the backend's
+  `team_size_max`, where a size asked for is refused: the bits do not depend on it (section 16).
+  Why 128, from `ptxas -v` (below) and the hardware limits, computed and not measured ⚠: the team
+  kernel takes 80 registers for `sm_89` and 94 for `sm_90`, so a multiprocessor of 65 536 registers
+  holds 25 or 21 warps. Teams of four warps put six (`sm_89`) or five (`sm_90`) teams on one, 768
+  on the RTX 4090's 128 multiprocessors and 660 on an H100's 132, so the 576 components of
+  `bench_small` (NK = NTH = 24) are all resident at once; teams of eight warps fit three or two per
+  multiprocessor (384 or 264 at once) and would need two passes. Smaller teams also wait less at
+  the barrier after each split loop. Before, the device ran 576 threads, at most 18 warps, so at
+  most 18 of the 4090's multiprocessors had work.
+- **`WW_KOKKOS_SRCE_BATCH_MIB` unset** is 1024 MiB on a backend that reads host memory, as
+  before, and 128 MiB on a device ([`srce_shim.cpp`](srce_shim.cpp), `kBatchMibDefault`). At about
+  56 KB per point (`bench_small`, section 10) 128 MiB holds about 2 400 points, so a step of its
+  9 204 points runs in four launches instead of one. The reason is the display watchdog: the RTX
+  4090 here also drives the screen, and the driver ends a kernel that runs too long
+  (`cudaErrorLaunchTimeout`). The estimate, ⚠ (nothing ran on the GPU, and the watchdog's limit,
+  a few seconds on Linux with a display, was not measured here): on the CPU (OpenMP, 32 threads)
+  `srce.batch.kernel` took 18.6 s for 25 one-launch steps, 0.74 s per launch of 9 204 points, and
+  17.3 s for 100 launches at 128 MiB, 0.17 s per launch of about 2 300. A device launch of 2 300
+  points stays under 1 s as long as the GPU runs this kernel at no less than about a sixth of the
+  speed of the 32 CPU threads; at 1024 MiB it would need three quarters of it. The price: the
+  input shadows of section 14 are kept only when a step runs in one launch, so on the device the
+  per-step inputs (340 bytes per point at NK = 24: `BJSEA`, `BWN1`, `BCG1`, `BPIN`, `BPSC`,
+  `BWC`, `BTB`, `BTI`; 3.1 MB per step) are copied at every step again.
+  A machine whose GPU drives no display can set `WW_KOKKOS_SRCE_BATCH_MIB=1024`.
+- **Chunks do not change the bits**: each team integrates its own point, and a chunk only
+  changes which launch it is in (section 10, `WW_KOKKOS_SRCE_BATCH_MIB=64`, and below).
+
+**`ptxas -v`, CUDA 12.9 `nvcc_wrapper`**, the shims compiled alone in a scratch build of the
+`cuda-release` preset with `-Xptxas -v` (`sm_89`), and `prop3_shim.cpp` again with `-arch=sm_90`
+against the same ADA89 Kokkos headers (so its `sm_90` numbers are indicative ⚠), on `main` at
+`d8905a3b` with these changes (after WFIP-0006's device libm; the resident-path numbers are those
+of the tree before it); nothing ran:
+
+| Kernel (resident path) | Launch shape on `bench_small` | `sm_89` | `sm_90` |
+|---|---|---|---|
+| `ww_xyp3_team` (now the device default) | 576 teams of 128 | 80 registers, 0 spill, 1 barrier, 16 B shared | 94 registers, 0 spill |
+| `ww_xyp3_batch` (`WW_KOKKOS_XYP3_TEAM=0`) | 576 threads, one per component | 96 registers, 0 spill | 96 registers, 0 spill |
+| `ww_xyp3_scatter` | 9 204 threads, one per sea point, 576 stores each | 34 registers | 28 registers |
+| `ww_ktp3_batch` | 9 204 threads, one per point, `NTIMES` sweeps of 576 bins each | 80 registers, 0 spill | 80 registers, 0 spill |
+| `ww::iogo::w3outg` (`OUTG`) | 9 204 threads, one per point, at output times | 96 registers, 112 B stack, 0 spill | not compiled |
+| `w3outg` init, part, skewness kernels | one per sea point or `NSEALM` | 30 to 60 registers; skewness 44, 288 B stack | not compiled |
+| `ww_va.gather_cols` (`IOPE`) | one thread per element of the columns read | 20 registers | not compiled |
+| `ww_va.zero_cols` (`UPDV`) | one thread per element zeroed | 20 registers | not compiled |
+| `W3GATH` / `W3SCAT` / `W3MAP3` / `W3MAPT` / `W3DZXY` / `W3UTRN` / `W3UWND` (`wave_support_shim.cpp`, not in `resident`) | one thread per cell or sea point | 11 to 56 registers, at most 344 B stack (`DISTAB`, with the device libm of WFIP-0006) | not compiled |
+
+**What else has the shape `W3XYP3` had** (one thread for a large item, a launch smaller than the
+device), checked for the resident path and not changed, because none is bit-neutral by
+construction or none matters:
+
+- **`ww_ktp3_batch`**: 9 204 threads of 80 registers are 288 warps, about 2.3 per multiprocessor
+  of the 4090, and each thread sweeps its point's 576 bins `NTIMES` times; on the CPU it took
+  0.66 s of the 21.6 s full run. It is the next launch to give a team: the bins of a point would
+  go to the team's threads, but `CFLTHMAX` and `CFLKMAX` are in-order maxima whose NaN behaviour
+  depends on the order (section 16), so splitting it is an owner's decision and its own PR.
+- **`ww::iogo::w3outg`**: one thread per point with in-order sums over the spectrum; 13 calls,
+  0.24 s on the CPU. The same reductions keep it per point.
+- **`ww_xyp3_scatter`**: 9 204 threads, each storing its point's 576 components into its own
+  column of `VA`. A pure copy, so an element-per-thread version would be bit-neutral; its stores
+  are 576 floats apart across a warp, but the whole scatter moves 21 MB per call, about 0.1 ms of
+  the 4090's bandwidth even at a tenth of it, computed ⚠, so it was left as written.
+- **`ww_va.gather_cols`, `ww_va.zero_cols`, `W3GATH`, `W3SCAT`** already run one thread per
+  element.
+
+The checkpoint on the CPU, 2026-10-17 (OpenMP backend, 32 threads, Kokkos 5.2.2, gfortran/g++
+16.2.0, Intel Core i9-14900, shared with other sessions, load average 11 to 56; never `--gpu`):
+`<env> bash scripts/ww3-gpu.sh --ww3-gpu <case> --cpu --kokkos resident --timers`, on
+`switch_lab_ompg` and `WW3GPU_SWITCH=switch_lab_shrd`, for full and coast with `<env>` empty,
+`WW_KOKKOS_XYP3_TEAM=0`, `AUTO`, 4 and 16, and `WW_KOKKOS_SRCE_BATCH_MIB=128` (the device default,
+forced on the CPU), and smoke with `<env>` empty.
+Run on `main` at `d8905a3b` with these changes, 26 runs. In every one, every file the run wrote
+(`out_grd.ww3` and the NetCDF field; in coast also `out_pnt.ww3`; in smoke also `out_pnt.ww3` and
+`restart.ww3`) is `cmp`-equal to the Fortran of the same executable, `out_grd.ww3` (and
+`out_pnt.ww3`, `restart.ww3`) `cmp`-equal to `--ww3`, whose NetCDF differs only in the
+`WAVEWATCH_III_switches` attribute (`diff` of the two `ncdump`, full and coast), and `nccmp-tol`
+PASS both (v). `W3XYP3 team launches` read 0 with the flag unset and with `0`, 24 (full) or 72
+(coast) with `AUTO`, 4 and 16; `W3SRCE batched launches` 25 (full) and 72 (coast) at the host
+default, 100 and 144 at 128 MiB. The same set on `switch_lab_ompg` also passed before the rebase
+onto `d8905a3b`, at `4fbffbe8`.
+
+Mutations, on `switch_lab_ompg`, full, at `4fbffbe8` with these changes (scratch edits, restored,
+never committed; the files they touch did not change in the rebase), each confirming that the CPU
+parity run under the forced setting sees a broken kernel:
+
+| Mutation | Run | Result |
+|---|---|---|
+| the team kernel's gather skips the last sea point (`lp.par(1, insea, ...)`) | `WW_KOKKOS_XYP3_TEAM=AUTO` | FAIL: `out_grd.ww3` and NetCDF differ, `nccmp-tol` FAIL on `hs`, `max|d|` 0.571 m |
+| the same | flag unset (the per-component kernel) | byte-identical, PASS: the CPU default does not take the team kernel |
+| every `TeamLoops::par` loop skips its last index | `WW_KOKKOS_XYP3_TEAM=AUTO` | FAIL, `hs` `max|d|` 1.742 m |
+| every chunk after the first of `ww_srce_batch(_va)` one point short | `WW_KOKKOS_SRCE_BATCH_MIB=128` | FAIL, `hs` `max|d|` 0.556 m |
+| the same | host default, one launch per step | byte-identical, PASS |
+
+Also run: `bash scripts/ww3-gpu.sh --self-test`, `just kokkos-test serial-debug` and
+`openmp-release`, `python3 scripts/port_score.py --write` then `--check`, and `bash
+scripts/ww3-gpu.sh --ww3-gpu full --gpu --kokkos resident --build-only` (compiled the shims and the
+fork for CUDA, `sm_89`). Nothing ran on a GPU ⚠: whether the team kernel and the chunks give the
+CPU's bits there, and how long a launch takes, are not known. The regtest matrix did not run ⚠.
