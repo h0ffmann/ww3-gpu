@@ -24,6 +24,12 @@ include(GNUInstallDirs)
 # Kokkos' package config runs find_dependency(OpenMP), which needs an enabled
 # language -- hence LANGUAGES above, and hence no cmake -P probing of this tree.
 find_package(Kokkos REQUIRED)
+# A preset for one GPU (cuda-h100-release) names the Kokkos architecture it needs; kokkos_check,
+# from Kokkos' package config, stops the configure when the Kokkos found was built without it.
+set(WW_KOKKOS_ARCH "" CACHE STRING "Kokkos architecture the found Kokkos must have (e.g. HOPPER90); empty: no check")
+if(WW_KOKKOS_ARCH)
+  kokkos_check(ARCH ${WW_KOKKOS_ARCH})
+endif()
 find_package(GTest REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(NETCDF REQUIRED IMPORTED_TARGET netcdf)
