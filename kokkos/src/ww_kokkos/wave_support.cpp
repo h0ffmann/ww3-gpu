@@ -41,6 +41,7 @@
 #include "gke_ufunc.hpp"
 #include "gke_vmfunc.hpp"
 #include "gke_vpfunc.hpp"
+#include "gsru_gsu_create.hpp"
 #include "ic3_bsdet.hpp"
 #include "ic3_cginic3_cheng.hpp"
 #include "ic3_cmplx_root_muller_cheng.hpp"
@@ -316,6 +317,7 @@ void ww_support_instantiate() {
   (void)&ww::adat::w3xeta<E>;
   (void)&ww::adat::w3xdma<E>;
   (void)&ww::flds::w3fldg<E>;
+  (void)&ww::gsru::gsu_create;
   (void)&ww::init::w3mpio;
   (void)&ww::init::w3init<E>;
   (void)&ww::init::init_wavenumbers<E>;

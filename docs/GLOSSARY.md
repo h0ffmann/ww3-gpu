@@ -383,6 +383,10 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | CALDATT / DPYTHAG / DSVBKSB | `W3TIDEMD`'s numerical helpers: Julian day number to day, month and year ("See numerical recipes 2nd ed. The order of month and day have been swapped!") / sqrt(a**2 + b**2) in double precision ⚠ (Numerical Recipes' `pythag` by its form; the source does not say) / SVD back-substitution, "(C) Copr. 1986-92 Numerical Recipes Software" `(v)` `WW3-noaa/model/src/w3tidemd.F90:1284,976,994-995` at `03adda91` | Called by `TIDE_WRITE_RESULTS` (`:163-164`), `DSVDCMP` (`:1175`) and `SVD` (`:1415`), for the least-squares tidal analysis. | [kokkos/port_report/CALDATT_KOKKOS.md](../kokkos/port_report/CALDATT_KOKKOS.md), [kokkos/port_report/DPYTHAG_KOKKOS.md](../kokkos/port_report/DPYTHAG_KOKKOS.md), [kokkos/port_report/DSVBKSB_KOKKOS.md](../kokkos/port_report/DSVBKSB_KOKKOS.md) |
 | SECONDHH / VMIN_D / VPLUS_D | "Computation of second order harmonics and relevant tables for the altimeter corrections" (P.A.E.M. Janssen) / its two contained functions, which give the "nonlinear transfer coefficient for three wave interactions of deep-water waves in the ideal case of no current. (cf.Zakharov)" for the difference and the sum interaction `(v)` `WW3-noaa/model/src/w3iogomd.F90:4622,4777,4820` at `03adda91` | Called by `SKEWNESS` (`:4944`). `VPLUS_D`'s purpose text says "gravity-capillary waves" where its title says deep-water waves. | [kokkos/port_report/VMIN_D_KOKKOS.md](../kokkos/port_report/VMIN_D_KOKKOS.md), [kokkos/port_report/VPLUS_D_KOKKOS.md](../kokkos/port_report/VPLUS_D_KOKKOS.md) |
 | W3PARALL / W3TRIAMD / W3GSRUMD / W3CSPCMD / W3FLDSMD / W3TIMEMD | parallel routines for the implicit solver / unstructured grid reader / grid search & regrid utilities / spectral-grid conversion / forcing field I/O / time utilities `(v)` | Supporting modules named in the H100 plan's repository map. | [docs/KOKKOS_H100_PLAN_202609.md](KOKKOS_H100_PLAN_202609.md) |
+| W3GSUC / GSU_CREATE / T_GSU | "Create grid-search-utility object" `(v)` `w3gsrumd.F90:179`, the generic interface `:417-422` over four wrappers that call the internal `GSU_CREATE` (`:7354-7849`); `T_GSU` is the opaque handle `:325-328` | Builds the bucket-search object of a logically rectangular grid (closure, `LCLO`, `L360`, bounding box, `NBY` x `NBX` cell lists); `W3IOGR` reaches it for every structured grid through `W3GNTX` (`w3gdatmd.F90:3017`). Ported as `gsru_gsu_create.hpp`. | [kokkos/port_report/GSU_CREATE_KOKKOS.md](../kokkos/port_report/GSU_CREATE_KOKKOS.md) |
+| W3NNSC / T_NNS | "Create nearest-neighbor-search object" `(v)` `w3gsrumd.F90:200`, `:6819-6879`; `T_NNS` `:366-373` | The index deltas of the `(2*NLVL+1)**2` neighbours, ring by ring; `GSU_CREATE` calls it twice (`:7482`/`:7484`, `:7829`). Not translated: a hook of the `GSU_CREATE` port. | [kokkos/port_report/GSU_CREATE_KOKKOS.md](../kokkos/port_report/GSU_CREATE_KOKKOS.md) |
+| ICLO / ICLO_NONE / ICLO_GRDI / ICLO_GRDJ / ICLO_TRDL / ICLO_TRPL | the index-closure codes of `W3GSRUMD`, -1, 2, 3, 6, 8 `(v)` `w3gsrumd.F90:314-319` | `MOD(ICLO,2) = 0` closes the i index, `MOD(ICLO,3) = 0` the j index, `ICLO_TRPL` folds the row above `UBY` onto `UBX+LBX-i` (`:7529-7536`). `W3GNTX` passes the grid's `ICLOSE`. | [kokkos/port_report/GSU_CREATE_KOKKOS.md](../kokkos/port_report/GSU_CREATE_KOKKOS.md) |
+| LCLO / L360 | "flag indicating longitudinal periodicity" / "flag indicating longitude range: T = [0:360], F = [-180:180]" `(v)` `w3gsrumd.F90:337-341` | `LCLO` is true for a spherical grid with any closure or with a cell crossing the 180 degree branch cut; it then forces the search domain to `[0,360]`. `L360` is `XMIN >= 0` after that (`:7608`). | [kokkos/port_report/GSU_CREATE_KOKKOS.md](../kokkos/port_report/GSU_CREATE_KOKKOS.md) |
 | wm*md.F90 (WMESMFMD, WMSCRPMD, …) | `ww3_multi` counterparts: ESMF interface module, SCRIP remapping, … `(v)` | Dropped from the port's scope. | [docs/KOKKOS_H100_PLAN_202609.md](KOKKOS_H100_PLAN_202609.md) |
 | VA, VS/VD, SPEC, VSNL/VDNL, CG1, WNMEAN, DEPTH, ISEA/JSEA, IMOD | storage array for spectra / source and diagonal / the point's spectrum inside `W3SRCE` / DIA outputs / `CG(1:NK,ISEA)` / mean wavenumber / depth / global and local sea-point index / grid number `(v)` `w3wdatmd.F90`, [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md) | The variable names that appear in the patch hunks. | [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md) |
 | regtests/ | WW3's 62 regression cases (`ww3_tp1.*`, `ww3_tp2.*`, `ww3_ts*`, `ww3_tc*`, `ww3_tic*`, `ww3_ta*`, `mww3_test_*`, `ww3_ufs*`) `(v)` [examples/README.md](../examples/README.md), `WW3/regtests/` | The best example collection there is; each has an `info` file and `input/`. | [examples/README.md](../examples/README.md), [course/09-benchmark-profile-compile-run.md](../course/09-benchmark-profile-compile-run.md) |
@@ -1057,6 +1061,7 @@ Every term above, alphabetically, with the section it lives in.
 - IC3PRECALC_CHENG: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - IC3TABLE_CHENG: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - ICL DAP: [HPC and software](#hpc-and-software)
+- ICLO / ICLO_NONE / ICLO_GRDI / ICLO_GRDJ / ICLO_TRDL / ICLO_TRPL: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - IFILE4: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - IJKCel3: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - IJKUFc: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1121,6 +1126,7 @@ Every term above, alphabetically, with the section it lives in.
 - HOMOG_COUNT: [WW3 programs and files](#ww3-programs-and-files)
 - HOMOG_COUNT / HOMOG_INPUT: [WW3 programs and files](#ww3-programs-and-files)
 - HOMOG_INPUT: [WW3 programs and files](#ww3-programs-and-files)
+- LCLO / L360: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - LDSOL: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - LDSOLC: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - LDSOLL: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1290,6 +1296,7 @@ Every term above, alphabetically, with the section it lives in.
 - W3FLX5MD: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3GNTX: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3GRMP / GSU (T_GSU): [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3GSUC / GSU_CREATE / T_GSU: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3IOPE / W3IOSF / W3CPRT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3IOPP: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3KRTN / SMCkUNO2 / SMCGtCrfr / CTMAX: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1297,6 +1304,7 @@ Every term above, alphabetically, with the section it lives in.
 - W3LLTOEQ / SMCGradn: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3LLTOEQ: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3NESTUG / W3GFPT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3NNSC / T_NNS: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3RPWNICE / FINDROOTS_NR / FUNCD_FVAL / FUNCD_FDERIV / IS2DISP: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3RPWNICE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3S2XY_SMC / W3S2XY_SMCRG / W3S2XY_SMCRG_DIR / W3S2XY_SMCNN / W3S2XY_SMCNN_INT / MAPSTA_SMC / CALC_INTERP: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
