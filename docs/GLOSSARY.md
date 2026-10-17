@@ -311,6 +311,10 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | W3GDATMD | "Define data structures to set up wave model grids and aliases to use individual grids transparently" `(v)` | Grid data: `NK`, `NTH`, `NSPEC`, `XFR`, `SIG(0:NK+1)`, `DTH`, the DIA constants `LAM`, `SNLC1`, `KDCON`, `KDMN`, `SNLS1..3`, `FACHFE`, `IQTPE`; the largest source of hidden global state. | [course/12-porting-a-kernel-w3snl1.md](../course/12-porting-a-kernel-w3snl1.md) |
 | IMOD / IGRID | grid index: the argument of `W3INIT` and `W3SETG`, and `W3GDATMD`'s "Selected spatial grid, init. at -1" `(v)` `w3gdatmd.F90:119`, set by `W3SETG` (`:2278`) | `ww3_multi` runs several grids in one process; the Kokkos shim keeps one DIA context per grid, built at `W3INIT` with `IMOD` and selected at `W3SRCE` with `IGRID`. | [kokkos/src/fortran_iface/ww_kokkos_c.hpp](../kokkos/src/fortran_iface/ww_kokkos_c.hpp) |
 | W3NMOD / W3DIMS / W3SETG | "Set up the number of grids to be used" / "Initialize an individual spatial grid at the proper dimensions" / "Select one of the WAVEWATCH III grids / models" `(v)` `w3gdatmd.F90` | The pointer-swap idiom that retargets module-level `SIG`, `NK`, … per grid (`IMOD`). | [docs/KOKKOS_H100_PLAN_202609.md](KOKKOS_H100_PLAN_202609.md) |
+| GRIDS / SGRDS / MPARS / NGRIDS / NAUXGR | `W3GDATMD`'s per-model arrays of `GRID`, `SGRD` and `MPAR`, the "Number of grids, initialized at -1" and the "Auxiliary grids" count `(v)` `w3gdatmd.F90:116-118`, `:1091-1093` | Allocated `NLOW:NGRIDS` by `W3NMOD` with `NAUXGR = -NLOW` (`:1543-1547`), so models run from `-NAUXGR` to `NGRIDS` and 0 or negative numbers are auxiliary grids. | [kokkos/port_report/W3SETG_KOKKOS.md](../kokkos/port_report/W3SETG_KOKKOS.md) |
+| ISGRD / IPARS | "Selected spectral grid, init. at -1" / "Selected num. and ph. pars, init. at -1" `(v)` `w3gdatmd.F90:120-121` | Set to `IMOD` with `IGRID` by `W3SETG` (`:2278-2280`), the only writer at the pin; the models the unconditional `SGRDS` and `MPARS` aliases name. | [kokkos/port_report/W3SETG_KOKKOS.md](../kokkos/port_report/W3SETG_KOKKOS.md) |
+| GINIT / SINIT / PINIT | "Flag identifying grid initialization" (`GRID`, `SGRD`) / "Flag identifying initialization" (`MPAR`) `(v)` `w3gdatmd.F90:230`, `:287`, `:296` | Set `.FALSE.` by `W3NMOD` (`:1554-1557`), `.TRUE.` by `W3DIMX` (`:1816`) and `W3DIMS` (`:2108`); `W3SETG` re-points `MAPSTA` .. `GSU` only under `GINIT` (`:2434`) and `MAPWN` .. `DDEN2` only under `SINIT` (`:2518`). | [kokkos/port_report/W3SETG_KOKKOS.md](../kokkos/port_report/W3SETG_KOKKOS.md) |
+| I10 | Fortran integer edit descriptor, width 10 `(v)` `w3gdatmd.F90:2884-2886` | Right-justified in ten characters; a value that needs more (e.g. -2147483647) prints ten asterisks, which `w3setg_message()` reproduces (checked against gfortran 16.2 output, 2026-10-16). | [kokkos/port_report/W3SETG_KOKKOS.md](../kokkos/port_report/W3SETG_KOKKOS.md) |
 | W3ADATMD | "Define data structures to set up wave model auxiliary data for several models simultaneously" `(v)` | Holds `CG(0:NK+1,0:NSEA)`, `WN`, and the DIA tables `IP11..AF11`. | [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md) |
 | W3NAUX / W3DIMA / W3SETA / W3DMNL | number of grids / dimension an auxiliary grid / select a grid / "Initialize an individual data grid at the proper dimensions (DIA)" `(v)` `w3adatmd.F90` | `W3DMNL` is the allocation `INSNL1` section 6 calls; `snl1_ref.F90` replaces it with the `ALLOCATE` it performs. | [course/10-modern-fortran-refactoring.md](../course/10-modern-fortran-refactoring.md) |
 | W3WDATMD (W3NDAT / W3SETW) | "wave model dynamic data": the spectra `VA` and `TIME` `(v)` | The model state proper. | [docs/AGENTS_KOKKOS_202609.md](AGENTS_KOKKOS_202609.md) |
@@ -975,6 +979,7 @@ Every term above, alphabetically, with the section it lives in.
 - GFS / GEFS: [HPC and software](#hpc-and-software)
 - GH200: [HPC and software](#hpc-and-software)
 - GH200 / NVLink-C2C: [HPC and software](#hpc-and-software)
+- GINIT / SINIT / PINIT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - GitHub Pages / chunkedhtml / MathML: [HPC and software](#hpc-and-software)
 - GIVENS / IMPLU / UPPDIR: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - GIVENS: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -987,6 +992,7 @@ Every term above, alphabetically, with the section it lives in.
 - gprof: [HPC and software](#hpc-and-software)
 - `gprof_table.sh`: [This repository's own names](#this-repositorys-own-names)
 - `gprof_table.sh` / `perf_table.sh` / `just profile`: [This repository's own names](#this-repositorys-own-names)
+- GRIDS / SGRDS / MPARS / NGRIDS / NAUXGR: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - GTYPE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - GUGINIT / AREA_SI: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - HasNaN: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -994,6 +1000,7 @@ Every term above, alphabetically, with the section it lives in.
 - HIP / SYCL / HPX: [HPC and software](#hpc-and-software)
 - Hook table (`ww_w3wave_hooks`, `IogrHooks`, `W3OutgHooks`): [This repository's own names](#this-repositorys-own-names)
 - HPX: [HPC and software](#hpc-and-software)
+- I10: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - i9-14900: [HPC and software](#hpc-and-software)
 - IBM 704: [HPC and software](#hpc-and-software)
 - IC3PRECALC_CHENG: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1026,6 +1033,7 @@ Every term above, alphabetically, with the section it lives in.
 - IRANGE / RRANGE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - IRANGE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - IS2DISP: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- ISGRD / IPARS: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - ISO/IEC 1539:1991: [HPC and software](#hpc-and-software)
 - ITIME / IPASS / IDLAST / ITSTEP / FLCOLD / FLIWND: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - JACOBI_INIT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)

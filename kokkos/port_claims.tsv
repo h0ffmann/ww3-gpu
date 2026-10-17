@@ -9,7 +9,6 @@ w3iogomd:w3iogo	model/src/w3iogomd.F90:2395-4097	goal/42-port-six-expensive	docs
 w3initmd:w3init	model/src/w3initmd.F90:163-1683	goal/42-port-six-expensive	docs/W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md
 w3iorsmd:w3iors	model/src/w3iorsmd.F90:113-1600	goal/42-port-six-expensive	docs/W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md
 w3iobcmd:w3iobc	model/src/w3iobcmd.F90:100-852	goal/42-port-six-expensive	docs/W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md
-w3gdatmd:w3setg	model/src/w3gdatmd.F90:2156-2893	goal/42-port-six-expensive	docs/W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md
 w3iopomd:w3iopp	model/src/w3iopomd.F90:242-859	goal/42-port-six-expensive	docs/W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md
 w3iopomd:w3iopo	model/src/w3iopomd.F90:2131-2626	goal/42-port-six-expensive	docs/W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md
 w3gsrumd:gsu_create	model/src/w3gsrumd.F90:7354-7849	goal/42-port-six-expensive	docs/W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md

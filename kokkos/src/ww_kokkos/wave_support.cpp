@@ -28,6 +28,7 @@
 #include "flds_w3fldg.hpp"
 #include "flds_w3fldh.hpp"
 #include "gdat_w3dims.hpp"
+#include "gdat_w3setg.hpp"
 #include "gig1_df1f2theta.hpp"
 #include "gke_asymsmattimvec.hpp"
 #include "gke_biinterpwt.hpp"
@@ -277,6 +278,9 @@ void ww_support_instantiate() {
   (void)&ww::srce::st3::w3sin3_point<true>;
   (void)&ww::adat::w3dima<E>;
   (void)&ww::gdat::w3dims<E>;
+  (void)&ww::gdat::w3setg;
+  (void)&ww::gdat::selected<ww::gdat::Sgrd<E::memory_space>>;
+  (void)&ww::gdat::w3setg_message;
   (void)&ww::iogo::w3outg<E>;
   (void)&ww::iogr::iogr_rect_xy<E>;
   (void)&ww::iogr::iogr_decode_maptmp<E>;
