@@ -30,7 +30,7 @@ The manual chapter behind most switch rows is `WW3/manual/impl/switch.tex`.
 | WAM | ⚠ likely "WAve Model" (the WAMDI Group, 1988) | The original third-generation model that WW3 and ECWAM descend from; `ST1`/`ST3` are its Cycle 3 / Cycle 4 physics (`WW3/model/src/w3src1md.F90`, `w3src3md.F90` headers `(v)`). | [docs/AWESOME-WW3_202609.md](AWESOME-WW3_202609.md), [course/07-physics-choices.md](../course/07-physics-choices.md) |
 | ECWAM | ⚠ ECMWF's WAM | WAM's operational descendant at ECMWF, source of ERA5's wave fields. | [docs/AWESOME-WW3_202609.md](AWESOME-WW3_202609.md) |
 | WAM6-GPU | WAM6-GPU v1.0, Yuan et al. (2024), *GMD* 17 `(v)` [course/13-bulk-porting-with-agents.md](../course/13-bulk-porting-with-agents.md) | A whole-model GPU refactor of WAM that keeps fields device-resident and reports an order-of-magnitude gain; the counter-example to directive offloading. | [course/13-bulk-porting-with-agents.md](../course/13-bulk-porting-with-agents.md), [pubs/proposal/pt/05-justification.md](../pubs/proposal/pt/05-justification.md) |
-| FESOM2 | ⚠ Finite-volumE Sea ice–Ocean Model 2; not expanded in the repo | The ocean model Koldunov et al. (2026) took from Fortran to C to C++/Kokkos with an LLM assistant; the "FESOM2 recipe" is this project's porting method `(v)`. | [course/13-bulk-porting-with-agents.md](../course/13-bulk-porting-with-agents.md), [pubs/proposal/pt/05-justification.md](../pubs/proposal/pt/05-justification.md) |
+| FESOM2 | Finite-volumE Sea ice–Ocean Model `(v)` (the title of Danilov et al. 2017, GMD 10:765, doi:10.5194/gmd-10-765-2017, as Koldunov et al. 2026 cite it, read 2026-10-16); that the 2 is a version number ⚠ | AWI's unstructured-mesh ocean–sea-ice model, which Koldunov et al. (2026) took from Fortran to C to C++/Kokkos with an LLM assistant; its two-stage route is compared with this repository's direct one in the note. | [course/13-bulk-porting-with-agents.md](../course/13-bulk-porting-with-agents.md), [notes/202610170112-fesom2-went-through-c-ww3-goes-straight-to-kokkos.md](../notes/202610170112-fesom2-went-through-c-ww3-goes-straight-to-kokkos.md) |
 | Omega | ⚠ E3SM's C++/Kokkos ocean model, the MPAS-Ocean successor | DOE project said to be rebuilding WW3's source terms in C++/Kokkos; the H100 plan's first action is to contact them. | [docs/KOKKOS_H100_PLAN_202609.md](KOKKOS_H100_PLAN_202609.md) |
 | NOAA | National Oceanic and Atmospheric Administration `(v)` `WW3/regtests/bin/matrix.comp` header | US agency that distributes WW3 and owns the WAVEWATCH trademarks. | [README.md](../README.md) |
 | NWS | National Weather Service `(v)` `WW3/regtests/bin/matrix.comp` header | NOAA's weather service, the trademark holder and primary funder of WW4. | [README.md](../README.md), [course/14-ww4-and-the-future.md](../course/14-ww4-and-the-future.md) |
@@ -64,6 +64,9 @@ The manual chapter behind most switch rows is `WW3/manual/impl/switch.tex`.
 | WCOSS2 | Weather and Climate Operational Supercomputing System 2: NOAA's twin HPE Cray EX production machines, Cactus and Dogwood, AMD EPYC 7742, no GPUs `(v)` TOP500 system 179944 and NOAA releases of 2022-06-28 and 2026-07-27, read 2026-10-16 | Where GFS-Wave and GEFS-Wave run; moving to Google Cloud by December 2027. | [docs/H100_OPTIMIZATION_STRATEGY_202610.md](H100_OPTIMIZATION_STRATEGY_202610.md) |
 | RDHPCS / Ursa / Rhea | NOAA's Research and Development High Performance Computing System; Ursa (58 nodes with two H100 NVL each) and Rhea (GPUs for AI and machine learning) are its machines `(v)` Ursa user guide and NOAA release of 2024-09-03, read 2026-10-16 | Where NOAA's GPUs are: research, not production. | [docs/H100_OPTIMIZATION_STRATEGY_202610.md](H100_OPTIMIZATION_STRATEGY_202610.md) |
 | SENA | Software Engineering for Novel Architectures, NOAA's 2015 project to re-architect applications for GPUs and many-core CPUs `(v)` Hart, NOAA OCIO, HPC User Forum, 2015-09-09 | Its priority models did not include waves. | [docs/H100_OPTIMIZATION_STRATEGY_202610.md](H100_OPTIMIZATION_STRATEGY_202610.md) |
+| AWI | Alfred Wegener Institute, Helmholtz Centre for Polar and Marine Research, Bremerhaven `(v)` (Koldunov et al. 2026, p. 1) | The institute that develops FESOM2 and wrote the FESOM2 port paper. | [notes/202610170112-fesom2-went-through-c-ww3-goes-straight-to-kokkos.md](../notes/202610170112-fesom2-went-through-c-ww3-goes-straight-to-kokkos.md) |
+| DKRZ | Deutsches Klimarechenzentrum, the German Climate Computing Center `(v)` (Koldunov et al. 2026, Acknowledgements) | Runs Levante, where the FESOM2 port was written and timed. | [notes/202610170112-fesom2-went-through-c-ww3-goes-straight-to-kokkos.md](../notes/202610170112-fesom2-went-through-c-ww3-goes-straight-to-kokkos.md) |
+| CVMix | ⚠ Community Vertical Mixing, a library of ocean vertical-mixing schemes; the paper calls it "the external mixing library" and does not expand it | Kept out of FESOM2's ported configuration; `src/cvmix_driver/` holds 5 588 Fortran lines at `9271ae92` `(v)`. | [notes/202610170112-fesom2-went-through-c-ww3-goes-straight-to-kokkos.md](../notes/202610170112-fesom2-went-through-c-ww3-goes-straight-to-kokkos.md) |
 
 ## Wave physics and the spectrum
 
@@ -587,6 +590,9 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | `FMNMX` | the SASS minimum/maximum instruction of NVIDIA GPUs ⚠ (from `cuobjdump -sass` output, not NVIDIA's documentation) | What `nvcc` makes of `v > 0 ? v : 0` in `iors_va_clamp`; a NaN gives the other operand. | [kokkos/port_report/W3IORS_KOKKOS.md](../kokkos/port_report/W3IORS_KOKKOS.md) |
 | libdevice | NVIDIA's device math library, the bitcode that implements `expf`, `logf`, `powf`, `tanhf`, `sincosf` and the other math functions in CUDA device code ⚠ (general knowledge, not read today) | Its results are not glibc's, so a CUDA kernel that calls them may not give the Fortran's bits; unmeasured. | [docs/H100_OPTIMIZATION_STRATEGY_202610.md](H100_OPTIMIZATION_STRATEGY_202610.md), [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md) |
 | H100 NVL | an H100 variant with 94 GB of memory per GPU `(v)` RDHPCS Ursa user guide, read 2026-10-16; that it is a PCIe card is general knowledge ⚠ | The GPU of NOAA's Ursa nodes; whether the UFSC node has an NVL, PCIe or SXM H100 is not recorded ⚠. | [docs/H100_OPTIMIZATION_STRATEGY_202610.md](H100_OPTIMIZATION_STRATEGY_202610.md) |
+| SYPD | simulated years per (wall-clock) day `(v)` (Koldunov et al. 2026, Fig. 7) | Throughput unit of climate runs; FESOM2-Kokkos reached 1.3 to 3.5 SYPD at 32 GPU nodes. | [notes/202610170112-fesom2-went-through-c-ww3-goes-straight-to-kokkos.md](../notes/202610170112-fesom2-went-through-c-ww3-goes-straight-to-kokkos.md) |
+| A100 / MI250X | NVIDIA's Ampere data-centre GPU, 80 GB on Levante / AMD's GPU of two compute dies, which the runtime sees as two devices `(v)` (Koldunov et al. 2026, §6, §6.3) | The FESOM2 port's development GPU and its AMD target through Kokkos's HIP backend; neither is used here. | [notes/202610170112-fesom2-went-through-c-ww3-goes-straight-to-kokkos.md](../notes/202610170112-fesom2-went-through-c-ww3-goes-straight-to-kokkos.md) |
+| `fcheck` | FESOM2's result check: compares global means of a test run against "truth values" in the setup's `setup.yml` `(v)` (FESOM/fesom2 `9271ae92`, `setups/test_pi/setup.yml:58-64`, `.github/workflows/fesom2_main.yml`); the tool is not in that repository, so its tolerance is ⚠ | FESOM2's regression check in CI, which the port paper does not mention. | [notes/202610170112-fesom2-went-through-c-ww3-goes-straight-to-kokkos.md](../notes/202610170112-fesom2-went-through-c-ww3-goes-straight-to-kokkos.md) |
 
 ## This repository's own names
 
@@ -702,6 +708,7 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | W3setaTargets | this repository's record of which model each W3SETA/W3XETA pointer group names (`base`, `ainit`, `x`, `fl_all`, `cur`, `wind`, `taua`, `rhoa`, `iter`, `nlinit`) `(v)`, defined in [kokkos/src/ww_kokkos/adat_wadat.hpp](../kokkos/src/ww_kokkos/adat_wadat.hpp), set by [kokkos/src/ww_kokkos/adat_w3seta.hpp](../kokkos/src/ww_kokkos/adat_w3seta.hpp) | Stands for Fortran pointer association that persists across calls; `IADATA` itself is `Wadats::iadata`. | [kokkos/port_report/W3SETA_KOKKOS.md](../kokkos/port_report/W3SETA_KOKKOS.md), [kokkos/port_report/W3XETA_KOKKOS.md](../kokkos/port_report/W3XETA_KOKKOS.md) |
 | FULL / PARTIAL / default (Kokkos modes) | FULL: `WW_KOKKOS_ALL=1`, every wired part on Kokkos where its translation covers the switch file; PARTIAL: `WW_KOKKOS_<PART>=1` for a list of parts, or `WW3GPU_ROUTINES=<R>,...` in the matrix; default: no flag set, every part the Fortran `(v)` `kokkos/src/fortran_iface/PATCH.md` §7 on the wiring branch, `regtests/CMakeLists.txt:19-22` | `scripts/ww3-gpu.sh --kokkos all|none|<PART,...>`; a FULL matrix mode is planned, not implemented; FULL on wired-but-unregtested parts is for development only (ADR-0012). | [docs/ADRs/ADR-0012-translate-and-wire-now-regtest-matrix-on-the-h100.md](ADRs/ADR-0012-translate-and-wire-now-regtest-matrix-on-the-h100.md) |
 | static parity | the bit-parity argument made without running WW3: the `-O3` GIMPLE and object code of the Fortran routine and of the C++ kernel compared operation by operation `(v)` ADR-0011, "The discipline", item 4 | What a translated routine carries until the regtest matrix judges it; recorded as ⚠ in its port report. | [docs/ADRs/ADR-0011-port-in-units-regtest-at-checkpoints.md](ADRs/ADR-0011-port-in-units-regtest-at-checkpoints.md), [docs/ADRs/ADR-0012-translate-and-wire-now-regtest-matrix-on-the-h100.md](ADRs/ADR-0012-translate-and-wire-now-regtest-matrix-on-the-h100.md) |
+| twin kernel (FESOM2) | the C original of a kernel, kept beside its Kokkos rewrite and run on the same live state when `FESOM_KK_VERIFY` is set; Serial must match it exactly `(v)` (Koldunov et al. 2026, §4.4) | This repository has no twin: the Fortran routine is the reference, selected by its `WW_KOKKOS_<PART>` flag, and compared only inside WW3's regtests (ADR-0010). | [notes/202610170112-fesom2-went-through-c-ww3-goes-straight-to-kokkos.md](../notes/202610170112-fesom2-went-through-c-ww3-goes-straight-to-kokkos.md) |
 
 ## Citation and licensing
 
@@ -724,8 +731,10 @@ Every term above, alphabetically, with the section it lives in.
 - `02-regional-real-forcing`: [This repository's own names](#this-repositorys-own-names)
 - 7.14: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - `ACCESS='STREAM'`: [HPC and software](#hpc-and-software)
+- `fcheck`: [HPC and software](#hpc-and-software)
 - `FMNMX`: [HPC and software](#hpc-and-software)
 - `LIBERROR_*`: [HPC and software](#hpc-and-software)
+- A100 / MI250X: [HPC and software](#hpc-and-software)
 - A2A / `para:*`: [This repository's own names](#this-repositorys-own-names)
 - ABNT: [HPC and software](#hpc-and-software)
 - ABPI0 / ABPIN / ABPOS: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -766,6 +775,7 @@ Every term above, alphabetically, with the section it lives in.
 - ATMUXR: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - automatic array: [HPC and software](#hpc-and-software)
 - AWESOME-WW3: [This repository's own names](#this-repositorys-own-names)
+- AWI: [Models, projects and institutions](#models-projects-and-institutions)
 - B4B: [WW3 switches](#ww3-switches)
 - b4b: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - backend: [HPC and software](#hpc-and-software)
@@ -876,6 +886,7 @@ Every term above, alphabetically, with the section it lives in.
 - cuTile / CUDA Tile / TileGym: [HPC and software](#hpc-and-software)
 - CURRLINE: [WW3 programs and files](#ww3-programs-and-files)
 - CURV: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
+- CVMix: [Models, projects and institutions](#models-projects-and-institutions)
 - DAXPY: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - DDOT / DAXPY / DNRM2 / DLASSQ / PGMRES: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - DDOT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -885,6 +896,7 @@ Every term above, alphabetically, with the section it lives in.
 - Df1f2theta / W3ADDIG: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - Df1f2theta: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - DIA format: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- DKRZ: [Models, projects and institutions](#models-projects-and-institutions)
 - DLASSQ: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - DNRM2: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - DPO / WAO / WDO / ASO / CAO / CDO / ICEO / ICEHO / ICEFO / SPCO: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1269,6 +1281,7 @@ Every term above, alphabetically, with the section it lives in.
 - SWL6CSTB1: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - SWL6S6 / SWL6B1 / SWL6CSTB1: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - SWL6S6: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- SYPD: [HPC and software](#hpc-and-software)
 - TABU_STRESS: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - TABU_TAUHF: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - TAIL_ID: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1285,6 +1298,7 @@ Every term above, alphabetically, with the section it lives in.
 - TLEV / TLN: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - TOFRST / TONEXT / TOLAST / DTOUT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - TSTOUT / LPDLIB: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- twin kernel (FESOM2): [This repository's own names](#this-repositorys-own-names)
 - UDSOL: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - UDSOLC: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - UFunc: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
