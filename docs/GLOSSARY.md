@@ -320,6 +320,11 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | MAPTMP / AUX1 / AUX2 / TIMETAG | `W3IOGO`'s locals: the packed map `MAPSTA + 8*MAPST2`, the two Cartesian components of a vector field, and the `YYYYMMDD.HHMMSS` string of `TIME` `(v)` `w3iogomd.F90:2563`, `:2573-2577`, `:2833`, `:2734` | `MAPTMP` is written with `IX` fastest, the transpose of its storage; `AUX1`/`AUX2` have the `NSEA` of the grid selected before the call. | [kokkos/port_report/W3IOGO_KOKKOS.md](../kokkos/port_report/W3IOGO_KOKKOS.md) |
 | AFTER_ENDFILE / IOSTAT 5001 | libgfortran's state of a sequential unit after a READ met the end of the file, and the IOSTAT of the next READ on it (LIBERROR_OPTION_CONFLICT, [kokkos/port_report/W3FLDG_KOKKOS.md](../kokkos/port_report/W3FLDG_KOKKOS.md)); 5001 measured with gfortran 16.2 and WW3's flags, cleared by a REWIND `(v)` [kokkos/port_report/W3IOGO_KOKKOS.md](../kokkos/port_report/W3IOGO_KOKKOS.md) | A reader that calls `W3IOGO` again after `IOTST = -1` stops with exit 43; the port keeps the state in `W3IogoUnit`. | [kokkos/port_report/W3IOGO_KOKKOS.md](../kokkos/port_report/W3IOGO_KOKKOS.md) |
 | W3IOPOMD / W3IOPO, W3IORSMD / W3IORS, W3IOBCMD / W3IOBC, W3IOTRMD / W3IOTR | point output / restart files / boundary conditions / track output read-write `(v)` | The I/O bucket (`w3io*`) of the profile. | [course/09-benchmark-profile-compile-run.md](../course/09-benchmark-profile-compile-run.md) |
+| W3DMO2 | "Initialize an individual data storage for point output" `(v)` `w3odatmd.F90:984` | Allocates the point-output arrays of `OUTPTS(IMOD)%OUT2` with `NPT` points and sets `NOPTS = NPT`; a hook of the Kokkos `W3IOPP`. | [kokkos/port_report/W3IOPP_KOKKOS.md](../kokkos/port_report/W3IOPP_KOKKOS.md) |
+| W3GRMP / GSU (T_GSU) | "Compute bilinear remapping for target point (xtin,ytin) from source grid associated with the input grid search utility object (GSU)"; `T_GSU` "Grid-search-utility type (opaque)" `(v)` `w3gsrumd.F90:2443-2444`, `:169` | Returns the four corner indices and weights of the cell holding a point; `W3IOPP` calls the `REAL(4)` specific `W3GRMP_R4`; a hook of the Kokkos `W3IOPP`. | [kokkos/port_report/W3IOPP_KOKKOS.md](../kokkos/port_report/W3IOPP_KOKKOS.md) |
+| IS_IN_UNGRID | "Determine whether a point is inside or outside an unstructured grid, and returns index of triangle and interpolation weights" `(v)` `w3triamd.F90:1600-1601` | The unstructured-grid analogue of `W3GRMP`; a hook of the Kokkos `W3IOPP`. | [kokkos/port_report/W3IOPP_KOKKOS.md](../kokkos/port_report/W3IOPP_KOKKOS.md) |
+| NOPTS / PTLOC / IPTINT / PTIFAC / PTNME / GRDID | "Number of output points" / "Output locations" / "(I,J)-indices of enclosing cell corner points" / "Interpolation weights" / "Name of output locations" / "Originating grid ID" `(v)` `w3odatmd.F90:166-190` | Fields of `OUTPTS(IMOD)%OUT2` that `W3IOPP` fills: `PTLOC(2,NPT)`, `IPTINT(2,4,NPT)`, `PTIFAC(4,NPT)`; `NOPTS` counts the accepted points. | [kokkos/port_report/W3IOPP_KOKKOS.md](../kokkos/port_report/W3IOPP_KOKKOS.md) |
+| pnt_wght.<ext>.nc / out.pnt_wght.<ext>.nc | NetCDF point weight file, read and written by `W3IOPP` on an unstructured grid `(v)` `w3iopomd.F90:460-470`, `:638` | `W3IOPP` reads `PTLOC`, `PTNME`, `IPTINT`, `PTIFAC` from `pnt_wght.<ext>.nc` when it exists and otherwise writes them to `out.pnt_wght.<ext>.nc` (`IPTINT` stored as `NF90_FLOAT`); other grid types never use it. | [kokkos/port_report/W3IOPP_KOKKOS.md](../kokkos/port_report/W3IOPP_KOKKOS.md) |
 | W3NESTUG / W3GFPT | "UGTYPE nesting initialization" / "Find point in grid, associated with the input grid-search-utility object (GSU), that is closest to the target point (xtin,ytin)" `(v)` `w3triamd.F90:2160`, `w3gsrumd.F90:1981-1982` | How `W3IOBC` maps each input boundary point of `nest.ww3` to a sea point (`ISBPI`): `W3NESTUG` on an unstructured grid, `W3GFPT` (through `W3GFPT_R4`, `DCIN=0.1`) otherwise; hooks of the Kokkos `W3IOBC`. | [kokkos/port_report/W3IOBC_KOKKOS.md](../kokkos/port_report/W3IOBC_KOKKOS.md) |
 | W3CSPC | "Convert a set of spectra to a new spectral grid" `(v)` `w3cspcmd.F90:119`, `:143` | Called by `W3IOBC` when the spectral grid of `nest.ww3` differs from the model's (`SPCONV`); a hook of the Kokkos `W3IOBC`. | [kokkos/port_report/W3IOBC_KOKKOS.md](../kokkos/port_report/W3IOBC_KOKKOS.md) |
 | NBI / NBI2 / NBO / NBO2 / NFBPO | "Number of input bound. points" / "Number of output bound. pts. per file" / "Number of files for output bound. data" `(v)` `w3odatmd.F90:232-236`, declared at `:411-412`; `NBI2` and `NBO2` have no description there: they count spectra, `NBI2` read with each time record of `nest.ww3` (`w3iobcmd.F90:564`), `NBO2` per output file (`:608`) | `NBO(0:9)` and `NBO2(0:9)` are cumulative over the files; a `nest<N>.ww3` header counts points with `NBO`, its time records count spectra with `NBO2`. | [kokkos/port_report/W3IOBC_KOKKOS.md](../kokkos/port_report/W3IOBC_KOKKOS.md) |
@@ -1082,6 +1087,7 @@ Every term above, alphabetically, with the section it lives in.
 - IRANGE / RRANGE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - IRANGE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - IS2DISP: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- IS_IN_UNGRID: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - ISGRD / IPARS: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - ISO/IEC 1539:1991: [HPC and software](#hpc-and-software)
 - ITIME / IPASS / IDLAST / ITSTEP / FLCOLD / FLIWND: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1147,6 +1153,7 @@ Every term above, alphabetically, with the section it lives in.
 - NLINIT / NSPECX / IPnn / IMnn / ICnn: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - NNIDX: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - NOGRP / NGRPP / NOEXTR: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- NOPTS / PTLOC / IPTINT / PTIFAC / PTNME / GRDID: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - NOVAL: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - npa / iplg: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - NR_CORR: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1167,6 +1174,7 @@ Every term above, alphabetically, with the section it lives in.
 - PDLIB_W3XYPUG_BLOCK_IMPLICIT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - PGMRES: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - `__powisf2`: [This repository's own names](#this-repositorys-own-names)
+- pnt_wght.<ext>.nc / out.pnt_wght.<ext>.nc: [WW3 programs and files](#ww3-programs-and-files)
 - POS_TRICK / ListISPprevDir / ListISPnextDir / ListISPprevFreq / ListISPnextFreq: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - PRINT_MEMCHECK: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - QFunc / VpFunc / VmFunc / UFunc / TFunc / ASymSmatTimVec: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1259,6 +1267,7 @@ Every term above, alphabetically, with the section it lives in.
 - W3DIMW / W3DIMI: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3DIMW: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3DIMX / W3DIMUG: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3DMO2: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3DMO5: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3FLDG / W3FLDO: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3FLDH: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1276,6 +1285,7 @@ Every term above, alphabetically, with the section it lives in.
 - W3FLX5MD / W3FLX5: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3FLX5MD: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3GNTX: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3GRMP / GSU (T_GSU): [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3IOPE / W3IOSF / W3CPRT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3IOPP: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3KRTN / SMCkUNO2 / SMCGtCrfr / CTMAX: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)

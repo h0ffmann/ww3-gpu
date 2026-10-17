@@ -76,6 +76,7 @@
 #include "iogo_w3iogo.hpp"
 #include "iogo_w3outg.hpp"
 #include "iogr_w3iogr.hpp"
+#include "iopo_w3iopp.hpp"
 #include "iors_w3iors.hpp"
 #include "is2_funcd_fderiv.hpp"
 #include "is2_funcd_fval.hpp"
@@ -320,4 +321,5 @@ void ww_support_instantiate() {
   (void)&ww::iobc::iobc_gather_shrd<E>;
   (void)&ww::iobc::w3iobc<E>;
   (void)&ww::iogo::w3iogo<E>;
+  (void)&ww::iopo::w3iopp;
 }
