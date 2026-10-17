@@ -38,7 +38,7 @@ byte-identical to the CMake build's inside the pinned `ww3` shell), read as GIMP
   libdevice's `tanhf` (12), `sinhf` (7), `coshf` (6); the header's own products and sums stay
   `FMUL` and `FADD`.
 - ⚠ Whether libdevice's `tanhf`, `coshf`, `sinhf` return glibc's bits is not known, and that is
-  the GPU risk; `DISTAB` runs once at set-up, so its shim may compute on the host and copy.
+  the GPU risk; `DISTAB` runs once at set-up, so its shim may compute on the host and copy. Since #178 a CUDA build with `WW_KOKKOS_LIBM` (its default) calls `ww::dm`'s copies of glibc's functions there instead (`../src/ww_kokkos/libm_device.hpp`, WFIP-0006); that they give glibc's bits on a device is ⚠ until `scripts/libm_bits.sh --device` runs.
 - ⚠ `-ffp-contract=off` is private to the `ww_kokkos` target: code outside it that includes this
   header would let GCC fuse lines 102, 109 or 124.
 - The reviewer also linked the Fortran object and the header into a scratch program, against the

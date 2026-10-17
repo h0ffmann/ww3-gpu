@@ -46,6 +46,9 @@ Date, author, issue/PR/WFIP.
 | 2026-10-16 | [W3WAVE support routines translated to Kokkos; the two translation units joined on one branch](2026-10-16-w3wave-support-kokkos-translation.md) | #42 |
 | 2026-10-16 | [W3WAVE support unit finished, W3MAP3 and W3MAPT added, every launcher built for CUDA](2026-10-16-w3wave-support-finished-pr3-maps.md) | #42 |
 | 2026-10-16 | [NOAA's operational switches translated to Kokkos; what the reviews found in WW3](2026-10-16-noaa-ops-kokkos-translation.md) | #42, PR #152 |
+| 2026-10-16 | [ST0, ST1, ST2, ST3, ST6, FLX1-5 and SWL translated to Kokkos, one agent per routine](2026-10-16-st-flx-swl-kokkos-translation.md) | #42, PR #157 |
+| 2026-10-16 | [The 92 easiest routines left in Fortran translated to Kokkos, one agent per routine](2026-10-16-easy-batch-kokkos-translation.md) | #42, PR #159 |
+| 2026-10-16 | [W3WAVE's support routines wired, a master Kokkos flag, and the pin-move checkpoint](2026-10-16-w3wave-support-wiring-checkpoint.md) | #42 |
 | 2026-10-15 | [The ST4 checkpoint, first half: byte-identical on ww3_ts1 and bench_small, the matrix running](2026-10-15-st4-checkpoint.md) | #45, ADR-0011 |
 | 2026-10-14 | [Matrix entry 16 (`ww3_ts1 -g ST4_T500`): the Kokkos DIA fails `nccmp-tol`, and the Fortran alone does too](2026-10-14-hoff-matrix-entry16.md) | WFIP-0003 |
 | 2026-10-15 | [Matrix entries 51 and 54 (`ww3_ts3`, ST1): the same amplification as entry 16](2026-10-15-hoff-matrix-entries51-54.md) | WFIP-0003 |

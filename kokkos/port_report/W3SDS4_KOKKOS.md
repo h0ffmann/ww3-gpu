@@ -42,7 +42,7 @@ Edge cases, not on finite valid inputs:
 - ⚠ `FLOOR(AAIRCMIN) <= 0` (an `AIRCMIN` above `GRAV/SIG(1)`) writes `COEF4(0...)` out of bounds in the Fortran too; in the port it lands before the work buffer.
 - ⚠ `MAX(1e-20,A)` at `:2518` in a one-element scalar remainder passes a NaN `A` through in the Fortran (`maxss` operand order), not in the port. A NaN spectrum only.
 - ⚠ MAX/MIN elsewhere are `a>b?a:b`; they match the assembly at `:2512`, `:2514`, `:2568` and differ elsewhere only for NaN or a signed zero.
-- ⚠ On a device the libmvec sites fall back to scalar `powf`/`expf`: a GPU build cannot be bit for bit there.
+- ⚠ On a device without `WW_KOKKOS_LIBM` the libmvec sites fall back to libdevice's scalar `powf`/`expf`: such a build cannot be bit for bit there. Since #178 a CUDA build with it (its default) calls copies of libmvec's SSE4 `_ZGVbN4vv_powf` and `_ZGVbN4v_expf`, lane by lane, with the same grouping (`../src/ww_kokkos/st4_libmvec.hpp`, WFIP-0006); that they give libmvec's bits on a device is ⚠ until `scripts/libm_bits.sh --device` runs.
 
 ## Benchmarks
 

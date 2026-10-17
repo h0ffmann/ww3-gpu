@@ -299,10 +299,14 @@ Fortran.
 Whether WW3 itself is deterministic enough for this rule (serial, OpenMP and MPI runs
 reproduce; a PDLIB restart under MPI and an `OMPG` data race of WW3's own do not) is measured in
 `CONTRIBUTING.md`, "Is WW3 deterministic enough for bit for bit". ⚠ On a GPU the rule needs the
-kernel's transcendental functions (`expf`, `logf`) to return glibc's bits. CUDA's math library uses
-other algorithms, and the 2026-09-15 match on fixture points does not show it for every input;
-contraction off (`--fmad=false`) is necessary, not sufficient, and ST4's five libmvec loops cannot
-be reproduced on a device. So the rule is the CPU backend's: a GPU run is judged by `nccmp-tol`'s
+kernel's transcendental functions (`expf`, `logf`) to return glibc's bits. CUDA's math library
+(libdevice) uses other algorithms, and contraction off (`--fmad=false`) is necessary, not
+sufficient. Since #178 a CUDA build with `WW_KOKKOS_LIBM` (its default) sends every libm call of
+the kernels `WW_KOKKOS_ALL` runs, ST4's five libmvec loops included, to device copies of glibc
+2.44's functions (`kokkos/src/ww_kokkos/libm_device.hpp`, WFIP-0006), which equal glibc on the
+host on every input checked; no device run has compared them yet (`scripts/libm_bits.sh
+--device`, the owner's), and the opt-in `W3OUTG` and the other switches' kernels still call
+libdevice. Until such a run, the rule is the CPU backend's: a GPU run is judged by `nccmp-tol`'s
 tolerances against the Fortran of the same executable and against `--ww3`, with every field's
 differences recorded and no tolerance ever widened, and its timing enters a table only after
 that pass ([ADR-0014](docs/ADRs/ADR-0014-gpu-runs-judged-by-tolerance.md), the owner, 17 October

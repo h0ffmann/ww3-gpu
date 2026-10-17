@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Draft |
+| **Status** | Partially implemented (units 1–4 of 5, #178, on `main` with #179; 2026-10-17) |
 | **Author** | M. Hoffmann (asked 2026-10-17 in the project thread: "move the compute to GPU without changing the answer") |
 | **Created** | 2026-10-17 |
 | **Deliverable** | D5 |
@@ -138,7 +138,7 @@ __builtin_cpu_supports("avx2")` once on the host and stores it in each kernel's 
 
 What runs where: units 1 to 5 build and run on the CPU; only §7's device boxes need the GPU.
 
-### As built (2026-10-17, branch goal/42-gpu-libm-route)
+### As built (2026-10-17, branch goal/42-gpu-libm-route, #178)
 
 - **Unit 1** without the move: `kokkos/src/ww_kokkos/libm_device.hpp` (`ww::dm`) includes the
   headers from `kokkos/tools/libm_bits`, on the include path of a CUDA build only. Each wrapper's
@@ -155,7 +155,8 @@ What runs where: units 1 to 5 build and run on the CPU; only §7's device boxes 
   `st4_sin4.hpp`, `st4_spr4.hpp`, `st4_calc_ustar.hpp`, `st4_libmvec.hpp`, `snl1_team.hpp`,
   `updt_utrn.hpp`, `updt_uwnd.hpp`, `disp_distab.hpp`. DISTAB needed `coshf` and `sinhf`, now in
   `coremath_f.hpp` (CORE-MATH, correctly rounded; 0 of 2^32 inputs differ from glibc each, v).
-- **Unit 5** not done: `scripts/ww3-gpu.sh` is being changed by the goal/42-gpu-step work.
+- **Unit 5** not done: `scripts/ww3-gpu.sh` was being changed by the goal/42-gpu-step work, which
+  merged as #179, so nothing blocks it now (v, `scripts/ww3-gpu.sh` at `68ae5e2` has no libm check).
 - **Not routed:** W3OUTG (`iogo_w3outg.hpp`, opt-in, not under `WW_KOKKOS_ALL`) calls libmvec's
   `sinf`/`cosf`, scalar `sinhf`, `coshf`, `logf`, `atan2f` and `powf`; the other switches'
   kernels (ST1, ST2, ST3, ST6 with libmvec `tanhf`, FLX1-5, IC4, ...) are not on the lab

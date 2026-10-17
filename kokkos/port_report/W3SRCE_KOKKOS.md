@@ -108,7 +108,7 @@ Checked 2026-10-17 on the CPU (Kokkos OpenMP backend; Intel Core i9-14900, 32 th
 
 `bash scripts/ww3-gpu.sh --ww3-gpu smoke --gpu --build-only` compiled the shim for CUDA (Ada 8.9);
 nothing ran on the GPU. ⚠ The batch on CUDA is not known to give the bits of the CPU (the libdevice
-`logf`, `tanhf`, `sincosf` of the [arithmetic](#arithmetic) section).
+`logf`, `tanhf`, `sincosf` of the [arithmetic](#arithmetic) section). Since #178 a CUDA build with `WW_KOKKOS_LIBM` (its default) calls `ww::dm`'s copies of glibc's functions there instead (`../src/ww_kokkos/libm_device.hpp`, WFIP-0006); that they give glibc's bits on a device is ⚠ until `scripts/libm_bits.sh --device` runs.
 
 ## Resident spectrum (WFIP-0005, units 1 and 2)
 

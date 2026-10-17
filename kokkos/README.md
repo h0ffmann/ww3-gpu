@@ -167,6 +167,7 @@ PORT_RANKING.md       what is still in Fortran, by self time, and each port's te
 tools/nccmp-tol/      per-field NetCDF comparator                (Task 5)
 tools/bench_case/     benchmark-case generator                   (Task 6)
 tools/fetch_analyse/  fetch-growth analyser                      (Task 6)
+tools/libm_bits/      glibc's libm on a device: copies, checks, gen_tables (WFIP-0006)
 ```
 
 ## Building
@@ -348,6 +349,8 @@ this is the short form.
 | none | `WW_KOKKOS_ALL=0` | `--kokkos none` | nothing, except a part whose own flag is set to `1` |
 | partial | `WW_KOKKOS_<PART>=1` for each part wanted | `--kokkos SNL1,SDS4` | the listed parts |
 | full | `WW_KOKKOS_ALL=1` | `--kokkos all` | every wired part whose translation covers the switch file |
+| GPU preset | `WW_KOKKOS_ALL=0 WW_KOKKOS_SRCE=1` | `--kokkos gpu` (the default of `--gpu`) | `W3SRCE` with the source terms it calls (ADR-0013) |
+| resident preset | `WW_KOKKOS_ALL=0`, `WW_KOKKOS_<PART>=1` for `SRCE`, `XYP3`, `KTP3`, `OUTG`, `IOPE`, `UPDV` | `--kokkos resident` | the parts that keep the spectrum `VA` on the device (WFIP-0005 units 1 to 5, #173, #179); not a default: none of its parts is regtested yet ([`ports.tsv`](ports.tsv)) |
 
 An explicitly set `WW_KOKKOS_<PART>` wins over `WW_KOKKOS_ALL`; one C function,
 `ww_kokkos_flag` in `src/fortran_iface/part_flags.cpp`, resolves both for the Fortran and the
@@ -363,5 +366,10 @@ column in [`ports.tsv`](ports.tsv) says no is for development, not for results.
 20 calls, timed both end-to-end through `ww_snl1()` and with everything already on
 the device. The numbers, the machine they were measured on and what they do *not*
 mean are in [`PORT_STATUS.md`](PORT_STATUS.md).
+
+Inside WW3, `WW_KOKKOS_TIMERS=1` makes every shim report, per part, the copies to the device, the
+kernel and the copies back (`src/fortran_iface/timers.hpp`, #175);
+`scripts/ww3-gpu.sh --ww3-gpu <case> --timers` prints them with each region's share of `ww3_shel`.
+The timers fence the device, so such a run is a breakdown, never a timing for a table.
 
 SPDX-License-Identifier: MIT

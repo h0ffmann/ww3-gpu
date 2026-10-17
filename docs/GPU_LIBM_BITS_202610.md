@@ -25,6 +25,10 @@ compile-time fact read from the SASS, or reasoning marked ⚠.
   pairs for `powf`, `atan2f` and libmvec's `powf` (v, [results](#results-on-the-host)). The device
   builds have the same fused and unfused operations as glibc's x86 builds (v, SASS). That they
   give the same bits on a device is ⚠ until `scripts/libm_bits.sh --device` runs under the owner.
+- Since #178 the kernels `WW_KOKKOS_ALL` runs call these copies on the device, through
+  `kokkos/src/ww_kokkos/libm_device.hpp` (`ww::dm`), in a CUDA build with `WW_KOKKOS_LIBM` (the
+  default); the CPU build still calls glibc ([WFIP-0006](WFIPs/WFIP-0006-device-libm-bits.md),
+  units 1 to 4). The opt-in `W3OUTG` and the other switches' kernels still call libdevice.
 - Four of them are correctly rounded in glibc 2.44 (`tanhf`, `atan2f`, `log10f`, double `tanh`):
   their copies are CORE-MATH's own code (MIT), and `tanhf`, `log10f` and
   `atan2f` were checked correctly rounded on their own (v).

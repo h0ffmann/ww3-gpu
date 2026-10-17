@@ -132,6 +132,15 @@ This is `W3KOKKOSMD` and `WW_KOKKOS_SNL1` from lesson 12, drawn; "measured per s
 | 3 | + propagation with device halo buffers | halos, forcing, output | transposes gone; Fortran only sequences calls |
 | 4 | + member dimension | same, batched | ensemble throughput |
 
+Where the port stands on this ladder, on the CPU only (v, PR #179, 2026-10-17): with
+`--kokkos resident` (`W3SRCE`, the PR3/UQ propagation `W3XYP3`/`W3KTP3`, the gridded output
+integrals of `W3OUTG`, and the point output and ice update reading or zeroing only the columns
+they need) the spectrum crosses to the device once and back once on `bench_small`, the
+`W3SRCE` inputs only when their bits change, and every output is byte-identical to the Fortran
+of the same executable and to `--ww3`. That is step 2 with part of step 3, on one process;
+nothing has run on a GPU, and none of these parts is regtested yet (`kokkos/ports.tsv`)
+([WFIP-0005](../docs/WFIPs/WFIP-0005-device-resident-step.md)).
+
 Step 2 is where the OpenACC port of Ikuyajolu et al. (2023) stalled, because the state
 lived in Fortran modules; WAM6-GPU (Yuan et al. 2024) went the other way, refactoring the
 whole model so the fields stay on the device, and reported an order-of-magnitude gain on

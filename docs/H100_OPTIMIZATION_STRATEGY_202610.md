@@ -163,7 +163,10 @@ measured or did not.
    ST4 and `W3SNL3` ports are bit for bit on the CPU only because they reproduce gfortran's calls
    into glibc's libmvec (`PATCH.md` §7, the parity column; `CPU_GPU_SPLIT_202610.md`). Whether
    any of the transcendental kernels can be bit for bit on the GPU is unknown ⚠; for most it is
-   unlikely without a device copy of glibc's algorithms.
+   unlikely without a device copy of glibc's algorithms. *Update 2026-10-17:* such copies exist
+   and the kernels `WW_KOKKOS_ALL` runs call them on a CUDA build with `WW_KOKKOS_LIBM`, ST4's
+   libmvec loops included (#177, #178, [WFIP-0006](WFIPs/WFIP-0006-device-libm-bits.md)); no
+   device run has compared them with glibc yet ⚠.
 5. **`--fmad=false` costs throughput.** Contraction is off because it changes the bits
    (`AGENTS.md`, "Porting"). An FMA does a multiply and an add in one instruction; without it the
    GPU issues two. How much that costs on these kernels is not measured ⚠; the 2026-09-15 DIA
@@ -281,7 +284,9 @@ Each with what would resolve it.
    different implementation. *Resolves it:* an exhaustive comparison of libdevice against glibc
    over the 2^32 `float` inputs of each one-argument function (ADR-0001's sweep, run on the GPU
    under the owner's supervision), and for the rest a decision by the owner, before any GPU work,
-   on whether the GPU side is held to bits or to a tolerance (an L2 verdict).
+   on whether the GPU side is held to bits or to a tolerance (an L2 verdict). The owner chose a
+   tolerance in ADR-0014; since #178 the device calls copies of glibc's algorithms, and
+   `scripts/libm_bits.sh --device` is the comparison still to run ⚠.
 2. **Phase-1 copies dominate until the spectrum is resident.** On the CPU the Kokkos DIA run is
    already 43 % slower than the Fortran on `bench_small` (217.9 s against 152.7 s). *Resolves it:*
    phase 2, the whole step on the device; until then no GPU number is quoted.

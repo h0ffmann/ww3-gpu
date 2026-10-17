@@ -38,6 +38,12 @@ just bench-case --size small -o bench/case_small   # a self-contained WW3 benchm
 just bench                           # kernel proxies + real WW3 MPI scaling (bench/run_all.sh)
 ```
 
+A CUDA build also compiles `gen_tables` with the host g++ and runs it against the toolchain's
+`libmvec.so.1` (`WW_KOKKOS_LIBM`, on by default, #178): the device's copies of glibc's libm then
+follow the glibc build and the CPU of the build host, so the run host must match it ⚠ (not
+checked at run time; `kokkos/src/ww_kokkos/CMakeLists.txt`,
+[WFIP-0006](WFIPs/WFIP-0006-device-libm-bits.md)).
+
 [`VERSIONS.md`](../VERSIONS.md) collects every pinned version: these, the Docker image's and the
 CMake files'. What `just toolchain` prints on the lab machine `(v)` (2026-10-15, picasso at `be76132`, PR #126,
 `labs/pratico` with PT-Scotch, one METIS prefix and WW3's regtest data as packages):
