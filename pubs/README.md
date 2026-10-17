@@ -81,6 +81,48 @@ The translation backend reads `TRANSLATE_BASE_URL`, `TRANSLATE_API_KEY` and `TRA
 Locally, `http://127.0.0.1:11434/v1`, `ollama` and an Ollama model work. In CI the same three names
 are repository secrets; without them the step is skipped and the committed `pt/` is used.
 
+## The arXiv paper
+
+`paper/` is a short research paper, not the book: the Kokkos DIA byte-identical to the Fortran
+inside WW3 on the CPU, the `AF11` compiler finding, and a comparison with the FESOM2 port of
+arXiv:2606.11356 ([WFIP-0004](../docs/WFIPs/WFIP-0004-arxiv-preprint.md)). One file,
+[`paper/paper.md`](paper/paper.md), with an `arxiv:` block in its front matter (categories,
+licence, comments); its bibliography is [`paper/refs.bib`](paper/refs.bib) and the log of how each
+reference was checked, and how much of it was read, is [`paper/REFERENCES.md`](paper/REFERENCES.md).
+
+```bash
+just arxiv --check   # text checks only: markers, uncited keys, abstract length, categories, licence
+just arxiv --draft   # build with **[AUTHOR ...]** markers allowed
+just arxiv           # -> build/arxiv/ww3-gpu-dia-bit-for-bit.{pdf,tar.gz,txt}
+```
+
+The rules of the text:
+
+- every number appears in the paper's last table with the file that records it and the command
+  that reproduces it;
+- a claim about another work leans only on what the log says was read (`full text`, `abstract` or
+  `record`);
+- an author's decision the text waits for is a `**[AUTHOR: ...]**` marker, which the bundle
+  refuses;
+- the use of AI is stated in *Statements*.
+
+Before a version is submitted, a fresh agent reads only the PDF and answers ten questions about
+it, and its certain findings are fixed.
+
+Submitting is a person's act on arxiv.org:
+
+1. Run `just arxiv`.
+2. Upload `build/arxiv/<slug>.tar.gz`.
+3. Copy the fields from the `.txt`.
+4. Compare arXiv's compiled preview with the local PDF.
+
+A first submission to physics.ao-ph needs an endorsement. A later version is a **replacement** on
+the arXiv user page, with a new tarball: arXiv makes it v2, v3, and every version stays public.
+Not every weekly release is a version; a version is a result a reader would notice (a new routine
+regtested, a GPU run). When v1 is announced, its arXiv DOI (`10.48550/arXiv.<id>`), read from
+DataCite that day, goes into `.zenodo.json` (`isVariantFormOf`), `CITATION.cff` and both READMEs,
+so every later Zenodo version points at it.
+
 ## Explaining the vocabulary
 
 `/eli5 <topic>` explains any of this (the action balance equation, a switch file, a Kokkos backend,

@@ -436,6 +436,12 @@ sub-sync: submodule-update src-sync ww4-sync
 pubs-shell:
     nix develop "{{justfile_directory()}}"
 
+# The arXiv paper (pubs/paper/) -> build/arxiv/<slug>.pdf, .tar.gz (the source arXiv compiles) and .txt (the form fields).
+# `just arxiv --draft` allows **[AUTHOR ...]** markers; `just arxiv --check` runs the text checks only.
+arxiv *args:
+    python3 scripts/refs_check.py --strict pubs/paper/refs.bib pubs/paper/REFERENCES.md
+    nix develop "{{justfile_directory()}}" --command python3 scripts/arxiv_bundle.py {{args}}
+
 # Course book PDF from course/*.md -> build/ww3-lab-course.pdf.
 book style="abnt":
     nix develop "{{justfile_directory()}}" --command scripts/build_pdf.sh book {{style}}

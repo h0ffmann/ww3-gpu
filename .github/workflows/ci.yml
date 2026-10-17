@@ -38,6 +38,11 @@ jobs:
       - name: Every reference of the proposal has a row and a verdict in its REFERENCES.md
         run: python3 scripts/refs_check.py --self-test && python3 scripts/refs_check.py
 
+      - name: The arXiv paper's references pass the strict gate, and its bundle checks pass
+        run: |
+          python3 scripts/refs_check.py --strict pubs/paper/refs.bib pubs/paper/REFERENCES.md
+          python3 scripts/arxiv_bundle.py --self-test
+
       - name: The slip box keeps its rules (NOTES.md)
         run: python3 scripts/notes_check.py --self-test && python3 scripts/notes_check.py
 

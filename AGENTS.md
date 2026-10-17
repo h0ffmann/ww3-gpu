@@ -58,7 +58,8 @@ the answer ([ADR-0003](docs/ADRs/ADR-0003-repository-is-a-book.md),
 [WFIP-0002](docs/WFIPs/WFIP-0002-lab-as-a-book.md)). The repository is the book's source and its
 evidence: the 17 lessons of `course/` are its chapters, built into a PDF on every merge; a
 Nix-pinned Fortran/MPI/NetCDF toolchain; a C++/Kokkos port of the DIA source term (`W3SNL1`) that
-matches the Fortran bit for bit on Serial, OpenMP and CUDA; benchmarks, plans, decisions and the
+matches the Fortran bit for bit inside WW3 on the CPU (WW3's regtests; not yet run on a GPU inside
+WW3); benchmarks, plans, decisions and the
 UFRJ/DEL project proposal co-advised at LabECO/UFSC. The lab's rules below do not change because
 the repository is read as a book; a chapter that contradicts `kokkos/PORT_STATUS.md` is a bug in
 the chapter. `README.md` has the study areas and their state; `README.pt-BR.md` is its Portuguese mirror, and a change in one

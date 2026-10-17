@@ -646,6 +646,7 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | LGPL-3.0-or-later | GNU Lesser General Public License, version 3 or later `(v)` [README.md](../README.md#licensing) | WW3's licence, so the kernels translated from it carry it too; the rest of the repo is MIT. | [README.md](../README.md), [kokkos/README.md](../kokkos/README.md) |
 | `just release` | `scripts/release.sh`: tag an up-to-date `main` as `vX.Y.Z` (default: the next patch) and push; `weekly-release.yml` runs it every Friday at 09:00 BRT `(v)` [justfile](../justfile) | `release.yml` publishes the GitHub release and Zenodo mints its DOI. | [README.md](../README.md) |
 | SWHID | Software Heritage persistent IDentifier `(v)` [swh-save.yml](../.github/workflows/swh-save.yml) | The intrinsic identifier (`swh:1:…`) Software Heritage gives an archived snapshot, release or file; `swh-save.yml` requests a Save Code Now of this repository on each release, and Zenodo shows the SWHID of its own deposit. | [.claude/skills/release/SKILL.md](../.claude/skills/release/SKILL.md) |
+| arXiv / `just arxiv` | the open preprint server; `just arxiv` is `scripts/arxiv_bundle.py` `(v)` [info.arxiv.org/help/replace.html](https://info.arxiv.org/help/replace.html), read 2026-10-16 | Hosts the paper in `pubs/paper/`; a new version is a replacement (v2, v3) and every version stays public. `just arxiv` builds the PDF, the source tarball arXiv compiles and the form fields, and refuses an unchecked or uncited reference or a `**[AUTHOR ...]**` marker; submission is a person's act. | [pubs/README.md](../pubs/README.md#the-arxiv-paper), [WFIP-0004](WFIPs/WFIP-0004-arxiv-preprint.md) |
 
 ## Remissive index
 
@@ -681,6 +682,7 @@ Every term above, alphabetically, with the section it lives in.
 - Antigravity / Consensus / NotebookLM: [HPC and software](#hpc-and-software)
 - ASan: [HPC and software](#hpc-and-software)
 - ASan / UBSan: [HPC and software](#hpc-and-software)
+- arXiv / `just arxiv`: [Citation and licensing](#citation-and-licensing)
 - ASCII: [WW3 switches](#ww3-switches)
 - ASPAR_JAC / B_JAC / CAD_THE / CAS_SIG / CWNB_SIG_M2 / U_JAC / ASPAR_DIAG_ALL: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - ASTR / SETVUF_FAST / VUF / TIDE_SET_INDICES / TIDE_PREDICT / TIDE_PREDICT_ONLY: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)

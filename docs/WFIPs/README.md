@@ -41,6 +41,7 @@ The six specific objectives of the proposal and the schedule rows that deliver t
 | [WFIP-0001](WFIP-0001-weathernext3-wind-rtx4090.md) | WW3 samples driven by WeatherNext 3 wind on an RTX 4090 box | Postponed (2026-10-15, ADR-0011) | 2026-10-08 | D1, D6 | M | do next | 0/6 |
 | [WFIP-0002](WFIP-0002-lab-as-a-book.md) | The lab as a book: compiled from the repository, built in CI, released with each version | Partially implemented (item 1 of 7, 2026-10-09) | 2026-10-08 | D6 | L | do next, in slices | 1/7 |
 | [WFIP-0003](WFIP-0003-kokkos-regtest-matrix.md) | The Kokkos DIA through WW3's own regtest harness, on the h0ffmann/WW3 fork | Implemented (2026-10-15) | 2026-10-14 | D4, D5 | M | do next | 7/7 |
+| [WFIP-0004](WFIP-0004-arxiv-preprint.md) | An arXiv preprint of the bit-for-bit DIA, built and gated from the repository | Draft | 2026-10-16 | D6 | M | do when the clean matrix re-run lands | 3/8 |
 <!-- wfip-index:end -->
 
 ## Coverage
@@ -56,7 +57,7 @@ late; it means its work has not been designed here yet.
 | D3 | none yet | 0/0 |
 | D4 | [WFIP-0003](WFIP-0003-kokkos-regtest-matrix.md) | 1/1 |
 | D5 | [WFIP-0003](WFIP-0003-kokkos-regtest-matrix.md) | 1/1 |
-| D6 | [WFIP-0001](WFIP-0001-weathernext3-wind-rtx4090.md), [WFIP-0002](WFIP-0002-lab-as-a-book.md) | 0/2 |
+| D6 | [WFIP-0001](WFIP-0001-weathernext3-wind-rtx4090.md), [WFIP-0002](WFIP-0002-lab-as-a-book.md), [WFIP-0004](WFIP-0004-arxiv-preprint.md) | 0/3 |
 <!-- wfip-coverage:end -->
 
 ## Dependency graph

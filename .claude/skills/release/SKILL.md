@@ -62,6 +62,16 @@ weekly release; a refused request is a warning, since Software Heritage also cra
 - The README "How to cite" badge uses the concept DOI (it always resolves to the latest
   version), not a version DOI.
 
+## The arXiv paper
+
+The Zenodo record archives every release; the arXiv paper in `pubs/paper/` is versioned by hand,
+because arXiv has no release webhook and its automated deposit needs arXiv's permission. When a
+release carries a result the paper should report, run `just arxiv` and upload the tarball as a
+**replacement** (`pubs/README.md`, "The arXiv paper"); never for a release that changes nothing a
+reader of the paper would notice. An agent never submits or replaces: an arXiv version, like a
+DOI, cannot be removed. The arXiv DOI enters `.zenodo.json` as `isVariantFormOf` once it was read
+from DataCite that day.
+
 ## What moved against the proposal
 
 The index [`docs/WFIPs/README.md`](../../../docs/WFIPs/README.md) travels inside every archived
