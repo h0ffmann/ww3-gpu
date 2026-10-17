@@ -303,6 +303,12 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | W3IOGRMD / W3IOGR | "Reading and writing of the model definition file" `(v)` | Reads `mod_def.ww3`; also calls `INSNL1` (`w3iogrmd.F90:1802`). | [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md) |
 | W3IOGOMD / W3OUTG / W3IOGO | "Gridded output of mean wave parameters": fill output arrays / read-write `out_grd.ww3` `(v)` | Integral parameters (`Hs`, `Tp`, …) from the spectrum; ranked #8 for the port. | [docs/AGENTS_KOKKOS_202609.md](AGENTS_KOKKOS_202609.md) |
 | W3IOPOMD / W3IOPO, W3IORSMD / W3IORS, W3IOBCMD / W3IOBC, W3IOTRMD / W3IOTR | point output / restart files / boundary conditions / track output read-write `(v)` | The I/O bucket (`w3io*`) of the profile. | [course/09-benchmark-profile-compile-run.md](../course/09-benchmark-profile-compile-run.md) |
+| LRECL / NSIZE (W3IORS) | the record length in bytes of `restart.<ext>`, `MAX(4*NSPEC, 84)`, and the values per record, `LRECL/4` `(v)` `WW3-noaa/model/src/w3iorsmd.F90:459-462` at `03adda91` | `W3IORS` writes a stream file in fixed records of `LRECL` bytes at `POS = 1 + LRECL*(NREC-1)`; the 84-byte floor does not count the 800 bytes of `FLOGRR` in the header. | [kokkos/port_report/W3IORS_KOKKOS.md](../kokkos/port_report/W3IORS_KOKKOS.md) |
+| RSTYPE | "Integer identifyng restart type" `(v)` `w3gdatmd.F90:148`; values 0 cold, 1 fetch-limited (WIND, FTCH), 2 full, 3 writing, 4 calm `(v)` `w3iorsmd.F90:578-586`, `:546`, `:610` | Set by `W3IORS` from the file's TYPE, or 4 when the file to read does not open (`LN1`); `W3INIT` acts on it. | [kokkos/port_report/W3IORS_KOKKOS.md](../kokkos/port_report/W3IORS_KOKKOS.md) |
+| OARST / FLOGRR | `OARST`: "Add fields needed for OASIS coupling in restart" `(v)` `w3iorsmd.F90:68-69`; `FLOGRR`: "FLags for optional coupling restart (2D)" `(v)` `w3odatmd.F90:153` | `OARST` (set to `ANY(FLOGR)` by `ww3_shel.F90:1944`) makes a full restart carry the output fields that `FLOGRR(NOGRP,NGRPP)` selects, after the FPIS records and without `POS=`. | [kokkos/port_report/W3IORS_KOKKOS.md](../kokkos/port_report/W3IORS_KOKKOS.md) |
+| NAPRST / IOSTYP / IFILE4 | "Proc. dealing with restart output" / "Output data server type" / "File number for output files" `(v)` `w3odatmd.F90:110`, `:71`, `:217` | `W3IORS` opens and writes the header only on NAPRST when `IOSTYP > 0`; `IFILE4 > 0` names the file `restartNNN.<ext>`. | [kokkos/port_report/W3IORS_KOKKOS.md](../kokkos/port_report/W3IORS_KOKKOS.md) |
+| FPIS / USTDIR / ASF | "Input peak frequencies" / "Friction velocity direction" / "Stability correction factor" `(v)` `w3wdatmd.F90:89`, `:87-88` | Per-point fields of a full restart; a cold start sets `FPIS = DUMFPI` (`SIG(NK)` from `W3INIT`, `w3initmd.F90:978`) and `ASF = 1` (`w3iorsmd.F90:1482-1483`). | [kokkos/port_report/W3IORS_KOKKOS.md](../kokkos/port_report/W3IORS_KOKKOS.md) |
+| W3DIMW | "Set dimensions of arrays" `(v)` `w3wdatmd.F90:100` (the `W3WDATMD` arrays `VA`, `WLV`, `ICE`, `UST`, ..., `w3wdatmd.F90:491`, `:561-573`) | Called by `W3IORS` when `.NOT.DINIT` (`w3iorsmd.F90:449-455`); a hook of the port. | [kokkos/port_report/W3IORS_KOKKOS.md](../kokkos/port_report/W3IORS_KOKKOS.md) |
 | W3PARTMD / W3PART | "Spectral partitioning according to the watershed method" / "Interface to watershed partitioning routines" `(v)` | The wind-sea/swell partition behind `PHS`, `PTP`, `PDIR`. | [course/06-output.md](../course/06-output.md) |
 | PTSORT / PTNGHB / PT_FLD / PTMEAN | the routines W3PART calls: "sorts the image data in ascending order", "computes the nearest neighbors for each grid" point, "does incremental flooding of the image", "Compute mean parameters per partition" `(v)` (`w3partmd.F90` headers at `03adda91`) | The watershed algorithm's pieces; each is translated in its own header `kokkos/src/ww_kokkos/part_*.hpp`. | [kokkos/port_report/PT_FLD_KOKKOS.md](../kokkos/port_report/PT_FLD_KOKKOS.md) |
 | PTMETH / PTFCUT / IHMAX / HSPMIN / WSMULT | W3ODATMD's partitioning settings: the method, 1 to 5, read from the namelist; the cutoff frequency of methods 4 and 5; "Number of discrete spectral levels"; "Minimum significant height per part."; "Multiplier for wind sea boundary." `(v)` (`w3partmd.F90:197-209`, `w3odatmd.F90:265-269`) | Per output set; `ww3_grid` sets `IHMAX = MAX(50, IHM)` and `HSPMIN = MAX(0.0001, HSPM)` (`w3gridmd.F90:3140-3141`). | [kokkos/port_report/W3PART_KOKKOS.md](../kokkos/port_report/W3PART_KOKKOS.md) |
@@ -527,6 +533,9 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | Developer Program / Academic Grant Program / DLI | NVIDIA's free developer account, its faculty-only research grant (H100 hours or RTX PRO GPUs) and its Deep Learning Institute for educators `(v)` [docs/W3SDS4_TRITON_PLANO_202610.pt.md](W3SDS4_TRITON_PLANO_202610.pt.md) | What can be asked for free: the account today, the grant through the advisor when it reopens, teaching material without GPUs. | [docs/W3SDS4_TRITON_PLANO_202610.pt.md](W3SDS4_TRITON_PLANO_202610.pt.md) |
 | Antigravity / Consensus / NotebookLM | Google's agent IDE (with its CLI, `agy`, which replaced Gemini CLI for Google AI Pro accounts on 2026-06-18 `(v)` 2026-10-09; it reads `AGENTS.md` and `.agents/skills/`), a peer-reviewed literature search with an MCP server, and Google's notebook over uploaded sources ⚠ [PR #41](https://github.com/h0ffmann/ww3-gpu/pull/41) | Research and agent tooling evaluated next to Claude Code. | [README.md](../README.md) |
 | Graphify / tree-sitter | a tool that parses a codebase into a queryable graph (`Graphify-Labs/graphify`, PyPI `graphifyy`, Apache-2.0, 0.9.85 tried) and the incremental parser library it uses for code `(v)` [docs/log/2026-10-11-graphify-on-ww3.md](log/2026-10-11-graphify-on-ww3.md), 2026-10-11 | Its code pass makes no model call; on WW3 it gets module `USE` edges right only on preprocessed sources and resolves no call across files, so ADR-0007 uses it to find files, not as evidence. | [docs/ADRs/ADR-0007-graphify-ww3-locator.md](ADRs/ADR-0007-graphify-ww3-locator.md) |
+| `ACCESS='STREAM'` | Fortran 2003 stream access: an unformatted file as a byte sequence with no record markers, positioned by `POS=` in bytes from 1 `(v)` gfortran 16.2 program, 2026-10-16 | How `W3IORS` opens `restart.<ext>`; libgfortran does not truncate an existing file on `OPEN` without `STATUS` or after a `WRITE`. | [kokkos/src/ww_kokkos/iors_stream.hpp](../kokkos/src/ww_kokkos/iors_stream.hpp), [kokkos/port_report/W3IORS_KOKKOS.md](../kokkos/port_report/W3IORS_KOKKOS.md) |
+| IOSTAT / `LIBERROR_*` | the Fortran I/O status specifier, and libgfortran's codes for it (`LIBERROR_END` -1, `LIBERROR_BAD_OPTION` 5002, `LIBERROR_BAD_ACTION` 5007; an OS error gives `errno`) `(v)` `gcc/fortran/libgfortran.h`, gcc 16.2.0, and the gfortran program | `EXTIOF` exits with `ERRCODE+1` for IOSTAT > 0 and `ERRCODE` for < 0 on a READ, `ERRCODE` for any nonzero IOSTAT on a WRITE (`w3servmd.F90:895-923`). | [kokkos/src/ww_kokkos/iors_stream.hpp](../kokkos/src/ww_kokkos/iors_stream.hpp), [kokkos/src/ww_kokkos/iogr_unformatted.hpp](../kokkos/src/ww_kokkos/iogr_unformatted.hpp) |
+| `FMNMX` | the SASS minimum/maximum instruction of NVIDIA GPUs ⚠ (from `cuobjdump -sass` output, not NVIDIA's documentation) | What `nvcc` makes of `v > 0 ? v : 0` in `iors_va_clamp`; a NaN gives the other operand. | [kokkos/port_report/W3IORS_KOKKOS.md](../kokkos/port_report/W3IORS_KOKKOS.md) |
 
 ## This repository's own names
 
@@ -659,6 +668,9 @@ Every term above, alphabetically, with the section it lives in.
 
 - `02-regional-real-forcing`: [This repository's own names](#this-repositorys-own-names)
 - 7.14: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- `ACCESS='STREAM'`: [HPC and software](#hpc-and-software)
+- `FMNMX`: [HPC and software](#hpc-and-software)
+- `LIBERROR_*`: [HPC and software](#hpc-and-software)
 - A2A / `para:*`: [This repository's own names](#this-repositorys-own-names)
 - ABNT: [HPC and software](#hpc-and-software)
 - ADA89: [HPC and software](#hpc-and-software)
@@ -688,6 +700,7 @@ Every term above, alphabetically, with the section it lives in.
 - ASan: [HPC and software](#hpc-and-software)
 - ASan / UBSan: [HPC and software](#hpc-and-software)
 - ASCII: [WW3 switches](#ww3-switches)
+- ASF: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - ASPAR_JAC / B_JAC / CAD_THE / CAS_SIG / CWNB_SIG_M2 / U_JAC / ASPAR_DIAG_ALL: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - ASTR / SETVUF_FAST / VUF / TIDE_SET_INDICES / TIDE_PREDICT / TIDE_PREDICT_ONLY: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - ASTR: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -927,6 +940,7 @@ Every term above, alphabetically, with the section it lives in.
 - FLD2: [WW3 switches](#ww3-switches)
 - float32: [HPC and software](#hpc-and-software)
 - FLOGRD / FLOGR2 / FLGRDALL: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- FLOGRR: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - FLOLOC / FLPART: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - FLX0: [WW3 switches](#ww3-switches)
 - FLX0–FLX5: [WW3 switches](#ww3-switches)
@@ -948,6 +962,7 @@ Every term above, alphabetically, with the section it lives in.
 - FP32 / FP64 / float32: [HPC and software](#hpc-and-software)
 - FP64: [HPC and software](#hpc-and-software)
 - FPI: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- FPIS: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - FREQ1 (FR1): [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - FreqShiftMethod / IMEM: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - frozen reference run: [This repository's own names](#this-repositorys-own-names)
@@ -1006,6 +1021,7 @@ Every term above, alphabetically, with the section it lives in.
 - IC3PRECALC_CHENG: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - IC3TABLE_CHENG: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - ICL DAP: [HPC and software](#hpc-and-software)
+- IFILE4: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - IJKCel3: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - IJKUFc: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - IJKVFc: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1030,6 +1046,8 @@ Every term above, alphabetically, with the section it lives in.
 - IOBDP: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - IOBDP_LOC: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - IOBP / IOBPD / IOBPA (and their `_LOC` copies): [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- IOSTAT: [HPC and software](#hpc-and-software)
+- IOSTYP: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - IRANGE / RRANGE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - IRANGE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - IS2DISP: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1069,6 +1087,7 @@ Every term above, alphabetically, with the section it lives in.
 - LFACTOR / TAU_WAVE_ATMOS / TAUWINDS: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - LFACTOR: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - libmvec / `_ZGVbN4vv_powf`: [This repository's own names](#this-repositorys-own-names)
+- LRECL: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - LSLOC: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - LSOL / LDSOL / LSOLC / LDSOLC / LDSOLL / USOL / UDSOL / USOLC / UDSOLC: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - LSOL: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1084,6 +1103,7 @@ Every term above, alphabetically, with the section it lives in.
 - N1MAX: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - NAPFLD / FLOUT / NRQGO: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - NAPROC / UNDEF: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- NAPRST: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - NITTIN / CINXSI / CD_MAX / CAP_ID / FLX4A0: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - NITTIN: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - NK10Hz / IK10Hz / SIG10Hz / DSII10Hz: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1095,6 +1115,8 @@ Every term above, alphabetically, with the section it lives in.
 - npa / iplg: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - NR_CORR: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - NRLv: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- NSIZE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- OARST: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - optionCall: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - OUTFLAGS / NXXX / X* arrays: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - PDLIB_ABORT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1114,6 +1136,7 @@ Every term above, alphabetically, with the section it lives in.
 - QSPLIT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - Record marker: [This repository's own names](#this-repositorys-own-names)
 - RRANGE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- RSTYPE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - RUNRC: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - SECONDHH / VMIN_D / VPLUS_D: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - SECONDHH: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1179,6 +1202,7 @@ Every term above, alphabetically, with the section it lives in.
 - UPPDIR: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - USOL: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - USOLC: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- USTDIR: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - VBR: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - VBRMV: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - VmFunc: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1189,6 +1213,7 @@ Every term above, alphabetically, with the section it lives in.
 - W3ADDIG: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3BETA: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3CFLUG / UG_GRADIENTS: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3DIMW: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3DIMX / W3DIMUG: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3DMO5: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3FLDG / W3FLDO: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)

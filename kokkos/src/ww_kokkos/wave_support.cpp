@@ -73,6 +73,7 @@
 #include "iogo_w3flgrdupdt.hpp"
 #include "iogo_w3outg.hpp"
 #include "iogr_w3iogr.hpp"
+#include "iors_w3iors.hpp"
 #include "is2_funcd_fderiv.hpp"
 #include "is2_funcd_fval.hpp"
 #include "is2_w3fsd_dave.hpp"
@@ -287,6 +288,9 @@ void ww_support_instantiate() {
   (void)&ww::iogr::iogr_encode_maptmp<E>;
   (void)&ww::iogr::iogr_mapsf3<E>;
   (void)&ww::iogr::w3iogr;
+  (void)&ww::iors::iors_va_clamp<E>;
+  (void)&ww::iors::iors_va_col0_zero<E>;
+  (void)&ww::iors::w3iors<E>;
   (void)&ww::wave::w3wave::w3wave<E>;
   (void)&ww::updt::w3ulev<E>;
   (void)&ww::pdlib::do_output_exchanges<E>;
