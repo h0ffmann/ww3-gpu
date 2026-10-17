@@ -195,11 +195,11 @@ drun-cuda *args:
 # NOAA's WW3 (--ww3, the Fortran on the CPU) against --ww3-gpu on CUDA (--kokkos gpu: W3SRCE on
 # Kokkos, the rest of WW3 in Fortran): parity first, then <runs> runs of each and their medians.
 # Asks the supervising human for "yes" (AGENTS.md). `dperf-ww3-gpu` is the same in the GPU image.
-perf-ww3-gpu case="full" runs="3":
-    bash scripts/ww3-gpu.sh --ww3-gpu "$1" --gpu --repeat "$2"
+perf-ww3-gpu case="full" runs="3" parts="gpu":
+    bash scripts/ww3-gpu.sh --ww3-gpu "$1" --gpu --repeat "$2" --kokkos "$3"
 
-dperf-ww3-gpu case="full" runs="3":
-    bash scripts/docker.sh run-cuda --ww3-gpu "$1" --gpu --repeat "$2"
+dperf-ww3-gpu case="full" runs="3" parts="gpu":
+    bash scripts/docker.sh run-cuda --ww3-gpu "$1" --gpu --repeat "$2" --kokkos "$3"
 
 # `just smoke-ww3-gpu gpu` in the GPU image; asks the supervising human for "yes" (AGENTS.md)
 dsmoke-ww3-gpu-cuda:

@@ -32,7 +32,9 @@ just bench                                 # or just do everything (builds the g
 
 ### WW3 against ww3-gpu, end to end
 
-`just perf-ww3-gpu [case] [runs]` (GPU, the owner's supervised run; `--cpu` through
+`just perf-ww3-gpu [case] [runs] [parts]` (GPU, the owner's supervised run; `parts` is `gpu`, SRCE
+alone, by default, or `resident`, SRCE with the PR3/UQ propagation so the spectrum stays on the
+device between output times; `--cpu` through
 `scripts/ww3-gpu.sh --ww3-gpu <case> --cpu --repeat N` for the OpenMP backend) times `ww3_shel`
 of pure NOAA WW3 (`--ww3`) against ww3-gpu, both built with `switches/switch_lab_ompg`. It first
 compares the Kokkos run with the Fortran of the same executable and with `--ww3` (`nccmp-tol`),
