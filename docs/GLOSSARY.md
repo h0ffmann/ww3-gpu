@@ -417,6 +417,11 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | W3UTAU / W3URHO / W3UIC1 | "Interpolate atmosphere momentum fields to the given time", "Interpolate air density field to the given time", "Update ice thickness in the wave model" `(v)` `w3updtmd.F90:835`, `:2626`, `:1555` | Forcing updates in `W3WAVE` not translated yet; hooks of the Kokkos `W3WAVE`. | [kokkos/port_report/W3WAVE_KOKKOS.md](../kokkos/port_report/W3WAVE_KOKKOS.md) |
 | W3UBPT | "Update spectra at the active boundary points" `(v)` `w3updtmd.F90:1329` | Hooks of the Kokkos `W3WAVE`. | [kokkos/port_report/W3WAVE_KOKKOS.md](../kokkos/port_report/W3WAVE_KOKKOS.md) |
 | W3IOPE / W3IOSF / W3CPRT | "Extract point output data and store in output COMMONs", "Write partitioned spectral data to file", "Partitioning of spectra into fields for all grid points that are locally stored" `(v)` `w3iopomd.F90:873`, `w3iosfmd.F90:360`, `:109` | The output and boundary I/O `W3WAVE` calls; hooks of the Kokkos `W3WAVE`. | [kokkos/port_report/W3WAVE_KOKKOS.md](../kokkos/port_report/W3WAVE_KOKKOS.md) |
+| MAPFS | the sea-point index of a grid point, `MAPFS(IY,IX)`; "Some array start at 0 because MAPFS(IY,IX)=0 for missing points" `(v)` `w3gdatmd.F90:1723`, `:1735` | `0` on land, so `W3IOPE` reads element 0 of the `(0:NSEA)` arrays for a land corner, with weight 0. | [kokkos/port_report/W3IOPE_KOKKOS.md](../kokkos/port_report/W3IOPE_KOKKOS.md) |
+| LPDLIB | "Logical for using the PDLIB library" `(v)` `constants.F90:102` | A run-time flag, `.FALSE.` unless WW3 was built with `PDLIB` (`w3initmd.F90:642-645`); `W3IOPE` interpolates `ICEFO` with a different sum under it. | [kokkos/port_report/W3IOPE_KOKKOS.md](../kokkos/port_report/W3IOPE_KOKKOS.md) |
+| SPPNT | "Point output buffer" `(v)` `w3adatmd.F90:306`, allocated `SPPNT(NTH,NK,4)` `:1451` | The four corner spectra `W3IOPE` copies from `A` (as `SP`) before interpolating them. | [kokkos/port_report/W3IOPE_KOKKOS.md](../kokkos/port_report/W3IOPE_KOKKOS.md) |
+| IL / IW / II | "Number of land points in interpolation box for output point", "Id. water", "Id. ice" `(v)` `w3odatmd.F90:169-172` | Fields of `OUTPTS(IMOD)%OUT2` that `W3IOPE` counts from `MAPSTA` of the four corners. | [kokkos/port_report/W3IOPE_KOKKOS.md](../kokkos/port_report/W3IOPE_KOKKOS.md) |
+| DPO / WAO / WDO / ASO / CAO / CDO / ICEO / ICEHO / ICEFO / SPCO | "Interpolated depths", "... wind speeds", "... wind directions", "... air-sea temp. diff.", "... current speeds", "... current directions", "... ice concentration", "... ice thickness", "... ice floe", "Output spectra" `(v)` `w3odatmd.F90:176-188` | Fields of `OUTPTS(IMOD)%OUT2` that `W3IOPE` fills at each output time; `SPCO(NSPEC,NPT)` is F(f,θ). | [kokkos/port_report/W3IOPE_KOKKOS.md](../kokkos/port_report/W3IOPE_KOKKOS.md) |
 | W3CFLUG / UG_GRADIENTS | "Computes the max CFL number for output purposes" / "Calculate gradients at a point via its connection" `(v)` `w3profsmd.F90:274`, `w3triamd.F90:2021` | Unstructured-grid callees of `W3WAVE`; hooks. | [kokkos/port_report/W3WAVE_KOKKOS.md](../kokkos/port_report/W3WAVE_KOKKOS.md) |
 | CALC_U3STOKES / CALC_WBT / SECONDHH | Stokes drift output parameters, "Estimate the dominant wave breaking probability b_T" (Babanin et al., 2001), "Computation of second order harmonics" `(v)` `w3iogomd.F90:4112`, `:4367`, `:4622` | Callees of `W3OUTG`; hooks or caller inputs of the Kokkos `W3OUTG`. `CALC_WBT` is not `CALC_WBTv2`. | [kokkos/port_report/W3OUTG_KOKKOS.md](../kokkos/port_report/W3OUTG_KOKKOS.md) |
 | FLOLOC / FLPART | `W3OUTG`'s local output flags and the partitioned-output argument `(v)` `w3iogomd.F90:1201-2380` | Select which output groups `W3OUTG` computes. | [kokkos/port_report/W3OUTG_KOKKOS.md](../kokkos/port_report/W3OUTG_KOKKOS.md) |
@@ -867,6 +872,7 @@ Every term above, alphabetically, with the section it lives in.
 - DIA format: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - DLASSQ: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - DNRM2: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- DPO / WAO / WDO / ASO / CAO / CDO / ICEO / ICEHO / ICEFO / SPCO: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - DPYTHAG: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - DRFUN_DBLE_CHENG: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - DRFUN_QUAD_CHENG: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1068,6 +1074,7 @@ Every term above, alphabetically, with the section it lives in.
 - IJKVFc: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - IK10Hz: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - IKN: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- IL / IW / II: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - ILU0 / ILUT / QSPLIT / LUSOL / LUTSOL: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - ILU0: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - ILUT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1133,6 +1140,7 @@ Every term above, alphabetically, with the section it lives in.
 - LFACTOR / TAU_WAVE_ATMOS / TAUWINDS: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - LFACTOR: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - libmvec / `_ZGVbN4vv_powf`: [This repository's own names](#this-repositorys-own-names)
+- LPDLIB: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - LRECL: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - LSLOC: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - LSOL / LDSOL / LSOLC / LDSOLC / LDSOLL / USOL / UDSOL / USOLC / UDSOLC: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1140,6 +1148,7 @@ Every term above, alphabetically, with the section it lives in.
 - LSOLC: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - LUSOL: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - LUTSOL: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- MAPFS: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - MAPSMC: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - MAPST2 / MAPWN: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - MAPSTA_LOC / INDEX_MAP / NBND_MAP / MAPSTA_HACK: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1220,6 +1229,7 @@ Every term above, alphabetically, with the section it lives in.
 - SMOOTH_K: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - SPARSKIT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - SPATIAL_GRID / NVECTRI / COORDMAX: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- SPPNT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - SRCTRM: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - STEXU / STEYU / STEDU: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - STME21: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
