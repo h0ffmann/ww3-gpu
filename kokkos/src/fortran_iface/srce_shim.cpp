@@ -265,7 +265,12 @@ void run_batch(GridCtx& g, const st4::Params& q, const st4::Fields& f, const snl
   Kokkos::deep_copy(ex, head(g.b_tauice, m * 2), HostUnmanaged<float>(tauice + o0 * 2, m * 2));
   t_in.stop();
 
-  using Policy = Kokkos::TeamPolicy<ExecSpace>;
+  // Dynamic, as W3WAVE's own loop over the sea points (SCHEDULE (DYNAMIC,1)): the cost of a point
+  // varies (ice, wind, the DIA's frequency range), and a hybrid CPU's P and E cores run at
+  // different speeds, so a static split leaves threads waiting at the end of the launch. Each
+  // point owns its slices of every array and its team scratch, so which thread runs it does not
+  // change a bit. CUDA ignores the schedule.
+  using Policy = Kokkos::TeamPolicy<ExecSpace, Kokkos::Schedule<Kokkos::Dynamic>>;
   using Member = typename Policy::member_type;
   const size_t scratch = snl1::snl1_team_scratch_bytes<ExecSpace>(nc, nt);
   Policy policy(n, Kokkos::AUTO);
