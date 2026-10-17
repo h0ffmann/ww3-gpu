@@ -161,7 +161,14 @@ void print_count() {
                  kInName[k], g_in_copies[k].load(), g_in_copy_bytes[k].load(), g_in_same[k].load());
 }
 
-constexpr long long kBatchMibDefault = 1024;
+// The default cap: a whole time step in one launch on a backend that reads host memory; smaller
+// chunks on a device, so that one launch stays well under the display watchdog of a GPU that also
+// drives a screen (the RTX 4090 here). The chunk size changes the launches, not the bits: each
+// team computes its own point (PATCH.md section 19, where the time per launch is estimated ⚠).
+constexpr long long kBatchMibDefault =
+    Kokkos::SpaceAccessibility<Kokkos::DefaultExecutionSpace, Kokkos::HostSpace>::accessible
+        ? 1024
+        : 128;
 
 /// The batch buffers' cap in bytes: WW_KOKKOS_SRCE_BATCH_MIB, a positive
 /// integer, else the default (a value that does not parse is reported once).

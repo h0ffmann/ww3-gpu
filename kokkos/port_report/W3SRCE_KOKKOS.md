@@ -89,8 +89,9 @@ does; otherwise the loop runs as before (v, read in the fork). The C ABI is `ww_
   holds a `static`.
 - **Memory.** Per point the batch keeps about 56 KB on the device for `bench_small` (NK = NTH =
   24: the 12 624-float work of `srce_work_reals`, the spectrum, the inputs and outputs). The
-  buffers hold at most `WW_KOKKOS_SRCE_BATCH_MIB` MiB (default 1024, about 19 000 such points); a
-  step with more points runs in chunks, one launch each. They are allocated outside the kernel,
+  buffers hold at most `WW_KOKKOS_SRCE_BATCH_MIB` MiB (default 1024, about 19 000 such points, on
+  Serial and OpenMP; 128, about 2 400, on a device since 2026-10-17, to keep one launch under the
+  display watchdog, PATCH.md section 19 ⚠); a step with more points runs in chunks, one launch each. They are allocated outside the kernel,
   kept between calls and grown on demand. The Fortran pack buffers are `SAVE` and sized `NSEAL`.
 - **Counters.** `WW_KOKKOS_SRCE_COUNT=1` prints, besides the spectra, `W3SRCE batched calls`,
   `launches` and `points`.
@@ -103,6 +104,8 @@ Checked 2026-10-17 on the CPU (Kokkos OpenMP backend; Intel Core i9-14900, 32 th
 | `bash scripts/ww3-gpu.sh --ww3-gpu smoke --cpu --kokkos SRCE` | `switch_lab_ompg` | 2 161 / 2 161 / 2 161 | byte-identical, `nccmp-tol` PASS | `out_grd.ww3`, `out_pnt.ww3`, `restart.ww3` equal (`cmp`), `nccmp-tol` PASS |
 | `... --ww3-gpu full --cpu --kokkos SRCE` | `switch_lab_ompg` | 25 / 25 / 230 100 | byte-identical, PASS | `out_grd.ww3` equal, PASS |
 | the same with `WW_KOKKOS_SRCE_BATCH_MIB=64` | `switch_lab_ompg` | 25 / 200 / 230 100 | byte-identical, PASS | `out_grd.ww3` equal, PASS |
+| `WW_KOKKOS_SRCE_BATCH_MIB=128 ... full --cpu --kokkos resident` (the device default, 2026-10-17) | `switch_lab_ompg`, `switch_lab_shrd` | 25 / 100 / 230 100 | byte-identical, PASS | `out_grd.ww3` equal, PASS |
+| the same, coast | `switch_lab_ompg`, `switch_lab_shrd` | 72 / 144 / 258 830 | byte-identical, PASS | `out_grd.ww3`, `out_pnt.ww3` equal, PASS |
 | `WW3GPU_SWITCH=switch_lab_shrd ... smoke ...` | `switch_lab_shrd` | 2 161 / 2 161 / 2 161 | byte-identical, PASS | PASS |
 | `WW3GPU_SWITCH=switch_lab_shrd ... full ...` | `switch_lab_shrd` | 25 / 25 / 230 100 | byte-identical, PASS | PASS |
 
