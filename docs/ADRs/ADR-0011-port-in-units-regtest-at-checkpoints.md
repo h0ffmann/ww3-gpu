@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Accepted |
+| **Status** | Superseded by [ADR-0016](ADR-0016-speed-first-regtests-postponed-one-person-loop.md) |
 | **Date** | 2026-10-15 |
 | **Deciders** | Hoffmann |
 | **Written by** | Hoffmann, with an agent |

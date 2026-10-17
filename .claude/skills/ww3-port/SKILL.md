@@ -86,9 +86,9 @@ compile the module with the flags in `<build>/model/src/CMakeFiles/ww3_lib.dir/f
 
 ## 5. Before calling it done
 
-Between checkpoints (ADR-0011) a routine is `ported`, never done: compare the optimised GIMPLE
+Until the validation phase (ADR-0016) a routine is `ported`, never done: compare the optimised GIMPLE
 of the Fortran (WW3's Release flags) and of the C++ (`openmp-release`) operation by operation,
-and record it in the port report as static parity, ⚠. At the checkpoint of its unit:
+and record it in the port report as static parity, ⚠. In the validation phase:
 
 
 `just kokkos-test serial-debug`, `just kokkos-test openmp-release`, the CUDA preset compiled,

@@ -1,0 +1,16 @@
+# Compound Engineering defaults for ww3-gpu (ADR-0016; AGENTS.md, "Engineering work: the compound loop").
+# Keys from docs/guides/configuration.md at compound-engineering-v3.30.3. AGENTS.md wins where it is stricter.
+
+# docs/ holds dated plans, WFIPs and ADRs; the loop's plans and learnings get their own folder.
+docs_root: docs/compound
+
+# Plans and brainstorms in Markdown, so vale, lychee and the book read them.
+brainstorm_output: md
+plan_output: md
+
+# The cross-model review pass would send the diff to a second provider; the owner asks per run.
+cross_model_review_mode: "off"
+
+# PRs are opened with `just pr`, whose body comes from the commits; no standing PR watch.
+pr_teaching_section: false
+auto_babysit: false

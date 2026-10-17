@@ -1,0 +1,366 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "ww3-gpu Device Math Data Flow",
+    "output": "docs/archify/ww3-gpu-device-math-dataflow.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/h0ffmann/ww3-gpu",
+      "revision": "b38b5fc81924284d62eaf453db30f8c2986f80e2"
+    },
+    "viewBox": [
+      1080,
+      560
+    ]
+  },
+  "stages": [
+    {
+      "label": "Call"
+    },
+    {
+      "label": "Route"
+    },
+    {
+      "label": "Library"
+    },
+    {
+      "label": "Bits"
+    },
+    {
+      "label": "Verification"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "kernel",
+      "type": "backend",
+      "label": "Kokkos kernel",
+      "sublabel": "expf logf powf sincosf",
+      "stage": 0,
+      "row": 1,
+      "tag": "per sea point",
+      "sources": [
+        {
+          "path": "docs/GPU_LIBM_BITS_202610.md",
+          "line": 19,
+          "end_line": 22,
+          "label": "eleven entry points"
+        }
+      ]
+    },
+    {
+      "id": "dm",
+      "type": "security",
+      "label": "ww::dm",
+      "sublabel": "libm_device.hpp",
+      "stage": 1,
+      "row": 1,
+      "tag": "host or device",
+      "sources": [
+        {
+          "path": "kokkos/src/ww_kokkos/libm_device.hpp",
+          "line": 69,
+          "end_line": 125,
+          "label": "one wrapper per call"
+        }
+      ]
+    },
+    {
+      "id": "gen",
+      "type": "cloud",
+      "label": "gen_tables",
+      "sublabel": "reads host libmvec",
+      "stage": 2,
+      "row": 0,
+      "tag": "WW_KOKKOS_LIBM",
+      "sources": [
+        {
+          "path": "kokkos/tools/libm_bits/gen_tables.cpp",
+          "line": 1,
+          "end_line": 13,
+          "label": "what it writes"
+        },
+        {
+          "path": "kokkos/src/ww_kokkos/CMakeLists.txt",
+          "line": 305,
+          "end_line": 337,
+          "label": "build step"
+        }
+      ]
+    },
+    {
+      "id": "host",
+      "type": "backend",
+      "label": "Kokkos::exp etc.",
+      "sublabel": "host branch, glibc",
+      "stage": 2,
+      "row": 2,
+      "tag": "CPU unchanged",
+      "sources": [
+        {
+          "path": "kokkos/src/ww_kokkos/libm_device.hpp",
+          "line": 1,
+          "end_line": 9,
+          "label": "host calls glibc"
+        }
+      ]
+    },
+    {
+      "id": "libm",
+      "type": "database",
+      "label": "ww::libm",
+      "sublabel": "glibc, libmvec copies",
+      "stage": 2,
+      "row": 1,
+      "tag": "device branch",
+      "sources": [
+        {
+          "path": "kokkos/src/ww_kokkos/libm_device.hpp",
+          "line": 27,
+          "end_line": 49,
+          "label": "dev with LIBM"
+        },
+        {
+          "path": "kokkos/tools/libm_bits/glibc_mathf.hpp",
+          "line": 1,
+          "end_line": 25,
+          "label": "glibc 2.44 algorithms"
+        }
+      ]
+    },
+    {
+      "id": "libdev",
+      "type": "external",
+      "label": "CUDA libdevice",
+      "sublabel": "LIBM=OFF only",
+      "stage": 3,
+      "row": 0,
+      "tag": "other bits",
+      "sources": [
+        {
+          "path": "kokkos/src/ww_kokkos/libm_device.hpp",
+          "line": 50,
+          "end_line": 66,
+          "label": "Kokkos fallback"
+        },
+        {
+          "path": "docs/ADRs/ADR-0014-gpu-runs-judged-by-tolerance.md",
+          "line": 51,
+          "end_line": 52,
+          "label": "a few ULP"
+        }
+      ]
+    },
+    {
+      "id": "cpubits",
+      "type": "frontend",
+      "label": "CPU result",
+      "sublabel": "Fortran's glibc bits",
+      "stage": 3,
+      "row": 2,
+      "tag": "regtested",
+      "sources": [
+        {
+          "path": "kokkos/src/ww_kokkos/CMakeLists.txt",
+          "line": 288,
+          "end_line": 298,
+          "label": "-ffp-contract=off"
+        }
+      ]
+    },
+    {
+      "id": "gpubits",
+      "type": "frontend",
+      "label": "GPU result",
+      "sublabel": "glibc algorithms",
+      "stage": 3,
+      "row": 1,
+      "tag": "not run",
+      "sources": [
+        {
+          "path": "kokkos/src/ww_kokkos/CMakeLists.txt",
+          "line": 299,
+          "end_line": 303,
+          "label": "--fmad=false"
+        }
+      ]
+    },
+    {
+      "id": "hostchk",
+      "type": "security",
+      "label": "libm_bits, host",
+      "sublabel": "2^32 inputs, 0 differ",
+      "stage": 4,
+      "row": 2,
+      "tag": "done (v)",
+      "sources": [
+        {
+          "path": "docs/GPU_LIBM_BITS_202610.md",
+          "line": 114,
+          "end_line": 145,
+          "label": "results on the host"
+        }
+      ]
+    },
+    {
+      "id": "devchk",
+      "type": "security",
+      "label": "device_check.cu",
+      "sublabel": "not run, needs owner",
+      "stage": 4,
+      "row": 1,
+      "tag": "pending",
+      "sources": [
+        {
+          "path": "kokkos/tools/libm_bits/device_check.cu",
+          "line": 1,
+          "end_line": 12,
+          "label": "supervised only"
+        }
+      ]
+    }
+  ],
+  "flows": [
+    {
+      "id": "call",
+      "from": "kernel",
+      "to": "dm",
+      "label": "libm call",
+      "variant": "emphasis"
+    },
+    {
+      "id": "onhost",
+      "from": "dm",
+      "to": "host",
+      "label": "IF_ON_HOST",
+      "variant": "default",
+      "fromSide": "bottom",
+      "toSide": "left",
+      "via": [
+        [
+          315,
+          385
+        ]
+      ]
+    },
+    {
+      "id": "ondev",
+      "from": "dm",
+      "to": "libm",
+      "label": "IF_ON_DEVICE",
+      "variant": "emphasis"
+    },
+    {
+      "id": "off",
+      "from": "dm",
+      "to": "libdev",
+      "label": "LIBM=OFF",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "left",
+      "via": [
+        [
+          315,
+          115
+        ],
+        [
+          637,
+          115
+        ],
+        [
+          637,
+          157
+        ]
+      ]
+    },
+    {
+      "id": "hdr",
+      "from": "gen",
+      "to": "libm",
+      "label": "ww_libm_tables.hpp",
+      "variant": "default",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "route": "straight",
+      "labelAt": [
+        530,
+        214
+      ]
+    },
+    {
+      "id": "hbits",
+      "from": "host",
+      "to": "cpubits",
+      "label": "glibc",
+      "variant": "default"
+    },
+    {
+      "id": "dbits",
+      "from": "libm",
+      "to": "gpubits",
+      "label": "same ops",
+      "variant": "emphasis"
+    },
+    {
+      "id": "lbits",
+      "from": "libdev",
+      "to": "gpubits",
+      "label": "a few ULP",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "route": "straight",
+      "labelAt": [
+        745,
+        214
+      ]
+    },
+    {
+      "id": "hchk",
+      "from": "cpubits",
+      "to": "hostchk",
+      "label": "glibc reference",
+      "classification": "2^32, 0 differ",
+      "variant": "security"
+    },
+    {
+      "id": "dchk",
+      "from": "gpubits",
+      "to": "devchk",
+      "label": "vs host glibc",
+      "classification": "⚠ not run",
+      "variant": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Host path",
+      "items": [
+        "Each ww::dm wrapper's host branch is the Kokkos call the kernel made before",
+        "CPU objects call glibc as before, so the CPU regtest record stands",
+        "-ffp-contract=off on the C++ (CMakeLists.txt:297-298)"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Device path",
+      "items": [
+        "CUDA build with WW_KOKKOS_LIBM (default ON) calls ww::libm",
+        "Scalar algorithms: ARM optimized-routines as glibc 2.44 imports them; CORE-MATH for tanhf, log10f, atan2f, tanh",
+        "gen_tables writes libmvec's tables, this host's rcpps and glibc's fma or sse2 choice",
+        "--fmad=false on the device half"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Verification",
+      "items": [
+        "Host: every float for unary functions, 0 differing (GPU_LIBM_BITS_202610.md)",
+        "SASS: same fused and unfused operation counts as glibc's x86 builds",
+        "Device: scripts/libm_bits.sh --device, under the owner, not run ⚠"
+      ]
+    }
+  ]
+}
