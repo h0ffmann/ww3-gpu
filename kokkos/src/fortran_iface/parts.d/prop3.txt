@@ -1,0 +1,5 @@
+# W3XYP3, W3KTP3 (with W3QCK1, W3QCK2, W3QCK3), batched (prop3_shim.cpp); opt-in, not under WW_KOKKOS_ALL
+# Read by scripts/ww3-gpu.sh: PART <name> (WW_KOKKOS_<name>), COUNT <variable>, FILE <fork path>; PATCH.md section 9.
+PART XYP3
+PART KTP3
+COUNT WW_KOKKOS_PROP3_COUNT

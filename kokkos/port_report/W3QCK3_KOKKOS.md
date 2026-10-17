@@ -1,8 +1,7 @@
 # W3QCK3_KOKKOS
 
-**Status:** ported, phase 1 (translated). Not wired into WW3, not regtested: the owner asked
-for translation only on 2026-10-16, with no test run. Its checkpoint (ADR-0011) needs the shim and
-the `W3WAVE` wiring first.
+**Status:** ported, phase 1, wired inside the Kokkos `W3XYP3` (`WW_KOKKOS_XYP3=1`) (2026-10-17). Run byte-identical inside WW3 on the CPU in
+the full case; not regtested: the regtest matrix has not run.
 
 UQ advection in one spatial direction with obstruction (transparency): the two sweeps of `W3XYP3`.
 
@@ -12,7 +11,7 @@ UQ advection in one spatial direction with obstruction (transparency): the two s
 |---|---|
 | WW3 routine | `W3QCK3`, `model/src/w3uqckmd.F90:925-1336` at NOAA-EMC/WW3 `03adda91`, as `switches/switch_lab_shrd` compiles it (`PR3`, `UQ`) |
 | Kokkos code | [`../src/ww_kokkos/prop_qck3.hpp`](../src/ww_kokkos/prop_qck3.hpp), a header-only device function `w3qck3`, serial, in the Fortran's structure and order |
-| C shim | none yet |
+| C shim | [`../src/fortran_iface/prop3_shim.cpp`](../src/fortran_iface/prop3_shim.cpp) (`ww_xyp3_batch`, `ww_ktp3_batch`), bound by `w3kokkos_prop3md.F90` on h0ffmann/WW3 `ww3-gpu/kokkos-prop3` (`fcdfabef`); [PATCH.md section 11](../src/fortran_iface/PATCH.md#11-the-pr3-propagation-batched-on-ww3-gpukokkos-prop3) |
 | Plan | [`PROPAGATION_KOKKOS_PLAN_202610.md`](../../docs/PROPAGATION_KOKKOS_PLAN_202610.md), issue #42 |
 
 ## Arithmetic
@@ -28,7 +27,7 @@ the translator and a fresh reviewer, 2026-10-16.
 
 ## Benchmarks
 
-None. No timing without parity (`AGENTS.md`).
+None of its own: it runs inside `W3XYP3`, whose report has the timings of 2026-10-17 ([W3XYP3_KOKKOS.md](W3XYP3_KOKKOS.md)).
 
 ## How it was regtested
 
@@ -36,3 +35,14 @@ Not yet, and nothing was run. What was done, 2026-10-16 (v): the `serial-debug`,
 and `cuda-release` presets compiled with the header included (`prop.cpp`), with no warning from it.
 Nothing calls the function yet, so the compilers parse and type-check it without generating its
 code; code generation, CUDA's included, comes with the shim ⚠.
+
+Update 2026-10-17, the wiring (v): `bash scripts/ww3-gpu.sh --ww3-gpu full --cpu --kokkos
+XYP3,KTP3,SRCE`, with `switch_lab_ompg`, with `WW3GPU_SWITCH=switch_lab_shrd`, and with
+`WW_KOKKOS_PROP3_BATCH_MIB=64` (six and three launches per call instead of one): `out_grd.ww3` and
+the NetCDF field byte-identical (`cmp`) to the Fortran of the same executable, `out_grd.ww3`
+byte-identical to `--ww3` (the NetCDF differs from it only in the `WAVEWATCH_III_switches`
+attribute), `nccmp-tol` PASS. The counters: `W3XYP3` 13 824 spectra in 24 calls, `W3KTP3` 441 792
+point calls in 48 calls. The smoke case (one point) makes no call of either. Not exercised by
+`bench_small` ⚠: currents (`FLCUR`), the wavenumber shift (`FLCK`, so `W3QCK2`), index closure
+and boundary input. The CUDA build compiles (`--gpu --build-only`), never run. The regtest matrix
+did not run.

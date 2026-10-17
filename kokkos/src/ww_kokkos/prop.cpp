@@ -1,9 +1,8 @@
 // kokkos/src/ww_kokkos/prop.cpp
 // The propagation headers (prop_*.hpp: W3XYP3, W3KTP3, W3QCK1, W3QCK2, W3QCK3, WAVNU1, W3XYP1,
-// W3KTP1, W3XYP2, W3KTP2, and W3XYPUG, a host function) are header-only functions with no caller
-// yet: the shim and the W3WAVE wiring come with the unit's checkpoint
-// (docs/PROPAGATION_KOKKOS_PLAN_202610.md). This translation unit makes every preset compile them,
-// host and CUDA, until a shim includes them.
+// W3KTP1, W3XYP2, W3KTP2, and W3XYPUG, a host function) are header-only functions. W3XYP3 and
+// W3KTP3, with the three W3QCKn, have a caller, fortran_iface/prop3_shim.cpp; the others none yet.
+// This translation unit makes every preset compile all of them, host and CUDA.
 #include "prop_ktp1.hpp"
 #include "prop_ktp2.hpp"
 #include "prop_ktp3.hpp"

@@ -1,6 +1,10 @@
 # Propagation on Kokkos: PR3 with UQ as one unit (phase 1, translation only)
 
 Status: **translated, reviewed, compiled; not wired, nothing run**, 2026-10-16 ([log](log/2026-10-16-propagation-kokkos-translation.md)), under [ADR-0011](ADRs/ADR-0011-port-in-units-regtest-at-checkpoints.md).
+Update 2026-10-17: `W3XYP3` and `W3KTP3` are **wired, opt-in, batched**, and ran byte-identical
+on the CPU in the full case; not regtested
+([PATCH.md section 11](../kokkos/src/fortran_iface/PATCH.md#11-the-pr3-propagation-batched-on-ww3-gpukokkos-prop3),
+[log](log/2026-10-17-prop3-wiring.md)).
 Issue [#42](https://github.com/h0ffmann/ww3-gpu/issues/42), the port planner.
 
 The owner, 2026-10-16: "translate the parts of the code still to translate, with the same
