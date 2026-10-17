@@ -366,7 +366,9 @@ else
   if [ "$mode" = ww3-gpu ]; then
     fresh_for_toolchain "$kbuild"
     [ -f "$kbuild/CMakeCache.txt" ] || cmake -S "$root/kokkos" --preset "$preset" >/dev/null
-    cmake --build "$kbuild" -j"$jobs" >/dev/null
+    # nvcc writes its errors to stdout: keep them in a log and show them, or the build fails silently.
+    cmake --build "$kbuild" -j"$jobs" > "$kbuild/build.log" 2>&1 \
+      || { grep -E -A8 "FAILED|error" "$kbuild/build.log" | head -60; echo "ww3-gpu: the Kokkos build ($preset) failed; $kbuild/build.log" >&2; exit 1; }
     cmake --install "$kbuild" --prefix "$kprefix" >/dev/null
     echo ">> ww_kokkos ($preset) installed in $kprefix"
   fi
