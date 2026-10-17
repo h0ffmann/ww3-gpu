@@ -1,0 +1,7 @@
+# W3SDS4, W3SIN4, W3SPR4 and their tables (st4_shim.cpp)
+# Read by scripts/ww3-gpu.sh: PART <name> (WW_KOKKOS_<name>), COUNT <variable>, FILE <fork path>; PATCH.md section 9.
+PART SDS4
+PART SIN4
+PART SPR4
+PART ST4_TABLES
+COUNT WW_KOKKOS_ST4_COUNT

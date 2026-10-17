@@ -1,7 +1,6 @@
 # W3SIN1_KOKKOS
 
-**Status:** ported, phase 1 (translated). Not wired into WW3, not regtested: translation only,
-no test run (the owner, 2026-10-16).
+**Status:** ported, phase 1 (translated). Wired: WW3 at the `WW3/` pin (`357f575c`) calls it at `w3srcemd.F90:1442` behind `WW_KOKKOS_SIN1` (default off); not regtested: compiled, never run inside WW3 (the owner, 2026-10-16).
 
 The WAM cycle 3 wind input of the `ST1` source-term package (Snyder et al. 1981, Komen et al.
 1984), `D = SINC1 * SIG2 * MAX(0, USTAR*cos(theta - USDIR)*K/SIG2 - 0.035714)` and `S = D * A`,

@@ -7,31 +7,34 @@ Read with `git -C WW3 fetch origin && git -C WW3 branch -r` and `git rev-list --
 
 | h0ffmann/WW3 branch | Head | Against the `WW3/` pin | What it wires |
 |---|---|---|---|
-| `ww3-gpu/kokkos-wave-support` | `357f575c` | **the pin** since this change; one commit on `ww3-gpu/kokkos-st-flx-swl`, pushed 2026-10-16 | `W3GATH`, `W3SCAT`, `W3UWND`, `W3UTRN`, `W3DZXY`, `W3MAP3`, `W3MAPT`, `DISTAB`, the master flag `WW_KOKKOS_ALL` and the parts line in `log.ww3` ([sections 7](#7-run-time-flags-one-per-part-and-a-master) and [8](#8-w3waves-support-routines-on-ww3-gpukokkos-wave-support)) |
+| `ww3-gpu/kokkos-wire-base` | `4a94a8f6` | **the pin** since this change; one commit on `ww3-gpu/kokkos-wave-support`, pushed 2026-10-16 | no routine: the part registry, the per-unit module files and the generated `W3KOKKOS_UNITSMD` every wiring unit builds on ([section 9](#9-wiring-units-in-parallel)) |
+| `ww3-gpu/kokkos-wave-support` | `357f575c` | the pin's parent; one commit on `ww3-gpu/kokkos-st-flx-swl`, pushed 2026-10-16 | `W3GATH`, `W3SCAT`, `W3UWND`, `W3UTRN`, `W3DZXY`, `W3MAP3`, `W3MAPT`, `DISTAB`, the master flag `WW_KOKKOS_ALL` and the parts line in `log.ww3` ([sections 7](#7-run-time-flags-one-per-part-and-a-master) and [8](#8-w3waves-support-routines-on-ww3-gpukokkos-wave-support)) |
 | `ww3-gpu/kokkos-st4` | `c9a6a0c6` | contained in the pin | the DIA (`W3SNL1`, `INSNL1`) and ST4 (`W3SDS4`, `W3SIN4`, `W3SPR4` and their tables) in `w3srcemd.F90` and `w3initmd.F90`, behind the `KOKKOS` switch |
 | `ww3-gpu/kokkos-srce` | `e062ff0b` | contained in the pin | `W3SRCE` itself (`WW_KOKKOS_SRCE`, with `LN1`, `BT1`, `DB1`): `w3wavemd.F90` +24, `w3initmd.F90` +23, `w3kokkosmd.F90` +212 lines |
-| `ww3-gpu/kokkos-st-flx-swl` | `8e433f99` | the pin's parent; seven commits on `ww3-gpu/kokkos-srce`, pushed (`git ls-remote`, v 2026-10-16) | ST0, ST1, ST2, ST3, ST6 (`W3SPRn`, `W3SINn`, `W3SDSn`), `W3FLX1` to `W3FLX5` and `W3SWL6`, one commit per unit, compiled; ST4 and `W3SRCE` from it ran in this change's checkpoint, the other units not ([section 6](#6-the-source-term-units-on-ww3-gpukokkos-st-flx-swl)) |
+| `ww3-gpu/kokkos-st-flx-swl` | `8e433f99` | the parent of `357f575c`; seven commits on `ww3-gpu/kokkos-srce`, pushed (`git ls-remote`, v 2026-10-16) | ST0, ST1, ST2, ST3, ST6 (`W3SPRn`, `W3SINn`, `W3SDSn`), `W3FLX1` to `W3FLX5` and `W3SWL6`, one commit per unit, compiled; ST4 and `W3SRCE` from it ran in this change's checkpoint, the other units not ([section 6](#6-the-source-term-units-on-ww3-gpukokkos-st-flx-swl)) |
 | `hoff/kokkos-snl1` | `bb08623a` | two commits behind, contained in the pin | the DIA alone; superseded |
 | `develop` | `03adda91` | the fork's base | none; equal to NOAA-EMC/WW3 `develop` on 2026-10-16, so there is no upstream change to take |
 
 What the next plug-ins need from the fork:
 
-- **`W3SRCE`, `W3SLN1`, `W3SBT1`, `W3SDB1`**: at the pin since `8e433f99`. This change's
-  checkpoint ran the Kokkos `W3SRCE` byte-identical (section 8); `kokkos/ports.tsv` still says
-  `wired` no for those rows and for the ST0 to ST6, FLX and SWL rows, which this change does not
-  edit ⚠.
+- **`W3SRCE`, `W3SLN1`, `W3SBT1`, `W3SDB1`**: at the pin since `8e433f99`; the checkpoint of
+  section 8 ran the Kokkos `W3SRCE` byte-identical. `kokkos/ports.tsv` says `wired` yes for them
+  and for the 31 ST0 to ST6, FLX and SWL rows since 2026-10-16, each with its flag and its call
+  line at `357f575c` (35 rows, v, read in the fork); `regtested` is unchanged, so the ST0 to ST6,
+  FLX and SWL rows stay "compiled, never run".
 - **Propagation** (`W3XYP3`, `W3KTP3`, `W3QCK1-3`): nothing on the fork yet; the `W3WAVE`
   support routines are wired (section 8). Each needs a `bind(C)` interface in `w3kokkosmd.F90`, a C shim in `kokkos/src/fortran_iface/`,
-  and a hunk in `w3wavemd.F90` that keeps the Fortran call selectable at run time, on a new fork
-  branch from `ww3-gpu/kokkos-wave-support`. The shared-memory
+  and a hunk in `w3wavemd.F90` that keeps the Fortran call selectable at run time, on a fork
+  branch from `ww3-gpu/kokkos-wire-base` (section 9). The shared-memory
   `W3GATH`/`W3SCAT` path is the only one ported; NOAA's operational switches are `DIST MPI`
   (`WW3-noaa/model/bin/switch_NCEP_st4`), whose branches are not.
 - The fork's `model/src/CMakeLists.txt` already links `ww_kokkos` under `KOKKOS`, and a new shim
   is one more source in this repository's `fortran_iface` target. What has to move with each new
   set of entry points is the ABI version: since `357f575c` the fork asks for
   `find_package(ww_kokkos 0.3)` and `kokkos/CMakeLists.txt` declares `0.3.0` (`SameMinorVersion`),
-  so an install from before `ww_kokkos_flag` and `ww_wave_*` is refused at configure time; the
-  next set of entry points raises both sides to `0.4`.
+  so an install from before `ww_kokkos_flag` and `ww_wave_*` is refused at configure time. The
+  registry of `ww3-gpu/kokkos-wire-base` is Fortran only and leaves the C ABI at `0.3`; the
+  integrator raises both sides to `0.4` once, when the wiring units are merged (section 9).
 - The source-term path runs per sea point, so it works under `DIST MPI` as under `SHRD` (the
   regtest matrix's MPI entries ran it, `AGENTS.md`, "Bit for bit"). A propagation path is
   different: `W3GATH`/`W3SCAT` and the `PDLIB` solver exchange data between ranks, so their
@@ -659,7 +662,7 @@ the code 2026-10-16).
 So `WW_KOKKOS_ALL=1` is "100 % Kokkos" and `WW_KOKKOS_ALL=0` "0 % Kokkos" in one place, and a
 per-part flag set explicitly wins over the master. **100 % means 100 % of the wired parts, not
 of WW3.** At the `WW3/` pin of this change, `kokkos/PORT_STATUS.md` (`port_score.py --write`,
-2026-10-16) gives the wired rows ("ported" level) **87.6 %** of the run time of the
+2026-10-16) gives the wired rows ("ported" level) **94.0 %** of the run time of the
 committed profile (`bench_small`, 1 thread, `WW3@6d1bcdfe`, 2026-10-14) (v); the rest of WW3,
 the propagation (`W3XYP3`, `W3KTP3`, `W3QCK*`), the I/O and the set-up, stays Fortran whatever
 the master says. Two rules keep the master safe on any switch file: a part whose translation does
@@ -789,3 +792,113 @@ spatial propagation (`W3GATH`, `W3SCAT`) and no gradient (`W3DZXY`); `W3UTRN` ra
 exercises them, but its `FLAGTR` is 0 too (`ww3_grid.out` of both cases), so `W3UTRN` stays
 `regtested` no. `just ww3-gpu-matrix` and the OpenMP (`OMPG`) entries are the next checkpoint
 steps before any of these rows may move to L2 ⚠.
+
+## 9. Wiring units in parallel
+
+`ww3-gpu/kokkos-wire-base` (`4a94a8f6`, h0ffmann/WW3, pushed 2026-10-16) is the branch every
+wiring unit starts from. It wires no routine. It moves the lists that every unit used to edit
+(`W3KOKKOS_SETUP`, `W3KOKKOS_REPORT`, the `USE` blocks, the source lists, `all_parts`) behind a
+convention, so units built at the same time add their own files and their own call-site hunks and
+nothing else. What the base adds, all under `KOKKOS` (v, read in the fork and built 2026-10-16):
+
+- **One module file per unit.** The fork's `model/src/CMakeLists.txt` compiles every
+  `model/src/w3kokkos_<unit>md.F90` by glob (`CONFIGURE_DEPENDS`) and generates
+  `W3KOKKOS_UNITSMD` in the build tree. That module `USE`s every unit module and holds
+  `W3KOKKOS_UNITS_SETUP (IMOD)`, which calls every `W3KOKKOS_<UNIT>_SETUP (IMOD)` in file-name
+  order. `W3INIT` calls it after `DISTAB` and before `W3KOKKOS_REPORT`. `W3WAVE`, `W3SRCE` and
+  `W3INIT` `USE W3KOKKOS_UNITSMD`, so a unit's flags and wrappers are visible at their call
+  sites without a `USE` line per unit.
+- **A part registry.** `W3KOKKOS_REGISTER (PART, ON)` in `w3kokkosmd.F90` records one part.
+  `W3KOKKOS_REPORT` prints the 34 parts of `357f575c` and then every registered part, so the
+  `Kokkos parts` line of `log.ww3` needs no edit per unit. A name registered again (W3INIT runs once
+  per grid) is updated, not repeated.
+- **In this repository.** `fortran_iface/CMakeLists.txt` compiles every `*_shim.cpp` and
+  `*_c.hpp` by glob. `scripts/ww3-gpu.sh` reads its part list, its counters and the fork files a
+  unit may touch from `parts.d/<unit>.txt`. Its check that the fork is `WW3-noaa/` plus the KOKKOS
+  patch accepts `model/src/w3kokkos_<unit>md.F90` and every `FILE` a `parts.d` file names.
+  `part_flags.cpp` has no part list: `ww_kokkos_flag` resolves any `WW_KOKKOS_<PART>` name.
+- **Unchanged.** The C ABI stays `ww_kokkos` 0.3. Without `KOKKOS`, `gfortran -E -P` of
+  `w3initmd.F90`, `w3srcemd.F90` and `w3wavemd.F90` with the lab switch is identical to
+  `WW3-noaa/`'s (blank lines dropped, v 2026-10-16).
+
+The registry has one limit. The 34 parts that existed before it are still printed from
+`W3KOKKOS_REPORT`'s own list, which is closed: a new part registers and is never added there.
+
+### What a unit adds
+
+A unit `<unit>` (lower case, digits and `_`; `units` is reserved) owns these files, and no other
+unit edits them:
+
+| Where | File | What it holds |
+|---|---|---|
+| fork, `ww3-gpu/kokkos-<unit>` from `ww3-gpu/kokkos-wire-base` | `model/src/w3kokkos_<unit>md.F90` | `MODULE W3KOKKOS_<UNIT>MD`: `PRIVATE` by default; the `bind(C)` interfaces; one `LOGICAL :: KOKKOS_<PART>` per part; the wrappers `W3KOKKOS_<R>`, with the Fortran routine's dummy list, the shim call inside `!$OMP CRITICAL`, `EXTCDE` on a non-zero status; `SUBROUTINE W3KOKKOS_<UNIT>_SETUP (IMOD)` |
+| fork, same branch | the call-site hunks | `#ifdef W3_KOKKOS` / `IF (KOKKOS_<PART>) THEN` / `CALL W3KOKKOS_<R> (...)` / `ELSE` / the original call unchanged / `END IF` / `#else` / the original call / `#endif` |
+| this repository | `kokkos/src/fortran_iface/<unit>_shim.cpp`, `<unit>_c.hpp` | the `extern "C"` entry points and their argument table (the section 6 format), the prototypes |
+| this repository | `kokkos/src/fortran_iface/parts.d/<unit>.txt` | a `#` line naming the unit, then `PART <name>` per part, `COUNT <variable>` per counter, `FILE model/src/<file>.F90` per fork file outside the base set that its hunks edit |
+| this repository | `kokkos/src/fortran_iface/units/<UNIT>.md` | the section draft: argument table, memory contract, what is not covered, build results |
+| this repository | its rows of `kokkos/ports.tsv`, its port reports, one row of `kokkos/port_claims.tsv` before it starts | `wired` and `regtested` text with no `<`, `>`, `&` or `"` (the site test looks for the text verbatim, and the page escapes them) |
+
+The set-up follows one pattern. Its body sits under the unit's switch, because the generated
+module calls it on every switch file. It sets each flag with `KOKKOS_PART ('<PART>', SUPPORTED)`,
+builds the unit's tables, and ends with one `CALL W3KOKKOS_REGISTER ('<PART>', KOKKOS_<PART>)` per
+part. Its first statement reads `IMOD` (`IF (IMOD < 1) RETURN`, a no-op since grids count from 1),
+so `-Wall` stays quiet on a switch file that compiles the body out. A minimal unit:
+
+```fortran
+MODULE W3KOKKOS_XYP3MD
+  USE W3KOKKOSMD, ONLY: KOKKOS_PART, W3KOKKOS_REGISTER
+  IMPLICIT NONE
+  PRIVATE
+  PUBLIC :: KOKKOS_XYP3, W3KOKKOS_XYP3, W3KOKKOS_XYP3_SETUP
+  LOGICAL :: KOKKOS_XYP3 = .FALSE.
+CONTAINS
+  SUBROUTINE W3KOKKOS_XYP3_SETUP ( IMOD )
+    INTEGER, INTENT(IN) :: IMOD
+    IF ( IMOD < 1 ) RETURN
+#ifdef W3_PR3
+    KOKKOS_XYP3 = KOKKOS_PART ( 'XYP3', .TRUE. )
+    CALL W3KOKKOS_REGISTER ( 'XYP3', KOKKOS_XYP3 )
+#endif
+  END SUBROUTINE W3KOKKOS_XYP3_SETUP
+  ! SUBROUTINE W3KOKKOS_XYP3 ( ... ): the wrapper
+END MODULE W3KOKKOS_XYP3MD
+```
+
+Rules that keep the units off each other:
+
+- **Names.** Export only `KOKKOS_<PART>`, `W3KOKKOS_<R>` and `W3KOKKOS_<UNIT>_SETUP`. They reach
+  `W3WAVE`, `W3SRCE` and `W3INIT` through a whole-module `USE`, so a clash with another unit or a
+  local variable fails at compile time.
+- **No cycles.** A unit module `USE`s only `ISO_C_BINDING`, `W3KOKKOSMD`, the data modules
+  (`W3GDATMD`, `W3WDATMD`, `W3ADATMD`, `W3IDATMD`, `W3ODATMD`) and `W3SERVMD`. It never uses a
+  module that holds a call site (`W3WAVEMD`, `W3SRCEMD`, `W3INITMD`, the parent-hook files) or
+  `W3KOKKOS_UNITSMD`.
+- **Call sites outside `W3WAVE`, `W3SRCE` and `W3INIT`.** A parent hook in another file
+  (`w3iosfmd.F90`, `w3wavset.F90`, `w3profsmd.F90`, ...) or in another routine of
+  `w3srcemd.F90` (`CALC_FPI`) puts `USE W3KOKKOS_<UNIT>MD` under `#ifdef W3_KOKKOS` in that routine,
+  as part of the unit's hunk. A new file also goes in a `FILE` line of the unit's `parts.d` file.
+- **Never edit** `w3kokkosmd.F90`, the fork's `CMakeLists.txt` or `cmake/switches.json`,
+  `W3KOKKOS_SETUP` or `W3KOKKOS_REPORT`, `ww_kokkos_c.hpp`, `fortran_iface/CMakeLists.txt`,
+  `scripts/ww3-gpu.sh`, the ABI version (`kokkos/CMakeLists.txt`, the fork's `find_package`),
+  this file, `docs/GLOSSARY.md`, or the outputs of `scripts/port_score.py --write`
+  (`PORT_STATUS.md`, `PORT_TABLE.tsv`, `PORT_RANKING.md`, `site/data/port_score.tsv`). Edit no
+  existing hunk of the base either. What one of those needs goes into the unit's
+  `units/<UNIT>.md` as a snippet for the integrator: section 7 table rows, a glossary entry, a
+  `regtested` note.
+- **`wired` stays no** until the integrator has merged the unit branches into one fork branch and
+  moved the `WW3/` pin. Then it becomes `yes: <flag>, <fork file:line> at <pin>`. The unit writes
+  the text it proposes in `units/<UNIT>.md`.
+
+The gate of a unit is build only, until the owner asks for regtests (the owner, 2026-10-16):
+
+```bash
+bash scripts/ww3-gpu.sh --ww3-gpu smoke --cpu --build-only   # the lab switch with KOKKOS
+# and the unit's own switch file (plan, "Build switch"), with KOKKOS added
+# switch off: gfortran -E -P <switch -D flags> of every touched fork file, run from
+#   WW3/model/src and WW3-noaa/model/src, identical after dropping blank lines
+just kokkos-test serial-debug && just kokkos-test openmp-release
+bash scripts/ww3-gpu.sh --self-test                           # parts.d parses, no duplicate part
+```
+
+No regtest, smoke run, matrix or `--gpu` run. Every row of a unit stays `regtested` no:
+"compiled, never run inside WW3".

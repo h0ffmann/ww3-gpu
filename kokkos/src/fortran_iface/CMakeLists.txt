@@ -2,7 +2,7 @@
 # The boundary between WAVEWATCH III and the Kokkos kernels: the C ABI
 # (ww_kokkos_c.hpp + snl1_shim.cpp) here, and the Fortran module that binds it
 # (w3kokkosmd.F90), which lives in WW3 itself: the h0ffmann/WW3 branch
-# ww3-gpu/kokkos-wave-support, at the commit the WW3/ submodule pins. This repository keeps
+# ww3-gpu/kokkos-wire-base, at the commit the WW3/ submodule pins. This repository keeps
 # no WW3 Fortran; this build compiles the module from WW3/model/src.
 #
 # The C++ half goes into ww_kokkos itself, so it is always built; the benchmark
@@ -12,31 +12,24 @@
 # scripts/ww3-gpu.sh --ww3-gpu --cpu, exercise it.
 #
 # SPDX-License-Identifier: MIT
+# Every shim by glob, so a wiring unit (PATCH.md section 9) adds its <unit>_shim.cpp and
+# <unit>_c.hpp and edits no list here.
+file(GLOB ww_kokkos_shims CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/*_shim.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/*_c.hpp")
 target_sources(ww_kokkos PRIVATE
-    ww_kokkos_c.hpp
+    ${ww_kokkos_shims}
     shim_state.hpp
-    snl1_shim.cpp
-    st4_shim.cpp
-    srce_shim.cpp
-    st0_shim.cpp
-    st1_shim.cpp
-    st2_shim.cpp
-    st3_shim.cpp
-    st6_shim.cpp
-    flx_shim.cpp
-    swl_shim.cpp
-    part_flags.cpp
-    wave_support_shim.cpp)
+    part_flags.cpp)
 
 set(WW_W3KOKKOSMD "${CMAKE_CURRENT_SOURCE_DIR}/../../../WW3/model/src/w3kokkosmd.F90"
-    CACHE FILEPATH "WW3's w3kokkosmd.F90 (the WW3/ submodule, branch ww3-gpu/kokkos-wave-support)")
+    CACHE FILEPATH "WW3's w3kokkosmd.F90 (the WW3/ submodule, branch ww3-gpu/kokkos-wire-base)")
 
 if(WW_ENABLE_FORTRAN)
   # Loud, not skipped: a missing module means the WW3/ pin and this C ABI can drift
   # apart unseen.
   if(NOT EXISTS "${WW_W3KOKKOSMD}")
     message(FATAL_ERROR "No ${WW_W3KOKKOSMD}: run `git submodule update --init WW3` "
-        "(the ww3-gpu/kokkos-wave-support branch of h0ffmann/WW3), or set WW_W3KOKKOSMD, "
+        "(the ww3-gpu/kokkos-wire-base branch of h0ffmann/WW3), or set WW_W3KOKKOSMD, "
         "or configure with -DWW_ENABLE_FORTRAN=OFF")
   endif()
   # A separate target, not sources of ww_kokkos: WW3 compiles the module in its own

@@ -1,0 +1,6 @@
+# W3SPR2, W3SIN2, W3SDS2 (st2_shim.cpp)
+# Read by scripts/ww3-gpu.sh: PART <name> (WW_KOKKOS_<name>), COUNT <variable>, FILE <fork path>; PATCH.md section 9.
+PART SPR2
+PART SIN2
+PART SDS2
+COUNT WW_KOKKOS_ST2_COUNT

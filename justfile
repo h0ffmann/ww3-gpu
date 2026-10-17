@@ -62,7 +62,7 @@ toolchain-smoke:
 
 # ---------------------------------------------------------------------
 # WW3 two ways (scripts/ww3-gpu.sh): --ww3, pure NOAA WW3 from WW3-noaa/; --ww3-gpu, WW3 built
-# with the KOKKOS switch from the h0ffmann/WW3 branch ww3-gpu/kokkos-wave-support and linked to kokkos/.
+# with the KOKKOS switch from the h0ffmann/WW3 branch ww3-gpu/kokkos-wire-base and linked to kokkos/.
 # --ww3-gpu runs on the CPU (Kokkos OpenMP) unless asked: `just smoke-ww3-gpu gpu` runs CUDA, and only
 # with a human supervising (AGENTS.md hard rule; it asks at the terminal).
 # ---------------------------------------------------------------------

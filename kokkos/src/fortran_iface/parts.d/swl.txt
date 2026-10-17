@@ -1,0 +1,4 @@
+# W3SWL6 (swl_shim.cpp)
+# Read by scripts/ww3-gpu.sh: PART <name> (WW_KOKKOS_<name>), COUNT <variable>, FILE <fork path>; PATCH.md section 9.
+PART SWL6
+COUNT WW_KOKKOS_SWL_COUNT

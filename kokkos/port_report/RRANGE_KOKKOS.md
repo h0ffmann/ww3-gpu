@@ -1,7 +1,6 @@
 # RRANGE_KOKKOS
 
-**Status:** ported, phase 1 (translated). Not wired into WW3, not regtested: translation only,
-no test run (the owner, 2026-10-16).
+**Status:** ported, phase 1 (translated). Wired: WW3 at the `WW3/` pin (`357f575c`) runs it inside the Kokkos `W3SIN6`, behind `WW_KOKKOS_SIN6` (default off); not regtested: compiled, never run inside WW3 (the owner, 2026-10-16).
 
 `RRANGE(X0,X1,DX)`, a private helper of the ST6 source-term module `W3SRC6MD` that builds a
 `REAL` vector of evenly spaced integers. `LFACTOR` (`w3src6md.F90:956`) and `TAU_WAVE_ATMOS`

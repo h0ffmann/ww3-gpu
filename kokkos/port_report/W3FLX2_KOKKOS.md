@@ -1,7 +1,6 @@
 # W3FLX2_KOKKOS
 
-**Status:** ported, phase 1 (translated). Not wired into WW3, not regtested: translation only,
-no test run (the owner, 2026-10-16).
+**Status:** ported, phase 1 (translated). Wired: WW3 at the `WW3/` pin (`357f575c`) calls it at `w3srcemd.F90:1319, :2287` behind `WW_KOKKOS_FLX2` (default off); not regtested: compiled, never run inside WW3 (the owner, 2026-10-16).
 
 Friction velocity `UST`, roughness length `Z0` and drag coefficient `CD` after Tolman and
 Chalikov (1996) (switch `FLX2`), iterated `NITTIN` times on the peak phase velocity `CP`, which

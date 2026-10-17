@@ -2,7 +2,7 @@
 
 **Status:** ported, phase 1 (translated). Not regtested: waiting for the checkpoint of the W3SRCE
 unit (ADR-0011), itself after the ST4 checkpoint. Selected by `WW_KOKKOS_SRCE=1`; the flag
-defaults to 0, so WW3 runs the Fortran.
+defaults to 0, so WW3 runs the Fortran. Wired: WW3 at the `WW3/` pin (`357f575c`) calls it at `w3wavemd.F90:2394-2395` (set-up `w3initmd.F90:824`) behind `WW_KOKKOS_SRCE` (default off).
 
 The source-term integration of one sea point: the semi-implicit dynamic time step with its
 limiter, the MLIM shallow-water cap, the high-frequency tail, and the flux diagnostics, with every

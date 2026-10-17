@@ -1,7 +1,6 @@
 # W3SRC3MD_TABU_TAUHF_KOKKOS
 
-**Status:** ported, phase 1 (translated). Not wired into WW3, not regtested: translation only,
-no test run (the owner, 2026-10-16).
+**Status:** ported, phase 1 (translated). Wired: WW3 at the `WW3/` pin (`357f575c`) runs it inside the Kokkos `W3KOKKOS_ST3_SETUP (INSIN3)`, behind `WW_KOKKOS_SPR3, SIN3 or SDS3` (default off); not regtested: compiled, never run inside WW3 (the owner, 2026-10-16).
 
 The table of the high-frequency wave-supported stress of the WAM4+ input term (switch `ST3`),
 `TAUHFT(0:IUSTAR,0:IALPHA)` of `W3SRC3MD`, with its steps `DELUST` and `DELALP`. `INSIN3` builds it

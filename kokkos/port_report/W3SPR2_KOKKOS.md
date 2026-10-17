@@ -1,7 +1,6 @@
 # W3SPR2_KOKKOS
 
-**Status:** ported, phase 1 (translated). Not wired into WW3, not regtested: translation only,
-no test run (the owner, 2026-10-16).
+**Status:** ported, phase 1 (translated). Wired: WW3 at the `WW3/` pin (`357f575c`) calls it at `w3srcemd.F90:1110, :2223` behind `WW_KOKKOS_SPR2` (default off); not regtested: compiled, never run inside WW3 (the owner, 2026-10-16).
 
 Mean wave parameters for the Tolman and Chalikov (1996) source terms (switch `ST2`): total
 energy `EMEAN`, mean frequency `FMEAN`, mean wavenumber `WNMEAN`, the spectral maximum `AMAX`,

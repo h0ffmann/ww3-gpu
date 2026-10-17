@@ -1,7 +1,6 @@
 # W3FLX4_KOKKOS
 
-**Status:** ported, phase 1 (translated). Not wired into WW3, not regtested: translation only,
-no test run (the owner, 2026-10-16).
+**Status:** ported, phase 1 (translated). Wired: WW3 at the `WW3/` pin (`357f575c`) calls it at `w3srcemd.F90:1347` behind `WW_KOKKOS_FLX4` (default off); not regtested: compiled, never run inside WW3 (the owner, 2026-10-16).
 
 Friction velocity `UST`, drag coefficient `CD` and roughness length `Z0` from the 10 m wind
 speed after Hwang (2011, J. Atmos. Oceanic Technol. 28(3) 436-443),

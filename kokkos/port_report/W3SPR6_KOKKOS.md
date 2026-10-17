@@ -1,7 +1,6 @@
 # W3SPR6_KOKKOS
 
-**Status:** ported, phase 1 (translated). Not wired into WW3, not regtested: translation only,
-no test run (the owner, 2026-10-16).
+**Status:** ported, phase 1 (translated). Wired: WW3 at the `WW3/` pin (`357f575c`) calls it at `w3srcemd.F90:1290, :2275` behind `WW_KOKKOS_SPR6` (default off); not regtested: compiled, never run inside WW3 (the owner, 2026-10-16).
 
 Mean wave parameters for the ST6 source terms (switch `ST6`): energy, mean frequency, mean
 wavenumber, maximum action density and a peak frequency weighted by `F**4` (Young 1999, p. 239).

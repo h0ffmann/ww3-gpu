@@ -1,7 +1,6 @@
 # W3BETA_KOKKOS
 
-**Status:** ported, phase 1 (translated). Not wired into WW3, not regtested: translation only,
-no test run (the owner, 2026-10-16).
+**Status:** ported, phase 1 (translated). Wired: WW3 at the `WW3/` pin (`357f575c`) runs it inside the Kokkos `W3KOKKOS_ST2_SETUP`, behind `WW_KOKKOS_SPR2, SIN2 or SDS2` (default off); not regtested: compiled, never run inside WW3 (the owner, 2026-10-16).
 
 The Chalikov and Belevich (1993) wind-wave interaction parameter, beta * 1e-4, as a piecewise
 function of the non-dimensional apparent frequency `OMA` and the drag coefficient `CL` (five

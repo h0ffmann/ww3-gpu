@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ww3-gpu — run WAVEWATCH three ways. WW3's Fortran comes from two submodules: WW3-noaa/ is pure
 # NOAA-EMC/WW3 at the commit the fork branched from, and WW3/ is the fork (the h0ffmann/WW3 branch
-# ww3-gpu/kokkos-wave-support: WW3-noaa plus the KOKKOS switch and the shim calls). WW4's C++ comes only from
+# ww3-gpu/kokkos-wire-base: WW3-noaa plus the KOKKOS switch and the shim calls). WW4's C++ comes only from
 # the WW4/ submodule (h0ffmann/WW4, develop); this repository holds the Kokkos port and nothing of
 # either model's source:
 #
@@ -76,13 +76,25 @@ tols=()
 usage() { sed -n '2,/^set -euo/{/^set -euo/!p}' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 64; }
 
 mode="" case_name="" device="" build_only="" kokkos=""
-all_parts=(SNL1 SDS4 SIN4 SPR4 ST4_TABLES SRCE SPR0 SPR1 SIN1 SDS1 SPR2 SIN2 SDS2 SPR3 SIN3 SDS3
-           SPR6 SIN6 SDS6 SWL6 FLX1 FLX2 FLX3 FLX4 FLX5 FLX_TABLES GATH SCAT UWND UTRN DZXY MAP3
-           MAPT DISTAB)
-count_flags=(WW_KOKKOS_SNL1_COUNT=1 WW_KOKKOS_ST4_COUNT=1 WW_KOKKOS_SRCE_COUNT=1
-             WW_KOKKOS_ST0_COUNT=1 WW_KOKKOS_ST1_COUNT=1 WW_KOKKOS_ST2_COUNT=1
-             WW_KOKKOS_ST3_COUNT=1 WW_KOKKOS_ST6_COUNT=1 WW_KOKKOS_FLX_COUNT=1
-             WW_KOKKOS_SWL_COUNT=1 WW_KOKKOS_WAVE_COUNT=1)
+# The parts, their counters and the fork files their hunks touch, one file per wiring unit
+# (kokkos/src/fortran_iface/parts.d/<unit>.txt, PATCH.md section 9), so a new unit adds a file and
+# edits nothing here. Lines: "PART <name>", "COUNT <variable>", "FILE <path in the fork>"; # comments.
+all_parts=() count_flags=() unit_files=()
+parts_d="$root/kokkos/src/fortran_iface/parts.d"
+parts_files=("$parts_d"/*.txt)
+[ -f "${parts_files[0]}" ] || { echo "ww3-gpu: no $parts_d/*.txt" >&2; exit 3; }
+for f in "${parts_files[@]}"; do
+  while read -r key val rest; do
+    case "$key" in
+      ''|'#'*) ;;
+      PART) [[ " ${all_parts[*]} " != *" $val "* ]] || { echo "ww3-gpu: $f: part $val is already in another parts.d file" >&2; exit 3; }
+            all_parts+=("$val") ;;
+      COUNT) count_flags+=("$val=1") ;;
+      FILE) unit_files+=("$val") ;;
+      *) echo "ww3-gpu: $f: unknown line '$key $val $rest'" >&2; exit 3 ;;
+    esac
+  done < "$f"
+done
 while [ $# -gt 0 ]; do
   case "$1" in
     --ww3|--ww3-gpu|--ww4) mode="${1#--}" ;;
@@ -140,6 +152,10 @@ if [ "$mode" = self-test ]; then
     "${BASH_SOURCE[0]}" $bad </dev/null >/dev/null 2>&1 && rc=0 || rc=$?
     [ "$rc" = 64 ] || { echo "ww3-gpu: '$bad' gave exit $rc, not 64" >&2; exit 1; }
   done
+  for p in SNL1 SRCE GATH DISTAB FLX_TABLES; do
+    [[ " ${all_parts[*]} " == *" $p "* ]] || { echo "ww3-gpu: parts.d lost part $p" >&2; exit 1; }
+  done
+  [[ " ${count_flags[*]} " == *" WW_KOKKOS_WAVE_COUNT=1 "* ]] || { echo "ww3-gpu: parts.d lost WW_KOKKOS_WAVE_COUNT" >&2; exit 1; }
   [ "$(kokkos_env 1 all)" = "WW_KOKKOS_ALL=1" ] || { echo "ww3-gpu: --kokkos all: $(kokkos_env 1 all)" >&2; exit 1; }
   [ "$(kokkos_env 1 none)" = "WW_KOKKOS_ALL=0" ] || { echo "ww3-gpu: --kokkos none: $(kokkos_env 1 none)" >&2; exit 1; }
   [ "$(kokkos_env 1 GATH,SNL1)" = "WW_KOKKOS_ALL=0 WW_KOKKOS_GATH=1 WW_KOKKOS_SNL1=1" ] \
@@ -290,8 +306,11 @@ else
   # --ww3 is the reference of --ww3-gpu, so the fork must be WW3-noaa/ plus the KOKKOS patch and
   # nothing else: a fork rebased onto a newer NOAA commit, with WW3-noaa/ left behind, would
   # compare two versions of WW3's physics.
+  # Plus every wiring unit's own module (model/src/w3kokkos_<unit>md.F90, matched below) and the
+  # fork files a unit's parent hook edits (its FILE lines in parts.d).
   kokkos_patch=(model/src/CMakeLists.txt model/src/cmake/switches.json model/src/w3initmd.F90
-                model/src/w3kokkosmd.F90 model/src/w3srcemd.F90 model/src/w3wavemd.F90)
+                model/src/w3kokkosmd.F90 model/src/w3srcemd.F90 model/src/w3wavemd.F90
+                "${unit_files[@]}")
   if [ "$mode" = ww3 ] && [ -f "$fork/model/src/w3kokkosmd.F90" ]; then
     # The trees, not the histories: CI clones the fork one commit deep. model/ holds every source
     # file WW3 compiles, and nothing a build or a regtest writes.
@@ -299,7 +318,8 @@ else
     extra="$(cd "$root" && diff -rq WW3-noaa/model WW3/model \
       | sed -E -e 's#^Files WW3-noaa/model/(.*) and WW3/model/.* differ$#\1#' \
                -e 's#^Only in (WW3-noaa|WW3)/model/?([^:]*): (.*)$#\2/\3#' -e 's#^/##' -e 's#^#model/#' \
-      | grep -v -x -F -f <(printf '%s\n' "${kokkos_patch[@]}") || true)"
+      | grep -v -x -F -f <(printf '%s\n' "${kokkos_patch[@]}") \
+      | grep -v -x -E 'model/src/w3kokkos_[a-z][a-z0-9_]*md\.F90' || true)"
     if [ -n "$extra" ]; then
       echo "ww3-gpu: the fork WW3/ differs from WW3-noaa/ ($(git -C "$noaa" rev-parse --short HEAD)) outside the KOKKOS patch:" >&2
       printf '%s\n' "$extra" | sed 's/^/  /' >&2
@@ -308,8 +328,8 @@ else
     fi
   fi
   if [ "$mode" = ww3-gpu ] && [ ! -f "$ww3/model/src/w3kokkosmd.F90" ]; then
-    echo "ww3-gpu: WW3/ is not the ww3-gpu/kokkos-wave-support branch of h0ffmann/WW3 (no model/src/w3kokkosmd.F90):" >&2
-    echo "      git -C WW3 fetch origin ww3-gpu/kokkos-wave-support && git -C WW3 switch ww3-gpu/kokkos-wave-support" >&2
+    echo "ww3-gpu: WW3/ is not the ww3-gpu/kokkos-wire-base branch of h0ffmann/WW3 (no model/src/w3kokkosmd.F90):" >&2
+    echo "      git -C WW3 fetch origin ww3-gpu/kokkos-wire-base && git -C WW3 switch ww3-gpu/kokkos-wire-base" >&2
     exit 3
   fi
   jobs="${JOBS:-$(nproc)}"
