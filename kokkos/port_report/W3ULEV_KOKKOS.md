@@ -101,6 +101,16 @@ sections being byte-identical means the compiled code is the same.
   shell: compiles, the only warnings are `-Wpedantic` on nvcc's own line directives. Nothing
   was run.
 
+## On the resident spectrum
+
+Not wired on `d_va` (2026-10-17). The ice update next to it, `W3UICE`, writes `VA` only as whole
+zeroed columns, and those are now repeated on the device (`kokkos/src/fortran_iface/PATCH.md`
+section 18). `W3ULEV` re-interpolates the spectrum of every point whose wavenumber grid moved by
+`RDKMIN` or more, reading `A` before it writes `VA`, the same array (`w3updtmd.F90:2464-2546`), with
+the points chosen from the depth, `WN` and `CG` it updates on the host. So its site in `W3WAVE` keeps
+the full host write of `VA`, and in the coast case its copies are the ones left at an update hour.
+Running this translation on `d_va` is the way to remove them, a unit with its own checkpoint.
+
 ## Benchmarks
 
 None. No timing without parity (`AGENTS.md`).

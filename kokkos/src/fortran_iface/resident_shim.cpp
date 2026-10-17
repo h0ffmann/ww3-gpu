@@ -5,7 +5,8 @@
 //
 // The Fortran owns VA; this file only copies it whole, host to device or back, when the
 // other side holds the newer bits, or (ww_va_host_read_cols, the pnt unit) copies back the few
-// columns W3IOPE reads without changing which side is newer. A copy moves bits and computes nothing. Every call
+// columns W3IOPE reads without changing which side is newer, or (ww_va_device_zero_cols, the updv
+// unit) repeats on d_va the zeroing of whole columns that W3UICE made on the host. A copy moves bits and computes nothing. Every call
 // comes from outside an OpenMP parallel region (the Fortran wrappers refuse one), so the
 // contexts and counters need no lock. Views die in Kokkos' finalize hook.
 //
@@ -53,6 +54,7 @@ std::map<int, Ctx>& grids() {
 struct Counts {
   long long h2d = 0, d2h = 0, host_reads = 0, host_writes = 0, device_calls = 0;
   long long part_calls = 0, part_d2h = 0, part_cols = 0;
+  long long zero_calls = 0, zero_launches = 0, zero_cols = 0, zero_checks = 0;
   double h2d_bytes = 0.0, d2h_bytes = 0.0, spectrum_bytes = 0.0, part_bytes = 0.0;
 };
 Counts g_n;
@@ -227,6 +229,59 @@ int host_read_cols(int igrid, float* va, int nspec, int nsealm, int ncol, const 
   return WW_KOKKOS_OK;
 }
 
+/// The device side of a host statement that set whole columns of VA to 0 and wrote nothing else:
+/// the same statement, VA(:,JSEA) = 0., on d_va. A store of +0.0f, so the device column holds
+/// the bits of the host column. HOST: the host write is the newer one and d_va is stale anyway.
+int device_zero_cols(int igrid, float* va, int nspec, int nsealm, int ncol, const int* cols) {
+  ww::timers::Region t("va.zero.cols");
+  Ctx* c = bind(igrid, va, nspec, nsealm);
+  if (c == nullptr) return WW_KOKKOS_ERR_BAD_SHAPE;
+  if (ncol < 0 || (ncol > 0 && cols == nullptr)) return WW_KOKKOS_ERR_BAD_SHAPE;
+  for (int k = 0; k < ncol; ++k)
+    if (cols[k] < 0 || cols[k] > nsealm) {
+      say("ww_va_device_zero_cols: a column outside 0..NSEALM");
+      return WW_KOKKOS_ERR_BAD_SHAPE;
+    }
+  if (c->side == Side::Host) return WW_KOKKOS_OK;
+  if (!Kokkos::is_initialized()) return WW_KOKKOS_ERR_NOT_INITIALISED;
+  const size_t ns = static_cast<size_t>(nspec);
+  if (ncol > 0) {
+    Kokkos::View<int*, DeviceSpace> dc(
+        Kokkos::view_alloc(Kokkos::WithoutInitializing, "ww_va.zero"), ncol);
+    Kokkos::deep_copy(
+        dc, Kokkos::View<const int*, Kokkos::HostSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>>(
+                cols, ncol));
+    const DevVa d = c->d;
+    Kokkos::parallel_for(
+        "ww_va.zero_cols", Kokkos::RangePolicy<>(0, ns * static_cast<size_t>(ncol)),
+        KOKKOS_LAMBDA(const size_t i) { d(i % ns, dc(i / ns)) = 0.0f; });
+    Kokkos::fence("ww_va.zero_cols");
+    ++g_n.zero_launches;
+    g_n.zero_cols += ncol;
+  }
+  if (resident_diag()) {
+    // ww_va_host_update made the two copies equal before the host statement, so now they must
+    // be equal again: a column the list missed is 0 on the host only, a wrong kernel shows too.
+    Kokkos::View<float**, Kokkos::LayoutLeft, Kokkos::HostSpace> back(
+        Kokkos::view_alloc(Kokkos::WithoutInitializing, "ww_va.zero_check"), c->nspec,
+        c->nsealm + 1);
+    Kokkos::deep_copy(back, c->d);
+    long long bad = 0;
+    for (int j = 0; j <= c->nsealm; ++j)
+      if (std::memcmp(&back(0, j), c->host + static_cast<size_t>(j) * ns, ns * sizeof(float)) != 0)
+        ++bad;
+    ++g_n.zero_checks;
+    if (bad != 0) {
+      std::fprintf(stderr,
+                   "ww_kokkos: ww_va_device_zero_cols: %lld columns of VA differ between the host "
+                   "and the device after the update of grid %d\n",
+                   bad, igrid);
+      return WW_KOKKOS_ERR_KERNEL;
+    }
+  }
+  return WW_KOKKOS_OK;
+}
+
 template <class F>
 int guarded(F&& f) {
   try {
@@ -284,6 +339,24 @@ int ww_va_host_read_cols(int igrid, float* va, int nspec, int nsealm, int ncol,
   return guarded([&]() { return host_read_cols(igrid, va, nspec, nsealm, ncol, cols); });
 }
 
+int ww_va_host_update(int igrid, float* va, int nspec, int nsealm) {
+  ++g_n.zero_calls;
+  return guarded([&]() {
+    if (!resident_diag()) {
+      // Bind (or check) only: the statement's writes are repeated on d_va afterwards.
+      return bind(igrid, va, nspec, nsealm) != nullptr ? static_cast<int>(WW_KOKKOS_OK)
+                                                       : static_cast<int>(WW_KOKKOS_ERR_BAD_SHAPE);
+    }
+    ++g_n.host_reads;
+    return host_sync(igrid, va, nspec, nsealm, false);
+  });
+}
+
+int ww_va_device_zero_cols(int igrid, float* va, int nspec, int nsealm, int ncol,
+                           const int* cols) {
+  return guarded([&]() { return device_zero_cols(igrid, va, nspec, nsealm, ncol, cols); });
+}
+
 int ww_va_device(int igrid, int write) {
   return guarded([&]() {
     const auto it = grids().find(igrid);
@@ -316,6 +389,11 @@ void ww_va_report(void) {
   std::fprintf(stderr, "ww_kokkos: VA partial host reads: %lld\n", g_n.part_calls);
   std::fprintf(stderr, "ww_kokkos: VA partial device-to-host copies: %lld\n", g_n.part_d2h);
   std::fprintf(stderr, "ww_kokkos: VA partial columns copied: %lld\n", g_n.part_cols);
+  std::fprintf(stderr, "ww_kokkos: VA host updates repeated on the device: %lld\n", g_n.zero_calls);
+  std::fprintf(stderr, "ww_kokkos: VA device zeroing launches: %lld\n", g_n.zero_launches);
+  std::fprintf(stderr, "ww_kokkos: VA device columns zeroed: %lld\n", g_n.zero_cols);
+  std::fprintf(stderr, "ww_kokkos: VA zeroing checks run: %lld\n",
+               g_n.zero_checks);
 }
 
 }  // extern "C"

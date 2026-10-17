@@ -150,7 +150,7 @@ one per `W3WAVE` call (`ww3_ts1` returns from `W3WAVE` every step, and the retur
 | outside Kokkos | 23.955 s (34.0 %) | 13.946 s (31.1 %) |
 
 
-Since `2f35368a` (`ww3-gpu/kokkos-pnt`, PATCH.md section 16), with `WW_KOKKOS_IOPE=1` (in
+Since `2f35368a` (`ww3-gpu/kokkos-pnt`, PATCH.md section 17), with `WW_KOKKOS_IOPE=1` (in
 `--kokkos resident`) the point output copies back from the resident `VA` only the columns `W3IOPE`
 interpolates, and the state stays `DEVICE`. The batch is unchanged; what changes is how often its
 output crosses: `VA` D2H 2 161 → 37 in the smoke and 36 → 24 in the coast case, every output
