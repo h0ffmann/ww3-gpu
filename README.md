@@ -548,6 +548,7 @@ v3.0.1 (`2ab3cae`), shallow and sparse so only its `archify/` folder is on disk,
 ```bash
 just archify init     # once per clone: check out the pinned submodule
 just archify render   # draw every docs/archify/<slug>.json as <slug>.html, then open it in a browser
+just archify pdf      # print each page to docs/archify/<slug>.pdf (committed, so readers can open them on GitHub)
 ```
 
 To add a twin, ask the agent for one with the `archify` skill, save its source as

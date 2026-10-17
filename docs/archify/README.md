@@ -13,16 +13,22 @@ because every page inlines Archify's template, and git ignores them:
 ```bash
 just archify init     # once per clone: the pinned commit, shallow, only archify/ on disk
 just archify render   # every docs/archify/<slug>.json -> <slug>.html, validated and browser-checked
+just archify pdf      # every rendered <slug>.html -> <slug>.pdf, printed by headless Chrome
 ```
+
+The PDFs are committed, so a reader without a browser or a clone can see the diagrams. Each one
+is the page printed with the template's print stylesheet (light palette, no toolbar) on a page
+sized from the diagram's `viewBox`: the whole diagram on page 1, the summary cards after it.
+Chrome stamps a creation date, so a re-run gives the same drawing, not the same bytes.
 
 `render` runs Archify's `finalize --quality showcase`, which validates the source, renders the
 page and checks it in a real browser. At `2ab3cae` it reproduces, byte for byte, the five pages
 first drawn for [`WW3_GPU_VS_NOAA_202610.md`](../WW3_GPU_VS_NOAA_202610.md) (v, `cmp`, 2026-10-17).
 
-| Source | Type | Question | Figure |
-|---|---|---|---|
-| [ww3-gpu-vs-noaa-architecture.json](ww3-gpu-vs-noaa-architecture.json) | architecture | What is the same and what differs between NOAA's WW3 and ww3-gpu? | [the two builds](../WW3_GPU_VS_NOAA_202610.md#the-two-builds) |
-| [ww3-gpu-parity-workflow.json](ww3-gpu-parity-workflow.json) | workflow | How is a ww3-gpu result judged against NOAA's WW3? | [the verdict](../WW3_GPU_VS_NOAA_202610.md#the-verdict) |
-| [ww3-gpu-step-sequence.json](ww3-gpu-step-sequence.json) | sequence | Where does a time step leave the Fortran in ww3-gpu, and what does NOAA's WW3 do at the same place? | [one time step](../WW3_GPU_VS_NOAA_202610.md#one-time-step) |
-| [ww3-gpu-port-lifecycle.json](ww3-gpu-port-lifecycle.json) | lifecycle | Which states does a WW3 routine pass through on its way to Kokkos? | [a routine's states](../WW3_GPU_VS_NOAA_202610.md#a-routines-states) |
-| [ww3-gpu-device-math-dataflow.json](ww3-gpu-device-math-dataflow.json) | dataflow | Why can a GPU result carry the bits of NOAA's CPU run? | [device math](../WW3_GPU_VS_NOAA_202610.md#device-math) |
+| Source | PDF | Type | Question | Figure |
+|---|---|---|---|---|
+| [ww3-gpu-vs-noaa-architecture.json](ww3-gpu-vs-noaa-architecture.json) | [PDF](ww3-gpu-vs-noaa-architecture.pdf) | architecture | What is the same and what differs between NOAA's WW3 and ww3-gpu? | [the two builds](../WW3_GPU_VS_NOAA_202610.md#the-two-builds) |
+| [ww3-gpu-parity-workflow.json](ww3-gpu-parity-workflow.json) | [PDF](ww3-gpu-parity-workflow.pdf) | workflow | How is a ww3-gpu result judged against NOAA's WW3? | [the verdict](../WW3_GPU_VS_NOAA_202610.md#the-verdict) |
+| [ww3-gpu-step-sequence.json](ww3-gpu-step-sequence.json) | [PDF](ww3-gpu-step-sequence.pdf) | sequence | Where does a time step leave the Fortran in ww3-gpu, and what does NOAA's WW3 do at the same place? | [one time step](../WW3_GPU_VS_NOAA_202610.md#one-time-step) |
+| [ww3-gpu-port-lifecycle.json](ww3-gpu-port-lifecycle.json) | [PDF](ww3-gpu-port-lifecycle.pdf) | lifecycle | Which states does a WW3 routine pass through on its way to Kokkos? | [a routine's states](../WW3_GPU_VS_NOAA_202610.md#a-routines-states) |
+| [ww3-gpu-device-math-dataflow.json](ww3-gpu-device-math-dataflow.json) | [PDF](ww3-gpu-device-math-dataflow.pdf) | dataflow | Why can a GPU result carry the bits of NOAA's CPU run? | [device math](../WW3_GPU_VS_NOAA_202610.md#device-math) |

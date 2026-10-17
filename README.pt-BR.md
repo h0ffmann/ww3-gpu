@@ -505,6 +505,7 @@ v3.0.1 (`2ab3cae`), raso e esparso para que só a pasta `archify/` vá para o di
 ```bash
 just archify init     # uma vez por clone: baixa o submódulo fixado
 just archify render   # desenha cada docs/archify/<slug>.json como <slug>.html; abra no navegador
+just archify pdf      # imprime cada página em docs/archify/<slug>.pdf (versionado, abre no GitHub)
 ```
 
 Para criar um gêmeo, peça um ao agente com a skill `archify`, salve a fonte como

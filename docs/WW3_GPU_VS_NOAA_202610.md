@@ -8,7 +8,8 @@ routine passes through on its way to Kokkos, and how the GPU can return the CPU'
 are postponed to a validation phase ([ADR-0016](ADRs/ADR-0016-speed-first-regtests-postponed-one-person-loop.md)).
 
 Each figure is a Mermaid fence with its reading card; its interactive twin is rendered from a
-source in [`docs/archify/`](archify/README.md) by `scripts/archify.sh render`.
+source in [`docs/archify/`](archify/README.md) by `scripts/archify.sh render`, and printed to a PDF
+next to it.
 
 ## The two builds
 
