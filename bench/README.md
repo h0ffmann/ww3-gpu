@@ -30,6 +30,19 @@ bash bench_ww3_cpu.sh $WW3/build case_medium
 just bench                                 # or just do everything (builds the generator first)
 ```
 
+### WW3 against ww3-gpu, end to end
+
+`just perf-ww3-gpu [case] [runs]` (GPU, the owner's supervised run; `--cpu` through
+`scripts/ww3-gpu.sh --ww3-gpu <case> --cpu --repeat N` for the OpenMP backend) times `ww3_shel`
+of pure NOAA WW3 (`--ww3`) against ww3-gpu, both built with `switches/switch_lab_ompg`. It first
+compares the Kokkos run with the Fortran of the same executable and with `--ww3` (`nccmp-tol`),
+then alternates N runs of each, checks every output against run 1's, and prints the medians.
+Only then does it write `build/runs/ww3-gpu-<case>-<backend>/perf.tsv`.
+`python3 scripts/results.py record <perf.tsv>` turns it into a record here. It refuses fewer than
+three runs and never overwrites a record, and the record says so when the tree had uncommitted
+changes. The baseline is OpenMP on one CPU node; NOAA runs WW3 under MPI on many nodes, so the
+ratio is not a speed-up over operations.
+
 ### The case generator
 
 `ww_bench_case` is a C++ program in `kokkos/tools/bench_case/`, built with the rest of

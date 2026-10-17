@@ -8,6 +8,7 @@ table there is generated, so it cannot drift from the record.
 
     scripts/results.py table   # rewrite every marked table from the records
     scripts/results.py check   # CI: records valid, every timing has a passed regtest, tables current
+    scripts/results.py record <perf.tsv>   # the record of a `ww3-gpu.sh --repeat N` run (N >= 3)
 """
 import json
 import pathlib
@@ -103,8 +104,70 @@ def render(page, records, root=ROOT):
     return BLOCK.sub(sub, text), missing
 
 
+def from_perf(perf):
+    """The record of one `scripts/ww3-gpu.sh --ww3-gpu <case> --repeat N` run, from the perf.tsv it
+    writes after its parity checks passed (pure WW3 against ww3-gpu, the same switch, alternated)."""
+    kv = dict(line.split("\t", 1) for line in perf.read_text(encoding="utf-8").splitlines() if "\t" in line)
+    n = int(kv["repeat"])
+    if n < 3:
+        raise ValueError(f"{perf}: {n} runs; a timing for a table is the median of three or more (bench/README.md)")
+    m3, m1 = float(kv["ww3_median_s"]), float(kv["ww3gpu_median_s"])
+    model = re.sub(r"\s*\(UUID:[^)]*\)", "", kv.get("gpu", "")).strip()  # never the card's UUID
+    gpu = f" + {model}, driver {kv['driver']}" if model else ""
+    record = {
+        "study": f"ww3-vs-ww3gpu-{kv['case']}-{kv['backend']}-{kv['date']}",
+        "date": kv["date"],
+        "routine": f"WW3 end to end (ww3_shel): pure NOAA WW3 against ww3-gpu with {kv['parts']}",
+        "what": (f"ww3_shel wall time, case {kv['case']}, {kv['switch']}: --ww3 is NOAA WW3 from WW3-noaa/, "
+                 f"--ww3-gpu the fork with those parts on Kokkos {kv['backend']} and the rest in Fortran; "
+                 f"{n} runs of each, alternated, every output byte-identical to run 1's"),
+        "machine": f"{kv['cpu']} ({kv['threads']} hardware threads){gpu}",
+        "toolchain": "; ".join(x for x in (kv.get("toolchain"), kv.get("kokkos")) if x),
+        "commit": kv["commit"] or None,
+        "ww3_commit": kv["ww3_commit"],
+        "regtest": (f"passed: {kv['command']} (nccmp-tol PASS against the Fortran of the same executable "
+                    f"and against --ww3, before the timed runs)"),
+        "statistic": f"median of {n} runs",
+        "columns": [["build", "backend"], ["ww3_shel median (s)", "median_s"], ["runs (s)", "runs_s"],
+                    ["--ww3 median / this median", "ratio"]],
+        "runs": [
+            {"backend": f"--ww3, pure NOAA WW3 ({kv['baseline']})", "command": kv["command"],
+             "median_s": m3, "runs_s": kv["ww3_s"], "ratio": "1.00x"},
+            {"backend": f"--ww3-gpu, {kv['parts']} on {kv['backend']}", "command": kv["command"],
+             "median_s": m1, "runs_s": kv["ww3gpu_s"], "ratio": f"{m3 / m1:.2f}x"},
+        ],
+    }
+    if kv.get("dirty"):
+        record["commit_note"] = "the tree had uncommitted changes when it ran; the commit is its parent"
+    if not record["commit"]:
+        record["commit_note"] = "the run did not know its commit (no git, no BUILD_INFO)"
+    return record
+
+
+def record_cmd(perf, results=RESULTS):
+    r = from_perf(pathlib.Path(perf))
+    # The name comes from the file's fields: a study is a plain file name, never a path.
+    if not re.fullmatch(r"[a-z0-9][a-z0-9.-]*", r["study"]):
+        raise ValueError(f"{perf}: study name {r['study']!r} is not a plain file name")
+    out = results / f"{r['study']}.json"
+    if out.exists():
+        raise FileExistsError(f"{out} exists; a record is not overwritten")
+    out.write_text(json.dumps(r, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    print(f"results: wrote {out.relative_to(ROOT) if out.is_relative_to(ROOT) else out}")
+    return 0
+
+
 def main(argv):
     cmd = argv[0] if argv else "check"
+    if cmd == "record":
+        if len(argv) != 2:
+            print("results: record <perf.tsv>", file=sys.stderr)
+            return 64
+        try:
+            return record_cmd(argv[1])
+        except (ValueError, KeyError, FileExistsError, OSError) as e:
+            print(f"results: {e}", file=sys.stderr)
+            return 1
     records = load()
     errs = problems(records)
     for page in pages():

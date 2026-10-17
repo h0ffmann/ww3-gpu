@@ -563,6 +563,34 @@ else
     m3="$(median "${w3s[@]}")" m1="$(median "${w1s[@]}")"
     echo ">> $repeat runs each, every output byte-identical to run 1's: --ww3 ${w3s[*]} s, median ${m3} s; --ww3-gpu ($backend, $kname) ${w1s[*]} s, median ${m1} s"
     awk -v a="$m3" -v b="$m1" -v c="$backend" -v t="$base_desc" 'BEGIN { if (b > 0) printf ">> median --ww3 (%s) / median --ww3-gpu (%s): %.2fx (above 1: the Kokkos run is faster; NOAA runs WW3 on many cores under MPI)\n", t, c, a / b }'
-    echo ">> machine: $(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2- | sed 's/^ //'), $(nproc) threads${dev_name:+; $dev_name}; $lab_switch, OMP_NUM_THREADS=${OMP_NUM_THREADS:-unset, all threads}"
+    cpu_name="$(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2- | sed 's/^ //')"
+    echo ">> machine: $cpu_name, $(nproc) threads${dev_name:+; $dev_name}; $lab_switch, OMP_NUM_THREADS=${OMP_NUM_THREADS:-unset, all threads}"
+    # Written only here, after the parity above and the per-run output checks passed:
+    # `python3 scripts/results.py record <file>` turns it into a bench/results/ record.
+    perf="$runs/ww3-gpu-$case_name-$backend/perf.tsv"
+    tool="$(gfortran --version 2>/dev/null | head -1 || true)"
+    [ "$backend" != cuda ] || tool="$tool; $(nvcc --version 2>/dev/null | tail -1 || true)"
+    kver="$(grep -o 'kokkos-[a-z]*-[0-9][0-9.]*[0-9]' "${kbuild:-/dev/null}/CMakeCache.txt" 2>/dev/null | head -1 || true)"
+    # The model only: nvidia-smi -L also prints the card's UUID, a fingerprint a record must not carry.
+    gpu_model="" driver=""
+    if [ "$backend" = cuda ]; then
+      gpu_model="$(nvidia-smi --query-gpu=name --format=csv,noheader | head -1)"
+      driver="$(nvidia-smi --query-gpu=driver_version --format=csv,noheader | head -1)"
+    fi
+    dirty=""; [ -z "$(git -C "$root" status --porcelain 2>/dev/null)" ] || dirty="yes"
+    # The image has no git: its BUILD_INFO names the commits it was built from.
+    info="${pre:+$(dirname "$pre")/BUILD_INFO}"
+    c_gpu="$(git -C "$root" rev-parse --short HEAD 2>/dev/null || sed -n 's/^ww3-gpu //p' "${info:-/dev/null}" 2>/dev/null || true)"
+    c_ww3="$(git -C "${ww3:-$root/WW3}" rev-parse --short HEAD 2>/dev/null || sed -n 's/^WW3 \([^ ]*\).*/\1/p' "${info:-/dev/null}" 2>/dev/null || true)"
+    {
+      printf 'case\t%s\nbackend\t%s\nparts\t%s\nrepeat\t%s\n' "$case_name" "$backend" "$kname" "$repeat"
+      printf 'ww3_s\t%s\nww3gpu_s\t%s\nww3_median_s\t%s\nww3gpu_median_s\t%s\n' "${w3s[*]}" "${w1s[*]}" "$m3" "$m1"
+      printf 'baseline\t%s\nswitch\t%s\nomp_num_threads\t%s\n' "$base_desc" "$lab_switch" "${OMP_NUM_THREADS:-}"
+      printf 'cpu\t%s\nthreads\t%s\ngpu\t%s\ndriver\t%s\n' "$cpu_name" "$(nproc)" "$gpu_model" "$driver"
+      printf 'toolchain\t%s\nkokkos\t%s\n' "$tool" "$kver"
+      printf 'commit\t%s\nww3_commit\t%s\ndirty\t%s\ndate\t%s\n' "$c_gpu" "$c_ww3" "$dirty" "$(date -u +%F)"
+      printf 'command\t%s\n' "${WW3GPU_SWITCH:+WW3GPU_SWITCH=$WW3GPU_SWITCH }bash scripts/ww3-gpu.sh --ww3-gpu $case_name --$device${kokkos:+ --kokkos $kokkos} --repeat $repeat"
+    } > "$perf"
+    echo ">> perf summary: $perf (python3 scripts/results.py record $perf writes the bench/results/ record)"
   fi
 fi

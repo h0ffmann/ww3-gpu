@@ -63,5 +63,50 @@ class Results(unittest.TestCase):
         bad = dict(rec, runs=[{"backend": "Serial", "command": "cmd", "fortran_ms": 1.5}])
         self.assertIn("s.json: run 0 missing 'r'", results.problems(self.write(bad)))
 
+    PERF = ("case\tfull\nbackend\tcuda\nparts\tKokkos --kokkos SRCE\nrepeat\t3\n"
+            "ww3_s\t20.1 20.3 20.2\nww3gpu_s\t10.0 10.2 10.1\nww3_median_s\t20.2\nww3gpu_median_s\t10.1\n"
+            "baseline\tCPU, OpenMP, 32 threads\nswitch\tswitch_lab_ompg\nomp_num_threads\t\n"
+            "cpu\tIntel(R) Core(TM) i9-14900\nthreads\t32\ngpu\tGPU 0: RTX 4090\ndriver\t595.84\n"
+            "toolchain\tGNU Fortran 16.2.0\nkokkos\tkokkos-cuda-5.2.2\ncommit\tabc1234\nww3_commit\tdef5678\n"
+            "dirty\t\ndate\t2026-10-17\ncommand\tbash scripts/ww3-gpu.sh --ww3-gpu full --gpu --kokkos SRCE --repeat 3\n")
+
+    def perf(self, text):
+        p = self.root / "perf.tsv"
+        p.write_text(text, encoding="utf-8")
+        return p
+
+    def test_a_perf_summary_becomes_a_valid_record(self):
+        r = results.from_perf(self.perf(self.PERF))
+        self.assertEqual(r["statistic"], "median of 3 runs")
+        self.assertEqual(r["runs"][1]["ratio"], "2.00x")
+        self.assertTrue(r["regtest"].startswith("passed: "))
+        self.assertEqual(results.problems(self.write(r, name=r["study"] + ".json")), [])
+
+    def test_a_perf_summary_of_fewer_than_three_runs_is_refused(self):
+        with self.assertRaises(ValueError):
+            results.from_perf(self.perf(self.PERF.replace("repeat\t3", "repeat\t2")))
+
+    def test_a_record_is_never_overwritten(self):
+        p = self.perf(self.PERF)
+        res = self.root / "bench" / "results"
+        results.record_cmd(p, res)
+        with self.assertRaises(FileExistsError):
+            results.record_cmd(p, res)
+
+    def test_a_study_name_cannot_leave_the_results_directory(self):
+        with self.assertRaises(ValueError):
+            results.record_cmd(self.perf(self.PERF.replace("case\tfull", "case\t../../x")),
+                               self.root / "bench" / "results")
+
+    def test_a_gpu_uuid_never_reaches_the_record(self):
+        text = self.PERF.replace("gpu\tGPU 0: RTX 4090", "gpu\tGPU 0: RTX 4090 (UUID: GPU-0000-1111)")
+        r = results.from_perf(self.perf(text))
+        self.assertNotIn("UUID", r["machine"])
+        self.assertIn("RTX 4090", r["machine"])
+
+    def test_a_dirty_tree_is_said_in_the_record(self):
+        r = results.from_perf(self.perf(self.PERF.replace("dirty\t\n", "dirty\tyes\n")))
+        self.assertIn("uncommitted", r["commit_note"])
+
     def test_checked_in_tables_are_current(self):
         self.assertEqual(results.main(["check"]), 0)
