@@ -45,6 +45,16 @@ three runs and never overwrites a record, and the record says so when the tree h
 changes. The baseline is OpenMP on one CPU node; NOAA runs WW3 under MPI on many nodes, so the
 ratio is not a speed-up over operations.
 
+Both programs get the same OpenMP environment: the script's default is `OMP_NUM_THREADS` unset
+(every hardware thread) and `OMP_PROC_BIND=false`. The record keeps `OMP_PROC_BIND`, `OMP_PLACES`,
+`OMP_WAIT_POLICY`, `GOMP_SPINCOUNT` and the 1-minute load average before and after the timed runs.
+The script refuses `KOKKOS_NUM_THREADS`, which sizes the Kokkos run's threads alone. On the i9-14900
+under a load average of 12 to 62, 116 runs of `full` with `--kokkos resident` wrote the same bits
+under every setting, and the script's default was among the fastest for both programs; pinning
+(`close` or `spread`) and `OMP_WAIT_POLICY=active` were slower for both ⚠ (shared machine; on an
+idle machine pinning to the P cores may win, see "The i9 trap" below). A timing for a table is
+taken with the load average below 2.
+
 ### The case generator
 
 `ww_bench_case` is a C++ program in `kokkos/tools/bench_case/`, built with the rest of

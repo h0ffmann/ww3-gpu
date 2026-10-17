@@ -181,6 +181,11 @@ if [ -n "$timers" ]; then
   # The timers fence the device around every phase: a run with them is a breakdown, never a median.
   [ "$repeat" = 1 ] || { echo "ww3-gpu: --timers and --repeat do not go together: time with --repeat, break down with --timers" >&2; exit 64; }
 fi
+# KOKKOS_NUM_THREADS sizes Kokkos' pool alone, so it would time the two programs on different thread
+# counts; OMP_* settings reach both runs alike.
+if [ "$mode" = ww3-gpu ] && [ -n "${KOKKOS_NUM_THREADS:-}" ]; then
+  echo "ww3-gpu: KOKKOS_NUM_THREADS acts on the Kokkos run only; unset it (OMP_NUM_THREADS sets both)" >&2; exit 64
+fi
 if [ "$mode" = self-test ]; then
   out="$("${BASH_SOURCE[0]}" --help 2>&1 || true)"
   if ! grep -q -- "--ww3" <<<"$out" || ! grep -q -- "--ww3-gpu" <<<"$out" || ! grep -q -- "--ww4" <<<"$out"; then echo "ww3-gpu: help text lost" >&2; exit 1; fi
@@ -190,6 +195,8 @@ if [ "$mode" = self-test ]; then
     "${BASH_SOURCE[0]}" $bad </dev/null >/dev/null 2>&1 && rc=0 || rc=$?
     [ "$rc" = 64 ] || { echo "ww3-gpu: '$bad' gave exit $rc, not 64" >&2; exit 1; }
   done
+  KOKKOS_NUM_THREADS=16 "${BASH_SOURCE[0]}" --ww3-gpu smoke </dev/null >/dev/null 2>&1 && rc=0 || rc=$?
+  [ "$rc" = 64 ] || { echo "ww3-gpu: KOKKOS_NUM_THREADS=16 gave exit $rc, not 64" >&2; exit 1; }
   WW3GPU_ROUTINES=SDS4,BOGUS "${BASH_SOURCE[0]}" --ww3-gpu smoke </dev/null >/dev/null 2>&1 && rc=0 || rc=$?
   [ "$rc" = 64 ] || { echo "ww3-gpu: WW3GPU_ROUTINES=SDS4,BOGUS gave exit $rc, not 64" >&2; exit 1; }
   for bad in "--ww3-gpu smoke --kokkos" "--ww3-gpu smoke --kokkos SNL1,BOGUS" "--ww3-gpu smoke --kokkos all,SNL1" \
@@ -616,6 +623,7 @@ else
   if [ "$repeat" -gt 1 ]; then
     cp "$ref" "$runs/ww3-gpu-$case_name-$backend/ww3-ref.nc"
     w1s=("$w1") w3s=("$w3")
+    load0="$(cut -d' ' -f1 /proc/loadavg)"
     for i in $(seq 2 "$repeat"); do
       bash "${BASH_SOURCE[0]}" --ww3 "$case_name" --cpu >/dev/null
       cmp -s "$runs/ww3-gpu-$case_name-$backend/ww3-ref.nc" "$ref" \
@@ -628,10 +636,13 @@ else
     done
     median() { printf '%s\n' "$@" | sort -g | awk '{ a[NR] = $1 } END { if (NR % 2) print a[(NR + 1) / 2]; else printf "%.2f\n", (a[NR / 2] + a[NR / 2 + 1]) / 2 }'; }
     m3="$(median "${w3s[@]}")" m1="$(median "${w1s[@]}")"
+    load1="$(cut -d' ' -f1 /proc/loadavg)"
+    # Unset is libgomp's default; run_model makes OMP_PROC_BIND false when it is unset.
+    omp_env="OMP_PROC_BIND=${OMP_PROC_BIND:-false} OMP_PLACES=${OMP_PLACES:-unset} OMP_WAIT_POLICY=${OMP_WAIT_POLICY:-unset} GOMP_SPINCOUNT=${GOMP_SPINCOUNT:-unset}"
     echo ">> $repeat runs each, every output byte-identical to run 1's: --ww3 ${w3s[*]} s, median ${m3} s; --ww3-gpu ($backend, $kname) ${w1s[*]} s, median ${m1} s"
     awk -v a="$m3" -v b="$m1" -v c="$backend" -v t="$base_desc" 'BEGIN { if (b > 0) printf ">> median --ww3 (%s) / median --ww3-gpu (%s): %.2fx (above 1: the Kokkos run is faster; NOAA runs WW3 on many cores under MPI)\n", t, c, a / b }'
     cpu_name="$(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2- | sed 's/^ //')"
-    echo ">> machine: $cpu_name, $(nproc) threads${dev_name:+; $dev_name}; $lab_switch, OMP_NUM_THREADS=${OMP_NUM_THREADS:-unset, all threads}"
+    echo ">> machine: $cpu_name, $(nproc) threads${dev_name:+; $dev_name}; $lab_switch, OMP_NUM_THREADS=${OMP_NUM_THREADS:-unset, all threads}, $omp_env; load average (1 min) $load0 before the timed runs, $load1 after"
     # Written only here, after the parity above and the per-run output checks passed:
     # `python3 scripts/results.py record <file>` turns it into a bench/results/ record.
     perf="$runs/ww3-gpu-$case_name-$backend/perf.tsv"
@@ -653,6 +664,7 @@ else
       printf 'case\t%s\nbackend\t%s\nparts\t%s\nrepeat\t%s\n' "$case_name" "$backend" "$kname" "$repeat"
       printf 'ww3_s\t%s\nww3gpu_s\t%s\nww3_median_s\t%s\nww3gpu_median_s\t%s\n' "${w3s[*]}" "${w1s[*]}" "$m3" "$m1"
       printf 'baseline\t%s\nswitch\t%s\nomp_num_threads\t%s\n' "$base_desc" "$lab_switch" "${OMP_NUM_THREADS:-}"
+      printf 'omp_env\t%s\nload_1min\t%s %s\n' "$omp_env" "$load0" "$load1"
       printf 'cpu\t%s\nthreads\t%s\ngpu\t%s\ndriver\t%s\n' "$cpu_name" "$(nproc)" "$gpu_model" "$driver"
       printf 'toolchain\t%s\nkokkos\t%s\n' "$tool" "$kver"
       printf 'commit\t%s\nww3_commit\t%s\ndirty\t%s\ndate\t%s\n' "$c_gpu" "$c_ww3" "$dirty" "$(date -u +%F)"
