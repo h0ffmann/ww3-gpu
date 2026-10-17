@@ -65,7 +65,9 @@ the chapter. `README.md` has the study areas and their state; `README.pt-BR.md` 
 is made in the other (content must match, length need not; see `CONTRIBUTING.md`, "Ground rules").
 
 Lab code is C++, Fortran and shell. Python appears only in the publishing and repo tooling
-(`scripts/*.py`, `tests/`), never in lab code or kernels. `just` is the task runner and every
+(`scripts/*.py`, `tests/`), never in lab code or kernels, with one exception: a Triton GPU kernel
+that is better fitted than the Kokkos one, integrated with the Fortran/C++ code and regtested by
+WW3's regtests ([ADR-0015](docs/ADRs/ADR-0015-triton-kernels-allowed-under-three-conditions.md)). `just` is the task runner and every
 recipe is a thin wrapper over a script in `scripts/`, except the `ww3-gpu-matrix*` recipes, which
 configure and run the CMake/CTest driver in `regtests/`; `just` lists them.
 
