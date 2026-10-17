@@ -3,7 +3,8 @@
 // ww_kokkos_c.hpp ("W3WAVE support") over the headers of
 // docs/W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md. Marshalling only: every entry point
 // copies its Fortran arrays to the device, calls the translated launcher, and
-// copies the results back (phase 1, no Unified Memory, nothing kept between calls).
+// copies the results back (phase 1, no Unified Memory); W3GATH/W3SCAT keep their
+// device buffers between calls and work in place on a host backend (below).
 //
 // The caller is W3WAVE (w3wavemd.F90) or W3INIT (DISTAB), through the wrappers
 // W3KOKKOS_<R> of w3kokkosmd.F90, each inside !$OMP CRITICAL (WW_KOKKOS_WAVE). The
@@ -13,10 +14,16 @@
 // returns a WwKokkosStatus.
 //
 // Two marshalling choices change no arithmetic and are worth knowing:
-//  * W3GATH/W3SCAT move one spectral component. The shim copies the row
-//    VA(ISPEC, 0:NSEA) into a (1, NSEA+1) View and calls the launcher with ISPEC = 1,
-//    so a call costs O(NSEA), not O(NSPEC*NSEA). The kernel is a pure copy, and the
-//    row holds the same bits as VA.
+//  * W3GATH/W3SCAT move one spectral component and run once per component and time
+//    step (41 472 calls each on the coast case), so their fixed cost per call is the
+//    cost. When the execution space can read host memory (OpenMP, Serial) the kernels
+//    work on the caller's VA, MAPSF, MAPSTA and FIELD in place, as prop3_shim.cpp's
+//    stage() does: no View is allocated, nothing is copied, the kernel reads and writes
+//    the same addresses the Fortran does. On a device the shim copies the row
+//    VA(ISPEC, 0:NSEA) into a (1, NSEA+1) buffer and calls the launcher with ISPEC = 1,
+//    so a call costs O(NSEA), not O(NSPEC*NSEA); the buffers are kept between calls
+//    (grown, never initialised: every element read is first written). The kernel is a
+//    pure copy, and the row holds the same bits as VA.
 //  * W3UTRN reads TRNY(0) with TRFLAG = 1, 3, 5 when the cell IXY = 1 is a sea point
 //    (w3updtmd.F90:2954 at the pin, outside the array, as the Fortran does). The shim
 //    reads trny[-1], the same address the Fortran reads, only in that case.
@@ -36,6 +43,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <exception>
+#include <mutex>
 #include <new>
 #include <string>
 #include <type_traits>
@@ -106,14 +114,17 @@ bool nested_in_openmp() {
 /// p (a bitwise copy), and the copy back. LayoutLeft, Fortran order.
 template <class T, class E>
 Kokkos::View<T*, Kokkos::LayoutLeft, E> in1(const E& e, const char* name, const T* p, size_t n) {
-  Kokkos::View<T*, Kokkos::LayoutLeft, E> d(Kokkos::view_alloc(e, std::string(name)), n);
+  // Not initialised: the deep_copy writes every element.
+  Kokkos::View<T*, Kokkos::LayoutLeft, E> d(
+      Kokkos::view_alloc(e, Kokkos::WithoutInitializing, std::string(name)), n);
   Kokkos::deep_copy(e, d, Borrowed<const T>(p, n));
   return d;
 }
 template <class T, class E>
 Kokkos::View<T**, Kokkos::LayoutLeft, E> in2(const E& e, const char* name, const T* p, size_t n0,
                                              size_t n1) {
-  Kokkos::View<T**, Kokkos::LayoutLeft, E> d(Kokkos::view_alloc(e, std::string(name)), n0, n1);
+  Kokkos::View<T**, Kokkos::LayoutLeft, E> d(
+      Kokkos::view_alloc(e, Kokkos::WithoutInitializing, std::string(name)), n0, n1);
   Kokkos::View<const T**, Kokkos::LayoutLeft, Host, Kokkos::MemoryTraits<Kokkos::Unmanaged>> h(
       p, n0, n1);
   Kokkos::deep_copy(e, d, h);
@@ -126,6 +137,51 @@ void out(const E& e, const V& d, T* p) {
                            Kokkos::MemoryTraits<Kokkos::Unmanaged>>(d.data(), d.size());
   Kokkos::deep_copy(e, h, flat);
   e.fence("ww_wave copy out");
+}
+
+/// True when E's kernels can read and write the caller's (host) arrays in place.
+template <class E>
+constexpr bool kInPlace = Kokkos::SpaceAccessibility<E, Kokkos::HostSpace>::accessible;
+
+template <class T>
+using HostUnmanaged2 =
+    Kokkos::View<T**, Kokkos::LayoutLeft, Host, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
+
+/// W3GATH/W3SCAT's device buffers (used only when !kInPlace<E>), kept between calls and
+/// released in Kokkos' finalize hook. g_gs_mutex serialises their users; the Fortran
+/// caller is already inside !$OMP CRITICAL (WW_KOKKOS_WAVE).
+template <class Mem>
+struct GsBuffers {
+  Kokkos::View<Real**, Kokkos::LayoutLeft, Mem> row;
+  Kokkos::View<int**, Kokkos::LayoutLeft, Mem> mapsf;
+  Kokkos::View<int*, Kokkos::LayoutLeft, Mem> mapsta;
+  Kokkos::View<Real*, Kokkos::LayoutLeft, Mem> field;
+};
+template <class Mem>
+GsBuffers<Mem>& gs_buffers() {
+  static GsBuffers<Mem>* b = [] {
+    auto* p = new GsBuffers<Mem>();
+    Kokkos::push_finalize_hook([p] { *p = GsBuffers<Mem>(); });
+    return p;
+  }();
+  return *b;
+}
+std::mutex g_gs_mutex;
+
+/// v reshaped to n0 x n1 (or n0), reallocated only when the extents differ, never initialised.
+template <class V>
+void fit(V& v, const char* name, size_t n0, size_t n1 = 0) {
+  if constexpr (V::rank == 1) {
+    if (v.extent(0) != n0) {
+      v = V();
+      v = V(Kokkos::view_alloc(Kokkos::WithoutInitializing, std::string(name)), n0);
+    }
+  } else {
+    if (v.extent(0) != n0 || v.extent(1) != n1) {
+      v = V();
+      v = V(Kokkos::view_alloc(Kokkos::WithoutInitializing, std::string(name)), n0, n1);
+    }
+  }
 }
 
 /// Runs f(E()) on Kokkos::Serial inside an OpenMP region, else on the default space,
@@ -179,15 +235,29 @@ int ww_wave_gath(int ispec, int nspec, int nsea, int ncol, int msea, int nx, int
   return run(GATH, [&](const auto& e) {
     using E = std::decay_t<decltype(e)>;
     const size_t nf = static_cast<size_t>(ny) * static_cast<size_t>(nx + 3);
-    std::vector<Real> row(static_cast<size_t>(nsea) + 1);
-    for (int isea = 0; isea <= nsea; ++isea)
-      row[static_cast<size_t>(isea)] =
-          va[static_cast<size_t>(isea) * static_cast<size_t>(nspec) + static_cast<size_t>(ispec - 1)];
-    auto drow = in2(e, "ww_wave.va_row", row.data(), 1, static_cast<size_t>(nsea) + 1);
-    auto dmap = in2(e, "ww_wave.mapsf", mapsf, static_cast<size_t>(msea), 3);
-    Kokkos::View<Real*, Kokkos::LayoutLeft, E> dfield(Kokkos::view_alloc(e, std::string("ww_wave.field")), nf);
-    ww::wave::w3gath<E>(e, 1, nsea, ny, drow, dmap, dfield);
-    out(e, dfield, field);
+    const size_t n1 = static_cast<size_t>(nsea) + 1;
+    if constexpr (kInPlace<E>) {
+      // The kernel zeroes FIELD and copies VA(ISPEC, 1:NSEA) into it, at the caller's addresses.
+      HostUnmanaged2<const Real> dva(va, static_cast<size_t>(nspec), static_cast<size_t>(ncol));
+      HostUnmanaged2<const int> dmap(mapsf, static_cast<size_t>(msea), 3);
+      Borrowed<Real> dfield(field, nf);
+      ww::wave::w3gath<E>(e, ispec, nsea, ny, dva, dmap, dfield);
+    } else {
+      using M = typename E::memory_space;
+      std::lock_guard<std::mutex> lock(g_gs_mutex);
+      auto& b = gs_buffers<M>();
+      std::vector<Real> row(n1);
+      for (int isea = 0; isea <= nsea; ++isea)
+        row[static_cast<size_t>(isea)] =
+            va[static_cast<size_t>(isea) * static_cast<size_t>(nspec) + static_cast<size_t>(ispec - 1)];
+      fit(b.row, "ww_wave.va_row", 1, n1);
+      fit(b.mapsf, "ww_wave.mapsf", static_cast<size_t>(msea), 3);
+      fit(b.field, "ww_wave.field", nf);
+      Kokkos::deep_copy(e, b.row, HostUnmanaged2<const Real>(row.data(), 1, n1));
+      Kokkos::deep_copy(e, b.mapsf, HostUnmanaged2<const int>(mapsf, static_cast<size_t>(msea), 3));
+      ww::wave::w3gath<E>(e, 1, nsea, ny, b.row, b.mapsf, b.field);
+      out(e, b.field, field);
+    }
     return int{WW_KOKKOS_OK};
   });
 }
@@ -205,17 +275,35 @@ int ww_wave_scat(int ispec, int nspec, int nsea, int ncol, int msea, int nx, int
     using E = std::decay_t<decltype(e)>;
     const size_t nf = static_cast<size_t>(ny) * static_cast<size_t>(nx + 3);
     const size_t ns = static_cast<size_t>(nspec);
-    std::vector<Real> row(static_cast<size_t>(nsea) + 1);
-    for (int isea = 0; isea <= nsea; ++isea)
-      row[static_cast<size_t>(isea)] = va[static_cast<size_t>(isea) * ns + static_cast<size_t>(ispec - 1)];
-    auto drow = in2(e, "ww_wave.va_row", row.data(), 1, static_cast<size_t>(nsea) + 1);
-    auto dmap = in2(e, "ww_wave.mapsf", mapsf, static_cast<size_t>(msea), 3);
-    auto dsta = in1(e, "ww_wave.mapsta", mapsta, static_cast<size_t>(nx) * static_cast<size_t>(ny));
-    auto dfield = in1(e, "ww_wave.field", field, nf);
-    ww::wave::w3scat<E>(e, 1, nsea, ny, dsta, dfield, dmap, drow);
-    out(e, drow, row.data());
-    for (int isea = 1; isea <= nsea; ++isea)
-      va[static_cast<size_t>(isea) * ns + static_cast<size_t>(ispec - 1)] = row[static_cast<size_t>(isea)];
+    const size_t n1 = static_cast<size_t>(nsea) + 1;
+    const size_t nc = static_cast<size_t>(nx) * static_cast<size_t>(ny);
+    if constexpr (kInPlace<E>) {
+      // The kernel writes VA(ISPEC, ISEA) where MAPSTA is nonzero, at the caller's addresses.
+      HostUnmanaged2<Real> dva(va, ns, static_cast<size_t>(ncol));
+      HostUnmanaged2<const int> dmap(mapsf, static_cast<size_t>(msea), 3);
+      Borrowed<const int> dsta(mapsta, nc);
+      Borrowed<const Real> dfield(field, nf);
+      ww::wave::w3scat<E>(e, ispec, nsea, ny, dsta, dfield, dmap, dva);
+    } else {
+      using M = typename E::memory_space;
+      std::lock_guard<std::mutex> lock(g_gs_mutex);
+      auto& b = gs_buffers<M>();
+      std::vector<Real> row(n1);
+      for (int isea = 0; isea <= nsea; ++isea)
+        row[static_cast<size_t>(isea)] = va[static_cast<size_t>(isea) * ns + static_cast<size_t>(ispec - 1)];
+      fit(b.row, "ww_wave.va_row", 1, n1);
+      fit(b.mapsf, "ww_wave.mapsf", static_cast<size_t>(msea), 3);
+      fit(b.mapsta, "ww_wave.mapsta", nc);
+      fit(b.field, "ww_wave.field", nf);
+      Kokkos::deep_copy(e, b.row, HostUnmanaged2<const Real>(row.data(), 1, n1));
+      Kokkos::deep_copy(e, b.mapsf, HostUnmanaged2<const int>(mapsf, static_cast<size_t>(msea), 3));
+      Kokkos::deep_copy(e, b.mapsta, Borrowed<const int>(mapsta, nc));
+      Kokkos::deep_copy(e, b.field, Borrowed<const Real>(field, nf));
+      ww::wave::w3scat<E>(e, 1, nsea, ny, b.mapsta, b.field, b.mapsf, b.row);
+      out(e, b.row, row.data());
+      for (int isea = 1; isea <= nsea; ++isea)
+        va[static_cast<size_t>(isea) * ns + static_cast<size_t>(ispec - 1)] = row[static_cast<size_t>(isea)];
+    }
     return int{WW_KOKKOS_OK};
   });
 }
