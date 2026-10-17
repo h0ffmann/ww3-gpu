@@ -100,7 +100,8 @@ in `w3kokkosmd.F90`) sits before the `:2323` parallel region, packs `VA(:,JSEA)`
 commit `caa5da36`, read 2026-10-17). The shim keeps per-grid device
 buffers `b_spec`, `b_wn1`, `b_cg1`, `b_pin`, `b_psc`, ... in a `GridCtx` and chunks by
 `WW_KOKKOS_SRCE_BATCH_MIB` (default 1 024 MiB) (v, `srce_shim.cpp:55-62,102-153`). `ww_kokkos` is
-0.4.0 there; its compatibility mode is the batch PR's to set ⚠.
+0.4.0 there; units 1 and 2 made it 0.5.0 with `SameMajorVersion`, entry points only added (v,
+`kokkos/CMakeLists.txt:12`, 2026-10-17).
 
 ### What is translated and not wired (v, `kokkos/ports.tsv`, `PATCH.md` §8, 2026-10-17)
 
@@ -221,7 +222,9 @@ by tolerance (ADR-0014).
 
 Bytes per global step, from `NSEA`, `NSPEC`, `NK`; `B_VA = 4 NSPEC (NSEA+1)`. The `bench_small`
 column is NSEA 9 520, NSPEC 576, NK 24 (`B_VA` = 21.94 MB), field output every 3 600 s, so every
-second step (`scripts/ww3-gpu.sh:457`), one restart at the end. Copy counts are read from the
+second step (`scripts/ww3-gpu.sh:457`), one restart at the end. The batch sees 9 204 of the 9 520
+sea points active per step, so its spectra are 21.21 MB a step (v, `WW_KOKKOS_SRCE_COUNT` 230 100
+points in 25 calls and `WW_KOKKOS_VA_COUNT=1`, full case, 2026-10-17). Copy counts are read from the
 shims' structure ⚠; GPU figures are ⚠ until unit 6.
 
 | After | In per step | Out per step | Copies per step | `bench_small` per step |
@@ -345,7 +348,7 @@ over points (none in these kernels) would be asked about first.
   `w3iorsmd.F90:685,696`; `w3iobcmd.F90:668`; `w3iogomd.F90:1201,1514-1516`.
 - PR #173, 2026-10-17: fork `ww3-gpu/kokkos-srce-batch` at `caa5da36` (one commit on `4a94a8f6`),
   hunks in `w3wavemd.F90` and `w3kokkosmd.F90` (`W3KOKKOS_SRCE_BATCH`); `kokkos/src/fortran_iface/srce_shim.cpp:55-62,102-153,223-300`;
-  `ww_kokkos_c.hpp:258-270`; `kokkos/CMakeLists.txt:12,81` (0.4.0).
+  `ww_kokkos_c.hpp:258-270`; `kokkos/CMakeLists.txt:12,81` (0.4.0, then 0.5.0 with units 1 and 2: fork `ww3-gpu/kokkos-resident` `513954a6`; its sync sites are listed in `kokkos/src/fortran_iface/PATCH.md` §12).
 - `kokkos/ports.tsv`, `kokkos/src/fortran_iface/PATCH.md` §7 to §9, `kokkos/PORT_STATUS.md`
   (level-0 scratch), ADR-0013, `docs/H100_OPTIMIZATION_STRATEGY_202610.md`,
   `docs/CPU_GPU_SPLIT_202610.md`, `docs/KOKKOS_H100_PLAN_202609.md` §5 and §6, `scripts/ww3-gpu.sh:244,457`,
