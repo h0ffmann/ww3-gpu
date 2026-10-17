@@ -137,6 +137,7 @@ lab files are in that state and are flagged below.
 | DIST | "Distributed memory model" `(v man)` | Must be paired with `MPI`. | [switches/switch_lab_mpi](../switches/switch_lab_mpi) |
 | MPI | "Message Passing Interface (MPI)" `(v man)` | The distributed-memory build, run with `mpirun -np N ww3_shel`. | [course/09-benchmark-profile-compile-run.md](../course/09-benchmark-profile-compile-run.md) |
 | MPIBDI | "Experimental parallelization of multi-grid model initialization" `(v man)` | Experimental MPI option (`mpiexp` category `(v json)`). | — |
+| MPIT | "Enable test output" of the MPI set-up `(v)` `w3initmd.F90:2126` (not in the WW3 manual or `switches.json` at `03adda91`); "Enable test output (MPI)" `w3initmd.F90:119`; listed among the test switches of `model/bin/sort_switch:141` | Test switch: writes the tables of MPI requests (formats 9010-9043 of `W3MPIO`). Not in the lab switch. | [kokkos/port_report/W3MPIO_KOKKOS.md](../kokkos/port_report/W3MPIO_KOKKOS.md) |
 | OMPG | "General loop parallelization directives used for both exclusive OpenMP parallelization and hybrid MPI-OpenMP" `(v man)`; category "directive controlled threading" `(v json)` | Turns on the `!$OMP` regions such as the `W3SRCE` loop in `W3WAVE`; requires care with the unlocked phase-1 shim. | [course/09-benchmark-profile-compile-run.md](../course/09-benchmark-profile-compile-run.md), [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md) |
 | OMPH | "Idem, but for directives used only for hybrid MPI-OpenMP parallelization" `(v man)`; requires `MPI` and `OMPG` `(v json)` | The hybrid layer on top of `OMPG`. | [course/09-benchmark-profile-compile-run.md](../course/09-benchmark-profile-compile-run.md) |
 | OMP0 | ⚠ not in `switches.json` or the manual; a `W3_OMP0` guard wraps an `!$OMP PARALLEL DO` around the source-term loop in `WW3/model/src/w3wavemd.F90:1551` `(v)` | An older OpenMP path the shim's threading note also has to respect. | [kokkos/README.md](../kokkos/README.md), [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md) |
@@ -298,6 +299,7 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | W3GATH / W3SCAT | "Gather spectral bin information into a propagation field array" / "Scatter data back to spectral storage after propagation" `(v)` | The MPI transposes between the point and spectral decompositions; the communication bucket of the profile. | [course/09-benchmark-profile-compile-run.md](../course/09-benchmark-profile-compile-run.md), [docs/AGENTS_KOKKOS_202609.md](AGENTS_KOKKOS_202609.md) |
 | W3INITMD / W3INIT | "Initialize WAVEWATCH III" `(v)`, `w3initmd.F90:163` | Where the Kokkos runtime and DIA tables would be set up (after `W3IOGR('READ')` at line 735). | [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md) |
 | W3MPII | "Perform initializations for MPI version of model. Data transpose only" `(v)` | MPI set-up in `w3initmd.F90`. | [docs/KOKKOS_H100_PLAN_202609.md](KOKKOS_H100_PLAN_202609.md) |
+| W3MPIO | "Prepare MPI persistent communication needed for WAVEWATCH I/O routines" `(v)` `w3initmd.F90:2033-2034`, `:2045` at `03adda91` | Called only by `W3INIT` under `W3_MPI` (`w3initmd.F90:1561`); under `SHRD` it compiles to an empty subroutine, which is what the port reproduces. | [kokkos/port_report/W3MPIO_KOKKOS.md](../kokkos/port_report/W3MPIO_KOKKOS.md) |
 | W3IOGRMD / W3IOGR | "Reading and writing of the model definition file" `(v)` | Reads `mod_def.ww3`; also calls `INSNL1` (`w3iogrmd.F90:1802`). | [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md) |
 | W3IOGOMD / W3OUTG / W3IOGO | "Gridded output of mean wave parameters": fill output arrays / read-write `out_grd.ww3` `(v)` | Integral parameters (`Hs`, `Tp`, …) from the spectrum; ranked #8 for the port. | [docs/AGENTS_KOKKOS_202609.md](AGENTS_KOKKOS_202609.md) |
 | W3IOPOMD / W3IOPO, W3IORSMD / W3IORS, W3IOBCMD / W3IOBC, W3IOTRMD / W3IOTR | point output / restart files / boundary conditions / track output read-write `(v)` | The I/O bucket (`w3io*`) of the profile. | [course/09-benchmark-profile-compile-run.md](../course/09-benchmark-profile-compile-run.md) |
@@ -1377,6 +1379,7 @@ Every term above, alphabetically, with the section it lives in.
 - MPI: [WW3 switches](#ww3-switches)
 - MPI: [HPC and software](#hpc-and-software)
 - MPIBDI: [WW3 switches](#ww3-switches)
+- MPIT: [WW3 switches](#ww3-switches)
 - MPRF: [WW3 switches](#ww3-switches)
 - MPRF / MEMCHECK / SETUP / BIN2NC / ASCII: [WW3 switches](#ww3-switches)
 - mww3_test_01…09: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1795,6 +1798,7 @@ Every term above, alphabetically, with the section it lives in.
 - W3KTP2 / W3KTP3: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3KTP3: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3MPII: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3MPIO: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3NAUX: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3NAUX / W3DIMA / W3SETA / W3DMNL: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3NMOD: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
