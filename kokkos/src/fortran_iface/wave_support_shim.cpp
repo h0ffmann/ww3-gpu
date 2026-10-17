@@ -26,6 +26,7 @@
 //
 // SPDX-License-Identifier: MIT
 
+#include "fortran_iface/timers.hpp"
 #include "fortran_iface/ww_kokkos_c.hpp"
 
 #include <Kokkos_Core.hpp>
@@ -66,6 +67,9 @@ using Borrowed = Kokkos::View<T*, Kokkos::LayoutLeft, Host, Kokkos::MemoryTraits
 enum Routine { GATH, SCAT, UWND, UTRN, DZXY, MAP3, MAPT, DISTAB, NROUTINES };
 const char* const kName[NROUTINES] = {"W3GATH", "W3SCAT", "W3UWND", "W3UTRN",
                                       "W3DZXY", "W3MAP3", "W3MAPT", "DISTAB"};
+const char* const kRegion[NROUTINES] = {"wave.gath.call", "wave.scat.call", "wave.uwnd.call",
+                                        "wave.utrn.call", "wave.dzxy.call", "wave.map3.call",
+                                        "wave.mapt.call", "wave.distab.call"};
 std::atomic<long long> g_calls[NROUTINES];
 
 void print_counts() {
@@ -131,6 +135,7 @@ int run(Routine r, const F& f) {
   try {
     if (!Kokkos::is_initialized()) return fail(WW_KOKKOS_ERR_NOT_INITIALISED, "before ww_kokkos_init");
     int rc;
+    ww::timers::Region t(kRegion[r], !nested_in_openmp());
 #if defined(WW_WAVE_SERIAL_NESTED)
     if (nested_in_openmp())
       rc = f(Kokkos::Serial());

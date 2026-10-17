@@ -1,8 +1,7 @@
 # W3QCK2_KOKKOS
 
-**Status:** ported, phase 1 (translated). Not wired into WW3, not regtested: the owner asked
-for translation only on 2026-10-16, with no test run. Its checkpoint (ADR-0011) needs the shim and
-the `W3WAVE` wiring first.
+**Status:** ported, phase 1, wired inside the Kokkos `W3KTP3` (`WW_KOKKOS_KTP3=1`) (2026-10-17). Never run: no case run so far has a
+current-induced wavenumber shift (`FLCK`); not regtested.
 
 UQ advection on a variable grid: the wavenumber pass of `W3KTP3`.
 
@@ -12,7 +11,7 @@ UQ advection on a variable grid: the wavenumber pass of `W3KTP3`.
 |---|---|
 | WW3 routine | `W3QCK2`, `model/src/w3uqckmd.F90:517-891` at NOAA-EMC/WW3 `03adda91`, as `switches/switch_lab_shrd` compiles it (`PR3`, `UQ`) |
 | Kokkos code | [`../src/ww_kokkos/prop_qck2.hpp`](../src/ww_kokkos/prop_qck2.hpp), a header-only device function `w3qck2`, serial, in the Fortran's structure and order |
-| C shim | none yet |
+| C shim | [`../src/fortran_iface/prop3_shim.cpp`](../src/fortran_iface/prop3_shim.cpp) (`ww_xyp3_batch`, `ww_ktp3_batch`), bound by `w3kokkos_prop3md.F90` on h0ffmann/WW3 `ww3-gpu/kokkos-prop3` (`fcdfabef`); [PATCH.md section 11](../src/fortran_iface/PATCH.md#11-the-pr3-propagation-batched-on-ww3-gpukokkos-prop3) |
 | Plan | [`PROPAGATION_KOKKOS_PLAN_202610.md`](../../docs/PROPAGATION_KOKKOS_PLAN_202610.md), issue #42 |
 
 ## Arithmetic
@@ -27,7 +26,7 @@ the translator and a fresh reviewer, 2026-10-16.
 
 ## Benchmarks
 
-None. No timing without parity (`AGENTS.md`).
+None of its own: it runs inside `W3KTP3`, whose report has the timings of 2026-10-17 ([W3KTP3_KOKKOS.md](W3KTP3_KOKKOS.md)).
 
 ## How it was regtested
 
@@ -35,3 +34,8 @@ Not yet, and nothing was run. What was done, 2026-10-16 (v): the `serial-debug`,
 and `cuda-release` presets compiled with the header included (`prop.cpp`), with no warning from it.
 Nothing calls the function yet, so the compilers parse and type-check it without generating its
 code; code generation, CUDA's included, comes with the shim ⚠.
+
+Update 2026-10-17, the wiring (v): `W3KTP3` calls it only when `FLCK` is true. The full case
+(`bench_small`) has `FLCK` false and the smoke case is one point, so `W3KTP3`'s runs (byte-identical,
+see its report) never reached this routine ⚠. It compiles for CUDA inside the shim
+(`--gpu --build-only`).

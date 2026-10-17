@@ -2,7 +2,11 @@
 
 **Status:** ported, phase 1 (translated). Not regtested: waiting for the checkpoint of the W3SRCE
 unit (ADR-0011), itself after the ST4 checkpoint. Selected by `WW_KOKKOS_SRCE=1`; the flag
-defaults to 0, so WW3 runs the Fortran. Wired: WW3 at the `WW3/` pin (`357f575c`) calls it at `w3wavemd.F90:2394-2395` (set-up `w3initmd.F90:824`) behind `WW_KOKKOS_SRCE` (default off).
+defaults to 0, so WW3 runs the Fortran. Wired: WW3 at the `WW3/` pin (`513954a6`,
+`ww3-gpu/kokkos-resident`) calls it for every sea point of a time step in one call at
+`w3wavemd.F90:2383-2384` (`W3KOKKOS_SRCE_BATCH`, set-up `w3initmd.F90:825`) behind
+`WW_KOKKOS_SRCE` (default off), on the resident spectrum; see
+[Batched path](#batched-path-phase-2-step-4) and [Resident spectrum](#resident-spectrum-wfip-0005-units-1-and-2).
 
 The source-term integration of one sea point: the semi-implicit dynamic time step with its
 limiter, the MLIM shallow-water cap, the high-frequency tail, and the flux diagnostics, with every
@@ -14,9 +18,9 @@ source term it calls on the device.
 |---|---|
 | WW3 routine | `W3SRCE`, `model/src/w3srcemd.F90:190-2412` at NOAA-EMC/WW3 `03adda91`, the `srce_direct` path as `switches/switch_lab_shrd` compiles it (ST4 NL1 LN1 BT1 DB1 MLIM) |
 | Kokkos code | [`../src/ww_kokkos/srce_kernel.hpp`](../src/ww_kokkos/srce_kernel.hpp), a team function `w3srce_team`, one team per point; it calls the ST4 point functions, the DIA as a team ([`snl1_team.hpp`](../src/ww_kokkos/snl1_team.hpp)), [`W3SLN1`](W3SLN1_KOKKOS.md), [`W3SBT1`](W3SBT1_KOKKOS.md), [`W3SDB1`](W3SDB1_KOKKOS.md) |
-| C shim | [`../src/fortran_iface/srce_shim.cpp`](../src/fortran_iface/srce_shim.cpp) (`ww_srce_init`, `ww_srce`); parameters in [`srce_params.hpp`](../src/ww_kokkos/srce_params.hpp); the DIA and ST4 tables of the same grid through [`shim_state.hpp`](../src/fortran_iface/shim_state.hpp) |
+| C shim | [`../src/fortran_iface/srce_shim.cpp`](../src/fortran_iface/srce_shim.cpp) (`ww_srce_init`, `ww_srce`, `ww_srce_batch`); parameters in [`srce_params.hpp`](../src/ww_kokkos/srce_params.hpp); the DIA and ST4 tables of the same grid through [`shim_state.hpp`](../src/fortran_iface/shim_state.hpp) |
 | WW3 side | `w3kokkosmd.F90` (interfaces, `W3KOKKOS_SRCE_SETUP`, `W3KOKKOS_SRCE_ON`, `W3KOKKOS_SRCE`), `w3initmd.F90` (init and log line), `w3wavemd.F90` (the `srce_direct` call) on the h0ffmann/WW3 branch `ww3-gpu/kokkos-srce` (`e062ff0b`), off `ww3-gpu/kokkos-st4`; the `WW3/` pin is not moved |
-| Phase | 1: copy in, kernel, copy out, one point per call, inside `!$OMP CRITICAL (WW_KOKKOS_SRCE)`; Kokkos::Serial inside an OpenMP region |
+| Phase | `ww_srce`: 1, copy in, kernel, copy out, one point per call, inside `!$OMP CRITICAL (WW_KOKKOS_SRCE)`; Kokkos::Serial inside an OpenMP region. `ww_srce_batch`: every active point of a time step per call, one copy in, one launch, one copy out per chunk, called outside W3WAVE's OpenMP region |
 | Plan | [`W3SRCE_KOKKOS_PLAN_202610.md`](../../docs/W3SRCE_KOKKOS_PLAN_202610.md), issue #42 |
 
 Left to the Fortran `W3SRCE`, call by call (`W3KOKKOS_SRCE_ON`): `IQTPE <= 0` (GQM,
@@ -60,14 +64,122 @@ spectrum updates, the flux sums, `FAGE`/`FHIGH`/`NKH`, MLIM, the tail, and the p
 stresses match statement by statement for finite inputs; the `MAX`/`MIN` orders they found were
 fixed. Static parity is still ⚠: only the regtests prove it.
 
+## Batched path (phase 2, step 4)
+
+Step 4 of [`H100_OPTIMIZATION_STRATEGY_202610.md`](../../docs/H100_OPTIMIZATION_STRATEGY_202610.md):
+the source terms of a whole time step reach Kokkos in one call, without the per-point copies and
+the `!$OMP CRITICAL`. The fork branch `ww3-gpu/kokkos-srce-batch` (`caa5da36`, from
+`4a94a8f6`) adds `W3KOKKOS_SRCE_BATCH` to `w3kokkosmd.F90` and one hunk before the
+`!$OMP PARALLEL` of W3WAVE's source-term loop (`w3wavemd.F90:2325-2331`, and its `END IF` at `:2469-2471`
+after the loop), under `KOKKOS`, `ST4`, `NL1` and not `PDLIB`: when `W3KOKKOS_SRCE_ON(IT)`, it packs
+the points with `MAPSTA(IY,IX) == 1` and `FLAGST(ISEA)`, calls `ww_srce_batch` once, unpacks,
+and writes `UNDEF` to `UST`, `USTDIR`, `DTDYN`, `FCUT` of the other points as the loop's `ELSE`
+does; otherwise the loop runs as before (v, read in the fork). The C ABI is `ww_kokkos` 0.4.
+
+- **The arithmetic is the kernel's.** Team *i* of a `TeamPolicy(npts)` runs the same
+  `w3srce_team` on point *i*, with its own `PointScalars`, `State` and slice of the work buffers.
+  Point order cannot change a bit: a point reads and writes only its own `JSEA`/`ISEA` entries,
+  which W3WAVE's own `!$OMP DO SCHEDULE (DYNAMIC,1)` already relies on (`w3wavemd.F90:2333-2335` at `caa5da36`).
+- **Nothing shared is written** (v, read 2026-10-17): the teams share `Grid`, `st4::Params`,
+  `st4::Fields`, the DIA `Config`/`Tables` and `SIG`. `w3spr4_point`, `w3sin4_point`,
+  `w3sds4_point`, `calc_ustar` (`st4_*.hpp`), `w3sln1_point`, `w3sbt1_point`, `w3sdb1_point`
+  (`srce_*.hpp`) and `snl1_team` write only their pointer arguments, which are the point's
+  spectrum, outputs and work slice, and `snl1_team` its team scratch; none writes a table or
+  holds a `static`.
+- **Memory.** Per point the batch keeps about 56 KB on the device for `bench_small` (NK = NTH =
+  24: the 12 624-float work of `srce_work_reals`, the spectrum, the inputs and outputs). The
+  buffers hold at most `WW_KOKKOS_SRCE_BATCH_MIB` MiB (default 1024, about 19 000 such points); a
+  step with more points runs in chunks, one launch each. They are allocated outside the kernel,
+  kept between calls and grown on demand. The Fortran pack buffers are `SAVE` and sized `NSEAL`.
+- **Counters.** `WW_KOKKOS_SRCE_COUNT=1` prints, besides the spectra, `W3SRCE batched calls`,
+  `launches` and `points`.
+
+Checked 2026-10-17 on the CPU (Kokkos OpenMP backend; Intel Core i9-14900, 32 threads, the pinned
+`ww3` shell), never on the GPU (v):
+
+| Run | Switch | Batched calls / launches / points | Against the Fortran, same executable | Against `--ww3` |
+|---|---|---|---|---|
+| `bash scripts/ww3-gpu.sh --ww3-gpu smoke --cpu --kokkos SRCE` | `switch_lab_ompg` | 2 161 / 2 161 / 2 161 | byte-identical, `nccmp-tol` PASS | `out_grd.ww3`, `out_pnt.ww3`, `restart.ww3` equal (`cmp`), `nccmp-tol` PASS |
+| `... --ww3-gpu full --cpu --kokkos SRCE` | `switch_lab_ompg` | 25 / 25 / 230 100 | byte-identical, PASS | `out_grd.ww3` equal, PASS |
+| the same with `WW_KOKKOS_SRCE_BATCH_MIB=64` | `switch_lab_ompg` | 25 / 200 / 230 100 | byte-identical, PASS | `out_grd.ww3` equal, PASS |
+| `WW3GPU_SWITCH=switch_lab_shrd ... smoke ...` | `switch_lab_shrd` | 2 161 / 2 161 / 2 161 | byte-identical, PASS | PASS |
+| `WW3GPU_SWITCH=switch_lab_shrd ... full ...` | `switch_lab_shrd` | 25 / 25 / 230 100 | byte-identical, PASS | PASS |
+
+`bash scripts/ww3-gpu.sh --ww3-gpu smoke --gpu --build-only` compiled the shim for CUDA (Ada 8.9);
+nothing ran on the GPU. ⚠ The batch on CUDA is not known to give the bits of the CPU (the libdevice
+`logf`, `tanhf`, `sincosf` of the [arithmetic](#arithmetic) section).
+
+## Resident spectrum (WFIP-0005, units 1 and 2)
+
+Since `513954a6` (`ww3-gpu/kokkos-resident`, PATCH.md section 12) the batch no longer packs the
+spectrum: `W3KOKKOS_SRCE_BATCH` passes `VA` and the list of active `JSEA`, and
+`ww_srce_batch_va` runs team *i* on column `jsea[i]` of the resident device copy of `VA`, in
+place. The arithmetic is the same `w3srce_team` on the same bits; only where the spectrum lives
+changed. W3WAVE's sync calls copy `VA` back before the next host statement that touches it: in the
+full case one host-to-device and one device-to-host copy of the whole `VA` (21.21 MB) per time
+step, 25 each, where the batch of `caa5da36` packed the 9 204 active spectra (21.2 MB) in Fortran
+and copied them both ways per step (v, `WW_KOKKOS_VA_COUNT=1`, below).
+
+Checked 2026-10-17 on the CPU (Kokkos OpenMP backend; the machine above), never on the GPU (v):
+every run byte-identical to the Fortran of the same executable (`ww3_ounf` NetCDF, `cmp`),
+`out_grd.ww3` (and in the smoke `out_pnt.ww3`, `restart.ww3`) `cmp`-equal to the Fortran and to
+`--ww3`, `nccmp-tol` PASS both:
+
+| Run (`bash scripts/ww3-gpu.sh --ww3-gpu ... --cpu`) | Switches | `WW_KOKKOS_VA_RESIDENT` | VA copies H2D / D2H |
+|---|---|---|---|
+| `smoke --kokkos SRCE` | `switch_lab_ompg`, `switch_lab_shrd` | unset, `1` | 1 / 2 161; 1 / 2 166 |
+| `full --kokkos SRCE` | both | unset, `1` | 25 / 25; 73 / 86 |
+| `smoke --kokkos all` | both | unset, `1` | 1 / 2 161; 1 / 2 166 |
+| `full --kokkos all` | `switch_lab_ompg` | unset, `1` | 25 / 25; 73 / 86 |
+| `full --kokkos XYP3,KTP3,SRCE` | `switch_lab_ompg` | unset, `1` | 25 / 25; 73 / 86 (`W3XYP3` 13 824 spectra, `W3KTP3` 441 792 point calls) |
+
+`WW_KOKKOS_SRCE_COUNT`: 2 161 batched calls and points in the smoke, 25 calls and 230 100 points
+in the full, the counts of the Fortran loop before. The smoke's 2 161 device-to-host copies are
+one per `W3WAVE` call (`ww3_ts1` returns from `W3WAVE` every step, and the return syncs `VA`).
+
+`--timers`, full, `switch_lab_ompg`, one fenced run each, the machine shared with other sessions
+(load average 45 for the first, 35 for the second), so the shares, not the seconds, are the reading ⚠:
+
+| Region | Batch packing `VA` (unit 1 only) | Resident `VA` (unit 2) |
+|---|---|---|
+| `ww3_shel` | 70.39 s | 44.89 s |
+| `srce.batch.kernel` | 46.124 s | 30.685 s |
+| `srce.batch.h2d` / `.d2h` | 0.160 / 0.151 s | 0.064 / 0.032 s |
+| `va.h2d` / `va.d2h` / `va.host.call` | none / none / 0.000 s | 0.032 / 0.031 / 0.031 s |
+| outside Kokkos | 23.955 s (34.0 %) | 13.946 s (31.1 %) |
+
 ## Benchmarks
 
-None. No timing without parity: nothing is timed before the W3SRCE regtest replay passes on the
-same commit (`AGENTS.md`, "No timing without parity").
+One CPU measurement of the batched path, after the replay above passed on the same tree
+(2026-10-17, v): `bash scripts/ww3-gpu.sh --ww3-gpu full --cpu --kokkos SRCE --repeat 3`,
+`switch_lab_ompg`, the machine above, `OMP_NUM_THREADS` unset (32 threads), `ww3_shel` wall time.
+
+| Run | Three runs (s) | Median (s) |
+|---|---|---|
+| `--ww3` (pure NOAA WW3, OpenMP) | 25.26, 25.86, 24.26 | 25.26 |
+| `--ww3-gpu`, Kokkos `W3SRCE` batched, OpenMP backend | 31.20, 31.71, 31.87 | 31.71 |
+
+On this CPU the batch is 0.80x of WW3's own OpenMP loop. It is a CPU number on the OpenMP
+backend, not a GPU one and not a projection of one. Why it is slower here was not measured ⚠ (one
+guess: most of `w3srce_team` runs in `Kokkos::single`, so every thread of a team past the first
+waits). With `switch_lab_shrd`, where WW3 has one thread, the full ran 34.71 s with the batch
+against 154.70 s for `--ww3` (one run each, not a median).
+
+On the resident spectrum (`513954a6`), the same command after the replay of
+[Resident spectrum](#resident-spectrum-wfip-0005-units-1-and-2) passed on the same tree,
+2026-10-17, with the machine shared with other sessions (load average about 35) ⚠:
+
+| Run | Three runs (s) | Median (s) |
+|---|---|---|
+| `--ww3` (pure NOAA WW3, OpenMP) | 46.46, 29.33, 45.48 | 45.48 |
+| `--ww3-gpu`, Kokkos `W3SRCE` on the resident `VA`, OpenMP backend | 67.35, 47.84, 67.43 | 67.35 |
+
+0.68x; the spread of `--ww3` itself (29 to 46 s) says the load, not the change, sets these
+numbers, so they are not a speed-up or slow-down of unit 2 ⚠. A quiet machine is needed.
 
 ## How it was regtested
 
-Not yet. What ran, 2026-10-15 (v): `openmp-release` and `serial-debug` built with no warning, ctest
+The resident path: the runs of [Resident spectrum](#resident-spectrum-wfip-0005-units-1-and-2), pair to pair; not the regtest matrix. The batched path: smoke and full, pair to pair, above; not the regtest matrix. Before it: What ran, 2026-10-15 (v): `openmp-release` and `serial-debug` built with no warning, ctest
 10/10 each (the intro programs' and tools' tests; the port has none, ADR-0010); `cuda-release`
 compiled, never run; the fork branch built and linked `ww3_shel` with `KOKKOS`, not run. The
 checkpoint (plan §7) adds `SRCE` to `WW3GPU_ROUTINES` and runs `just smoke-ww3-gpu`,
