@@ -17,7 +17,9 @@ namespace ww::profs {
 /// squared and divides by the signed X(IX): a negative NaN in X then leaves a negative NaN in
 /// SUMSQ where the Fortran leaves a positive one.
 KOKKOS_INLINE_FUNCTION double dlassq_paren(double v) {
-#if defined(__has_builtin)
+// nvcc's front end reports GCC's builtin and cannot parse it, in its host pass too; under
+// nvcc the barrier is absent (the CUDA build is not regtested).
+#if defined(__has_builtin) && !defined(__CUDACC__)
 #if __has_builtin(__builtin_assoc_barrier)
   return __builtin_assoc_barrier(v);
 #else

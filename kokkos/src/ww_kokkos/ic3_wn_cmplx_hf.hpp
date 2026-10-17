@@ -22,7 +22,9 @@ KOKKOS_INLINE_FUNCTION int fint_d(double x) {
 
 /// An opaque copy (PAREN_EXPR) for g++'s SLP vectoriser; no arithmetic. See the loop below.
 KOKKOS_INLINE_FUNCTION double slp_barrier(double x) {
-#if defined(__has_builtin)
+// nvcc's front end reports GCC's builtin and cannot parse it, in its host pass too; under
+// nvcc the barrier is absent (the CUDA build is not regtested).
+#if defined(__has_builtin) && !defined(__CUDACC__)
 #if __has_builtin(__builtin_assoc_barrier)
   return __builtin_assoc_barrier(x);
 #else
