@@ -505,7 +505,13 @@ v3.0.1 (`2ab3cae`), raso e esparso para que só a pasta `archify/` vá para o di
 ```bash
 just archify init     # uma vez por clone: baixa o submódulo fixado
 just archify render   # desenha cada docs/archify/<slug>.json como <slug>.html; abra no navegador
+just archify pdf      # imprime cada página em docs/archify/<slug>.pdf (versionado, abre no GitHub)
+just archify check    # quais desenhos estão mais velhos que a fonte; refresh redesenha só esses
 ```
+
+Os desenhos não são refeitos a cada merge. Quando uma fonte muda, `/drawings-refresh` no Claude
+Code (ou `just figures` e `just archify refresh` à mão) redesenha só os desatualizados, Mermaid e
+Archify, e avisa quando os dois desenhos de uma figura podem ter deixado de concordar.
 
 Para criar um gêmeo, peça um ao agente com a skill `archify`, salve a fonte como
 `docs/archify/<slug>.json`, liste-a em [`docs/archify/README.md`](docs/archify/README.md) e
