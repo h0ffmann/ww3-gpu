@@ -315,6 +315,8 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | W3MPIO | "Prepare MPI persistent communication needed for WAVEWATCH I/O routines" `(v)` `w3initmd.F90:2033-2034`, `:2045` at `03adda91` | Called only by `W3INIT` under `W3_MPI` (`w3initmd.F90:1561`); under `SHRD` it compiles to an empty subroutine, which is what the port reproduces. | [kokkos/port_report/W3MPIO_KOKKOS.md](../kokkos/port_report/W3MPIO_KOKKOS.md) |
 | W3IOGRMD / W3IOGR | "Reading and writing of the model definition file" `(v)` | Reads `mod_def.ww3`; also calls `INSNL1` (`w3iogrmd.F90:1802`). | [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md) |
 | W3IOGOMD / W3OUTG / W3IOGO | "Gridded output of mean wave parameters": fill output arrays / read-write `out_grd.ww3` `(v)` | Integral parameters (`Hs`, `Tp`, …) from the spectrum; ranked #8 for the port. | [docs/AGENTS_KOKKOS_202609.md](AGENTS_KOKKOS_202609.md) |
+| W3FLDTOIJ | "Returns the group/field (I/J) indices for a named output field" `(v)` `WW3-noaa/model/src/w3iogomd.F90:753,764-1188` at `03adda91` (C. Bunney) | Maps a namelist output name (`HS`, `DIR`, ...) to `FLG2D(I,J)`; called by `W3FLGRDFLAG`, `W3READFLGRD` and `w3ounfmetamd`. Only the first 6 characters count; `U1` and `U2` both give (10, 1). | [kokkos/port_report/W3FLDTOIJ_KOKKOS.md](../kokkos/port_report/W3FLDTOIJ_KOKKOS.md) |
+| US3DF / USSPF | "freq. indices for 3D output" of the 3-D Stokes drift (`US3DF(3)`) and the Stokes drift partitions (`USSPF(2)`) of a grid `(v)` `WW3-noaa/model/src/w3gdatmd.F90:715,2311-2312` at `03adda91` | `W3FLDTOIJ` accepts the output names `USF` and `USP` only when `US3DF(1)` or `USSPF(1)` is at least 1. | [kokkos/port_report/W3FLDTOIJ_KOKKOS.md](../kokkos/port_report/W3FLDTOIJ_KOKKOS.md) |
 | OFILES / IPASS1 / WRITE1 / FNMGRD | "Output in one or several files" / "Pass counter for file management, renamed to IPASS in routine" / "Write flag for file management, renamed to WRITE in routine" `(v)` `w3odatmd.F90:137`, `:145-148`; `FNMGRD`, the "GLOBAL PATH FOR USER DEFINED OUTPUT" of the gridded file `(v)` `w3odatmd.F90:339-340` | `OFILES(1)` = 1 makes `W3IOGO` write one `<YYYYMMDD.HHMMSS>.out_grd.<ext>` and a `log.` file per output time; `IPASS1` and `WRITE1` decide when it opens its unit and whether it writes or reads. `W3NOUT` sets `IPASS1` to 0 and leaves `WRITE1` undefined (`w3odatmd.F90:704`). | [kokkos/port_report/W3IOGO_KOKKOS.md](../kokkos/port_report/W3IOGO_KOKKOS.md) |
 | INXOUT / NDSOG / IOTST / IDSTR / VEROGR | `W3IOGO`'s "Test string for read/write", "File unit number", "Test indictor for reading" (0 fields read, -1 past end of file) `(v)` `w3iogomd.F90:2450-2455`, and the "Gridded output file ID string" and "version number" `(v)` `w3iogomd.F90:93-94`, `'WAVEWATCH III GRID OUTPUT FILE'` and `'2019-10-04'` `(v)` `:160-162` | The arguments and the header strings of `out_grd.ww3`. | [kokkos/port_report/W3IOGO_KOKKOS.md](../kokkos/port_report/W3IOGO_KOKKOS.md) |
 | MAPTMP / AUX1 / AUX2 / TIMETAG | `W3IOGO`'s locals: the packed map `MAPSTA + 8*MAPST2`, the two Cartesian components of a vector field, and the `YYYYMMDD.HHMMSS` string of `TIME` `(v)` `w3iogomd.F90:2563`, `:2573-2577`, `:2833`, `:2734` | `MAPTMP` is written with `IX` fastest, the transpose of its storage; `AUX1`/`AUX2` have the `NSEA` of the grid selected before the call. | [kokkos/port_report/W3IOGO_KOKKOS.md](../kokkos/port_report/W3IOGO_KOKKOS.md) |
@@ -1250,6 +1252,7 @@ Every term above, alphabetically, with the section it lives in.
 - UOST_SOURCETERM_SETGRID: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - UOST_SRCTRMCOMPUTE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - UPPDIR: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- US3DF / USSPF: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - USOL: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - USOLC: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - USTDIR: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1271,6 +1274,7 @@ Every term above, alphabetically, with the section it lives in.
 - W3DMO5: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3FLDG / W3FLDO: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3FLDH: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3FLDTOIJ: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3FLGRDUPDT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3FLX1: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3FLX1MD / W3FLX1: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)

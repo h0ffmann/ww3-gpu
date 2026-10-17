@@ -71,6 +71,7 @@
 #include "iogo_vmin_d.hpp"
 #include "iogo_vplus_d.hpp"
 #include "iogo_skewness.hpp"
+#include "iogo_w3fldtoij.hpp"
 #include "iogo_w3flgrdflag.hpp"
 #include "iogo_w3flgrdupdt.hpp"
 #include "iogo_w3iogo.hpp"
@@ -322,4 +323,5 @@ void ww_support_instantiate() {
   (void)&ww::iobc::w3iobc<E>;
   (void)&ww::iogo::w3iogo<E>;
   (void)&ww::iopo::w3iopp;
+  (void)&ww::iogo::w3fldtoij;
 }

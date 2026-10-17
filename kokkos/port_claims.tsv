@@ -8,5 +8,4 @@ routine	file	claim	plan
 w3iopomd:w3iopo	model/src/w3iopomd.F90:2131-2626	goal/42-port-six-expensive	docs/W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md
 w3gsrumd:gsu_create	model/src/w3gsrumd.F90:7354-7849	goal/42-port-six-expensive	docs/W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md
 w3fldsmd:w3fldo	model/src/w3fldsmd.F90:89-514	goal/42-port-six-expensive	docs/W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md
-w3iogomd:w3fldtoij	model/src/w3iogomd.F90:764-1188	goal/42-port-six-expensive	docs/W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md
 w3iopomd:w3iope	model/src/w3iopomd.F90:873-1293	goal/42-port-six-expensive	docs/W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md
