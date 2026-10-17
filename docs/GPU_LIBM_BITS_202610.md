@@ -63,6 +63,7 @@ once on the host and their tables are copied, so they do not enter the device qu
 | `_ZGVbN4vv_powf` | `W3SDS4`, `W3SPR4` (`:316`, `:317`, `:2315`, `:2500`) | libmvec, SSE4 build, uses `rcpps` | as above | `ww::libm::mvec_powf<Fma>`, tables and `rcpps` from the build host |
 | `exp` (double) | `W3SDB1` | not correctly rounded (ARM algorithm) | differ on 1 485 995 of 8.6 × 10^9 | `ww::libm::exp<Fma>` |
 | `tanh` (double) | `W3SDB1` | correctly rounded (CORE-MATH, 2.44) | fma and sse2 builds, same bits | `ww::libm::tanh` (CORE-MATH's code) |
+| `coshf`, `sinhf` | `DISTAB` (W3DISPMD's tables, once per run, not per point) | correctly rounded (CORE-MATH; glibc's `e_coshf.c`, `e_sinhf.c`) | one build | `ww::libm::coshf`, `sinhf` (CORE-MATH's code) |
 
 The libmvec line numbers are those of `kokkos/src/ww_kokkos/st4_libmvec.hpp`, from its GIMPLE
 inventory. Correct rounding is from glibc 2.44's `NEWS` (v, the release tarball, sha256
@@ -79,7 +80,7 @@ Four headers in `kokkos/tools/libm_bits/`, each usable in host and device code:
 |---|---|---|
 | `glibc_mathf.hpp` | `expf`, `logf`, `powf`, `sincosf`, double `exp` | ARM optimized-routines at `f67e7daa` ("MIT OR Apache-2.0 WITH LLVM-exception"), the code glibc imports; fused sites from glibc's disassembly |
 | `glibc_mathf.hpp` | `mvec_expf`, `mvec_powf` | written from glibc's SSE4 libmvec algorithms and constants; `mvec_powf`'s tables and `rcpps` runs generated at build time by `gen_tables.cpp` from the host's `libmvec.so.1` and CPU, never committed (the tables are glibc's, LGPL) |
-| `coremath_f.hpp` | `tanhf`, `log10f`, `atan2f` | CORE-MATH's code as glibc 2.44 carries it, MIT, notices kept |
+| `coremath_f.hpp` | `tanhf`, `log10f`, `atan2f`, `coshf`, `sinhf` | CORE-MATH's code as glibc 2.44 carries it, MIT, notices kept |
 | `coremath_d.hpp` | double `tanh` | the same, with the double-double helpers it needs; its five tables equal glibc's `libm.so.6` bytes (v) |
 
 For `expf`, `logf`, `powf`, `sincosf` and `exp`, `glibc_mathf.hpp` takes the algorithm and the
@@ -130,6 +131,8 @@ glibc 2.44-25), 4 threads under `nice -n 19`. Command: `scripts/libm_bits.sh all
 | `ww mvec_powf fma` | 79 456 894 976 | **0** | against libmvec's `_ZGVbN4vv_powf`, the same inputs as `ww powf` |
 | `ww tanhf` | 4 294 967 296 | **0** | CORE-MATH's code equals glibc |
 | `ww log10f` | 4 294 967 296 | **0** | |
+| `ww coshf` | 4 294 967 296 | **0** | added for DISTAB (WFIP-0006, as built) |
+| `ww sinhf` | 4 294 967 296 | **0** | |
 | `ww atan2f` | 36 507 222 016 | **0** | every y with 8 fixed x, 2^31 random pairs |
 | `ww exp fma` | 8 589 934 592 | **0** | every float as a double, 2^31 random bit patterns, 2^31 values in [-750, 710] |
 | `ww exp plain` | 8 589 934 592 | 1 485 995 | glibc's two builds of double `exp` |
@@ -137,7 +140,7 @@ glibc 2.44-25), 4 threads under `nice -n 19`. Command: `scripts/libm_bits.sh all
 
 The rows from `ww mvec_expf` down ran on 2026-10-17 as single checks (`scripts/libm_bits.sh ww
 <fn> fma 4` or 6) on the final headers; `atan2f` and `exp` were run again after the last change
-to their code.
+to their code. `coshf` and `sinhf` ran the same way on 2026-10-17, after the others.
 
 That the plain transcription is glibc's sse2 build was checked at the probe's distinguishing
 inputs: with `GLIBC_TUNABLES=glibc.cpu.hwcaps=-AVX2,-FMA` the probe answers sse2 for `expf` and

@@ -26,6 +26,7 @@
 
 #include <Kokkos_Core.hpp>
 
+#include "libm_device.hpp"
 #include "real.hpp"
 #include "snl1_config.hpp"
 #include "snl1_tables.hpp"
@@ -185,7 +186,7 @@ KOKKOS_INLINE_FUNCTION void snl1_team(const TeamMember& team, const Config& c, c
   const Real x2 = Kokkos::max(static_cast<Real>(-1.e15), snls3 * x);
   const Real cons =
       snlc1 * (static_cast<Real>(1) +
-               snls1 / x * (static_cast<Real>(1) - snls2 * x) * Kokkos::exp(x2));
+               snls1 / x * (static_cast<Real>(1) - snls2 * x) * dm::expf(x2));
 
   // 2.  Prepare auxiliary spectrum and arrays ----------------------- *
   Kokkos::parallel_for(Kokkos::TeamThreadRange(team, nfr), [&](const int ifr) {

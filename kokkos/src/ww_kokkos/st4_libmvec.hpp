@@ -7,14 +7,17 @@
 // libm differ by up to 3 ULP, so the grouping is part of the arithmetic. The
 // owner chose to emulate it on the host (2026-10-15).
 //
-// ⚠ On a device there is no libmvec: the lanes fall back to scalar pow/exp,
-// and such a build cannot be bit for bit at these sites (AGENTS.md, "Bit for
-// bit", GPU). The libmvec variant is chosen by glibc at run time from the CPU,
-// for the Fortran and for this code alike.
+// On a device there is no libmvec: the lanes call ww::dm's copies of glibc's
+// SSE4 _ZGVbN4vv_powf and _ZGVbN4v_expf, lane by lane (libm_device.hpp), with
+// libmvec's tables and the build host's rcpps; libdevice without WW_KOKKOS_LIBM.
+// The libmvec variant is chosen by glibc at run time from the CPU, for the
+// Fortran and for this code alike; the copies are of the SSE4 variant ⚠ (the
+// one this lab's hosts get: docs/GPU_LIBM_BITS_202610.md).
 #pragma once
 
 #include <Kokkos_Core.hpp>
 
+#include "libm_device.hpp"
 #include "real.hpp"
 
 #if defined(__x86_64__) && defined(__SSE2__)
@@ -39,8 +42,9 @@ KOKKOS_INLINE_FUNCTION void mvec_powf(int n, const X& x, const Y& y, const Out& 
     _mm_store_ps(r, _ZGVbN4vv_powf(_mm_load_ps(a), _mm_load_ps(b)));
     for (int l = 0; l < 4; ++l) out(i + l, r[l]);
   }))
+  KOKKOS_IF_ON_DEVICE((for (; i + 4 <= n; ++i) out(i, dm::dev::mvec_powf(x(i), y(i)));))
 #endif
-  for (; i < n; ++i) out(i, Kokkos::pow(x(i), y(i)));
+  for (; i < n; ++i) out(i, dm::powf(x(i), y(i)));
 }
 
 /// out[i] = exp(x[i]) for i < n, as -O3 computes it: _ZGVbN4v_expf by four, then expf.
@@ -54,8 +58,9 @@ KOKKOS_INLINE_FUNCTION void mvec_expf(int n, const X& x, const Out& out) {
     _mm_store_ps(r, _ZGVbN4v_expf(_mm_load_ps(a)));
     for (int l = 0; l < 4; ++l) out(i + l, r[l]);
   }))
+  KOKKOS_IF_ON_DEVICE((for (; i + 4 <= n; ++i) out(i, dm::dev::mvec_expf(x(i)));))
 #endif
-  for (; i < n; ++i) out(i, Kokkos::exp(x(i)));
+  for (; i < n; ++i) out(i, dm::expf(x(i)));
 }
 
 }  // namespace ww::st4

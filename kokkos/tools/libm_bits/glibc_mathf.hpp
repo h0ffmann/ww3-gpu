@@ -32,7 +32,9 @@
 
 #if defined(__CUDACC__)
 #define WW_LIBM_FN __host__ __device__ inline
-#define WW_LIBM_DEVTAB static __constant__ const
+// Global memory, not __constant__: the threads of a warp read different entries, which the
+// constant cache serves one address at a time. The bits are the same either way.
+#define WW_LIBM_DEVTAB static __device__ const
 #else
 #define WW_LIBM_FN inline
 #endif

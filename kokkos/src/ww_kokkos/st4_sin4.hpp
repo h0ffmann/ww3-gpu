@@ -13,6 +13,7 @@
 
 #include <Kokkos_Core.hpp>
 
+#include "libm_device.hpp"
 #include "real.hpp"
 #include "st4_arrays.hpp"
 #include "st4_params.hpp"
@@ -91,14 +92,14 @@ KOKKOS_INLINE_FUNCTION void w3sin4_point(const Params& p, const Fields& f, const
   uorb = static_cast<Real>(2) * Kokkos::sqrt(uorb);
   // AORB**(1-0.5*SSWELLF(6)): REAL exponent, powf in the dump (:637).
   const Real aorb1 = static_cast<Real>(2) *
-                     Kokkos::pow(aorb, static_cast<Real>(1) - static_cast<Real>(0.5) * p.sswellf[5]);
+                     dm::powf(aorb, static_cast<Real>(1) - static_cast<Real>(0.5) * p.sswellf[5]);
   const Real re = static_cast<Real>(4) * uorb * aorb1 / kNuAir;
 
   // Swell dissipation regime from the Reynolds number (:642-660)
   Real pturb, pvisc;
   if (p.sswellf[3] > static_cast<Real>(0)) {
     if (p.sswellf[6] > static_cast<Real>(0.)) {
-      const Real smooth = static_cast<Real>(0.5) * Kokkos::tanh((re - p.sswellf[3]) / p.sswellf[6]);
+      const Real smooth = static_cast<Real>(0.5) * dm::tanhf((re - p.sswellf[3]) / p.sswellf[6]);
       pturb = (static_cast<Real>(0.5) + smooth);
       pvisc = (static_cast<Real>(0.5) - smooth);
     } else {
@@ -125,7 +126,7 @@ KOKKOS_INLINE_FUNCTION void w3sin4_point(const Params& p, const Fields& f, const
     fu = Kokkos::fabs(p.sswellf[2]);
     fud = p.sswellf[1];
     aorb = static_cast<Real>(2) * Kokkos::sqrt(aorb);
-    const Real xi = (Kokkos::log10(max_r(aorb / z0noz, static_cast<Real>(3.))) - kAbMin) / p.delab;
+    const Real xi = (dm::log10f(max_r(aorb / z0noz, static_cast<Real>(3.))) - kAbMin) / p.delab;
     const int ind = min_i(kSizeFwTable - 1, fint(xi));
     const Real deli1 = min_r(static_cast<Real>(1.), xi - static_cast<Real>(ind));
     const Real deli2 = static_cast<Real>(1.) - deli1;
@@ -153,8 +154,10 @@ KOKKOS_INLINE_FUNCTION void w3sin4_point(const Params& p, const Fields& f, const
   for (int istab = istab_first; istab <= istab_last; ++istab) {
     if (istab == 1) ust = ustar * (static_cast<Real>(1.) - ustarsigma);
     if (istab == 2) ust = ustar * (static_cast<Real>(1.) + ustarsigma);
-    taux = (ust * ust) * Kokkos::cos(usdir);
-    tauy = (ust * ust) * Kokkos::sin(usdir);
+    Real cu, su;
+    dm::sincosf(usdir, su, cu);
+    taux = (ust * ust) * cu;
+    tauy = (ust * ust) * su;
     stressstab[istab - 1][0] = static_cast<Real>(0.);
     stressstab[istab - 1][1] = static_cast<Real>(0.);
     stressstabn[istab - 1][0] = static_cast<Real>(0.);
@@ -164,11 +167,10 @@ KOKKOS_INLINE_FUNCTION void w3sin4_point(const Params& p, const Fields& f, const
       const Real taupx = taux - Kokkos::fabs(p.ttauwshelter) * stressstab[istab - 1][0];
       const Real taupy = tauy - Kokkos::fabs(p.ttauwshelter) * stressstab[istab - 1][1];
       // (..)**0.25 is powf(x, 0.25) in the dump (:717).
-      ustp = min_r(Kokkos::pow((taupx * taupx + taupy * taupy), static_cast<Real>(0.25)),
+      ustp = min_r(dm::powf((taupx * taupx + taupy * taupy), static_cast<Real>(0.25)),
                    max_r(ust, static_cast<Real>(0.3)));
-      usdirp = Kokkos::atan2(taupy, taupx);
-      cosu = Kokkos::cos(usdirp);
-      sinu = Kokkos::sin(usdirp);
+      usdirp = dm::atan2f(taupy, taupx);
+      dm::sincosf(usdirp, sinu, cosu);
       int is = 1 + (ik - 1) * nth;
       const Real kis = k[is - 1];
       const Real sig2is = f.sig2(is - 1);
@@ -176,7 +178,7 @@ KOKKOS_INLINE_FUNCTION void w3sin4_point(const Params& p, const Fields& f, const
       const Real ucn = ustp * cm + p.zzalp;
       const Real const2 = f.dden2(is - 1) / cg[ik - 1] * kGrav / (f.sig(ik) / kis * drat);
       const Real cnst = sig2is * const0;
-      const Real zcn = Kokkos::log(kis * z0);
+      const Real zcn = dm::logf(kis * z0);
       // -(...) of the whole product (:737-738); sqrt(2*NU_AIR*SIG2) with 2*NU_AIR folded.
       const Real swellcoefv =
           -(p.sswellf[4] * drat * static_cast<Real>(2) * kis * Kokkos::sqrt(kTwoNuAir * sig2is));
@@ -193,8 +195,8 @@ KOKKOS_INLINE_FUNCTION void w3sin4_point(const Params& p, const Fields& f, const
           if (zlog < static_cast<Real>(0.)) {
             const Real zlog2 = zlog * zlog;
             // COSWIND**SSINTHP: REAL exponent, powf in the dump (:756).
-            DSTAB(istab, is) = cnst * Kokkos::exp(zlog) * (zlog2 * zlog2) * ucn * ucn *
-                               Kokkos::pow(coswind, p.ssinthp);
+            DSTAB(istab, is) = cnst * dm::expf(zlog) * (zlog2 * zlog2) * ucn * ucn *
+                               dm::powf(coswind, p.ssinthp);
             llws[is - 1] = 1;
           } else {
             DSTAB(istab, is) = static_cast<Real>(0.);
@@ -250,8 +252,8 @@ KOKKOS_INLINE_FUNCTION void w3sin4_point(const Params& p, const Fields& f, const
   {
     const Real taupx = taux - Kokkos::fabs(p.ttauwshelter) * xstress;
     const Real taupy = tauy - Kokkos::fabs(p.ttauwshelter) * ystress;
-    ustp = Kokkos::pow((taupx * taupx + taupy * taupy), static_cast<Real>(0.25));  // :837, no MIN
-    usdirp = Kokkos::atan2(taupy, taupx);
+    ustp = dm::powf((taupx * taupx + taupy * taupy), static_cast<Real>(0.25));  // :837, no MIN
+    usdirp = dm::atan2f(taupy, taupx);
   }
   ust = ustp;
 
@@ -283,12 +285,12 @@ KOKKOS_INLINE_FUNCTION void w3sin4_point(const Params& p, const Fields& f, const
     Real ustr = ust;
     const Real zz0 = z0;
     const Real signk = f.sig(nk);
-    const Real zinf = Kokkos::log(signk * signk / kGrav);
+    const Real zinf = dm::logf(signk * signk / kGrav);
     const Real dely = (kLogTpiOver005 - zinf) / static_cast<Real>(kJtot);
     Real taur = ust * ust;
     Real tau1 = static_cast<Real>(0.);
     for (int j = 1; j <= kJtot; ++j) {
-      const Real y = Kokkos::exp(zinf + static_cast<Real>(j - 1) * dely);
+      const Real y = dm::expf(zinf + static_cast<Real>(j - 1) * dely);
       const Real ykm = (y / kKm);
       const Real ykm2 = ykm * ykm;
       const Real tensk = static_cast<Real>(1) + ykm2;
@@ -298,8 +300,8 @@ KOKKOS_INLINE_FUNCTION void w3sin4_point(const Params& p, const Fields& f, const
                           Kokkos::sqrt(kGrav / (y * tensk));
       const Real zx = ustr / cm + p.zzalp;
       const Real zarg = min_r(kKappa / zx, static_cast<Real>(20.));
-      const Real zmu = min_r(kGrav * zz0 / (cm * cm) * Kokkos::exp(zarg), static_cast<Real>(1.));
-      const Real zlog = min_r(Kokkos::log(zmu), static_cast<Real>(0.));
+      const Real zmu = min_r(kGrav * zz0 / (cm * cm) * dm::expf(zarg), static_cast<Real>(1.));
+      const Real zlog = min_r(dm::logf(zmu), static_cast<Real>(0.));
       const Real zlog2 = zlog * zlog;
       const Real zbeta = const1 * zmu * (zlog2 * zlog2);
       Real levtail;
@@ -307,14 +309,14 @@ KOKKOS_INLINE_FUNCTION void w3sin4_point(const Params& p, const Fields& f, const
         Real alpham;
         if (ustr < cm) {
           alpham = max_r(static_cast<Real>(0.),
-                         static_cast<Real>(0.01) * (static_cast<Real>(1.) + Kokkos::log(ustr / cm)));
+                         static_cast<Real>(0.01) * (static_cast<Real>(1.) + dm::logf(ustr / cm)));
         } else {
-          alpham = static_cast<Real>(0.01) * (static_cast<Real>(1) + static_cast<Real>(3.) * Kokkos::log(ustr / cm));
+          alpham = static_cast<Real>(0.01) * (static_cast<Real>(1) + static_cast<Real>(3.) * dm::logf(ustr / cm));
         }
         const Real ykm1 = (ykm - static_cast<Real>(1));
-        const Real fm = Kokkos::exp(static_cast<Real>(-0.25) * (ykm1 * ykm1));
+        const Real fm = dm::expf(static_cast<Real>(-0.25) * (ykm1 * ykm1));
         const Real alphat = alpham * (kCmm / cm) * fm;
-        const Real th = Kokkos::tanh((y - static_cast<Real>(20)) / static_cast<Real>(5));
+        const Real th = dm::tanhf((y - static_cast<Real>(20)) / static_cast<Real>(5));
         levtail = levtail0 * static_cast<Real>(0.5) * (static_cast<Real>(1) - th) +
                   p.sintailpar[2] * static_cast<Real>(0.5) * (static_cast<Real>(1) + th) * alphat;
       } else {
@@ -356,8 +358,10 @@ KOKKOS_INLINE_FUNCTION void w3sin4_point(const Params& p, const Fields& f, const
   }
 
   // USDIRP of :838 here (:964-965).
-  tauwx = xstress + tauhf * Kokkos::cos(usdirp);
-  tauwy = ystress + tauhf * Kokkos::sin(usdirp);
+  Real cp, sp;
+  dm::sincosf(usdirp, sp, cp);
+  tauwx = xstress + tauhf * cp;
+  tauwy = ystress + tauhf * sp;
   // Tail reduced so the wave-supported stress stays below the total, ECWAM Stresso.F (:970-976).
   const Real tauw = Kokkos::sqrt(tauwx * tauwx + tauwy * tauwy);
   const Real ust2b = max_r(ustar, kEps2);
