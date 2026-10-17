@@ -551,7 +551,12 @@ int ww_st4_commit(int igrid) {
       set_error(WW_KOKKOS_ERR_TABLE, ("ww_st4_commit: " + why).c_str());
       return WW_KOKKOS_ERR_TABLE;
     }
-    if (flags().tables) rebuild_tables(g, m);
+    if (flags().tables) {
+      // Host code, once per grid, and not cheap: the C++ TABU_* recompute the tables that the
+      // Fortran's ww3_shel reads (mod_def.ww3; ST4TABUHF2.bin, w3src4md.F90:1710-1722).
+      ww::timers::Region t("st4.tables.call");  // .call: --timers counts it as Kokkos time
+      rebuild_tables(g, m);
+    }
     upload(g.h, g.d, false);
     upload(m.h, m.d, true);
     g.ready = true;
