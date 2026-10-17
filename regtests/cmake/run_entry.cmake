@@ -14,6 +14,7 @@
 cmake_minimum_required(VERSION 3.21)
 include("${CONFIG}")
 include("${CMAKE_CURRENT_LIST_DIR}/ww3gpu_common.cmake")
+ww3gpu_require_gpu_confirmation()
 
 # Not string(TIMESTAMP): it honours SOURCE_DATE_EPOCH, which the Nix shell sets to 1980.
 execute_process(COMMAND date +%s OUTPUT_VARIABLE t0 OUTPUT_STRIP_TRAILING_WHITESPACE)
@@ -49,6 +50,10 @@ set(log "${WW3GPU_OUT}/logs/${N}")
 set(rowf "${WW3GPU_OUT}/rows/${N}.tsv")
 
 set(ENV{CMAKE_OPTIONS} "-DWW_KOKKOS=ON -DCMAKE_PREFIX_PATH=${WW3GPU_KPREFIX}")
+# Kokkos' CUDA package wants the compiler it was built with, as scripts/ww3-gpu.sh passes it.
+if(WW3GPU_BACKEND STREQUAL "cuda")
+  set(ENV{CMAKE_OPTIONS} "$ENV{CMAKE_OPTIONS} -DCMAKE_CXX_COMPILER=nvcc_wrapper")
+endif()
 set(ENV{path_build_root} "${WW3GPU_OUT}/build_${N}")
 if(NOT DEFINED WW3GPU_MPI_RANKS)
   set(WW3GPU_MPI_RANKS 4)

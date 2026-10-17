@@ -64,21 +64,26 @@ case "$cmd" in
       --build-arg "WW4_REV=$(rev "$root/WW4")" "$root" ;;
   run)
     # As the caller's uid, so the runs on the host belong to whoever started them.
-    # WW3GPU_ROUTINES picks the Kokkos routines of --ww3-gpu (scripts/ww3-gpu.sh), SNL1 by default.
+    # WW3GPU_ROUTINES picks the Kokkos routines of --ww3-gpu (scripts/ww3-gpu.sh); unset, the script
+    # chooses (SNL1 on the CPU, --kokkos gpu on the GPU).
     [ -n "$dry" ] || mkdir -p "$root/build/docker-runs"
-    do_or_say docker run --rm --user "$(id -u):$(id -g)" -e "WW3GPU_ROUTINES=${WW3GPU_ROUTINES:-SNL1}" \
+    do_or_say docker run --rm --user "$(id -u):$(id -g)" -e "WW3GPU_ROUTINES=${WW3GPU_ROUTINES:-}" \
       -v "$root/build/docker-runs:/work/runs" "$image" "$@" ;;
   build-cuda)
-    # The GPU image (docker/Dockerfile.cuda): --ww3-gpu on Kokkos' CUDA backend only.
+    # The GPU image (docker/Dockerfile.cuda): --ww3-gpu on Kokkos' CUDA backend, and --ww3 from
+    # pure NOAA WW3 (WW3-noaa/) on the CPU as its reference.
+    [ -n "$dry" ] || [ -f "$root/WW3-noaa/model/src/CMakeLists.txt" ] \
+      || git -C "$root" submodule update --init --depth 1 WW3-noaa
     do_or_say docker build -f "$root/docker/Dockerfile.cuda" -t "ww3-gpu-cuda:${1:-local}" \
-      --build-arg "WW3_GPU_REV=$(rev "$root")" --build-arg "WW3_REV=$(rev "$root/WW3")" "$root" ;;
+      --build-arg "WW3_GPU_REV=$(rev "$root")" --build-arg "WW3_REV=$(rev "$root/WW3")" \
+      --build-arg "WW3_NOAA_REV=$(rev "$root/WW3-noaa")" "$root" ;;
   run-cuda)
     # --gpus all needs the NVIDIA Container Toolkit on the host. -it when there is a terminal: the
     # script asks the supervising human for "yes" before any --gpu run (AGENTS.md hard rule).
     [ -n "$dry" ] || mkdir -p "$root/build/docker-runs"
     tty=(); [ -t 0 ] && tty=(-it)
     do_or_say docker run --rm "${tty[@]}" --gpus all --user "$(id -u):$(id -g)" \
-      -e "WW3GPU_ROUTINES=${WW3GPU_ROUTINES:-SNL1}" -v "$root/build/docker-runs:/work/runs" \
+      -e "WW3GPU_ROUTINES=${WW3GPU_ROUTINES:-}" -v "$root/build/docker-runs:/work/runs" \
       "${DOCKER_IMAGE:-ww3-gpu-cuda:local}" "$@" ;;
   *) echo "docker: unknown command: $cmd" >&2; usage ;;
 esac

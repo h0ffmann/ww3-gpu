@@ -74,13 +74,16 @@ struct IknCtx {
   DevInt1D d;
 };
 
+// Never destroyed: ww_kokkos_finalize runs from atexit, after the static destructors of
+// objects built later, so a static map would be gone when its finalize hook clears it.
 std::map<int, GridCtx>& grids() {
-  static std::map<int, GridCtx> m;
-  return m;
+  static auto* m = new std::map<int, GridCtx>();
+  return *m;
 }
+// Never destroyed, as grids().
 IknCtx& ikn_ctx() {
-  static IknCtx m;
-  return m;
+  static auto* m = new IknCtx();
+  return *m;
 }
 
 std::atomic<int> g_last_error{WW_KOKKOS_OK};

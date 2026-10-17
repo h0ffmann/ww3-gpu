@@ -53,7 +53,7 @@ WORKDIR /src
 COPY kokkos/ kokkos/
 COPY WW3/ WW3/
 COPY WW3-noaa/ WW3-noaa/
-COPY switches/switch_lab_shrd switches/
+COPY switches/switch_lab_ompg switches/
 
 ENV P=/opt/ww3-gpu/prebuilt
 # The Kokkos port and nccmp-tol: the openmp-release preset (-O3, contraction off in the kernel).
@@ -66,8 +66,8 @@ RUN cmake -S kokkos --preset openmp-release -B /build/kokkos -DCMAKE_PREFIX_PATH
 # WW3 twice, as scripts/ww3-gpu.sh builds it: pure NOAA WW3 from WW3-noaa/ with the lab switch
 # (--ww3), and the fork WW3/ with the same switch plus KOKKOS linked to the port (--ww3-gpu).
 # WW3's own Release flags.
-RUN cat switches/switch_lab_shrd > /tmp/switch_ww3 \
- && printf '%s KOKKOS\n' "$(cat switches/switch_lab_shrd)" > /tmp/switch_ww3gpu \
+RUN cat switches/switch_lab_ompg > /tmp/switch_ww3 \
+ && printf '%s KOKKOS\n' "$(cat switches/switch_lab_ompg)" > /tmp/switch_ww3gpu \
  && cmake -S WW3-noaa -B /build/ww3 -DSWITCH=/tmp/switch_ww3 -DCMAKE_BUILD_TYPE=Release \
  && cmake --build /build/ww3 -j"$(nproc)" \
  && cmake -S WW3 -B /build/ww3-gpu -DSWITCH=/tmp/switch_ww3gpu -DCMAKE_BUILD_TYPE=Release \

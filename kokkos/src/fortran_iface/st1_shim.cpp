@@ -61,9 +61,11 @@ struct GridCtx {
   bool ready = false;       ///< ww_st1_commit done
 };
 
+// Never destroyed: ww_kokkos_finalize runs from atexit, after the static destructors of
+// objects built later, so a static map would be gone when its finalize hook clears it.
 std::map<int, GridCtx>& grids() {
-  static std::map<int, GridCtx> m;
-  return m;
+  static auto* m = new std::map<int, GridCtx>();
+  return *m;
 }
 
 std::atomic<int> g_last_error{WW_KOKKOS_OK};

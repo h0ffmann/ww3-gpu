@@ -3,7 +3,8 @@
 # fork WW3/ with the KOKKOS switch linked to the port built with the cuda-release preset. No Nix:
 # NVIDIA's CUDA image on Ubuntu 26.04, Kokkos built from its tarball with CUDA, and a final image
 # that keeps the compiled programs, their runtime libraries and the case inputs, not the sources.
-# --ww3 and --ww4 stay in the CPU image (docker/Dockerfile); this one runs only --gpu.
+# --ww4 stays in the CPU image (docker/Dockerfile); this one runs --ww3-gpu --gpu, and --ww3 on the
+# CPU as the reference it is compared with, pair to pair and by wall time.
 #
 #   just dbuild-cuda                   # docker build -f docker/Dockerfile.cuda -t ww3-gpu-cuda:local .
 #   just dsmoke-ww3-gpu-cuda           # --ww3-gpu smoke --gpu in the image, docker run --gpus all
@@ -47,7 +48,8 @@ ENV PATH=/opt/kokkos/bin:$PATH
 WORKDIR /src
 COPY kokkos/ kokkos/
 COPY WW3/ WW3/
-COPY switches/switch_lab_shrd switches/
+COPY WW3-noaa/ WW3-noaa/
+COPY switches/switch_lab_ompg switches/
 
 ENV P=/opt/ww3-gpu/prebuilt
 RUN cmake -S kokkos --preset cuda-release -B /build/kokkos -DCMAKE_PREFIX_PATH=/opt/kokkos \
@@ -56,8 +58,14 @@ RUN cmake -S kokkos --preset cuda-release -B /build/kokkos -DCMAKE_PREFIX_PATH=/
  && install -D -m 755 /build/kokkos/tools/nccmp-tol/nccmp-tol "$P/bin/nccmp-tol" \
  && install -D -m 644 kokkos/tools/nccmp-tol/tolerances.txt "$P/share/tolerances.txt"
 
-# The fork with the lab switch plus KOKKOS, as scripts/ww3-gpu.sh builds it for --gpu.
-RUN printf '%s KOKKOS\n' "$(cat switches/switch_lab_shrd)" > /tmp/switch_ww3gpu \
+# Pure NOAA WW3 from WW3-noaa/ with the lab switch (--ww3, the reference), and the fork with the
+# same switch plus KOKKOS (--ww3-gpu --gpu), as scripts/ww3-gpu.sh builds them; WW3's own Release
+# flags.
+RUN cat switches/switch_lab_ompg > /tmp/switch_ww3 \
+ && cmake -S WW3-noaa -B /build/ww3 -DSWITCH=/tmp/switch_ww3 -DCMAKE_BUILD_TYPE=Release \
+ && cmake --build /build/ww3 -j"$(nproc)" \
+ && mkdir -p "$P/ww3" && cp -r /build/ww3/bin "$P/ww3/bin" \
+ && printf '%s KOKKOS\n' "$(cat switches/switch_lab_ompg)" > /tmp/switch_ww3gpu \
  && cmake -S WW3 -B /build/ww3-gpu -DSWITCH=/tmp/switch_ww3gpu -DCMAKE_BUILD_TYPE=Release \
       -DWW_KOKKOS=ON "-DCMAKE_PREFIX_PATH=/opt/ww_kokkos;/opt/kokkos" -DCMAKE_CXX_COMPILER=nvcc_wrapper \
  && cmake --build /build/ww3-gpu -j"$(nproc)" \
@@ -76,7 +84,9 @@ RUN find "$P" -type f -perm -u+x -exec ldd {} + 2>/dev/null \
 
 ARG WW3_GPU_REV=?
 ARG WW3_REV=?
+ARG WW3_NOAA_REV=?
 RUN { echo "ww3-gpu ${WW3_GPU_REV}"; echo "WW3 ${WW3_REV} (h0ffmann/WW3)"; \
+      echo "WW3-noaa ${WW3_NOAA_REV} (NOAA-EMC/WW3)"; \
       echo "kokkos ${KOKKOS_VERSION} CUDA ${KOKKOS_ARCH}"; nvcc --version | tail -1; \
       gfortran --version | head -1; cmake --version | head -1; } > /opt/ww3-gpu/BUILD_INFO
 

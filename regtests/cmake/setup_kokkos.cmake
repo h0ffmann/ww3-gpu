@@ -1,7 +1,9 @@
-# setup:kokkos: build and install the openmp-release package of kokkos/ (ww_kokkos and
+# setup:kokkos: build and install the <WW3GPU_BACKEND>-release package of kokkos/ (ww_kokkos and
 # nccmp-tol), which every entry's KOKKOS build finds through CMAKE_PREFIX_PATH.
 cmake_minimum_required(VERSION 3.21)
 include("${CONFIG}")
+include("${CMAKE_CURRENT_LIST_DIR}/ww3gpu_common.cmake")
+ww3gpu_require_gpu_confirmation()
 cmake_host_system_information(RESULT ncpu QUERY NUMBER_OF_LOGICAL_CORES)
 # Reconfigured from scratch when the toolchain changed (scripts/ww3-gpu.sh keeps the same stamp).
 find_program(_gf gfortran)
@@ -20,7 +22,7 @@ endif()
 file(MAKE_DIRECTORY "${WW3GPU_KBUILD}")
 file(WRITE "${WW3GPU_KBUILD}/toolchain" "${_tc}\n")
 if(NOT EXISTS "${WW3GPU_KBUILD}/CMakeCache.txt")
-  execute_process(COMMAND "${CMAKE_COMMAND}" -S "${WW3GPU_ROOT}/kokkos" --preset openmp-release
+  execute_process(COMMAND "${CMAKE_COMMAND}" -S "${WW3GPU_ROOT}/kokkos" --preset ${WW3GPU_BACKEND}-release
                   WORKING_DIRECTORY "${WW3GPU_ROOT}/kokkos" OUTPUT_QUIET COMMAND_ERROR_IS_FATAL ANY)
 endif()
 execute_process(COMMAND "${CMAKE_COMMAND}" --build "${WW3GPU_KBUILD}" -j ${ncpu} OUTPUT_QUIET COMMAND_ERROR_IS_FATAL ANY)
@@ -28,4 +30,4 @@ execute_process(COMMAND "${CMAKE_COMMAND}" --install "${WW3GPU_KBUILD}" --prefix
 if(NOT EXISTS "${WW3GPU_NCCMP}")
   message(FATAL_ERROR "ww3gpu_matrix: no ${WW3GPU_NCCMP} after the build")
 endif()
-message(STATUS "ww_kokkos (openmp-release) installed in ${WW3GPU_KPREFIX}")
+message(STATUS "ww_kokkos (${WW3GPU_BACKEND}-release) installed in ${WW3GPU_KPREFIX}")
