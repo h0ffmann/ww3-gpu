@@ -306,7 +306,8 @@ be reproduced on a device. So the rule is the CPU backend's: a GPU run is judged
 tolerances against the Fortran of the same executable and against `--ww3`, with every field's
 differences recorded and no tolerance ever widened, and its timing enters a table only after
 that pass ([ADR-0014](docs/ADRs/ADR-0014-gpu-runs-judged-by-tolerance.md), the owner, 17 October
-2026).
+2026). How far a device is from glibc's bits, function by function, and how the host CPU's FMA
+enters the Fortran's: [`docs/GPU_LIBM_BITS_202610.md`](docs/GPU_LIBM_BITS_202610.md).
 
 ## Running on the GPU (hard rule)
 
@@ -317,6 +318,7 @@ be regtested pair to pair to existing ww3 src."
   `scripts/ww3-gpu.sh --ww3-gpu <case> --gpu`, `just smoke-ww3-gpu gpu`, `just full-ww3-gpu gpu`,
   `just perf-ww3-gpu`, `just ww3-gpu-matrix-cuda` (the regtest matrix on Kokkos' CUDA backend) and
   their Docker forms (`just dsmoke-ww3-gpu gpu`, `just dfull-ww3-gpu gpu`, `just dperf-ww3-gpu`).
+  The same holds for `scripts/libm_bits.sh --device`, which asks for the same "yes".
   `ww3-gpu.sh` and `scripts/gpu_supervised.sh` ask for a "yes" typed at a terminal and exit 7
   without one. Never work around it: no faked terminal, no `WW3GPU_IN_SHELL`, no
   `WW3GPU_GPU_CONFIRMED` (which the CUDA matrix's `setup:kokkos` and entries require), no piped
