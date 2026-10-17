@@ -684,6 +684,12 @@ runs, gives the Fortran run `WW_KOKKOS_ALL=0`, sets every counter in the Kokkos 
 the parts line and the counters. Without `--kokkos` it keeps `WW3GPU_ROUTINES` as before, now
 with `WW_KOKKOS_ALL=0` in both runs.
 
+`--kokkos gpu` is `SRCE` alone, the part list for Kokkos' CUDA backend and the default of `--gpu`
+when neither `--kokkos` nor `WW3GPU_ROUTINES` is given: phase 1 copies one sea point per call,
+and `W3SRCE` routed whole makes one round trip per point and time step where the DIA and ST4
+routed one by one make one each ([ADR-0013](../../../docs/ADRs/ADR-0013-operational-parts-default-to-kokkos.md)).
+WW3's own defaults are unchanged: every flag unset is the Fortran.
+
 The parity column is a judgement (⚠) from the port report's evidence unless it names a
 measurement: what decides bit parity is the compile flags (`-O3`, `-ffp-contract=off` /
 `--fmad=false`), `REAL(4)` kept as `float`, the reduction order, the libm calls (glibc on the host;
