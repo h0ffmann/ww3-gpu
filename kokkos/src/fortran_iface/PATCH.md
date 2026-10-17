@@ -1397,3 +1397,97 @@ breakdown and not a timing): `outg.call` 13 calls, 0.358 s of 30.20 s, all of it
 warning from `outg_shim.cpp`; whether CUDA gives the CPU's bits is not known ⚠. The device
 copy-back path never ran ⚠. The regtest matrix did not run ⚠. The preset `--kokkos resident` of
 `scripts/ww3-gpu.sh` now includes `OUTG`.
+
+## 16. `W3XYP3` one team per component (`WW_KOKKOS_XYP3_TEAM`)
+
+No fork change: the shim and the headers only. `ww_xyp3_batch` (and `_va`) ran one work item per
+spectral component, the serial body of `W3XYP3` inside it: 576 work items for the whole grid
+(`NK = NTH = 24`), each sweeping its own `FIELD` of about 0.6 MB, so a GPU could keep only a few
+of its multiprocessors busy. The diagnostic `WW_KOKKOS_XYP3_TEAM` keeps one component per work
+unit but gives each a Kokkos team whose threads share the loops inside it. Unset (or empty), the
+per-component kernel runs as before; `AUTO` lets Kokkos pick the team size; a positive N asks for
+N threads, refused (`WW_KOKKOS_ERR_UNSUPPORTED`) above the backend's `team_size_max`. A value that
+does not parse is reported once and the per-component kernel runs. `WW_KOKKOS_PROP3_COUNT=1` adds
+`W3XYP3 team launches`.
+
+- **How.** [`prop_loops.hpp`](../ww_kokkos/prop_loops.hpp) has two ways of running a loop:
+  `SerialLoops` (a plain `for` in index order) and `TeamLoops` (`TeamThreadRange`, then a team
+  barrier; `one()` is `single(PerTeam)` then a barrier). `w3xyp3` and `w3qck3` became
+  `w3xyp3_loops` and `w3qck3_loops`, templates on that choice; `w3xyp3` and `w3qck3` call them
+  with `SerialLoops`, so `prop_xyp2.hpp`, `wave_w3wave.hpp` and the per-component kernel keep
+  their calls. Every statement of every loop body is the one it was, in the same order; only the
+  loop heads changed. FIELD's layout is unchanged.
+- **Which loops are split, and why the bits cannot change.** A loop is split only when each
+  iteration writes elements no other iteration of that loop writes or reads, so each element gets
+  the same operations from whichever thread runs it; the barrier makes the next loop see all of
+  them, as in the serial body. Read in the fork at `e0cc8ee9` (`w3pro3md.F90` and `w3uqckmd.F90`
+  are byte-identical to `WW3-noaa/` at `03adda91`, `diff`, v):
+  - `W3QCK3` has no row loop: its sweeps run over the lists `MAPBOU` (`MAPX2` or `MAPY2`) and
+    `MAPACT` (`MAPAXY`). Sections 2 to 4 (`w3uqckmd.F90:1130-1172`, `:1187-1204`, `:1217-1234`)
+    write `FLA(IXY)` and read only `Q`, `CFLL` (not written there); section 6 (`:1258-1283`)
+    writes `Q(IXY)` from `Q(IXY)` itself, `TRANS` and `FLA`. The lists are injective: W3MAP3
+    adds a cell to `MAPX2` under three mutually exclusive tests of `MAPSTA(IY,IX)` and
+    `MAPSTA(IY,IX2)` (`w3pro3md.F90:270`, `:287`, `:304`), likewise `MAPY2` (`:334`, `:351`,
+    `:368`), and each active cell once to `MAPAXY` (`:392`). The closure loops over `IY`
+    (`:1101-1106`, `:1244-1246`) touch only indices congruent to `IY` modulo `MY`, so two rows
+    never meet even when `NX < 3` makes columns alias. These are the loops W3_OMPH itself runs
+    as `PARALLEL DO` (`:1098`, `:1123`, `:1255`).
+  - In `W3XYP3`: the per-sea-point loops (the averaging stencil set-up `:983-1059`, the
+    velocities `:1080-1137`, the straightening `:1301-1306` and back `:1368-1373`, the store
+    `:1430-1438`) write through `MAPSF(ISEA,3)`, injective because `ww3_grid` numbers each sea
+    cell once (`w3gridmd.F90:5020-5028`) and `MAPSF(:,3) = IY + (IX-1)*NY`
+    (`w3iogrmd.F90:1073`); W3_OMPH runs these as `PARALLEL DO` too (`:978`, `:1077`, `:1106`,
+    `:1126`, `:1298`, `:1365`, `:1427`). Also split: the zeroing and copies of `:944-956`, `:1149-1150`, `:1280-1282`, and the global fold `:1287-1290`, per `IY` (indices `IY` modulo `NY`).
+  - **Kept on one thread:** the averaging scatter, central and near-coast (`:1154-1183`,
+    `:1187-1276`), whose `+=` targets coincide, so the store order is binding (W3_OMPH leaves it
+    serial too); the boundary update (`:1406-1414`), where a point listed twice takes the last
+    write; the in-order `MINVAL`/`MAXVAL` of `:896-899`, broadcast to the team. Splitting the
+    averaging would reorder its sums: an owner's decision and its own PR.
+  - **W3GATH** in the team kernel: `FIELD = 0.` split over cells, a barrier, then the gather split
+    over sea points (`MAPSF(:,3)` injective). The scatter back into `VA` is the existing launch.
+- **`W3KTP3`** stays one point per work item (9 204 in `bench_small`). Its inner loops are over
+  the 576 spectral bins of a point and could go to vector lanes, but its CFL maxima (`CFLTHMAX`,
+  `CFLKMAX`) are in-order reductions whose NaN behaviour depends on the order; nothing there is as
+  clear as `W3XYP3`'s case, so it was not changed.
+- **CUDA, `ptxas -v`, `sm_89`** (the shim compiled alone with `-Xptxas -v` in a scratch build,
+  `nvcc_wrapper`, `CMAKE_CUDA_ARCHITECTURES=89`; nothing ran):
+
+  | Kernel | Before | After |
+  |---|---|---|
+  | `ww_xyp3_batch`, one work item per component | 96 registers, 0 spill, 0 stack | 96 registers, 0 spill, 0 stack (unchanged) |
+  | `ww_xyp3_team`, one team per component | none | 80 registers, 0 spill, 0 stack, 1 barrier, 16 bytes shared memory |
+  | `ww_xyp3_scatter` | 34 registers | 34 registers |
+  | `ww_ktp3_batch` | 80 registers, 0 spill | 80 registers, 0 spill |
+
+  At 96 registers an `sm_89` multiprocessor holds at most 21 warps (65 536 registers, 3 072 per
+  warp), at 80 at most 25 of its 48: a register limit of 44 % and 52 % occupancy, computed, not
+  measured ⚠. The point of the change is the launch size: 576 threads in 18 warps before, so at
+  most 18 of the RTX 4090's 128 multiprocessors had work; 576 teams of up to `team_size_max`
+  threads after, four or five teams per multiprocessor when they spread evenly. Which size `AUTO` picks on CUDA, and the
+  time, are not known: nothing ran on a GPU ⚠. `bash scripts/ww3-gpu.sh --ww3-gpu full --gpu
+  --kokkos resident --build-only` compiled the shim and the fork for CUDA.
+- **On the CPU the team version is slower** (one barrier per loop on OpenMP threads that would
+  otherwise each own a component); it exists for the device, and the default stays the
+  per-component kernel.
+
+The checkpoint on the CPU, 2026-10-17 (OpenMP backend, 32 threads, Kokkos 5.2.2, gfortran/g++
+16.2.0, Intel Core i9-14900, shared with other sessions; never `--gpu`): `WW_KOKKOS_XYP3_TEAM=<t>
+bash scripts/ww3-gpu.sh --ww3-gpu <case> --cpu --kokkos resident --timers`, for `<t>` unset,
+`AUTO`, 1, 4 and 16, `<case>` full and coast, on `switch_lab_ompg` and
+`WW3GPU_SWITCH=switch_lab_shrd`: 20 runs. In every one, every file the run wrote
+(`out_grd.ww3` and the NetCDF field; in coast also `out_pnt.ww3`) is `cmp`-equal to the Fortran of
+the same executable, `out_grd.ww3` (and `out_pnt.ww3`) `cmp`-equal to `--ww3`, and `nccmp-tol`
+PASS both (v). `W3XYP3 team launches` read 0 with the flag unset and 24 (full) or 72 (coast), one
+per call, with it set; the spectra are 13 824 and 41 472 in every run. `xyp3.kernel`, one fenced
+run each, a breakdown and not a timing (the machine was shared, load average 9 to 15):
+
+| `xyp3.kernel` (s) | unset | `AUTO` | 1 | 4 | 16 |
+|---|---|---|---|---|---|
+| full, `switch_lab_ompg` (24 calls) | 1.31 | 3.16 | 3.92 | 5.56 | 24.19 |
+| coast, `switch_lab_ompg` (72 calls) | 1.23 | 1.57 | 1.30 | 5.98 | 32.59 |
+| full, `switch_lab_shrd` | 1.58 | 1.53 | 1.70 | 3.11 | 15.95 |
+| coast, `switch_lab_shrd` | 1.37 | 1.81 | 1.22 | 6.76 | 36.51 |
+
+The team size `AUTO` resolves to on OpenMP was not printed ⚠. Also run: `bash scripts/ww3-gpu.sh
+--self-test`, `just kokkos-test serial-debug` and `openmp-release`, `python3 scripts/port_score.py
+--write` then `--check`. The regtest matrix did not run ⚠.

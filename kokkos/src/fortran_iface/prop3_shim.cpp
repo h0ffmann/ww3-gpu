@@ -37,6 +37,14 @@
 // WW_KOKKOS_PROP3_BATCH_MIB MiB each (default 1024); a step with more components or points than
 // fit runs in several launches.
 //
+// WW_KOKKOS_XYP3_TEAM (diagnostic, PATCH.md section 16) picks how ww_xyp3_batch runs a component:
+// unset or empty, one work item per component running the serial body (above); AUTO or a positive
+// N, one Kokkos team per component, of Kokkos' choice of size or of N threads, whose threads split
+// every loop of W3XYP3 and W3QCK3 in which each iteration writes its own elements (TeamLoops,
+// prop_loops.hpp), the averaging scatter and the boundary update on one thread of the team. Each
+// element gets the same operations in the same order either way. A value that does not parse is
+// reported once and the per-component kernel runs; an N above what the backend can run is refused.
+//
 // WW_KOKKOS_PROP3_COUNT=1 prints, at exit, the calls and the components or point calls each entry
 // point ran (the _va entries counted with their routine, and apart as resident calls), and on a
 // device the input copies made and skipped: the evidence that a run exercised the port.
@@ -93,6 +101,7 @@ const char* const kName[NROUTINES] = {"W3XYP3", "W3KTP3"};
 const char* const kItem[NROUTINES] = {"spectra", "point calls"};
 std::atomic<long long> g_calls[NROUTINES], g_items[NROUTINES], g_launches[NROUTINES];
 std::atomic<long long> g_resident[NROUTINES], g_in_copies[NROUTINES], g_in_same[NROUTINES];
+std::atomic<long long> g_team_launches;
 
 void print_counts() {
   for (int r = 0; r < NROUTINES; ++r) {
@@ -106,6 +115,8 @@ void print_counts() {
     std::fprintf(stderr, "ww_kokkos: %s device inputs unchanged, not copied: %lld\n", kName[r],
                  g_in_same[r].load());
   }
+  std::fprintf(stderr, "ww_kokkos: W3XYP3 team launches (WW_KOKKOS_XYP3_TEAM): %lld\n",
+               g_team_launches.load());
 }
 
 /// WW_KOKKOS_PROP3_COUNT=1 registers the exit print when the library loads, so a run in which
@@ -147,6 +158,27 @@ long long cap_bytes() {
     return mib * 1024 * 1024;
   }();
   return cap;
+}
+
+constexpr int kXyp3PerItem = -1;  // WW_KOKKOS_XYP3_TEAM unset: one work item per component
+constexpr int kXyp3TeamAuto = 0;  // AUTO: Kokkos picks the team size
+
+/// WW_KOKKOS_XYP3_TEAM: kXyp3PerItem, kXyp3TeamAuto or a team size N > 0, read once.
+int xyp3_team() {
+  static const int t = [] {
+    const char* v = std::getenv("WW_KOKKOS_XYP3_TEAM");
+    if (v == nullptr || *v == '\0') return kXyp3PerItem;
+    if (std::strcmp(v, "AUTO") == 0) return kXyp3TeamAuto;
+    char* end = nullptr;
+    const long x = std::strtol(v, &end, 10);
+    if (end != v && *end == '\0' && x > 0 && x <= 4096) return static_cast<int>(x);
+    std::fprintf(stderr,
+                 "ww_kokkos: WW_KOKKOS_XYP3_TEAM='%s' ignored (AUTO or a team size), using one "
+                 "work item per component\n",
+                 v);
+    return kXyp3PerItem;
+  }();
+  return t;
 }
 
 bool nested_in_openmp() {
@@ -435,24 +467,57 @@ int xyp3_batch(const E& e, bool fence, const Xyp3Args& a) {
   const int qoff = p.ny - 1;  // FIELD(i) -> [i + NY - 1]
   const int insea = p.nsea, inspec = p.nspec;
 
+  const int team = xyp3_team();
   long long launches = 0;
   for (long long n0 = 0; n0 < nlist; n0 += chunk) {
     const int m = static_cast<int>(std::min(chunk, nlist - n0));
     const int k0 = static_cast<int>(n0);
     ww::timers::Region t_k("xyp3.kernel", fence);
-    Kokkos::parallel_for(
-        "ww_xyp3_batch", Kokkos::RangePolicy<E, Kokkos::Schedule<Kokkos::Dynamic>>(e, 0, m),
-        KOKKOS_LAMBDA(const int i) {
-          const int isp = lst[k0 + i];
-          Real* const field = wr0 + static_cast<size_t>(i) * nwr;
-          // W3GATH, W3_SHRD: FIELD = 0., then FIELD(MAPSF(ISEA,3)) = VA(ISPEC,ISEA).
-          for (size_t k = 0; k < nf; ++k) field[k] = Real(0);
-          for (int isea = 1; isea <= insea; ++isea) {
-            const int ixy = g.mapsf[2 * insea + isea - 1];
-            field[ixy + qoff] = vad[static_cast<size_t>(isea) * inspec + isp - 1];
-          }
-          w3xyp3(p, g, s, isp, dtg, msta, field, field + nf, wi0 + static_cast<size_t>(i) * nwi);
+    if (team != kXyp3PerItem) {
+      // One team per component: W3GATH's two loops and W3XYP3's split over the team's threads.
+      using Policy = Kokkos::TeamPolicy<E, Kokkos::Schedule<Kokkos::Dynamic>>;
+      using Member = typename Policy::member_type;
+      const auto body = KOKKOS_LAMBDA(const Member& t) {
+        const int i = t.league_rank();
+        const int isp = lst[k0 + i];
+        Real* const field = wr0 + static_cast<size_t>(i) * nwr;
+        const TeamLoops<Member> lp{t};
+        const int inf = static_cast<int>(nf);
+        lp.par(0, inf, [&](int k) { field[k] = Real(0); });
+        // MAPSF(:,3) is injective, so the sea points' stores never meet.
+        lp.par(1, insea + 1, [&](int isea) {
+          const int ixy = g.mapsf[2 * insea + isea - 1];
+          field[ixy + qoff] = vad[static_cast<size_t>(isea) * inspec + isp - 1];
         });
+        w3xyp3_loops(lp, p, g, s, isp, dtg, msta, field, field + nf,
+                     wi0 + static_cast<size_t>(i) * nwi);
+      };
+      Policy pol = team == kXyp3TeamAuto ? Policy(e, m, Kokkos::AUTO) : Policy(e, m, team);
+      if (team != kXyp3TeamAuto) {
+        const int tmax = Policy(e, m, 1).team_size_max(body, Kokkos::ParallelForTag());
+        if (team > tmax)
+          return fail(WW_KOKKOS_ERR_UNSUPPORTED,
+                      ("ww_xyp3_batch: WW_KOKKOS_XYP3_TEAM=" + std::to_string(team) +
+                       " is above this backend's team size limit, " + std::to_string(tmax))
+                          .c_str());
+      }
+      Kokkos::parallel_for("ww_xyp3_team", pol, body);
+      g_team_launches.fetch_add(1, std::memory_order_relaxed);
+    } else {
+      Kokkos::parallel_for(
+          "ww_xyp3_batch", Kokkos::RangePolicy<E, Kokkos::Schedule<Kokkos::Dynamic>>(e, 0, m),
+          KOKKOS_LAMBDA(const int i) {
+            const int isp = lst[k0 + i];
+            Real* const field = wr0 + static_cast<size_t>(i) * nwr;
+            // W3GATH, W3_SHRD: FIELD = 0., then FIELD(MAPSF(ISEA,3)) = VA(ISPEC,ISEA).
+            for (size_t k = 0; k < nf; ++k) field[k] = Real(0);
+            for (int isea = 1; isea <= insea; ++isea) {
+              const int ixy = g.mapsf[2 * insea + isea - 1];
+              field[ixy + qoff] = vad[static_cast<size_t>(isea) * inspec + isp - 1];
+            }
+            w3xyp3(p, g, s, isp, dtg, msta, field, field + nf, wi0 + static_cast<size_t>(i) * nwi);
+          });
+    }
     // W3SCAT, W3_SHRD: VA(ISPEC,ISEA) = FIELD(IXY) where MAPSTA(IXY) /= 0, per sea point.
     Kokkos::parallel_for(
         "ww_xyp3_scatter", Kokkos::RangePolicy<E>(e, 1, insea + 1), KOKKOS_LAMBDA(const int isea) {

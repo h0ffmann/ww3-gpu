@@ -113,3 +113,24 @@ only in the `WAVEWATCH_III_switches` attribute (`diff` of the two `ncdump`, read
 switches: `W3XYP3` 41 472 spectra in 72 calls, `W3KTP3` 517 660 point calls in 144 calls, all on the
 resident `VA`; `W3SRCE` 258 830 spectra; `VA` H2D 13, D2H 36 (host writes 26; that they are the 13 hourly `W3ULEV` and 13 `W3UICE`
 sites is inferred from the forcing, not counted ⚠). Index closure never ran ⚠. The regtest matrix did not run ⚠.
+
+## One team per component (`WW_KOKKOS_XYP3_TEAM`), 2026-10-17
+
+A diagnostic for the device: with `WW_KOKKOS_XYP3_TEAM=AUTO` or a team size N, `ww_xyp3_batch`
+runs each spectral component on a Kokkos team instead of one thread, the team's threads splitting
+every loop of `W3XYP3` and `W3QCK3` in which each iteration writes its own elements, with a barrier
+between loops; the averaging scatter, the boundary update and the `MINVAL`/`MAXVAL` scans stay on
+one thread in source order. No statement of a loop body changed (the loops are written once,
+`w3xyp3_loops` and `w3qck3_loops`, for both ways of running them, `prop_loops.hpp`). Unset, the
+per-component kernel of the sections above runs. The dependency reading with `file:line`, the
+`ptxas` registers and the parity table are in
+[PATCH.md section 16](../src/fortran_iface/PATCH.md#16-w3xyp3-one-team-per-component-ww_kokkos_xyp3_team).
+
+Checked on the CPU, never on the GPU (v): full and coast, `--kokkos resident`, both lab switches,
+the flag unset, `AUTO`, 1, 4 and 16, 20 runs: every output `cmp`-equal to the Fortran of the same
+executable and to `--ww3`, `nccmp-tol` PASS. On the CPU the team version is slower (`xyp3.kernel`
+1.2 to 1.6 s unset, up to 36.5 s with teams of 16, one fenced run each, shared machine), so it is
+not the default. `ptxas` for `sm_89`: the per-component kernel 96 registers (unchanged), the team
+kernel 80 registers, no spill; it would put 576 teams on the device instead of 576 threads. Whether
+that is faster on a GPU, and whether CUDA gives the CPU's bits, is not known: nothing ran there ⚠.
+The regtest matrix did not run ⚠.
