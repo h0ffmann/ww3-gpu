@@ -22,10 +22,15 @@ case "${1:-}" in
     render)
         [ "$dry" -eq 1 ] || [ -f "$root/$sub/archify/bin/archify.mjs" ] \
             || { echo "archify: $sub is not checked out; run scripts/archify.sh init" >&2; exit 1; }
+        # A source is <slug>.json, never <slug>.delivery.json. finalize's receipts go to a temporary
+        # --out-dir: left beside the page, an old receipt makes the next finalize of a changed source
+        # fail (viewer/evidence-path-conflict).
+        tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
         for json in "$root"/docs/archify/*.json; do
+            case "$(basename "$json" .json)" in *.*) continue ;; esac
             type="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["diagram_type"])' "$json")"
             run env ARCHIFY_UPDATE_CHECK_DISABLED=1 node "$root/$sub/archify/bin/archify.mjs" \
-                finalize "$type" "$json" "${json%.json}.html" --repo-root "$root" --quality showcase --json
+                finalize "$type" "$json" "${json%.json}.html" --out-dir "$tmp" --repo-root "$root" --quality showcase --json
         done
         ;;
     *) sed -n '2,8p' "$0"; exit 2 ;;
