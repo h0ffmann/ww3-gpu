@@ -19,7 +19,9 @@ file(GLOB ww_kokkos_shims CONFIGURE_DEPENDS
 target_sources(ww_kokkos PRIVATE
     ${ww_kokkos_shims}
     shim_state.hpp
-    part_flags.cpp)
+    part_flags.cpp
+    timers.hpp
+    timers.cpp)
 
 set(WW_W3KOKKOSMD "${CMAKE_CURRENT_SOURCE_DIR}/../../../WW3/model/src/w3kokkosmd.F90"
     CACHE FILEPATH "WW3's w3kokkosmd.F90 (the WW3/ submodule, branch ww3-gpu/kokkos-wire-base)")

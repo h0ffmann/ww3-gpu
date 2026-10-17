@@ -30,6 +30,7 @@
 
 #include "fortran_iface/ww_kokkos_c.hpp"
 #include "fortran_iface/shim_state.hpp"
+#include "fortran_iface/timers.hpp"
 
 #include <Kokkos_Core.hpp>
 
@@ -337,6 +338,7 @@ void ww_snl1(int igrid, int npts, const float* a, const float* cg, const float* 
     const int nk = c.cfg.nk;
     const int nspec = c.cfg.nspec();
     const bool nested = nested_in_openmp();
+    ww::timers::Region t_call("snl1.call", !nested);
     if (npts > c.capacity) {
 #if defined(WW_SNL1_SERIAL_NESTED)
       if (nested) {
@@ -367,28 +369,40 @@ void ww_snl1(int igrid, int npts, const float* a, const float* cg, const float* 
 #if defined(WW_SNL1_SERIAL_NESTED)
     if (nested) {
       const Kokkos::Serial host;
+      ww::timers::Region t_in("snl1.h2d", false);
       Kokkos::deep_copy(host, a_d, h_a);
       Kokkos::deep_copy(host, cg_d, h_cg);
       Kokkos::deep_copy(host, kd_d, h_kd);
+      t_in.stop();
+      ww::timers::Region t_k("snl1.kernel", false);
       snl1::snl1_serial(c.cfg, c.tables, c.sig_d, a_d, cg_d, kd_d, s_d, d_d);
+      t_k.stop();
+      ww::timers::Region t_out("snl1.d2h", false);
       Kokkos::deep_copy(host, h_s, s_d);
       Kokkos::deep_copy(host, h_d, d_d);
       host.fence();
+      t_out.stop();
       g_points.fetch_add(npts, std::memory_order_relaxed);
       g_last_error.store(WW_KOKKOS_OK, std::memory_order_relaxed);
       return;
     }
 #endif
 
+    ww::timers::Region t_in("snl1.h2d");
     Kokkos::deep_copy(a_d, h_a);
     Kokkos::deep_copy(cg_d, h_cg);
     Kokkos::deep_copy(kd_d, h_kd);
+    t_in.stop();
 
+    ww::timers::Region t_k("snl1.kernel");
     snl1::snl1(c.cfg, c.tables, c.sig_d, a_d, cg_d, kd_d, s_d, d_d);
     Kokkos::fence();  // the caller reads s and d the instant we return
+    t_k.stop();
 
+    ww::timers::Region t_out("snl1.d2h");
     Kokkos::deep_copy(h_s, s_d);
     Kokkos::deep_copy(h_d, d_d);
+    t_out.stop();
     g_points.fetch_add(npts, std::memory_order_relaxed);
     g_last_error.store(WW_KOKKOS_OK, std::memory_order_relaxed);
   } catch (const std::bad_alloc& e) {

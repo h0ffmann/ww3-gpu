@@ -11,8 +11,11 @@
 
 #include "fortran_iface/ww_kokkos_c.hpp"
 #include "fortran_iface/shim_state.hpp"
+#include "fortran_iface/timers.hpp"
 
 #include <Kokkos_Core.hpp>
+
+#include <type_traits>
 
 #include <atomic>
 #include <cstdio>
@@ -177,6 +180,9 @@ void run(GridCtx& g, const st4::Params& q, const st4::Fields& f, const snl1::Con
          float* tauice) {
   const ExecSpace ex;
   const Params p = g.p;
+  // On Kokkos::Serial (a caller inside an OpenMP region) the work is synchronous: no fence.
+  constexpr bool fence = !std::is_same_v<ExecSpace, Kokkos::Serial>;
+  ww::timers::Region t_in("srce.h2d", fence);
   Kokkos::deep_copy(ex, g.spec, HostUnmanaged<float>(spec, p.nspec));
   Kokkos::deep_copy(ex, g.wn1, HostUnmanaged<const float>(wn1, p.nk));
   Kokkos::deep_copy(ex, g.cg1, HostUnmanaged<const float>(cg1, p.nk));
@@ -184,6 +190,7 @@ void run(GridCtx& g, const st4::Params& q, const st4::Fields& f, const snl1::Con
   Kokkos::deep_copy(ex, g.taubbl, HostUnmanaged<float>(taubbl, 2));
   Kokkos::deep_copy(ex, g.tauice, HostUnmanaged<float>(tauice, 2));
   Kokkos::deep_copy(ex, g.scal, HostUnmanaged<PointScalars>(&o, 1));
+  t_in.stop();
 
   using Policy = Kokkos::TeamPolicy<ExecSpace>;
   using Member = typename Policy::member_type;
@@ -203,6 +210,7 @@ void run(GridCtx& g, const st4::Params& q, const st4::Fields& f, const snl1::Con
   const auto SC = g.scal;
   const auto ST = g.state;
   const Real* ns = nsig.data();
+  ww::timers::Region t_k("srce.kernel", fence);
   Kokkos::parallel_for(
       "ww_srce", policy, KOKKOS_LAMBDA(const Member& team) {
         const snl1::TeamScratch w = snl1::snl1_team_scratch(team, level, nc, nt);
@@ -211,7 +219,9 @@ void run(GridCtx& g, const st4::Params& q, const st4::Fields& f, const snl1::Con
                     DW.data());
       });
   ex.fence();
+  t_k.stop();
 
+  ww::timers::Region t_out("srce.d2h", fence);
   Kokkos::deep_copy(ex, HostUnmanaged<float>(spec, p.nspec), g.spec);
   Kokkos::deep_copy(ex, HostUnmanaged<float>(whitecap, 4), g.whitecap);
   Kokkos::deep_copy(ex, HostUnmanaged<float>(taubbl, 2), g.taubbl);
@@ -241,6 +251,8 @@ void run_batch(GridCtx& g, const st4::Params& q, const st4::Fields& f, const snl
   const auto head = [](const auto& v, size_t len) {
     return Kokkos::subview(v, std::make_pair(static_cast<size_t>(0), len));
   };
+  constexpr bool fence = !std::is_same_v<ExecSpace, Kokkos::Serial>;
+  ww::timers::Region t_in("srce.batch.h2d", fence);
   Kokkos::deep_copy(ex, head(g.b_spec, m * nspec), HostUnmanaged<float>(spec + o0 * nspec, m * nspec));
   Kokkos::deep_copy(ex, head(g.b_wn1, m * nk), HostUnmanaged<const float>(wn1 + o0 * nk, m * nk));
   Kokkos::deep_copy(ex, head(g.b_cg1, m * nk), HostUnmanaged<const float>(cg1 + o0 * nk, m * nk));
@@ -251,6 +263,7 @@ void run_batch(GridCtx& g, const st4::Params& q, const st4::Fields& f, const snl
   Kokkos::deep_copy(ex, head(g.b_whitecap, m * 4), HostUnmanaged<float>(whitecap + o0 * 4, m * 4));
   Kokkos::deep_copy(ex, head(g.b_taubbl, m * 2), HostUnmanaged<float>(taubbl + o0 * 2, m * 2));
   Kokkos::deep_copy(ex, head(g.b_tauice, m * 2), HostUnmanaged<float>(tauice + o0 * 2, m * 2));
+  t_in.stop();
 
   using Policy = Kokkos::TeamPolicy<ExecSpace>;
   using Member = typename Policy::member_type;
@@ -272,6 +285,7 @@ void run_batch(GridCtx& g, const st4::Params& q, const st4::Fields& f, const snl
   const size_t nrw = static_cast<size_t>(g.work_reals), niw = static_cast<size_t>(g.work_ints),
                ndw = static_cast<size_t>(srce_work_doubles(p));
   const Real* ns = nsig.data();
+  ww::timers::Region t_k("srce.batch.kernel", fence);
   Kokkos::parallel_for(
       "ww_srce_batch", policy, KOKKOS_LAMBDA(const Member& team) {
         const int i = team.league_rank();
@@ -334,7 +348,9 @@ void run_batch(GridCtx& g, const st4::Params& q, const st4::Fields& f, const snl
         });
       });
   ex.fence();
+  t_k.stop();
 
+  ww::timers::Region t_out("srce.batch.d2h", fence);
   Kokkos::deep_copy(ex, HostUnmanaged<float>(spec + o0 * nspec, m * nspec), head(g.b_spec, m * nspec));
   Kokkos::deep_copy(ex, HostUnmanaged<float>(psc + o0 * WW_SRCE_NPSC, m * WW_SRCE_NPSC),
                     head(g.b_psc, m * WW_SRCE_NPSC));
@@ -343,6 +359,7 @@ void run_batch(GridCtx& g, const st4::Params& q, const st4::Fields& f, const snl
   Kokkos::deep_copy(ex, HostUnmanaged<float>(tauice + o0 * 2, m * 2), head(g.b_tauice, m * 2));
   Kokkos::deep_copy(ex, HostUnmanaged<int>(shave + o0, m), head(g.b_shave, m));
   ex.fence();
+  t_out.stop();
 }
 
 }  // namespace
@@ -465,6 +482,11 @@ void ww_srce(int igrid, int it, int inflags24, int flogrd57, int flogrd58, float
     }
     const PointIn in{it, inflags24, flogrd57, flogrd58, d_inp, u10abs, u10dir, as,
                      ice, dtg, dair, coef};
+#if defined(WW_SRCE_SERIAL_NESTED)
+    ww::timers::Region t_call("srce.call", !nested_in_openmp());
+#else
+    ww::timers::Region t_call("srce.call");
+#endif
     PointScalars o{*ustar,  *ustdir, *tauwx,  *tauwy, *dtdyn,  *fcut,  *tauox, *tauoy,
                    *tauwix, *tauwiy, *tauwnx, *tauwny, *phiaw, *charn, *tws,  *phioc,
                    *phibbl, *phice,  *tauocx, *tauocy, *wnmean, *shave};
@@ -570,6 +592,11 @@ void ww_srce_batch(int igrid, int it, int inflags24, int flogrd57, int flogrd58,
     const int chunk = static_cast<int>(fit < npts ? fit : npts);
     batch_reserve(g, chunk);
     const BatchStep c{it, inflags24, flogrd57, flogrd58, dtg};
+#if defined(WW_SRCE_SERIAL_NESTED)
+    ww::timers::Region t_call("srce.batch.call", !nested_in_openmp());
+#else
+    ww::timers::Region t_call("srce.batch.call");
+#endif
     for (int n0 = 0; n0 < npts; n0 += chunk) {
       const int n = (npts - n0 < chunk) ? npts - n0 : chunk;
 #if defined(WW_SRCE_SERIAL_NESTED)

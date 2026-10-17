@@ -14,6 +14,7 @@
 
 #include "fortran_iface/ww_kokkos_c.hpp"
 #include "fortran_iface/shim_state.hpp"
+#include "fortran_iface/timers.hpp"
 
 #include <Kokkos_Core.hpp>
 
@@ -574,6 +575,8 @@ void ww_sds4(int igrid, int npts, const float* a, const float* k, const float* c
     if (g == nullptr) return;
     if (npts == 0) return ok();
     const Exec ex{nested_in_openmp()};
+    ww::timers::Region t_call("st4.sds4.call", !ex.nested);
+    ww::timers::Region t_in("st4.sds4.h2d", !ex.nested);
     const int nk = g->p.nk, ns = g->p.nspec;
     auto& R = g->buf.real;
     const auto a_s = stage_in(ex, R, "sds4.a", a, ns, npts);
@@ -588,6 +591,7 @@ void ww_sds4(int igrid, int npts, const float* a, const float* k, const float* c
     const auto dd_s = stage_in(ex, R, "sds4.ddiag", ddiag, ns, npts);
     const auto br_s = stage_in(ex, R, "sds4.brlambda", brlambda, ns, npts);
     const auto wc_s = stage_in(ex, R, "sds4.whitecap", whitecap, 4, npts);
+    t_in.stop();
     Params p;
     Fields f;
     current(*g, p, f);
@@ -596,15 +600,19 @@ void ww_sds4(int igrid, int npts, const float* a, const float* k, const float* c
     const auto A = a_s.all, K = k_s.all, CG = cg_s.all, US = us_s.all, UD = ud_s.all,
                DP = dp_s.all, DA = da_s.all, DL = dl_s.all, SR = sr_s.all, DD = dd_s.all,
                BR = br_s.all, WC = wc_s.all;
+    ww::timers::Region t_k("st4.sds4.kernel", !ex.nested);
     ex.for_points("ww_st4.sds4", npts, KOKKOS_LAMBDA(const int ip) {
       w3sds4_point(p, f, col(A, ip), col(K, ip), col(CG, ip), US(0, ip), UD(0, ip), DP(0, ip),
                    DA(0, ip), DL(0, ip), flogrd57, flogrd58, col(SR, ip), col(DD, ip),
                    col(BR, ip), col(WC, ip), col(w, ip), col(iw, ip));
     });
+    t_k.stop();
+    ww::timers::Region t_out("st4.sds4.d2h", !ex.nested);
     stage_out(ex, sr_s, npts);
     stage_out(ex, dd_s, npts);
     stage_out(ex, br_s, npts);
     stage_out(ex, wc_s, npts);
+    t_out.stop();
     g_count_sds4.fetch_add(npts, std::memory_order_relaxed);
     ok();
   } catch (const std::bad_alloc& e) {
@@ -625,6 +633,8 @@ void ww_sin4(int igrid, int npts, const float* a, const float* cg, const float* 
     if (g == nullptr) return;
     if (npts == 0) return ok();
     const Exec ex{nested_in_openmp()};
+    ww::timers::Region t_call("st4.sin4.call", !ex.nested);
+    ww::timers::Region t_in("st4.sin4.h2d", !ex.nested);
     const int nk = g->p.nk, ns = g->p.nspec;
     auto& R = g->buf.real;
     const auto a_s = stage_in(ex, R, "sin4.a", a, ns, npts);
@@ -644,6 +654,7 @@ void ww_sin4(int igrid, int npts, const float* a, const float* cg, const float* 
     const auto s_s = stage_in(ex, R, "sin4.s", s, ns, npts);
     const auto d_s = stage_in(ex, R, "sin4.d", d, ns, npts);
     const auto l_s = stage_in(ex, g->buf.ints, "sin4.llws", llws, ns, npts);
+    t_in.stop();
     Params p;
     Fields f;
     current(*g, p, f);
@@ -654,11 +665,14 @@ void ww_sin4(int igrid, int npts, const float* a, const float* cg, const float* 
                TX = tx_s.all, TY = ty_s.all, TNX = tnx_s.all, TNY = tny_s.all, S = s_s.all,
                D = d_s.all;
     const auto L = l_s.all;
+    ww::timers::Region t_k("st4.sin4.kernel", !ex.nested);
     ex.for_points("ww_st4.sin4", npts, KOKKOS_LAMBDA(const int ip) {
       w3sin4_point(p, f, col(A, ip), col(CG, ip), col(K, ip), U(0, ip), US(0, ip), DR(0, ip),
                    AS(0, ip), UD(0, ip), Z0(0, ip), CD(0, ip), TX(0, ip), TY(0, ip), TNX(0, ip),
                    TNY(0, ip), col(S, ip), col(D, ip), col(L, ip), col(w, ip), col(iw, ip));
     });
+    t_k.stop();
+    ww::timers::Region t_out("st4.sin4.d2h", !ex.nested);
     stage_out(ex, tx_s, npts);
     stage_out(ex, ty_s, npts);
     stage_out(ex, tnx_s, npts);
@@ -666,6 +680,7 @@ void ww_sin4(int igrid, int npts, const float* a, const float* cg, const float* 
     stage_out(ex, s_s, npts);
     stage_out(ex, d_s, npts);
     stage_out(ex, l_s, npts);
+    t_out.stop();
     g_count_sin4.fetch_add(npts, std::memory_order_relaxed);
     ok();
   } catch (const std::bad_alloc& e) {
@@ -687,6 +702,8 @@ void ww_spr4(int igrid, int npts, const float* a, const float* cg, const float* 
     if (g == nullptr) return;
     if (npts == 0) return ok();
     const Exec ex{nested_in_openmp()};
+    ww::timers::Region t_call("st4.spr4.call", !ex.nested);
+    ww::timers::Region t_in("st4.spr4.h2d", !ex.nested);
     const int nk = g->p.nk, ns = g->p.nspec;
     auto& R = g->buf.real;
     const auto a_s = stage_in(ex, R, "spr4.a", a, ns, npts);
@@ -705,6 +722,7 @@ void ww_spr4(int igrid, int npts, const float* a, const float* cg, const float* 
                                     "spr4.z0", "spr4.charn", "spr4.fmeanws", "spr4.dlwmean"};
     Staged<Real> o[12];
     for (int j = 0; j < 12; ++j) o[j] = stage_in(ex, R, names[j], outs[j], 1, npts);
+    t_in.stop();
     Params p;
     Fields f;
     current(*g, p, f);
@@ -716,13 +734,17 @@ void ww_spr4(int igrid, int npts, const float* a, const float* cg, const float* 
     const auto O0 = o[0].all, O1 = o[1].all, O2 = o[2].all, O3 = o[3].all, O4 = o[4].all,
                O5 = o[5].all, O6 = o[6].all, O7 = o[7].all, O8 = o[8].all, O9 = o[9].all,
                O10 = o[10].all, O11 = o[11].all;
+    ww::timers::Region t_k("st4.spr4.kernel", !ex.nested);
     ex.for_points("ww_st4.spr4", npts, KOKKOS_LAMBDA(const int ip) {
       w3spr4_point(p, f, col(A, ip), col(CG, ip), col(WN, ip), U(0, ip), UD(0, ip), TX(0, ip),
                    TY(0, ip), col(L, ip), O0(0, ip), O1(0, ip), O2(0, ip), O3(0, ip), O4(0, ip),
                    O5(0, ip), O6(0, ip), O7(0, ip), O8(0, ip), O9(0, ip), O10(0, ip), O11(0, ip),
                    col(w, ip), col(iw, ip));
     });
+    t_k.stop();
+    ww::timers::Region t_out("st4.spr4.d2h", !ex.nested);
     for (int j = 0; j < 12; ++j) stage_out(ex, o[j], npts);
+    t_out.stop();
     g_count_spr4.fetch_add(npts, std::memory_order_relaxed);
     ok();
   } catch (const std::bad_alloc& e) {

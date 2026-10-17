@@ -28,6 +28,9 @@
 # the CPU too and ends with the three ww3_shel wall times (--ww3, the Kokkos run, the Fortran run
 # of the same executable) and their ratio, one run each; --repeat N then runs --ww3 and the Kokkos
 # case N times each, alternated, checks every output against run 1's and prints the medians.
+# --timers sets WW_KOKKOS_TIMERS=1 in the Kokkos run and prints where its time went: per part, the
+# copies to the device, the kernel and the copies back, and the time outside Kokkos (never with
+# --repeat: the timers fence the device, so their run is a breakdown, not a timing).
 # Before it builds --ww3, the script checks that the fork differs from WW3-noaa/ only in the files
 # of the KOKKOS patch (kokkos_patch below) and exits 3 when it does not.
 #   add --build-only to build and stop before the run (a machine without the GPU can still compile)
@@ -88,7 +91,7 @@ tols=()
 
 usage() { sed -n '2,/^set -euo/{/^set -euo/!p}' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 64; }
 
-mode="" case_name="" device="" build_only="" kokkos="" repeat=1
+mode="" case_name="" device="" build_only="" kokkos="" repeat=1 timers=""
 # The parts, their counters and the fork files their hunks touch, one file per wiring unit
 # (kokkos/src/fortran_iface/parts.d/<unit>.txt, PATCH.md section 9), so a new unit adds a file and
 # edits nothing here. Lines: "PART <name>", "COUNT <variable>", "FILE <path in the fork>"; # comments.
@@ -128,6 +131,7 @@ while [ $# -gt 0 ]; do
                 [ -n "$kokkos" ] || { echo "ww3-gpu: --kokkos needs all, none, gpu or a list of parts" >&2; exit 64; } ;;
     --repeat) [ $# -ge 2 ] && [[ "$2" =~ ^[1-9][0-9]?$ ]] || { echo "ww3-gpu: --repeat needs a count, 1 to 99" >&2; exit 64; }
               repeat="$2"; shift ;;
+    --timers) timers=1 ;;
     --self-test) mode=self-test ;;
     -h|--help) usage ;;
     *) echo "ww3-gpu: unknown argument: $1" >&2; usage ;;
@@ -160,6 +164,11 @@ if [ -n "$kokkos" ]; then
     done
   fi
 fi
+if [ -n "$timers" ]; then
+  [ "$mode" = ww3-gpu ] || [ "$mode" = self-test ] || { echo "ww3-gpu: --timers is for --ww3-gpu only" >&2; exit 64; }
+  # The timers fence the device around every phase: a run with them is a breakdown, never a median.
+  [ "$repeat" = 1 ] || { echo "ww3-gpu: --timers and --repeat do not go together: time with --repeat, break down with --timers" >&2; exit 64; }
+fi
 if [ "$mode" = self-test ]; then
   out="$("${BASH_SOURCE[0]}" --help 2>&1 || true)"
   if ! grep -q -- "--ww3" <<<"$out" || ! grep -q -- "--ww3-gpu" <<<"$out" || ! grep -q -- "--ww4" <<<"$out"; then echo "ww3-gpu: help text lost" >&2; exit 1; fi
@@ -173,7 +182,8 @@ if [ "$mode" = self-test ]; then
   [ "$rc" = 64 ] || { echo "ww3-gpu: WW3GPU_ROUTINES=SDS4,BOGUS gave exit $rc, not 64" >&2; exit 1; }
   for bad in "--ww3-gpu smoke --kokkos" "--ww3-gpu smoke --kokkos SNL1,BOGUS" "--ww3-gpu smoke --kokkos all,SNL1" \
              "--ww3-gpu smoke --kokkos=" "--ww3 smoke --kokkos all" "--ww3-gpu smoke --repeat 0" \
-             "--ww3-gpu smoke --repeat x" "--ww3-gpu smoke --repeat"; do
+             "--ww3-gpu smoke --repeat x" "--ww3-gpu smoke --repeat" \
+             "--ww3-gpu smoke --timers --repeat 3" "--ww3 smoke --timers"; do
     # shellcheck disable=SC2086
     "${BASH_SOURCE[0]}" $bad </dev/null >/dev/null 2>&1 && rc=0 || rc=$?
     [ "$rc" = 64 ] || { echo "ww3-gpu: '$bad' gave exit $rc, not 64" >&2; exit 1; }
@@ -282,7 +292,7 @@ if [ -z "${WW3GPU_IN_SHELL:-}" ] && [ -z "$pre" ]; then
   shell="ww3"; [ "$mode" = ww3-gpu ] && [ "$backend" = cuda ] && shell="cuda"
   exec env WW3GPU_IN_SHELL=1 \
     nix develop "$pratico#$shell" --command bash "${BASH_SOURCE[0]}" "--$mode" "$case_name" "--$device" $build_only \
-    ${kokkos:+--kokkos "$kokkos"} --repeat "$repeat"
+    ${kokkos:+--kokkos "$kokkos"} --repeat "$repeat" ${timers:+--timers}
 fi
 
 runs="${WW3GPU_RUNS:-$root/build/runs}"
@@ -474,6 +484,7 @@ run_model() { # <dir> <0|1>: grid, strt, shel, ounf; prints ww3_shel's wall time
       if [ "$k" = 1 ] && [[ " ${routines[*]} " == *" $r "* ]]; then flags+=("WW_KOKKOS_$r=1"); else flags+=("WW_KOKKOS_$r=0"); fi
     done
   fi
+  [ "$k" = 0 ] || [ -z "$timers" ] || flags+=(WW_KOKKOS_TIMERS=1)
   (cd "$d" && "$bin/ww3_grid" > ww3_grid.out 2>&1) || { tail -20 "$d/ww3_grid.out" >&2; return 1; }
   if [ -f "$d/ww3_strt.inp" ] || [ -f "$d/ww3_strt.nml" ]; then
     (cd "$d" && "$bin/ww3_strt" > ww3_strt.out 2>&1) || { tail -20 "$d/ww3_strt.out" >&2; return 1; }
@@ -503,6 +514,16 @@ d1="$runs/ww3-gpu-$case_name-$backend/kokkos"
 prepare "$d0"; prepare "$d1"
 w0="$(run_model "$d0" 0)"
 w1="$(run_model "$d1" 1)"
+if [ -n "$timers" ]; then
+  # kokkos/src/fortran_iface/timers.hpp: one line per region; .call is a whole entry point, so
+  # the wall time minus the .call totals is what the run spent outside Kokkos (the Fortran).
+  echo ">> time breakdown of the Kokkos run, $case_name ($backend), ww3_shel ${w1} s (WW_KOKKOS_TIMERS=1, fenced):"
+  grep -h '^ww_kokkos: time ' "$d1/ww3_shel.out" | awk -v w="$w1" '
+    { name = $3; sub(/:$/, "", name); calls = $4; s = $6 + 0
+      printf ">>   %-22s %10d calls %10.3f s %6.1f %%\n", name, calls, s, (w > 0 ? 100 * s / w : 0)
+      if (name ~ /\.call$/) in_kokkos += s }
+    END { printf ">>   %-22s %21s %10.3f s %6.1f %%\n", "outside Kokkos", "", w - in_kokkos, (w > 0 ? 100 * (w - in_kokkos) / w : 0) }'
+fi
 if [ -n "$kokkos" ]; then
   parts_line="$(grep -h "Kokkos parts" "$d1/log.ww3" | head -1 || true)"
   [ -n "$parts_line" ] || { echo "ww3-gpu: no 'Kokkos parts' line in $d1/log.ww3" >&2; exit 1; }
