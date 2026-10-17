@@ -315,6 +315,10 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | W3MPIO | "Prepare MPI persistent communication needed for WAVEWATCH I/O routines" `(v)` `w3initmd.F90:2033-2034`, `:2045` at `03adda91` | Called only by `W3INIT` under `W3_MPI` (`w3initmd.F90:1561`); under `SHRD` it compiles to an empty subroutine, which is what the port reproduces. | [kokkos/port_report/W3MPIO_KOKKOS.md](../kokkos/port_report/W3MPIO_KOKKOS.md) |
 | W3IOGRMD / W3IOGR | "Reading and writing of the model definition file" `(v)` | Reads `mod_def.ww3`; also calls `INSNL1` (`w3iogrmd.F90:1802`). | [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md) |
 | W3IOGOMD / W3OUTG / W3IOGO | "Gridded output of mean wave parameters": fill output arrays / read-write `out_grd.ww3` `(v)` | Integral parameters (`Hs`, `Tp`, …) from the spectrum; ranked #8 for the port. | [docs/AGENTS_KOKKOS_202609.md](AGENTS_KOKKOS_202609.md) |
+| OFILES / IPASS1 / WRITE1 / FNMGRD | "Output in one or several files" / "Pass counter for file management, renamed to IPASS in routine" / "Write flag for file management, renamed to WRITE in routine" `(v)` `w3odatmd.F90:137`, `:145-148`; `FNMGRD`, the "GLOBAL PATH FOR USER DEFINED OUTPUT" of the gridded file `(v)` `w3odatmd.F90:339-340` | `OFILES(1)` = 1 makes `W3IOGO` write one `<YYYYMMDD.HHMMSS>.out_grd.<ext>` and a `log.` file per output time; `IPASS1` and `WRITE1` decide when it opens its unit and whether it writes or reads. `W3NOUT` sets `IPASS1` to 0 and leaves `WRITE1` undefined (`w3odatmd.F90:704`). | [kokkos/port_report/W3IOGO_KOKKOS.md](../kokkos/port_report/W3IOGO_KOKKOS.md) |
+| INXOUT / NDSOG / IOTST / IDSTR / VEROGR | `W3IOGO`'s "Test string for read/write", "File unit number", "Test indictor for reading" (0 fields read, -1 past end of file) `(v)` `w3iogomd.F90:2450-2455`, and the "Gridded output file ID string" and "version number" `(v)` `w3iogomd.F90:93-94`, `'WAVEWATCH III GRID OUTPUT FILE'` and `'2019-10-04'` `(v)` `:160-162` | The arguments and the header strings of `out_grd.ww3`. | [kokkos/port_report/W3IOGO_KOKKOS.md](../kokkos/port_report/W3IOGO_KOKKOS.md) |
+| MAPTMP / AUX1 / AUX2 / TIMETAG | `W3IOGO`'s locals: the packed map `MAPSTA + 8*MAPST2`, the two Cartesian components of a vector field, and the `YYYYMMDD.HHMMSS` string of `TIME` `(v)` `w3iogomd.F90:2563`, `:2573-2577`, `:2833`, `:2734` | `MAPTMP` is written with `IX` fastest, the transpose of its storage; `AUX1`/`AUX2` have the `NSEA` of the grid selected before the call. | [kokkos/port_report/W3IOGO_KOKKOS.md](../kokkos/port_report/W3IOGO_KOKKOS.md) |
+| AFTER_ENDFILE / IOSTAT 5001 | libgfortran's state of a sequential unit after a READ met the end of the file, and the IOSTAT of the next READ on it (LIBERROR_OPTION_CONFLICT, [kokkos/port_report/W3FLDG_KOKKOS.md](../kokkos/port_report/W3FLDG_KOKKOS.md)); 5001 measured with gfortran 16.2 and WW3's flags, cleared by a REWIND `(v)` [kokkos/port_report/W3IOGO_KOKKOS.md](../kokkos/port_report/W3IOGO_KOKKOS.md) | A reader that calls `W3IOGO` again after `IOTST = -1` stops with exit 43; the port keeps the state in `W3IogoUnit`. | [kokkos/port_report/W3IOGO_KOKKOS.md](../kokkos/port_report/W3IOGO_KOKKOS.md) |
 | W3IOPOMD / W3IOPO, W3IORSMD / W3IORS, W3IOBCMD / W3IOBC, W3IOTRMD / W3IOTR | point output / restart files / boundary conditions / track output read-write `(v)` | The I/O bucket (`w3io*`) of the profile. | [course/09-benchmark-profile-compile-run.md](../course/09-benchmark-profile-compile-run.md) |
 | W3NESTUG / W3GFPT | "UGTYPE nesting initialization" / "Find point in grid, associated with the input grid-search-utility object (GSU), that is closest to the target point (xtin,ytin)" `(v)` `w3triamd.F90:2160`, `w3gsrumd.F90:1981-1982` | How `W3IOBC` maps each input boundary point of `nest.ww3` to a sea point (`ISBPI`): `W3NESTUG` on an unstructured grid, `W3GFPT` (through `W3GFPT_R4`, `DCIN=0.1`) otherwise; hooks of the Kokkos `W3IOBC`. | [kokkos/port_report/W3IOBC_KOKKOS.md](../kokkos/port_report/W3IOBC_KOKKOS.md) |
 | W3CSPC | "Convert a set of spectra to a new spectral grid" `(v)` `w3cspcmd.F90:119`, `:143` | Called by `W3IOBC` when the spectral grid of `nest.ww3` differs from the model's (`SPCONV`); a hook of the Kokkos `W3IOBC`. | [kokkos/port_report/W3IOBC_KOKKOS.md](../kokkos/port_report/W3IOBC_KOKKOS.md) |
@@ -703,6 +707,7 @@ Every term above, alphabetically, with the section it lives in.
 - ADR-0005: [This repository's own names](#this-repositorys-own-names)
 - ADR-0007: [This repository's own names](#this-repositorys-own-names)
 - ADR-0010: [This repository's own names](#this-repositorys-own-names)
+- AFTER_ENDFILE / IOSTAT 5001: [HPC and software](#hpc-and-software)
 - agentic coding / agentic research: [HPC and software](#hpc-and-software)
 - agentic coding: [HPC and software](#hpc-and-software)
 - agentic research: [HPC and software](#hpc-and-software)
@@ -1067,6 +1072,7 @@ Every term above, alphabetically, with the section it lives in.
 - INSIN3: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - INSNL4: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - INSNLGQM: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- INXOUT / NDSOG / IOTST / IDSTR / VEROGR: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - IOBDP: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - IOBDP_LOC: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - IOBP / IOBPD / IOBPA (and their `_LOC` copies): [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1124,6 +1130,7 @@ Every term above, alphabetically, with the section it lives in.
 - MAPST2 / MAPWN: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - MAPSTA_LOC / INDEX_MAP / NBND_MAP / MAPSTA_HACK: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - MAPSTA_SMC: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- MAPTMP / AUX1 / AUX2 / TIMETAG: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - MAPTST: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - MSC: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - MSR: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1147,6 +1154,7 @@ Every term above, alphabetically, with the section it lives in.
 - NSIZE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - NTPROC / NAPLOG / NAPERR / IOSTYP: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - OARST: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- OFILES / IPASS1 / WRITE1 / FNMGRD: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - optionCall: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - OUTFLAGS / NXXX / X* arrays: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - PDLIB_ABORT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)

@@ -73,6 +73,7 @@
 #include "iogo_skewness.hpp"
 #include "iogo_w3flgrdflag.hpp"
 #include "iogo_w3flgrdupdt.hpp"
+#include "iogo_w3iogo.hpp"
 #include "iogo_w3outg.hpp"
 #include "iogr_w3iogr.hpp"
 #include "iors_w3iors.hpp"
@@ -318,4 +319,5 @@ void ww_support_instantiate() {
   (void)&ww::init::init_zero_dry<E>;
   (void)&ww::iobc::iobc_gather_shrd<E>;
   (void)&ww::iobc::w3iobc<E>;
+  (void)&ww::iogo::w3iogo<E>;
 }
