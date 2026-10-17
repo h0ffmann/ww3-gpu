@@ -19,10 +19,7 @@
 
 namespace ww::init {
 
-/// W3MPIO(IMOD), :2045-5384, as switch_lab_shrd compiles it: no operation. imod is
-/// INTEGER, INTENT(IN) (:2191) and unread, as in the Fortran. Host only; no hook, since the
-/// compiled routine calls nothing. The W3_MPI body (MPI_SEND_INIT/MPI_RECV_INIT requests,
-/// W3XDMA, W3XETA, W3SETA, EXTCDE(10) and EXTCDE(11)) is not ported (port report, "Not ported").
+/// W3MPIO(IMOD) under switch_lab_shrd: no operation; imod (:2191) is unread, as in the Fortran.
 inline void w3mpio(std::int32_t imod) { (void)imod; }
 
 }  // namespace ww::init

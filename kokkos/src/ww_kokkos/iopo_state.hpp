@@ -17,11 +17,11 @@
 // NOPTS whenever a point is skipped.
 #pragma once
 
-#include <array>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
+#include <cstdlib>
 #include <string>
 #include <vector>
 
@@ -89,12 +89,8 @@ inline void iopo_shape_w3dmo2(IopoState& o, int npt, int nspec) {
 inline constexpr const char* kVeropt = "2021-04-06";                       // VEROPT, :122
 inline constexpr const char* kIdstr = "WAVEWATCH III POINT OUTPUT FILE";   // IDSTR, :123-124
 inline constexpr const char* kDnameNopts = "NOPTS";      // DNAME_NOPTS, :128
-inline constexpr const char* kDnameNspec = "NSPEC";      // DNAME_NSPEC, :131
 inline constexpr const char* kDnameVsize = "VSIZE";      // DNAME_VSIZE, :135
 inline constexpr const char* kDnameNamelen = "NAMELEN";  // DNAME_NAMELEN, :140
-inline constexpr const char* kDnameGrdidlen = "GRDIDLEN";  // DNAME_GRDIDLEN, :144
-inline constexpr const char* kDnameTime = "TIME";        // DNAME_TIME, :147
-inline constexpr const char* kDnameWw3time = "WW3TIME";  // DNAME_WW3TIME, :150
 inline constexpr const char* kDnameWghtlen = "WGHTLEN";  // DNAME_WGHTLEN, :154
 inline constexpr const char* kVnamePtloc = "PTLOC";      // VNAME_PTLOC, :163
 inline constexpr const char* kVnamePtnme = "PTNME";      // VNAME_PTNME, :166
