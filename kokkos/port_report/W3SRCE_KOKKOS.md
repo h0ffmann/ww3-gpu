@@ -195,6 +195,178 @@ The copies removed are about 0.05 s of host `memcpy` per run on this CPU; the ke
 differences are the machine's load, not the change. What the change exists for is a device, where
 3.13 MB per step no longer crosses PCIe ⚠ (never run).
 
+## Team-parallel body on a device
+
+**Why.** The batched launch ran `w3srce_team`, which does almost all of W3SRCE inside
+`Kokkos::single(PerTeam)` and spreads only the DIA (`snl1_team`) over its team. On the OpenMP
+backend that is right: the 9 520 sea points of the full case already give each of the 32 threads
+its own points. On CUDA it leaves one thread per point working outside the DIA: ptxas gives that
+kernel 168 registers, and the DIA's team scratch (about 27 KiB at NK = NTH = 24, in shared memory)
+lets three teams share a streaming multiprocessor (SM) of the RTX 4090 (sm_89), so about three
+threads per SM ran the non-DIA part ⚠ (an estimate from ptxas and the hardware limits, never
+measured).
+
+**Two bodies, one arithmetic.** `w3srce_split`
+([`srce_kernel_team.hpp`](../src/ww_kokkos/srce_kernel_team.hpp)) and the team forms of its
+callees (`st4_sds4_team.hpp`, `st4_sin4_team.hpp`, `st4_spr4_team.hpp`, `srce_ln1_team.hpp`,
+`srce_bt1_team.hpp`, `srce_db1_team.hpp`) split every loop whose iterations are independent over
+the team (`TeamExec` in [`srce_team.hpp`](../src/ww_kokkos/srce_team.hpp): `for_` a
+`TeamThreadRange`, `one` a `Kokkos::single`, `sync` a `team_barrier`). The design is that of
+`6ba626c` (branch `goal/42-srce-kernel`), re-applied to this code with one difference: there
+`w3srce_team` and the `*_point` functions became the team bodies run on one thread, here they are
+left as they were, and the team bodies are new code beside them. So every host run by default, the
+per-point ST4 shims and the PDLIB block compile the code they compiled before. `run_batch` picks
+the body at compile time (`run_batch_as<ExecSpace, Split>`, `w3srce_body<Split>`):
+
+| `WW_KOKKOS_SRCE_TEAM` | Host backend (Serial, OpenMP) | Device (CUDA) |
+|---|---|---|
+| unset, empty, `AUTO` | `w3srce_team`, `TeamPolicy(n, AUTO)` as before | `w3srce_split`, 96 threads per point (32 with `WW_KOKKOS_SRCE_SCRATCH=1`) |
+| `0` | `w3srce_team` | `w3srce_team`, `TeamPolicy(n, AUTO)`: the old kernel, for an A/B |
+| `N`, 1 to 1024 | `w3srce_split`, teams of `N` capped at `team_size_max` | the same |
+
+`WW_KOKKOS_SRCE_SCRATCH` (`AUTO`, `0`, `1`) puts the DIA's scratch at that level for both bodies;
+it moves no bit (each point owns its scratch) and exists for a supervised A/B on the GPU. Any
+other value of either flag stops the run in `ww_srce_init` (status 3). `WW_KOKKOS_SRCE_COUNT=1`
+prints the split launches, the threads per point of the last one and the scratch level, so a log
+says which body ran. `w3srce_split` needs three more arrays of NSPEC and the 14 shared reals of
+`W3SIN4` per point; the work is sized for it only when a launch will run it.
+
+**The rules** (the owner's, 2026-10-17). Only a loop whose iterations are independent (each
+writes its own elements and reads nothing another writes) is split, each element with the same
+operations in the same order. Every sum, `MIN`/`MAX`/`MAXVAL`, accumulation and running value
+stays on one thread in the Fortran's order: no `parallel_reduce`, no tree, no atomic, the
+`MIN`/`MAX` operand orders unchanged. Where a reduction's terms are element-wise, the terms are
+computed over the team into a work array and summed in order after a barrier. A per-`IK` sum over
+`ITH` is computed whole by the one thread that owns that row, in `ITH` order. The libmvec
+emulation keeps its groups of four: a split loop calls `mvec_powf` once per row on one thread (the
+grouping starts at `ITH = 1` of each row, as in the build) or stays on one thread. A value one
+thread computes reaches the others through `State`, `PointScalars` or a work array, after a
+`team_barrier`. Contraction stays off, `float` as before.
+
+**Split over the team** (v, read in the code at this commit):
+
+| Where | Loop | Unit of work |
+|---|---|---|
+| `srce_kernel_team.hpp` `w3srce_split` | zeroing of the 13 `V*` arrays and `BRLAMBDA`; `DAM`/`WN2` (two loops, a barrier between); `LLWS = .TRUE.` at `IT = 0`; `SPECINIT`; the ice scaling (`:1446-1453`); `VS`, `VD` and the time-step candidate of `:1523-1532`; the two `SPEC` updates of `:1761-1808`, the second after the first on each element; the `PHIAW`/`PHIBBL` terms of `:1827-1831`; the MLIM rescaling; the tail (`:1985-1997`) row by row, a barrier after each row; `SPEC = SPECINIT` at `IT = 0`; the final `MAX` of `:2350` | `IS`, or `ITH` within a row |
+| `st4_sds4_team.hpp` `w3sds4_team` | section 0 zeroing; `SDSBCHOICE = 1`: `BTH = 0`, the saturation (`BTH` row, `BTH0(IK)`, its `MAXVAL` on the row's thread), the 2.a.2 diagonal (one `mvec_powf` per row), `PB`/`BRLAMBDA`/`SRHS`; the cumulative term with `SSDSC(3) < 0` (the default, `O(NK^2 NTH^2)`) per (`IK`, `ITH`), each element's `IK2`, `J` sums its own; with `SSDSC(3) >= 0` per `IK` | `IS`, `IK`, (`IK`, `ITH`) |
+| `st4_sin4_team.hpp` `w3sin4_team` | `DSTAB = 0`; `DSTAB`/`LLWS` of each `ITH` of a row (`:740-783`), the row's scalars recomputed by every thread from the shared stress; `D`, `S = D*A` | `IS`, `ITH` |
+| `st4_spr4_team.hpp` `w3spr4_team` | `EB(IK)`, `EB2(IK)`, summed in locals as `w3spr4_point` does | `IK` |
+| `srce_ln1_team.hpp` `w3sln1_team` | `DIRF`, `WNF`, `S` | `ITH`, `IK`, `IS` |
+| `srce_bt1_team.hpp` `w3sbt1_team` | `D`, `S = D*A` | `IS` |
+| `srce_db1_team.hpp` `w3sdb1_team` | `EB(IK)` (REAL*8, dead under `IWB = 1` and kept); `D`, `S = D*A` | `IK`, `IS` |
+
+**Kept on one thread**, and why: in W3SRCE the scalars of the initialisation and of each
+sub-step, the time-step `MIN` over `IS` (`:1532`), the `PHIAW`/`PHIBBL`/`WHITECAP(3)` sums
+(`:1817-1846`), the stresses, `FAGE`/`FHIGH`/`NKH`, the MLIM test, and after the loop the energy
+and momentum sums (`:2066-2081`) and the ice block; in `W3SDS4` the `MSSSUM` prefix sums,
+`SDSBCHOICE = 2` (running counts and sums over scales) and `= 3` (`BTH(1:NTH)` and `LMODULATION`
+are scratch reused by every `IK`), the whitecap recurrences; in `W3SIN4` the `UORB`/`AORB` sums,
+the stress of each row after its `DSTAB` (the same `TEMP2` as at `:785`, accumulated in `ITH`
+order; the next row reads it), and the tail (`:847-976`); in `W3SPR4` `ELCS`, `ELSN`, `AMAX`, the
+two libmvec sites over `IK` and everything after them, `CALC_USTAR`; in `W3SBT1` the `CBETA` loop
+that stops at the first `IK` with `WN*DEPTH > 6`; in `W3SDB1` `ETOT` and `FMEAN2`.
+
+**The host code did not change** (v, 2026-10-17). `srce_shim.cpp` compiled with the
+`openmp-release` command of `kokkos/build/openmp-release` (g++ 16.2, `-O3 -march=x86-64-v3
+-ffp-contract=off -fopenmp`) at `origin/main` (`d8905a3b`) and at this commit, then each function
+of the default host path disassembled (`objdump -d --no-show-raw-insn --disassemble=<symbol>`) and
+its floating-point instructions counted by mnemonic (every `v*ss`, `v*ps`, `v*sd`, `v*pd`, compare,
+convert, min, max, sqrt on `xmm`/`ymm`):
+
+| Function (host instantiation) | FP instructions, by mnemonic | Whole instruction stream |
+|---|---|---|
+| `w3srce_team<HostThreadTeamMember<OpenMP>>`, its three `single` bodies | equal | equal, 4 268 instructions each |
+| `w3srce_team<...OpenMP>` itself | equal | 1 031 against 946: one `team_barrier` inlined before is a call now, registers renamed |
+| `w3srce_team<...Serial>` | equal | |
+| `ParallelFor` of `run_batch<OpenMP>` (`run_batch_as<OpenMP, false>`) | equal | equal, 785 each, but the `State` stride (`imul $0x68` against `$0x74`: three fields appended) |
+| `snl1_team<...OpenMP>`, `<...Serial>` | equal | `team_barrier` called instead of inlined (fewer `lock`/`pause`), registers |
+
+So a host run by default does the same floating-point operations in the same order; what moved is
+where GCC put a barrier (with one thread per team it returns at once) and the size of `State`.
+
+**ptxas** (v, 2026-10-17; `nix develop ./picasso/labs/pratico#cuda`, `cmake -S kokkos -B <dir>
+--preset cuda-release -DCMAKE_CXX_FLAGS='-Xptxas -v' -DWW_W3KOKKOSMD=$PWD/WW3/model/src/w3kokkosmd.F90`,
+`ninja -C <dir> CMakeFiles/ww_kokkos.dir/src/fortran_iface/srce_shim.cpp.o`; sm_89, `--fmad=false`,
+`libm_device.hpp` on), the `ww_srce_batch` kernel, the same for the static and the dynamic schedule:
+
+| Kernel | Registers | Spill stores / loads | Stack frame | Static smem | Barriers |
+|---|---|---|---|---|---|
+| `w3srce_team`, `origin/main` | 168 | 0 / 0 B | 3 568 B | 16 B | 1 |
+| `w3srce_team`, this commit (`WW_KOKKOS_SRCE_TEAM=0` on a device) | 168 | 0 / 0 B | 3 568 B | 16 B | 1 |
+| `w3srce_split`, this commit (the device default) | 203 | 0 / 0 B | 2 640 B | 16 B | 1 |
+
+Before `libm_device.hpp` (base `4fbffbe8`) the two were 178 and 146 registers, with 544 and 632 B
+of stack: the glibc-bit routines cost registers and stack, and `w3srce_split` more.
+
+**Occupancy on sm_89** ⚠ (an estimate from the table above and the hardware limits: 64 Ki
+registers, 48 warps, 24 blocks and 100 KiB of shared memory per SM, registers allocated per warp
+in units of 256; not measured, and the GPU never ran). The DIA's team scratch for the full case is
+`snl1_team_scratch_bytes` = (768 + 8 x 696 + 576) floats, about 27 KiB per team, plus 1 KiB the
+driver keeps per block, so three teams fit in shared memory at level 0. 203 registers are 6 656
+per warp, so 9 warps per SM; 168 are 5 632, 11 warps.
+
+| Body, scratch level, threads per point | Teams per SM | Warps per SM | Threads working outside the DIA, per SM |
+|---|---|---|---|
+| `w3srce_team`, level 0, `AUTO` (before) | 3 | at most 11 | 3 (one per team, the rest wait in `single`) |
+| `w3srce_split`, level 0, 32 | 3 | 3 | 96 in the split loops, 3 in `one()` |
+| `w3srce_split`, level 0, 96 (the default) | 3 | 9 | 288 in the split loops, 3 in `one()` |
+| `w3srce_split`, level 0, 128 | 2 | 8 | 256, 2 |
+| `w3srce_split`, level 1 (`WW_KOKKOS_SRCE_SCRATCH=1`), 32 (that level's default) | 9 | 9 | 288, 9 |
+
+The default trades the most points per SM for the most threads in the split loops at level 0;
+level 1 runs three times as many points at once, with the DIA's scratch in global memory (L1 and
+L2 cached). Which is faster, and by how much against WW3 on 32 OpenMP threads, is for the
+supervised GPU run: `WW_KOKKOS_SRCE_TEAM=0` against unset, and `WW_KOKKOS_SRCE_SCRATCH=1`, are its
+A/B, and `WW_KOKKOS_SRCE_COUNT=1` prints which body ran.
+
+**Parity on the CPU** (v, 2026-10-17, Kokkos OpenMP backend, Intel Core i9-14900, 32 threads,
+the pinned `ww3` shell; never on the GPU). `bash scripts/ww3-gpu.sh --ww3-gpu <case> --cpu
+--kokkos resident` with the variables shown; every row: the Kokkos run "byte-identical" to the
+Fortran of the same executable, and `nccmp-tol` PASS against that Fortran and against `--ww3`.
+"Split launches" is the counter `W3SRCE batched launches split over a team`.
+
+| Case | Switch | Variables | Split launches, threads per point, scratch level | Result |
+|---|---|---|---|---|
+| smoke | `switch_lab_ompg` | none | 0, -, 1 | byte-identical, PASS, PASS |
+| full | `switch_lab_ompg` | none (`--timers`) | 0, -, 0 | byte-identical, PASS, PASS |
+| coast | `switch_lab_ompg` | none | 0, -, 0 | byte-identical, PASS, PASS |
+| full | `switch_lab_ompg` | `WW_KOKKOS_SRCE_TEAM=4` | 25, 4, 0 | byte-identical, PASS, PASS |
+| coast | `switch_lab_ompg` | `WW_KOKKOS_SRCE_TEAM=4` | 72, 4, 0 | byte-identical, PASS, PASS |
+| full | `switch_lab_ompg` | `WW_KOKKOS_SRCE_TEAM=16` | 25, 16, 0 | byte-identical, PASS, PASS |
+| coast | `switch_lab_ompg` | `WW_KOKKOS_SRCE_TEAM=16` | 72, 16, 0 | byte-identical, PASS, PASS |
+| smoke | `switch_lab_ompg` | `WW_KOKKOS_SRCE_TEAM=4 WW_KOKKOS_SRCE_SCRATCH=1` | 2 161, 4, 1 | byte-identical, PASS, PASS |
+| full | `switch_lab_ompg` | `WW_KOKKOS_SRCE_TEAM=4 WW_KOKKOS_SRCE_SCRATCH=1` | 25, 4, 1 | byte-identical, PASS, PASS |
+| smoke | `switch_lab_shrd` | `WW3GPU_SWITCH=switch_lab_shrd` | 0, -, 1 | byte-identical, PASS, PASS |
+| full | `switch_lab_shrd` | `WW3GPU_SWITCH=switch_lab_shrd` | 0, -, 0 | byte-identical, PASS, PASS |
+| coast | `switch_lab_shrd` | `WW3GPU_SWITCH=switch_lab_shrd` | 0, -, 0 | byte-identical, PASS, PASS |
+| full | `switch_lab_shrd` | `... WW_KOKKOS_SRCE_TEAM=4` | 25, 4, 0 | byte-identical, PASS, PASS |
+| coast | `switch_lab_shrd` | `... WW_KOKKOS_SRCE_TEAM=4` | 72, 4, 0 | byte-identical, PASS, PASS |
+<!-- T16-SHRD -->
+
+`WW_KOKKOS_SRCE_TEAM=bogus` and `WW_KOKKOS_SRCE_SCRATCH=2` stop the smoke in `ww_srce_init` with
+"expected AUTO, 0 or a team size from 1 to 1024 (code 3)" and "expected AUTO, 0 or 1 (code 3)"
+(v): the variables reach the run. `bash scripts/ww3-gpu.sh --ww3-gpu full --gpu --kokkos resident
+--build-only` built `ww_kokkos` (cuda-release) and WW3 for CUDA; nothing ran on the GPU. ⚠ The
+`SDSBCHOICE = 2, 3`, `SSDSC(3) >= 0` and `W3_STAB3` branches of the team bodies did not run (the
+cases take `SDSBCHOICE = 1`, `SDSCUM < 0`), so no output shows them.
+
+**Mutation check** (v, 2026-10-17; scratch edits of `w3srce_split`, reverted, never committed).
+Identical outputs prove only what reaches the outputs, so the forced-team run was shown to catch a
+broken team loop. `bash scripts/ww3-gpu.sh --ww3-gpu full --cpu --kokkos resident` with
+`WW_KOKKOS_SRCE_TEAM=4`, `switch_lab_ompg`:
+
+<!-- MUTATIONS -->
+
+**CPU time** (`--timers`, one fenced run each, `switch_lab_ompg`, the machine shared with other
+sessions ⚠): `srce.batch.kernel` 22.66 s before (`4fbffbe8`, load average about 16) and 24.91 s
+after (load about 40); `ww3_shel` 26.95 s and 30.09 s with Kokkos, against `--ww3` 50.48 s and
+45.78 s. The load, not the change, sets that difference: the object code above is the evidence
+that the default host path is unchanged. The forced team is a check, not a CPU mode: with
+`WW_KOKKOS_SRCE_TEAM=4` the full took 143.52 s (Kokkos) against 54.49 s for the Fortran, the team
+barriers costing more than they save when the points already fill the threads; with 16 the full
+took 2 499.54 s and the coast 686.40 s (spinning team barriers on a machine shared by other
+sessions).
+
 ## Benchmarks
 
 One CPU measurement of the batched path, after the replay above passed on the same tree

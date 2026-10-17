@@ -88,6 +88,14 @@ target_sources(ww_kokkos PRIVATE
     prop_freq_shift.hpp
     wave_support.cpp
     srce_kernel.hpp
+    srce_team.hpp
+    srce_kernel_team.hpp
+    srce_bt1_team.hpp
+    srce_db1_team.hpp
+    srce_ln1_team.hpp
+    st4_sds4_team.hpp
+    st4_sin4_team.hpp
+    st4_spr4_team.hpp
     srce_ln1.hpp
     srce_bt1.hpp
     srce_db1.hpp
