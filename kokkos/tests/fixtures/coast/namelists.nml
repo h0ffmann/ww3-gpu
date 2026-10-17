@@ -1,3 +1,16 @@
+! The space-time extremes (STDX, STDY, STDT) and the 3-D and P2S fields (OUTS) switched on, so
+! that every field the field list of ww3_shel.nml asks for is computed and allocated.
 &MISC
   FLAGTR = 0
+  STDX = 20000.
+  STDY = 20000.
+  STDT = 1800.
+/
+&OUTS
+  E3D = 1
+  TH1MF = 1
+  STH1MF = 1
+  TH2MF = 1
+  STH2MF = 1
+  P2SF = 1
 /

@@ -2,6 +2,12 @@
 ! ww3_prnc_*.nml, boundary spectra on the west edge from ww3_bounc.nml (nest.ww3), and a
 ! homogeneous wind that veers and strengthens. The forcing files are written by
 ! scripts/coast_case.sh.
+! The field list is every field the Kokkos W3OUTG computes (none it leaves to the Fortran, so
+! W3OUTG runs on Kokkos at every output), and the restarts at 05:30 and 11:30 make W3IORS read VA
+! in the middle of a W3WAVE call (ww3_shel calls it up to each hourly forcing time, and the read
+! at its return would cover a restart on the hour): a defect in either reaches out_grd.ww3 or
+! restart00N.ww3, which scripts/ww3-gpu.sh compares byte for byte
+! (docs/log/2026-10-17-mutation-audit.md).
 &DOMAIN_NML
   DOMAIN%START = '20200101 000000'
   DOMAIN%STOP  = '20200101 120000'
@@ -13,12 +19,13 @@
   INPUT%FORCING%ICE_CONC     = 'T'
 /
 &OUTPUT_TYPE_NML
-  TYPE%FIELD%LIST = 'HS FP DIR DP T0M1 CUR WLV ICE DPT'
+  TYPE%FIELD%LIST = 'DPT CUR WLV ICE HS LM T02 T0M1 T01 FP DIR SPR DP HIG MXE MXES MXH MXHC SDMH SDMC TP EF TH1M STH1M TH2M STH2M CGE SXY BHD TUS USS P2S P2L ABR UBR MSS MSC MSD MCD QP QKK'
   TYPE%POINT%FILE = 'points.list'
 /
 &OUTPUT_DATE_NML
   DATE%FIELD = '20200101 000000' '3600' '20200101 120000'
   DATE%POINT = '20200101 000000' '1800' '20200101 120000'
+  DATE%RESTART = '20200101 053000' '21600' '20200101 120000'
 /
 &HOMOG_COUNT_NML
   HOMOG_COUNT%N_WND = 2
