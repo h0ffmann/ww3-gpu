@@ -104,6 +104,11 @@ class Results(unittest.TestCase):
         self.assertNotIn("UUID", r["machine"])
         self.assertIn("RTX 4090", r["machine"])
 
+    def test_a_gpu_record_says_it_was_judged_by_tolerance(self):
+        self.assertIn("not bits", results.from_perf(self.perf(self.PERF))["regtest"])
+        cpu = results.from_perf(self.perf(self.PERF.replace("backend\tcuda", "backend\topenmp")))
+        self.assertNotIn("not bits", cpu["regtest"])
+
     def test_a_dirty_tree_is_said_in_the_record(self):
         r = results.from_perf(self.perf(self.PERF.replace("dirty\t\n", "dirty\tyes\n")))
         self.assertIn("uncommitted", r["commit_note"])

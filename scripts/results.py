@@ -126,7 +126,8 @@ def from_perf(perf):
         "commit": kv["commit"] or None,
         "ww3_commit": kv["ww3_commit"],
         "regtest": (f"passed: {kv['command']} (nccmp-tol PASS against the Fortran of the same executable "
-                    f"and against --ww3, before the timed runs)"),
+                    f"and against --ww3, before the timed runs)"
+                    + ("; GPU: judged by tolerance, not bits (ADR-0014)" if kv["backend"] == "cuda" else "")),
         "statistic": f"median of {n} runs",
         "columns": [["build", "backend"], ["ww3_shel median (s)", "median_s"], ["runs (s)", "runs_s"],
                     ["--ww3 median / this median", "ratio"]],

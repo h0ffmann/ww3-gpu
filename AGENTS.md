@@ -298,8 +298,12 @@ reproduce; a PDLIB restart under MPI and an `OMPG` data race of WW3's own do not
 `CONTRIBUTING.md`, "Is WW3 deterministic enough for bit for bit". ⚠ On a GPU the rule needs the
 kernel's transcendental functions (`expf`, `logf`) to return glibc's bits. CUDA's math library uses
 other algorithms, and the 2026-09-15 match on fixture points does not show it for every input;
-contraction off (`--fmad=false`) is necessary, not sufficient. A GPU port that cannot meet the rule
-stops and asks the owner.
+contraction off (`--fmad=false`) is necessary, not sufficient, and ST4's five libmvec loops cannot
+be reproduced on a device. So the rule is the CPU backend's: a GPU run is judged by `nccmp-tol`'s
+tolerances against the Fortran of the same executable and against `--ww3`, with every field's
+differences recorded and no tolerance ever widened, and its timing enters a table only after
+that pass ([ADR-0014](docs/ADRs/ADR-0014-gpu-runs-judged-by-tolerance.md), the owner, 17 October
+2026).
 
 ## Running on the GPU (hard rule)
 

@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Proposed |
+| **Status** | Accepted |
 | **Date** | 2026-10-17 |
 | **Deciders** | Hoffmann |
 | **Written by** | Hoffmann, with an agent |
@@ -54,8 +54,8 @@ The owner was asked on 2026-10-17 how GPU runs are judged, and chose the toleran
   variables and judges one of them, `hs` ("1 judged, 25 unlisted"); the full case judges `hs` of
   five (v, the runs of 2026-10-16 and 2026-10-17). An unlisted field is reported, not judged ⚠:
   judging more fields is a change to `tolerances.txt` under point 3.
-- `scripts/results.py record` writes the run's `regtest` text; a GPU record needs the wording of
-  point 4, which the next change to it adds.
+- `scripts/results.py record` writes the wording of point 4 in the `regtest` of a CUDA record.
+- AGENTS.md, "Bit for bit with the Fortran", states this rule in place of "stops and asks the owner".
 
 ## Revisit when
 
