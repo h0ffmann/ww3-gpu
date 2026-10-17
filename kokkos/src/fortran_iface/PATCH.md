@@ -966,6 +966,16 @@ source terms of a time step reach Kokkos in one call, without a copy per point a
   1024 MiB, about 56 KB per point at NK = NTH = 24, so about 19 000 points per launch); the buffers
   are kept between calls and grown on demand. Inside an OpenMP region it runs on Kokkos::Serial,
   as `ww_srce`; W3WAVE calls it outside one.
+- **Which body, which team** (2026-10-17, C++ only, nothing on the Fortran side): on a device the
+  launch runs `w3srce_split` (`srce_kernel_team.hpp`), W3SRCE with its element-wise loops over the
+  team's threads and every sum, `MIN`/`MAX` and running value on one thread in the Fortran's
+  order, 96 threads per point by default; on a host backend it runs `w3srce_team`, as before.
+  `WW_KOKKOS_SRCE_TEAM=<N>` runs `w3srce_split` with teams of *N* on any backend, so the CPU checks
+  the device's body bit for bit; `=0` runs `w3srce_team` on a device too, for an A/B.
+  `WW_KOKKOS_SRCE_SCRATCH` sets the level of the DIA's team scratch. `srce_team.hpp` holds both
+  flags; [`W3SRCE_KOKKOS.md`](../../port_report/W3SRCE_KOKKOS.md#team-parallel-body-on-a-device)
+  says which loop is split, the host evidence, ptxas and the parity runs. This holds for the
+  resident path below too (`ww_srce_batch_va` shares `run_batch`).
 - **Memory contract**: phase 2 delivery, still phase 1 residency. One host-to-device copy of each
   packed array and one copy back per chunk; the spectrum does not stay on the device between time
   steps. No Unified Memory.

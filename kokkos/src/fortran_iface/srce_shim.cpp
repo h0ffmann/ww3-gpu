@@ -39,6 +39,8 @@
 #include "ww_kokkos/resident_state.hpp"
 #include "ww_kokkos/snl1_team.hpp"
 #include "ww_kokkos/srce_kernel.hpp"
+#include "ww_kokkos/srce_kernel_team.hpp"
+#include "ww_kokkos/srce_team.hpp"
 #include "ww_kokkos/srce_params.hpp"
 
 #if defined(WW_SRCE_SERIAL_NESTED)
@@ -99,6 +101,10 @@ std::map<int, GridCtx>& grids() {
 std::atomic<int> g_last_error{WW_KOKKOS_OK};
 std::atomic<long long> g_count{0};
 std::atomic<long long> g_batch_calls{0}, g_batch_launches{0}, g_batch_points{0};
+// Launches of w3srce_split (srce_team.hpp) and the team size of the last one: which body ran.
+std::atomic<long long> g_split_launches{0};
+std::atomic<int> g_split_team{0};
+std::atomic<int> g_scratch_level{-1};  // W3SNL1's scratch level of the last batched launch
 // ww_srce_batch_va's per-step inputs (BatchIn): copies to the device and their bytes, inputs
 // whose bits had not changed and were not copied, and the copies back of the inout ones. On a
 // backend that reads host memory nothing is copied; with WW_KOKKOS_SRCE_COUNT=1 the same
@@ -138,6 +144,12 @@ void print_count() {
   std::fprintf(stderr, "ww_kokkos: W3SRCE batched calls: %lld\n", g_batch_calls.load());
   std::fprintf(stderr, "ww_kokkos: W3SRCE batched launches: %lld\n", g_batch_launches.load());
   std::fprintf(stderr, "ww_kokkos: W3SRCE batched points: %lld\n", g_batch_points.load());
+  std::fprintf(stderr, "ww_kokkos: W3SRCE batched launches split over a team (WW_KOKKOS_SRCE_TEAM): %lld\n",
+               g_split_launches.load());
+  std::fprintf(stderr, "ww_kokkos: W3SRCE threads per point of the last split launch: %d\n",
+               g_split_team.load());
+  std::fprintf(stderr, "ww_kokkos: W3SRCE team scratch level of the last batched launch: %d\n",
+               g_scratch_level.load());
   long long nc = 0, bc = 0, ns = 0, bs = 0;
   for (int k = 0; k < kNumIn; ++k) {
     nc += g_in_copies[k].load();
@@ -361,14 +373,15 @@ struct BatchStep {
 /// Points [n0, n0+n) of a ww_srce_batch call on ExecSpace: one copy of each
 /// array in, one launch of n teams, team i on point n0+i, one copy out. With `va`
 /// (ww_srce_batch_va), team i reads and writes its spectrum in place, column jsea[n0+i]
-/// of the resident VA, and the column indices cross instead of the spectra.
-template <class ExecSpace>
-void run_batch(GridCtx& g, const st4::Params& q, const st4::Fields& f, const snl1::Config& nc,
-               const snl1::Tables& nt, const snl1::RealView1D& nsig, const BatchStep& c,
-               int n0, int n, float* spec, const float* wn1, const float* cg1,
-               const float* pin, float* psc, float* whitecap, float* taubbl, float* tauice,
-               int* shave, const ww::resident::DevVa* va = nullptr, const int* jsea = nullptr,
-               bool whole = false) {
+/// of the resident VA, and the column indices cross instead of the spectra. Split chooses the
+/// body: w3srce_split over a team of srce_split_team threads, or w3srce_team (srce_team.hpp).
+template <class ExecSpace, bool Split>
+void run_batch_as(GridCtx& g, const st4::Params& q, const st4::Fields& f, const snl1::Config& nc,
+                  const snl1::Tables& nt, const snl1::RealView1D& nsig, const BatchStep& c,
+                  int n0, int n, float* spec, const float* wn1, const float* cg1,
+                  const float* pin, float* psc, float* whitecap, float* taubbl, float* tauice,
+                  int* shave, const ww::resident::DevVa* va = nullptr, const int* jsea = nullptr,
+                  bool whole = false) {
   const ExecSpace ex;
   const Params p = g.p;
   const size_t o0 = static_cast<size_t>(n0), m = static_cast<size_t>(n);
@@ -424,11 +437,15 @@ void run_batch(GridCtx& g, const st4::Params& q, const st4::Fields& f, const snl
   using Member = typename Policy::member_type;
   const size_t scratch = snl1::snl1_team_scratch_bytes<ExecSpace>(nc, nt);
   Policy policy(n, Kokkos::AUTO);
-  const int level = scratch <= static_cast<size_t>(policy.scratch_size_max(0)) ? 0 : 1;
+  // W3SNL1's scratch: level 0 when it fits, or the level WW_KOKKOS_SRCE_SCRATCH names.
+  const int sreq = srce_scratch_request();
+  const int level =
+      sreq >= 0 ? sreq : (scratch <= static_cast<size_t>(policy.scratch_size_max(0)) ? 0 : 1);
   if (scratch > static_cast<size_t>(policy.scratch_size_max(level)))
     throw std::runtime_error("ww_srce_batch: W3SNL1 needs " + std::to_string(scratch) +
                              " B of team scratch, more than this backend offers");
   policy.set_scratch_size(level, Kokkos::PerTeam(scratch));
+  g_scratch_level.store(level, std::memory_order_relaxed);
   // One point per steal, W3WAVE's DYNAMIC,1: Kokkos' automatic chunk (8 at 9 204 points and 32
   // threads) leaves up to eight points' work in the last thread's hands. CUDA does not read it.
   policy.set_chunk_size(1);
@@ -481,10 +498,10 @@ void run_batch(GridCtx& g, const st4::Params& q, const st4::Fields& f, const snl
         const snl1::TeamScratch w = snl1::snl1_team_scratch(team, level, nc, nt);
         Real* const sp = resident ? VA.data() + static_cast<size_t>(JS(i)) * p.nspec
                                   : SP.data() + ii * p.nspec;
-        w3srce_team(team, p, grid, q, f, nc, nt, ns, w, in, sp, W1.data() + ii * p.nk,
-                    C1.data() + ii * p.nk, o, WC.data() + ii * 4,
-                    TB.data() + ii * 2, TI.data() + ii * 2, ST(i), RW.data() + ii * nrw,
-                    IW.data() + ii * niw, DW.data() + ii * ndw);
+        w3srce_body<Split>(team, p, grid, q, f, nc, nt, ns, w, in, sp, W1.data() + ii * p.nk,
+                           C1.data() + ii * p.nk, o, WC.data() + ii * 4,
+                           TB.data() + ii * 2, TI.data() + ii * 2, ST(i), RW.data() + ii * nrw,
+                           IW.data() + ii * niw, DW.data() + ii * ndw);
         team.team_barrier();
         Kokkos::single(Kokkos::PerTeam(team), [&]() {
           y[WW_SRCE_SC_USTAR] = o.ustar;
@@ -511,6 +528,17 @@ void run_batch(GridCtx& g, const st4::Params& q, const st4::Fields& f, const snl
           SH(i) = o.shave;
         });
       };
+  if constexpr (Split) {
+    // The team size the backend allows for this body (its registers on a device, the threads of
+    // a host backend), then the same scratch and chunk as above.
+    const int cap = policy.team_size_max(body, Kokkos::ParallelForTag());
+    const int want = srce_split_team<ExecSpace>(level);
+    policy = Policy(n, want < cap ? want : cap);
+    policy.set_scratch_size(level, Kokkos::PerTeam(scratch));
+    policy.set_chunk_size(1);
+    g_split_launches.fetch_add(1, std::memory_order_relaxed);
+    g_split_team.store(policy.team_size(), std::memory_order_relaxed);
+  }
   // With no more points than threads no thread gets a second point under either schedule, and
   // the dynamic one costs a rendezvous of every thread per launch (ww3_ts1, one sea point, 2 161
   // launches: srce.batch.kernel 0.51-0.53 s static, 0.80-0.97 s dynamic, 32 threads). The
@@ -548,6 +576,15 @@ void run_batch(GridCtx& g, const st4::Params& q, const st4::Fields& f, const snl
     remember_out(g, st, kInTb, taubbl + o0 * 2, m * 2 * sizeof(float));
     remember_out(g, st, kInTi, tauice + o0 * 2, m * 2 * sizeof(float));
   }
+}
+
+/// run_batch_as with the body srce_team.hpp chooses for ExecSpace (WW_KOKKOS_SRCE_TEAM).
+template <class ExecSpace, class... A>
+void run_batch(A&&... a) {
+  if (srce_split_on<ExecSpace>())
+    run_batch_as<ExecSpace, true>(std::forward<A>(a)...);
+  else
+    run_batch_as<ExecSpace, false>(std::forward<A>(a)...);
 }
 
 }  // namespace
@@ -612,8 +649,12 @@ int ww_srce_init(int igrid, const float* rpar, int nrpar, const int* ipar, int n
     g.whitecap = DevReal1D("ww_srce.whitecap", 4);
     g.taubbl = DevReal1D("ww_srce.taubbl", 2);
     g.tauice = DevReal1D("ww_srce.tauice", 2);
-    g.work_reals = srce_work_reals(p, q);
-    g.work_ints = srce_work_ints(p, q);
+    // w3srce_split needs a little more work per point than w3srce_team: sized for it only when
+    // a launch will run it (srce_team.hpp), so a default host run keeps its layout.
+    const bool split = srce_split_on<Kokkos::DefaultExecutionSpace>();
+    (void)srce_scratch_request();  // a bad WW_KOKKOS_SRCE_SCRATCH stops the run here
+    g.work_reals = split ? srce_split_work_reals(p, q) : srce_work_reals(p, q);
+    g.work_ints = split ? srce_split_work_ints(p, q) : srce_work_ints(p, q);
     g.rw = DevReal1D("ww_srce.rw", g.work_reals);
     g.iw = DevInt1D("ww_srce.iw", g.work_ints);
     g.dw = DevDouble1D("ww_srce.dw", srce_work_doubles(p));

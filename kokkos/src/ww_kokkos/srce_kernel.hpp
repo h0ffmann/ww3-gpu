@@ -93,6 +93,10 @@ struct State {
   Real dttot, dt, hdt, tauwax, tauway;
   int nsteps, nkh, nkh1, nspech;
   int done;
+  // Read only by w3srce_split (srce_kernel_team.hpp): :1437's AFILT and MLIM's EM and test,
+  // which one thread computes and the whole team reads. Last, so the fields above keep their offsets.
+  Real afilt, em;
+  int mlim;
 };
 
 /// Reals of per-point work (no allocation in a kernel): 18 arrays of NSPEC
