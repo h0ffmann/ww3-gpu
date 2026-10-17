@@ -549,7 +549,12 @@ v3.0.1 (`2ab3cae`), shallow and sparse so only its `archify/` folder is on disk,
 just archify init     # once per clone: check out the pinned submodule
 just archify render   # draw every docs/archify/<slug>.json as <slug>.html, then open it in a browser
 just archify pdf      # print each page to docs/archify/<slug>.pdf (committed, so readers can open them on GitHub)
+just archify check    # which drawings are older than their source; refresh redraws only those
 ```
+
+The drawings are not rebuilt on a merge. When a source changes, `/drawings-refresh` in Claude
+Code (or `just figures` and `just archify refresh` by hand) redraws only the stale ones, Mermaid
+and Archify, and says when a figure's two drawings may no longer agree.
 
 To add a twin, ask the agent for one with the `archify` skill, save its source as
 `docs/archify/<slug>.json`, list it in [`docs/archify/README.md`](docs/archify/README.md) and

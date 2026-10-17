@@ -14,12 +14,17 @@ because every page inlines Archify's template, and git ignores them:
 just archify init     # once per clone: the pinned commit, shallow, only archify/ on disk
 just archify render   # every docs/archify/<slug>.json -> <slug>.html, validated and browser-checked
 just archify pdf      # every rendered <slug>.html -> <slug>.pdf, printed by headless Chrome
+just archify check    # the drawings whose JSON or Archify pin moved since their PDF was printed
+just archify refresh  # render and print only those, then rewrite pdf.lock
 ```
 
 The PDFs are committed, so a reader without a browser or a clone can see the diagrams. Each one
 is the page printed with the template's print stylesheet (light palette, no toolbar) on a page
 sized from the diagram's `viewBox`: the whole diagram on page 1, the summary cards after it.
-Chrome stamps a creation date, so a re-run gives the same drawing, not the same bytes.
+Chrome stamps a creation date, so a re-run gives the same drawing, not the same bytes; that is
+why [`pdf.lock`](pdf.lock) records each source's sha256 and the Archify commit rather than the
+PDF's hash. Nothing redraws on a merge: run `/drawings-refresh` (Claude Code) or
+`just archify refresh` after changing a source, and commit the PDFs with the lock.
 
 `render` runs Archify's `finalize --quality showcase`, which validates the source, renders the
 page and checks it in a real browser. At `2ab3cae` it reproduces, byte for byte, the five pages
