@@ -130,7 +130,27 @@ Checked on the CPU, never on the GPU (v): full and coast, `--kokkos resident`, b
 the flag unset, `AUTO`, 1, 4 and 16, 20 runs: every output `cmp`-equal to the Fortran of the same
 executable and to `--ww3`, `nccmp-tol` PASS. On the CPU the team version is slower (`xyp3.kernel`
 1.2 to 1.6 s unset, up to 36.5 s with teams of 16, one fenced run each, shared machine), so it is
-not the default. `ptxas` for `sm_89`: the per-component kernel 96 registers (unchanged), the team
+not the default there. `ptxas` for `sm_89`: the per-component kernel 96 registers (unchanged), the team
 kernel 80 registers, no spill; it would put 576 teams on the device instead of 576 threads. Whether
 that is faster on a GPU, and whether CUDA gives the CPU's bits, is not known: nothing ran there ⚠.
 The regtest matrix did not run ⚠.
+
+## The team kernel as the device default, 2026-10-17
+
+With `WW_KOKKOS_XYP3_TEAM` unset, a CUDA build now runs the team kernel above with teams of 128
+threads, and Serial and OpenMP still run the per-component kernel; `0` forces the per-component
+kernel anywhere. Why 128 (the team kernel's 80 registers on `sm_89`, 94 on `sm_90`, so every one
+of the 576 components is resident at once on an RTX 4090 or an H100) is computed, not measured ⚠;
+the reading and the `ptxas` table are in
+[PATCH.md section 19](../src/fortran_iface/PATCH.md#19-device-defaults-w3xyp3-teams-and-w3srce-chunks-on-cuda).
+
+Checked on the CPU, never on the GPU (v): full and coast, `--kokkos resident`, `switch_lab_ompg`
+and `switch_lab_shrd`, the flag unset, `0`, `AUTO`, 4 and 16: every output `cmp`-equal to the
+Fortran of the same executable, `out_grd.ww3` (and in coast `out_pnt.ww3`) `cmp`-equal to `--ww3`,
+whose NetCDF differs only in the `WAVEWATCH_III_switches` attribute, `nccmp-tol` PASS both;
+`W3XYP3 team launches` 0 for unset and `0`, one per call otherwise. A mutation on
+`switch_lab_ompg` (full), the team gather skipping the last sea point, made the `AUTO` run fail (`out_grd.ww3` different, `nccmp-tol` FAIL on `hs`, `max|d|` 0.57 m) and
+left the unset run byte-identical, as the CPU never takes the team kernel unasked; a second, every
+team-split loop skipping its last index, failed under `AUTO` too (`max|d|` 1.74 m). Neither was
+committed. Whether CUDA gives the CPU's bits is not known: nothing ran there ⚠. The regtest matrix
+did not run ⚠.
