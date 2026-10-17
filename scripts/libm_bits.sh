@@ -10,8 +10,9 @@
 #   scripts/libm_bits.sh <libm_bits args> one host check, e.g. `ww expf fma 8`
 #   scripts/libm_bits.sh --nvcc           compile device_check.cu for sm_89 and sm_90, run nothing
 #   scripts/libm_bits.sh --device [fn]    run device_check on GPU 0 (every transcribed function, or
-#                                         one: expf logf sincosf powf mvec_expf mvec_powf tanhf
-#                                         log10f atan2f coshf sinhf exp tanh): the owner only, at a terminal
+#                                         one: expf logf sincosf powf mvec_expf mvec_powf mvec_sinf
+#                                         mvec_cosf tanhf log10f atan2f coshf sinhf exp tanh): the
+#                                         owner only, at a terminal
 #   scripts/libm_bits.sh --self-test      build, the probe, one host check that must pass
 #
 # Host checks run under nice: they take every thread they are given for tens of minutes.
@@ -89,6 +90,6 @@ case "${1:-}" in
     run fingerprint
     exit "$rc"
     ;;
-  "") sed -n '2,22p' "${BASH_SOURCE[0]}"; exit 64 ;;
+  "") sed -n '2,21p' "${BASH_SOURCE[0]}"; exit 64 ;;
   *) run "$@" ;;
 esac

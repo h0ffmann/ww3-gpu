@@ -493,6 +493,59 @@ WW_LIBM_FN float mvec_expf(float x) {
   return asfloat((asuint(m) + 0x7f) << 23) * p;
 }
 
+/// One lane of glibc 2.44's libmvec _ZGVbN4v_sinf and _ZGVbN4v_cosf, their SSE4 builds
+/// (svml_s_sinf4_core_sse4.S, svml_s_cosf4_core_sse4.S, constants svml_s_trig_data.S): x minus
+/// a multiple of pi in four parts, an odd degree-9 polynomial, the sign set by xor; a lane with
+/// |x| above 0x461c4000 (10000) or NaN is recomputed by scalar sinf or cosf. glibc's scalar sinf
+/// and cosf equal the sincosf copy's two results on every input (v, libm_bits ww sinf, ww cosf,
+/// 2026-10-17), so the callout is sincosf<Fma>. Written from the algorithm and its constants.
+namespace detail {
+WW_LIBM_FN float mvec_trig_poly(float r, uint32_t sign_bits) {
+  const float r2 = r * r;
+  const float rs = asfloat(asuint(r) ^ sign_bits);
+  float p = asfloat(0x362edef8) * r2 + asfloat(0xb94fb7ff);  // A9, A7
+  p = p * r2 + asfloat(0x3c08876a);                            // A5
+  p = p * r2 + asfloat(0xbe2aaaa6);                            // A3
+  return rs + (r2 * p) * rs;
+}
+// cmpnleps: not (|x| <= 10000), so NaN takes the scalar path too.
+WW_LIBM_FN bool mvec_trig_special(float x) {
+  return !(asfloat(asuint(x) & 0x7fffffff) <= asfloat(0x461c4000));
+}
+}  // namespace detail
+
+template <bool Fma>
+WW_LIBM_FN float mvec_sinf(float x) {
+  using namespace detail;
+  if (mvec_trig_special(x)) { float s, c; sincosf<Fma>(x, &s, &c); return s; }
+  const float inv_pi = asfloat(0x3ea2f983), shifter = asfloat(0x4b400000);
+  const float ax = asfloat(asuint(x) & 0x7fffffff);
+  float y = ax * inv_pi + shifter;
+  const uint32_t s = asuint(y) << 31;
+  y = y - shifter;
+  float r = ax - y * asfloat(0x40490000);
+  r = r - y * asfloat(0x3a7da000);
+  r = r - y * asfloat(0x34222000);
+  r = r - y * asfloat(0x2cb4611a);
+  return asfloat(asuint(mvec_trig_poly(r, s)) ^ (asuint(x) & 0x80000000u));
+}
+
+template <bool Fma>
+WW_LIBM_FN float mvec_cosf(float x) {
+  using namespace detail;
+  if (mvec_trig_special(x)) { float s, c; sincosf<Fma>(x, &s, &c); return c; }
+  const float inv_pi = asfloat(0x3ea2f983), shifter = asfloat(0x4b400000);
+  float y = (asfloat(0x3fc90fdb) + x) * inv_pi + shifter;  // (pi/2 + x) / pi
+  const uint32_t s = asuint(y) << 31;
+  y = y - shifter;
+  y = y - asfloat(0x3f000000);
+  float r = x - y * asfloat(0x40490000);
+  r = r - y * asfloat(0x3a7da000);
+  r = r - y * asfloat(0x34222000);
+  r = r - y * asfloat(0x2cb4611a);
+  return mvec_trig_poly(r, s);
+}
+
 /// glibc 2.44 exp, double (dbl-64/e_exp.c, ARM optimized-routines math/exp.c, N = 128), as
 /// __ieee754_exp_fma (Fma) or its sse2/avx builds; the fused sites are read from the
 /// disassembly of __ieee754_exp_fma. W3SDB1 calls it per sea point.

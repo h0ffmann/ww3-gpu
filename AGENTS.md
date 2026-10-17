@@ -305,7 +305,7 @@ sufficient. Since #178 a CUDA build with `WW_KOKKOS_LIBM` (its default) sends ev
 the kernels `WW_KOKKOS_ALL` runs, ST4's five libmvec loops included, to device copies of glibc
 2.44's functions (`kokkos/src/ww_kokkos/libm_device.hpp`, WFIP-0006), which equal glibc on the
 host on every input checked; no device run has compared them yet (`scripts/libm_bits.sh
---device`, the owner's), and the opt-in `W3OUTG` and the other switches' kernels still call
+--device`, the owner's), and W3OUTG's too (the `resident` preset), and the other switches' kernels still call
 libdevice. Until such a run, the rule is the CPU backend's: a GPU run is judged by `nccmp-tol`'s
 tolerances against the Fortran of the same executable and against `--ww3`, with every field's
 differences recorded and no tolerance ever widened, and its timing enters a table only after

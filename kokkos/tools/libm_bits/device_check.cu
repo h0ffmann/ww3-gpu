@@ -33,13 +33,15 @@
 
 extern "C" __m128 _ZGVbN4v_expf(__m128);
 extern "C" __m128 _ZGVbN4vv_powf(__m128, __m128);
+extern "C" __m128 _ZGVbN4v_sinf(__m128);
+extern "C" __m128 _ZGVbN4v_cosf(__m128);
 
 namespace {
 
 constexpr uint64_t kChunk = 1ULL << 26;
 constexpr bool kFma = WW_LIBM_HOST_FMA != 0;
 
-enum Fn { kExpf, kLogf, kSincosf, kPowf, kMvecExpf, kMvecPowf, kTanhf, kLog10f, kAtan2f, kCoshf, kSinhf, kExp, kTanh };
+enum Fn { kExpf, kLogf, kSincosf, kPowf, kMvecExpf, kMvecPowf, kMvecSinf, kMvecCosf, kTanhf, kLog10f, kAtan2f, kCoshf, kSinhf, kExp, kTanh };
 
 __host__ __device__ inline uint64_t splitmix(uint64_t s) {
   uint64_t z = s + 0x9e3779b97f4a7c15ULL;
@@ -70,7 +72,7 @@ __host__ __device__ inline void input(Fn fn, uint64_t i, float& x, float& y) {
   memcpy(&x, &u, 4);
 }
 
-bool has_cuda(Fn fn) { return fn != kMvecExpf && fn != kMvecPowf; }
+bool has_cuda(Fn fn) { return fn != kMvecExpf && fn != kMvecPowf && fn != kMvecSinf && fn != kMvecCosf; }
 
 // Two doubles per input: a float result is widened (exactly), sincosf uses both.
 __global__ void kernel(Fn fn, bool cuda_own, uint64_t base, uint64_t n, double* out) {
@@ -89,6 +91,8 @@ __global__ void kernel(Fn fn, bool cuda_own, uint64_t base, uint64_t n, double* 
       break;
     case kMvecExpf: a = ww::libm::mvec_expf<kFma>(x); break;
     case kMvecPowf: a = ww::libm::mvec_powf<kFma>(x, y); break;
+    case kMvecSinf: a = ww::libm::mvec_sinf<kFma>(x); break;
+    case kMvecCosf: a = ww::libm::mvec_cosf<kFma>(x); break;
     case kTanhf: a = cuda_own ? ::tanhf(x) : ww::libm::tanhf(x); break;
     case kLog10f: a = cuda_own ? ::log10f(x) : ww::libm::log10f(x); break;
     case kAtan2f: a = cuda_own ? ::atan2f(y, x) : ww::libm::atan2f(y, x); break;
@@ -119,6 +123,8 @@ void reference(Fn fn, float x, float y, double& wa, double& wb) {
       _mm_store_ps(vr, _ZGVbN4vv_powf(_mm_load_ps(va), _mm_load_ps(vb)));
       a = vr[0];
       break;
+    case kMvecSinf: _mm_store_ps(vr, _ZGVbN4v_sinf(_mm_load_ps(va))); a = vr[0]; break;
+    case kMvecCosf: _mm_store_ps(vr, _ZGVbN4v_cosf(_mm_load_ps(va))); a = vr[0]; break;
     case kTanhf: a = ::tanhf(x); break;
     case kLog10f: a = ::log10f(x); break;
     case kAtan2f: a = ::atan2f(y, x); break;
@@ -178,6 +184,7 @@ int main(int argc, char** argv) {
       {kExpf, "expf", 1ULL << 32},       {kLogf, "logf", 1ULL << 32},
       {kSincosf, "sincosf", 1ULL << 32}, {kPowf, "powf", 1ULL << 32},
       {kMvecExpf, "mvec_expf", 1ULL << 32}, {kMvecPowf, "mvec_powf", 1ULL << 32},
+      {kMvecSinf, "mvec_sinf", 1ULL << 32}, {kMvecCosf, "mvec_cosf", 1ULL << 32},
       {kTanhf, "tanhf", 1ULL << 32},     {kLog10f, "log10f", 1ULL << 32},
       {kAtan2f, "atan2f", 1ULL << 32},   {kCoshf, "coshf", 1ULL << 32},
       {kSinhf, "sinhf", 1ULL << 32},     {kExp, "exp", 1ULL << 32},

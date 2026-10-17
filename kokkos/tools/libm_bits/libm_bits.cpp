@@ -3,7 +3,7 @@
 // device would compute (docs/GPU_LIBM_BITS_202610.md). Host only; it tests glibc and the
 // transcription in glibc_mathf.hpp, not a ported routine (ADR-0010 is about the port).
 //
-//   libm_bits ww <expf|logf|sincosf|powf|mvec_expf|mvec_powf|tanhf|log10f|atan2f|coshf|sinhf|exp|tanh> <fma|plain> [threads]
+//   libm_bits ww <expf|logf|sincosf|powf|sinf|cosf|mvec_expf|mvec_sinf|mvec_cosf|mvec_powf|tanhf|log10f|atan2f|coshf|sinhf|exp|tanh> <fma|plain> [threads]
 //       glibc_mathf.hpp against this process's glibc: every float input for the unary
 //       functions; for powf every positive x with fixed y, every y with fixed x, and
 //       random pairs. mvec_expf and mvec_powf are checked against libmvec's
@@ -52,6 +52,8 @@
 
 extern "C" __m128 _ZGVbN4vv_powf(__m128, __m128);
 extern "C" __m128 _ZGVbN4v_expf(__m128);
+extern "C" __m128 _ZGVbN4v_sinf(__m128);
+extern "C" __m128 _ZGVbN4v_cosf(__m128);
 
 namespace {
 
@@ -127,6 +129,18 @@ void ww_unary(const std::string& fn, int threads, Tally& t) {
         alignas(16) float a[4] = {x, -x, x * 0.5f, 1.0f}, r[4];
         _mm_store_ps(r, _ZGVbN4v_expf(_mm_load_ps(a)));
         for (int l = 0; l < 4; ++l) compare(t, ww::libm::mvec_expf<Fma>(a[l]), r[l], "", a[l]);
+      } else if (fn == "sinf" || fn == "cosf") {
+        // glibc's scalar sinf and cosf against the two results of the sincosf copy.
+        float s, c;
+        ww::libm::sincosf<Fma>(x, &s, &c);
+        if (fn == "sinf") compare(t, s, ::sinf(x), "", x);
+        else compare(t, c, ::cosf(x), "", x);
+      } else if (fn == "mvec_sinf" || fn == "mvec_cosf") {
+        alignas(16) float a[4] = {x, -x, x * 0.5f, 1.0f}, r[4];
+        const bool sn = fn == "mvec_sinf";
+        _mm_store_ps(r, sn ? _ZGVbN4v_sinf(_mm_load_ps(a)) : _ZGVbN4v_cosf(_mm_load_ps(a)));
+        for (int l = 0; l < 4; ++l)
+          compare(t, sn ? ww::libm::mvec_sinf<Fma>(a[l]) : ww::libm::mvec_cosf<Fma>(a[l]), r[l], "", a[l]);
       } else if (fn == "tanhf") {
         compare(t, ww::libm::tanhf(x), ::tanhf(x), "", x);
       } else if (fn == "log10f") {
@@ -494,6 +508,7 @@ int main(int argc, char** argv) {
     else if (fn == "exp") fma ? ww_exp<true>(threads, t) : ww_exp<false>(threads, t);
     else if (fn == "tanh") ww_tanh(threads, t);
     else if (fn == "expf" || fn == "logf" || fn == "sincosf" || fn == "mvec_expf" ||
+             fn == "mvec_sinf" || fn == "mvec_cosf" || fn == "sinf" || fn == "cosf" ||
              fn == "tanhf" || fn == "log10f" || fn == "coshf" || fn == "sinhf")
       fma ? ww_unary<true>(fn, threads, t) : ww_unary<false>(fn, threads, t);
     else return 64;

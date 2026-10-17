@@ -157,10 +157,13 @@ What runs where: units 1 to 5 build and run on the CPU; only §7's device boxes 
   `coremath_f.hpp` (CORE-MATH, correctly rounded; 0 of 2^32 inputs differ from glibc each, v).
 - **Unit 5** not done: `scripts/ww3-gpu.sh` was being changed by the goal/42-gpu-step work, which
   merged as #179, so nothing blocks it now (v, `scripts/ww3-gpu.sh` at `68ae5e2` has no libm check).
-- **Not routed:** W3OUTG (`iogo_w3outg.hpp`, opt-in, not under `WW_KOKKOS_ALL`) calls libmvec's
-  `sinf`/`cosf`, scalar `sinhf`, `coshf`, `logf`, `atan2f` and `powf`; the other switches'
-  kernels (ST1, ST2, ST3, ST6 with libmvec `tanhf`, FLX1-5, IC4, ...) are not on the lab
-  switch's path. Each still calls libdevice on a device.
+- **W3OUTG** (`iogo_w3outg.hpp`, `iogo_skewness.hpp`; opt-in, in the `resident` preset), routed
+  after #178: libmvec's SSE4 `_ZGVbN4v_sinf`/`_cosf` copied as `mvec_sinf`/`mvec_cosf`
+  (0 of 2^32 inputs differ from libmvec, four lanes each, v), scalar `sinf`/`cosf` as `sincosf`'s
+  two results (glibc's equal them on every input, v, `libm_bits.sh ww sinf fma`, `ww cosf fma`), and `sinhf`, `coshf`,
+  `logf`, `atan2f`, `powf` as above; `gen_tables` checks libmvec's 14 trig constants.
+- **Not routed:** the other switches' kernels (ST1, ST2, ST3, ST6 with libmvec `tanhf`, FLX1-5,
+  IC4, ...) are not on the lab switch's path. Each still calls libdevice on a device.
 
 ## 6. Parity and physics impact
 

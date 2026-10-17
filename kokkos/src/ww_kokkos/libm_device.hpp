@@ -1,5 +1,5 @@
 // kokkos/src/ww_kokkos/libm_device.hpp
-// The libm functions the kernels WW_KOKKOS_ALL runs call, with glibc's bits on a device
+// The libm functions the kernels WW_KOKKOS_ALL and --kokkos resident run call, with glibc's bits on a device
 // (WFIP-0006). On the host each wrapper is the Kokkos call the kernel made before, so the CPU
 // build calls glibc as before. On a CUDA build configured with WW_KOKKOS_LIBM (the default
 // there), the device calls ww::libm, the copies of glibc 2.44 in kokkos/tools/libm_bits that
@@ -27,7 +27,8 @@
 namespace ww::dm {
 
 // The device implementations, also called by kernels that keep their own host branch
-// (srce_kernel.hpp, srce_ln1.hpp, updt_uwnd.hpp, disp_distab.hpp, st4_libmvec.hpp).
+// (srce_kernel.hpp, srce_ln1.hpp, updt_uwnd.hpp, disp_distab.hpp, st4_libmvec.hpp,
+// iogo_w3outg.hpp).
 namespace dev {
 #if defined(WW_KOKKOS_LIBM)
 inline constexpr bool kFma = WW_LIBM_HOST_FMA != 0;
@@ -44,6 +45,8 @@ KOKKOS_INLINE_FUNCTION double exp(double x) { return ww::libm::exp<kFma>(x); }
 KOKKOS_INLINE_FUNCTION double tanh(double x) { return ww::libm::tanh(x); }
 KOKKOS_INLINE_FUNCTION float mvec_expf(float x) { return ww::libm::mvec_expf<kFma>(x); }
 KOKKOS_INLINE_FUNCTION float mvec_powf(float x, float y) { return ww::libm::mvec_powf<kFma>(x, y); }
+KOKKOS_INLINE_FUNCTION float mvec_sinf(float x) { return ww::libm::mvec_sinf<kFma>(x); }
+KOKKOS_INLINE_FUNCTION float mvec_cosf(float x) { return ww::libm::mvec_cosf<kFma>(x); }
 #else
 KOKKOS_INLINE_FUNCTION float expf(float x) { return Kokkos::exp(x); }
 KOKKOS_INLINE_FUNCTION float logf(float x) { return Kokkos::log(x); }
@@ -58,6 +61,8 @@ KOKKOS_INLINE_FUNCTION double exp(double x) { return Kokkos::exp(x); }
 KOKKOS_INLINE_FUNCTION double tanh(double x) { return Kokkos::tanh(x); }
 KOKKOS_INLINE_FUNCTION float mvec_expf(float x) { return Kokkos::exp(x); }
 KOKKOS_INLINE_FUNCTION float mvec_powf(float x, float y) { return Kokkos::pow(x, y); }
+KOKKOS_INLINE_FUNCTION float mvec_sinf(float x) { return Kokkos::sin(x); }
+KOKKOS_INLINE_FUNCTION float mvec_cosf(float x) { return Kokkos::cos(x); }
 #endif
 }  // namespace dev
 
@@ -92,6 +97,24 @@ KOKKOS_INLINE_FUNCTION float atan2f(float y, float x) {
   KOKKOS_IF_ON_HOST((return Kokkos::atan2(y, x);))
   KOKKOS_IF_ON_DEVICE((return dev::atan2f(y, x);))
 }
+/// A lone sin or cos: glibc's sinf and cosf equal the two results of its sincosf on every input
+/// (v, libm_bits ww sinf and ww cosf, every input, 2026-10-17), so the device computes sincosf.
+KOKKOS_INLINE_FUNCTION float sinf(float x) {
+  KOKKOS_IF_ON_HOST((return Kokkos::sin(x);))
+  KOKKOS_IF_ON_DEVICE((float s, c; dev::sincosf(x, &s, &c); return s;))
+}
+KOKKOS_INLINE_FUNCTION float cosf(float x) {
+  KOKKOS_IF_ON_HOST((return Kokkos::cos(x);))
+  KOKKOS_IF_ON_DEVICE((float s, c; dev::sincosf(x, &s, &c); return c;))
+}
+KOKKOS_INLINE_FUNCTION float coshf(float x) {
+  KOKKOS_IF_ON_HOST((return Kokkos::cosh(x);))
+  KOKKOS_IF_ON_DEVICE((return dev::coshf(x);))
+}
+KOKKOS_INLINE_FUNCTION float sinhf(float x) {
+  KOKKOS_IF_ON_HOST((return Kokkos::sinh(x);))
+  KOKKOS_IF_ON_DEVICE((return dev::sinhf(x);))
+}
 KOKKOS_INLINE_FUNCTION double exp(double x) {
   KOKKOS_IF_ON_HOST((return Kokkos::exp(x);))
   KOKKOS_IF_ON_DEVICE((return dev::exp(x);))
@@ -108,6 +131,10 @@ template <class T> void sincosf(T, float&, float&) = delete;
 template <class T> float tanhf(T) = delete;
 template <class T> float log10f(T) = delete;
 template <class T, class U> float atan2f(T, U) = delete;
+template <class T> float sinf(T) = delete;
+template <class T> float cosf(T) = delete;
+template <class T> float coshf(T) = delete;
+template <class T> float sinhf(T) = delete;
 template <class T> double exp(T) = delete;
 template <class T> double tanh(T) = delete;
 

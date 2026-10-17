@@ -30,6 +30,7 @@
 
 #include "iogo_skewness.hpp"
 #include "prop_params.hpp"
+#include "libm_device.hpp"
 #include "real.hpp"
 #include "st4_libmvec.hpp"
 #include "st4_params.hpp"
@@ -96,10 +97,15 @@ KOKKOS_INLINE_FUNCTION void thmp_sincos(Real x, bool lane, Real& s, Real& c) {
     c = rc[0];
     done = true;
   }))
+  KOKKOS_IF_ON_DEVICE((if (lane) {
+    s = dm::dev::mvec_sinf(x);
+    c = dm::dev::mvec_cosf(x);
+    done = true;
+  }))
 #endif
   if (!done) {
-    s = Kokkos::sin(x);
-    c = Kokkos::cos(x);
+    KOKKOS_IF_ON_HOST((s = Kokkos::sin(x); c = Kokkos::cos(x);))
+    KOKKOS_IF_ON_DEVICE((dm::dev::sincosf(x, &s, &c);))
   }
 }
 }  // namespace w3outg_detail
@@ -302,9 +308,9 @@ KOKKOS_INLINE_FUNCTION void w3outg_point(const W3OutgArgs<ExecSpace>& g, const W
       const Real ma = abx2 * factor * fac5;
       const Real mc = aby2 * factor * fac5;
       const Real mb = abyx * factor * fac5;
-      mscd = half * Kokkos::atan2(two * mb, ma - mc);
-      const Real cs = Kokkos::cos(mscd);
-      const Real sn = Kokkos::sin(mscd);
+      mscd = half * dm::atan2f(two * mb, ma - mc);
+      Real cs, sn;
+      dm::sincosf(mscd, sn, cs);
       mscx = ma * (cs * cs) + two * mb * sn * cs + ma * (sn * sn);
       mscy = mc * (cs * cs) - two * mb * sn * cs + ma * (sn * sn);
     }
@@ -312,7 +318,7 @@ KOKKOS_INLINE_FUNCTION void w3outg_point(const W3OutgArgs<ExecSpace>& g, const W
     const Real kd = gt_sel(wnk * g.dw(isea), static_cast<Real>(0.001));  // :1639
     Real ussco;
     if (kd < static_cast<Real>(6.)) {
-      const Real sh = Kokkos::sinh(kd);
+      const Real sh = dm::sinhf(kd);
       const Real fkd = factor / (sh * sh);
       abr = abr + ab * fkd;
       aba = aba + abx * fkd;
@@ -321,8 +327,8 @@ KOKKOS_INLINE_FUNCTION void w3outg_point(const W3OutgArgs<ExecSpace>& g, const W
       ubr = ubr + ab * sg2 * fkd;
       uba = uba + abx * sg2 * fkd;
       ubd = ubd + aby * sg2 * fkd;
-      ussco = fkd * sigk * wnk * Kokkos::cosh(two * kd);
-      bhd = bhd + kGrav * wnk * ebd / Kokkos::sinh(two * kd);
+      ussco = fkd * sigk * wnk * dm::coshf(two * kd);
+      bhd = bhd + kGrav * wnk * ebd / dm::sinhf(two * kd);
     } else {
       ussco = factor * sigk * two * wnk;
     }
@@ -343,7 +349,7 @@ KOKKOS_INLINE_FUNCTION void w3outg_point(const W3OutgArgs<ExecSpace>& g, const W
 
     if (l.f3[1] && ik >= s.e3df2[1] && ik <= s.e3df3[1])
       g.th1m(j0, ik - s.e3df2[1]) =
-          Kokkos::fmod(static_cast<Real>(630.) - kRade * Kokkos::atan2(aby, abx), static_cast<Real>(360.));
+          Kokkos::fmod(static_cast<Real>(630.) - kRade * dm::atan2f(aby, abx), static_cast<Real>(360.));
     // MAX(1E-20,AB) (:1678, :1683): the SHRD object keeps two copies of this loop, chosen by
     // FLOLOC(3,5), and the maxss destination differs between them: AB when it is set, 1E-20 when it
     // is not. The OMPG object (_omp_fn.1) computes M1 and M2 only under their FLOLOC test, with AB
@@ -355,7 +361,7 @@ KOKKOS_INLINE_FUNCTION void w3outg_point(const W3OutgArgs<ExecSpace>& g, const W
       g.sth1m(j0, ik - s.e3df2[2]) = Kokkos::sqrt(Kokkos::fabs(two * (one - m1))) * kRade;
     if (l.f3[3] && ik >= s.e3df2[3] && ik <= s.e3df3[3])
       g.th2m(j0, ik - s.e3df2[3]) =
-          Kokkos::fmod(static_cast<Real>(270.) - kRadeHalf * Kokkos::atan2(ab2y, ab2x), static_cast<Real>(180.));
+          Kokkos::fmod(static_cast<Real>(270.) - kRadeHalf * dm::atan2f(ab2y, ab2x), static_cast<Real>(180.));
     const Real m2 = Kokkos::sqrt(ab2x * ab2x + ab2y * ab2y) / abm;
     if (l.f3[4] && ik >= s.e3df2[4] && ik <= s.e3df3[4])
       g.sth2m(j0, ik - s.e3df2[4]) = Kokkos::sqrt(Kokkos::fabs(half * (one - m2))) * kRade;
@@ -365,7 +371,7 @@ KOKKOS_INLINE_FUNCTION void w3outg_point(const W3OutgArgs<ExecSpace>& g, const W
   if (l.ste) {
     const Real undef = s.undef;
     Real thmp = undef;
-    if (sea && Kokkos::fabs(etx) + Kokkos::fabs(ety) > k1em7) thmp = Kokkos::atan2(ety, etx);
+    if (sea && Kokkos::fabs(etx) + Kokkos::fabs(ety) > k1em7) thmp = dm::atan2f(ety, etx);
     Real sth;
     Real cth;
     thmp_sincos(thmp, !s.ompg && s.nseal >= 4 && jsea <= 4 * (s.nseal / 4), sth, cth);
@@ -422,16 +428,16 @@ KOKKOS_INLINE_FUNCTION void w3outg_point(const W3OutgArgs<ExecSpace>& g, const W
       nb = stex / wl02x + stey / wl02y + sted / t02p;
     }
     if (et1 > k1em7) ni = Kokkos::sqrt(et * et02 / (et1 * et1) - one);
-    if (et > k1em7) mu = et1 * et1 / kGrav * Kokkos::pow(et, static_cast<Real>(-1.5)) * (one - ni + ni * ni);
+    if (et > k1em7) mu = et1 * et1 / kGrav * dm::powf(et, static_cast<Real>(-1.5)) * (one - ni + ni * ni);
 
     if (stex == zero && stey == zero) {  // :1858-1869
-      mode = Kokkos::sqrt(two * Kokkos::log(nb));
+      mode = Kokkos::sqrt(two * dm::logf(nb));
     } else if (sted == zero) {
-      const Real t = two * Kokkos::log(ns);
-      mode = Kokkos::sqrt(t + Kokkos::log(t + Kokkos::log(t)));
+      const Real t = two * dm::logf(ns);
+      mode = Kokkos::sqrt(t + dm::logf(t + dm::logf(t)));
     } else if (wl02x > k1em7 && wl02y > k1em7 && t02p > k1em7) {
-      const Real t = two * Kokkos::log(nv);
-      mode = Kokkos::sqrt(t + two * Kokkos::log(t + two * Kokkos::log(t)));
+      const Real t = two * dm::logf(nv);
+      mode = Kokkos::sqrt(t + two * dm::logf(t + two * dm::logf(t)));
     }
 
     const Real sqet = Kokkos::sqrt(et);
@@ -452,10 +458,10 @@ KOKKOS_INLINE_FUNCTION void w3outg_point(const W3OutgArgs<ExecSpace>& g, const W
       for (int itl = 0; itl < 21; ++itl) {
         for (int ik = 1; ik <= nk - 3; ik += 4) {
           const Real sigk = g.sig(ik);
-          phi[itl] = phi[itl] + (x3 * g.ebd(ik + 2, j0) * Kokkos::cos(x3 * sigk * tlphi) +
-                                 x2 * g.ebd(ik + 1, j0) * Kokkos::cos(x2 * sigk * tlphi) +
-                                 xfr * g.ebd(ik, j0) * Kokkos::cos(xfr * sigk * tlphi) +
-                                 g.ebd(ik - 1, j0) * Kokkos::cos(sigk * tlphi)) *
+          phi[itl] = phi[itl] + (x3 * g.ebd(ik + 2, j0) * dm::cosf(x3 * sigk * tlphi) +
+                                 x2 * g.ebd(ik + 1, j0) * dm::cosf(x2 * sigk * tlphi) +
+                                 xfr * g.ebd(ik, j0) * dm::cosf(xfr * sigk * tlphi) +
+                                 g.ebd(ik - 1, j0) * dm::cosf(sigk * tlphi)) *
                                     g.dsii(ik - 1);
         }
         tlphi = tlphi + t02p / static_cast<Real>(20.);
@@ -483,10 +489,10 @@ KOKKOS_INLINE_FUNCTION void w3outg_point(const W3OutgArgs<ExecSpace>& g, const W
   }
 
   // 3.a (:1948-1952)
-  const Real mssd = half * Kokkos::atan2(two * etxy, etxx - etyy);
+  const Real mssd = half * dm::atan2f(two * etxy, etxx - etyy);
   {
-    const Real cs = Kokkos::cos(mssd);
-    const Real sn = Kokkos::sin(mssd);
+    Real cs, sn;
+    dm::sincosf(mssd, sn, cs);
     g.mssx(j0) = etxx * (cs * cs) + two * etxy * sn * cs + etyy * (sn * sn);
     g.mssy(j0) = etyy * (cs * cs) - two * etxy * sn * cs + etxx * (sn * sn);
     g.mssd(j0) = mssd;
@@ -534,12 +540,12 @@ KOKKOS_INLINE_FUNCTION void w3outg_point(const W3OutgArgs<ExecSpace>& g, const W
       g.t0m1(j0) = kTpi / signk;
       g.ths(j0) = zero;
     }
-    g.thm(j0) = (Kokkos::fabs(etx) + Kokkos::fabs(ety) > k1em7) ? Kokkos::atan2(ety, etx) : zero;
+    g.thm(j0) = (Kokkos::fabs(etx) + Kokkos::fabs(ety) > k1em7) ? dm::atan2f(ety, etx) : zero;
     abr = Kokkos::sqrt(two * gt_sel(zero, abr));  // :2024, 0. the destination
-    abd = (abr >= k1em7) ? Kokkos::atan2(abd, aba) : zero;
+    abd = (abr >= k1em7) ? dm::atan2f(abd, aba) : zero;
     aba = abr;
     ubr = Kokkos::sqrt(two * gt_sel(zero, ubr));  // :2031, 0. the destination
-    ubd = (ubr >= k1em7) ? Kokkos::atan2(ubd, uba) : zero;
+    ubd = (ubr >= k1em7) ? dm::atan2f(ubd, uba) : zero;
     uba = ubr;
     g.cge(j0) = kDwatGrav * etf;
     if (et02 > k1em7 && et > zero) {
@@ -597,7 +603,7 @@ KOKKOS_INLINE_FUNCTION void w3outg_point(const W3OutgArgs<ExecSpace>& g, const W
       etyp = etyp + g.a(ith - 1, ikp0 - 1, jsea) * g.esin(ith - 1);
     }
   }
-  if (Kokkos::fabs(etxp) + Kokkos::fabs(etyp) > k1em7 && fp0 != s.undef) thp0 = Kokkos::atan2(etyp, etxp);
+  if (Kokkos::fabs(etxp) + Kokkos::fabs(etyp) > k1em7 && fp0 != s.undef) thp0 = dm::atan2f(etyp, etxp);
   if (!sea) {
     fp0 = s.undef;
     thp0 = s.undef;
