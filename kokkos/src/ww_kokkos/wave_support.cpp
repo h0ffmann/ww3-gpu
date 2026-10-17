@@ -66,6 +66,7 @@
 #include "ic5_polyroots.hpp"
 #include "ic5_w3ic5wncg.hpp"
 #include "init_w3mpio.hpp"
+#include "iobc_w3iobc.hpp"
 #include "iogo_vmin_d.hpp"
 #include "iogo_vplus_d.hpp"
 #include "iogo_skewness.hpp"
@@ -311,4 +312,6 @@ void ww_support_instantiate() {
   (void)&ww::adat::w3xdma<E>;
   (void)&ww::flds::w3fldg<E>;
   (void)&ww::init::w3mpio;
+  (void)&ww::iobc::iobc_gather_shrd<E>;
+  (void)&ww::iobc::w3iobc<E>;
 }

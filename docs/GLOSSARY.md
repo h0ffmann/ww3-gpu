@@ -303,6 +303,13 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | W3IOGRMD / W3IOGR | "Reading and writing of the model definition file" `(v)` | Reads `mod_def.ww3`; also calls `INSNL1` (`w3iogrmd.F90:1802`). | [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md) |
 | W3IOGOMD / W3OUTG / W3IOGO | "Gridded output of mean wave parameters": fill output arrays / read-write `out_grd.ww3` `(v)` | Integral parameters (`Hs`, `Tp`, …) from the spectrum; ranked #8 for the port. | [docs/AGENTS_KOKKOS_202609.md](AGENTS_KOKKOS_202609.md) |
 | W3IOPOMD / W3IOPO, W3IORSMD / W3IORS, W3IOBCMD / W3IOBC, W3IOTRMD / W3IOTR | point output / restart files / boundary conditions / track output read-write `(v)` | The I/O bucket (`w3io*`) of the profile. | [course/09-benchmark-profile-compile-run.md](../course/09-benchmark-profile-compile-run.md) |
+| W3NESTUG / W3GFPT | "UGTYPE nesting initialization" / "Find point in grid, associated with the input grid-search-utility object (GSU), that is closest to the target point (xtin,ytin)" `(v)` `w3triamd.F90:2160`, `w3gsrumd.F90:1981-1982` | How `W3IOBC` maps each input boundary point of `nest.ww3` to a sea point (`ISBPI`): `W3NESTUG` on an unstructured grid, `W3GFPT` (through `W3GFPT_R4`, `DCIN=0.1`) otherwise; hooks of the Kokkos `W3IOBC`. | [kokkos/port_report/W3IOBC_KOKKOS.md](../kokkos/port_report/W3IOBC_KOKKOS.md) |
+| W3CSPC | "Convert a set of spectra to a new spectral grid" `(v)` `w3cspcmd.F90:119`, `:143` | Called by `W3IOBC` when the spectral grid of `nest.ww3` differs from the model's (`SPCONV`); a hook of the Kokkos `W3IOBC`. | [kokkos/port_report/W3IOBC_KOKKOS.md](../kokkos/port_report/W3IOBC_KOKKOS.md) |
+| NBI / NBI2 / NBO / NBO2 / NFBPO | "Number of input bound. points" / "Number of output bound. pts. per file" / "Number of files for output bound. data" `(v)` `w3odatmd.F90:232-236`, declared at `:411-412`; `NBI2` and `NBO2` have no description there: they count spectra, `NBI2` read with each time record of `nest.ww3` (`w3iobcmd.F90:564`), `NBO2` per output file (`:608`) | `NBO(0:9)` and `NBO2(0:9)` are cumulative over the files; a `nest<N>.ww3` header counts points with `NBO`, its time records count spectra with `NBO2`. | [kokkos/port_report/W3IOBC_KOKKOS.md](../kokkos/port_report/W3IOBC_KOKKOS.md) |
+| IPBPI / ISBPI / RDBPI / XBPI / YBPI (and IPBPO, ISBPO, RDBPO, XBPO, YBPO) | "Interpolation data input b.p." / "Sea point counters for input b.p." / "Interpolation factors input b.p." / "Location of input boundary points"; the `O` arrays "Id. for output b.p." `(v)` `w3odatmd.F90:238-250` | Read from or written to the point record of the nest files by `W3IOBC`; the weights come from `ww3_grid`. | [kokkos/port_report/W3IOBC_KOKKOS.md](../kokkos/port_report/W3IOBC_KOKKOS.md) |
+| ABPI0 / ABPIN / ABPOS | "Storage of spectra from which to interpolate b.d." / "Temporarily storage for output b.d." `(v)` `w3odatmd.F90:245-248` | `ABPI0(NSPEC,0:NBI2)` and `ABPIN` hold the input spectra of the previous and the current time record, filled by `W3IOBC` and interpolated in time by `W3UBPT`; `ABPOS(NSPEC,0:NBO2(NFBPO))` holds the output spectra `VA*SIG2/CG` before `W3IOBC` writes them. | [kokkos/port_report/W3IOBC_KOKKOS.md](../kokkos/port_report/W3IOBC_KOKKOS.md) |
+| FILER / FILEW / FILED / SPCONV / FLBPI / NAPBPT | "Read/write flags for file management" / "Flag for change of spec. res." / "Flag for input of boundary data" / "Proc. dealing with boundary output" `(v)` `w3odatmd.F90:251-254`, `:111` | `FILER`, `FILEW`, `FILED` start `.TRUE.` (`:734-736`) and mark the first 'READ', 'WRITE' or 'DUMP' call of `W3IOBC`, which opens the file; `W3IOBC` clears `FLBPI` at the end of `nest.ww3`. | [kokkos/port_report/W3IOBC_KOKKOS.md](../kokkos/port_report/W3IOBC_KOKKOS.md) |
+| nest1.ww3 .. nest9.ww3 | boundary output files, "nest1.FILEXT through nest9.FILEXT for up to 9 output files" `(v)` `w3iobcmd.F90:88-89` | Written by `W3IOBC('WRITE')` from `ww3_shel`, one per output file of `ww3_grid`, in the same format as `nest.ww3`. | [kokkos/port_report/W3IOBC_KOKKOS.md](../kokkos/port_report/W3IOBC_KOKKOS.md) |
 | LRECL / NSIZE (W3IORS) | the record length in bytes of `restart.<ext>`, `MAX(4*NSPEC, 84)`, and the values per record, `LRECL/4` `(v)` `WW3-noaa/model/src/w3iorsmd.F90:459-462` at `03adda91` | `W3IORS` writes a stream file in fixed records of `LRECL` bytes at `POS = 1 + LRECL*(NREC-1)`; the 84-byte floor does not count the 800 bytes of `FLOGRR` in the header. | [kokkos/port_report/W3IORS_KOKKOS.md](../kokkos/port_report/W3IORS_KOKKOS.md) |
 | RSTYPE | "Integer identifyng restart type" `(v)` `w3gdatmd.F90:148`; values 0 cold, 1 fetch-limited (WIND, FTCH), 2 full, 3 writing, 4 calm `(v)` `w3iorsmd.F90:578-586`, `:546`, `:610` | Set by `W3IORS` from the file's TYPE, or 4 when the file to read does not open (`LN1`); `W3INIT` acts on it. | [kokkos/port_report/W3IORS_KOKKOS.md](../kokkos/port_report/W3IORS_KOKKOS.md) |
 | OARST / FLOGRR | `OARST`: "Add fields needed for OASIS coupling in restart" `(v)` `w3iorsmd.F90:68-69`; `FLOGRR`: "FLags for optional coupling restart (2D)" `(v)` `w3odatmd.F90:153` | `OARST` (set to `ANY(FLOGR)` by `ww3_shel.F90:1944`) makes a full restart carry the output fields that `FLOGRR(NOGRP,NGRPP)` selects, after the FPIS records and without `POS=`. | [kokkos/port_report/W3IORS_KOKKOS.md](../kokkos/port_report/W3IORS_KOKKOS.md) |
@@ -673,6 +680,7 @@ Every term above, alphabetically, with the section it lives in.
 - `LIBERROR_*`: [HPC and software](#hpc-and-software)
 - A2A / `para:*`: [This repository's own names](#this-repositorys-own-names)
 - ABNT: [HPC and software](#hpc-and-software)
+- ABPI0 / ABPIN / ABPOS: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - ADA89: [HPC and software](#hpc-and-software)
 - ADA89 / HOPPER90: [HPC and software](#hpc-and-software)
 - ADR-0001: [This repository's own names](#this-repositorys-own-names)
@@ -927,6 +935,7 @@ Every term above, alphabetically, with the section it lives in.
 - FIELD%TYPE: [WW3 programs and files](#ww3-programs-and-files)
 - `_FillValue`: [HPC and software](#hpc-and-software)
 - `finalize`: [HPC and software](#hpc-and-software)
+- FILER / FILEW / FILED / SPCONV / FLBPI / NAPBPT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - FINDROOTS_NR: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - Finep: [Models, projects and institutions](#models-projects-and-institutions)
 - fixed-output derivation: [HPC and software](#hpc-and-software)
@@ -1048,6 +1057,7 @@ Every term above, alphabetically, with the section it lives in.
 - IOBP / IOBPD / IOBPA (and their `_LOC` copies): [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - IOSTAT: [HPC and software](#hpc-and-software)
 - IOSTYP: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- IPBPI / ISBPI / RDBPI / XBPI / YBPI (and IPBPO, ISBPO, RDBPO, XBPO, YBPO): [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - IRANGE / RRANGE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - IRANGE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - IS2DISP: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1104,6 +1114,8 @@ Every term above, alphabetically, with the section it lives in.
 - NAPFLD / FLOUT / NRQGO: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - NAPROC / UNDEF: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - NAPRST: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- NBI / NBI2 / NBO / NBO2 / NFBPO: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- nest1.ww3 .. nest9.ww3: [WW3 programs and files](#ww3-programs-and-files)
 - NITTIN / CINXSI / CD_MAX / CAP_ID / FLX4A0: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - NITTIN: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - NK10Hz / IK10Hz / SIG10Hz / DSII10Hz: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1213,6 +1225,7 @@ Every term above, alphabetically, with the section it lives in.
 - W3ADDIG: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3BETA: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3CFLUG / UG_GRADIENTS: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3CSPC: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3DIMW: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3DIMX / W3DIMUG: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3DMO5: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1236,6 +1249,7 @@ Every term above, alphabetically, with the section it lives in.
 - W3KRTN: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3LLTOEQ / SMCGradn: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3LLTOEQ: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3NESTUG / W3GFPT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3RPWNICE / FINDROOTS_NR / FUNCD_FVAL / FUNCD_FDERIV / IS2DISP: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3RPWNICE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3S2XY_SMC / W3S2XY_SMCRG / W3S2XY_SMCRG_DIR / W3S2XY_SMCNN / W3S2XY_SMCNN_INT / MAPSTA_SMC / CALC_INTERP: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
