@@ -23,6 +23,11 @@
 // WW_KOKKOS_OUTG_COUNT=1 prints, at exit, the calls, the sea points and the fields and bytes that
 // came back (on a host backend, the copies a device would make, labelled as such: none is made).
 // WW_KOKKOS_TIMERS=1 times outg.call, outg.h2d, outg.kernel and outg.d2h (timers.hpp).
+// WW_KOKKOS_OUTG_STAGED=1, a diagnostic read once: on a host backend the shim takes the device's
+// path, inputs copied into its own buffers, the fields computed into buffers that are not WW3's
+// arrays, and only the fields the selection above wants copied back, so a field the selection
+// misses keeps its old bits in WW3's array and shows in the output (in place it cannot: the
+// kernel writes every field into WW3's array). Bits move and nothing else changes.
 //
 // SPDX-License-Identifier: MIT
 
@@ -58,6 +63,17 @@ using Mem = Exec::memory_space;
 using Args = ww::iogo::W3OutgArgs<Exec>;
 static_assert(std::is_same_v<Real, float>, "the C ABI passes REAL as float");
 constexpr bool kHostReadable = Kokkos::SpaceAccessibility<Exec, Kokkos::HostSpace>::accessible;
+
+/// WW_KOKKOS_OUTG_STAGED=1 (the header): the device's buffers and copies on a host backend.
+bool staged() {
+  static const bool on = [] {
+    const char* v = std::getenv("WW_KOKKOS_OUTG_STAGED");
+    return v != nullptr && std::strcmp(v, "1") == 0;
+  }();
+  return on;
+}
+/// The kernel reads and writes WW3's arrays themselves.
+bool in_place() { return kHostReadable && !staged(); }
 
 template <class T>
 using H1 = Kokkos::View<T*, Kokkos::LayoutLeft, Kokkos::HostSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
@@ -136,7 +152,8 @@ std::atomic<long long> g_calls{0}, g_points{0}, g_back{0};
 std::atomic<long long> g_back_bytes{0};
 
 void print_counts() {
-  const char* proj = kHostReadable ? " (projected for a device, none made)" : "";
+  const char* proj = in_place() ? " (projected for a device, none made)"
+                     : (kHostReadable ? " (WW_KOKKOS_OUTG_STAGED=1, host buffers)" : "");
   std::fprintf(stderr, "ww_kokkos: W3OUTG Kokkos calls: %lld\n", g_calls.load());
   std::fprintf(stderr, "ww_kokkos: W3OUTG sea points: %lld\n", g_points.load());
   std::fprintf(stderr, "ww_kokkos: W3OUTG fields copied back D2H%s: %lld\n", proj, g_back.load());
@@ -188,48 +205,30 @@ void ensure(V& v, const char* name, size_t n0, size_t n1 = 0) {
 /// A read-only input: WW3's array itself on a host backend; else its device buffer, refreshed.
 template <class T>
 U1<const T> in1(D1<T>& buf, const char* name, const T* p, size_t n) {
-  if constexpr (kHostReadable) {
-    (void)buf;
-    (void)name;
-    return U1<const T>(p, n);
-  } else {
-    ensure(buf, name, n);
-    Kokkos::deep_copy(buf, H1<const T>(p, n));
-    return U1<const T>(buf.data(), n);
-  }
+  if (in_place()) return U1<const T>(p, n);
+  ensure(buf, name, n);
+  Kokkos::deep_copy(buf, H1<const T>(p, n));
+  return U1<const T>(buf.data(), n);
 }
 template <class T>
 U2<const T> in2(D2<T>& buf, const char* name, const T* p, size_t n0, size_t n1) {
-  if constexpr (kHostReadable) {
-    (void)buf;
-    (void)name;
-    return U2<const T>(p, n0, n1);
-  } else {
-    ensure(buf, name, n0, n1);
-    Kokkos::deep_copy(buf, H2<const T>(p, n0, n1));
-    return U2<const T>(buf.data(), n0, n1);
-  }
+  if (in_place()) return U2<const T>(p, n0, n1);
+  ensure(buf, name, n0, n1);
+  Kokkos::deep_copy(buf, H2<const T>(p, n0, n1));
+  return U2<const T>(buf.data(), n0, n1);
 }
 
 /// An output field: WW3's array on a host backend; else its device buffer.
 U1<Real> out1(D1<Real>& buf, float* p, size_t n) {
-  if constexpr (kHostReadable) {
-    (void)buf;
-    return U1<Real>(p, n);
-  } else {
-    ensure(buf, "ww_outg.field", n);
-    return U1<Real>(buf.data(), n);
-  }
+  if (in_place()) return U1<Real>(p, n);
+  ensure(buf, "ww_outg.field", n);
+  return U1<Real>(buf.data(), n);
 }
 U2<Real> out2(D2<Real>& buf, float* p, size_t n0, size_t n1) {
   if (p == nullptr) return U2<Real>();
-  if constexpr (kHostReadable) {
-    (void)buf;
-    return U2<Real>(p, n0, n1);
-  } else {
-    ensure(buf, "ww_outg.field2", n0, n1);
-    return U2<Real>(buf.data(), n0, n1);
-  }
+  if (in_place()) return U2<Real>(p, n0, n1);
+  ensure(buf, "ww_outg.field2", n0, n1);
+  return U2<Real>(buf.data(), n0, n1);
 }
 
 bool nested_in_openmp() {
@@ -338,7 +337,7 @@ int run(int igrid, const int* ipar, const float* rpar, const int* flogrd, const 
     for (int k = 0; k < WW_OUTG_NFIELD - WW_OUTG_N1D; ++k)
       *o2[k] = out2(b.f2[k], fields[WW_OUTG_N1D + k], nf, n2[k]);
     // CGE is not reset by W3OUTG (it writes sea points only): its device buffer holds the host bits.
-    if constexpr (!kHostReadable) Kokkos::deep_copy(g.cge, H1<const Real>(fields[WW_OUTG_CGE], nf));
+    if (!in_place()) Kokkos::deep_copy(g.cge, H1<const Real>(fields[WW_OUTG_CGE], nf));
   }
 
   ww::iogo::W3OutgFlags f{false, floutg, floutg2, flogrd, flogr2};
@@ -361,7 +360,7 @@ int run(int igrid, const int* ipar, const float* rpar, const int* flogrd, const 
       if (!want) continue;
       const size_t n = k < WW_OUTG_N1D ? nf : nf * n2[k - WW_OUTG_N1D];
       if (n == 0) continue;
-      if constexpr (!kHostReadable) {
+      if (!in_place()) {
         if (k < WW_OUTG_N1D)
           Kokkos::deep_copy(H1<Real>(fields[k], nf), b.f1[k]);
         else
@@ -370,7 +369,7 @@ int run(int igrid, const int* ipar, const float* rpar, const int* flogrd, const 
       g_back.fetch_add(1, std::memory_order_relaxed);
       g_back_bytes.fetch_add(static_cast<long long>(n * sizeof(float)), std::memory_order_relaxed);
     }
-    if constexpr (!kHostReadable) Exec().fence("ww_outg_va d2h");
+    if (!in_place()) Exec().fence("ww_outg_va d2h");
   }
   g_calls.fetch_add(1, std::memory_order_relaxed);
   g_points.fetch_add(nseal, std::memory_order_relaxed);
