@@ -15,8 +15,8 @@
 #            needs is ported to WW4 (scripts/ww4_parts.py): if one is not, it exits 5 and says
 #            which, before building anything.
 #
-#   scripts/ww3-gpu.sh --ww3  smoke|full [--cpu]
-#   scripts/ww3-gpu.sh --ww3-gpu smoke|full [--cpu|--gpu] [--kokkos all|none|<PART,...>]
+#   scripts/ww3-gpu.sh --ww3  smoke|full|coast [--cpu]
+#   scripts/ww3-gpu.sh --ww3-gpu smoke|full|coast [--cpu|--gpu] [--kokkos all|none|<PART,...>]
 #   scripts/ww3-gpu.sh --ww4  smoke|full [--cpu]
 #
 # --cpu is the default everywhere. --gpu exists for --ww3-gpu only (Kokkos on CUDA): WW3's Fortran
@@ -44,6 +44,11 @@
 # Cases:
 #   smoke  regtest ww3_ts1 (one point, ST4 + NL1, NK=36 NTH=24, 10 model days; seconds on a CPU)
 #   full   kokkos/tests/fixtures/bench_small (120 x 80, 9 520 sea points, NK=24 NTH=24, 12 hours)
+#   coast  kokkos/tests/fixtures/coast (80 x 50 cells of 5 km, 3 791 sea and 50 boundary points,
+#          NK=24 NTH=24, 12 hours): FLCK on, and hourly currents, water levels and ice
+#          concentration through ww3_prnc and boundary spectra through ww3_bounc, all written by
+#          scripts/coast_case.sh; the paths full and smoke never take (W3QCK2, W3UCUR, W3ULEV
+#          with drying, W3UICE, W3UBPT). No --ww4 and no prebuilt image for it yet.
 #
 # --ww3-gpu runs the case twice with the same executable, every WW_KOKKOS_<R>=0 (the Fortran) and
 # WW_KOKKOS_<R>=1 for each routine R of WW3GPU_ROUTINES (the Kokkos), and compares the gridded
@@ -124,7 +129,7 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --ww3|--ww3-gpu|--ww4) mode="${1#--}" ;;
     --hoff) mode="ww3-gpu" ;;  # the old name, as the dated records in docs/log and docs/data cite it
-    smoke|full) case_name="$1" ;;
+    smoke|full|coast) case_name="$1" ;;
     --cpu|--gpu) [ -z "$device" ] || [ "$device" = "${1#--}" ] || { echo "ww3-gpu: --cpu or --gpu, not both" >&2; exit 64; }
                  device="${1#--}" ;;
     --build-only) build_only=--build-only ;;
@@ -209,6 +214,16 @@ if [ "$mode" = self-test ]; then
   [ "$(kokkos_env 1 "$(kokkos_preset resident)")" = "WW_KOKKOS_ALL=0 WW_KOKKOS_SRCE=1 WW_KOKKOS_XYP3=1 WW_KOKKOS_KTP3=1" ] \
     || { echo "ww3-gpu: --kokkos resident: $(kokkos_env 1 "$(kokkos_preset resident)")" >&2; exit 1; }
   [ "$(kokkos_preset SNL1,GATH)" = "SNL1,GATH" ] || { echo "ww3-gpu: kokkos_preset changed a part list" >&2; exit 1; }
+  # coast: no WW4 parts model for it, and every input the case reads is in the fixture or written
+  # by scripts/coast_case.sh (whose own self-test needs ncgen, so it runs only where ncgen is).
+  "${BASH_SOURCE[0]}" --ww4 coast </dev/null >/dev/null 2>&1 && rc=0 || rc=$?
+  [ "$rc" = 64 ] || { echo "ww3-gpu: '--ww4 coast' gave exit $rc, not 64" >&2; exit 1; }
+  for f in ww3_grid.nml namelists.nml ww3_shel.nml ww3_ounf.nml ww3_bounc.nml spec.list points.list \
+           ww3_prnc_current.nml ww3_prnc_level.nml ww3_prnc_ice.nml; do
+    [ -f "$root/kokkos/tests/fixtures/coast/$f" ] || { echo "ww3-gpu: the coast fixture lost $f" >&2; exit 1; }
+  done
+  grep -q "RUN%FLCK  = T" "$root/kokkos/tests/fixtures/coast/ww3_grid.nml" || { echo "ww3-gpu: the coast case lost FLCK" >&2; exit 1; }
+  if command -v ncgen >/dev/null; then bash "$root/scripts/coast_case.sh" --self-test >/dev/null || exit 1; fi
   # Without a terminal --ww3-gpu --gpu never runs: 7 (no supervisor) or 4 (no driver), before any
   # build; with prebuilt programs (the Docker image, CPU only) it is refused outright, 64.
   "${BASH_SOURCE[0]}" --ww3-gpu smoke --gpu </dev/null >/dev/null 2>&1 && rc=0 || rc=$?
@@ -218,6 +233,12 @@ if [ "$mode" = self-test ]; then
   exit 0
 fi
 [ -n "$mode" ] && [ -n "$case_name" ] || usage
+if [ "$case_name" = coast ] && [ "$mode" = ww4 ]; then
+  echo "ww3-gpu: --ww4 has no coast case (scripts/ww4_parts.py knows smoke and full)" >&2; exit 64
+fi
+if [ "$case_name" = coast ] && [ -n "$pre" ]; then
+  echo "ww3-gpu: the prebuilt image has no coast case yet; run it from the source tree" >&2; exit 64
+fi
 # A GPU run with no part list takes --kokkos gpu: the DIA alone, WW3GPU_ROUTINES' default, is the
 # part with the most round trips per unit of work (ADR-0013).
 if [ "$mode" = ww3-gpu ] && [ "$device" = gpu ] && [ -z "$kokkos" ] && [ -z "${WW3GPU_ROUTINES:-}" ]; then
@@ -309,6 +330,7 @@ if [ -n "$pre" ]; then
   smoke_in="$pre/cases/ww3_ts1/input" full_in="$pre/cases/bench_small" ww4_in="$pre/cases/ww4"
 else
   smoke_in="$root/WW3/regtests/ww3_ts1/input" full_in="$root/kokkos/tests/fixtures/bench_small"
+  coast_in="$root/kokkos/tests/fixtures/coast"
   ww4_in="$root/kokkos/tests/fixtures/ww4"
 fi
 
@@ -470,6 +492,9 @@ prepare() { # <dir>: copy the case's inputs into <dir> and make their paths loca
     cp "$smoke_in"/* "$d"/
     cp "$d/ww3_grid_ST4_T475.nml" "$d/ww3_grid.nml"   # the setup docs/data's profile used
     sed -i 's#\.\./input/#./#g' "$d"/*.nml "$d"/*.inp
+  elif [ "$case_name" = coast ]; then
+    cp "$coast_in"/* "$d"/
+    bash "$root/scripts/coast_case.sh" "$d" >/dev/null
   else
     cp "$full_in"/* "$d"/
     # The fixture writes no field (stride 0: it was made for timing); write HS every hour, so
@@ -495,6 +520,18 @@ run_model() { # <dir> <0|1>: grid, strt, shel, ounf; prints ww3_shel's wall time
   fi
   [ "$k" = 0 ] || [ -z "$timers" ] || flags+=(WW_KOKKOS_TIMERS=1)
   (cd "$d" && "$bin/ww3_grid" > ww3_grid.out 2>&1) || { tail -20 "$d/ww3_grid.out" >&2; return 1; }
+  # The forcing and the boundary spectra (the coast case), made by the Fortran in every run, so
+  # the two runs of a pair read the same files.
+  local p
+  for p in "$d"/ww3_prnc_*.nml; do
+    [ -f "$p" ] || continue
+    cp "$p" "$d/ww3_prnc.nml"
+    (cd "$d" && env "${unset[@]}" WW_KOKKOS_ALL=0 "$bin/ww3_prnc" > "$(basename "$p" .nml).out" 2>&1) \
+      || { tail -20 "$d/$(basename "$p" .nml).out" >&2; return 1; }
+  done
+  if [ -f "$d/ww3_bounc.nml" ]; then
+    (cd "$d" && env "${unset[@]}" WW_KOKKOS_ALL=0 "$bin/ww3_bounc" > ww3_bounc.out 2>&1) || { tail -20 "$d/ww3_bounc.out" >&2; return 1; }
+  fi
   if [ -f "$d/ww3_strt.inp" ] || [ -f "$d/ww3_strt.nml" ]; then
     (cd "$d" && "$bin/ww3_strt" > ww3_strt.out 2>&1) || { tail -20 "$d/ww3_strt.out" >&2; return 1; }
   fi

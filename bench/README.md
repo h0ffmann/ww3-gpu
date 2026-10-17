@@ -77,6 +77,33 @@ The generator replaced a Python script; its `--size small` output is pinned byte
 byte to that script's captured files by `kokkos/tests/L1_test_bench_case.cpp`, so
 numbers taken before and after the rewrite are comparable.
 
+### The forced case (`coast`)
+
+`smoke` is one point and `full` (`bench_small`) is 500 m of water everywhere with a constant wind and no current, level, ice or boundary input, so
+neither reaches the branches of W3WAVE that forcing switches on. `coast` does:
+`bash scripts/ww3-gpu.sh --ww3-gpu coast --cpu --kokkos resident` (`just coast-ww3-gpu`). Its
+namelists are in [`kokkos/tests/fixtures/coast/`](../kokkos/tests/fixtures/coast/); the depth,
+the mask, the forcing and the boundary spectra are written into the run directory by
+[`scripts/coast_case.sh`](../scripts/coast_case.sh) (awk writes CDL, `ncgen` turns it into
+netCDF), and `ww3-gpu.sh` runs `ww3_prnc` three times and `ww3_bounc` once, with every Kokkos part
+off, before `ww3_shel`, so both runs of a pair read the same forcing files.
+
+| What | In the case | The WW3 path it opens |
+|---|---|---|
+| grid | 80 x 50 Cartesian cells of 5 km, 3 791 sea and 50 boundary points, NK = 24, NTH = 24, 12 hours, `DTMAX` 600 s, `DTXY` 150 s, `DTKTH` 300 s | |
+| bathymetry | a shelf from 100 m to 8 m, a 1 m intertidal strip, an island of nine cells on a shoal | refraction on depth gradients |
+| currents | hourly, `ww3_prnc` as is: a tidal along-shore jet (0.8 m/s), a cross-shelf tide, an eddy round the island | `FLCUR` (`W3UCUR`, `CRT1`/`CRX1`), the current terms of `W3KTP3`, and with `FLCK` on `W3QCK2` |
+| water levels | hourly: a tide of 0.8 m offshore to 1.5 m at the coast | `W3ULEV`, the strip falling dry and wetting again, `FLMAP` and `W3MAP3` |
+| ice | hourly concentration growing from the north-east corner (`IC0`: a cell at `CICEN`, 0.5 by default, `WW3/model/src/w3gridmd.F90:2750`, or more leaves the active sea points, `w3updtmd.F90:1956` at `90631fad`) | `W3UICE`, `MAPSTA` changing during the run |
+| boundary | three JONSWAP spectra on the west edge, Hs 1.5 to 2.9 m, through `ww3_bounc` into `nest.ww3` | `W3IOBC`, `W3UBPT` and the boundary points of `W3XYP3` |
+| wind | homogeneous, 10 m/s from 250° veering to 15 m/s from 220° | |
+
+The output is every hourly field of the case (`HS FP DIR DP T0M1 CUR WLV ICE DPT`) and 5 point
+spectra every 30 min (`out_pnt.ww3`). Whether `FLCK` reaches the answer was checked once, by hand,
+on 2026-10-17: the same `--ww3` case with `RUN%FLCK = F` gave an `hs` up to 0.073 m different
+(`nccmp-tol` FAIL on `hs`, `dir`, `dp`), so a port of `W3QCK2` that went wrong would show in the
+output (v). None of the forcing is a physical study; it is a case that takes those branches.
+
 ---
 
 ## Can the i9 and the 4090 work on the same problem together?

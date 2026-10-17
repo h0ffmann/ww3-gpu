@@ -1,0 +1,50 @@
+! ww3-gpu coast case (scripts/ww3-gpu.sh coast): 80 x 50 Cartesian cells of 5 km, a shelf from
+! 100 m to 8 m against an east coast, an intertidal strip that dries at low water, an island, and
+! boundary input on the west edge. depth.inp and mask.inp are written by scripts/coast_case.sh.
+&SPECTRUM_NML
+  SPECTRUM%XFR   = 1.1
+  SPECTRUM%FREQ1 = 0.04118
+  SPECTRUM%NK    = 24
+  SPECTRUM%NTH   = 24
+/
+&RUN_NML
+  RUN%FLCX  = T
+  RUN%FLCY  = T
+  RUN%FLCTH = T
+  RUN%FLCK  = T
+  RUN%FLSOU = T
+/
+&TIMESTEPS_NML
+  TIMESTEPS%DTMAX = 600.
+  TIMESTEPS%DTXY  = 150.
+  TIMESTEPS%DTKTH = 300.
+  TIMESTEPS%DTMIN = 10.
+/
+&GRID_NML
+  GRID%NAME  = 'WW3GPU COAST 80x50'
+  GRID%NML   = 'namelists.nml'
+  GRID%TYPE  = 'RECT'
+  GRID%COORD = 'CART'
+  GRID%CLOS  = 'NONE'
+  GRID%ZLIM  = -0.10
+  GRID%DMIN  = 0.30
+/
+&RECT_NML
+  RECT%NX  = 80
+  RECT%NY  = 50
+  RECT%SX  = 5000.
+  RECT%SY  = 5000.
+  RECT%SF  = 1.
+  RECT%X0  = 0.
+  RECT%Y0  = 0.
+  RECT%SF0 = 1.
+/
+&DEPTH_NML
+  DEPTH%SF       = -1.
+  DEPTH%FILENAME = 'depth.inp'
+  DEPTH%IDLA     = 1
+/
+&MASK_NML
+  MASK%FILENAME = 'mask.inp'
+  MASK%IDLA     = 1
+/
