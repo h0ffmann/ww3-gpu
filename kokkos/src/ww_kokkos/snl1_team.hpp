@@ -30,6 +30,17 @@
 #include "snl1_config.hpp"
 #include "snl1_tables.hpp"
 
+// GCC 16 at -O3 leaves the bodies of sections 3 and 4 out of line inside the batched W3SRCE
+// kernel: TeamThreadRange then calls a function per spectral bin, which reloads every captured
+// variable through the closure on each call (2026-10-17, profile of that kernel on OpenMP).
+// always_inline puts the body back in the loop; it changes where the code sits, not one floating-
+// point operation (-ffp-contract=off still holds). Device compilers inline these on their own.
+#if defined(__GNUC__) && !defined(__CUDACC__) && !defined(__HIPCC__) && !defined(__SYCL_DEVICE_ONLY__)
+#define WW_SNL1_INLINE_BODY __attribute__((always_inline))
+#else
+#define WW_SNL1_INLINE_BODY
+#endif
+
 namespace ww::snl1 {
 
 /// W3SNL1's working arrays for one point, in team scratch.
@@ -189,7 +200,7 @@ KOKKOS_INLINE_FUNCTION void snl1_team(const TeamMember& team, const Config& c, c
   }
 
   // 3.  Calculate interactions for extended spectrum ---------------- *
-  Kokkos::parallel_for(Kokkos::TeamThreadRange(team, nspecx), [&](const int isp) {
+  Kokkos::parallel_for(Kokkos::TeamThreadRange(team, nspecx), [&](const int isp) WW_SNL1_INLINE_BODY {
     // 3.a Energy at interacting bins
     const Real e00 = ue[isp + nth];
     const Real ep1 = t.awg[0] * ue[t.ip[0][0](isp) + nth] +
@@ -231,7 +242,7 @@ KOKKOS_INLINE_FUNCTION void snl1_team(const TeamMember& team, const Config& c, c
   team.team_barrier();
 
   // 4.  Put source and diagonal term together ----------------------- *
-  Kokkos::parallel_for(Kokkos::TeamThreadRange(team, nspec), [&](const int isp) {
+  Kokkos::parallel_for(Kokkos::TeamThreadRange(team, nspec), [&](const int isp) WW_SNL1_INLINE_BODY {
     s[isp] = con[isp] * (-static_cast<Real>(2) * (sa1[isp + nth] + sa2[isp + nth]) +
                          t.awg[0] * (sa1[t.ic[0][0](isp) + nth] + sa2[t.ic[0][1](isp) + nth]) +
                          t.awg[1] * (sa1[t.ic[1][0](isp) + nth] + sa2[t.ic[1][1](isp) + nth]) +
