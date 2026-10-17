@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Proposed |
+| **Status** | Accepted |
 | **Date** | 2026-10-16 |
 | **Deciders** | Hoffmann |
 | **Written by** | Hoffmann, with an agent |
@@ -67,7 +67,7 @@ Two things follow for which parts are worth routing to a GPU:
 
 ## Decision
 
-When this ADR is accepted, and for each part only once the conditions below hold for it, the
+From its acceptance by the owner on 2026-10-16, and for each part only once the conditions below hold for it, the
 default (part flag unset, `WW_KOKKOS_ALL` unset) becomes on for `SRCE` in a device (CUDA) build,
 and for `SNL1`, `SDS4`, `SIN4`, `SPR4`, `ST4_TABLES` and `SRCE` in a host (OpenMP) build. Every
 other part stays off by default. An explicit
