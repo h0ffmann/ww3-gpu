@@ -14,8 +14,9 @@
 // and unstructured explicit propagation (W3XYP1, W3KTP1, W3XYP2, W3KTP2, W3XYPUG) stay on the
 // Fortran unless their own flag is "1", so WW_KOKKOS_ALL=1 cannot route them to Kokkos. The PR3
 // propagation of the prop3 unit (W3XYP3, W3KTP3, PATCH.md section 11), W3OUTG of the outg unit
-// (PATCH.md section 15) and the partial read of VA before W3IOPE of the pnt unit (section 16) are
-// opt-in the same way until their rows are regtested.
+// (PATCH.md section 15), the partial read of VA before W3IOPE of the pnt unit (section 16) and
+// W3UICE's zeroing of VA repeated on the device by the updv unit (section 17) are opt-in the same
+// way until their rows are regtested.
 //
 // SPDX-License-Identifier: MIT
 
@@ -27,7 +28,8 @@
 namespace {
 constexpr const char* kOptInOnly[] = {"WW_KOKKOS_XYP1", "WW_KOKKOS_KTP1", "WW_KOKKOS_XYP2",
                                       "WW_KOKKOS_KTP2", "WW_KOKKOS_XYPUG", "WW_KOKKOS_XYP3",
-                                      "WW_KOKKOS_KTP3", "WW_KOKKOS_OUTG", "WW_KOKKOS_IOPE"};
+                                      "WW_KOKKOS_KTP3", "WW_KOKKOS_OUTG", "WW_KOKKOS_IOPE",
+                                      "WW_KOKKOS_UPDV"};
 }  // namespace
 
 extern "C" int ww_kokkos_flag(const char* name) {

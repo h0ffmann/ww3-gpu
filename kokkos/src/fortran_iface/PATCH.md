@@ -737,6 +737,7 @@ to `--ww3` (pure NOAA WW3 at `WW3-noaa/`); the NetCDF file against `--ww3` diffe
 | DISTAB | `WW_KOKKOS_DISTAB` | any | `DISTAB` (with `WAVNU2`), run by `W3IOGR('READ')`: the Kokkos tables overwrite the Fortran's in `W3INIT` | `WW_KOKKOS_WAVE_COUNT`, and the count of differing values | measured, CPU: "0 of EWN1, ECG1(0:121), DSIE, N1MAX differ from the Fortran's" and byte-identical output in the smoke 2026-10-16 (v); GPU ⚠ (`tanhf`, `coshf`, `sinhf` from libdevice, `port_report/DISTAB_KOKKOS.md`) |
 | XYP3, KTP3 | `WW_KOKKOS_XYP3`, `_KTP3`, opt-in only (`WW_KOKKOS_ALL` does not set them) | `PR3` `UQ`, a regular or curvilinear grid, no `PDLIB` `MGP` `MGG`; `XYP3` also `SHRD` and not tripole, `KTP3` no `REFRX` | the `DO ISPEC` loop of `W3GATH`, `W3XYP3`, `W3SCAT` and the two `DO ITLOC` loops of `W3KTP3` in `W3WAVE`, one call each (section 11) | `WW_KOKKOS_PROP3_COUNT` | measured, CPU: byte-identical in the full 2026-10-17 with `switch_lab_ompg` and `switch_lab_shrd` (13 824 spectra, 441 792 point calls) (v); 0 calls in the smoke; `W3QCK2`, `FLCUR` and boundary input byte-identical in the coast case 2026-10-17 with `--kokkos resident`, both switches, with and without `WW_KOKKOS_VA_RESIDENT=1` (41 472 spectra, 517 660 point calls) (v); closure never ran ⚠; GPU ⚠ never run |
 | IOPE | `WW_KOKKOS_IOPE`, opt-in only | `SHRD`, no `MPI` | the host read of `VA` before `W3IOPE` in `W3WAVE`: only the columns `W3IOPE` reads come back from the resident `VA` (section 16); `W3IOPE` itself stays Fortran | `WW_KOKKOS_VA_COUNT` (`VA partial ...`) | measured, CPU: smoke, full and coast byte-identical, `out_pnt.ww3` included, 2026-10-17, `switch_lab_ompg` and `switch_lab_shrd`, with and without `WW_KOKKOS_VA_RESIDENT=1` (v); copies bits only, so any backend gives them; GPU ⚠ never run |
+| UPDV | `WW_KOKKOS_UPDV`, opt-in only | `SHRD`, no `MPI`, no `PDLIB`; `IC0` for any column to be zeroed | the host write of `VA` before `W3UICE` in `W3WAVE`: the Fortran `W3UICE` runs on the host `VA` and its `VA(:,JSEA) = 0.` is repeated on the resident `VA` (section 17) | `WW_KOKKOS_VA_COUNT` (`VA device zeroing ...`) | measured, CPU: smoke, full and coast byte-identical 2026-10-17, both lab switches, with and without `WW_KOKKOS_VA_RESIDENT=1`, whose host/device check passed after all 13 coast updates (8 launches, 91 columns) (v); the output alone does not show the kernel (section 17); GPU ⚠ never run |
 
 ## 8. W3WAVE's support routines on `ww3-gpu/kokkos-wave-support`
 
@@ -1482,3 +1483,87 @@ copied the whole `VA` (8.50 MB). Nothing of this ran on a GPU ⚠. `bash scripts
 --ww3-gpu full --gpu --kokkos resident --build-only` compiled the shim and the fork for CUDA; the
 gather kernel never ran on a device ⚠. The regtest matrix did not run ⚠. The preset `--kokkos
 resident` of `scripts/ww3-gpu.sh` now includes `IOPE`.
+
+## 17. `W3UICE`'s write of `VA` on the device, `ww3-gpu/kokkos-pnt`
+
+A second commit on `ww3-gpu/kokkos-pnt` (section 16): `769c44f0`, pushed to h0ffmann/WW3 on
+2026-10-17. Before it, an ice update made `W3WAVE` call `W3KOKKOS_VA_HOST_WRITE`, so `VA` came back
+from the device whole and went out again whole at the next kernel. The ABI is `ww_kokkos` 0.9.0 (two
+entry points added, `SameMajorVersion`); the fork asks for `0.9`.
+
+- **What `W3UICE` does to `VA`** (`w3updtmd.F90:1806-2052` at the pin). Under `W3_IC0` only, one
+  statement form, `VA(:,JSEA) = 0.`: at `:1965`, a sea point whose concentration reaches `FICEN`
+  and whose ice bit was 0 (`:1956`), and at `:2001`, an ice point whose concentration falls below
+  `FICEN` (`:1987`) and whose `MAPST2` without the ice bit is 0 (`:1992`). It reads no `VA`. Without
+  `W3_IC0` it writes no `VA`. That is a per-point operation with no arithmetic, so it is repeated on
+  `d_va` as it stands.
+- **Which columns.** `MAPICE = MOD(MAPST2,2)` and `MAPST2 - MAPICE` on entry (`:1938-1939`),
+  `MAPST2 + MAPICE` on exit (`:2035`), and nothing else in the routine writes `MAPST2`. So the ice
+  bit goes 0 → 1 exactly where `:1956` holds and 1 → 0 exactly where `:1987` holds; the two exclude
+  each other (`ICEI >= FICEN` against `< FICEN`), and `MAPSF` visits each sea cell once. The
+  columns zeroed are the sea points whose bit changed and whose `MAPST2` on exit is odd (`:1965`) or
+  0 (`:2001`). Under `W3_SHRD` `JSEA = ISEA` (`NAPROC = 1`, `w3parall.F90:1236`), and `LOCAL` and
+  `IAPROC .EQ. ISPROC` hold for every point.
+- **The fork** adds the unit file `model/src/w3kokkos_updvmd.F90` (`W3KOKKOS_UPDVMD`).
+  `W3KOKKOS_UPDV_SETUP` sets `KOKKOS_UPDV` from `WW_KOKKOS_UPDV`, opt-in (`kOptInOnly`), refused
+  outside `SHRD` and under `MPI` or `PDLIB`. At the ice site (`w3wavemd.F90:1386-1399` at
+  `769c44f0`) `CALL W3KOKKOS_VA_HOST_WRITE` and `CALL W3UICE ( VA )` become `IF ( KOKKOS_UPDV ) CALL
+  W3KOKKOS_UICE ( VA ) ELSE` those two calls. `W3KOKKOS_UICE` keeps a copy of `MAPST2`, calls
+  `ww_va_host_update`, calls the Fortran `W3UICE ( VA )` unchanged on the host `VA`, lists the
+  columns by the rule above, and calls `ww_va_device_zero_cols`.
+- **The entry points** ([`resident_c.hpp`](resident_c.hpp), [`resident_shim.cpp`](resident_shim.cpp)).
+  `ww_va_host_update` copies nothing. `ww_va_device_zero_cols` stores `0.0f` in every listed column
+  of `d_va` when the state is `DEVICE` or `BOTH`, and does nothing when it is `HOST`; the state is
+  left as it was. The argument: `W3UICE` reads no `VA`, so running it on a stale host copy changes
+  nothing it computes; with `DEVICE` the host columns it zeroed were stale anyway and the device
+  gets the same zeros, so the device stays the newer copy; with `BOTH` both copies get the same zeros
+  and stay equal; with `HOST` the host write is the real one and `d_va` is refreshed whole at the
+  next kernel. `0.` is `+0.0` in both, so the bits agree.
+- **Diagnostic.** Under `WW_KOKKOS_VA_RESIDENT=1`, `ww_va_host_update` is a full host read (the
+  two copies equal, state `BOTH`), and after the kernel `ww_va_device_zero_cols` copies `d_va` back
+  into a scratch array and compares every column with the host `VA` (`memcmp`); one column that
+  differs stops the model (`WW_KOKKOS_ERR_KERNEL`, `EXTCDE`). So a column the host zeroed and the
+  list missed, or a wrong kernel, cannot pass silently. The negative control: with the kernel's
+  launch skipped, the diagnostic coast run without water levels (below) stopped at the first ice update that zeroed a
+  column ("1 columns of VA differ"), 2026-10-17 (v).
+- **Why the output alone does not show the kernel.** With the launch skipped and no diagnostic, the
+  coast case was still byte-identical, `out_grd.ww3`, `out_pnt.ww3` and hourly restarts included,
+  with and without water levels (v, four throwaway runs). With levels on, `W3ULEV`'s host write right
+  after `W3UICE` makes the host `VA` the newer copy, so the device is refreshed whole; without them,
+  a point that turns to ice becomes inactive (`MAPSTA < 0`, `:1957`) and its stale spectrum seems not
+  to reach any output before it is overwritten (not traced ⚠). So the evidence for the
+  kernel is the check above, not the byte identity.
+- **`W3ULEV` is not covered.** Its writes of `VA` are not a per-point operation of that kind: besides
+  zeroing the new dry and new wet points (`w3updtmd.F90:2395`, `:2419`), it re-interpolates the
+  spectrum of every point whose wavenumber grid moved by `RDKMIN` or more onto the new grid
+  (`:2464-2546`), reading `A(ITH,IK,JSEA)` before it writes, with `A` and `VA` the same array passed
+  twice (`CALL W3ULEV ( VA, VA )`) and the depth, `WN`, `CG`, `MAPSTA` and `MAPST2` it updates on the
+  host deciding which points. Moving that to `d_va` means running the translation
+  (`kokkos/src/ww_kokkos/updt_w3ulev.hpp`, translated, never run) on the device with its inputs,
+  a unit of its own; its site keeps `W3KOKKOS_VA_HOST_WRITE`.
+- **Counters** (`WW_KOKKOS_VA_COUNT=1`): `VA host updates repeated on the device`, `VA device
+  zeroing launches`, `VA device columns zeroed`, `VA zeroing checks run`. **Timer**: `va.zero.cols`.
+- **Memory contract**: phase 2. A device list of the zeroed columns per call. No Unified Memory.
+
+The checkpoint on the CPU, 2026-10-17 (the machine of section 16; never `--gpu`): `bash
+scripts/ww3-gpu.sh --ww3-gpu smoke|full|coast --cpu --kokkos SRCE,XYP3,KTP3,OUTG,IOPE,UPDV` and `...
+smoke ... --kokkos all`, on `switch_lab_ompg` and `WW3GPU_SWITCH=switch_lab_shrd`, each plain and with
+`WW_KOKKOS_VA_RESIDENT=1`: 16 runs, every file cmp-equal as in section 16, `nccmp-tol` PASS, every
+`max|d|` 0 (v). Only the coast case updates ice: 13 calls, 8 launches, 91 columns zeroed, and under
+the diagnostic 13 checks passed, on both switches. Beside the script, the coast case with water levels
+off (`INPUT%FORCING%WATER_LEVELS = 'F'`) and hourly restarts was byte-identical too, restarts
+included, plain and with the diagnostic (v).
+
+`VA` traffic, `WW_KOKKOS_VA_COUNT=1`:
+
+| Run | Before (section 16, `IOPE` on) | With `UPDV` | Why |
+|---|---|---|---|
+| coast | H2D 13, D2H 24; 39 host sync calls | H2D 13, D2H 24; 26 host sync calls | `W3ULEV` runs at the same hours, right after `W3UICE`, and its host write makes the copies that `W3UICE`'s made before |
+| coast, `WW_KOKKOS_VA_RESIDENT=1` | H2D 27, D2H 39 | H2D 14, D2H 39 | |
+| coast without water levels (diagnostic) | H2D 13, D2H 24; 38 host sync calls | H2D 1, D2H 12; 25 host sync calls | no host write of `VA` left in the step |
+| smoke, full | unchanged | unchanged | no ice input |
+
+Nothing of this ran on a GPU ⚠. `bash scripts/ww3-gpu.sh --ww3-gpu full --gpu --kokkos resident
+--build-only` compiled the shim and the fork for CUDA; the zeroing kernel never ran on a device ⚠.
+The regtest matrix did not run ⚠. The preset `--kokkos resident` of `scripts/ww3-gpu.sh` now
+includes `UPDV`.
