@@ -307,10 +307,13 @@ The owner, 14 October 2026: "never run --ww3-gpu --gpu without supervision, only
 be regtested pair to pair to existing ww3 src."
 
 - **Never run `--ww3-gpu --gpu` without the owner supervising that run.** That is
-  `scripts/ww3-gpu.sh --ww3-gpu <case> --gpu`, `just smoke-ww3-gpu gpu` and `just full-ww3-gpu gpu`.
-  `ww3-gpu.sh` asks for a "yes" typed at a terminal and exits 7 without one. Never work around it:
-  no faked terminal, no `WW3GPU_IN_SHELL`, no piped answer. `--build-only` compiles for the GPU
-  without running it and is allowed.
+  `scripts/ww3-gpu.sh --ww3-gpu <case> --gpu`, `just smoke-ww3-gpu gpu`, `just full-ww3-gpu gpu`,
+  `just perf-ww3-gpu`, `just ww3-gpu-matrix-cuda` (the regtest matrix on Kokkos' CUDA backend) and
+  their Docker forms (`just dsmoke-ww3-gpu gpu`, `just dfull-ww3-gpu gpu`, `just dperf-ww3-gpu`).
+  `ww3-gpu.sh` and `scripts/gpu_supervised.sh` ask for a "yes" typed at a terminal and exit 7
+  without one. Never work around it: no faked terminal, no `WW3GPU_IN_SHELL`, no
+  `WW3GPU_GPU_CONFIRMED` (which the CUDA matrix's `setup:kokkos` and entries require), no piped
+  answer. `--build-only` compiles for the GPU without running it and is allowed.
 - **The agents' regtest is `--ww3-gpu --cpu`** (the default; Kokkos on OpenMP). Its Kokkos run is
   compared pair to pair with `--ww3`, WW3 from the existing source built without the KOKKOS
   switch, by `nccmp-tol`, after the comparison with the Fortran DIA of the same executable. Run

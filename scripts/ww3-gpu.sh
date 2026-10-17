@@ -6,6 +6,8 @@
 # either model's source:
 #
 #   --ww3    WW3 as NOAA writes it, built from WW3-noaa/: the lab switch, the Fortran W3SNL1.
+# Both modes build the lab switch with OpenMP, switches/switch_lab_ompg, so every comparison with
+# pure WW3 is OpenMP against OpenMP; WW3GPU_SWITCH=switch_lab_shrd builds the serial lab switch.
 #   --ww3-gpu   WW3 from the fork, built with the KOKKOS switch and linked to this repository's Kokkos port
 #            (kokkos/, installed as the ww_kokkos package); the routines of WW3GPU_ROUTINES run on
 #            the Kokkos backend.
@@ -22,9 +24,12 @@
 # Hard rule (AGENTS.md): --ww3-gpu --gpu runs only under a human's supervision. It asks for a
 # confirmation typed at a terminal and refuses without one (exit 7); --build-only compiles for
 # the GPU without running and needs none. --ww3-gpu --cpu is the agents' regtest: its Kokkos run is
-# compared pair to pair with --ww3, pure NOAA WW3 at the fork's base. Before it builds --ww3, the
-# script checks that the fork differs from WW3-noaa/ only in the files of the KOKKOS patch
-# (kokkos_patch below) and exits 3 when it does not.
+# compared pair to pair with --ww3, pure NOAA WW3 at the fork's base; --ww3-gpu --gpu runs --ww3 on
+# the CPU too and ends with the three ww3_shel wall times (--ww3, the Kokkos run, the Fortran run
+# of the same executable) and their ratio, one run each; --repeat N then runs --ww3 and the Kokkos
+# case N times each, alternated, checks every output against run 1's and prints the medians.
+# Before it builds --ww3, the script checks that the fork differs from WW3-noaa/ only in the files
+# of the KOKKOS patch (kokkos_patch below) and exits 3 when it does not.
 #   add --build-only to build and stop before the run (a machine without the GPU can still compile)
 #   scripts/ww3-gpu.sh --self-test
 #
@@ -83,7 +88,7 @@ tols=()
 
 usage() { sed -n '2,/^set -euo/{/^set -euo/!p}' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 64; }
 
-mode="" case_name="" device="" build_only="" kokkos=""
+mode="" case_name="" device="" build_only="" kokkos="" repeat=1
 # The parts, their counters and the fork files their hunks touch, one file per wiring unit
 # (kokkos/src/fortran_iface/parts.d/<unit>.txt, PATCH.md section 9), so a new unit adds a file and
 # edits nothing here. Lines: "PART <name>", "COUNT <variable>", "FILE <path in the fork>"; # comments.
@@ -121,6 +126,8 @@ while [ $# -gt 0 ]; do
               kokkos="$2"; shift ;;
     --kokkos=*) kokkos="${1#--kokkos=}"
                 [ -n "$kokkos" ] || { echo "ww3-gpu: --kokkos needs all, none, gpu or a list of parts" >&2; exit 64; } ;;
+    --repeat) [ $# -ge 2 ] && [[ "$2" =~ ^[1-9][0-9]?$ ]] || { echo "ww3-gpu: --repeat needs a count, 1 to 99" >&2; exit 64; }
+              repeat="$2"; shift ;;
     --self-test) mode=self-test ;;
     -h|--help) usage ;;
     *) echo "ww3-gpu: unknown argument: $1" >&2; usage ;;
@@ -165,7 +172,8 @@ if [ "$mode" = self-test ]; then
   WW3GPU_ROUTINES=SDS4,BOGUS "${BASH_SOURCE[0]}" --ww3-gpu smoke </dev/null >/dev/null 2>&1 && rc=0 || rc=$?
   [ "$rc" = 64 ] || { echo "ww3-gpu: WW3GPU_ROUTINES=SDS4,BOGUS gave exit $rc, not 64" >&2; exit 1; }
   for bad in "--ww3-gpu smoke --kokkos" "--ww3-gpu smoke --kokkos SNL1,BOGUS" "--ww3-gpu smoke --kokkos all,SNL1" \
-             "--ww3-gpu smoke --kokkos=" "--ww3 smoke --kokkos all"; do
+             "--ww3-gpu smoke --kokkos=" "--ww3 smoke --kokkos all" "--ww3-gpu smoke --repeat 0" \
+             "--ww3-gpu smoke --repeat x" "--ww3-gpu smoke --repeat"; do
     # shellcheck disable=SC2086
     "${BASH_SOURCE[0]}" $bad </dev/null >/dev/null 2>&1 && rc=0 || rc=$?
     [ "$rc" = 64 ] || { echo "ww3-gpu: '$bad' gave exit $rc, not 64" >&2; exit 1; }
@@ -232,6 +240,16 @@ if [ "$device" = gpu ] && [ "$mode" != ww3-gpu ]; then
   exit 64
 fi
 if [ "$device" = gpu ]; then backend=cuda; else backend=openmp; fi
+dev_name=""
+lab_switch="${WW3GPU_SWITCH:-switch_lab_ompg}"
+[[ "$lab_switch" =~ ^switch_lab_[a-z0-9]+$ ]] && [ -f "$root/switches/$lab_switch" ] \
+  || { echo "ww3-gpu: WW3GPU_SWITCH is a switches/switch_lab_* file, not '$lab_switch'" >&2; exit 64; }
+if grep -qw OMPG "$root/switches/$lab_switch"; then
+  base_desc="CPU, OpenMP, ${OMP_NUM_THREADS:-$(nproc)} threads"
+else
+  base_desc="CPU, one thread"
+fi
+if [ "$device" = gpu ]; then dev_name="$(nvidia-smi -L 2>/dev/null | head -1 || true)"; fi
 if [ -n "$pre" ] && [ "$device" = gpu ] && [ ! -d "$pre/ww3-gpu-cuda/bin" ]; then
   echo "ww3-gpu: the prebuilt programs ($pre) are CPU only; the GPU image is docker/Dockerfile.cuda" >&2
   exit 64
@@ -264,7 +282,7 @@ if [ -z "${WW3GPU_IN_SHELL:-}" ] && [ -z "$pre" ]; then
   shell="ww3"; [ "$mode" = ww3-gpu ] && [ "$backend" = cuda ] && shell="cuda"
   exec env WW3GPU_IN_SHELL=1 \
     nix develop "$pratico#$shell" --command bash "${BASH_SOURCE[0]}" "--$mode" "$case_name" "--$device" $build_only \
-    ${kokkos:+--kokkos "$kokkos"}
+    ${kokkos:+--kokkos "$kokkos"} --repeat "$repeat"
 fi
 
 runs="${WW3GPU_RUNS:-$root/build/runs}"
@@ -402,7 +420,7 @@ else
     [ -d "$bdir/ww3" ] && [[ "$bdir/ww3" == "$root/build/"* ]] && rm -rf -- "$bdir/ww3"
     printf '%s\n' "$ww3" > "$bdir/source"
   fi
-  switch_now="$(cat "$root/switches/switch_lab_shrd")"
+  switch_now="$(cat "$root/switches/$lab_switch")"
   [ "$mode" = ww3-gpu ] && switch_now="$switch_now KOKKOS"
   # A changed switch needs a fresh configure: WW3 bakes it into the preprocessed sources.
   if [ ! -f "$switch_file" ] || [ "$(cat "$switch_file")" != "$switch_now" ]; then
@@ -474,6 +492,7 @@ if [ "$mode" = ww3 ]; then
   [[ "$d" == "$runs/"* ]] && rm -rf -- "$d"
   prepare "$d"
   wall="$(run_model "$d" 0)"
+  echo "$wall" > "$d/ww3_shel.wall"
   echo ">> --ww3 $case_name: ww3_shel finished in ${wall} s; output: $(cd "$d" && ls ww3.*.nc)"
   exit 0
 fi
@@ -508,12 +527,42 @@ echo ">> --ww3-gpu $case_name ($backend): ww3_shel ${w0} s with the Fortran, ${w
 if cmp -s "$d0/$nc0" "$d1/$nc0"; then echo ">> the two outputs are byte-identical"; fi
 echo ">> $kname against the Fortran, same executable:"
 "$nccmp" "$d0/$nc0" "$d1/$nc0" "${tols[@]}"
-# --ww3-gpu --cpu is the agents' regtest: pair to pair with --ww3, pure NOAA WW3 (WW3-noaa/) at
-# the fork's base, without the KOKKOS switch.
-if [ "$device" = cpu ]; then
+# Pair to pair with --ww3, pure NOAA WW3 (WW3-noaa/) at the fork's base, without the KOKKOS
+# switch, on the CPU: the agents' regtest for --cpu, and for --gpu the reference whose wall time
+# the GPU run is set against. A GPU image built before it carried --ww3 has no $pre/ww3.
+if [ -n "$pre" ] && [ ! -x "$pre/ww3/bin/ww3_shel" ]; then
+  echo ">> no --ww3 programs in $pre: rebuild the image (just dbuild-cuda) to compare with pure WW3"
+else
   bash "${BASH_SOURCE[0]}" --ww3 "$case_name" --cpu
   ref="$runs/ww3-$case_name/$nc0"
   [ -f "$ref" ] || { echo "ww3-gpu: the --ww3 run wrote no $nc0" >&2; exit 1; }
   echo ">> $kname against --ww3 (pure NOAA WW3, WW3-noaa/), pair to pair:"
   "$nccmp" "$ref" "$d1/$nc0" "${tols[@]}"
+  # One run each, so a check that the pieces work, not a benchmark: a timing for a table is the
+  # median of three runs after this parity passes (bench/README.md).
+  w3="$(cat "$runs/ww3-$case_name/ww3_shel.wall")"
+  echo ">> ww3_shel wall time, $case_name, one run each: --ww3 ${w3} s ($base_desc); --ww3-gpu ($backend) ${w1} s with $kname, ${w0} s with the Fortran"
+  awk -v a="$w3" -v b="$w1" -v c="$backend" -v t="$base_desc" 'BEGIN { if (b > 0) printf ">> --ww3 (%s) / --ww3-gpu (%s): %.2fx (above 1: the Kokkos run is faster; NOAA runs WW3 on many cores under MPI)\n", t, c, a / b }'
+  # --repeat N: after the parity above, N runs of each, alternated so a drift of the machine hits
+  # both, every output byte-identical to run 1's, and the medians (bench/README.md: a timing for a
+  # table is the median of three runs after a passed regtest replay on the same commit).
+  if [ "$repeat" -gt 1 ]; then
+    cp "$ref" "$runs/ww3-gpu-$case_name-$backend/ww3-ref.nc"
+    w1s=("$w1") w3s=("$w3")
+    for i in $(seq 2 "$repeat"); do
+      bash "${BASH_SOURCE[0]}" --ww3 "$case_name" --cpu >/dev/null
+      cmp -s "$runs/ww3-gpu-$case_name-$backend/ww3-ref.nc" "$ref" \
+        || { echo "ww3-gpu: --ww3 run $i wrote a different $nc0 from run 1" >&2; exit 1; }
+      w3s+=("$(cat "$runs/ww3-$case_name/ww3_shel.wall")")
+      di="$runs/ww3-gpu-$case_name-$backend/kokkos-$i"
+      prepare "$di"
+      w1s+=("$(run_model "$di" 1)")
+      cmp -s "$d1/$nc0" "$di/$nc0" || { echo "ww3-gpu: Kokkos run $i wrote a different $nc0 from run 1" >&2; exit 1; }
+    done
+    median() { printf '%s\n' "$@" | sort -g | awk '{ a[NR] = $1 } END { if (NR % 2) print a[(NR + 1) / 2]; else printf "%.2f\n", (a[NR / 2] + a[NR / 2 + 1]) / 2 }'; }
+    m3="$(median "${w3s[@]}")" m1="$(median "${w1s[@]}")"
+    echo ">> $repeat runs each, every output byte-identical to run 1's: --ww3 ${w3s[*]} s, median ${m3} s; --ww3-gpu ($backend, $kname) ${w1s[*]} s, median ${m1} s"
+    awk -v a="$m3" -v b="$m1" -v c="$backend" -v t="$base_desc" 'BEGIN { if (b > 0) printf ">> median --ww3 (%s) / median --ww3-gpu (%s): %.2fx (above 1: the Kokkos run is faster; NOAA runs WW3 on many cores under MPI)\n", t, c, a / b }'
+    echo ">> machine: $(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2- | sed 's/^ //'), $(nproc) threads${dev_name:+; $dev_name}; $lab_switch, OMP_NUM_THREADS=${OMP_NUM_THREADS:-unset, all threads}"
+  fi
 fi

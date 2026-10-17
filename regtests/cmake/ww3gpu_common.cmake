@@ -386,3 +386,13 @@ function(ww3gpu_stage_data out cache st test script)
   endforeach()
   set(${out} ${n} PARENT_SCOPE)
 endfunction()
+
+# A CUDA matrix runs on the GPU, which needs the owner watching (AGENTS.md, "Running on the GPU").
+# `just ww3-gpu-matrix-cuda` asks for a typed "yes" (scripts/gpu_supervised.sh) and sets
+# WW3GPU_GPU_CONFIRMED=1 for its own ctest only; a ctest started any other way stops here, in
+# setup:kokkos and in every entry. Never set it by hand.
+function(ww3gpu_require_gpu_confirmation)
+  if(WW3GPU_BACKEND STREQUAL "cuda" AND NOT "$ENV{WW3GPU_GPU_CONFIRMED}" STREQUAL "1")
+    message(FATAL_ERROR "ww3gpu_matrix: this build runs Kokkos on the GPU; start it with `just ww3-gpu-matrix-cuda`, which asks the supervising human first")
+  endif()
+endfunction()

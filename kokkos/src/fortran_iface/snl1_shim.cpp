@@ -11,10 +11,11 @@
 //    started; an over-eager Kokkos::finalize() here would take down the caller's
 //    runtime.
 //  * Lifetime. Every Kokkos View must be destroyed *before* Kokkos::finalize().
-//    The context is file-static, so its destructor would otherwise run at exit,
-//    long after finalize. A Kokkos::push_finalize_hook() releases it whoever calls
-//    finalize, which makes the shim safe inside a test binary that owns the
-//    runtime.
+//    A Kokkos::push_finalize_hook() releases the contexts whoever calls finalize,
+//    which makes the shim safe inside a test binary that owns the runtime. When the
+//    shim started Kokkos it also finalizes it from atexit, before the CUDA runtime
+//    unloads, and the contexts live in a map that is never destroyed, so no static
+//    destructor can run before or after that finalize.
 //  * Errors. ww::snl1::snl1() throws std::runtime_error when the spectral grid
 //    does not fit in level-0 team scratch. An exception unwinding into Fortran is
 //    undefined behaviour, so nothing may leave this file: every entry point is a
@@ -78,12 +79,13 @@ struct Ctx {
   bool ready = false;
 };
 
-/// One context per grid index. Function-local so its construction order is
-/// defined; release() empties it before Kokkos::finalize(). A std::map, so a
-/// grid added by ww_snl1_init() moves no other grid's context.
+/// One context per grid index. release() empties it before Kokkos::finalize(). A
+/// std::map, so a grid added by ww_snl1_init() moves no other grid's context. Never
+/// destroyed: ww_kokkos_finalize runs from atexit, after the static destructors of
+/// objects built later, so a static map would be gone when its finalize hook clears it.
 std::map<int, Ctx>& contexts() {
-  static std::map<int, Ctx> m;
-  return m;
+  static auto* m = new std::map<int, Ctx>();
+  return *m;
 }
 
 std::atomic<int> g_last_error{WW_KOKKOS_OK};
@@ -206,6 +208,11 @@ int ww_kokkos_init(int comm_f) {
 #endif
       Kokkos::initialize(settings);
       g_we_started_kokkos = true;
+      // No WW3 program calls WW_KOKKOS_FINALIZE, so without this Kokkos is torn down after the
+      // CUDA runtime has unloaded and aborts in cudaSetDevice (cudaErrorCudartUnloading) at
+      // STOP. Registered after Kokkos::initialize, this handler runs before the teardown the
+      // CUDA runtime registered while initializing (exit runs handlers last-in, first-out).
+      std::atexit(ww_kokkos_finalize);
     }
     if (!g_hook_pushed) {
       Kokkos::push_finalize_hook(release_on_finalize);

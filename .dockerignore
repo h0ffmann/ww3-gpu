@@ -5,6 +5,7 @@
 !WW3-noaa/
 !WW4/
 !switches/switch_lab_shrd
+!switches/switch_lab_ompg
 !scripts/ww3-gpu.sh
 !scripts/ww4_parts.py
 !scripts/ww4_status.py

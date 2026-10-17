@@ -13,7 +13,7 @@ cmake .. -DSWITCH=Ifremer2
 
 ## ⚠ Before you trust these
 
-The three files here are *reasonable lab defaults assembled from documentation and
+The files here are *reasonable lab defaults assembled from documentation and
 tutorials*, not files copied out of an upstream tree. **Diff them against the real ones in
 your clone before relying on them:**
 
@@ -32,6 +32,7 @@ start from `$WW3/model/bin/switch_default` or `switch_Ifremer2` and edit one gro
 | File | For |
 |---|---|
 | `switch_lab_shrd` | Serial. Start here. Easiest to debug, fine for the course examples. |
+| `switch_lab_ompg` | `switch_lab_shrd` plus `OMPG` (OpenMP over the sea points and spectral bins of `W3WAVE`, as upstream's `SHRD OMPG` regtest switches). What `scripts/ww3-gpu.sh` builds `--ww3` and `--ww3-gpu` with, so every comparison with pure WW3 is OpenMP against OpenMP; `WW3GPU_SWITCH=switch_lab_shrd` builds the serial one. |
 | `switch_lab_mpi`  | `DIST MPI`: distributed memory. Use once examples work; run with `mpirun -np N ./ww3_shel`. |
 | `switch_lab_st6`  | Same as MPI but swaps the source-term package to `ST6` (observation-based) so you can A/B it against `ST4`. |
 

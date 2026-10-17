@@ -121,6 +121,29 @@ ww3-gpu-matrix jobs="8" selection="serial" *ctest_args:
       -DWW3GPU_OMP_NESTED="${WW3GPU_OMP_NESTED:-OFF}" >/dev/null
     WW3GPU_COMMAND="${WW3GPU_ROUTINES:+WW3GPU_ROUTINES=$WW3GPU_ROUTINES }${WW3GPU_OMP_NESTED:+WW3GPU_OMP_NESTED=$WW3GPU_OMP_NESTED }just ww3-gpu-matrix $*" {{ww3_shell}} ctest --test-dir "$b" -j "$jobs" --output-on-failure "${rest[@]}"
 
+# WW3's regtest matrix with the Kokkos runs on Kokkos' CUDA backend (WFIP-0003, WW3GPU_BACKEND=cuda):
+# per entry, the Fortran and the CUDA Kokkos of one executable built with nvcc_wrapper, test.comp
+# and nccmp-tol, in build/ww3-gpu-matrix-cuda-<selection>. It runs on the GPU, so it asks the
+# supervising human for "yes" first (scripts/gpu_supervised.sh, AGENTS.md). WW3GPU_ROUTINES as
+# ww3-gpu-matrix (SNL1 by default); jobs share the one GPU.
+ww3-gpu-matrix-cuda jobs="2" selection="serial" *ctest_args:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    jobs="$1" sel="$2"
+    [[ "$jobs" =~ ^[1-9][0-9]*$ ]] || { echo "ww3-gpu-matrix-cuda: jobs is a positive integer, not '$jobs'" >&2; exit 64; }
+    [[ "$sel" =~ ^(serial|omp|mpi|all)$ ]] || { echo "ww3-gpu-matrix-cuda: serial, omp, mpi or all, not '$sel'" >&2; exit 64; }
+    bash scripts/gpu_supervised.sh "just ww3-gpu-matrix-cuda $jobs $sel"
+    t=$(( $(nproc --all) / jobs )); t=${WW3GPU_OMP_THREADS:-$(( t > 0 ? t : 1 ))}
+    data=$(nix build --no-link --print-out-paths "{{pratico}}#ww3-regtest-data")
+    routines="${WW3GPU_ROUTINES:-SNL1}"; routines="${routines//[ ,]/;}"
+    b="{{ww3gpu_build}}cuda-$sel"; [ "$routines" = SNL1 ] || b="$b-${routines//;/-}"
+    cuda=(nix develop "{{pratico}}#cuda" --command)
+    "${cuda[@]}" cmake -S regtests -B "$b" -DWW3GPU_BACKEND=cuda -DWW3GPU_SELECTION="$sel" \
+      -DWW3GPU_OMP_THREADS="$t" -DWW3GPU_MPI_RANKS="${WW3GPU_MPI_RANKS:-4}" -DWW3GPU_DATA="$data" \
+      -DWW3GPU_ROUTINES="$routines" -DWW3GPU_OMP_NESTED="${WW3GPU_OMP_NESTED:-OFF}" >/dev/null
+    WW3GPU_COMMAND="${WW3GPU_ROUTINES:+WW3GPU_ROUTINES=$WW3GPU_ROUTINES }just ww3-gpu-matrix-cuda $jobs $sel" \
+      WW3GPU_GPU_CONFIRMED=1 "${cuda[@]}" ctest --test-dir "$b" -j "$jobs" --output-on-failure "${@:3}"
+
 # The entries of a selection, as CTest test names (NNN:<test>:<switch>), without running them.
 ww3-gpu-matrix-list selection="serial":
     #!/usr/bin/env bash
@@ -169,6 +192,15 @@ dbuild-cuda tag="local":
 drun-cuda *args:
     bash scripts/docker.sh run-cuda {{args}}
 
+# NOAA's WW3 (--ww3, the Fortran on the CPU) against --ww3-gpu on CUDA (--kokkos gpu: W3SRCE on
+# Kokkos, the rest of WW3 in Fortran): parity first, then <runs> runs of each and their medians.
+# Asks the supervising human for "yes" (AGENTS.md). `dperf-ww3-gpu` is the same in the GPU image.
+perf-ww3-gpu case="full" runs="3":
+    bash scripts/ww3-gpu.sh --ww3-gpu "$1" --gpu --repeat "$2"
+
+dperf-ww3-gpu case="full" runs="3":
+    bash scripts/docker.sh run-cuda --ww3-gpu "$1" --gpu --repeat "$2"
+
 # `just smoke-ww3-gpu gpu` in the GPU image; asks the supervising human for "yes" (AGENTS.md)
 dsmoke-ww3-gpu-cuda:
     bash scripts/docker.sh run-cuda --ww3-gpu smoke --gpu
@@ -184,17 +216,18 @@ dsmoke: dsmoke-ww3 dsmoke-ww3-gpu
 dsmoke-ww3:
     bash scripts/docker.sh run --ww3 smoke
 
-# `just smoke-ww3-gpu` in the image (CPU only: the image has no CUDA build).
-dsmoke-ww3-gpu:
-    bash scripts/docker.sh run --ww3-gpu smoke
+# `just smoke-ww3-gpu [gpu]` in an image: the CPU image, or with `gpu` the GPU image
+# (just dbuild-cuda), which asks the supervising human for "yes" (AGENTS.md).
+dsmoke-ww3-gpu device="cpu":
+    {{ if device == "gpu" { "bash scripts/docker.sh run-cuda --ww3-gpu smoke --gpu" } else if device == "cpu" { "bash scripts/docker.sh run --ww3-gpu smoke" } else { error("dsmoke-ww3-gpu: cpu or gpu") } }}
 
 # `just full-ww3` in the image.
 dfull-ww3:
     bash scripts/docker.sh run --ww3 full
 
-# `just full-ww3-gpu` in the image (CPU only).
-dfull-ww3-gpu:
-    bash scripts/docker.sh run --ww3-gpu full
+# `just full-ww3-gpu [gpu]` in an image, as dsmoke-ww3-gpu.
+dfull-ww3-gpu device="cpu":
+    {{ if device == "gpu" { "bash scripts/docker.sh run-cuda --ww3-gpu full --gpu" } else if device == "cpu" { "bash scripts/docker.sh run --ww3-gpu full" } else { error("dfull-ww3-gpu: cpu or gpu") } }}
 
 # `just smoke-ww4` in the image; exit 5 while a part the case needs is not ported.
 dsmoke-ww4:

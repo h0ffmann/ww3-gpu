@@ -32,6 +32,10 @@
 #   WW3GPU_MPI_RANKS    matrix.base's $np and $nr on an MPI line (-p $mpi, mpirun)
 #   The PDLIB entries build against SCOTCH_PATH and METIS_PATH, which the pratico ww3 shell
 #   exports (PT-Scotch static, METIS + ParMETIS); ctest runs in that shell.
+#   WW3GPU_BACKEND      the Kokkos backend of every entry's build: openmp (the default, the agents'
+#                     regtest) or cuda (the kokkos/ cuda-release preset, WW3 built with nvcc_wrapper),
+#                     which runs on the GPU and so only under the owner's supervision
+#                     (`just ww3-gpu-matrix-cuda`, AGENTS.md "Running on the GPU")
 #   WW3GPU_OMP_NESTED   export OMP_MAX_ACTIVE_LEVELS=2 for both runs of an entry (default OFF). Kokkos
 #                     5.2.0's OpenMP backend aborts when the shim is called inside W3WAVE's
 #                     !$OMP PARALLEL region with the limit at 1 ("Nested parallelism requires the
@@ -40,8 +44,9 @@
 #
 # Tests: setup:kokkos and setup:stage (FIXTURES_SETUP ww3-gpu), NNN:<test>:<switch> per entry
 # (LABELS entry and the selection), record:summary (FIXTURES_CLEANUP ww3-gpu: <build>/summary.tsv),
-# selection:count (the number of entries the pin is expected to give). CPU only: there is no GPU
-# path here, GPU runs are the owner's (AGENTS.md, "Running on the GPU").
+# selection:count (the number of entries the pin is expected to give). CPU by default; with
+# WW3GPU_BACKEND=cuda the Kokkos runs are on the GPU, which are the owner's (AGENTS.md, "Running on
+# the GPU").
 cmake_minimum_required(VERSION 3.21)
 project(ww3gpu_matrix NONE)
 
@@ -52,6 +57,11 @@ set(WW3GPU_SELECTION serial CACHE STRING "Which matrix.base entries: serial, omp
 set_property(CACHE WW3GPU_SELECTION PROPERTY STRINGS serial omp mpi all)
 set(WW3GPU_ROUTINES SNL1 CACHE STRING "The routines the Kokkos run turns on: a list of WW3GPU_ALL_ROUTINES")
 set(WW3GPU_WW3 "${WW3GPU_ROOT}/WW3" CACHE PATH "The WW3 tree (h0ffmann/WW3, ww3-gpu/kokkos-st4), read-only")
+set(WW3GPU_BACKEND openmp CACHE STRING "The Kokkos backend: openmp or cuda")
+set_property(CACHE WW3GPU_BACKEND PROPERTY STRINGS openmp cuda)
+if(NOT WW3GPU_BACKEND MATCHES "^(openmp|cuda)$")
+  message(FATAL_ERROR "WW3GPU_BACKEND is openmp or cuda, not '${WW3GPU_BACKEND}'")
+endif()
 option(WW3GPU_STRICT "A test.comp difference fails the entry" ON)
 option(WW3GPU_OMP_NESTED "Export OMP_MAX_ACTIVE_LEVELS=2 for both runs of an entry" OFF)
 cmake_host_system_information(RESULT _ncpu QUERY NUMBER_OF_LOGICAL_CORES)
@@ -122,14 +132,14 @@ set(WW3GPU_EXPECTED "${_expected_${_phys}_${WW3GPU_SELECTION}}")
 
 ww3gpu_select_entries(E "${_base}" "${WW3GPU_WW3}/regtests" "${WW3GPU_SELECTION}" "${WW3GPU_PHYSICS}")
 list(LENGTH E_TESTS _count)
-message(STATUS "ww3-gpu-matrix: ${_count} ${WW3GPU_SELECTION} entries of ${_base} with ${WW3GPU_PHYSICS}; Kokkos ${WW3GPU_ROUTINES}")
+message(STATUS "ww3-gpu-matrix: ${_count} ${WW3GPU_SELECTION} entries of ${_base} with ${WW3GPU_PHYSICS}; Kokkos ${WW3GPU_ROUTINES} on ${WW3GPU_BACKEND}")
 
-set(_kbuild "${WW3GPU_ROOT}/kokkos/build/openmp-release")
+set(_kbuild "${WW3GPU_ROOT}/kokkos/build/${WW3GPU_BACKEND}-release")
 set(_config "${CMAKE_CURRENT_BINARY_DIR}/ww3gpu_config.cmake")
 file(WRITE "${_config}" "# written by ${CMAKE_CURRENT_LIST_FILE}; reconfigure to change\n")
 foreach(kv
     "WW3GPU_ROOT;${WW3GPU_ROOT}" "WW3GPU_WW3;${WW3GPU_WW3}" "WW3GPU_DATA;${WW3GPU_DATA}"
-    "WW3GPU_SELECTION;${WW3GPU_SELECTION}" "WW3GPU_ROUTINES;${WW3GPU_ROUTINES}" "WW3GPU_PHYSICS;${WW3GPU_PHYSICS}" "WW3GPU_STRICT;${WW3GPU_STRICT}" "WW3GPU_OMP_NESTED;${WW3GPU_OMP_NESTED}"
+    "WW3GPU_SELECTION;${WW3GPU_SELECTION}" "WW3GPU_BACKEND;${WW3GPU_BACKEND}" "WW3GPU_ROUTINES;${WW3GPU_ROUTINES}" "WW3GPU_PHYSICS;${WW3GPU_PHYSICS}" "WW3GPU_STRICT;${WW3GPU_STRICT}" "WW3GPU_OMP_NESTED;${WW3GPU_OMP_NESTED}"
     "WW3GPU_OMP_THREADS;${WW3GPU_OMP_THREADS}" "WW3GPU_MPI_RANKS;${WW3GPU_MPI_RANKS}" "WW3GPU_EXPECTED;${WW3GPU_EXPECTED}"
     "WW3GPU_OUT;${CMAKE_CURRENT_BINARY_DIR}" "WW3GPU_STAGE;${CMAKE_CURRENT_BINARY_DIR}/regtests"
     "WW3GPU_KBUILD;${_kbuild}" "WW3GPU_KPREFIX;${_kbuild}/install"
