@@ -681,7 +681,10 @@ the master says. Two rules keep the master safe on any switch file: a part whose
 not cover the switch file stays Fortran under `WW_KOKKOS_ALL=1` and stops the model under
 `WW_KOKKOS_<PART>=1` (`KOKKOS_PART` in `w3kokkosmd.F90`); `W3SRCE` does the same outside
 `ST4 NL1` and the lab switch (`W3INIT`, `W3KOKKOS_SRCE_SETUP`). The `*_COUNT` and `*_TABLES`
-rows differ: `*_COUNT` are diagnostics and ignore the master; `*_TABLES` follow it.
+rows differ: `*_COUNT` are diagnostics and ignore the master; `FLX_TABLES` follows it, and
+`ST4_TABLES` is opt-in like the parts of `kOptInOnly` (the owner, 2026-10-17): under
+`WW_KOKKOS_ALL=1` the ST4 shim reads the tables the Fortran built instead of rebuilding them,
+which costs about 8 s per run (coast, commit 4fbffbe) and gives the same values.
 
 `W3INIT` writes one line to `log.ww3` after every set-up, the parts this build can run and where
 each runs (v, smoke 2026-10-16):
@@ -689,6 +692,11 @@ each runs (v, smoke 2026-10-16):
 ```text
   Kokkos parts (K Kokkos, F Fortran): SNL1=K SDS4=K SIN4=K SPR4=K ST4_TABLES=K SRCE=K GATH=K SCAT=K UWND=K UTRN=K DZXY=K MAP3=K MAPT=K DISTAB=K (14 of 14 on Kokkos)
 ```
+
+Since `ST4_TABLES` became opt-in, `--kokkos all` prints `ST4_TABLES=F` there (13 of 14) ⚠ (from
+`part_flags.cpp` and `KOKKOS_PART`; not run); `--kokkos all,ST4_TABLES` is not a form the script
+takes, so the rebuild is asked for with `--kokkos <parts>,ST4_TABLES` or
+`WW_KOKKOS_ST4_TABLES=1`.
 
 `scripts/ww3-gpu.sh --ww3-gpu <case> --kokkos all|none|<PART,...>` runs the Kokkos case with
 `WW_KOKKOS_ALL=1`, `=0`, or `=0` plus the listed parts, unsets every `WW_KOKKOS_<PART>` in both

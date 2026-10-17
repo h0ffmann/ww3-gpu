@@ -16,7 +16,11 @@
 // propagation of the prop3 unit (W3XYP3, W3KTP3, PATCH.md section 11), W3OUTG of the outg unit
 // (PATCH.md section 15), the partial read of VA before W3IOPE of the pnt unit (section 16) and
 // W3UICE's zeroing of VA repeated on the device by the updv unit (section 17) are opt-in the same
-// way until their rows are regtested.
+// way until their rows are regtested. ST4_TABLES is opt-in as well (the owner, 2026-10-17): the
+// C++ rebuild of the ST4 tables gives the Fortran's values ("0 values differ", the
+// ST4_TABLES row of PATCH.md) but costs about 8 s per run (coast, SRCE 18.3-18.6 s against 26.6-26.7 s with ST4_TABLES,
+// commit 4fbffbe), while without it the shim reads the tables the Fortran built, the same bits by
+// construction.
 //
 // SPDX-License-Identifier: MIT
 
@@ -29,7 +33,7 @@ namespace {
 constexpr const char* kOptInOnly[] = {"WW_KOKKOS_XYP1", "WW_KOKKOS_KTP1", "WW_KOKKOS_XYP2",
                                       "WW_KOKKOS_KTP2", "WW_KOKKOS_XYPUG", "WW_KOKKOS_XYP3",
                                       "WW_KOKKOS_KTP3", "WW_KOKKOS_OUTG", "WW_KOKKOS_IOPE",
-                                      "WW_KOKKOS_UPDV"};
+                                      "WW_KOKKOS_UPDV", "WW_KOKKOS_ST4_TABLES"};
 }  // namespace
 
 extern "C" int ww_kokkos_flag(const char* name) {
