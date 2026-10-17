@@ -7,7 +7,8 @@ Read with `git -C WW3 fetch origin && git -C WW3 branch -r` and `git rev-list --
 
 | h0ffmann/WW3 branch | Head | Against the `WW3/` pin | What it wires |
 |---|---|---|---|
-| `ww3-gpu/kokkos-resident` | `513954a6` | the `WW3/` pin of h0ffmann/ww3-gpu `goal/42-srce-resident`; two commits on `ww3-gpu/kokkos-prop3`, pushed 2026-10-17 (v) | the resident spectrum: `VA` synced at W3WAVE's host statements (`W3KOKKOS_RESIDENTMD`) and `W3SRCE` batched on the device copy of `VA` (`ww_srce_batch_va`), the ABI `0.5` ([section 12](#12-the-resident-spectrum-on-ww3-gpukokkos-resident)) |
+| `ww3-gpu/kokkos-prop3dev` | `90631fad` | the `WW3/` pin of h0ffmann/ww3-gpu `goal/42-srce-prop3dev`; one commit on `ww3-gpu/kokkos-resident`, pushed 2026-10-17 (v) | `W3XYP3` and `W3KTP3` batched on the device copy of `VA` (`ww_xyp3_batch_va`, `ww_ktp3_batch_va`), their host syncs only on the Fortran path, the ABI `0.6` ([section 13](#13-the-propagation-on-the-resident-spectrum-ww3-gpukokkos-prop3dev)) |
+| `ww3-gpu/kokkos-resident` | `513954a6` | the parent of `90631fad`, the `WW3/` pin of h0ffmann/ww3-gpu `goal/42-srce-resident`; two commits on `ww3-gpu/kokkos-prop3`, pushed 2026-10-17 (v) | the resident spectrum: `VA` synced at W3WAVE's host statements (`W3KOKKOS_RESIDENTMD`) and `W3SRCE` batched on the device copy of `VA` (`ww_srce_batch_va`), the ABI `0.5` ([section 12](#12-the-resident-spectrum-on-ww3-gpukokkos-resident)) |
 | `ww3-gpu/kokkos-prop3` | `fcdfabef` | the parent of the resident branch, the `WW3/` pin of h0ffmann/ww3-gpu `goal/42-srce-prop3`; one commit on `ww3-gpu/kokkos-srce-batch`, pushed 2026-10-17 (v) | `W3XYP3` for every spectral component and `W3KTP3` for every sea point in one call each, opt-in (`WW_KOKKOS_XYP3`, `WW_KOKKOS_KTP3`, `ww_xyp3_batch`, `ww_ktp3_batch`) ([section 11](#11-the-pr3-propagation-batched-on-ww3-gpukokkos-prop3)) |
 | `ww3-gpu/kokkos-srce-batch` | `caa5da36` | the parent of `fcdfabef`, the `WW3/` pin of h0ffmann/ww3-gpu `goal/42-srce-batch`; one commit on `ww3-gpu/kokkos-wire-base`, pushed 2026-10-17 (v) | `W3SRCE` for every sea point of a time step in one call (`W3KOKKOS_SRCE_BATCH`, `ww_srce_batch`), the ABI `0.4` ([section 10](#10-w3srce-batched-on-ww3-gpukokkos-srce-batch)) |
 | `ww3-gpu/kokkos-wire-base` | `4a94a8f6` | **the pin** since this change; one commit on `ww3-gpu/kokkos-wave-support`, pushed 2026-10-16 | no routine: the part registry, the per-unit module files and the generated `W3KOKKOS_UNITSMD` every wiring unit builds on ([section 9](#9-wiring-units-in-parallel)) |
@@ -32,8 +33,9 @@ What the next plug-ins need from the fork:
   (`WW3-noaa/model/bin/switch_NCEP_st4`), whose branches are not.
 - The fork's `model/src/CMakeLists.txt` already links `ww_kokkos` under `KOKKOS`, and a new shim
   is one more source in this repository's `fortran_iface` target. What has to move with each new
-  set of entry points is the ABI version. `kokkos/CMakeLists.txt` declares `0.5.0` since
-  the resident spectrum (`ww_va_*`, `ww_srce_batch_va`, section 12; `ww_xyp3_batch` and `ww_ktp3_batch` of section 11 came under 0.4.0 unbumped and are covered by 0.5.0 too; `0.4.0` added `ww_srce_batch`, section 10), with `SameMajorVersion` compatibility: an install satisfies a
+  set of entry points is the ABI version. `kokkos/CMakeLists.txt` declares `0.6.0` since
+  the propagation on the resident spectrum (`ww_xyp3_batch_va`, `ww_ktp3_batch_va`, section 13;
+  `ww3-gpu/kokkos-prop3dev` asks for `0.6`), and `0.5.0` came with the resident spectrum (`ww_va_*`, `ww_srce_batch_va`, section 12; `ww_xyp3_batch` and `ww_ktp3_batch` of section 11 came under 0.4.0 unbumped and are covered by 0.5.0 too; `0.4.0` added `ww_srce_batch`, section 10), with `SameMajorVersion` compatibility: an install satisfies a
   `find_package(ww_kokkos 0.x)` up to its own minor, so a fork branch that asks for `0.3` (the
   wiring base `4a94a8f6` and the units built on it) still configures against `0.4.0`, and only a
   branch that calls a new entry point asks for the new minor (`ww3-gpu/kokkos-srce-batch` asks
@@ -1112,3 +1114,119 @@ cross as two `deep_copy` of `VA` and nothing is packed. `bash scripts/ww3-gpu.sh
 --gpu --build-only` compiled every unit for CUDA; nothing ran on the GPU, and whether CUDA gives
 the CPU's bits is not known ⚠. The regtest matrix did not run ⚠. `ww3_multi`, `PDLIB`, `MPI` and
 SMC are not covered (WFIP-0005 §8).
+
+## 13. The propagation on the resident spectrum, `ww3-gpu/kokkos-prop3dev`
+
+One commit on `ww3-gpu/kokkos-resident` (`513954a6`, section 12): `90631fad`, pushed to
+h0ffmann/WW3 on 2026-10-17. It is unit 3b of
+[WFIP-0005](../../../docs/WFIPs/WFIP-0005-device-resident-step.md) as far as this change takes
+it: the batched `W3XYP3` and `W3KTP3` of section 11 read and write the device copy `d_va` of
+section 12, so `VA` no longer crosses for the propagation, and on a device their read-only inputs
+are copied only when their bits change. The ABI is `ww_kokkos` 0.6.0 (entry points added,
+`SameMajorVersion`); the fork asks for `0.6` (`model/src/CMakeLists.txt:36-40`).
+
+- **The entry points** ([`prop3_c.hpp`](prop3_c.hpp), [`prop3_shim.cpp`](prop3_shim.cpp)):
+  `ww_xyp3_batch_va` and `ww_ktp3_batch_va` take `IGRID` first and, in place of `ncol`, `VA`,
+  `SIZE(VA,1)`, `UBOUND(VA,2)` after it, as `ww_srce_batch_va` does. Both run the same checks and
+  the same kernels as `ww_xyp3_batch` and `ww_ktp3_batch`: one template per routine
+  (`xyp3_batch`, `ktp3_batch`) takes the column base of `VA` either from the host array (staged,
+  the old entries) or from `d_va` (`ww::resident::device_va`, which syncs it first and refuses a
+  padded View), and nothing else differs. The per-component and per-point lambdas, their work
+  arrays, the gather through `MAPSF`, the scatter launch and the order of every operation are the
+  ones of section 11, so the arithmetic is unchanged by construction; the index of `VA(ISPEC,JSEA)`
+  is `JSEA*NSPEC + ISPEC-1` in both, since `d_va` is `LayoutLeft` of the Fortran's shape. After a
+  launch the state is `DEVICE`. The `_va` entries refuse a call from inside an OpenMP region (the
+  resident context is not locked; W3WAVE calls both outside one). `ww_xyp3_batch` and
+  `ww_ktp3_batch` stay in the ABI, called by no fork branch at this pin.
+- **`w3kokkos_prop3md.F90`**: `W3KOKKOS_XYP3` and `W3KOKKOS_KTP3` call the `_va` entries with
+  `IGRID` (`W3GDATMD`), `VA`, `SIZE(VA,1)`, `UBOUND(VA,2)` (`:200`, `:208`, `:283` at `90631fad`);
+  what they pack is unchanged.
+- **`w3wavemd.F90`** (line numbers at `90631fad`), each under `#ifdef W3_KOKKOS`, the Fortran
+  `ELSE` path unchanged:
+
+  | Line | Before (section 12) | Now |
+  |---|---|---|
+  | `:1877` | `CALL W3KOKKOS_VA_HOST_WRITE` before `W3KTP3` part 1 | `IF ( .NOT. KOKKOS_KTP3 ) CALL W3KOKKOS_VA_HOST_WRITE` |
+  | `:2029` | the same before the `DO ISPEC` loop | `IF ( .NOT. KOKKOS_XYP3 ) CALL W3KOKKOS_VA_HOST_WRITE` |
+  | `:2151` | (covered by `:2024`) | under `W3_SMC`: `IF ( ARCTC .AND. KOKKOS_XYP3 ) CALL W3KOKKOS_VA_HOST_WRITE` before the SMC Arctic block, which reads and writes `VA(:,JSEA)` on the host |
+  | `:2255` | `CALL W3KOKKOS_VA_HOST_WRITE` before `W3KTP3` part 2 | `IF ( .NOT. KOKKOS_KTP3 ) CALL W3KOKKOS_VA_HOST_WRITE` |
+  | `:1974`, `:2240`, `:2348` | none | under `W3_DEBUGCOH`: `CALL W3KOKKOS_VA_HOST_READ` before the `ALL_VA_INTEGRAL_PRINT` that follows each part |
+
+  With the part on Fortran the call is the one of section 12, so that path makes the same calls
+  in the same order. With it on Kokkos, no host statement of W3WAVE touches `VA` between the
+  propagation calls and the source-term batch: read in `w3wavemd.F90` from `:1877` to `:2400`, the
+  only other uses of `VA` are the SMC Arctic block, the `W3_DEBUGCOH` integrals, and the `PDLIB`
+  and SMC-grid branches, which `KOKKOS_XYP3` and `KOKKOS_KTP3` exclude (`W3KOKKOS_PROP3_SETUP`
+  takes a regular or curvilinear grid only). `ARCTC` is read from the `PSMC` namelist, false by
+  default (`w3gridmd.F90:2630`, `:2677`), so an `SMC` build could carry it on a grid the Kokkos
+  `W3XYP3` takes; the `:2151` call covers that case. The `W3CFLXY` loop of section 3.6.1
+  (`:1801`) reads `CG`, `CX`, `CY`, never `VA`.
+  `W3_DEBUGCOH` and `W3_SMC` with `KOKKOS` were not compiled ⚠.
+- **Inputs kept on the device** (CUDA only; on Serial and OpenMP the kernels read WW3's arrays in
+  place and nothing is copied). Every read-only argument of both entries keeps a device buffer
+  per argument slot between calls and a host shadow of the bits it last copied; a call compares
+  the host array with the shadow (`memcmp`) and copies only when the length or a byte differs.
+  The comparison is the guarantee, so a writer missed below cannot leave stale bits on the device;
+  the list says how often each input should cross (read in the fork at `90631fad`):
+  - written once, before the first step, so they cross once per run: `MAPSF`
+    (`w3gridmd.F90:5182-5184`, `w3iogrmd.F90:1073`), `CLATS` (`w3gridmd.F90:5031-5035`,
+    `:5193`), `SIG`, `DSIP` (`w3gridmd.F90:1320`), `ECOS`, `ESIN`, `EC2`, `ESC`, `ES2`
+    (`w3gridmd.F90:1278-1307`), `MAPWN` (`w3gridmd.F90:5307`), `DPDX`, `DPDY`, `DQDX`, `DQDY`,
+    `GSQRT` (grid geometry of `W3GDATMD`, read by `W3IOGR`): `ww3_grid` writes them and `W3INIT`
+    reads them back; W3WAVE has no statement that writes them;
+  - the maps, rewritten only in W3WAVE section 3.5 when `FLMAP` is set (`w3wavemd.F90:1499-1548`;
+    `FLMAP` is true at the first step, `:755`, and after an ice or level update, `:1394`, `:1425`,
+    `:1451`, `:1485`): `MAPX2`, `MAPY2`, `MAPAXY`, `MAPCXY`, `MAPTH2`, `MAPWN2` and the counts
+    `NMX0`..`NCENT` (`W3MAP3`, `w3pro3md.F90:139-526`), `MAPTRN` (`W3MAPT`, `:527`, `:615`),
+    `ATRNX`, `ATRNY` (`W3UTRN`, `w3updtmd.F90:2809`, `:2917-2949`);
+  - the fields the host updates: `CG`, `WN` and `MAPSTA` (`W3ULEV`, after a level change), `CX`,
+    `CY` (`W3UCUR`), `BBPI0`, `BBPIN` (`W3UBPT`), and the packets the Fortran wrappers fill per
+    call (`ON`, `MTRN`, the point list and `PSCAL` of `W3KOKKOS_KTP3`), which cross when they
+    change.
+
+  `CFLTHMAX` and `CFLKMAX` are written by the kernel and still go in and out at every call on a
+  device (`NSEALM` floats each). The counters `W3XYP3 device input copies`, `W3XYP3 device inputs
+  unchanged, not copied` and the two of `W3KTP3` (`WW_KOKKOS_PROP3_COUNT=1`) count both; they
+  read 0 on the CPU. Nothing of this ran on a GPU ⚠.
+- **Memory contract**: phase 2. `VA` stays on the device from the first device call to the next
+  host read; the read-only inputs are device buffers kept for the run, refreshed by content. No
+  Unified Memory.
+- **Without `KOKKOS`**, no hunk is compiled: `cpp -traditional-cpp -P` with the `-DW3_<switch>`
+  of `switch_lab_shrd` and of `switch_lab_ompg`, blank lines dropped, gives the same text for
+  `w3wavemd.F90`, `w3initmd.F90` and `w3srcemd.F90` of the fork at `90631fad` and of `WW3-noaa/`
+  (v, 2026-10-17).
+
+The checkpoint on the CPU, 2026-10-17 (OpenMP backend, Kokkos 5.2.2, gfortran/g++ 16.2.0, an
+Intel Core i9-14900 with 32 threads, shared with other sessions; never `--gpu`). Every run below
+gave `out_grd.ww3` and the NetCDF field (and in the smoke `out_pnt.ww3`, `restart.ww3`)
+`cmp`-equal to the Fortran of the same executable, `out_grd.ww3` (and `out_pnt.ww3`,
+`restart.ww3`) `cmp`-equal to `--ww3`, whose NetCDF differs only in `WAVEWATCH_III_switches`, and
+`nccmp-tol` PASS both (v): `bash scripts/ww3-gpu.sh --ww3-gpu full --cpu --kokkos XYP3,KTP3,SRCE`
+and `... smoke --cpu --kokkos XYP3,KTP3,SRCE` and `... smoke --cpu --kokkos all`, on
+`switch_lab_ompg` and `WW3GPU_SWITCH=switch_lab_shrd`, each with and without
+`WW_KOKKOS_VA_RESIDENT=1`; and full `--kokkos SRCE`, `KTP3,SRCE` and `XYP3,SRCE` with
+`WW_KOKKOS_VA_RESIDENT=1` on `switch_lab_ompg`, the paths where one propagation part stays on the
+Fortran and its sync runs. Traffic of `VA` per run (`WW_KOKKOS_VA_COUNT=1`, both switches give
+the same counts):
+
+| Run | Section 12 (`513954a6`) | This section (`90631fad`) | This section, `WW_KOKKOS_VA_RESIDENT=1` |
+|---|---|---|---|
+| full, `--kokkos XYP3,KTP3,SRCE` | H2D 25, D2H 25 (530.21 MB each way); host reads 14, writes 72 | H2D 1 (21.21 MB), D2H 13 (275.71 MB); reads 14, writes 0, device syncs 97 | H2D 1, D2H 14 |
+| full, `--kokkos SRCE` (propagation on the Fortran) | H2D 25, D2H 25 | not run without the flag | H2D 73, D2H 86, as in section 12 |
+| full, `--kokkos KTP3,SRCE` | | | H2D 25, D2H 38; writes 24 (the `W3XYP3` site) |
+| full, `--kokkos XYP3,SRCE` | | | H2D 49, D2H 62; writes 48 (the two `W3KTP3` sites) |
+| smoke, `XYP3,KTP3,SRCE` or `all` | H2D 1, D2H 2 161 | the same (one point: neither part is called) | H2D 1, D2H 2 166 |
+
+In the full case the 13 D2H are the host reads of the output block (`:2650`) at the 12 output
+times that follow a device write and the one at the return of `W3WAVE` (`:3099`); no step copies
+`VA` otherwise, the target of the unit. The `W3XYP3` (13 824 spectra, 24 calls) and `W3KTP3`
+(441 792 point calls, 48 calls) counters are unchanged, all on the resident `VA`
+(`... batched calls on the resident VA: 24` and `48`). `--timers`, one fenced run each (not a
+timing): `va.h2d` 25 calls 0.027 s and `va.d2h` 25 calls 0.028 s before, 1 call 0.001 s and 13
+calls 0.014 s after; on the OpenMP backend `d_va` is host memory, so the copies saved are about
+0.04 s of an 18 to 23 s run, and the gain this unit exists for is on a device ⚠ (never run). The
+timing after the change, `--repeat 3`, is in the port reports of `W3XYP3` and `W3KTP3`.
+`bash scripts/ww3-gpu.sh --ww3-gpu full --gpu --kokkos XYP3,KTP3,SRCE --build-only` compiled the
+shim and the fork for CUDA with no warning from `prop3_shim.cpp`; nothing ran on the GPU, and
+whether CUDA gives the CPU's bits is not known ⚠. The regtest matrix did not run ⚠. Not covered:
+`ww3_multi`, `PDLIB`, `MPI`, SMC; `W3_SMC` and `W3_DEBUGCOH` with `KOKKOS` were not compiled ⚠.

@@ -23,20 +23,30 @@
 //    NTIMES calls run back to back in one work item, the same sequence of calls on the same
 //    VA(:,JSEA) as the Fortran's sub-step loop, and the CFL maxima are the last call's.
 //
-// Memory contract, phase 1 residency: on a backend whose execution space can read host memory
-// (Serial, OpenMP) the kernels read and write WW3's arrays in place, with no copy; on a device
-// (CUDA) every input is copied to a device buffer per call, VA (and the CFL arrays) are copied in
-// and out whole, and nothing stays on the device between calls. No Unified Memory. Work buffers
-// are kept between calls and grown on demand, at most WW_KOKKOS_PROP3_BATCH_MIB MiB each
-// (default 1024); a step with more components or points than fit runs in several launches.
+// Memory contract. ww_xyp3_batch and ww_ktp3_batch are phase 1: on a backend whose execution
+// space can read host memory (Serial, OpenMP) the kernels read and write WW3's arrays in place,
+// with no copy; on a device (CUDA) VA and the CFL arrays are copied in and out whole per call.
+// ww_xyp3_batch_va and ww_ktp3_batch_va (WFIP-0005 unit 3b) read and write the resident VA of the
+// grid instead (ww::resident::device_va, resident_state.hpp), so VA does not cross for the
+// propagation on any backend. On a device every read-only input keeps its buffer between calls
+// and is copied again only when its bits differ from those of the last copy (a host shadow,
+// compared with memcmp): the grid tables, which W3WAVE never writes, cross once per run, and the
+// maps, CG, WN, CX, CY, MAPSTA and the packed scalars only after W3WAVE rewrote them (PATCH.md
+// section 13 lists the writers). A copy, or its skip, moves bits and computes nothing. No Unified
+// Memory. Work buffers are kept between calls and grown on demand, at most
+// WW_KOKKOS_PROP3_BATCH_MIB MiB each (default 1024); a step with more components or points than
+// fit runs in several launches.
 //
 // WW_KOKKOS_PROP3_COUNT=1 prints, at exit, the calls and the components or point calls each entry
-// point ran: the evidence that a run exercised the port. WW_KOKKOS_TIMERS=1 times the regions
-// xyp3.call/.h2d/.kernel/.d2h and ktp3.call/.h2d/.kernel/.d2h (timers.hpp).
+// point ran (the _va entries counted with their routine, and apart as resident calls), and on a
+// device the input copies made and skipped: the evidence that a run exercised the port.
+// WW_KOKKOS_TIMERS=1 times the regions xyp3.call/.h2d/.kernel/.d2h and ktp3.call/.h2d/.kernel/.d2h
+// (timers.hpp).
 //
 // SPDX-License-Identifier: MIT
 
 #include "fortran_iface/prop3_c.hpp"
+#include "fortran_iface/resident_c.hpp"
 #include "fortran_iface/timers.hpp"
 
 #include <Kokkos_Core.hpp>
@@ -57,6 +67,7 @@
 #include "ww_kokkos/prop_params.hpp"
 #include "ww_kokkos/prop_xyp3.hpp"
 #include "ww_kokkos/real.hpp"
+#include "ww_kokkos/resident_state.hpp"
 
 #if defined(KOKKOS_ENABLE_OPENMP) && defined(KOKKOS_ENABLE_SERIAL) && \
     !defined(KOKKOS_ENABLE_CUDA) && !defined(KOKKOS_ENABLE_HIP) && !defined(KOKKOS_ENABLE_SYCL)
@@ -81,12 +92,19 @@ enum Routine { XYP3, KTP3, NROUTINES };
 const char* const kName[NROUTINES] = {"W3XYP3", "W3KTP3"};
 const char* const kItem[NROUTINES] = {"spectra", "point calls"};
 std::atomic<long long> g_calls[NROUTINES], g_items[NROUTINES], g_launches[NROUTINES];
+std::atomic<long long> g_resident[NROUTINES], g_in_copies[NROUTINES], g_in_same[NROUTINES];
 
 void print_counts() {
   for (int r = 0; r < NROUTINES; ++r) {
     std::fprintf(stderr, "ww_kokkos: %s batched calls: %lld\n", kName[r], g_calls[r].load());
+    std::fprintf(stderr, "ww_kokkos: %s batched calls on the resident VA: %lld\n", kName[r],
+                 g_resident[r].load());
     std::fprintf(stderr, "ww_kokkos: %s batched launches: %lld\n", kName[r], g_launches[r].load());
     std::fprintf(stderr, "ww_kokkos: %s %s: %lld\n", kName[r], kItem[r], g_items[r].load());
+    std::fprintf(stderr, "ww_kokkos: %s device input copies: %lld\n", kName[r],
+                 g_in_copies[r].load());
+    std::fprintf(stderr, "ww_kokkos: %s device inputs unchanged, not copied: %lld\n", kName[r],
+                 g_in_same[r].load());
   }
 }
 
@@ -139,17 +157,29 @@ bool nested_in_openmp() {
 #endif
 }
 
+/// The bits of a read-only input as last copied to the device: its length and a host copy.
+struct Shadow {
+  bool valid = false;
+  size_t n = 0;
+  std::vector<unsigned char> bytes;
+};
+
 /// Buffers kept between calls on one memory space: the work arrays, and on a device the copies
-/// of the inputs (one per argument slot). Emptied by a Kokkos finalize hook, before
-/// Kokkos::finalize; never destroyed (ww_kokkos_finalize runs from atexit, after static
-/// destructors of objects built later).
+/// of the inputs (one per argument slot) with the shadow of each read-only one. Emptied by a
+/// Kokkos finalize hook, before Kokkos::finalize; never destroyed (ww_kokkos_finalize runs from
+/// atexit, after static destructors of objects built later).
 template <class Mem>
 struct Buffers {
   Kokkos::View<Real*, Mem> work_r;
   Kokkos::View<int*, Mem> work_i;
   std::vector<Kokkos::View<Real*, Mem>> in_r;
   std::vector<Kokkos::View<int*, Mem>> in_i;
+  std::vector<Shadow> shadow_r, shadow_i;
 };
+
+/// Argument slots: W3XYP3's from 0, W3KTP3's from kKtp3Slot, so the two never share a buffer
+/// or a shadow.
+constexpr int kKtp3Slot = 32;
 
 template <class Mem>
 Buffers<Mem>& buffers() {
@@ -172,8 +202,9 @@ void grow(V& v, size_t n, const char* name) {
 }
 
 /// Where the kernels of execution space E find caller array p of n elements: p itself when E
-/// can read host memory, else a device buffer filled from p (a bitwise copy). `slot` numbers the
-/// argument, so each keeps its own buffer.
+/// can read host memory, else a device buffer holding p's bits. `slot` numbers the argument, so
+/// each keeps its own buffer. A read-only p (const T) is copied only when its n or its bits
+/// differ from the last copy into that buffer; an inout p is copied at every call.
 template <class E, class T>
 T* stage(const E& e, int slot, T* p, size_t n) {
   using Mem = typename E::memory_space;
@@ -184,18 +215,48 @@ T* stage(const E& e, int slot, T* p, size_t n) {
     return p;
   } else {
     using U = std::remove_const_t<T>;
+    auto& b = buffers<Mem>();
     auto& pool = [&]() -> auto& {
       if constexpr (std::is_same_v<U, Real>)
-        return buffers<Mem>().in_r;
+        return b.in_r;
       else
-        return buffers<Mem>().in_i;
+        return b.in_i;
     }();
-    if (pool.size() <= static_cast<size_t>(slot)) pool.resize(static_cast<size_t>(slot) + 1);
-    auto& v = pool[static_cast<size_t>(slot)];
-    grow(v, std::max<size_t>(n, 1), "ww_prop3.in");
-    if (n > 0)
-      Kokkos::deep_copy(e, Kokkos::subview(v, std::make_pair(size_t{0}, n)),
-                        HostUnmanaged<const U>(p, n));
+    const size_t k = static_cast<size_t>(slot);
+    if (pool.size() <= k) pool.resize(k + 1);
+    auto& v = pool[k];
+    const Routine r = slot >= kKtp3Slot ? KTP3 : XYP3;
+    if constexpr (std::is_const_v<T>) {
+      auto& shadows = [&]() -> auto& {
+        if constexpr (std::is_same_v<U, Real>)
+          return b.shadow_r;
+        else
+          return b.shadow_i;
+      }();
+      if (shadows.size() <= k) shadows.resize(k + 1);
+      Shadow& sh = shadows[k];
+      const size_t nbytes = n * sizeof(U);
+      if (sh.valid && sh.n == n &&
+          (nbytes == 0 || std::memcmp(sh.bytes.data(), p, nbytes) == 0)) {
+        g_in_same[r].fetch_add(1, std::memory_order_relaxed);
+        return v.data();
+      }
+      sh.valid = false;
+      grow(v, std::max<size_t>(n, 1), "ww_prop3.in");
+      if (n > 0)
+        Kokkos::deep_copy(e, Kokkos::subview(v, std::make_pair(size_t{0}, n)),
+                          HostUnmanaged<const U>(p, n));
+      const auto* src = reinterpret_cast<const unsigned char*>(p);
+      sh.bytes.assign(src, src + nbytes);
+      sh.n = n;
+      sh.valid = true;
+    } else {
+      grow(v, std::max<size_t>(n, 1), "ww_prop3.in");
+      if (n > 0)
+        Kokkos::deep_copy(e, Kokkos::subview(v, std::make_pair(size_t{0}, n)),
+                          HostUnmanaged<const U>(p, n));
+    }
+    g_in_copies[r].fetch_add(1, std::memory_order_relaxed);
     return v.data();
   }
 }
@@ -239,6 +300,39 @@ int run(const char* name, const F& f) {
   }
 }
 
+/// run() on the resident VA of grid igrid (WFIP-0005 unit 3b): syncs d_va (one host-to-device
+/// copy when the host holds the newer bits), runs f(E(), fence, d_va.data()) on the default
+/// space, and leaves the state DEVICE. Refused inside an OpenMP region: the resident context is
+/// not locked, and every caller in W3WAVE is outside one.
+template <class F>
+int run_va(const char* name, Routine r, int igrid, float* va, int nspec, int nsealm,
+           const F& f) {
+  try {
+    if (!Kokkos::is_initialized())
+      return fail(WW_KOKKOS_ERR_NOT_INITIALISED, "before ww_kokkos_init");
+    if (nested_in_openmp())
+      return fail(WW_KOKKOS_ERR_UNSUPPORTED, "the resident VA inside an OpenMP region");
+    std::lock_guard<std::mutex> lock(g_mutex);
+    ww::timers::Region t(name);
+    ww::resident::DevVa dva;
+    const int rc = ww::resident::device_va(igrid, va, nspec, nsealm, dva);
+    if (rc != WW_KOKKOS_OK) return fail(rc, "the resident VA refused this call");
+    if (dva.stride(1) != static_cast<size_t>(nspec))
+      return fail(WW_KOKKOS_ERR_BAD_SHAPE, "the resident VA is padded");
+    const int st = f(Kokkos::DefaultExecutionSpace(), true, dva.data());
+    // The launch wrote d_va; on a failure the model stops (PROP3_CHECK), so the state is moot.
+    ww::resident::device_written(igrid);
+    if (st == WW_KOKKOS_OK) g_resident[r].fetch_add(1, std::memory_order_relaxed);
+    return st;
+  } catch (const std::bad_alloc& e) {
+    return fail(WW_KOKKOS_ERR_RUNTIME, e.what());
+  } catch (const std::exception& e) {
+    return fail(WW_KOKKOS_ERR_KERNEL, e.what());
+  } catch (...) {
+    return fail(WW_KOKKOS_ERR_KERNEL, "unknown exception");
+  }
+}
+
 /// How many work items of `per_item` bytes fit the cap; at least one.
 long long chunk_items(long long n, long long per_item) {
   const long long fit = std::max(1LL, cap_bytes() / std::max(1LL, per_item));
@@ -256,6 +350,7 @@ struct Xyp3Args {
   const float *cg, *cx, *cy, *bbpi0, *bbpin;
   int flbpi, nbi, ncol;
   float* va;
+  float* dva;  // the resident VA of the grid in E's memory space, or nullptr: va, staged
 };
 
 template <class E>
@@ -321,8 +416,9 @@ int xyp3_batch(const E& e, bool fence, const Xyp3Args& a) {
   s.dsec_bpi0 = flbpi != 0 ? tscal[1] : Real(0);
   s.dsec_bpin = flbpi != 0 ? tscal[2] : Real(0);
   const int* const msta = stage(e, slot++, a.mapsta, nxy);
-  const int* const lst = stage(e, slot++, list.data(), list.size());
-  float* const vad = stage(e, slot++, va, nspec * static_cast<size_t>(ncol));
+  const int* const lst = stage(e, slot++, static_cast<const int*>(list.data()), list.size());
+  float* const vad =
+      a.dva != nullptr ? a.dva : stage(e, slot++, va, nspec * static_cast<size_t>(ncol));
   t_in.stop();
 
   // Per component: FIELD(1-NY:NY*(NX+2)), then W3XYP3's reals; its ints apart.
@@ -371,7 +467,7 @@ int xyp3_batch(const E& e, bool fence, const Xyp3Args& a) {
   }
 
   ww::timers::Region t_out("xyp3.d2h", fence);
-  unstage(e, va, vad, nspec * static_cast<size_t>(ncol));
+  if (a.dva == nullptr) unstage(e, va, vad, nspec * static_cast<size_t>(ncol));
   e.fence("ww_xyp3_batch");
   t_out.stop();
   count(XYP3, nlist, launches);
@@ -386,6 +482,7 @@ struct Ktp3Args {
   int itstep, ntimes, nsea, npts, ncol;
   float facth, fack;
   float *va, *cflthmax, *cflkmax;
+  float* dva;  // the resident VA of the grid in E's memory space, or nullptr: va, staged
 };
 
 template <class E>
@@ -401,7 +498,7 @@ int ktp3_batch(const E& e, bool fence, const Ktp3Args& a) {
   const size_t ncfl = static_cast<size_t>(ncol) - 1;
 
   ww::timers::Region t_in("ktp3.h2d", fence);
-  int slot = 0;
+  int slot = kKtp3Slot;
   Ktp3Grid g{};
   g.sig = stage(e, slot++, a.sig, nk2);
   g.dsip = stage(e, slot++, a.dsip, nk2);
@@ -419,7 +516,8 @@ int ktp3_batch(const E& e, bool fence, const Ktp3Args& a) {
   const int* const isd = stage(e, slot++, a.isea, static_cast<size_t>(npts));
   const float* const psd =
       stage(e, slot++, a.pscal, static_cast<size_t>(WW_KTP3_NPSCAL) * static_cast<size_t>(npts));
-  float* const vad = stage(e, slot++, a.va, nspec * static_cast<size_t>(ncol));
+  float* const vad =
+      a.dva != nullptr ? a.dva : stage(e, slot++, a.va, nspec * static_cast<size_t>(ncol));
   float* const cthd = stage(e, slot++, a.cflthmax, ncfl);
   float* const ckd = stage(e, slot++, a.cflkmax, ncfl);
   t_in.stop();
@@ -459,13 +557,114 @@ int ktp3_batch(const E& e, bool fence, const Ktp3Args& a) {
   }
 
   ww::timers::Region t_out("ktp3.d2h", fence);
-  unstage(e, a.va, vad, nspec * static_cast<size_t>(ncol));
+  if (a.dva == nullptr) unstage(e, a.va, vad, nspec * static_cast<size_t>(ncol));
   unstage(e, a.cflthmax, cthd, ncfl);
   unstage(e, a.cflkmax, ckd, ncfl);
   e.fence("ww_ktp3_batch");
   t_out.stop();
   count(KTP3, static_cast<long long>(npts) * ntimes, launches);
   return int{WW_KOKKOS_OK};
+}
+
+/// The resident VA an entry point works on: grid, SIZE(VA,1), UBOUND(VA,2).
+struct ResidentVa {
+  int igrid, nspec, nsealm;
+};
+
+// The checks and the call of ww_xyp3_batch and ww_xyp3_batch_va: res == nullptr stages va,
+// else the kernels work on the resident VA of res->igrid (ncol is then NSEALM+1).
+int xyp3_entry(const ResidentVa* res, const float* rpar, int nrpar, const int* ipar, int nipar,
+               const int* imaps, int nimaps, const float* tscal, int ntscal, float dtg,
+               const int* mapsf, const float* clats, const float* sig, const float* ecos,
+               const float* esin, const float* dpdx, const float* dpdy, const float* dqdx,
+               const float* dqdy, const float* gsqrt, const float* atrnx, const float* atrny,
+               const int* mapx2, const int* mapy2, const int* mapaxy, const int* mapcxy,
+               const int* maptrn, const int* mapsta, const float* cg, const float* cx,
+               const float* cy, int flbpi, int nbi, const int* isbpi, const float* bbpi0,
+               const float* bbpin, const int* on, int ncol, float* va) {
+  using namespace ww::prop;
+  if (rpar == nullptr || ipar == nullptr || imaps == nullptr || tscal == nullptr ||
+      nrpar != WW_XYP3_NRPAR || nipar != WW_XYP3_NIPAR || nimaps != WW_XYP3_NIMAPS ||
+      ntscal != WW_XYP3_NTSCAL)
+    return fail(WW_KOKKOS_ERR_BAD_SHAPE, "ww_xyp3_batch: bad packet");
+  const Params p = unpack(rpar, ipar);
+  if (p.nx < 1 || p.ny < 1 || p.nsea < 1 || p.nk < 1 || p.nth < 1 || p.nspec != p.nk * p.nth ||
+      ncol < p.nsea + 1 || nbi < 0 || mapsf == nullptr || clats == nullptr || sig == nullptr ||
+      ecos == nullptr || esin == nullptr || dpdx == nullptr || dpdy == nullptr ||
+      dqdx == nullptr || dqdy == nullptr || gsqrt == nullptr || atrnx == nullptr ||
+      atrny == nullptr || mapx2 == nullptr || mapy2 == nullptr || mapaxy == nullptr ||
+      mapcxy == nullptr || maptrn == nullptr || mapsta == nullptr || cg == nullptr ||
+      cx == nullptr || cy == nullptr || on == nullptr || va == nullptr ||
+      (flbpi != 0 && (isbpi == nullptr || bbpi0 == nullptr || bbpin == nullptr)) ||
+      (res != nullptr && res->nspec != p.nspec))
+    return fail(WW_KOKKOS_ERR_BAD_SHAPE, "ww_xyp3_batch: bad sizes or null pointer");
+  if (p.iclose == kIcloseTrpl)
+    return fail(WW_KOKKOS_ERR_UNSUPPORTED, "ww_xyp3_batch: tripole grid (W3XYP3 stops there)");
+
+  const Xyp3Args args{p,     imaps, tscal, dtg,   mapsf, mapx2, mapy2,  mapaxy, mapcxy, maptrn,
+                      mapsta, isbpi, on,  clats, sig,   ecos,  esin,  dpdx,   dpdy,   dqdx,
+                      dqdy,  gsqrt, atrnx, atrny, cg,    cx,    cy,    bbpi0,  bbpin,  flbpi,
+                      nbi,   ncol,  va,    nullptr};
+  if (res != nullptr)
+    return run_va("xyp3.call", XYP3, res->igrid, va, res->nspec, res->nsealm,
+                  [&](const auto& e, bool fence, float* dva) {
+                    Xyp3Args ar = args;
+                    ar.dva = dva;
+                    return xyp3_batch(e, fence, ar);
+                  });
+  return run("xyp3.call", [&](const auto& e, bool fence) { return xyp3_batch(e, fence, args); });
+}
+
+// The checks and the call of ww_ktp3_batch and ww_ktp3_batch_va, as xyp3_entry.
+int ktp3_entry(const ResidentVa* res, const float* rpar, int nrpar, const int* ipar, int nipar,
+               const float* sig, const float* dsip, const float* ecos, const float* esin,
+               const float* ec2, const float* esc, const float* es2, const int* mapwn,
+               const int* mapth2, const int* mapwn2, int itstep, int ntimes, float facth,
+               float fack, int nsea, const float* cg, const float* wn, int npts, const int* jsea,
+               const int* isea, const float* pscal, int ncol, float* va, float* cflthmax,
+               float* cflkmax) {
+  using namespace ww::prop;
+  if (rpar == nullptr || ipar == nullptr || nrpar != WW_KTP3_NRPAR || nipar != WW_KTP3_NIPAR)
+    return fail(WW_KOKKOS_ERR_BAD_SHAPE, "ww_ktp3_batch: bad packet");
+  Ktp3Params p{};
+  p.dmin = rpar[0];
+  p.ctmax = rpar[1];
+  p.fachfa = rpar[2];
+  p.nk = ipar[0];
+  p.nth = ipar[1];
+  p.nspec = ipar[2];
+  p.nk2 = ipar[3];
+  p.flcth = ipar[4];
+  p.flck = ipar[5];
+  p.flcur = ipar[6];
+  if (p.nk < 1 || p.nth < 1 || p.nspec != p.nk * p.nth || p.nk2 != p.nk + 2 || nsea < 1 ||
+      npts < 0 || npts > nsea || ntimes < 0 || ncol < 2 || sig == nullptr || dsip == nullptr ||
+      ecos == nullptr || esin == nullptr || ec2 == nullptr || esc == nullptr || es2 == nullptr ||
+      mapwn == nullptr || mapth2 == nullptr || mapwn2 == nullptr || cg == nullptr ||
+      wn == nullptr || va == nullptr || cflthmax == nullptr || cflkmax == nullptr ||
+      (npts > 0 && (jsea == nullptr || isea == nullptr || pscal == nullptr)) ||
+      (res != nullptr && res->nspec != p.nspec))
+    return fail(WW_KOKKOS_ERR_BAD_SHAPE, "ww_ktp3_batch: bad sizes or null pointer");
+  for (int j = 0; j < npts; ++j)
+    if (jsea[j] < 1 || jsea[j] >= ncol || isea[j] < 1 || isea[j] > nsea)
+      return fail(WW_KOKKOS_ERR_BAD_SHAPE, "ww_ktp3_batch: a point outside VA or the sea");
+  if (ntimes == 0 || npts == 0) {
+    count(KTP3, 0, 0);
+    return int{WW_KOKKOS_OK};
+  }
+
+  const Ktp3Args args{p,     sig,   dsip,   ecos,   esin,   ec2,    esc,    es2,   cg,
+                      wn,    pscal, mapwn,  mapth2, mapwn2, jsea,   isea,   itstep, ntimes,
+                      nsea,  npts,  ncol,   facth,  fack,   va,     cflthmax, cflkmax,
+                      nullptr};
+  if (res != nullptr)
+    return run_va("ktp3.call", KTP3, res->igrid, va, res->nspec, res->nsealm,
+                  [&](const auto& e, bool fence, float* dva) {
+                    Ktp3Args ar = args;
+                    ar.dva = dva;
+                    return ktp3_batch(e, fence, ar);
+                  });
+  return run("ktp3.call", [&](const auto& e, bool fence) { return ktp3_batch(e, fence, args); });
 }
 
 }  // namespace
@@ -519,29 +718,37 @@ int ww_xyp3_batch(const float* rpar, int nrpar, const int* ipar, int nipar, cons
                   const int* mapsta, const float* cg, const float* cx, const float* cy,
                   int flbpi, int nbi, const int* isbpi, const float* bbpi0, const float* bbpin,
                   const int* on, int ncol, float* va) {
-  using namespace ww::prop;
-  if (rpar == nullptr || ipar == nullptr || imaps == nullptr || tscal == nullptr ||
-      nrpar != WW_XYP3_NRPAR || nipar != WW_XYP3_NIPAR || nimaps != WW_XYP3_NIMAPS ||
-      ntscal != WW_XYP3_NTSCAL)
-    return fail(WW_KOKKOS_ERR_BAD_SHAPE, "ww_xyp3_batch: bad packet");
-  const Params p = unpack(rpar, ipar);
-  if (p.nx < 1 || p.ny < 1 || p.nsea < 1 || p.nk < 1 || p.nth < 1 || p.nspec != p.nk * p.nth ||
-      ncol < p.nsea + 1 || nbi < 0 || mapsf == nullptr || clats == nullptr || sig == nullptr ||
-      ecos == nullptr || esin == nullptr || dpdx == nullptr || dpdy == nullptr ||
-      dqdx == nullptr || dqdy == nullptr || gsqrt == nullptr || atrnx == nullptr ||
-      atrny == nullptr || mapx2 == nullptr || mapy2 == nullptr || mapaxy == nullptr ||
-      mapcxy == nullptr || maptrn == nullptr || mapsta == nullptr || cg == nullptr ||
-      cx == nullptr || cy == nullptr || on == nullptr || va == nullptr ||
-      (flbpi != 0 && (isbpi == nullptr || bbpi0 == nullptr || bbpin == nullptr)))
-    return fail(WW_KOKKOS_ERR_BAD_SHAPE, "ww_xyp3_batch: bad sizes or null pointer");
-  if (p.iclose == kIcloseTrpl)
-    return fail(WW_KOKKOS_ERR_UNSUPPORTED, "ww_xyp3_batch: tripole grid (W3XYP3 stops there)");
+  return xyp3_entry(nullptr, rpar, nrpar, ipar, nipar, imaps, nimaps, tscal, ntscal, dtg, mapsf,
+                    clats, sig, ecos, esin, dpdx, dpdy, dqdx, dqdy, gsqrt, atrnx, atrny, mapx2,
+                    mapy2, mapaxy, mapcxy, maptrn, mapsta, cg, cx, cy, flbpi, nbi, isbpi, bbpi0,
+                    bbpin, on, ncol, va);
+}
 
-  const Xyp3Args args{p,     imaps, tscal, dtg,   mapsf, mapx2, mapy2,  mapaxy, mapcxy, maptrn,
-                      mapsta, isbpi, on,  clats, sig,   ecos,  esin,  dpdx,   dpdy,   dqdx,
-                      dqdy,  gsqrt, atrnx, atrny, cg,    cx,    cy,    bbpi0,  bbpin,  flbpi,
-                      nbi,   ncol,  va};
-  return run("xyp3.call", [&](const auto& e, bool fence) { return xyp3_batch(e, fence, args); });
+// ww_xyp3_batch_va (WFIP-0005 unit 3b): ww_xyp3_batch on the resident VA of grid igrid. The
+// arguments are ww_xyp3_batch's, ncol replaced by:
+// | C      | Fortran                    | Type   | Intent | Shape                          |
+// | igrid  | IGRID (W3GDATMD)           | int    | in     |                                |
+// | va     | VA(1,0) (W3WDATMD)         | float* | inout  | nspec x nsealm+1, never read   |
+// |        |                            |        |        | or written here but to bind it |
+// | nspec  | SIZE(VA,1)                 | int    | in     | = NSPEC                        |
+// | nsealm | UBOUND(VA,2)               | int    | in     | >= NSEA                        |
+// The kernels read and write d_va (ww::resident::device_va syncs it first); afterwards the
+// state is DEVICE and the host VA is stale until a ww_va_host_read or _write.
+int ww_xyp3_batch_va(int igrid, const float* rpar, int nrpar, const int* ipar, int nipar,
+                     const int* imaps, int nimaps, const float* tscal, int ntscal, float dtg,
+                     const int* mapsf, const float* clats, const float* sig, const float* ecos,
+                     const float* esin, const float* dpdx, const float* dpdy, const float* dqdx,
+                     const float* dqdy, const float* gsqrt, const float* atrnx,
+                     const float* atrny, const int* mapx2, const int* mapy2, const int* mapaxy,
+                     const int* mapcxy, const int* maptrn, const int* mapsta, const float* cg,
+                     const float* cx, const float* cy, int flbpi, int nbi, const int* isbpi,
+                     const float* bbpi0, const float* bbpin, const int* on, float* va, int nspec,
+                     int nsealm) {
+  const ResidentVa r{igrid, nspec, nsealm};
+  return xyp3_entry(&r, rpar, nrpar, ipar, nipar, imaps, nimaps, tscal, ntscal, dtg, mapsf,
+                    clats, sig, ecos, esin, dpdx, dpdy, dqdx, dqdy, gsqrt, atrnx, atrny, mapx2,
+                    mapy2, mapaxy, mapcxy, maptrn, mapsta, cg, cx, cy, flbpi, nbi, isbpi, bbpi0,
+                    bbpin, on, nsealm + 1, va);
 }
 
 // ww_ktp3_batch: one intra-spectral part of W3WAVE (sections 3.6.2, 3.6.4), on a regular or
@@ -577,39 +784,25 @@ int ww_ktp3_batch(const float* rpar, int nrpar, const int* ipar, int nipar, cons
                   const int* mapwn2, int itstep, int ntimes, float facth, float fack, int nsea,
                   const float* cg, const float* wn, int npts, const int* jsea, const int* isea,
                   const float* pscal, int ncol, float* va, float* cflthmax, float* cflkmax) {
-  using namespace ww::prop;
-  if (rpar == nullptr || ipar == nullptr || nrpar != WW_KTP3_NRPAR || nipar != WW_KTP3_NIPAR)
-    return fail(WW_KOKKOS_ERR_BAD_SHAPE, "ww_ktp3_batch: bad packet");
-  Ktp3Params p{};
-  p.dmin = rpar[0];
-  p.ctmax = rpar[1];
-  p.fachfa = rpar[2];
-  p.nk = ipar[0];
-  p.nth = ipar[1];
-  p.nspec = ipar[2];
-  p.nk2 = ipar[3];
-  p.flcth = ipar[4];
-  p.flck = ipar[5];
-  p.flcur = ipar[6];
-  if (p.nk < 1 || p.nth < 1 || p.nspec != p.nk * p.nth || p.nk2 != p.nk + 2 || nsea < 1 ||
-      npts < 0 || npts > nsea || ntimes < 0 || ncol < 2 || sig == nullptr || dsip == nullptr ||
-      ecos == nullptr || esin == nullptr || ec2 == nullptr || esc == nullptr || es2 == nullptr ||
-      mapwn == nullptr || mapth2 == nullptr || mapwn2 == nullptr || cg == nullptr ||
-      wn == nullptr || va == nullptr || cflthmax == nullptr || cflkmax == nullptr ||
-      (npts > 0 && (jsea == nullptr || isea == nullptr || pscal == nullptr)))
-    return fail(WW_KOKKOS_ERR_BAD_SHAPE, "ww_ktp3_batch: bad sizes or null pointer");
-  for (int j = 0; j < npts; ++j)
-    if (jsea[j] < 1 || jsea[j] >= ncol || isea[j] < 1 || isea[j] > nsea)
-      return fail(WW_KOKKOS_ERR_BAD_SHAPE, "ww_ktp3_batch: a point outside VA or the sea");
-  if (ntimes == 0 || npts == 0) {
-    count(KTP3, 0, 0);
-    return int{WW_KOKKOS_OK};
-  }
+  return ktp3_entry(nullptr, rpar, nrpar, ipar, nipar, sig, dsip, ecos, esin, ec2, esc, es2,
+                    mapwn, mapth2, mapwn2, itstep, ntimes, facth, fack, nsea, cg, wn, npts, jsea,
+                    isea, pscal, ncol, va, cflthmax, cflkmax);
+}
 
-  const Ktp3Args args{p,     sig,   dsip,   ecos,   esin,   ec2,    esc,    es2,   cg,
-                      wn,    pscal, mapwn,  mapth2, mapwn2, jsea,   isea,   itstep, ntimes,
-                      nsea,  npts,  ncol,   facth,  fack,   va,     cflthmax, cflkmax};
-  return run("ktp3.call", [&](const auto& e, bool fence) { return ktp3_batch(e, fence, args); });
+// ww_ktp3_batch_va (WFIP-0005 unit 3b): ww_ktp3_batch on the resident VA of grid igrid. The
+// arguments are ww_ktp3_batch's, ncol replaced by igrid (first), and nspec, nsealm after va, as
+// in ww_xyp3_batch_va; cflthmax and cflkmax stay host arrays (NSEALM each, as before).
+int ww_ktp3_batch_va(int igrid, const float* rpar, int nrpar, const int* ipar, int nipar,
+                     const float* sig, const float* dsip, const float* ecos, const float* esin,
+                     const float* ec2, const float* esc, const float* es2, const int* mapwn,
+                     const int* mapth2, const int* mapwn2, int itstep, int ntimes, float facth,
+                     float fack, int nsea, const float* cg, const float* wn, int npts,
+                     const int* jsea, const int* isea, const float* pscal, float* va, int nspec,
+                     int nsealm, float* cflthmax, float* cflkmax) {
+  const ResidentVa r{igrid, nspec, nsealm};
+  return ktp3_entry(&r, rpar, nrpar, ipar, nipar, sig, dsip, ecos, esin, ec2, esc, es2, mapwn,
+                    mapth2, mapwn2, itstep, ntimes, facth, fack, nsea, cg, wn, npts, jsea, isea,
+                    pscal, nsealm + 1, va, cflthmax, cflkmax);
 }
 
 }  // extern "C"

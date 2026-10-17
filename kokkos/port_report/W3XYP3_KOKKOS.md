@@ -11,7 +11,7 @@ Spatial propagation of one spectral component on a regular grid with UQ: the sub
 |---|---|
 | WW3 routine | `W3XYP3`, `model/src/w3pro3md.F90:641-1477` at NOAA-EMC/WW3 `03adda91`, as `switches/switch_lab_shrd` compiles it (`PR3`, `UQ`) |
 | Kokkos code | [`../src/ww_kokkos/prop_xyp3.hpp`](../src/ww_kokkos/prop_xyp3.hpp), a header-only device function `w3xyp3`, serial, in the Fortran's structure and order |
-| C shim | [`../src/fortran_iface/prop3_shim.cpp`](../src/fortran_iface/prop3_shim.cpp) (`ww_xyp3_batch`, `ww_ktp3_batch`), bound by `w3kokkos_prop3md.F90` on h0ffmann/WW3 `ww3-gpu/kokkos-prop3` (`fcdfabef`); [PATCH.md section 11](../src/fortran_iface/PATCH.md#11-the-pr3-propagation-batched-on-ww3-gpukokkos-prop3) |
+| C shim | [`../src/fortran_iface/prop3_shim.cpp`](../src/fortran_iface/prop3_shim.cpp) (`ww_xyp3_batch`, `ww_ktp3_batch`, and on the resident spectrum `ww_xyp3_batch_va`, `ww_ktp3_batch_va`), bound by `w3kokkos_prop3md.F90` on h0ffmann/WW3 `ww3-gpu/kokkos-prop3` (`fcdfabef`) and `ww3-gpu/kokkos-prop3dev` (`90631fad`, which calls the `_va` forms); [PATCH.md sections 11](../src/fortran_iface/PATCH.md#11-the-pr3-propagation-batched-on-ww3-gpukokkos-prop3) and [13](../src/fortran_iface/PATCH.md#13-the-propagation-on-the-resident-spectrum-ww3-gpukokkos-prop3dev) |
 | Plan | [`PROPAGATION_KOKKOS_PLAN_202610.md`](../../docs/PROPAGATION_KOKKOS_PLAN_202610.md), issue #42 |
 
 ## Arithmetic
@@ -38,6 +38,7 @@ so the spread is wide and the medians are not a clean benchmark ⚠.
 | `SRCE` (before this change) | 39.94, 37.74, 40.46; 39.94 | 66.50, 62.74, 66.36; 66.36 | 0.60x |
 | `XYP3,KTP3,SRCE` | 41.49, 36.81, 41.40; 41.40 | 46.46, 54.43, 48.88; 48.88 | 0.85x |
 | `XYP3,KTP3` (the source terms Fortran) | 44.12, 46.15, 43.57; 44.12 | 37.42, 27.32, 21.14; 27.32 | 1.61x |
+| `XYP3,KTP3,SRCE` on the resident `VA` (`90631fad`, WFIP-0005 unit 3b; load average 9 to 19) | 23.06, 23.08, 23.21; 23.08 | 18.58, 18.50, 18.54; 18.54 | 1.24x |
 
 Where the time goes, one fenced run each (`--timers`, not a timing): with `--kokkos SRCE` the run
 spent 19.35 s outside Kokkos, propagation included; with `XYP3,KTP3,SRCE`, 2.89 s, while
@@ -64,3 +65,26 @@ point calls in 48 calls. The smoke case (one point) makes no call of either. Not
 `bench_small` ⚠: currents (`FLCUR`), the wavenumber shift (`FLCK`, so `W3QCK2`), index closure
 and boundary input. The CUDA build compiles (`--gpu --build-only`), never run. The regtest matrix
 did not run.
+
+## Resident spectrum (WFIP-0005 unit 3b)
+
+Since `90631fad` (`ww3-gpu/kokkos-prop3dev`, PATCH.md section 13) the fork calls `ww_xyp3_batch_va`: the
+same kernels read and write the resident device copy of `VA` instead of WW3's array, so W3WAVE no
+longer syncs `VA` to the host around the call when `WW_KOKKOS_XYP3=1` (the sync stays on the
+Fortran path). Only the base pointer of the `VA` columns changed; the lambdas, the work arrays and
+the order of every operation are those above. On a device the read-only inputs are copied only when
+their bits change (a host shadow compared with `memcmp`); on the CPU nothing is copied either way.
+
+Checked 2026-10-17 on the CPU (Kokkos OpenMP backend, the machine above, shared with other
+sessions), never on the GPU (v): `bash scripts/ww3-gpu.sh --ww3-gpu full --cpu --kokkos
+XYP3,KTP3,SRCE` on `switch_lab_ompg` and `WW3GPU_SWITCH=switch_lab_shrd`, each with and without
+`WW_KOKKOS_VA_RESIDENT=1`, and on `switch_lab_ompg` `--kokkos SRCE`, `KTP3,SRCE` and `XYP3,SRCE`
+under `WW_KOKKOS_VA_RESIDENT=1` (the mixed paths): `out_grd.ww3` and the NetCDF field `cmp`-equal
+to the Fortran of the same executable, `out_grd.ww3` `cmp`-equal to `--ww3`, `nccmp-tol` PASS
+both. The traffic of `VA` in the full case with `XYP3,KTP3,SRCE` (`WW_KOKKOS_VA_COUNT=1`) went
+from H2D 25 / D2H 25 (one copy each way per step) to H2D 1 / D2H 13, the D2H only at the host reads
+of the output block and of the return of `W3WAVE`. The `bench_small` branches listed above as not
+exercised are still not exercised ⚠. The same command with `--repeat 3` after the replay, on the same commit,
+gave the row "on the resident `VA`" of the table above, a quieter machine than the earlier rows,
+so the rows are not a before/after comparison ⚠. The CUDA build compiles (`--gpu --build-only`),
+never run ⚠. The regtest matrix did not run ⚠.
