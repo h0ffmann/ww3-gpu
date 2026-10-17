@@ -1,0 +1,7 @@
+! ww3-gpu coast case: three spectra on the west edge (scripts/coast_case.sh) into nest.ww3.
+&BOUND_NML
+  BOUND%MODE    = 'WRITE'
+  BOUND%INTERP  = 2
+  BOUND%VERBOSE = 1
+  BOUND%FILE    = 'spec.list'
+/
