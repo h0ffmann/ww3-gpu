@@ -28,7 +28,7 @@ The reference is the `-O3` GIMPLE inventory of `w3src4md.F90` (WW3 CMake Release
 
 ## Host parallel loop
 
-The (K,L) elements are independent at `:1749-1794`: `UST=UST0` per L (`:1752`) carries over I only within one (K,L), J is summed in order per element, and each writes only `TAUHFT(K,L)` and `TAUHFT2(K,L,0:ILEVTAIL)`. So they run in a host `parallel_for` with the Fortran's arithmetic per element unchanged: no reduction crosses elements, and the order of the elements does not enter any value. Host only: on a device `expf`/`logf`/`powf` are not glibc's (`AGENTS.md`, "Bit for bit"). (v) 2026-10-17: `ST4 tables rebuilt in C++: 0 values differ from the Fortran's` on smoke, full and coast with `--kokkos all` and `--kokkos SRCE,ST4_TABLES`, `switch_lab_ompg` and `switch_lab_shrd`, every output byte-identical to the Fortran of the same executable and to `--ww3`.
+The (K,L) elements are independent at `:1749-1794`: `UST=UST0` per L (`:1752`) carries over I only within one (K,L), J is summed in order per element, and each writes only `TAUHFT(K,L)` and `TAUHFT2(K,L,0:ILEVTAIL)`. So they run in a host `parallel_for` with the Fortran's arithmetic per element unchanged: no reduction crosses elements, and the order of the elements does not enter any value. Host only: on a device `expf`/`logf`/`powf` are not glibc's (`AGENTS.md`, "Bit for bit"). (v) 2026-10-17: `ST4 tables rebuilt in C++: 0 values differ from the Fortran's` on smoke, full and coast with `--kokkos all` (which rebuilt the tables until commit d6b321af made `ST4_TABLES` opt-in) and `--kokkos SRCE,ST4_TABLES`, `switch_lab_ompg` and `switch_lab_shrd`, every output byte-identical to the Fortran of the same executable and to `--ww3`.
 
 ## Static parity
 
@@ -46,7 +46,7 @@ Edge cases, not on finite valid inputs:
 
 ## Benchmarks
 
-The whole C++ table rebuild (`INSIN4` with `FLTABS`, of which `TABU_TAUHF2` is 101 x 201 x 51 x 250 = 259 million inner iterations) is the timer region `st4.tables.call` of `bash scripts/ww3-gpu.sh --ww3-gpu <case> --kokkos all --timers`, one run each, Intel Core i9-14900 (32 threads), 2026-10-17 (v): serial before, host parallel after. Smoke 7.57 s before (load 7) and 0.44 s after (load 6); at load 42-55, smoke 15.56 s before and 0.83 s after, coast 15.38 s before and 0.90 s after. A fenced diagnostic of initialisation, not a kernel timing.
+The whole C++ table rebuild (`INSIN4` with `FLTABS`, of which `TABU_TAUHF2` is 101 x 201 x 51 x 250 = 259 million inner iterations) is the timer region `st4.tables.call` of `bash scripts/ww3-gpu.sh --ww3-gpu <case> --kokkos SRCE,ST4_TABLES --timers`. The runs below used `--kokkos all`, which rebuilt the tables until commit d6b321af made `ST4_TABLES` opt-in; one run each, Intel Core i9-14900 (32 threads), 2026-10-17 (v): serial before, host parallel after. Smoke 7.57 s before (load 7) and 0.44 s after (load 6); at load 42-55, smoke 15.56 s before and 0.83 s after, coast 15.38 s before and 0.90 s after. A fenced diagnostic of initialisation, not a kernel timing.
 
 Kernel benchmarks: none. No timing without parity: nothing is timed before the ST4 regtest replay passes on the
 same commit (`AGENTS.md`, "No timing without parity").

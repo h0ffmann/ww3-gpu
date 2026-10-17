@@ -684,7 +684,9 @@ not cover the switch file stays Fortran under `WW_KOKKOS_ALL=1` and stops the mo
 rows differ: `*_COUNT` are diagnostics and ignore the master; `FLX_TABLES` follows it, and
 `ST4_TABLES` is opt-in like the parts of `kOptInOnly` (the owner, 2026-10-17): under
 `WW_KOKKOS_ALL=1` the ST4 shim reads the tables the Fortran built instead of rebuilding them,
-which costs about 8 s per run (coast, commit 4fbffbe) and gives the same values.
+which cost about 8 s per run (coast, commit 4fbffbe) and gives the same values; with the
+three `TABU_*` tables on a host `parallel_for` the rebuild is 0.44 s in the smoke and 0.90 s in
+the coast case (`kokkos/port_report/TABU_TAUHF2_KOKKOS.md`), and it stays opt-in.
 
 `W3INIT` writes one line to `log.ww3` after every set-up, the parts this build can run and where
 each runs (v, smoke 2026-10-16):
