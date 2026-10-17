@@ -212,6 +212,7 @@ edit a vendored skill through its patch); this is what each one is for.
 | `ww3-port` | the WW3-specific traps of a Fortran-to-Kokkos translation (gfortran `-O3` powers, array bases, per-grid tables, OpenMP nesting) and of claiming a routine regtested; follows `/port-next` |
 | `wfip` | write, revise or report on a WFIP; `scripts/wfip.py` is its harness and `just specify` wires GitHub's Spec Kit (its `/speckit-*` skills are generated per clone and not tracked) |
 | `humanizar`, `humanizer` | remove AI tells from pt-BR and English prose without changing facts; third-party |
+| `ste` | write or rewrite English procedures, runbooks, port reports, log entries, commit and PR bodies in ASD-STE100 Simplified Technical English; keeps `(v)`/`⚠`, numbers and technical names; never the proposal or pt-BR |
 | `ponytail`, `ponytail-review`, `ponytail-audit` | the laziest solution that works; over-engineering review and audit; third-party |
 | `routing` | find where something is in one bounded call (`scripts/route.py`): a glossary term, a definition, the pages that name a file, the paragraph that answers a why, one section of a plan |
 | `sharingan` | port a skill, workflow or pattern from another repository by URL: fetch it pinned, let the licence decide vendor, adapt or rewrite, map each upstream concept to a home here; third-party (marola-devkit) |

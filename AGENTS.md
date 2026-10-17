@@ -168,8 +168,9 @@ statement. In practice:
 - Prose is plain and direct. Length is not a measure of a research document: cut a sentence because
   it repeats or teaches nothing, never to hit a word count, and never pad one language's version to
   match the other's. `humanizar` (pt-BR) and `humanizer` (en) are the filters for text a person will
-  sign or publish. No em dash in prose (`just vale` fails on one; a lone `—` in a table cell is
-  fine); `just vale --report` lists the judgement-call tells for a person to weigh.
+  sign or publish; `ste` is the stricter ASD-STE100 filter for English procedures and runbooks. No
+  em dash in prose (`just vale` fails on one; a lone `—` in a table cell is fine);
+  `just vale --report` lists the judgement-call tells for a person to weigh.
 - Every abbreviation, switch, routine and tool name used here is expanded in
   [`docs/GLOSSARY.md`](docs/GLOSSARY.md); add the entry with the first use.
 
