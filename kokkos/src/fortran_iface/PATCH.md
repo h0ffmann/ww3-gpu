@@ -1712,7 +1712,9 @@ runs exactly what it ran before.
 `cuda-release` preset with `-Xptxas -v` (`sm_89`), and `prop3_shim.cpp` again with `-arch=sm_90`
 against the same ADA89 Kokkos headers (so its `sm_90` numbers are indicative ⚠), on `main` at
 `d8905a3b` with these changes (after WFIP-0006's device libm; the resident-path numbers are those
-of the tree before it); nothing ran:
+of the tree before it; the `OUTG` rows, and the whole `sm_89` column, measured again on `main` at
+`b38b5fc8` with these changes, after `W3OUTG` and its skewness moved to the device libm, where
+only those two rows changed); nothing ran:
 
 | Kernel (resident path) | Launch shape on `bench_small` | `sm_89` | `sm_90` |
 |---|---|---|---|
@@ -1720,11 +1722,11 @@ of the tree before it); nothing ran:
 | `ww_xyp3_batch` (`WW_KOKKOS_XYP3_TEAM=0`) | 576 threads, one per component | 96 registers, 0 spill | 96 registers, 0 spill |
 | `ww_xyp3_scatter` | 9 204 threads, one per sea point, 576 stores each | 34 registers | 28 registers |
 | `ww_ktp3_batch` | 9 204 threads, one per point, `NTIMES` sweeps of 576 bins each | 80 registers, 0 spill | 80 registers, 0 spill |
-| `ww::iogo::w3outg` (`OUTG`) | 9 204 threads, one per point, at output times | 96 registers, 112 B stack, 0 spill | not compiled |
-| `w3outg` init, part, skewness kernels | one per sea point or `NSEALM` | 30 to 60 registers; skewness 44, 288 B stack | not compiled |
+| `ww::iogo::w3outg` (`OUTG`) | 9 204 threads, one per point, at output times | 161 registers, 576 B stack, 0 spill, with the device libm of `b38b5fc8` (96 registers, 112 B stack before it) | not compiled |
+| `w3outg` init, part, skewness kernels | one per sea point or `NSEALM` | 30 to 60 registers; skewness 66, 288 B stack (44 before `b38b5fc8`) | not compiled |
 | `ww_va.gather_cols` (`IOPE`) | one thread per element of the columns read | 20 registers | not compiled |
 | `ww_va.zero_cols` (`UPDV`) | one thread per element zeroed | 20 registers | not compiled |
-| `W3GATH` / `W3SCAT` / `W3MAP3` / `W3MAPT` / `W3DZXY` / `W3UTRN` / `W3UWND` (`wave_support_shim.cpp`, not in `resident`) | one thread per cell or sea point | 11 to 56 registers, at most 344 B stack (`DISTAB`, with the device libm of WFIP-0006) | not compiled |
+| `W3GATH` / `W3SCAT` / `W3MAP3` / `W3MAPT` / `W3DZXY` / `W3UTRN` / `W3UWND` (`wave_support_shim.cpp`, not in `resident`) | one thread per cell or sea point | 11 to 56 registers, at most 344 B stack (`DISTAB`, with the device libm of WFIP-0006; the same at `b38b5fc8`) | not compiled |
 
 **What else has the shape `W3XYP3` had** (one thread for a large item, a launch smaller than the
 device), checked for the resident path and not changed, because none is bit-neutral by
