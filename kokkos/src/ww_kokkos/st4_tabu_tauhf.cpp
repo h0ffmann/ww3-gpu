@@ -7,10 +7,11 @@
 // WW3 heritage: WW3/model/src/w3src4md.F90:1427-1596 at WW3@bb08623a.
 #include <cmath>
 
+#include <Kokkos_Core.hpp>
+
 #include "st4_tables_build.hpp"
 
 namespace ww::st4 {
-
 
 void tabu_tauhf(Params& p, Real sigmax, HostArrays& a) {
   constexpr int kJtot = 250;  // JTOT :1514
@@ -36,30 +37,40 @@ void tabu_tauhf(Params& p, Real sigmax, HostArrays& a) {
   w[kJtot - 1] = static_cast<Real>(0.5);
   const Real x0 = static_cast<Real>(0.05);
 
-  for (int l = 0; l <= kIalpha; ++l) {
-    for (int k = 0; k <= kIustar; ++k) {
-      const Real ust = max_r(static_cast<Real>(k) * delust, static_cast<Real>(0.000001));
-      Real zz00 = ust * ust * aalpha / kGrav;
-      if (p.zz0max != static_cast<Real>(0)) zz00 = min_r(zz00, p.zz0max);
-      const Real zz0 = zz00 * (static_cast<Real>(1) + static_cast<Real>(l) * delalp / aalpha);
-      const Real omegacc = max_r(omegac, x0 * kGrav / ust);
-      const Real yc = omegacc * std::sqrt(zz0 / kGrav);
-      const Real dely = max_r((static_cast<Real>(1.) - yc) / static_cast<Real>(kJtot), static_cast<Real>(0.));
-      // Integrated in J order up to 0.05*g/UST (:1555-1570).
-      for (int j = 1; j <= kJtot; ++j) {
-        const Real y = yc + static_cast<Real>(j - 1) * dely;
-        const Real omega = y * std::sqrt(kGrav / zz0);
-        const Real cm = kGrav / omega;
-        const Real zx = ust / cm + p.zzalp;
-        const Real zarg = min_r(kKappa / zx, static_cast<Real>(20.));
-        const Real zmu = min_r(kGrav * zz0 / (cm * cm) * std::exp(zarg), static_cast<Real>(1.));
-        const Real zlog = min_r(std::log(zmu), static_cast<Real>(0.));
-        const Real zlog2 = zlog * zlog;  // ZLOG**4 as (ZLOG**2)**2, -O3 power tree
-        const Real zbeta = const1 * zmu * (zlog2 * zlog2);
-        a.tauhft(k, l) = a.tauhft(k, l) + w[j - 1] * zbeta / y * dely;
-      }
-    }
-  }
+  // Each (K,L) is independent (:1544-1574): it reads only scalars and W, and only
+  // TAUHFT(K,L) is written, summed over J in order. So the pairs run in parallel on
+  // the host, each with the Fortran's J loop unchanged. Host only: the bits need
+  // glibc's expf/logf (AGENTS.md, "Bit for bit").
+  const Real zz0max = p.zz0max, zzalp = p.zzalp;
+  const auto tauhft = a.tauhft;
+  constexpr int kNk = kIustar + 1;
+  using Host = Kokkos::DefaultHostExecutionSpace;
+  Kokkos::parallel_for(
+      "ww_st4.tabu_tauhf", Kokkos::RangePolicy<Host>(0, (kIalpha + 1) * kNk), [=](const int n) {
+        const int l = n / kNk;
+        const int k = n % kNk;
+        const Real ust = max_r(static_cast<Real>(k) * delust, static_cast<Real>(0.000001));
+        Real zz00 = ust * ust * aalpha / kGrav;
+        if (zz0max != static_cast<Real>(0)) zz00 = min_r(zz00, zz0max);
+        const Real zz0 = zz00 * (static_cast<Real>(1) + static_cast<Real>(l) * delalp / aalpha);
+        const Real omegacc = max_r(omegac, x0 * kGrav / ust);
+        const Real yc = omegacc * std::sqrt(zz0 / kGrav);
+        const Real dely = max_r((static_cast<Real>(1.) - yc) / static_cast<Real>(kJtot), static_cast<Real>(0.));
+        // Integrated in J order up to 0.05*g/UST (:1555-1570).
+        for (int j = 1; j <= kJtot; ++j) {
+          const Real y = yc + static_cast<Real>(j - 1) * dely;
+          const Real omega = y * std::sqrt(kGrav / zz0);
+          const Real cm = kGrav / omega;
+          const Real zx = ust / cm + zzalp;
+          const Real zarg = min_r(kKappa / zx, static_cast<Real>(20.));
+          const Real zmu = min_r(kGrav * zz0 / (cm * cm) * std::exp(zarg), static_cast<Real>(1.));
+          const Real zlog = min_r(std::log(zmu), static_cast<Real>(0.));
+          const Real zlog2 = zlog * zlog;  // ZLOG**4 as (ZLOG**2)**2, -O3 power tree
+          const Real zbeta = const1 * zmu * (zlog2 * zlog2);
+          tauhft(k, l) = tauhft(k, l) + w[j - 1] * zbeta / y * dely;
+        }
+      });
+  Kokkos::fence("ww_st4.tabu_tauhf");
 }
 
 }  // namespace ww::st4

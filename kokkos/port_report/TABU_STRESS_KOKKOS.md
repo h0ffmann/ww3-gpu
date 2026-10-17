@@ -10,7 +10,7 @@ The stress table `TAUT(0:ITAUMAX,0:JUMAX)` and its steps `DELU`, `DELTAUW`.
 | | |
 |---|---|
 | WW3 routine | `TABU_STRESS`, `model/src/w3src4md.F90:1290-1425` at `WW3@bb08623a` (the same lines at NOAA-EMC/WW3 `03adda91`) |
-| Kokkos code | [`../src/ww_kokkos/st4_tabu_stress.cpp`](../src/ww_kokkos/st4_tabu_stress.cpp), a host function `tabu_stress`, called by `insin4` |
+| Kokkos code | [`../src/ww_kokkos/st4_tabu_stress.cpp`](../src/ww_kokkos/st4_tabu_stress.cpp), a host function `tabu_stress`, called by `insin4`; a `Kokkos::parallel_for` on `DefaultHostExecutionSpace` over the independent (I,J) elements (2026-10-17), every inner loop and sum in the Fortran's order |
 | C shim | [`../src/fortran_iface/st4_shim.cpp`](../src/fortran_iface/st4_shim.cpp); parameters and arrays in [`st4_params.hpp`](../src/ww_kokkos/st4_params.hpp), [`st4_arrays.hpp`](../src/ww_kokkos/st4_arrays.hpp) |
 | WW3 side | `w3kokkosmd.F90`, `w3initmd.F90`, `w3srcemd.F90` on the h0ffmann/WW3 branch `ww3-gpu/kokkos-st4` (`c9a6a0c6`); the `WW3/` pin is not moved yet |
 | Phase | 1: copy in, kernel, copy out, one point per call, inside `!$OMP CRITICAL (WW_KOKKOS_ST4)`; Kokkos::Serial inside an OpenMP region |
@@ -25,6 +25,10 @@ The reference is the `-O3` GIMPLE inventory of `w3src4md.F90` (WW3 CMake Release
 ## Quirks kept
 
 Ten Newton steps per entry; `TAUT(I,0)` zeroed at the end.
+
+## Host parallel loop
+
+The (I,J) elements are independent at `:1376-1401`: each element reads only scalars, runs its own `NITER` loop and writes only `TAUT(I,J)`; `TAUT(I,0)=0` follows serially, as written. So they run in a host `parallel_for` with the Fortran's arithmetic per element unchanged: no reduction crosses elements, and the order of the elements does not enter any value. Host only: on a device `expf`/`logf`/`powf` are not glibc's (`AGENTS.md`, "Bit for bit"). (v) 2026-10-17: `ST4 tables rebuilt in C++: 0 values differ from the Fortran's` on smoke, full and coast with `--kokkos all` and `--kokkos SRCE,ST4_TABLES`, `switch_lab_ompg` and `switch_lab_shrd`, every output byte-identical to the Fortran of the same executable and to `--ww3`.
 
 ## Static parity
 
