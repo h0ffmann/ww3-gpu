@@ -816,6 +816,7 @@ nothing else. What the base adds, all under `KOKKOS` (v, read in the fork and bu
   `*_c.hpp` by glob. `scripts/ww3-gpu.sh` reads its part list, its counters and the fork files a
   unit may touch from `parts.d/<unit>.txt`. Its check that the fork is `WW3-noaa/` plus the KOKKOS
   patch accepts `model/src/w3kokkos_<unit>md.F90` and every `FILE` a `parts.d` file names.
+  `scripts/ww3-gpu.sh` checks the shape of every `parts.d` line (a `PART` is `[A-Z][A-Z0-9_]*`, a `COUNT` is `WW_KOKKOS_<NAME>_COUNT`, a `FILE` is `model/src/<name>.F90`) and refuses an exempted path that is not a regular file. A `FILE` line widens the fork check to a physics file, so review it like the fork hunk it covers: the unit's gate shows the file preprocesses without `KOKKOS` to the same source as `WW3-noaa/` (security review of PR #165, 2026-10-16).
   `part_flags.cpp` has no part list: `ww_kokkos_flag` resolves any `WW_KOKKOS_<PART>` name.
 - **Unchanged.** The C ABI stays `ww_kokkos` 0.3. Without `KOKKOS`, `gfortran -E -P` of
   `w3initmd.F90`, `w3srcemd.F90` and `w3wavemd.F90` with the lab switch is identical to

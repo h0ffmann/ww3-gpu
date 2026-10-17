@@ -87,10 +87,16 @@ for f in "${parts_files[@]}"; do
   while read -r key val rest; do
     case "$key" in
       ''|'#'*) ;;
-      PART) [[ " ${all_parts[*]} " != *" $val "* ]] || { echo "ww3-gpu: $f: part $val is already in another parts.d file" >&2; exit 3; }
+      # Shapes checked so a data file cannot set an arbitrary variable (PART only ever becomes
+      # WW_KOKKOS_<PART>, COUNT is exported as <COUNT>=1) or exempt anything but a Fortran file of
+      # model/src from the fork check below.
+      PART) [[ $val =~ ^[A-Z][A-Z0-9_]*$ ]] || { echo "ww3-gpu: $f: bad part name '$val'" >&2; exit 3; }
+            [[ " ${all_parts[*]} " != *" $val "* ]] || { echo "ww3-gpu: $f: part $val is already in another parts.d file" >&2; exit 3; }
             all_parts+=("$val") ;;
-      COUNT) count_flags+=("$val=1") ;;
-      FILE) unit_files+=("$val") ;;
+      COUNT) [[ $val =~ ^WW_KOKKOS_[A-Z0-9_]+_COUNT$ ]] || { echo "ww3-gpu: $f: bad counter '$val'" >&2; exit 3; }
+             count_flags+=("$val=1") ;;
+      FILE) [[ $val =~ ^model/src/[a-z0-9_]+\.F90$ ]] || { echo "ww3-gpu: $f: bad fork file '$val'" >&2; exit 3; }
+            unit_files+=("$val") ;;
       *) echo "ww3-gpu: $f: unknown line '$key $val $rest'" >&2; exit 3 ;;
     esac
   done < "$f"
@@ -320,6 +326,13 @@ else
                -e 's#^Only in (WW3-noaa|WW3)/model/?([^:]*): (.*)$#\2/\3#' -e 's#^/##' -e 's#^#model/#' \
       | grep -v -x -F -f <(printf '%s\n' "${kokkos_patch[@]}") \
       | grep -v -x -E 'model/src/w3kokkos_[a-z][a-z0-9_]*md\.F90' || true)"
+    # diff -rq reports a directory present on one side as one line, so an exempted name must be a
+    # regular file, or the directory's contents would pass unseen.
+    for p in "${kokkos_patch[@]}" "$fork"/model/src/w3kokkos_*md.F90; do
+      p="${p#"$fork"/}"
+      [ ! -e "$fork/$p" ] || [ -f "$fork/$p" ] || extra+=$'\n'"$p (not a regular file)"
+    done
+    extra="${extra#$'\n'}"
     if [ -n "$extra" ]; then
       echo "ww3-gpu: the fork WW3/ differs from WW3-noaa/ ($(git -C "$noaa" rev-parse --short HEAD)) outside the KOKKOS patch:" >&2
       printf '%s\n' "$extra" | sed 's/^/  /' >&2
