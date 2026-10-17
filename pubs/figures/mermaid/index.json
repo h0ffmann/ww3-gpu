@@ -123,6 +123,31 @@
       "file": "README.pt-BR.md",
       "title": "O que o ww3-gpu compila, de quais fontes, e em qual ambiente roda cada modo?",
       "sha256": "04bec6c5a285918cdd63d9c3dcf0cf59b574108dc35df2ae51a0a5dffb5da052"
+    },
+    "ww3-gpu-device-math-dataflow": {
+      "file": "docs/WW3_GPU_VS_NOAA_202610.md",
+      "title": "How does a kernel's expf or logf get the bits of NOAA's CPU build on a GPU, and what has been checked?",
+      "sha256": "6a4904102a576344a67e9282c281c748c595dd15aef8aa04f8a451efa2384e63"
+    },
+    "ww3-gpu-parity-workflow": {
+      "file": "docs/WW3_GPU_VS_NOAA_202610.md",
+      "title": "How is a ww3-gpu result judged against NOAA's WW3 before a timing may be recorded?",
+      "sha256": "e0743d9886e1a9ed29306bf0c4217941cc0bb0823efa23f13e4e0e780eba8cd6"
+    },
+    "ww3-gpu-port-lifecycle": {
+      "file": "docs/WW3_GPU_VS_NOAA_202610.md",
+      "title": "Which states does a WW3 routine pass through in ww3-gpu, and how many routines are in each?",
+      "sha256": "043ab99d1f23935850635d3be3f8a19b9a7ff3af509e44dd4096987b2ced1973"
+    },
+    "ww3-gpu-step-sequence": {
+      "file": "docs/WW3_GPU_VS_NOAA_202610.md",
+      "title": "Where does a time step leave the Fortran in ww3-gpu, and what does NOAA's WW3 do at the same place?",
+      "sha256": "a23ba2815043f554daef44e77662a0ffb1c7a28e88ef34f0187a6406619e26dd"
+    },
+    "ww3-gpu-vs-noaa-architecture": {
+      "file": "docs/WW3_GPU_VS_NOAA_202610.md",
+      "title": "What is the same and what differs between NOAA's WW3 and ww3-gpu?",
+      "sha256": "87dd7a876a87eacee136e8013dbe06ec2475f668bb9248fb3f6b64e931bcb2d0"
     }
   }
 }

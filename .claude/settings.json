@@ -38,7 +38,9 @@
   },
   "enabledPlugins": {
     "ai-memory@ai-memory": true,
-    "ponytail@ponytail": true
+    "ponytail@ponytail": true,
+    "compound-engineering@compound-engineering-plugin": true,
+    "context7@context7-marketplace": true
   },
   "extraKnownMarketplaces": {
     "ai-memory": {
@@ -53,6 +55,20 @@
         "source": "github",
         "repo": "DietrichGebert/ponytail",
         "ref": "v5.2.0"
+      }
+    },
+    "compound-engineering-plugin": {
+      "source": {
+        "source": "github",
+        "repo": "EveryInc/compound-engineering-plugin",
+        "ref": "compound-engineering-v3.30.3"
+      }
+    },
+    "context7-marketplace": {
+      "source": {
+        "source": "github",
+        "repo": "upstash/context7",
+        "ref": "@upstash/context7-mcp@4.1.2"
       }
     }
   }

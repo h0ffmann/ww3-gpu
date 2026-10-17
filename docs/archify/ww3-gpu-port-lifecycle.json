@@ -1,0 +1,294 @@
+{
+  "schema_version": 2,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "ww3-gpu Port Lifecycle",
+    "output": "docs/archify/ww3-gpu-port-lifecycle.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/h0ffmann/ww3-gpu",
+      "revision": "b38b5fc81924284d62eaf453db30f8c2986f80e2"
+    }
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "Ledger levels"
+    },
+    {
+      "id": "replay",
+      "label": "Replay steps (status)"
+    },
+    {
+      "id": "terminal",
+      "label": "Default on (ADR-0013)"
+    }
+  ],
+  "states": [
+    {
+      "id": "fortran",
+      "type": "start",
+      "label": "Fortran only",
+      "sublabel": "713 of 1023 routines",
+      "lane": "main",
+      "col": 0,
+      "step": "01",
+      "tag": "713 of 1023",
+      "sources": [
+        {
+          "path": "kokkos/PORT_STATUS.md",
+          "line": 48,
+          "label": "310 of 1023 translated"
+        }
+      ]
+    },
+    {
+      "id": "claimed",
+      "type": "waiting",
+      "label": "Claimed",
+      "sublabel": "0 rows open",
+      "lane": "main",
+      "col": 1,
+      "step": "02",
+      "tag": "0 rows",
+      "sources": [
+        {
+          "path": "kokkos/port_claims.tsv",
+          "line": 1,
+          "end_line": 7,
+          "label": "header only"
+        }
+      ]
+    },
+    {
+      "id": "translated",
+      "type": "active",
+      "label": "Translated",
+      "sublabel": "310 (250 not wired)",
+      "lane": "main",
+      "col": 2,
+      "step": "03",
+      "tag": "310 (250 only)",
+      "sources": [
+        {
+          "path": "scripts/port_score.py",
+          "line": 19,
+          "end_line": 22,
+          "label": "three levels"
+        },
+        {
+          "path": "kokkos/PORT_STATUS.md",
+          "line": 48,
+          "label": "translated row"
+        }
+      ]
+    },
+    {
+      "id": "wired",
+      "type": "active",
+      "label": "Wired",
+      "sublabel": "60 (50 not regtested)",
+      "lane": "main",
+      "col": 3,
+      "step": "04",
+      "tag": "60 (50 only)",
+      "sources": [
+        {
+          "path": "scripts/port_score.py",
+          "line": 125,
+          "end_line": 131,
+          "label": "at_level"
+        },
+        {
+          "path": "kokkos/PORT_STATUS.md",
+          "line": 49,
+          "label": "ported row"
+        },
+        {
+          "path": "kokkos/src/fortran_iface/part_flags.cpp",
+          "line": 33,
+          "end_line": 36,
+          "label": "kOptInOnly"
+        }
+      ]
+    },
+    {
+      "id": "regtested",
+      "type": "decision",
+      "label": "Regtested",
+      "sublabel": "10 routines",
+      "lane": "main",
+      "col": 4,
+      "step": "05",
+      "tag": "10",
+      "sources": [
+        {
+          "path": "kokkos/ports.tsv",
+          "line": 10,
+          "end_line": 13,
+          "label": "regtested column"
+        },
+        {
+          "path": "kokkos/PORT_STATUS.md",
+          "line": 50,
+          "label": "regtested row"
+        }
+      ]
+    },
+    {
+      "id": "l2",
+      "type": "success",
+      "label": "L2",
+      "sublabel": "2: W3SNL1, INSNL1",
+      "lane": "replay",
+      "col": 4,
+      "tag": "2: SNL1, INSNL1",
+      "sources": [
+        {
+          "path": "kokkos/ports.tsv",
+          "line": 4,
+          "end_line": 8,
+          "label": "status steps"
+        }
+      ]
+    },
+    {
+      "id": "gpu",
+      "type": "waiting",
+      "label": "gpu",
+      "sublabel": "0 routines",
+      "lane": "replay",
+      "col": 3,
+      "tag": "0",
+      "sources": [
+        {
+          "path": "kokkos/ports.tsv",
+          "line": 8,
+          "label": "gpu step"
+        },
+        {
+          "path": "kokkos/PORT_STATUS.md",
+          "line": 54,
+          "label": "On a GPU: none yet"
+        }
+      ]
+    },
+    {
+      "id": "defhost",
+      "type": "neutral",
+      "label": "Default, host",
+      "sublabel": "0 parts, OpenMP",
+      "lane": "terminal",
+      "col": 4,
+      "tag": "0 parts",
+      "sources": [
+        {
+          "path": "docs/ADRs/ADR-0013-operational-parts-default-to-kokkos.md",
+          "line": 70,
+          "end_line": 81,
+          "label": "conditions 1, 2"
+        },
+        {
+          "path": "kokkos/src/fortran_iface/part_flags.cpp",
+          "line": 39,
+          "end_line": 46,
+          "label": "no default list"
+        }
+      ]
+    },
+    {
+      "id": "defdev",
+      "type": "neutral",
+      "label": "Default, device",
+      "sublabel": "0 parts, CUDA SRCE",
+      "lane": "terminal",
+      "col": 3,
+      "tag": "0 parts",
+      "sources": [
+        {
+          "path": "docs/ADRs/ADR-0013-operational-parts-default-to-kokkos.md",
+          "line": 82,
+          "end_line": 88,
+          "label": "condition 3"
+        }
+      ]
+    }
+  ],
+  "transitions": [
+    {
+      "from": "fortran",
+      "to": "claimed",
+      "label": "claim row"
+    },
+    {
+      "from": "claimed",
+      "to": "translated",
+      "label": "ports.tsv row"
+    },
+    {
+      "from": "translated",
+      "to": "wired",
+      "label": "fork pin calls it"
+    },
+    {
+      "from": "wired",
+      "to": "regtested",
+      "label": "validation phase",
+      "variant": "emphasis"
+    },
+    {
+      "from": "regtested",
+      "to": "l2",
+      "label": "L2 replay",
+      "variant": "emphasis"
+    },
+    {
+      "from": "l2",
+      "to": "gpu",
+      "label": "CUDA, owner",
+      "variant": "security"
+    },
+    {
+      "from": "l2",
+      "to": "defhost",
+      "label": "timing parity",
+      "variant": "dashed"
+    },
+    {
+      "from": "gpu",
+      "to": "defdev",
+      "label": "batched, bits",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Levels (port_score.py)",
+      "items": [
+        "translated: every row of kokkos/ports.tsv",
+        "ported (wired): wired column starts with yes",
+        "regtested: regtested column starts with yes",
+        "Counts from kokkos/PORT_STATUS.md:48-50 and PORT_TABLE.tsv at b38b5fc8"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Gates",
+      "items": [
+        "Validation phase: WW3 regtests, Fortran against Kokkos in one executable (ADR-0010, ADR-0016)",
+        "A test.comp difference is a defect of the port; tolerances never widened",
+        "kOptInOnly parts (XYP1..UPDV, ST4_TABLES) stay off unless their own flag is 1"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Default on (ADR-0013)",
+      "items": [
+        "Host: SNL1, SDS4, SIN4, SPR4, ST4_TABLES, SRCE once regtested and faster with parity",
+        "Device: SRCE only, batched or resident, GPU bits, owner present",
+        "No part is default on at this commit"
+      ]
+    }
+  ]
+}
