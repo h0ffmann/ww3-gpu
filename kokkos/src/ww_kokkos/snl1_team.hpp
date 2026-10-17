@@ -41,7 +41,31 @@
 #define WW_SNL1_INLINE_BODY
 #endif
 
+// Sections 3 and 4 as `#pragma omp simd` loops on a host team. Each bin writes only its own slot
+// (sa*/da* in section 3, s and d in section 4) and reads only ue, the tables and the slots of the
+// section before, so the loop carries no dependence, and it has no reduction a lane split could
+// reorder: every lane does one bin's operations in the bin's order. Without the pragma GCC 16
+// vectorises neither loop (it cannot tell the gathers through the index tables from the stores);
+// gfortran -O3 vectorises section 3 of W3SNL1 (w3snl1md.F90:380-412) on four SSE lanes and leaves
+// section 4 scalar (2026-10-17, the hot loops of the build's w3snl1md.F90.o).
+#if defined(__GNUC__) && !defined(__CUDACC__) && !defined(__HIPCC__) && !defined(__SYCL_DEVICE_ONLY__) && defined(_OPENMP)
+#define WW_SNL1_HOST_SIMD 1
+#endif
+
 namespace ww::snl1 {
+
+/// parallel_for(TeamThreadRange(team, n), body), with the host team's range run as a simd loop
+/// (WW_SNL1_HOST_SIMD). The range of each team member is Kokkos' own.
+template <class TeamMember, class Body>
+KOKKOS_FORCEINLINE_FUNCTION void team_bins(const TeamMember& team, const int n, const Body& body) {
+#if defined(WW_SNL1_HOST_SIMD)
+  const auto r = Kokkos::TeamThreadRange(team, n);
+#pragma omp simd
+  for (int i = r.start; i < r.end; ++i) body(i);
+#else
+  Kokkos::parallel_for(Kokkos::TeamThreadRange(team, n), body);
+#endif
+}
 
 /// W3SNL1's working arrays for one point, in team scratch.
 ///
@@ -200,7 +224,7 @@ KOKKOS_INLINE_FUNCTION void snl1_team(const TeamMember& team, const Config& c, c
   }
 
   // 3.  Calculate interactions for extended spectrum ---------------- *
-  Kokkos::parallel_for(Kokkos::TeamThreadRange(team, nspecx), [&](const int isp) WW_SNL1_INLINE_BODY {
+  team_bins(team, nspecx, [&](const int isp) WW_SNL1_INLINE_BODY {
     // 3.a Energy at interacting bins
     const Real e00 = ue[isp + nth];
     const Real ep1 = t.awg[0] * ue[t.ip[0][0](isp) + nth] +
@@ -242,7 +266,7 @@ KOKKOS_INLINE_FUNCTION void snl1_team(const TeamMember& team, const Config& c, c
   team.team_barrier();
 
   // 4.  Put source and diagonal term together ----------------------- *
-  Kokkos::parallel_for(Kokkos::TeamThreadRange(team, nspec), [&](const int isp) WW_SNL1_INLINE_BODY {
+  team_bins(team, nspec, [&](const int isp) WW_SNL1_INLINE_BODY {
     s[isp] = con[isp] * (-static_cast<Real>(2) * (sa1[isp + nth] + sa2[isp + nth]) +
                          t.awg[0] * (sa1[t.ic[0][0](isp) + nth] + sa2[t.ic[0][1](isp) + nth]) +
                          t.awg[1] * (sa1[t.ic[1][0](isp) + nth] + sa2[t.ic[1][1](isp) + nth]) +
