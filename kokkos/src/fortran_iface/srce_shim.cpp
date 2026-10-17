@@ -279,6 +279,9 @@ void run_batch(GridCtx& g, const st4::Params& q, const st4::Fields& f, const snl
     throw std::runtime_error("ww_srce_batch: W3SNL1 needs " + std::to_string(scratch) +
                              " B of team scratch, more than this backend offers");
   policy.set_scratch_size(level, Kokkos::PerTeam(scratch));
+  // One point per steal, W3WAVE's DYNAMIC,1: Kokkos' automatic chunk (8 at 9 204 points and 32
+  // threads) leaves up to eight points' work in the last thread's hands. CUDA does not read it.
+  policy.set_chunk_size(1);
 
   const Grid grid{g.sig.data(), g.dden.data(), g.ecos.data(), g.esin.data(), g.mapwn.data()};
   const auto SP = g.b_spec, W1 = g.b_wn1, C1 = g.b_cg1, PI = g.b_pin, PS = g.b_psc,
