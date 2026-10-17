@@ -20,6 +20,7 @@
 
 #include <Kokkos_Core.hpp>
 
+#include "prop_loops.hpp"
 #include "real.hpp"
 #include "st4_params.hpp"  // fint, max_r, min_r
 
@@ -53,10 +54,15 @@ KOKKOS_INLINE_FUNCTION constexpr int qck3_work_reals(int mx, int my) { return my
 /// No reduction: each MAPBOU or MAPACT iteration writes one element and reads
 /// only Q, CFLL, TRANS and FLA, so the loops compute the same bits serial or
 /// parallel when the maps are injective (W3MAP3's are, w3pro3md.F90:255-392).
-/// Phase 1 keeps them serial, in source order, sections 2 to 5 before 6.
-KOKKOS_INLINE_FUNCTION void w3qck3(int mx, int my, int nx, int ny, Real* cfll, const Real* trans,
-                                   Real* q, bool close, int inc, const int* mapact, int nact,
-                                   const int* mapbou, int nb0, int nb1, int nb2, Real* fla) {
+/// w3qck3 runs them serially, in source order, sections 2 to 5 before 6; w3qck3_loops with
+/// TeamLoops (prop_loops.hpp) splits each loop over the threads of a team, with a barrier
+/// between loops (PATCH.md section 16: the same loops W3_OMPH runs as PARALLEL DO,
+/// w3uqckmd.F90:1098, :1123, :1255).
+template <class L>
+KOKKOS_INLINE_FUNCTION void w3qck3_loops(const L& lp, int mx, int my, int nx, int ny, Real* cfll,
+                                         const Real* trans, Real* q, bool close, int inc,
+                                         const int* mapact, int nact, const int* mapbou, int nb0,
+                                         int nb1, int nb2, Real* fla) {
   using ww::st4::fint;
   using ww::st4::max_r;
   using ww::st4::min_r;
@@ -87,7 +93,7 @@ KOKKOS_INLINE_FUNCTION void w3qck3(int mx, int my, int nx, int ny, Real* cfll, c
   // the propagation reads FLA(IXY-INC) of the lowest column, which stays 0
   // without closure.
   const int nfla = qck3_work_reals(mx, my);
-  for (int i = 0; i < nfla; ++i) fla[i] = r0;
+  lp.par(0, nfla, [&](int i) { fla[i] = r0; });
 
   // :1087-1112, closure part 1. Serial, statements in source order inside one
   // IY, because columns may alias when NX < 3. IADN1 and IADN2 are read here
@@ -97,17 +103,18 @@ KOKKOS_INLINE_FUNCTION void w3qck3(int mx, int my, int nx, int ny, Real* cfll, c
   const int iadn0 = iad00 + my * nx;
   const int iadn1 = my * nx;
   const int iadn2 = iad02 + my * nx;
+  // Every index of one IY is IY modulo MY, so two IY never touch the same element.
   if (close) {
-    for (int iy = 1; iy <= ny; ++iy) {
+    lp.par(1, ny + 1, [&](int iy) {
       q[iy + iad00 + qoff] = q[iy + iadn0 + qoff];  // :1102, 1 ghost column to the left
       q[iy + iadn1 + qoff] = q[iy + qoff];          // :1103, 1st ghost column to the right
       q[iy + iadn2 + qoff] = q[iy + iad02 + qoff];  // :1104, 2nd ghost column to the right
       cfll[iy + iadn1 - 1] = cfll[iy - 1];          // :1105, CFLL extension column, persists
-    }
+    });
   }
 
   // :1130-1172, central points, 3rd order with the ULTIMATE limiter.
-  for (int ip = 1; ip <= nb0; ++ip) {
+  lp.par(1, nb0 + 1, [&](int ip) {
     const int ixy = mapbou[ip - 1];
     // :1133. The sum is commutative; -O3 adds CFLL(IXY+INC) + CFLL(IXY), then * 0.5.
     const Real cfl = (cfll[ixy + inc - 1] + cfll[ixy - 1]) * r05;
@@ -161,36 +168,36 @@ KOKKOS_INLINE_FUNCTION void w3qck3(int mx, int my, int nx, int ny, Real* cfll, c
     const Real qb2 = qixyc * cfac + (r1 - cfac) * qbr;
     // :1154.
     fla[ixy + foff] = cfl * qb2;
-  }
+  });
 
   // :1187-1204, boundary above: CFL from CFLL(IXY). MIN_EXPR <s, 0.0>, minss 0,s.
-  for (int ip = nb0 + 1; ip <= nb1; ++ip) {
+  lp.par(nb0 + 1, nb1 + 1, [&](int ip) {
     const int ixy = mapbou[ip - 1];
     const Real cfl = cfll[ixy - 1];
     const Real s = Kokkos::copysign(r11, cfl);
     const int ixyc = ixy - inc * fint(min_r(s, r0));
     fla[ixy + foff] = q[ixyc + qoff] * cfl;  // :1191, emitted Q*CFL; the same bits as CFL*Q
-  }
+  });
 
   // :1217-1234, boundary below: CFL from CFLL(IXY+INC). MIN_EXPR as above.
-  for (int ip = nb1 + 1; ip <= nb2; ++ip) {
+  lp.par(nb1 + 1, nb2 + 1, [&](int ip) {
     const int ixy = mapbou[ip - 1];
     const Real cfl = cfll[ixy + inc - 1];
     const Real s = Kokkos::copysign(r11, cfl);
     const int ixyc = ixy - inc * fint(min_r(s, r0));
     fla[ixy + foff] = q[ixyc + qoff] * cfl;  // :1221
-  }
+  });
 
   // :1240-1247, closure part 2: FLA column 0 <- column NX, whole columns.
   if (close) {
-    for (int iy = 1; iy <= ny; ++iy) fla[iy + iad00 + foff] = fla[iy + iadn0 + foff];
+    lp.par(1, ny + 1, [&](int iy) { fla[iy + iad00 + foff] = fla[iy + iadn0 + foff]; });
   }
 
   // :1258-1283, propagation with transparencies. JN and JP pick the TRANS
   // column: -1 for an incoming flux from below (FLA(IXY-INC) > 0), +1 for an
   // incoming flux from above (FLA(IXY) < 0), 0 otherwise; comiss, so a NaN
   // flux compares false and reads column 0 (:1261-1270).
-  for (int ip = 1; ip <= nact; ++ip) {
+  lp.par(1, nact + 1, [&](int ip) {
     const int ixy = mapact[ip - 1];
     const Real fm = fla[ixy - inc + foff];
     const Real fp = fla[ixy + foff];
@@ -201,7 +208,15 @@ KOKKOS_INLINE_FUNCTION void w3qck3(int mx, int my, int nx, int ny, Real* cfll, c
     const Real t = q[ixy + qoff] + fm * trans[static_cast<long>(jn + 1) * mymx + ixy - 1];
     const Real u = t - fp * trans[static_cast<long>(jp + 1) * mymx + ixy - 1];
     q[ixy + qoff] = max_r(u, r0);
-  }
+  });
+}
+
+/// W3QCK3 as translated: every loop by the calling thread, in source order.
+KOKKOS_INLINE_FUNCTION void w3qck3(int mx, int my, int nx, int ny, Real* cfll, const Real* trans,
+                                   Real* q, bool close, int inc, const int* mapact, int nact,
+                                   const int* mapbou, int nb0, int nb1, int nb2, Real* fla) {
+  w3qck3_loops(SerialLoops{}, mx, my, nx, ny, cfll, trans, q, close, inc, mapact, nact, mapbou,
+               nb0, nb1, nb2, fla);
 }
 
 }  // namespace ww::prop
