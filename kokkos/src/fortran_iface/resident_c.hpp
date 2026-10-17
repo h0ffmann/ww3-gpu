@@ -19,7 +19,19 @@
 //   WW_KOKKOS_VA_RESIDENT=1  every host call first pushes a HOST array to the device, then
 //                            copies d_va back over it, so a host write W3WAVE makes without
 //                            its ww_va_host_write is overwritten and shows in the output;
+//   WW_KOKKOS_VA_CHECK=1     every sync call first checks what the state claims, comparing bits
+//                            only: unless HOST, the host VA still holds the bits of the last
+//                            sync (a host write with no ww_va_host_write before it stops the
+//                            model at the next call), and with BOTH so does d_va (a kernel that
+//                            wrote d_va without marking it does too); it adds no copy, so it does
+//                            not hide a missing mark the way WW_KOKKOS_VA_RESIDENT=1 does;
+//   WW_KOKKOS_VA_POISON=1    after every kernel write of d_va the stale host VA is filled with a
+//                            quiet NaN, so a host read that lacks its sync (or a column the
+//                            partial read misses) puts NaN into the output; a correct run writes
+//                            the same bits, since every host reader syncs first;
 //   WW_KOKKOS_VA_COUNT=1     the traffic line and counters at exit (stderr).
+// The last two, and the byte comparison of every model file in scripts/ww3-gpu.sh, came out of
+// the mutation audit of docs/log/2026-10-17-mutation-audit.md.
 // Under WW_KOKKOS_VA_RESIDENT=1 the partial read stays partial (a HOST array is pushed first, as
 // every host call does), so a column W3IOPE reads and the list misses keeps stale bits there.
 //
