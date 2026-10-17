@@ -13,6 +13,7 @@
 
 #include <Kokkos_Core.hpp>
 
+#include "libm_device.hpp"
 #include "real.hpp"
 #include "st4_arrays.hpp"
 #include "st4_params.hpp"
@@ -60,7 +61,7 @@ KOKKOS_INLINE_FUNCTION void calc_ustar(const Params& p, const Fields& f, Real wi
     if (p.capchnk[0] == static_cast<Real>(1.)) {  // :1950, Donelan (2018)
       chath = p.capchnk[1] + static_cast<Real>(0.5) * (p.capchnk[2] - p.capchnk[1]) *
                                  (static_cast<Real>(1) -
-                                  Kokkos::tanh((windspeed - p.capchnk[3]) / p.capchnk[4]));
+                                  dm::tanhf((windspeed - p.capchnk[3]) / p.capchnk[4]));
       xmin = static_cast<Real>(0.15) * (p.capchnk[2] - chath);
     } else {
       xmin = static_cast<Real>(0.);
@@ -82,10 +83,10 @@ KOKKOS_INLINE_FUNCTION void calc_ustar(const Params& p, const Fields& f, Real wi
       if (p.zz0max != static_cast<Real>(0)) zz00 = fmin2(zz00, p.zz0max);  // :1973
       // Corrects roughness ZZ00 for quasi-linear effect; REAL exponent -> powf.
       const Real omx = static_cast<Real>(1.) - x;
-      Real zz0 = zz00 / Kokkos::pow(omx, kXm);
+      Real zz0 = zz00 / dm::powf(omx, kXm);
       const Real znu = kZnuNum / fmax2(ust, static_cast<Real>(1E-6));
       zz0 = p.sintailpar[4] * znu + zz0;
-      const Real lg = Kokkos::log(p.zzwnd / zz0);  // ALOG(ZZWND/ZZ0), computed once at -O3
+      const Real lg = dm::logf(p.zzwnd / zz0);  // ALOG(ZZWND/ZZ0), computed once at -O3
       const Real fval = ust - kKappa * windspeed / lg;
       // :1979-1980, left to right: ((((K*W)/lg**2)*2.)/UST)*(1-(XM+1)*X))/(1-X)
       const Real delf = static_cast<Real>(1.) -
@@ -100,12 +101,12 @@ KOKKOS_INLINE_FUNCTION void calc_ustar(const Params& p, const Fields& f, Real wi
   // Determines roughness length (:1989-2001).
   if (ustar > static_cast<Real>(0.001)) {
     const Real sqrtcdm1 = fmin2(windspeed / ustar, static_cast<Real>(100.0));
-    z0 = p.zzwnd * Kokkos::exp(-kKappa * sqrtcdm1);
+    z0 = p.zzwnd * dm::expf(-kKappa * sqrtcdm1);
     charn = kGrav * z0 / (ustar * ustar);  // USTAR**2
   } else {
     if (ustar > static_cast<Real>(0)) {
       const Real sqrtcdm1 = fmin2(windspeed / ustar, static_cast<Real>(100.0));
-      z0 = p.zzwnd * Kokkos::exp(-kKappa * sqrtcdm1);
+      z0 = p.zzwnd * dm::expf(-kKappa * sqrtcdm1);
     } else {
       z0 = chath * static_cast<Real>(0.001) * static_cast<Real>(0.001) / kGrav;
     }

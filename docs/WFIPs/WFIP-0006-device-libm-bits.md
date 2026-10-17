@@ -7,10 +7,10 @@
 | **Created** | 2026-10-17 |
 | **Deliverable** | D5 |
 | **Related** | issue #42 (the port planner); [`GPU_LIBM_BITS_202610.md`](../GPU_LIBM_BITS_202610.md) (the measurements this design rests on); `kokkos/tools/libm_bits/` (the transcriptions); [ADR-0014](../ADRs/ADR-0014-gpu-runs-judged-by-tolerance.md) (its "revisit when"); [ADR-0010](../ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md); [ADR-0011](../ADRs/ADR-0011-port-in-units-regtest-at-checkpoints.md); [WFIP-0005](WFIP-0005-device-resident-step.md) |
-| **Effort** | M: one header moved into `kokkos/src`, one configure step, 58 call sites re-pointed in nine files, one flag through the shims; no physics changes |
+| **Effort** | M: one routing header in `kokkos/src`, one build step, the call sites of twelve kernel files re-pointed; no physics changes |
 | **Gain** | `proposal` (D5: a GPU result that is the Fortran's, so its timing needs no tolerance caveat); `science` (whether a whole WW3 time step on a GPU can be bit for bit with glibc's x86 libm) |
 | **Effort vs Gain** | do when WFIP-0005's units have merged: the call sites live in the files that work is changing, and one rebase is cheaper than two |
-| **Depends on** | the transcriptions of `kokkos/tools/libm_bits` merged (the PR that adds `GPU_LIBM_BITS_202610.md`); the owner at the terminal for `scripts/libm_bits.sh --device` and every `--gpu` run; double `tanh` transcribed (§8) |
+| **Depends on** | the transcriptions of `kokkos/tools/libm_bits` merged (the PR that adds `GPU_LIBM_BITS_202610.md`); the owner at the terminal for `scripts/libm_bits.sh --device` and every `--gpu` run |
 | **Blocked by** | none (WFIP-0005 must merge first, as **Depends on** and **Effort vs Gain** say; the index's dependency graph does not yet pass `figures.py check`) |
 | **Risk** | the supervised `--device` run shows a difference the host checks cannot, such as a device conversion or a denormal path, and the device cannot be bit for bit without a deeper rewrite |
 
@@ -65,6 +65,11 @@ supervised runs that decide whether ADR-0014's verdict by tolerance can be revis
 ## 4. Sources and dependencies reviewed
 
 ### Device call sites (v, `grep` of `kokkos/src/ww_kokkos` at the worktree, equal to origin/main in `kokkos/src`, 2026-10-17)
+
+The table is the first survey. Re-read at goal/42-gpu-step 4fbffbe on 2026-10-17, the kernels
+`WW_KOKKOS_ALL` runs also call `exp` in `updt_utrn.hpp` (W3UTRN), `atan2` and `cos`+`sin` in
+`updt_uwnd.hpp` (W3UWND), and `tanh`, `cosh`, `sinh` in `disp_distab.hpp` (DISTAB); the line
+numbers below have moved. The implementation routes all of them (§5).
 
 | File | Calls (`Kokkos::` unless noted) | Replacement |
 |---|---|---|
@@ -133,6 +138,29 @@ __builtin_cpu_supports("avx2")` once on the host and stores it in each kernel's 
 
 What runs where: units 1 to 5 build and run on the CPU; only §7's device boxes need the GPU.
 
+### As built (2026-10-17, branch goal/42-gpu-libm-route)
+
+- **Unit 1** without the move: `kokkos/src/ww_kokkos/libm_device.hpp` (`ww::dm`) includes the
+  headers from `kokkos/tools/libm_bits`, on the include path of a CUDA build only. Each wrapper's
+  host branch is the Kokkos call the kernel made before; its device branch calls `ww::libm`.
+  Overloads for the other argument type are deleted, so a promotion is a compile error.
+- **Unit 2** as designed, at build time rather than configure time: CMake builds `gen_tables` and
+  runs it into `ww_libm_tables.hpp`. `gen_tables` now finds the loaded `libmvec.so.1` and the
+  symbol's file offset itself.
+- **Unit 4** at build time: `gen_tables` decides glibc's fma or sse2 build by comparing glibc's
+  `exp` with both copies, and writes `WW_LIBM_HOST_FMA`. It follows `GLIBC_TUNABLES` (v:
+  `glibc.cpu.hwcaps=-AVX2,-FMA` gives sse2). The run host must be the build host, or have the
+  same glibc build and `rcpps` ⚠ (not checked at run time).
+- **Unit 3** in twelve files: `srce_kernel.hpp`, `srce_ln1.hpp`, `srce_db1.hpp`, `st4_sds4.hpp`,
+  `st4_sin4.hpp`, `st4_spr4.hpp`, `st4_calc_ustar.hpp`, `st4_libmvec.hpp`, `snl1_team.hpp`,
+  `updt_utrn.hpp`, `updt_uwnd.hpp`, `disp_distab.hpp`. DISTAB needed `coshf` and `sinhf`, now in
+  `coremath_f.hpp` (CORE-MATH, correctly rounded; 0 of 2^32 inputs differ from glibc each, v).
+- **Unit 5** not done: `scripts/ww3-gpu.sh` is being changed by the goal/42-gpu-step work.
+- **Not routed:** W3OUTG (`iogo_w3outg.hpp`, opt-in, not under `WW_KOKKOS_ALL`) calls libmvec's
+  `sinf`/`cosf`, scalar `sinhf`, `coshf`, `logf`, `atan2f` and `powf`; the other switches'
+  kernels (ST1, ST2, ST3, ST6 with libmvec `tanhf`, FLX1-5, IC4, ...) are not on the lab
+  switch's path. Each still calls libdevice on a device.
+
 ## 6. Parity and physics impact
 
 - **CPU backend:** none. The host branches still call glibc, so the objects keep the libm set of §2
@@ -158,14 +186,17 @@ What runs where: units 1 to 5 build and run on the CPU; only §7's device boxes 
   i9-14900 the rounded value differs from an exact reciprocal's for 661 269 of 8 388 608
   mantissas (v, `gen_tables`). The device copies the build host's `rcpps`; a run whose Fortran
   executes on another vendor's CPU needs the tables generated there ⚠.
-- **Double `tanh` is not transcribed yet** (`srce_db1.hpp:81`, `W3SDB1`, 0.4 % of the profile).
-  Until it is, `DB1` stays on libdevice and the GPU verdict for switches with `DB1` stays
-  ADR-0014's.
+- **Speed.** glibc's `expf`, `logf`, `powf` (ARM's algorithms) and every CORE-MATH function
+  compute in double. An H100 runs FP64 at about half its FP32 rate; an RTX 4090 at about 1/64,
+  so there the routed build is expected to be clearly slower than libdevice ⚠ (vendor
+  datasheets, not measured). `-DWW_KOKKOS_LIBM=OFF` keeps libdevice; a GPU timing should be
+  recorded both ways.
 - **NaN payloads** differ between x86 and CUDA default NaNs; `test.comp` compares bytes, so a NaN
   in an output field would fail the entry even with every finite value equal ⚠ (no regtest output
   is known to hold one).
-- **Tables in device code.** `glibc_mathf.hpp` keeps its tables in `__constant__` memory;
-  `coremath_f.hpp` keeps CORE-MATH's as `constexpr` locals, which nvcc may materialise per call in
+- **Tables in device code.** `glibc_mathf.hpp` keeps its tables in global memory (`__device__
+  const`), since the threads of a warp read different entries and `__constant__` serves one
+  address at a time; `coremath_f.hpp` keeps CORE-MATH's as `constexpr` locals, which nvcc may materialise per call in
   local memory. That is a speed question, not a parity one, and is measured after §7.
 - **Register pressure.** CORE-MATH's `atan2f` slow path (double-double polynomial, 32 terms)
   inlined into `W3SIN4`'s kernel may spill; `--resource-usage` is read in unit 3 ⚠.
@@ -190,8 +221,8 @@ What runs where: units 1 to 5 build and run on the CPU; only §7's device boxes 
 - Is a separate `sinf`/`cosf` ever needed on the device? **Default:** no; unit 5's check flags any
   lone call, and a lone call gets `sinf`/`cosf` transcribed from the same `sincosf.h` before it
   merges.
-- Does `DB1` wait for double `tanh`, or ship on libdevice with its switches judged by tolerance?
-  **Default:** wait; `tanh` is the last item of the libm work.
+- Is `WW_KOKKOS_LIBM=ON` the default of a CUDA build? **Default:** yes, as the bit-for-bit rule
+  asks; the owner decides once the H100 cost is measured.
 
 ## Appendix
 

@@ -3,7 +3,7 @@
 // device would compute (docs/GPU_LIBM_BITS_202610.md). Host only; it tests glibc and the
 // transcription in glibc_mathf.hpp, not a ported routine (ADR-0010 is about the port).
 //
-//   libm_bits ww <expf|logf|sincosf|powf|mvec_expf|mvec_powf|tanhf|log10f|atan2f|exp|tanh> <fma|plain> [threads]
+//   libm_bits ww <expf|logf|sincosf|powf|mvec_expf|mvec_powf|tanhf|log10f|atan2f|coshf|sinhf|exp|tanh> <fma|plain> [threads]
 //       glibc_mathf.hpp against this process's glibc: every float input for the unary
 //       functions; for powf every positive x with fixed y, every y with fixed x, and
 //       random pairs. mvec_expf and mvec_powf are checked against libmvec's
@@ -131,6 +131,10 @@ void ww_unary(const std::string& fn, int threads, Tally& t) {
         compare(t, ww::libm::tanhf(x), ::tanhf(x), "", x);
       } else if (fn == "log10f") {
         compare(t, ww::libm::log10f(x), ::log10f(x), "", x);
+      } else if (fn == "coshf") {
+        compare(t, ww::libm::coshf(x), ::coshf(x), "", x);
+      } else if (fn == "sinhf") {
+        compare(t, ww::libm::sinhf(x), ::sinhf(x), "", x);
       } else if (fn == "logf") {
         compare(t, ww::libm::logf<Fma>(x), ::logf(x), "", x);
       } else {
@@ -439,6 +443,8 @@ void fingerprint() {
         return (static_cast<uint64_t>(asuint(s)) << 32) | asuint(c); }));
   row("tanhf", hash_unary([](float x) { return asuint(::tanhf(x)); }));
   row("log10f", hash_unary([](float x) { return asuint(::log10f(x)); }));
+  row("coshf", hash_unary([](float x) { return asuint(::coshf(x)); }));
+  row("sinhf", hash_unary([](float x) { return asuint(::sinhf(x)); }));
   row("powf", hash_pairs(1, [](float* a, float* b) {
         uint64_t h = 0;
         for (int l = 0; l < 4; ++l) h = h * 31 + asuint(::powf(a[l], b[l]));
@@ -488,7 +494,7 @@ int main(int argc, char** argv) {
     else if (fn == "exp") fma ? ww_exp<true>(threads, t) : ww_exp<false>(threads, t);
     else if (fn == "tanh") ww_tanh(threads, t);
     else if (fn == "expf" || fn == "logf" || fn == "sincosf" || fn == "mvec_expf" ||
-             fn == "tanhf" || fn == "log10f")
+             fn == "tanhf" || fn == "log10f" || fn == "coshf" || fn == "sinhf")
       fma ? ww_unary<true>(fn, threads, t) : ww_unary<false>(fn, threads, t);
     else return 64;
     print("ww", fn.c_str(), var.c_str(), t);

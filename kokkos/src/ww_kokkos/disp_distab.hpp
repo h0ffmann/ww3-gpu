@@ -25,6 +25,7 @@
 
 #include <Kokkos_Core.hpp>
 
+#include "libm_device.hpp"
 #include "real.hpp"
 
 namespace ww::disp {
@@ -39,13 +40,12 @@ inline constexpr Real kDistabEps = 1e-7f;
 inline constexpr int kDistabNmax = 15;
 
 namespace detail {
-// glibc's scalar tanhf/coshf/sinhf on the host, as the Fortran object calls them.
-// ⚠ On a device, Kokkos' (CUDA libdevice) tanh/cosh/sinh use other algorithms and
-// are not shown to return glibc's bits (AGENTS.md, "Bit for bit with the Fortran").
+// glibc's scalar tanhf/coshf/sinhf on the host, as the Fortran object calls them, and
+// ww::dm's copies of them on a device (libdevice without WW_KOKKOS_LIBM).
 KOKKOS_INLINE_FUNCTION Real tanh_(Real x) {
 #if defined(__GLIBC__)
   KOKKOS_IF_ON_HOST((return ::tanhf(x);))
-  KOKKOS_IF_ON_DEVICE((return Kokkos::tanh(x);))
+  KOKKOS_IF_ON_DEVICE((return dm::dev::tanhf(x);))
 #else
   return Kokkos::tanh(x);
 #endif
@@ -53,7 +53,7 @@ KOKKOS_INLINE_FUNCTION Real tanh_(Real x) {
 KOKKOS_INLINE_FUNCTION Real cosh_(Real x) {
 #if defined(__GLIBC__)
   KOKKOS_IF_ON_HOST((return ::coshf(x);))
-  KOKKOS_IF_ON_DEVICE((return Kokkos::cosh(x);))
+  KOKKOS_IF_ON_DEVICE((return dm::dev::coshf(x);))
 #else
   return Kokkos::cosh(x);
 #endif
@@ -61,7 +61,7 @@ KOKKOS_INLINE_FUNCTION Real cosh_(Real x) {
 KOKKOS_INLINE_FUNCTION Real sinh_(Real x) {
 #if defined(__GLIBC__)
   KOKKOS_IF_ON_HOST((return ::sinhf(x);))
-  KOKKOS_IF_ON_DEVICE((return Kokkos::sinh(x);))
+  KOKKOS_IF_ON_DEVICE((return dm::dev::sinhf(x);))
 #else
   return Kokkos::sinh(x);
 #endif

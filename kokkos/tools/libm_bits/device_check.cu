@@ -3,13 +3,14 @@
 // glibc_mathf.hpp and coremath_f.hpp transcribe, and compares each result on the host with what
 // WW3's Fortran gets there: the toolchain's glibc, or libmvec for the vector functions
 // (libm_bits.cpp shows the transcriptions equal those on the host). Where CUDA has a function
-// of its own (expf, logf, powf, sincosf, tanhf, log10f, atan2f, exp, tanh) it is computed too and
+// of its own (expf, logf, powf, sincosf, tanhf, log10f, atan2f, coshf, sinhf, exp, tanh) it is computed too and
 // printed beside the transcription for comparison; the exit code is the transcriptions' only.
 //
 // It runs on the GPU, so it runs only under the owner's supervision (AGENTS.md, "Running on
 // the GPU"): scripts/libm_bits.sh --device asks for a typed "yes". --nvcc only compiles it.
 // Compiled with --fmad=false and with build/libm_bits/svml_tables.hpp pre-included (mvec_powf's
-// tables): the headers fuse only where they call ::fma or ::fmaf.
+// tables, and WW_LIBM_HOST_FMA, the glibc build this host gets): the headers fuse only where
+// they call ::fma or ::fmaf.
 //
 // Output, one TSV line per function and implementation: device, function, impl, inputs,
 // differing, nan_payload, first differing input.
@@ -36,8 +37,9 @@ extern "C" __m128 _ZGVbN4vv_powf(__m128, __m128);
 namespace {
 
 constexpr uint64_t kChunk = 1ULL << 26;
+constexpr bool kFma = WW_LIBM_HOST_FMA != 0;
 
-enum Fn { kExpf, kLogf, kSincosf, kPowf, kMvecExpf, kMvecPowf, kTanhf, kLog10f, kAtan2f, kExp, kTanh };
+enum Fn { kExpf, kLogf, kSincosf, kPowf, kMvecExpf, kMvecPowf, kTanhf, kLog10f, kAtan2f, kCoshf, kSinhf, kExp, kTanh };
 
 __host__ __device__ inline uint64_t splitmix(uint64_t s) {
   uint64_t z = s + 0x9e3779b97f4a7c15ULL;
@@ -78,19 +80,21 @@ __global__ void kernel(Fn fn, bool cuda_own, uint64_t base, uint64_t n, double* 
   double d = 0;
   input(fn, base + k, x, y);
   switch (fn) {
-    case kExpf: a = cuda_own ? ::expf(x) : ww::libm::expf<true>(x); break;
-    case kLogf: a = cuda_own ? ::logf(x) : ww::libm::logf<true>(x); break;
-    case kPowf: a = cuda_own ? ::powf(x, y) : ww::libm::powf<true>(x, y); break;
+    case kExpf: a = cuda_own ? ::expf(x) : ww::libm::expf<kFma>(x); break;
+    case kLogf: a = cuda_own ? ::logf(x) : ww::libm::logf<kFma>(x); break;
+    case kPowf: a = cuda_own ? ::powf(x, y) : ww::libm::powf<kFma>(x, y); break;
     case kSincosf:
       if (cuda_own) ::sincosf(x, &a, &b);
-      else ww::libm::sincosf<true>(x, &a, &b);
+      else ww::libm::sincosf<kFma>(x, &a, &b);
       break;
-    case kMvecExpf: a = ww::libm::mvec_expf<true>(x); break;
-    case kMvecPowf: a = ww::libm::mvec_powf<true>(x, y); break;
+    case kMvecExpf: a = ww::libm::mvec_expf<kFma>(x); break;
+    case kMvecPowf: a = ww::libm::mvec_powf<kFma>(x, y); break;
     case kTanhf: a = cuda_own ? ::tanhf(x) : ww::libm::tanhf(x); break;
     case kLog10f: a = cuda_own ? ::log10f(x) : ww::libm::log10f(x); break;
     case kAtan2f: a = cuda_own ? ::atan2f(y, x) : ww::libm::atan2f(y, x); break;
-    case kExp: d = cuda_own ? ::exp(static_cast<double>(x)) : ww::libm::exp<true>(x); break;
+    case kCoshf: a = cuda_own ? ::coshf(x) : ww::libm::coshf(x); break;
+    case kSinhf: a = cuda_own ? ::sinhf(x) : ww::libm::sinhf(x); break;
+    case kExp: d = cuda_own ? ::exp(static_cast<double>(x)) : ww::libm::exp<kFma>(x); break;
     case kTanh: d = cuda_own ? ::tanh(static_cast<double>(x)) : ww::libm::tanh(x); break;
   }
   out[2 * k] = (fn == kExp || fn == kTanh) ? d : static_cast<double>(a);
@@ -118,6 +122,8 @@ void reference(Fn fn, float x, float y, double& wa, double& wb) {
     case kTanhf: a = ::tanhf(x); break;
     case kLog10f: a = ::log10f(x); break;
     case kAtan2f: a = ::atan2f(y, x); break;
+    case kCoshf: a = ::coshf(x); break;
+    case kSinhf: a = ::sinhf(x); break;
     case kExp: wa = std::exp(static_cast<double>(x)); return;
     case kTanh: wa = std::tanh(static_cast<double>(x)); return;
   }
@@ -173,7 +179,8 @@ int main(int argc, char** argv) {
       {kSincosf, "sincosf", 1ULL << 32}, {kPowf, "powf", 1ULL << 32},
       {kMvecExpf, "mvec_expf", 1ULL << 32}, {kMvecPowf, "mvec_powf", 1ULL << 32},
       {kTanhf, "tanhf", 1ULL << 32},     {kLog10f, "log10f", 1ULL << 32},
-      {kAtan2f, "atan2f", 1ULL << 32},   {kExp, "exp", 1ULL << 32},
+      {kAtan2f, "atan2f", 1ULL << 32},   {kCoshf, "coshf", 1ULL << 32},
+      {kSinhf, "sinhf", 1ULL << 32},     {kExp, "exp", 1ULL << 32},
       {kTanh, "tanh", 1ULL << 32}};
   for (const auto& f : fns) {
     if (!only.empty() && only != f.name) continue;

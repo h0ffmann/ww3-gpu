@@ -34,6 +34,7 @@
 
 #include <Kokkos_Core.hpp>
 
+#include "libm_device.hpp"
 #include "real.hpp"
 
 namespace ww::updt {
@@ -243,8 +244,8 @@ KOKKOS_INLINE_FUNCTION void w3utrn_ice_point(int isea, const UtrnScalars& s, con
   const Real ic = ice(isea);  // ICE(0:NSEA)
   if (ic > Real(0.)) {         // :3081
     if (s.ficel > Real(0.)) {  // :3082-3084
-      trix(ixy - 1) = Kokkos::exp(-(ic * dx / s.ficel));
-      triy(ixy - 1) = Kokkos::exp(-(ic * dy / s.ficel));
+      trix(ixy - 1) = dm::expf(-(ic * dx / s.ficel));
+      triy(ixy - 1) = dm::expf(-(ic * dy / s.ficel));
     } else {  // :3089-3105, Tolman (2003)
       Real lice0 = s.fice0 * dx;
       Real licen = s.ficen * dx;
@@ -262,8 +263,8 @@ KOKKOS_INLINE_FUNCTION void w3utrn_ice_point(int isea, const UtrnScalars& s, con
   const Real bg = berg(isea - 1);  // :3117-3120
   if (bg > Real(0.)) {
     const Real bf = bg * s.ffacberg;
-    trix(ixy - 1) = trix(ixy - 1) * Kokkos::exp(-(bf * dx * utrn_detail::kBergScale));
-    triy(ixy - 1) = triy(ixy - 1) * Kokkos::exp(-(bf * dy * utrn_detail::kBergScale));
+    trix(ixy - 1) = trix(ixy - 1) * dm::expf(-(bf * dx * utrn_detail::kBergScale));
+    triy(ixy - 1) = triy(ixy - 1) * dm::expf(-(bf * dy * utrn_detail::kBergScale));
   }
 }
 

@@ -15,6 +15,7 @@
 
 #include <Kokkos_Core.hpp>
 
+#include "libm_device.hpp"
 #include "real.hpp"
 #include "st4_arrays.hpp"
 #include "st4_params.hpp"
@@ -72,7 +73,7 @@ KOKKOS_INLINE_FUNCTION void w3spr4_point(const Params& p, const Fields& f, const
   for (int ik = 1; ik <= nk; ++ik) {
     Real ebk = 0;
     Real eb2k = 0;
-    const Real sigfac = Kokkos::pow(f.sig(ik), p.ssdsc[11]) * f.dden(ik - 1) / cg[ik - 1];
+    const Real sigfac = dm::powf(f.sig(ik), p.ssdsc[11]) * f.dden(ik - 1) / cg[ik - 1];
     for (int ith = 1; ith <= nth; ++ith) {
       const int is = ith + (ik - 1) * nth;
       const Real aa = a[(ik - 1) * nth + ith - 1];
@@ -87,7 +88,7 @@ KOKKOS_INLINE_FUNCTION void w3spr4_point(const Params& p, const Fields& f, const
   }
   amax = amaxl;
 
-  dlwmean = Kokkos::atan2(elsn, elcs);  // :307
+  dlwmean = dm::atan2f(elsn, elcs);  // :307
 
   // 2.  Integrate over directions (:311-320).
   // The powers are computed before the sum loop (mvec_powf); the values
@@ -137,15 +138,15 @@ KOKKOS_INLINE_FUNCTION void w3spr4_point(const Params& p, const Fields& f, const
   if (fmean1 < eps) {
     fmean1 = kTpiInv * f.sig(nk);
   } else {
-    fmean1 = kTpiInv * Kokkos::pow(max_r(eps, fmean1) / max_r(eps, emean),
+    fmean1 = kTpiInv * dm::powf(max_r(eps, fmean1) / max_r(eps, emean),
                                    static_cast<Real>(1) / (static_cast<Real>(2.) * p.wwnmeanptail));
   }
-  wnmean = Kokkos::pow(max_r(eps, wnmean) / max_r(eps, emean),
+  wnmean = dm::powf(max_r(eps, wnmean) / max_r(eps, emean),
                        static_cast<Real>(1) / p.wwnmeanp);
   if (fmeanws < eps || emeanws < eps) {
     fmeanws = kTpiInv * f.sig(nk);
   } else {
-    fmeanws = kTpiInv * Kokkos::pow(max_r(eps, fmeanws) / max_r(eps, emeanws),
+    fmeanws = kTpiInv * dm::powf(max_r(eps, fmeanws) / max_r(eps, emeanws),
                                     static_cast<Real>(1) / (static_cast<Real>(2.) * p.wwnmeanptail));
   }
 

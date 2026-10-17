@@ -17,6 +17,7 @@
 
 #include <Kokkos_Core.hpp>
 
+#include "libm_device.hpp"
 #include "real.hpp"
 #include "srce_params.hpp"
 
@@ -50,7 +51,7 @@ KOKKOS_INLINE_FUNCTION void w3sln1_point(const Params& p, const Real* sig, const
   Real sinu = 0;
 #if defined(__GLIBC__)
   KOKKOS_IF_ON_HOST((::sincosf(usdir, &sinu, &cosu);))
-  KOKKOS_IF_ON_DEVICE((cosu = Kokkos::cos(usdir); sinu = Kokkos::sin(usdir);))
+  KOKKOS_IF_ON_DEVICE((dm::dev::sincosf(usdir, &sinu, &cosu);))
 #else
   cosu = Kokkos::cos(usdir);
   sinu = Kokkos::sin(usdir);
@@ -83,7 +84,7 @@ KOKKOS_INLINE_FUNCTION void w3sln1_point(const Params& p, const Real* sig, const
       // RFR**(-4) as -O3: 1. / ((r*r)*(r*r)).
       const Real r2 = rfr * rfr;
       const Real rm4 = static_cast<Real>(1.) / (r2 * r2);
-      wnf[ik - 1] = fac / k[ik - 1] * Kokkos::exp(-rm4);
+      wnf[ik - 1] = fac / k[ik - 1] * dm::expf(-rm4);
     }
   }
 

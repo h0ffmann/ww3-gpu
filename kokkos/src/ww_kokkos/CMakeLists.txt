@@ -26,6 +26,7 @@ target_sources(ww_kokkos PRIVATE
     st4_params.hpp
     st4_arrays.hpp
     st4_libmvec.hpp
+    libm_device.hpp
     st4_calc_ustar.hpp
     st4_spr4.hpp
     st4_sin4.hpp
@@ -299,6 +300,40 @@ target_compile_options(ww_kokkos PRIVATE
 # *host* half of the compile only; the device half needs nvcc's own switch.
 if(Kokkos_ENABLE_CUDA)
   target_compile_options(ww_kokkos PRIVATE $<$<COMPILE_LANGUAGE:CXX>:--fmad=false>)
+endif()
+
+# On CUDA the kernels' libm calls go to the copies of glibc 2.44 in kokkos/tools/libm_bits
+# (libm_device.hpp, WFIP-0006) instead of libdevice. gen_tables reads libmvec's tables from
+# the libmvec.so.1 this toolchain links, this host's rcpps and glibc's fma or sse2 choice, so
+# the device follows the glibc the Fortran of the same build calls. OFF keeps libdevice, and
+# ADR-0014's verdict by tolerance. The CPU build never uses them: its host branches call glibc.
+if(Kokkos_ENABLE_CUDA)
+  option(WW_KOKKOS_LIBM "CUDA: the device computes glibc's libm bits (libm_device.hpp)" ON)
+  if(WW_KOKKOS_LIBM)
+    set(ww_libm_src ${PROJECT_SOURCE_DIR}/tools/libm_bits)
+    set(ww_libm_gen ${CMAKE_CURRENT_BINARY_DIR}/libm)
+    # A host program; nvcc's front end fails on it (an internal assertion), so the host g++
+    # builds it, the one nvcc_wrapper compiles host code with. exp<false> in its fma probe is
+    # glibc's sse2 build only without contraction.
+    find_program(WW_LIBM_HOST_CXX NAMES g++ c++ REQUIRED)
+    add_custom_command(OUTPUT ${ww_libm_gen}/gen_tables
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${ww_libm_gen}
+        COMMAND ${WW_LIBM_HOST_CXX} -std=c++20 -O2 -ffp-contract=off -o ${ww_libm_gen}/gen_tables
+                ${ww_libm_src}/gen_tables.cpp -lmvec -lm
+        DEPENDS ${ww_libm_src}/gen_tables.cpp ${ww_libm_src}/glibc_mathf.hpp
+        VERBATIM)
+    add_custom_command(OUTPUT ${ww_libm_gen}/ww_libm_tables.hpp
+        COMMAND ${ww_libm_gen}/gen_tables ${ww_libm_gen}/ww_libm_tables.hpp
+        DEPENDS ${ww_libm_gen}/gen_tables
+        COMMENT "gen_tables: libmvec's tables, this host's rcpps and glibc's fma choice"
+        VERBATIM)
+    # ww_kokkos is created one directory up, where this custom command's output is not
+    # attached; a target here carries it and orders it before ww_kokkos compiles.
+    add_custom_target(ww_libm_tables DEPENDS ${ww_libm_gen}/ww_libm_tables.hpp)
+    add_dependencies(ww_kokkos ww_libm_tables)
+    target_include_directories(ww_kokkos PRIVATE ${ww_libm_src} ${ww_libm_gen})
+    target_compile_definitions(ww_kokkos PRIVATE WW_KOKKOS_LIBM=1)
+  endif()
 endif()
 
 # ST4 calls glibc's libmvec where gfortran -O3 does (st4_libmvec.hpp), so the

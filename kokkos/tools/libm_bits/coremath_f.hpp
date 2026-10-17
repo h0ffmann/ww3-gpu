@@ -1,9 +1,9 @@
 // kokkos/tools/libm_bits/coremath_f.hpp
-// glibc 2.44's tanhf, log10f and atan2f, correctly rounded, for host and device code. glibc
-// imports them from the CORE-MATH project (sysdeps/ieee754/flt-32/s_tanhf.c, e_log10f.c,
-// e_atan2f.c); they are copied here with their notices, under the MIT licence they carry. Since
+// glibc 2.44's tanhf, log10f, atan2f, coshf and sinhf, correctly rounded, for host and device
+// code. glibc imports them from the CORE-MATH project (sysdeps/ieee754/flt-32/s_tanhf.c,
+// e_log10f.c, e_atan2f.c, e_coshf.c, e_sinhf.c, e_sincoshf_data.c); they are copied here with their notices, under the MIT licence they carry. Since
 // glibc's results are correctly rounded (libm_bits cr: every input of tanhf and log10f), a copy
-// that equals glibc on every input (libm_bits ww tanhf, log10f, atan2f) is too, and so is a
+// that equals glibc on every input (libm_bits ww tanhf, log10f, atan2f, coshf, sinhf) is too, and so is a
 // device build with the same operations. Changes from glibc's text: C++ for host and device,
 // tables as constexpr locals, glibc's error helpers replaced by glibc_mathf.hpp's, errno and the
 // SVID wrappers dropped. Compile without contraction (-ffp-contract=off, nvcc --fmad=false):
@@ -391,5 +391,123 @@ WW_LIBM_FN float atan2f(float y, float x) {
   if (rf == 0.0f) return uflowf(asuint(rf) >> 1);
   return rf;
 }
+
+/* Correctly-rounded hyperbolic cosine and sine functions for binary32 value.
+
+Copyright (c) 2022-2024 Alexei Sibidanov (e_coshf.c, e_sinhf.c);
+Copyright (c) 2022-2025 Alexei Sibidanov (e_sincoshf_data.c).
+
+The original versions of these files were copied from the CORE-MATH
+project (files src/binary32/cosh/coshf.c, revision de59ecfb, and
+src/binary32/sinh/sinhf.c).
+
+(The permission notice is the one above, word for word, in glibc's files.)
+*/
+namespace detail {
+struct SinCoshF {
+  double c[4], ch[7];
+  uint64_t tb[32];
+};
+// roundeven_finite of glibc's math_config.h: rint in the default rounding mode is the same.
+WW_LIBM_FN float sincoshf_core(float x, double sgn, const SinCoshF& t, double tol) {
+  const double iln2 = 0x1.71547652b82fep+5;
+  double z = x;
+  double a = iln2 * z;
+  double ia = ::rint(a);
+  double h = a - ia;
+  double h2 = h * h;
+  int64_t jp = static_cast<int64_t>(asuint64(ia + 0x1.8p52));
+  int64_t jm = -jp;
+  double sp = asdouble(t.tb[jp & 31] + (static_cast<uint64_t>(jp >> 5) << 52));
+  double sm = asdouble(t.tb[jm & 31] + (static_cast<uint64_t>(jm >> 5) << 52));
+  double te = t.c[0] + h2 * t.c[2];
+  double to = (t.c[1] + h2 * t.c[3]);
+  double rp = sp * (te + h * to);
+  double rm = sm * (te - h * to);
+  double r = rp + sgn * rm;
+  float ub = static_cast<float>(r);
+  float lb = static_cast<float>(r - tol * r);
+  if (ub != lb) {
+    const double iln2h = 0x1.7154765p+5;
+    const double iln2l = 0x1.5c17f0bbbe88p-26;
+    h = (iln2h * z - ia) + iln2l * z;
+    h2 = h * h;
+    te = t.ch[0] + h2 * t.ch[2] + (h2 * h2) * (t.ch[4] + h2 * t.ch[6]);
+    to = t.ch[1] + h2 * (t.ch[3] + h2 * t.ch[5]);
+    r = sp * (te + h * to) + sgn * (sm * (te - h * to));
+    ub = static_cast<float>(r);
+  }
+  return ub;
+}
+}  // namespace detail
+
+#define WW_LIBM_SINCOSHF_T                                                                       \
+  {{1, 0x1.62e42fef4c4e7p-6, 0x1.ebfd1b232f475p-13, 0x1.c6b19384ecd93p-20},                      \
+   {1, 0x1.62e42fefa39efp-6, 0x1.ebfbdff82c58fp-13, 0x1.c6b08d702e0edp-20,                       \
+    0x1.3b2ab6fb92e5ep-27, 0x1.5d886e6d54203p-35, 0x1.430976b8ce6efp-43},                        \
+   {0x3fe0000000000000, 0x3fe059b0d3158574, 0x3fe0b5586cf9890f, 0x3fe11301d0125b51,              \
+    0x3fe172b83c7d517b, 0x3fe1d4873168b9aa, 0x3fe2387a6e756238, 0x3fe29e9df51fdee1,              \
+    0x3fe306fe0a31b715, 0x3fe371a7373aa9cb, 0x3fe3dea64c123422, 0x3fe44e086061892d,              \
+    0x3fe4bfdad5362a27, 0x3fe5342b569d4f82, 0x3fe5ab07dd485429, 0x3fe6247eb03a5585,              \
+    0x3fe6a09e667f3bcd, 0x3fe71f75e8ec5f74, 0x3fe7a11473eb0187, 0x3fe82589994cce13,              \
+    0x3fe8ace5422aa0db, 0x3fe93737b0cdc5e5, 0x3fe9c49182a3f090, 0x3fea5503b23e255d,              \
+    0x3feae89f995ad3ad, 0x3feb7f76f2fb5e47, 0x3fec199bdd85529c, 0x3fecb720dcef9069,              \
+    0x3fed5818dcfba487, 0x3fedfc97337b9b5f, 0x3feea4afa2a490da, 0x3fef50765b6e4540}}
+
+WW_LIBM_FN float coshf(float x) {
+  using namespace detail;
+  constexpr SinCoshF t = WW_LIBM_SINCOSHF_T;
+  double z = x;
+  uint32_t ax = asuint(x) << 1;
+  if (ax > 0x8565a9f8u) { /* |x| >~ 89.4 */
+    if (ax >= 0xff000000u) {
+      if (ax << 8) return x + x; /* nan */
+      return INFINITY;           /* +-inf */
+    }
+    return oflowf(0);
+  }
+  if (ax < 0x7c000000u) {   /* |x| < 0.125 */
+    if (ax < 0x74000000u) { /* |x| < 0x1p-11 */
+      if (ax < 0x66000000u) /* |x| < 0x1p-24 */
+        return ::fmaf(::fabsf(x), 0x1p-25f, 1.0f);
+      return (0.5f * x) * x + 1.0f;
+    }
+    constexpr double cp[] = {0x1.fffffffffffe3p-2, 0x1.55555555723cfp-5, 0x1.6c16bee4a5986p-10,
+                             0x1.a0483fc0328f7p-16};
+    double z2 = z * z;
+    double z4 = z2 * z2;
+    return static_cast<float>(1.0 + z2 * ((cp[0] + z2 * cp[1]) + z4 * (cp[2] + z2 * (cp[3]))));
+  }
+  return sincoshf_core(x, 1.0, t, 1.45e-10);
+}
+
+WW_LIBM_FN float sinhf(float x) {
+  using namespace detail;
+  constexpr SinCoshF t = WW_LIBM_SINCOSHF_T;
+  double z = x;
+  uint32_t ux = asuint(x) << 1;
+  if (ux > 0x8565a9f8u) { /* |x| >~ 89.4 */
+    if (ux >= 0xff000000u) return x + x;
+    return oflowf(x < 0);
+  }
+  if (ux < 0x7c000000u) {    /* |x| < 0.125 */
+    if (ux <= 0x74250bfeu) { /* |x| <= 0x1.250bfep-11 */
+      if (ux < 0x66000000u)  /* |x| < 0x1p-24 */
+        return ::fmaf(x, ::fabsf(x), x);
+      if (ux == 0x74250bfeu) {
+        float sgn = ::copysignf(1.0f, x);
+        return sgn * 0x1.250bfep-11f + sgn * 0x1p-36f;
+      }
+      return (x * 0x1.555556p-3f) * (x * x) + x;
+    }
+    constexpr double cp[] = {0x1.5555555555555p-3, 0x1.11111111146e1p-7, 0x1.a01a00930dda6p-13,
+                             0x1.71f92198aa6e9p-19};
+    double z2 = z * z;
+    double z4 = z2 * z2;
+    return static_cast<float>(z + (z2 * z) * ((cp[0] + z2 * cp[1]) + z4 * (cp[2] + z2 * (cp[3]))));
+  }
+  return sincoshf_core(x, -1.0, t, 1.52e-10);
+}
+#undef WW_LIBM_SINCOSHF_T
 
 }  // namespace ww::libm
