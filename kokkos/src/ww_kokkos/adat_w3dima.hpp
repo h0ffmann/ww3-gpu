@@ -67,7 +67,7 @@ enum class W3dimaStatus : int {
   /// Not a WW3 code: :961 would store through the FL_ALL pointer before any W3SETA
   /// has associated it (W3setaTargets::base still 0), undefined behaviour in the
   /// Fortran. No caller at the pin does this (W3INIT calls W3SETA at
-  /// w3initmd.F90:550, W3IOGO at w3iogomd.F90:2605, ww3_gint at ww3_gint.F90:805,
+  /// w3initmd.F90:540, W3IOGO at w3iogomd.F90:2605, ww3_gint at ww3_gint.F90:805,
   /// before W3DIMA).
   fl_all_unassociated = -1,
 };

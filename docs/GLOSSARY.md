@@ -298,6 +298,19 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | W3WAVEMD / W3WAVE | "Run WAVEWATCH III for a given time interval" `(v)`, `w3wavemd.F90:229` | The main time loop: forcing update → propagation → source terms → output; slices `CG(1:NK,ISEA)` into `W3SRCE`. | [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md) |
 | W3GATH / W3SCAT | "Gather spectral bin information into a propagation field array" / "Scatter data back to spectral storage after propagation" `(v)` | The MPI transposes between the point and spectral decompositions; the communication bucket of the profile. | [course/09-benchmark-profile-compile-run.md](../course/09-benchmark-profile-compile-run.md), [docs/AGENTS_KOKKOS_202609.md](AGENTS_KOKKOS_202609.md) |
 | W3INITMD / W3INIT | "Initialize WAVEWATCH III" `(v)`, `w3initmd.F90:163` | Where the Kokkos runtime and DIA tables would be set up (after `W3IOGR('READ')` at line 735). | [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md) |
+| W3DIMW / W3DIMI | "Initialize an individual data grid at the proper dimensions" `(v)` `w3wdatmd.F90:342`, `w3idatmd.F90:434` | Allocate the wave state (`VA`, `WLV`, ...) and the input fields of model `IMOD`; hooks of the Kokkos `W3INIT`. | [kokkos/port_report/W3INIT_KOKKOS.md](../kokkos/port_report/W3INIT_KOKKOS.md) |
+| W3IOPP | "Preprocessing of point output" `(v)` `w3iopomd.F90:242` | Locates the output points in the grid and sets `NOPTS`, `PTLOC`, `PTNME`; a hook of the Kokkos `W3INIT`. | [kokkos/port_report/W3INIT_KOKKOS.md](../kokkos/port_report/W3INIT_KOKKOS.md) |
+| ITRACE | "(Re-) initialization for module version of STRACE" `(v)` `w3servmd.F90:96` | Sets the unit and count of the subroutine trace; a hook of the Kokkos `W3INIT`. | [kokkos/port_report/W3INIT_KOKKOS.md](../kokkos/port_report/W3INIT_KOKKOS.md) |
+| WWDATE / WWTIME | "Get date from machine dependent routine" / "Get time from machine dependent routine" `(v)` `w3servmd.F90:681`, `:750` | The wall-clock date and time in the log header (format 900 of `W3INIT`). | [kokkos/port_report/W3INIT_KOKKOS.md](../kokkos/port_report/W3INIT_KOKKOS.md) |
+| SPATIAL_GRID / NVECTRI / COORDMAX | "Calculates triangle areas and reorders the triangles to have them oriented counterclockwise" / "Calculate cell tools: inward normal, angles and length of edges" / "Calculate first point and last point coordinates, and minimum and maximum edge length" `(v)` `w3triamd.F90:872`, `:984`, `:1227` | Unstructured-mesh geometry `W3INIT` builds after `W3IOGR` when `GTYPE = UNGTYPE`; hooks of the Kokkos `W3INIT`. | [kokkos/port_report/W3INIT_KOKKOS.md](../kokkos/port_report/W3INIT_KOKKOS.md) |
+| W3FLGRDUPDT | "Updates the flags for output parameters based on the mod_def file" `(v)` `w3iogomd.F90:179` | Switches off the output fields whose frequency bounds `mod_def` does not set; called by `W3INIT` at `w3initmd.F90:780`. | [kokkos/port_report/W3FLGRDUPDT_KOKKOS.md](../kokkos/port_report/W3FLGRDUPDT_KOKKOS.md) |
+| SET_UP_NSEAL_NSEALM | "Setup NSEAL, NSEALM in context of PDLIB" `(v)` `w3parall.F90:1030` | The local and maximum local sea-point counts; under `SHRD` both are `NSEA`. | [kokkos/port_report/SET_UP_NSEAL_NSEALM_KOKKOS.md](../kokkos/port_report/SET_UP_NSEAL_NSEALM_KOKKOS.md) |
+| IAPPRO | "Processor numbers for propagation calc." `(v)` `w3adatmd.F90:280` | Set to 1 for every spectral bin by `W3INIT` (`w3initmd.F90:871`); the MPI sweeps that distribute it are under `W3_DIST`. | [kokkos/port_report/W3INIT_KOKKOS.md](../kokkos/port_report/W3INIT_KOKKOS.md) |
+| NTPROC / NAPLOG / NAPERR / IOSTYP | "Number of processors", "Proc. dealing with log output", "Proc. dealing with error output", "Output data server type" `(v)` `w3odatmd.F90:101`, `:104`, `:106`, `:71` | `W3INIT` sets the counts to 1 under `SHRD` (`w3initmd.F90:562-565`); log lines are written only when `IAPROC = NAPLOG`. | [kokkos/port_report/W3INIT_KOKKOS.md](../kokkos/port_report/W3INIT_KOKKOS.md) |
+| TOFRST / TONEXT / TOLAST / DTOUT | "Times for first output", "Times for next output", "Times for last output", "Output intervals" `(v)` `w3odatmd.F90:116-118`, `:123` | Integer dates and intervals per output type, which `W3INIT` builds from `ODAT` (`w3initmd.F90:1066-1246`). | [kokkos/port_report/W3INIT_KOKKOS.md](../kokkos/port_report/W3INIT_KOKKOS.md) |
+| TSTOUT / LPDLIB | "Flag for generation of test files" (a `.FALSE.` PARAMETER) / "Logical for using the PDLIB library" `(v)` `constants.F90:57`, `:102` | With `TSTOUT` false the test-file block of `W3INIT` is dead code; `W3INIT` sets `LPDLIB` false unless `W3_PDLIB` is compiled. | [kokkos/port_report/W3INIT_KOKKOS.md](../kokkos/port_report/W3INIT_KOKKOS.md) |
+| CRITOS / FRACOS | `W3INIT`'s PARAMETER 15. and local: the percentage of processes reserved for output `(v)` `w3initmd.F90:129`, `:505`, `:622` | Warning 8002 when more than 15 % of the processes do output; 0 under `SHRD`. | [kokkos/port_report/W3INIT_KOKKOS.md](../kokkos/port_report/W3INIT_KOKKOS.md) |
+| MAPTST | `W3INIT`'s local copy of `MAPSTA`, then its dry-point flag map `(v)` `w3initmd.F90:501`, `:795-796`, `:1285` | Merges the restart `MAPSTA` with the grid's (`:1009-1016`) and carries the dry flag into `MAPST2` (`:1368`). | [kokkos/port_report/W3INIT_KOKKOS.md](../kokkos/port_report/W3INIT_KOKKOS.md) |
 | W3MPII | "Perform initializations for MPI version of model. Data transpose only" `(v)` | MPI set-up in `w3initmd.F90`. | [docs/KOKKOS_H100_PLAN_202609.md](KOKKOS_H100_PLAN_202609.md) |
 | W3MPIO | "Prepare MPI persistent communication needed for WAVEWATCH I/O routines" `(v)` `w3initmd.F90:2033-2034`, `:2045` at `03adda91` | Called only by `W3INIT` under `W3_MPI` (`w3initmd.F90:1561`); under `SHRD` it compiles to an empty subroutine, which is what the port reproduces. | [kokkos/port_report/W3MPIO_KOKKOS.md](../kokkos/port_report/W3MPIO_KOKKOS.md) |
 | W3IOGRMD / W3IOGR | "Reading and writing of the model definition file" `(v)` | Reads `mod_def.ww3`; also calls `INSNL1` (`w3iogrmd.F90:1802`). | [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md) |
@@ -802,6 +815,7 @@ Every term above, alphabetically, with the section it lives in.
 - COV: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - `CPU_TIME`: [HPC and software](#hpc-and-software)
 - `create_mirror_view`: [HPC and software](#hpc-and-software)
+- CRITOS / FRACOS: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - critérios de concordância: [This repository's own names](#this-repositorys-own-names)
 - critérios de concordância / agreement criteria: [This repository's own names](#this-repositorys-own-names)
 - CRT0: [WW3 switches](#ww3-switches)
@@ -1026,6 +1040,7 @@ Every term above, alphabetically, with the section it lives in.
 - HPX: [HPC and software](#hpc-and-software)
 - I10: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - i9-14900: [HPC and software](#hpc-and-software)
+- IAPPRO: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - IBM 704: [HPC and software](#hpc-and-software)
 - IC3PRECALC_CHENG: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - IC3TABLE_CHENG: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1064,6 +1079,7 @@ Every term above, alphabetically, with the section it lives in.
 - ISGRD / IPARS: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - ISO/IEC 1539:1991: [HPC and software](#hpc-and-software)
 - ITIME / IPASS / IDLAST / ITSTEP / FLCOLD / FLIWND: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- ITRACE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - JACOBI_INIT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - JAD: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - KDMAX / RDKMIN: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1108,6 +1124,7 @@ Every term above, alphabetically, with the section it lives in.
 - MAPST2 / MAPWN: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - MAPSTA_LOC / INDEX_MAP / NBND_MAP / MAPSTA_HACK: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - MAPSTA_SMC: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- MAPTST: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - MSC: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - MSR: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - N1MAX: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1128,6 +1145,7 @@ Every term above, alphabetically, with the section it lives in.
 - NR_CORR: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - NRLv: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - NSIZE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- NTPROC / NAPLOG / NAPERR / IOSTYP: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - OARST: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - optionCall: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - OUTFLAGS / NXXX / X* arrays: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1154,6 +1172,7 @@ Every term above, alphabetically, with the section it lives in.
 - SECONDHH: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - SET_IOBDP_PDLIB: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - SET_IOBPA_PDLIB: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- SET_UP_NSEAL_NSEALM: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - SETDEPTH / IOBDP: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - SETDEPTH: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - SETVUF_FAST: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1176,6 +1195,7 @@ Every term above, alphabetically, with the section it lives in.
 - SMCyUNO2r: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - SMOOTH_K: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - SPARSKIT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- SPATIAL_GRID / NVECTRI / COORDMAX: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - SRCTRM: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - STEXU / STEYU / STEDU: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - STME21: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1202,6 +1222,8 @@ Every term above, alphabetically, with the section it lives in.
 - TIDE_SET_INDICES: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - TIDYCG: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - TLEV / TLN: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- TOFRST / TONEXT / TOLAST / DTOUT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- TSTOUT / LPDLIB: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - UDSOL: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - UDSOLC: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - UFunc: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1226,11 +1248,13 @@ Every term above, alphabetically, with the section it lives in.
 - W3BETA: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3CFLUG / UG_GRADIENTS: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3CSPC: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3DIMW / W3DIMI: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3DIMW: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3DIMX / W3DIMUG: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3DMO5: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3FLDG / W3FLDO: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3FLDH: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3FLGRDUPDT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3FLX1: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3FLX1MD / W3FLX1: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3FLX1MD: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1245,6 +1269,7 @@ Every term above, alphabetically, with the section it lives in.
 - W3FLX5MD: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3GNTX: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3IOPE / W3IOSF / W3CPRT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3IOPP: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3KRTN / SMCkUNO2 / SMCGtCrfr / CTMAX: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3KRTN: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3LLTOEQ / SMCGradn: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1674,6 +1699,7 @@ Every term above, alphabetically, with the section it lives in.
 - WFIP-0002: [This repository's own names](#this-repositorys-own-names)
 - WFIP-0003: [This repository's own names](#this-repositorys-own-names)
 - Without Changing the Answer: [This repository's own names](#this-repositorys-own-names)
+- WWDATE / WWTIME: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - Zenodo: [Citation and licensing](#citation-and-licensing)
 - `_ZGVbN4vv_powf`: [This repository's own names](#this-repositorys-own-names)
 - σ (SIG): [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
