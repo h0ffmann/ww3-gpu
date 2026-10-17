@@ -10,7 +10,8 @@
 // W3KOKKOS_<R> of w3kokkosmd.F90, each inside !$OMP CRITICAL (WW_KOKKOS_WAVE). The
 // shim holds no grid state, so no per-grid context: every call carries its sizes.
 // Inside an OpenMP parallel region (host builds) the kernels run on Kokkos::Serial,
-// as in the other shims. Nothing throws across the boundary; every entry point
+// as in the other shims; W3GATH and W3SCAT always do in a host build (serial_on_host).
+// Nothing throws across the boundary; every entry point
 // returns a WwKokkosStatus.
 //
 // Two marshalling choices change no arithmetic and are worth knowing:
@@ -184,16 +185,31 @@ void fit(V& v, const char* name, size_t n0, size_t n1 = 0) {
   }
 }
 
-/// Runs f(E()) on Kokkos::Serial inside an OpenMP region, else on the default space,
-/// and turns an exception into a status.
+/// W3GATH and W3SCAT run on Kokkos::Serial in a host build, as the Fortran runs them: their
+/// ISEA loops carry no OpenMP directive (WW3-noaa/model/src/w3wavemd.F90:3163-3166 and
+/// :3478-3481 at 03adda91) and W3WAVE's ISPEC loop around them none either. Each call copies
+/// one component of 3 791 floats on the coast case, a few microseconds of work, where an
+/// OpenMP launch of all the threads costs tens (more on a loaded machine), and they run 2 x
+/// 41 472 times there. A copy has no order to keep, so the space changes no bit.
+#if defined(WW_WAVE_SERIAL_NESTED)
+bool serial_on_host(Routine r) { return r == GATH || r == SCAT; }
+#endif
+
+/// Runs f(E()) on Kokkos::Serial inside an OpenMP region (and for serial_on_host), else on
+/// the default space, and turns an exception into a status.
 template <class F>
 int run(Routine r, const F& f) {
   try {
     if (!Kokkos::is_initialized()) return fail(WW_KOKKOS_ERR_NOT_INITIALISED, "before ww_kokkos_init");
     int rc;
-    ww::timers::Region t(kRegion[r], !nested_in_openmp());
 #if defined(WW_WAVE_SERIAL_NESTED)
-    if (nested_in_openmp())
+    const bool serial = nested_in_openmp() || serial_on_host(r);
+#else
+    const bool serial = nested_in_openmp();  // false: no Serial space beside a device
+#endif
+    ww::timers::Region t(kRegion[r], !serial);
+#if defined(WW_WAVE_SERIAL_NESTED)
+    if (serial)
       rc = f(Kokkos::Serial());
     else
 #endif
