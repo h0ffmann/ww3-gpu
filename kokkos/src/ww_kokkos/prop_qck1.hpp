@@ -24,7 +24,7 @@
 namespace ww::prop {
 
 /// Reals of work storage w3qck1 needs: the automatic FLA(1-MY:MY*MX),
-/// MY*(MX+1) entries (w3uqckmd.F90:171), heap-allocated and freed by the
+/// MY*(MX+1) entries (w3uqckmd.F90:232), heap-allocated and freed by the
 /// Fortran on every call. The port takes it from the caller.
 KOKKOS_INLINE_FUNCTION constexpr int qck1_work_reals(int mx, int my) { return my * (mx + 1); }
 

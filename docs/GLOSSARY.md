@@ -300,10 +300,12 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | EWN1 / DSIE / N1MAX | `W3DISPMD`'s dispersion table: "Wavenumber array" / "SI step" / "Actual maximum position in array" `(v)` `WW3-noaa/model/src/w3dispmd.F90:37-40,78-79` at `03adda91` | Filled by `DISTAB` (`:652-659`); `W3FLX2` and `W3FLX3` interpolate the peak wavenumber from it (`w3flx2md.F90:196-200`). | [kokkos/port_report/W3FLX2_KOKKOS.md](../kokkos/port_report/W3FLX2_KOKKOS.md), [kokkos/port_report/W3FLX3_KOKKOS.md](../kokkos/port_report/W3FLX3_KOKKOS.md) |
 | FTE / FTF / FTWN | "Factor in tail integration energy" / "Id. frequency" / "Id. wavenumber" `(v)` `WW3-noaa/model/src/w3gdatmd.F90:266-268` at `03adda91` | Set by `ww3_grid` from the last bin, `FTE = 0.25*SIG(NK)*DTH*SIG(NK)`, `FTF = 0.20*DTH*SIG(NK)`, `FTWN = 0.20*SQRT(GRAV)*DTH*SIG(NK)` (`w3gridmd.F90:3509-3511`): the parametric tail beyond `NK` that the mean-parameter routines add, as in `EMEAN = SUM(EB) + (EB(NK)/DDEN(NK))*FTE` (`w3swldmd.F90:207`). | [kokkos/port_report/W3SPR1_KOKKOS.md](../kokkos/port_report/W3SPR1_KOKKOS.md), [kokkos/port_report/W3SWL4_KOKKOS.md](../kokkos/port_report/W3SWL4_KOKKOS.md) |
 | FPI | "Input 'peak' frequency" `(v)` `WW3-noaa/model/src/w3src2md.F90:300,341` at `03adda91` | Returned by `W3SIN2` as `M0/M1`, moments of the positive wind input, or `XFR*SIG(NK)` when there is none (`:493-506`); `W3SPR2` makes it nondimensional, `FPISTR = MAX(0.008, FPI*UST/GRAV)` (`:280`), and `W3SDS2` reads it. | [kokkos/port_report/W3SIN2_KOKKOS.md](../kokkos/port_report/W3SIN2_KOKKOS.md), [kokkos/port_report/W3SPR2_KOKKOS.md](../kokkos/port_report/W3SPR2_KOKKOS.md), [kokkos/port_report/W3SDS2_KOKKOS.md](../kokkos/port_report/W3SDS2_KOKKOS.md) |
-| W3PRO2MD / W3PRO3MD | "third order propagation scheme" modules (`PR2` / `PR3`) `(v)` | Hold `W3XYP2`/`W3KTP2` and `W3XYP3`/`W3KTP3`. | [course/09-benchmark-profile-compile-run.md](../course/09-benchmark-profile-compile-run.md) |
-| W3XYP2 / W3XYP3 | "Propagation in physical space for a given spectral component" `(v)` | Spatial advection per spectral bin, the memory-bound bucket. | [docs/AGENTS_KOKKOS_202609.md](AGENTS_KOKKOS_202609.md) |
+| W3PRO1MD / W3PRO2MD / W3PRO3MD | "first order propagation scheme" module (`PR1`) / "third order propagation scheme" modules (`PR2` / `PR3`) `(v)` `WW3-noaa/model/src/w3pro1md.F90:61`, `w3pro2md.F90:65` | Hold `W3XYP1`/`W3KTP1`, `W3XYP2`/`W3KTP2` and `W3XYP3`/`W3KTP3`. | [course/09-benchmark-profile-compile-run.md](../course/09-benchmark-profile-compile-run.md) |
+| W3XYP1 / W3XYP2 / W3XYP3 | "Propagation in physical space for a given spectral component" `(v)` `WW3-noaa/model/src/w3pro1md.F90:328` | Spatial advection per spectral bin, the memory-bound bucket. | [docs/AGENTS_KOKKOS_202609.md](AGENTS_KOKKOS_202609.md) |
 | W3MAP3 / W3MAPT | "Generate 'map' arrays for the ULTIMATE QUICKEST scheme" / the same "to combine GSE alleviation with obstructions" `(v)` `WW3-noaa/model/src/w3pro3md.F90:139,527` | The index maps `W3XYP3` and `W3KTP3` read, rebuilt by `W3WAVE` around `W3UTRN` when the sea mask or the obstructions change (`w3wavemd.F90:1463-1467`). | [docs/W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md](W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md) |
-| W3KTP2 / W3KTP3 | "Propagation in spectral space" `(v)` | Refraction and frequency shift per point over (θ, k). | [course/09-benchmark-profile-compile-run.md](../course/09-benchmark-profile-compile-run.md) |
+| W3MAP1 / W3MAP2 | "Generate 'map' arrays for the first order upstream scheme" / the same "for the ULTIMATE QUICKEST scheme" `(v)` `WW3-noaa/model/src/w3pro1md.F90:107,126`, `w3pro2md.F90:135,153` | The maps `W3XYP1`/`W3KTP1` (`FACVX`, `FACVY`, `IS0`, `IS2`) and `W3XYP2`/`W3KTP2` (`MAPTH2`, `MAPWN2`) read; not translated, so a shim copies them from the Fortran. | [kokkos/port_report/W3XYP1_KOKKOS.md](../kokkos/port_report/W3XYP1_KOKKOS.md), [kokkos/port_report/W3KTP2_KOKKOS.md](../kokkos/port_report/W3KTP2_KOKKOS.md) |
+| W3XYPUG | "Propagation in physical space for a given spectral component" on an unstructured grid, explicit, without `PDLIB` `(v)` `WW3-noaa/model/src/w3profsmd.F90:69` | Calls `SETDEPTH`, then one of `W3XYPFSN2`, `W3XYPFSPSI2`, `W3XYPFSFCT2`, `W3XYPFSNIMP`; called from `w3wavemd.F90:1970,1973`. | [kokkos/port_report/W3XYPUG_KOKKOS.md](../kokkos/port_report/W3XYPUG_KOKKOS.md) |
+| W3KTP1 / W3KTP2 / W3KTP3 | "Propagation in spectral space" `(v)` `WW3-noaa/model/src/w3pro1md.F90:917` | Refraction and frequency shift per point over (θ, k). | [course/09-benchmark-profile-compile-run.md](../course/09-benchmark-profile-compile-run.md) |
 | W3UQCKMD / W3QCK1 / W3QCK2 / W3QCK3 (W3UQCK*) | "Portable ULTIMATE QUICKEST schemes": 1-D propagation on a regular grid / with variable spacing / with cell transparencies `(v)` | The `UQ` sweeps called by `W3XYP*`. | [course/09-benchmark-profile-compile-run.md](../course/09-benchmark-profile-compile-run.md) |
 | W3WAVEMD / W3WAVE | "Run WAVEWATCH III for a given time interval" `(v)`, `w3wavemd.F90:229` | The main time loop: forcing update → propagation → source terms → output; slices `CG(1:NK,ISEA)` into `W3SRCE`. | [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md) |
 | W3GATH / W3SCAT | "Gather spectral bin information into a propagation field array" / "Scatter data back to spectral storage after propagation" `(v)` | The MPI transposes between the point and spectral decompositions; the communication bucket of the profile. | [course/09-benchmark-profile-compile-run.md](../course/09-benchmark-profile-compile-run.md), [docs/AGENTS_KOKKOS_202609.md](AGENTS_KOKKOS_202609.md) |
@@ -1353,10 +1355,17 @@ Every term above, alphabetically, with the section it lives in.
 - W3IOPP: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3KRTN / SMCkUNO2 / SMCGtCrfr / CTMAX: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3KRTN: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3KTP1 / W3KTP2 / W3KTP3: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3KTP1: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3LLTOEQ / SMCGradn: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3LLTOEQ: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3MAP1 / W3MAP2: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3MAP1: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3MAP2: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3NESTUG / W3GFPT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3NNSC / T_NNS: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3PRO1MD / W3PRO2MD / W3PRO3MD: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3PRO1MD: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3RPWNICE / FINDROOTS_NR / FUNCD_FVAL / FUNCD_FDERIV / IS2DISP: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3RPWNICE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3S2XY_SMC / W3S2XY_SMCRG / W3S2XY_SMCRG_DIR / W3S2XY_SMCNN / W3S2XY_SMCNN_INT / MAPSTA_SMC / CALC_INTERP: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1398,8 +1407,11 @@ Every term above, alphabetically, with the section it lives in.
 - W3UBPT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3UTAU / W3URHO / W3UIC1: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3XDMA / AINIT2: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3XYP1 / W3XYP2 / W3XYP3: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3XYP1: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3XYPFSNIMP / FSNIMP / IMPFSN: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3XYPFSNIMP: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3XYPUG: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - WADAT / FL_ALL / D_ONLY / NSEALM: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - WADATS / NADATA / IADATA: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - WCOSS2: [Models, projects and institutions](#models-projects-and-institutions)
@@ -1954,7 +1966,6 @@ Every term above, alphabetically, with the section it lives in.
 - W3KOKKOS_UNITSMD / W3KOKKOS_REGISTER / `parts.d`: [This repository's own names](#this-repositorys-own-names)
 - `w3kokkosmd.F90`: [This repository's own names](#this-repositorys-own-names)
 - W3KTP2: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
-- W3KTP2 / W3KTP3: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3KTP3: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3MPII: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3MPIO: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1971,7 +1982,6 @@ Every term above, alphabetically, with the section it lives in.
 - W3PARTMD: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3PARTMD / W3PART: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3PRO2MD: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
-- W3PRO2MD / W3PRO3MD: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3PRO3MD: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3PROFSMD: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3PROFSMD / w3profsmd_pdlib.F90: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -2029,7 +2039,6 @@ Every term above, alphabetically, with the section it lives in.
 - W3WDATMD (W3NDAT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3WDATMD (W3NDAT / W3SETW): [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3XYP2: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
-- W3XYP2 / W3XYP3: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3XYP3: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - wall-clock: [HPC and software](#hpc-and-software)
 - WAM: [Models, projects and institutions](#models-projects-and-institutions)
