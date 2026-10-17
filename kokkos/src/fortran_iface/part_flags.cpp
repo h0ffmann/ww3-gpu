@@ -13,8 +13,8 @@
 // The parts of kOptInOnly ignore the master too: the owner, 2026-10-16, asked that the PR1, PR2
 // and unstructured explicit propagation (W3XYP1, W3KTP1, W3XYP2, W3KTP2, W3XYPUG) stay on the
 // Fortran unless their own flag is "1", so WW_KOKKOS_ALL=1 cannot route them to Kokkos. The PR3
-// propagation of the prop3 unit (W3XYP3, W3KTP3, PATCH.md section 11) is opt-in the same way until
-// its rows are regtested.
+// propagation of the prop3 unit (W3XYP3, W3KTP3, PATCH.md section 11) and W3OUTG of the outg unit
+// (PATCH.md section 15) are opt-in the same way until their rows are regtested.
 //
 // SPDX-License-Identifier: MIT
 
@@ -26,7 +26,7 @@
 namespace {
 constexpr const char* kOptInOnly[] = {"WW_KOKKOS_XYP1", "WW_KOKKOS_KTP1", "WW_KOKKOS_XYP2",
                                       "WW_KOKKOS_KTP2", "WW_KOKKOS_XYPUG", "WW_KOKKOS_XYP3",
-                                      "WW_KOKKOS_KTP3"};
+                                      "WW_KOKKOS_KTP3", "WW_KOKKOS_OUTG"};
 }  // namespace
 
 extern "C" int ww_kokkos_flag(const char* name) {

@@ -1,0 +1,4 @@
+# W3OUTG's integrals on the resident VA, WFIP-0005 unit 5 (outg_shim.cpp); opt-in, not under WW_KOKKOS_ALL
+# Read by scripts/ww3-gpu.sh: PART <name> (WW_KOKKOS_<name>), COUNT <variable>, FILE <fork path>; PATCH.md section 9.
+PART OUTG
+COUNT WW_KOKKOS_OUTG_COUNT

@@ -8,11 +8,14 @@
 // and the authors of its history block. Evidence: kokkos/port_report/W3OUTG_KOKKOS.md.
 // SPDX-License-Identifier: LGPL-3.0-or-later
 //
-// Ported: every statement switches/switch_lab_shrd compiles (SHRD; no OMPG, O8, O9, IG1, T, S):
-// sections 1-4 and 6, the space-time extremes (:1694-1931) and the calls of :2347-2362, SKEWNESS
-// through iogo_skewness.hpp. Not ported, by switch: the W3_IG1 HSIG (:1556-1558), the W3_O9
-// negative Hs (:1995-2003), the W3_O8 low-Hs filter (:2058-2068), the W3_T prints (:2219-2237,
-// :2368-2375), W3_S STRACE, and the W3_OMPG directives (they do not change a point's arithmetic).
+// Ported: every statement switches/switch_lab_shrd and switch_lab_ompg compile (SHRD, with or
+// without OMPG; no O8, O9, IG1, T, S): sections 1-4 and 6, the space-time extremes (:1694-1931)
+// and the calls of :2347-2362, SKEWNESS through iogo_skewness.hpp. Not ported, by switch: the
+// W3_IG1 HSIG (:1556-1558), the W3_O9 negative Hs (:1995-2003), the W3_O8 low-Hs filter
+// (:2058-2068), the W3_T prints (:2219-2237, :2368-2375), W3_S STRACE. The W3_OMPG directives
+// change no point's arithmetic, but they change two choices of the object, which W3OutgScalars::
+// ompg selects: the libmvec split of :1733-1745 (thmp_sincos) and the MAXSS operand order of
+// MAX(1E-20,AB) at :1678 and :1683.
 // Not translated: CALC_U3STOKES (:4112-4341) and CALC_WBT (:4367-4607) are hooks the caller
 // provides (W3OutgHooks); a requested hook that is missing aborts. CALC_WBTv2 of W3SNL5
 // (snl5_calc_wbtv2.hpp) is a different routine (fixed BETA, no DMIN, another SIGP threshold).
@@ -75,10 +78,12 @@ static_assert(kDera == 1.745329238474369049072265625e-2f);
 KOKKOS_INLINE_FUNCTION Real gt_sel(Real a, Real b) { return a > b ? a : b; }
 KOKKOS_INLINE_FUNCTION Real lt_sel(Real a, Real b) { return a < b ? a : b; }
 
-/// SIN/COS(THMP(JSEA)) of :1733-1745. The object vectorises that JSEA loop by fours with
-/// _ZGVbN4v_sinf/_ZGVbN4v_cosf when NSEAL >= 4, for JSEA <= 4*(NSEAL/4), and calls the scalar
-/// sincosf for the rest; `lane` says which. A lane's result depends on its own input only, so the
-/// value is broadcast to the four lanes.
+/// SIN/COS(THMP(JSEA)) of :1733-1745. Under switch_lab_shrd the object vectorises that JSEA loop
+/// by fours with _ZGVbN4v_sinf/_ZGVbN4v_cosf when NSEAL >= 4, for JSEA <= 4*(NSEAL/4), and calls
+/// the scalar sincosf for the rest; `lane` says which. A lane's result depends on its own input
+/// only, so the value is broadcast to the four lanes. Under switch_lab_ompg the loop is the body
+/// of an !$OMP PARALLEL DO (_omp_fn.2 of the object), which calls the scalar sincosf for every
+/// point (no _ZGV symbol in the object): the caller passes lane = false.
 KOKKOS_INLINE_FUNCTION void thmp_sincos(Real x, bool lane, Real& s, Real& c) {
   (void)lane;
   bool done = false;
@@ -119,6 +124,7 @@ struct W3OutgScalars {
   int p2msf3;    ///< P2MSF(3)
   int e3df2[5];  ///< E3DF(2,1:5)
   int e3df3[5];  ///< E3DF(3,1:5)
+  bool ompg;     ///< WW3 built with W3_OMPG: the object's choices of thmp_sincos and of :1678, :1683
 };
 
 /// The flags of the argument list and of W3ODATMD, on the host. flogrd and flogr2 are
@@ -338,10 +344,12 @@ KOKKOS_INLINE_FUNCTION void w3outg_point(const W3OutgArgs<ExecSpace>& g, const W
     if (l.f3[1] && ik >= s.e3df2[1] && ik <= s.e3df3[1])
       g.th1m(j0, ik - s.e3df2[1]) =
           Kokkos::fmod(static_cast<Real>(630.) - kRade * Kokkos::atan2(aby, abx), static_cast<Real>(360.));
-    // MAX(1E-20,AB) (:1678, :1683): the object keeps two copies of this loop, chosen by FLOLOC(3,5),
-    // and the maxss destination differs between them: AB when it is set, 1E-20 when it is not.
+    // MAX(1E-20,AB) (:1678, :1683): the SHRD object keeps two copies of this loop, chosen by
+    // FLOLOC(3,5), and the maxss destination differs between them: AB when it is set, 1E-20 when it
+    // is not. The OMPG object (_omp_fn.1) computes M1 and M2 only under their FLOLOC test, with AB
+    // the destination in both.
     const Real tiny = static_cast<Real>(1E-20);
-    const Real abm = l.f3[4] ? gt_sel(ab, tiny) : gt_sel(tiny, ab);
+    const Real abm = (s.ompg || l.f3[4]) ? gt_sel(ab, tiny) : gt_sel(tiny, ab);
     const Real m1 = Kokkos::sqrt(abx * abx + aby * aby) / abm;
     if (l.f3[2] && ik >= s.e3df2[2] && ik <= s.e3df3[2])
       g.sth1m(j0, ik - s.e3df2[2]) = Kokkos::sqrt(Kokkos::fabs(two * (one - m1))) * kRade;
@@ -360,7 +368,7 @@ KOKKOS_INLINE_FUNCTION void w3outg_point(const W3OutgArgs<ExecSpace>& g, const W
     if (sea && Kokkos::fabs(etx) + Kokkos::fabs(ety) > k1em7) thmp = Kokkos::atan2(ety, etx);
     Real sth;
     Real cth;
-    thmp_sincos(thmp, s.nseal >= 4 && jsea <= 4 * (s.nseal / 4), sth, cth);
+    thmp_sincos(thmp, !s.ompg && s.nseal >= 4 && jsea <= 4 * (s.nseal / 4), sth, cth);
 
     Real mssxm = zero, mssym = zero, mssxtm = zero, mssytm = zero, mssxym = zero;
     for (int ik = 1; ik <= nk; ++ik) {
@@ -646,7 +654,8 @@ KOKKOS_INLINE_FUNCTION void w3outg_part_point(const W3OutgArgs<ExecSpace>& g, co
   }
 }
 
-/// W3OUTG(A, FLPART, FLOUTG, FLOUTG2), :1201-2380, as switch_lab_shrd compiles it.
+/// W3OUTG(A, FLPART, FLOUTG, FLOUTG2), :1201-2380, as switch_lab_shrd (s.ompg false) or
+/// switch_lab_ompg (s.ompg true) compiles it.
 template <class ExecSpace>
 void w3outg(const ExecSpace& exec, const W3OutgScalars& s, const W3OutgFlags& f, const W3OutgArgs<ExecSpace>& g,
             const W3OutgHooks& hooks) {
