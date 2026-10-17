@@ -2,9 +2,9 @@
 # WW3@03adda91. The website reads this file (site/content).
 # name	share	count	what
 of the run time, translated	99.3 %	305 of 1 023 routines	a Kokkos translation exists in kokkos/src; the profile's self time, full (bench_small, 120 x 80, 9 520 sea points, 12 h)
-of the run time, ported	87.4 %	10 of 1 023 routines	WW3 at the WW3/ pin calls the Kokkos code, behind its run-time flag; the profile's self time, full (bench_small, 120 x 80, 9 520 sea points, 12 h)
-of the run time, regtested	48.4 %	2 of 1 023 routines	WW3's regtests ran with it on Kokkos and agreed with the Fortran; the profile's self time, full (bench_small, 120 x 80, 9 520 sea points, 12 h)
+of the run time, ported	87.6 %	19 of 1 023 routines	WW3 at the WW3/ pin calls the Kokkos code, behind its run-time flag; the profile's self time, full (bench_small, 120 x 80, 9 520 sea points, 12 h)
+of the run time, regtested	48.6 %	10 of 1 023 routines	WW3's regtests ran with it on Kokkos and agreed with the Fortran; the profile's self time, full (bench_small, 120 x 80, 9 520 sea points, 12 h)
 of the lines of code, translated	24.84 %	65 429 of 263 375	Fortran lines of the translated routines, of every line in WW3's model/src, in 61 of 147 files
-of the lines of code, ported	1.17 %	3 082 of 263 375	Fortran lines of the ported routines, of every line in WW3's model/src, in 2 of 147 files
-of the lines of code, regtested	0.25 %	663 of 263 375	Fortran lines of the regtested routines, of every line in WW3's model/src, in 1 of 147 files
-lines of Kokkos C++	52 440	in 327 files	under kokkos/src: the port itself
+of the lines of code, ported	2.08 %	5 482 of 263 375	Fortran lines of the ported routines, of every line in WW3's model/src, in 6 of 147 files
+of the lines of code, regtested	1.02 %	2 677 of 263 375	Fortran lines of the regtested routines, of every line in WW3's model/src, in 5 of 147 files
+lines of Kokkos C++	53 022	in 329 files	under kokkos/src: the port itself

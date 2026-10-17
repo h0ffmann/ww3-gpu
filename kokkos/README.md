@@ -335,6 +335,28 @@ handles each one explicitly:
 | one caller at a time | `W3SRCE` runs inside an `!$OMP PARALLEL` region under `W3_OMPG`/`W3_OMP0`; two threads in `ww_snl1` race over the device buffers |
 | `sig` starts at bin 1 | the C dummy is assumed-size and `W3GDATMD` allocates `SIG(0:MK+1)`, so passing the bare name builds every quadruplet one frequency bin low |
 
+## Run-time flags: 0 % to 100 % Kokkos
+
+A WW3 built with the `KOKKOS` switch from the `WW3/` fork runs every part in Fortran unless a
+flag asks for Kokkos. The table of every part, its flag, its counter, what it replaces and the
+judgement of its parity is [`src/fortran_iface/PATCH.md`](src/fortran_iface/PATCH.md), section 7;
+this is the short form.
+
+| Mode | Environment | `scripts/ww3-gpu.sh` | Runs on Kokkos |
+|---|---|---|---|
+| default | no `WW_KOKKOS_*` set | (no `--kokkos`) | nothing: the Fortran |
+| none | `WW_KOKKOS_ALL=0` | `--kokkos none` | nothing, except a part whose own flag is set to `1` |
+| partial | `WW_KOKKOS_<PART>=1` for each part wanted | `--kokkos SNL1,SDS4` | the listed parts |
+| full | `WW_KOKKOS_ALL=1` | `--kokkos all` | every wired part whose translation covers the switch file |
+
+An explicitly set `WW_KOKKOS_<PART>` wins over `WW_KOKKOS_ALL`; one C function,
+`ww_kokkos_flag` in `src/fortran_iface/part_flags.cpp`, resolves both for the Fortran and the
+shims. `W3INIT` writes one line to `log.ww3` naming each part and where it ran. "Full" is 100 %
+of the wired parts, not of WW3: their share of the profiled run time is in
+[`PORT_STATUS.md`](PORT_STATUS.md) (`python3 scripts/port_score.py --write`), and the I/O,
+set-up and the rest of the propagation stay Fortran. A part that is wired but whose `regtested`
+column in [`ports.tsv`](ports.tsv) says no is for development, not for results.
+
 ## Timing
 
 `tests/bench_snl1.cpp` builds `ww_bench_snl1` (not a CTest case): 1 000 sea points,

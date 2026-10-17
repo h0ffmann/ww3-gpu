@@ -1,8 +1,6 @@
 # W3MAPT_KOKKOS
 
-**Status:** ported, phase 1 (translated). Not wired into WW3, not regtested: the owner asked
-for translation only on 2026-10-16, with no test run. Its checkpoint (ADR-0011) needs the shim
-and the `W3WAVE` wiring first.
+**Status:** ported, phase 1, wired and regtested on the CPU (2026-10-16). WW3 calls it under `WW_KOKKOS_MAPT=1` (or `WW_KOKKOS_ALL=1`) at h0ffmann/WW3 `357f575c` (`ww3-gpu/kokkos-wave-support`); the WW3 regtest matrix has not run it ⚠.
 
 The map `MAPTRN` of the `PR3`/`UQ` scheme: a sea point whose smallest cell-boundary
 transparency (`ATRNX`, `ATRNY`, from `W3UTRN`) is below `TRNMIN = 0.95` is flagged, so the
@@ -14,7 +12,7 @@ propagation turns the GSE alleviation off there.
 |---|---|
 | WW3 routine | `W3MAPT`, `model/src/w3pro3md.F90:527-625` at NOAA-EMC/WW3 `03adda91`, as `switches/switch_lab_shrd` compiles it (`W3_S` out); called by `W3WAVE` at `w3wavemd.F90:1467`, after `W3MAP3` and `W3UTRN` |
 | Kokkos code | [`../src/ww_kokkos/prop_mapt.hpp`](../src/ww_kokkos/prop_mapt.hpp), a header-only device function (`w3mapt_point`) and its launcher (`w3mapt`); instantiated by `wave_support.cpp` in every preset |
-| C shim | none yet |
+| C shim | [`../src/fortran_iface/wave_support_shim.cpp`](../src/fortran_iface/wave_support_shim.cpp), `ww_wave_mapt`, wired by `W3KOKKOS_MAPT` in the fork's `w3kokkosmd.F90` ([`PATCH.md`](../src/fortran_iface/PATCH.md), section 8) |
 | Plan | [`W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md`](../../docs/W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md), issue #42 |
 
 ## Arithmetic
@@ -45,6 +43,15 @@ None. No timing without parity (`AGENTS.md`).
 
 ## How it was regtested
 
-Not yet, and nothing was run. What was done, 2026-10-16 (v): a translator compared the C++
-object (`openmp-release` flags, and the CUDA SASS) with the Fortran object, and a fresh reviewer
-re-read the Fortran object and the logic and found no defect.
+2026-10-16, on the CPU (Kokkos 5.2.2 OpenMP backend, gfortran/g++ 16.2.0, the pinned `ww3`
+shell), never on the GPU: `scripts/ww3-gpu.sh --ww3-gpu full --cpu` with
+`--kokkos all` (`WW_KOKKOS_ALL=1`) and with the W3WAVE support parts alone (PATCH.md, section 8,
+"The checkpoint"). Calls (`WW_KOKKOS_WAVE_COUNT=1`): 1 call on the 120 x 80 grid. `out_grd.ww3` (and in the smoke
+`out_pnt.ww3`, `restart.ww3`) and the `ww3_ounf` NetCDF file were byte-identical (`cmp`) to the
+Fortran of the same executable, and the binary files to `--ww3`, pure NOAA WW3 (v). ⚠ Not run:
+the WW3 regtest matrix (`just ww3-gpu-matrix`), the OpenMP (`OMPG`) entries, the GPU; `out_grd.ww3`
+holds only the fields each case requests.
+
+Before the wiring, 2026-10-16 (v): a throwaway translation unit with the `openmp-release` flags
+compiled the header with no warning and no FMA, and `wave_support.cpp` instantiates its launcher
+on the default execution space in the `serial-debug`, `openmp-release` and `cuda-release` builds.

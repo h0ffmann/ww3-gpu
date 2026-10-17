@@ -1,6 +1,6 @@
 # W3WAVE's per-step support routines on Kokkos (phase 1, translation only)
 
-Status: **every routine translated and reviewed, with the PR3 maps added**, 2026-10-16, under [ADR-0011](ADRs/ADR-0011-port-in-units-regtest-at-checkpoints.md).
+Status: **every routine translated and reviewed, with the PR3 maps added**, 2026-10-16, under [ADR-0011](ADRs/ADR-0011-port-in-units-regtest-at-checkpoints.md); **wired** the same day (h0ffmann/WW3 `357f575c`, see the end).
 Issue [#42](https://github.com/h0ffmann/ww3-gpu/issues/42), the port planner.
 
 The owner, 2026-10-16: "Start porting routines with discipline to Kokkos. Without any regtests.
@@ -79,3 +79,14 @@ instantiates every launcher on the default execution space, so `serial-debug`,
 `openmp-release` and `cuda-release` build them (the CUDA build never run). `W3MAP3` and
 `W3MAPT` were added to this unit on 2026-10-16: `W3WAVE` calls them around `W3UTRN`
 (`w3wavemd.F90:1463-1467`), and the propagation plan had left them out as set-up.
+
+## Wired, 2026-10-16
+
+The shim [`wave_support_shim.cpp`](../kokkos/src/fortran_iface/wave_support_shim.cpp) and the
+fork branch `ww3-gpu/kokkos-wave-support` (`357f575c`) wire all eight routines, each behind its
+own flag `WW_KOKKOS_GATH`, `_SCAT`, `_UWND`, `_UTRN`, `_DZXY`, `_MAP3`, `_MAPT`, `_DISTAB`, off by
+default, and add the master `WW_KOKKOS_ALL` for every wired part
+([`PATCH.md`](../kokkos/src/fortran_iface/PATCH.md), sections 7 and 8). The checkpoint on the CPU
+(`ww3_ts1` and `bench_small`, every flag on and the unit alone) was byte-identical to the Fortran
+and to `--ww3` (v); `W3UTRN` ran only its `TRFLAG = 0` branch, so it stays `regtested` no ⚠. The
+regtest matrix has not run the unit ⚠.

@@ -84,7 +84,7 @@ struct Flags {
   bool spr0, count;
 };
 const Flags& flags() {
-  static const Flags f{env_is_one("WW_KOKKOS_SPR0"), env_is_one("WW_KOKKOS_ST0_COUNT")};
+  static const Flags f{(ww_kokkos_flag("WW_KOKKOS_SPR0") != 0), env_is_one("WW_KOKKOS_ST0_COUNT")};
   return f;
 }
 

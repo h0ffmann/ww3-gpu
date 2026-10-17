@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ww3-gpu — run WAVEWATCH three ways. WW3's Fortran comes from two submodules: WW3-noaa/ is pure
 # NOAA-EMC/WW3 at the commit the fork branched from, and WW3/ is the fork (the h0ffmann/WW3 branch
-# ww3-gpu/kokkos-st4: WW3-noaa plus the KOKKOS switch and the shim calls). WW4's C++ comes only from
+# ww3-gpu/kokkos-wave-support: WW3-noaa plus the KOKKOS switch and the shim calls). WW4's C++ comes only from
 # the WW4/ submodule (h0ffmann/WW4, develop); this repository holds the Kokkos port and nothing of
 # either model's source:
 #
@@ -14,7 +14,7 @@
 #            which, before building anything.
 #
 #   scripts/ww3-gpu.sh --ww3  smoke|full [--cpu]
-#   scripts/ww3-gpu.sh --ww3-gpu smoke|full [--cpu|--gpu]
+#   scripts/ww3-gpu.sh --ww3-gpu smoke|full [--cpu|--gpu] [--kokkos all|none|<PART,...>]
 #   scripts/ww3-gpu.sh --ww4  smoke|full [--cpu]
 #
 # --cpu is the default everywhere. --gpu exists for --ww3-gpu only (Kokkos on CUDA): WW3's Fortran
@@ -46,6 +46,14 @@
 # "Kokkos ST4 (W3SDS4 W3SIN4 W3SPR4) enabled: SDS4=T ..."). --ww3 runs the case once and fails
 # when ww3_shel does not reach "End of program".
 #
+# --kokkos replaces WW3GPU_ROUTINES with the master flag of the fork (PATCH.md, "Run-time
+# flags"): "all" runs the Kokkos case with WW_KOKKOS_ALL=1 (every part the build covers),
+# "none" with WW_KOKKOS_ALL=0, and a comma list of parts (SNL1, GATH, ...) with
+# WW_KOKKOS_ALL=0 and WW_KOKKOS_<PART>=1 for each. The Fortran run always has WW_KOKKOS_ALL=0,
+# every WW_KOKKOS_<PART> is unset in both runs, and the Kokkos run sets every *_COUNT=1, so its
+# ww3_shel.out says how many calls each part made. It fails when the log's "Kokkos parts" line
+# (W3INIT) does not show a listed part as K.
+#
 # --cpu is Kokkos' OpenMP backend, --gpu its CUDA backend. The script enters the pinned toolchain
 # itself (picasso/labs/pratico: #ww3, or #cuda for --gpu).
 # Builds go to build/<ww3|ww3-gpu-BACKEND>/, runs to build/runs/<mode>-<case>[-BACKEND]/ ($WW3GPU_RUNS).
@@ -67,7 +75,14 @@ tols=()
 
 usage() { sed -n '2,/^set -euo/{/^set -euo/!p}' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 64; }
 
-mode="" case_name="" device="" build_only=""
+mode="" case_name="" device="" build_only="" kokkos=""
+all_parts=(SNL1 SDS4 SIN4 SPR4 ST4_TABLES SRCE SPR0 SPR1 SIN1 SDS1 SPR2 SIN2 SDS2 SPR3 SIN3 SDS3
+           SPR6 SIN6 SDS6 SWL6 FLX1 FLX2 FLX3 FLX4 FLX5 FLX_TABLES GATH SCAT UWND UTRN DZXY MAP3
+           MAPT DISTAB)
+count_flags=(WW_KOKKOS_SNL1_COUNT=1 WW_KOKKOS_ST4_COUNT=1 WW_KOKKOS_SRCE_COUNT=1
+             WW_KOKKOS_ST0_COUNT=1 WW_KOKKOS_ST1_COUNT=1 WW_KOKKOS_ST2_COUNT=1
+             WW_KOKKOS_ST3_COUNT=1 WW_KOKKOS_ST6_COUNT=1 WW_KOKKOS_FLX_COUNT=1
+             WW_KOKKOS_SWL_COUNT=1 WW_KOKKOS_WAVE_COUNT=1)
 while [ $# -gt 0 ]; do
   case "$1" in
     --ww3|--ww3-gpu|--ww4) mode="${1#--}" ;;
@@ -76,6 +91,10 @@ while [ $# -gt 0 ]; do
     --cpu|--gpu) [ -z "$device" ] || [ "$device" = "${1#--}" ] || { echo "ww3-gpu: --cpu or --gpu, not both" >&2; exit 64; }
                  device="${1#--}" ;;
     --build-only) build_only=--build-only ;;
+    --kokkos) [ $# -ge 2 ] || { echo "ww3-gpu: --kokkos needs all, none or a list of parts" >&2; exit 64; }
+              kokkos="$2"; shift ;;
+    --kokkos=*) kokkos="${1#--kokkos=}"
+                [ -n "$kokkos" ] || { echo "ww3-gpu: --kokkos needs all, none or a list of parts" >&2; exit 64; } ;;
     --self-test) mode=self-test ;;
     -h|--help) usage ;;
     *) echo "ww3-gpu: unknown argument: $1" >&2; usage ;;
@@ -83,6 +102,27 @@ while [ $# -gt 0 ]; do
   shift
 done
 
+# kokkos_env <0|1> <all|none|PART,...>: the run-time flags of the Fortran (0) or Kokkos (1) run.
+kokkos_env() {
+  local -a parts=()
+  local p
+  if [ "$1" = 0 ] || [ "$2" = none ]; then echo "WW_KOKKOS_ALL=0"; return; fi
+  if [ "$2" = all ]; then echo "WW_KOKKOS_ALL=1"; return; fi
+  IFS=', ' read -r -a parts <<<"$2"
+  printf '%s' "WW_KOKKOS_ALL=0"
+  for p in "${parts[@]}"; do printf ' %s' "WW_KOKKOS_$p=1"; done
+  echo
+}
+if [ -n "$kokkos" ]; then
+  [ "$mode" = ww3-gpu ] || [ "$mode" = self-test ] || { echo "ww3-gpu: --kokkos is for --ww3-gpu only" >&2; exit 64; }
+  if [ "$kokkos" != all ] && [ "$kokkos" != none ]; then
+    IFS=', ' read -r -a kparts <<<"$kokkos"
+    [ "${#kparts[@]}" -gt 0 ] || { echo "ww3-gpu: --kokkos is empty" >&2; exit 64; }
+    for p in "${kparts[@]}"; do
+      [[ " ${all_parts[*]} " == *" $p "* ]] || { echo "ww3-gpu: --kokkos: '$p' is not all, none or one of ${all_parts[*]}" >&2; exit 64; }
+    done
+  fi
+fi
 if [ "$mode" = self-test ]; then
   out="$("${BASH_SOURCE[0]}" --help 2>&1 || true)"
   if ! grep -q -- "--ww3" <<<"$out" || ! grep -q -- "--ww3-gpu" <<<"$out" || ! grep -q -- "--ww4" <<<"$out"; then echo "ww3-gpu: help text lost" >&2; exit 1; fi
@@ -94,6 +134,17 @@ if [ "$mode" = self-test ]; then
   done
   WW3GPU_ROUTINES=SDS4,BOGUS "${BASH_SOURCE[0]}" --ww3-gpu smoke </dev/null >/dev/null 2>&1 && rc=0 || rc=$?
   [ "$rc" = 64 ] || { echo "ww3-gpu: WW3GPU_ROUTINES=SDS4,BOGUS gave exit $rc, not 64" >&2; exit 1; }
+  for bad in "--ww3-gpu smoke --kokkos" "--ww3-gpu smoke --kokkos SNL1,BOGUS" "--ww3-gpu smoke --kokkos all,SNL1" \
+             "--ww3-gpu smoke --kokkos=" "--ww3 smoke --kokkos all"; do
+    # shellcheck disable=SC2086
+    "${BASH_SOURCE[0]}" $bad </dev/null >/dev/null 2>&1 && rc=0 || rc=$?
+    [ "$rc" = 64 ] || { echo "ww3-gpu: '$bad' gave exit $rc, not 64" >&2; exit 1; }
+  done
+  [ "$(kokkos_env 1 all)" = "WW_KOKKOS_ALL=1" ] || { echo "ww3-gpu: --kokkos all: $(kokkos_env 1 all)" >&2; exit 1; }
+  [ "$(kokkos_env 1 none)" = "WW_KOKKOS_ALL=0" ] || { echo "ww3-gpu: --kokkos none: $(kokkos_env 1 none)" >&2; exit 1; }
+  [ "$(kokkos_env 1 GATH,SNL1)" = "WW_KOKKOS_ALL=0 WW_KOKKOS_GATH=1 WW_KOKKOS_SNL1=1" ] \
+    || { echo "ww3-gpu: --kokkos GATH,SNL1: $(kokkos_env 1 GATH,SNL1)" >&2; exit 1; }
+  [ "$(kokkos_env 0 all)" = "WW_KOKKOS_ALL=0" ] || { echo "ww3-gpu: the Fortran run of --kokkos all: $(kokkos_env 0 all)" >&2; exit 1; }
   # Without a terminal --ww3-gpu --gpu never runs: 7 (no supervisor) or 4 (no driver), before any
   # build; with prebuilt programs (the Docker image, CPU only) it is refused outright, 64.
   "${BASH_SOURCE[0]}" --ww3-gpu smoke --gpu </dev/null >/dev/null 2>&1 && rc=0 || rc=$?
@@ -170,7 +221,8 @@ fi
 if [ -z "${WW3GPU_IN_SHELL:-}" ] && [ -z "$pre" ]; then
   shell="ww3"; [ "$mode" = ww3-gpu ] && [ "$backend" = cuda ] && shell="cuda"
   exec env WW3GPU_IN_SHELL=1 \
-    nix develop "$pratico#$shell" --command bash "${BASH_SOURCE[0]}" "--$mode" "$case_name" "--$device" $build_only
+    nix develop "$pratico#$shell" --command bash "${BASH_SOURCE[0]}" "--$mode" "$case_name" "--$device" $build_only \
+    ${kokkos:+--kokkos "$kokkos"}
 fi
 
 runs="${WW3GPU_RUNS:-$root/build/runs}"
@@ -256,8 +308,8 @@ else
     fi
   fi
   if [ "$mode" = ww3-gpu ] && [ ! -f "$ww3/model/src/w3kokkosmd.F90" ]; then
-    echo "ww3-gpu: WW3/ is not the ww3-gpu/kokkos-st4 branch of h0ffmann/WW3 (no model/src/w3kokkosmd.F90):" >&2
-    echo "      git -C WW3 fetch origin ww3-gpu/kokkos-st4 && git -C WW3 switch ww3-gpu/kokkos-st4" >&2
+    echo "ww3-gpu: WW3/ is not the ww3-gpu/kokkos-wave-support branch of h0ffmann/WW3 (no model/src/w3kokkosmd.F90):" >&2
+    echo "      git -C WW3 fetch origin ww3-gpu/kokkos-wave-support && git -C WW3 switch ww3-gpu/kokkos-wave-support" >&2
     exit 3
   fi
   jobs="${JOBS:-$(nproc)}"
@@ -336,17 +388,25 @@ prepare() { # <dir>: copy the case's inputs into <dir> and make their paths loca
 run_model() { # <dir> <0|1>: grid, strt, shel, ounf; prints ww3_shel's wall time
   # Called inside $(...): every diagnostic goes to stderr, or it would vanish into the variable.
   # <1> sets WW_KOKKOS_<R>=1 for each routine of WW3GPU_ROUTINES; every other flag is 0.
+  # With --kokkos, the master flag decides instead (kokkos_env).
   local d="$1" k="$2" t0 t1 r
-  local -a flags=()
-  for r in "${all_routines[@]}"; do
-    if [ "$k" = 1 ] && [[ " ${routines[*]} " == *" $r "* ]]; then flags+=("WW_KOKKOS_$r=1"); else flags+=("WW_KOKKOS_$r=0"); fi
-  done
+  local -a flags=() unset=()
+  for r in "${all_parts[@]}"; do unset+=(-u "WW_KOKKOS_$r"); done
+  if [ -n "$kokkos" ]; then
+    read -r -a flags <<<"$(kokkos_env "$k" "$kokkos")"
+    [ "$k" = 0 ] || flags+=("${count_flags[@]}")
+  else
+    flags+=(WW_KOKKOS_ALL=0)
+    for r in "${all_routines[@]}"; do
+      if [ "$k" = 1 ] && [[ " ${routines[*]} " == *" $r "* ]]; then flags+=("WW_KOKKOS_$r=1"); else flags+=("WW_KOKKOS_$r=0"); fi
+    done
+  fi
   (cd "$d" && "$bin/ww3_grid" > ww3_grid.out 2>&1) || { tail -20 "$d/ww3_grid.out" >&2; return 1; }
   if [ -f "$d/ww3_strt.inp" ] || [ -f "$d/ww3_strt.nml" ]; then
     (cd "$d" && "$bin/ww3_strt" > ww3_strt.out 2>&1) || { tail -20 "$d/ww3_strt.out" >&2; return 1; }
   fi
   t0="$(date +%s.%N)"
-  (cd "$d" && env OMP_PROC_BIND="${OMP_PROC_BIND:-false}" "${flags[@]}" "$bin/ww3_shel" > ww3_shel.out 2>&1) \
+  (cd "$d" && env "${unset[@]}" OMP_PROC_BIND="${OMP_PROC_BIND:-false}" "${flags[@]}" "$bin/ww3_shel" > ww3_shel.out 2>&1) \
     || { grep -h "ww_kokkos:\|Kokkos::" "$d/ww3_shel.out" >&2; tail -20 "$d/ww3_shel.out" >&2; return 1; }
   t1="$(date +%s.%N)"
   grep -q "End of program" "$d/ww3_shel.out" || { echo "ww3-gpu: ww3_shel did not finish in $d" >&2; return 1; }
@@ -369,12 +429,25 @@ d1="$runs/ww3-gpu-$case_name-$backend/kokkos"
 prepare "$d0"; prepare "$d1"
 w0="$(run_model "$d0" 0)"
 w1="$(run_model "$d1" 1)"
-for r in "${routines[@]}"; do
-  if [ "$r" = SNL1 ]; then re="Kokkos DIA \(W3SNL1\) enabled"; else re="Kokkos ST4 \(W3SDS4 W3SIN4 W3SPR4\) enabled:.* $r=T"; fi
-  grep -qE "$re" "$d1/log.ww3" \
-    || { echo "ww3-gpu: the Kokkos run did not enable W3$r (no '$re' in $d1/log.ww3)" >&2; exit 1; }
-done
-kname="Kokkos ${routines[*]}"
+if [ -n "$kokkos" ]; then
+  parts_line="$(grep -h "Kokkos parts" "$d1/log.ww3" | head -1 || true)"
+  [ -n "$parts_line" ] || { echo "ww3-gpu: no 'Kokkos parts' line in $d1/log.ww3" >&2; exit 1; }
+  echo ">> $parts_line"
+  if [ "$kokkos" != all ] && [ "$kokkos" != none ]; then
+    for p in "${kparts[@]}"; do
+      [[ "$parts_line" == *" $p=K"* ]] || { echo "ww3-gpu: the Kokkos run did not put $p on Kokkos" >&2; exit 1; }
+    done
+  fi
+  grep -h "^ww_kokkos: .*: [0-9]*$" "$d1/ww3_shel.out" | sed 's/^/>> /' || true
+  kname="Kokkos --kokkos $kokkos"
+else
+  for r in "${routines[@]}"; do
+    if [ "$r" = SNL1 ]; then re="Kokkos DIA \(W3SNL1\) enabled"; else re="Kokkos ST4 \(W3SDS4 W3SIN4 W3SPR4\) enabled:.* $r=T"; fi
+    grep -qE "$re" "$d1/log.ww3" \
+      || { echo "ww3-gpu: the Kokkos run did not enable W3$r (no '$re' in $d1/log.ww3)" >&2; exit 1; }
+  done
+  kname="Kokkos ${routines[*]}"
+fi
 nc0="$(cd "$d0" && find . -maxdepth 1 -name 'ww3.*.nc' -printf '%f\n' | sort | head -1)"
 echo ">> --ww3-gpu $case_name ($backend): ww3_shel ${w0} s with the Fortran, ${w1} s with $kname"
 if cmp -s "$d0/$nc0" "$d1/$nc0"; then echo ">> the two outputs are byte-identical"; fi

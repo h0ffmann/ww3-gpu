@@ -147,8 +147,8 @@ struct Flags {
   bool spr6, sin6, sds6, count;
 };
 const Flags& flags() {
-  static const Flags f{env_is_one("WW_KOKKOS_SPR6"), env_is_one("WW_KOKKOS_SIN6"),
-                       env_is_one("WW_KOKKOS_SDS6"), env_is_one("WW_KOKKOS_ST6_COUNT")};
+  static const Flags f{(ww_kokkos_flag("WW_KOKKOS_SPR6") != 0), (ww_kokkos_flag("WW_KOKKOS_SIN6") != 0),
+                       (ww_kokkos_flag("WW_KOKKOS_SDS6") != 0), env_is_one("WW_KOKKOS_ST6_COUNT")};
   return f;
 }
 

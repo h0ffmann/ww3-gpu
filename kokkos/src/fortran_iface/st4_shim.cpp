@@ -103,8 +103,8 @@ struct Flags {
   bool sds4, sin4, spr4, tables, count;
 };
 const Flags& flags() {
-  static const Flags f{env_is_one("WW_KOKKOS_SDS4"), env_is_one("WW_KOKKOS_SIN4"),
-                       env_is_one("WW_KOKKOS_SPR4"), env_is_one("WW_KOKKOS_ST4_TABLES"),
+  static const Flags f{(ww_kokkos_flag("WW_KOKKOS_SDS4") != 0), (ww_kokkos_flag("WW_KOKKOS_SIN4") != 0),
+                       (ww_kokkos_flag("WW_KOKKOS_SPR4") != 0), (ww_kokkos_flag("WW_KOKKOS_ST4_TABLES") != 0),
                        env_is_one("WW_KOKKOS_ST4_COUNT")};
   return f;
 }
