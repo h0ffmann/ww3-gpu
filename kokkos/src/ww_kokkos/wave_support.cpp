@@ -27,6 +27,7 @@
 #include "fld2_wnd2sat.hpp"
 #include "flds_w3fldg.hpp"
 #include "flds_w3fldh.hpp"
+#include "flds_w3fldo.hpp"
 #include "gdat_w3dims.hpp"
 #include "gdat_w3setg.hpp"
 #include "gig1_df1f2theta.hpp"
@@ -324,4 +325,5 @@ void ww_support_instantiate() {
   (void)&ww::iogo::w3iogo<E>;
   (void)&ww::iopo::w3iopp;
   (void)&ww::iogo::w3fldtoij;
+  (void)&ww::flds::w3fldo;
 }
