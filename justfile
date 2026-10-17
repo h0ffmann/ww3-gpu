@@ -361,7 +361,7 @@ results *args:
 refs *args:
     python3 scripts/refs_check.py "$@"
 
-# Archify, a pinned submodule: `just archify init` checks it out, `just archify render` draws docs/archify/*.html.
+# Archify, a pinned submodule: `just archify init` checks it out, `render` draws docs/archify/*.html, `pdf` prints them, `check`/`refresh` find and redraw the stale ones.
 archify *args:
     bash scripts/archify.sh "$@"
 

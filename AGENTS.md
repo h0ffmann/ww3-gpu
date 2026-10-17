@@ -148,6 +148,7 @@ Run the gates of what you changed before calling it done. CI (`.github/workflows
 | `kokkos/ports.tsv`, `kokkos/port_claims.tsv` or `docs/data/ww3_*_gprof.tsv` | `python3 scripts/port_score.py --write`, then `--check` (CI runs `--self-test` and `--check`) |
 | Fortran in `gpu/`, `examples/`, `exercises/` | they must compile with gfortran with directives ignored; the exercise parity test must pass |
 | a Mermaid fence or its page | `python3 scripts/figures.py check`, then `just figures` to re-render and `python3 -m unittest tests/test_figures.py` |
+| `docs/archify/*.json` or the `vendor/archify` pin | `just archify check`, then `just archify refresh` to redraw the stale PDFs (`/drawings-refresh` does both kinds); not run in CI or on a merge |
 | `pubs/proposal/` | `just proposal-lint`, the `revisor-proposta` review, `just proposal-review-record <parecer>`, `just proposal-review-check` |
 | `scripts/*.py` | `python3 -m unittest discover tests`; `scripts/leanpub_manuscript.py --self-test` also runs in `ci.yml` and the Leanpub workflow |
 | `bench/results/` or a table it quotes | `just results check` (`just results table` regenerates) |
