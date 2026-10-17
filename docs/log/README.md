@@ -53,4 +53,6 @@ Date, author, issue/PR/WFIP.
 | 2026-10-14 | [The Kokkos DIA byte-identical inside WW3: `AF11` used the `-O0` chain of `x**11`](2026-10-14-snl1-bitwise-af11.md) | WFIP-0003, PR #120 |
 | 2026-10-14 | [The first published ai-memory page, and `memory/`](2026-10-14-memory-publish.md) | ADR-0009 |
 | 2026-10-15 | [The OpenMP entries of the regtest matrix: 25 of 25 byte-identical, with nesting allowed](2026-10-15-hoff-matrix-omp.md) | WFIP-0003, PR #120 |
+| 2026-10-17 | [The ST4 regtest matrix of 2026-10-15, stopped at entry 91: 81 entries compared, 0 files different](2026-10-17-st4-matrix-partial.md) | #42, ADR-0011 |
+| 2026-10-17 | [WW3's Fortran with glibc's fma builds and with its sse2 builds: byte-identical on two cases](2026-10-17-glibc-fma-builds-ww3.md) | #42 |
 | 2026-10-17 | [W3XYP3 and W3KTP3 wired into WW3, batched, byte-identical on the CPU](2026-10-17-prop3-wiring.md) | #42, PR #173 |
