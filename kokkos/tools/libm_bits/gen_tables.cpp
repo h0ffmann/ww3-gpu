@@ -116,6 +116,39 @@ int host_fma() {
   return -1;
 }
 
+// The constants of __svml_s_trig_data that mvec_sinf and mvec_cosf write as literals
+// (svml_s_trig_data.h offsets, 64 bytes per vector constant).
+constexpr Expect kExpectTrig[] = {
+    {0, 0x7fffffff, 4, "__sAbsMask"},       {64, 0x461c4000, 4, "__sRangeReductionVal"},
+    {448, 0x40490000, 4, "__sPI1"},         {512, 0x3a7da000, 4, "__sPI2"},
+    {576, 0x34222000, 4, "__sPI3"},         {640, 0x2cb4611a, 4, "__sPI4"},
+    {896, 0xbe2aaaa6, 4, "__sA3"},          {960, 0x3c08876a, 4, "__sA5"},
+    {1024, 0xb94fb7ff, 4, "__sA7"},         {1088, 0x362edef8, 4, "__sA9"},
+    {1344, 0x3ea2f983, 4, "__sInvPI"},      {1408, 0x4b400000, 4, "__sRShifter"},
+    {1472, 0x3fc90fdb, 4, "__sHalfPI"},     {1536, 0x3f000000, 4, "__sOneHalf"},
+};
+
+// 0 when every constant of `want` holds in `lib` at the file offset of `sym`.
+int check_constants(const std::string& lib, const char* sym, const Expect* want, size_t n, long size) {
+  const long off = symbol_offset(lib, sym);
+  if (off < 0) { std::fprintf(stderr, "gen_tables: no %s in %s\n", sym, lib.c_str()); return 3; }
+  FILE* f = std::fopen(lib.c_str(), "rb");
+  std::vector<unsigned char> d(static_cast<size_t>(size));
+  const bool ok = f && std::fseek(f, off, SEEK_SET) == 0 && std::fread(d.data(), 1, d.size(), f) == d.size();
+  if (f) std::fclose(f);
+  if (!ok) { std::perror(lib.c_str()); return 2; }
+  for (size_t i = 0; i < n; ++i) {
+    uint64_t v = 0;
+    std::memcpy(&v, d.data() + want[i].off, want[i].width);
+    if (v != want[i].bits) {
+      std::fprintf(stderr, "gen_tables: %s is %" PRIx64 " in %s, %" PRIx64 " expected\n", want[i].name, v,
+                   lib.c_str(), want[i].bits);
+      return 3;
+    }
+  }
+  return 0;
+}
+
 }  // namespace
 
 int main(int argc, char** argv) {
@@ -150,6 +183,9 @@ int main(int argc, char** argv) {
       return 3;
     }
   }
+  if (const int rc = check_constants(lib, "__svml_s_trig_data", kExpectTrig,
+                                     sizeof kExpectTrig / sizeof kExpectTrig[0], 1600))
+    return rc;
   FILE* o = std::fopen(outp, "w");
   if (!o) { std::perror(outp); return 2; }
   const char* base = std::strrchr(lib.c_str(), '/');

@@ -25,6 +25,10 @@ compile-time fact read from the SASS, or reasoning marked ⚠.
   pairs for `powf`, `atan2f` and libmvec's `powf` (v, [results](#results-on-the-host)). The device
   builds have the same fused and unfused operations as glibc's x86 builds (v, SASS). That they
   give the same bits on a device is ⚠ until `scripts/libm_bits.sh --device` runs under the owner.
+- Since #178 the kernels `WW_KOKKOS_ALL` runs call these copies on the device, through
+  `kokkos/src/ww_kokkos/libm_device.hpp` (`ww::dm`), in a CUDA build with `WW_KOKKOS_LIBM` (the
+  default); the CPU build still calls glibc ([WFIP-0006](WFIPs/WFIP-0006-device-libm-bits.md),
+  units 1 to 4), and W3OUTG (the `resident` preset) since, with libmvec's SSE4 `sinf`/`cosf` added. The other switches' kernels still call libdevice.
 - Four of them are correctly rounded in glibc 2.44 (`tanhf`, `atan2f`, `log10f`, double `tanh`):
   their copies are CORE-MATH's own code (MIT), and `tanhf`, `log10f` and
   `atan2f` were checked correctly rounded on their own (v).
@@ -63,7 +67,9 @@ once on the host and their tables are copied, so they do not enter the device qu
 | `_ZGVbN4vv_powf` | `W3SDS4`, `W3SPR4` (`:316`, `:317`, `:2315`, `:2500`) | libmvec, SSE4 build, uses `rcpps` | as above | `ww::libm::mvec_powf<Fma>`, tables and `rcpps` from the build host |
 | `exp` (double) | `W3SDB1` | not correctly rounded (ARM algorithm) | differ on 1 485 995 of 8.6 × 10^9 | `ww::libm::exp<Fma>` |
 | `tanh` (double) | `W3SDB1` | correctly rounded (CORE-MATH, 2.44) | fma and sse2 builds, same bits | `ww::libm::tanh` (CORE-MATH's code) |
-| `coshf`, `sinhf` | `DISTAB` (W3DISPMD's tables, once per run, not per point) | correctly rounded (CORE-MATH; glibc's `e_coshf.c`, `e_sinhf.c`) | one build | `ww::libm::coshf`, `sinhf` (CORE-MATH's code) |
+| `coshf`, `sinhf` | `DISTAB` (W3DISPMD's tables, once per run, not per point); `W3OUTG` | correctly rounded (CORE-MATH; glibc's `e_coshf.c`, `e_sinhf.c`) | one build | `ww::libm::coshf`, `sinhf` (CORE-MATH's code) |
+| `sinf`, `cosf` | `W3OUTG` (`iogo_w3outg.hpp`) | not correctly rounded; equal to the `sincosf` copy's two results on every input (v, `libm_bits.sh ww sinf fma`, `ww cosf fma`, 2026-10-17) | as `sincosf` | `ww::libm::sincosf<Fma>` |
+| `_ZGVbN4v_sinf`, `_ZGVbN4v_cosf` | `W3OUTG`, `SIN/COS(THMP)` under `switch_lab_shrd` | libmvec, SSE4 build | as the other libmvec rows | `ww::libm::mvec_sinf<Fma>`, `mvec_cosf<Fma>` (their callouts are `sincosf<Fma>`) |
 
 The libmvec line numbers are those of `kokkos/src/ww_kokkos/st4_libmvec.hpp`, from its GIMPLE
 inventory. Correct rounding is from glibc 2.44's `NEWS` (v, the release tarball, sha256
@@ -129,6 +135,8 @@ glibc 2.44-25), 4 threads under `nice -n 19`. Command: `scripts/libm_bits.sh all
 | `mvec powf` | 1 073 741 824 random pairs | 55 228 991 (5.14 %) | libmvec's `powf` is not the scalar `powf` |
 | `ww mvec_expf fma` | 4 294 967 296, four lanes each | **0** | the transcription is libmvec's `_ZGVbN4v_expf` |
 | `ww mvec_powf fma` | 79 456 894 976 | **0** | against libmvec's `_ZGVbN4vv_powf`, the same inputs as `ww powf` |
+| `ww sinf fma`, `ww cosf fma` | 4 294 967 296 each | **0** | glibc's scalar `sinf`, `cosf` against the `sincosf` copy's two results |
+| `ww mvec_sinf fma`, `ww mvec_cosf fma` | 4 294 967 296 each, four lanes each | **0** | against libmvec's `_ZGVbN4v_sinf`, `_ZGVbN4v_cosf` (2026-10-17, for W3OUTG) |
 | `ww tanhf` | 4 294 967 296 | **0** | CORE-MATH's code equals glibc |
 | `ww log10f` | 4 294 967 296 | **0** | |
 | `ww coshf` | 4 294 967 296 | **0** | added for DISTAB (WFIP-0006, as built) |

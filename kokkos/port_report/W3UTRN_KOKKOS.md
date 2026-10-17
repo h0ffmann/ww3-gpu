@@ -44,7 +44,7 @@ object, read as GIMPLE and assembly, 2026-10-16.
 - ⚠ With `NX == 1` or `NY == 1` and `TRFLAG` not 0, 1, 3, 5, the Fortran reads one element past
   `TRIX`/`TRIY`; the port reads the same index and cannot reproduce heap bytes. Whether WW3
   accepts such a grid was not checked.
-- ⚠ CUDA's `expf` bits are not glibc's (`AGENTS.md`, "Bit for bit").
+- ⚠ CUDA's `expf` bits are not glibc's (`AGENTS.md`, "Bit for bit"). Since #178 a CUDA build with `WW_KOKKOS_LIBM` (its default) calls `ww::dm`'s copies of glibc's functions there instead (`../src/ww_kokkos/libm_device.hpp`, WFIP-0006); that they give glibc's bits on a device is ⚠ until `scripts/libm_bits.sh --device` runs.
 
 ## Benchmarks
 

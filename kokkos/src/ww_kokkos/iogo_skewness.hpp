@@ -12,6 +12,7 @@
 
 #include <Kokkos_Core.hpp>
 
+#include "libm_device.hpp"
 #include "real.hpp"
 #include "srce_params.hpp"
 
@@ -24,7 +25,7 @@ namespace skewness_detail {
 KOKKOS_INLINE_FUNCTION Real pow_half(Real x, int n) {
   if (n == 0) return Real(1.0);
   if (n == 2) return x;
-  return Kokkos::pow(x, n == 1 ? Real(0.5) : Real(1.5));
+  return dm::powf(x, n == 1 ? Real(0.5) : Real(1.5));
 }
 }  // namespace skewness_detail
 

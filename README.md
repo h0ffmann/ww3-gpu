@@ -137,7 +137,7 @@ or issues, linked so you can follow them.
 | Agent tooling | Which agent frameworks and research tools fit that workflow? | [#25](https://github.com/h0ffmann/ww3-gpu/pull/25), [#41](https://github.com/h0ffmann/ww3-gpu/pull/41), [#38](https://github.com/h0ffmann/ww3-gpu/issues/38), [ADR-0009](docs/ADRs/ADR-0009-ww3-gpu-adopts-ai-memory-from-fabio-akita.md) | Evaluations in review; ai-memory chosen |
 | Bit-for-bit proof | What can be proved, and not only tested, about the Fortran → C++ translation? | [`BITWISE_PROOF`](docs/BITWISE_PROOF_202610.md), [`docs/proof/`](docs/proof/README.md), [ADR-0001](docs/ADRs/ADR-0001-proof-language.md) | No proof language; exhaustive sweeps, GIMPLE diffs and SMT queries. `W3SNL1` section 1 swept over all 2^32 inputs |
 | Triton and ML weather forcing | Does a Triton kernel of the `W3SDS4` cumulative term beat the Kokkos one? Does WeatherNext 3 wind improve the wave forecast? | [#45](https://github.com/h0ffmann/ww3-gpu/issues/45), [`W3SDS4_TRITON_PLANO`](docs/W3SDS4_TRITON_PLANO_202610.pt.md) (pt-BR) | Planned |
-| Single-H100 port | What would a full port to one H100 take? | [`KOKKOS_H100_PLAN`](docs/KOKKOS_H100_PLAN_202609.md) | Plan |
+| Single-H100 port | What would a full port to one H100 take? | [`KOKKOS_H100_PLAN`](docs/KOKKOS_H100_PLAN_202609.md), [WFIP-0005](docs/WFIPs/WFIP-0005-device-resident-step.md), [WFIP-0006](docs/WFIPs/WFIP-0006-device-libm-bits.md) | Plan. The device-resident step (`--kokkos resident`) runs on the CPU byte-identical to the Fortran, with the spectrum crossing once each way on `bench_small` ([#179](https://github.com/h0ffmann/ww3-gpu/pull/179)); the device's libm calls go to copies of glibc's ([#178](https://github.com/h0ffmann/ww3-gpu/pull/178)). Nothing has run on a GPU |
 | WW4 and SWAN | What replaces WW3, and what covers the coast? | [lesson 14](course/14-ww4-and-the-future.md), [lesson 15](course/15-swan.md) | Merged |
 | The book and the proposal | The lessons compiled as a book, and the project proposal | [`pubs/`](pubs/README.md), PDFs and Word files in [`pdf/`](pdf/), [WFIP-0002](docs/WFIPs/WFIP-0002-lab-as-a-book.md) | Built by CI on every merge |
 
@@ -184,6 +184,7 @@ More recipes on the same toolchain:
 just ww3                # enter the toolchain shell
 just smoke              # WW3 as written, then the Kokkos DIA against the Fortran DIA (ww3_ts1)
 just full-ww3-gpu       # the Kokkos DIA on bench_small
+just coast-ww3-gpu      # the forced case: currents, water levels, ice, boundary input (--kokkos resident)
 just ww3-gpu-matrix     # WW3's regtest matrix, CPU only
 ```
 

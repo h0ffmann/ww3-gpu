@@ -41,7 +41,7 @@ Edge cases, not on finite valid inputs:
 
 - ⚠ `MAX(const, x)` at `:278`, `:336`, `:344`, `:362` is `maxss` in the Fortran, which returns the constant when `x` is NaN; the port returns NaN.
 - ⚠ `-O3` keeps a scalar copy of the `:311` loop for aliased arrays; the port assumes they never alias.
-- ⚠ On a device `:316`/`:317` fall back to scalar `powf`.
+- ⚠ On a device without `WW_KOKKOS_LIBM` `:316`/`:317` fall back to libdevice's scalar `powf`. Since #178 a CUDA build with it (its default) calls a copy of libmvec's `_ZGVbN4vv_powf` there, lane by lane (`../src/ww_kokkos/st4_libmvec.hpp`, WFIP-0006); that it gives libmvec's bits on a device is ⚠ until `scripts/libm_bits.sh --device` runs.
 
 ## Benchmarks
 

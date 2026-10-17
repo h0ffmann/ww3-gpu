@@ -42,7 +42,7 @@ The six specific objectives of the proposal and the schedule rows that deliver t
 | [WFIP-0002](WFIP-0002-lab-as-a-book.md) | The lab as a book: compiled from the repository, built in CI, released with each version | Partially implemented (item 1 of 7, 2026-10-09) | 2026-10-08 | D6 | L | do next, in slices | 1/7 |
 | [WFIP-0003](WFIP-0003-kokkos-regtest-matrix.md) | The Kokkos DIA through WW3's own regtest harness, on the h0ffmann/WW3 fork | Implemented (2026-10-15) | 2026-10-14 | D4, D5 | M | do next | 7/7 |
 | [WFIP-0005](WFIP-0005-device-resident-step.md) | The device-resident time step: `VA` lives on the GPU, only forcing in and output out | Draft | 2026-10-17 | D5 | L | do when the batched `W3SRCE` shim lands | 0/8 |
-| [WFIP-0006](WFIP-0006-device-libm-bits.md) | The device computes glibc's libm bits: routing the port's per-point math through `ww::libm` | Draft | 2026-10-17 | D5 | M | do when WFIP-0005's units have merged | 0/8 |
+| [WFIP-0006](WFIP-0006-device-libm-bits.md) | The device computes glibc's libm bits: routing the port's per-point math through `ww::libm` | Partially implemented (units 1–4 of 5, #178, on `main` with #179; 2026-10-17) | 2026-10-17 | D5 | M | do when WFIP-0005's units have merged | 0/8 |
 <!-- wfip-index:end -->
 
 ## Coverage

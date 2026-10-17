@@ -21,7 +21,7 @@ read as GIMPLE and as assembly, 2026-10-15.
 
 - (v) `COS`/`SIN(USDIR)` are one `sincosf` (`__builtin_cexpif`) on the host; `MAX(0.,x)**4` is `m=MAX; (m*m)*(m*m)`; `USTAR**4` is `(u*u)*(u*u)`; `RFR**(-4)` is `1/((r*r)*(r*r))`, then a scalar `expf`; `FF1` is `(FSPM*GRAV)/(28.*USTAR)`.
 - (v) `:185`, `FFILT = MIN(MAX(FF1,FF2),2.*SIG(NK))`, in the order of the object's `maxss`/`minss`: a NaN `FF1` (`RFPM = 0`, `w3gridmd.F90:1690`, with `USTAR = 0`) keeps `FF2`, as WW3 does. The review found the first translation returned NaN there; fixed.
-- ⚠ On a device `Kokkos::cos`/`sin`/`exp` are not glibc's bits.
+- ⚠ On a device `Kokkos::cos`/`sin`/`exp` are not glibc's bits. Since #178 a CUDA build with `WW_KOKKOS_LIBM` (its default) calls `ww::dm`'s copies of glibc's functions there instead (`../src/ww_kokkos/libm_device.hpp`, WFIP-0006); that they give glibc's bits on a device is ⚠ until `scripts/libm_bits.sh --device` runs.
 
 ## Benchmarks
 

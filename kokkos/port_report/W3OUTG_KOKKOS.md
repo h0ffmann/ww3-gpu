@@ -117,9 +117,10 @@ flags, read the same way. 2026-10-16.
   `FLOUTG2`, tests `/= 0`; the C++ tests the same, so the truth values agree for any nonzero
   `LOGICAL`. Turning `FLPART`, `FLOUTG`, `FLOUTG2` into `bool` the same way is the shim's job.
 - ⚠ glibc. The `sincosf` identity and libmvec lane independence were shown for glibc 2.44 only.
-- ⚠ GPU. On a device the libmvec lanes fall back to `Kokkos::sin`/`cos`, and CUDA's
-  transcendental functions are not shown to return glibc's bits (`AGENTS.md`, "Bit for bit"). The
-  CUDA build compiles (below, not run). Its SASS has 1179 `FFMA` with `--fmad=false` against 1434
+- ⚠ GPU. Since the routing after #178 (WFIP-0006), a CUDA build with `WW_KOKKOS_LIBM` calls the
+  device copies of glibc's functions here, the libmvec lanes through `mvec_sinf`/`mvec_cosf`;
+  they equal glibc and libmvec on the host on every input, and no device run has compared them
+  (`scripts/libm_bits.sh --device`). Before that routing the CUDA build compiled (below, not run). Its SASS has 1179 `FFMA` with `--fmad=false` against 1434
   with `--fmad=true`; the remaining ones are taken to be inside CUDA's math functions, not checked.
 - (v) `skewness_point` was compared with the `03adda91` object (`SKEWNESS_KOKKOS.md`). The
   `SKEWNESS` and `SECONDHH` code of the `8e433f99` object is the same: disassembly with relocations,
