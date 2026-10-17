@@ -19,6 +19,7 @@
 
 #include <Kokkos_Core.hpp>
 
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -39,6 +40,10 @@ struct Ctx {
   // The partial read: the sorted column list of the last call and its device copies, kept
   // because W3IOPE asks for the same columns at every point-output time.
   std::vector<int> cols;
+  // WW_KOKKOS_VA_CHECK=1: the host bits of VA when the two copies were last made equal, kept up to
+  // date by the declared host writes of whole columns (the partial read, the zeroed columns).
+  std::vector<float> snap;
+  bool snap_ok = false;
   Kokkos::View<int*, DeviceSpace> d_cols;
   Kokkos::View<float**, Kokkos::LayoutLeft, DeviceSpace> d_buf;
   Kokkos::View<float**, Kokkos::LayoutLeft, Kokkos::HostSpace> h_buf;
@@ -55,6 +60,7 @@ struct Counts {
   long long h2d = 0, d2h = 0, host_reads = 0, host_writes = 0, device_calls = 0;
   long long part_calls = 0, part_d2h = 0, part_cols = 0;
   long long zero_calls = 0, zero_launches = 0, zero_cols = 0, zero_checks = 0;
+  long long va_checks = 0, poisons = 0;
   double h2d_bytes = 0.0, d2h_bytes = 0.0, spectrum_bytes = 0.0, part_bytes = 0.0;
 };
 Counts g_n;
@@ -66,6 +72,14 @@ bool env_is_one(const char* name) {
 }
 bool resident_diag() {
   static const bool on = env_is_one("WW_KOKKOS_VA_RESIDENT");
+  return on;
+}
+bool check_diag() {
+  static const bool on = env_is_one("WW_KOKKOS_VA_CHECK");
+  return on;
+}
+bool poison_diag() {
+  static const bool on = env_is_one("WW_KOKKOS_VA_POISON");
   return on;
 }
 bool count_diag() {
@@ -126,6 +140,55 @@ Ctx* bind(int igrid, float* va, int nspec, int nsealm) {
 
 HostVa host_view(const Ctx& c) { return HostVa(c.host, c.nspec, c.nsealm + 1); }
 
+/// WW_KOKKOS_VA_CHECK=1: the two copies were just made equal; remember the host's bits.
+void snapshot(Ctx& c) {
+  if (!check_diag()) return;
+  c.snap.assign(c.host, c.host + c.count());
+  c.snap_ok = true;
+}
+
+/// Columns of `p` (nspec x 0:nsealm, Fortran order) whose bits differ from the snapshot.
+long long cols_differ(const Ctx& c, const float* p) {
+  const size_t ns = static_cast<size_t>(c.nspec);
+  long long bad = 0;
+  for (int j = 0; j <= c.nsealm; ++j)
+    if (std::memcmp(p + static_cast<size_t>(j) * ns, c.snap.data() + static_cast<size_t>(j) * ns,
+                    ns * sizeof(float)) != 0)
+      ++bad;
+  return bad;
+}
+
+/// WW_KOKKOS_VA_CHECK=1, at every sync call before it copies anything: what the state claims
+/// must hold. Unless the state is HOST (a declared host write), the host VA still holds the
+/// bits of the last sync, so a host statement that wrote VA with no W3KOKKOS_VA_HOST_WRITE
+/// before it is caught at the next call; and with BOTH, d_va holds them too, so a kernel that
+/// wrote d_va with no device_written is caught. Reads and compares only: no bit moves.
+int check(Ctx& c, int igrid, const char* where) {
+  if (!check_diag() || !c.snap_ok || c.side == Side::Host) return WW_KOKKOS_OK;
+  ++g_n.va_checks;
+  const long long host_bad = cols_differ(c, c.host);
+  if (host_bad != 0) {
+    std::fprintf(stderr,
+                 "ww_kokkos: WW_KOKKOS_VA_CHECK: at %s, %lld columns of the host VA of grid %d "
+                 "changed since the last sync, and no W3KOKKOS_VA_HOST_WRITE declared it\n",
+                 where, host_bad, igrid);
+    return WW_KOKKOS_ERR_KERNEL;
+  }
+  if (c.side == Side::Both && c.d.data() != nullptr) {
+    const auto h = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), c.d);
+    const long long dev_bad = cols_differ(c, h.data());
+    if (dev_bad != 0) {
+      std::fprintf(stderr,
+                   "ww_kokkos: WW_KOKKOS_VA_CHECK: at %s, %lld columns of d_va of grid %d differ "
+                   "from the host VA while the state says both copies are equal (a kernel wrote "
+                   "d_va and did not mark it)\n",
+                   where, dev_bad, igrid);
+      return WW_KOKKOS_ERR_KERNEL;
+    }
+  }
+  return WW_KOKKOS_OK;
+}
+
 void allocate(Ctx& c) {
   if (c.d.data() != nullptr) return;
   c.d = DevVa(Kokkos::view_alloc(Kokkos::WithoutInitializing, "ww_va.d_va"), c.nspec,
@@ -140,6 +203,7 @@ void h2d(Ctx& c) {
   ++g_n.h2d;
   g_n.h2d_bytes += static_cast<double>(c.count() * sizeof(float));
   c.side = Side::Both;
+  snapshot(c);
 }
 
 void d2h(Ctx& c) {
@@ -149,6 +213,7 @@ void d2h(Ctx& c) {
   ++g_n.d2h;
   g_n.d2h_bytes += static_cast<double>(c.count() * sizeof(float));
   c.side = Side::Both;
+  snapshot(c);
 }
 
 /// The host side of the protocol: the newer bits onto the Fortran array, then HOST if the
@@ -157,6 +222,8 @@ int host_sync(int igrid, float* va, int nspec, int nsealm, bool write) {
   ww::timers::Region t("va.host.call");
   Ctx* c = bind(igrid, va, nspec, nsealm);
   if (c == nullptr) return WW_KOKKOS_ERR_BAD_SHAPE;
+  if (const int rc = check(*c, igrid, write ? "a host write" : "a host read"); rc != WW_KOKKOS_OK)
+    return rc;
   if (resident_diag()) {
     if (!Kokkos::is_initialized()) return WW_KOKKOS_ERR_NOT_INITIALISED;
     if (c->side == Side::Host) h2d(*c);
@@ -164,7 +231,10 @@ int host_sync(int igrid, float* va, int nspec, int nsealm, bool write) {
   } else if (c->side == Side::Device) {
     d2h(*c);
   }
-  if (write) c->side = Side::Host;
+  if (write) {
+    c->side = Side::Host;
+    c->snap_ok = false;
+  }
   return WW_KOKKOS_OK;
 }
 
@@ -184,6 +254,7 @@ int host_read_cols(int igrid, float* va, int nspec, int nsealm, int ncol, const 
     say("ww_va_host_read_cols: a column outside 0..NSEALM");
     return WW_KOKKOS_ERR_BAD_SHAPE;
   }
+  if (const int rc = check(*c, igrid, "a partial host read"); rc != WW_KOKKOS_OK) return rc;
   if (resident_diag()) {
     if (!Kokkos::is_initialized()) return WW_KOKKOS_ERR_NOT_INITIALISED;
     if (c->side == Side::Host) h2d(*c);
@@ -222,6 +293,11 @@ int host_read_cols(int igrid, float* va, int nspec, int nsealm, int ncol, const 
   for (int k = 0; k < n; ++k)
     std::memcpy(c->host + static_cast<size_t>(c->cols[k]) * static_cast<size_t>(nspec),
                 &c->h_buf(0, k), static_cast<size_t>(nspec) * sizeof(float));
+  // The host columns just copied are part of what the host holds now.
+  if (c->snap_ok)
+    for (int k = 0; k < n; ++k)
+      std::memcpy(c->snap.data() + static_cast<size_t>(c->cols[k]) * static_cast<size_t>(nspec),
+                  &c->h_buf(0, k), static_cast<size_t>(nspec) * sizeof(float));
   ++g_n.part_d2h;
   g_n.part_cols += n;
   g_n.part_bytes += static_cast<double>(static_cast<size_t>(n) * static_cast<size_t>(nspec) *
@@ -259,6 +335,11 @@ int device_zero_cols(int igrid, float* va, int nspec, int nsealm, int ncol, cons
     ++g_n.zero_launches;
     g_n.zero_cols += ncol;
   }
+  // The listed columns are 0 on both sides now (the host statement wrote them, declared by
+  // ww_va_host_update); a column it zeroed and the list missed shows at the next check.
+  if (c->snap_ok)
+    for (int k = 0; k < ncol; ++k)
+      std::fill_n(c->snap.data() + static_cast<size_t>(cols[k]) * ns, ns, 0.0f);
   if (resident_diag()) {
     // ww_va_host_update made the two copies equal before the host statement, so now they must
     // be equal again: a column the list missed is 0 on the host only, a wrong kernel shows too.
@@ -305,6 +386,7 @@ int device_va(int igrid, float* va, int nspec, int nsealm, DevVa& out) {
     if (!Kokkos::is_initialized()) return static_cast<int>(WW_KOKKOS_ERR_NOT_INITIALISED);
     Ctx* c = bind(igrid, va, nspec, nsealm);
     if (c == nullptr) return static_cast<int>(WW_KOKKOS_ERR_BAD_SHAPE);
+    if (const int rc = check(*c, igrid, "a kernel's sync"); rc != WW_KOKKOS_OK) return rc;
     ++g_n.device_calls;
     if (c->side == Side::Host) h2d(*c);
     out = c->d;
@@ -314,7 +396,21 @@ int device_va(int igrid, float* va, int nspec, int nsealm, DevVa& out) {
 
 void device_written(int igrid) {
   const auto it = grids().find(igrid);
-  if (it != grids().end() && it->second.d.data() != nullptr) it->second.side = Side::Device;
+  if (it == grids().end() || it->second.d.data() == nullptr) return;
+  Ctx& c = it->second;
+  c.side = Side::Device;
+  if (poison_diag()) {
+    // WW_KOKKOS_VA_POISON=1: the host VA is stale now, so make it unusable. A quiet NaN in every
+    // element: a host statement that reads VA before the sync it needs (a missing
+    // W3KOKKOS_VA_HOST_READ, a column the partial read misses) propagates NaN into the output.
+    // The next full sync copies d_va back over it, so a correct run writes the same bits.
+    const std::uint32_t bits = 0x7FC0BAD0u;
+    float nan;
+    std::memcpy(&nan, &bits, sizeof nan);
+    std::fill_n(c.host, c.count(), nan);
+    c.snap_ok = false;  // the host part of WW_KOKKOS_VA_CHECK cannot hold over a poisoned array
+    ++g_n.poisons;
+  }
 }
 
 }  // namespace ww::resident
@@ -344,8 +440,9 @@ int ww_va_host_update(int igrid, float* va, int nspec, int nsealm) {
   return guarded([&]() {
     if (!resident_diag()) {
       // Bind (or check) only: the statement's writes are repeated on d_va afterwards.
-      return bind(igrid, va, nspec, nsealm) != nullptr ? static_cast<int>(WW_KOKKOS_OK)
-                                                       : static_cast<int>(WW_KOKKOS_ERR_BAD_SHAPE);
+      Ctx* c = bind(igrid, va, nspec, nsealm);
+      if (c == nullptr) return static_cast<int>(WW_KOKKOS_ERR_BAD_SHAPE);
+      return check(*c, igrid, "a host update");
     }
     ++g_n.host_reads;
     return host_sync(igrid, va, nspec, nsealm, false);
@@ -363,6 +460,7 @@ int ww_va_device(int igrid, int write) {
     if (it == grids().end() || !Kokkos::is_initialized())
       return static_cast<int>(WW_KOKKOS_ERR_NOT_INITIALISED);
     Ctx& c = it->second;
+    if (const int rc = check(c, it->first, "a kernel's sync"); rc != WW_KOKKOS_OK) return rc;
     ++g_n.device_calls;
     if (c.side == Side::Host) h2d(c);
     if (write != 0) c.side = Side::Device;
@@ -394,6 +492,10 @@ void ww_va_report(void) {
   std::fprintf(stderr, "ww_kokkos: VA device columns zeroed: %lld\n", g_n.zero_cols);
   std::fprintf(stderr, "ww_kokkos: VA zeroing checks run: %lld\n",
                g_n.zero_checks);
+  std::fprintf(stderr, "ww_kokkos: VA consistency checks run (WW_KOKKOS_VA_CHECK): %lld\n",
+               g_n.va_checks);
+  std::fprintf(stderr, "ww_kokkos: VA host copies poisoned (WW_KOKKOS_VA_POISON): %lld\n",
+               g_n.poisons);
 }
 
 }  // extern "C"
