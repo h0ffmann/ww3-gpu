@@ -10,6 +10,7 @@
 // reads the W3SNL1 and ST4 tables of the same grid (shim_state.hpp).
 
 #include "fortran_iface/ww_kokkos_c.hpp"
+#include "fortran_iface/resident_c.hpp"
 #include "fortran_iface/shim_state.hpp"
 #include "fortran_iface/timers.hpp"
 
@@ -29,6 +30,7 @@
 #include <utility>
 
 #include "ww_kokkos/real.hpp"
+#include "ww_kokkos/resident_state.hpp"
 #include "ww_kokkos/snl1_team.hpp"
 #include "ww_kokkos/srce_kernel.hpp"
 #include "ww_kokkos/srce_params.hpp"
@@ -55,10 +57,11 @@ struct GridCtx {
   Kokkos::View<PointScalars*, DeviceSpace> scal;
   Kokkos::View<State*, DeviceSpace> state;
   int work_reals = -1, work_ints = -1;
-  // ww_srce_batch: the same arrays for batch_cap points, point index slowest.
-  int batch_cap = 0;
+  // ww_srce_batch: the same arrays for batch_cap points, point index slowest; b_spec only
+  // for ww_srce_batch (ww_srce_batch_va reads the spectra in the resident VA through b_jsea).
+  int batch_cap = 0, spec_cap = 0;
   DevReal1D b_spec, b_wn1, b_cg1, b_pin, b_psc, b_whitecap, b_taubbl, b_tauice, b_rw;
-  DevInt1D b_shave, b_iw;
+  DevInt1D b_shave, b_iw, b_jsea;
   DevDouble1D b_dw;
   Kokkos::View<PointScalars*, DeviceSpace> b_scal;
   Kokkos::View<State*, DeviceSpace> b_state;
@@ -123,23 +126,27 @@ long long batch_cap_bytes() {
   return cap;
 }
 
-/// Device bytes one point takes in the batch buffers.
-long long batch_bytes_per_point(const GridCtx& g) {
+/// Device bytes one point takes in the batch buffers: with its spectrum (ww_srce_batch), or
+/// with its column index in the resident VA instead (ww_srce_batch_va).
+long long batch_bytes_per_point(const GridCtx& g, bool spec) {
   const Params& p = g.p;
-  const long long reals = static_cast<long long>(p.nspec) + 2LL * p.nk + WW_SRCE_NPIN +
-                          WW_SRCE_NPSC + 4 + 2 + 2 + g.work_reals;
-  const long long ints = 1LL + g.work_ints;
+  const long long reals = (spec ? static_cast<long long>(p.nspec) : 0LL) + 2LL * p.nk +
+                          WW_SRCE_NPIN + WW_SRCE_NPSC + 4 + 2 + 2 + g.work_reals;
+  const long long ints = (spec ? 1LL : 2LL) + g.work_ints;
   return reals * static_cast<long long>(sizeof(Real)) + ints * static_cast<long long>(sizeof(int)) +
          static_cast<long long>(srce_work_doubles(p)) * static_cast<long long>(sizeof(double)) +
          static_cast<long long>(sizeof(PointScalars) + sizeof(State));
 }
 
-/// Grow the batch buffers of `g` to `n` points; they never shrink.
-void batch_reserve(GridCtx& g, int n) {
-  if (n <= g.batch_cap) return;
+/// Grow the batch buffers of `g` to `n` points (b_spec only when `spec`); they never shrink.
+void batch_reserve(GridCtx& g, int n, bool spec) {
   const Params& p = g.p;
   const size_t m = static_cast<size_t>(n);
-  g.b_spec = DevReal1D("ww_srce.b_spec", m * p.nspec);
+  if (spec && n > g.spec_cap) {
+    g.b_spec = DevReal1D("ww_srce.b_spec", m * p.nspec);
+    g.spec_cap = n;
+  }
+  if (n <= g.batch_cap) return;
   g.b_wn1 = DevReal1D("ww_srce.b_wn1", m * p.nk);
   g.b_cg1 = DevReal1D("ww_srce.b_cg1", m * p.nk);
   g.b_pin = DevReal1D("ww_srce.b_pin", m * WW_SRCE_NPIN);
@@ -150,6 +157,7 @@ void batch_reserve(GridCtx& g, int n) {
   g.b_rw = DevReal1D("ww_srce.b_rw", m * g.work_reals);
   g.b_shave = DevInt1D("ww_srce.b_shave", m);
   g.b_iw = DevInt1D("ww_srce.b_iw", m * g.work_ints);
+  g.b_jsea = DevInt1D("ww_srce.b_jsea", m);
   g.b_dw = DevDouble1D("ww_srce.b_dw", m * srce_work_doubles(p));
   g.b_scal = Kokkos::View<PointScalars*, DeviceSpace>("ww_srce.b_scal", m);
   g.b_state = Kokkos::View<State*, DeviceSpace>("ww_srce.b_state", m);
@@ -237,13 +245,15 @@ struct BatchStep {
 };
 
 /// Points [n0, n0+n) of a ww_srce_batch call on ExecSpace: one copy of each
-/// array in, one launch of n teams, team i on point n0+i, one copy out.
+/// array in, one launch of n teams, team i on point n0+i, one copy out. With `va`
+/// (ww_srce_batch_va), team i reads and writes its spectrum in place, column jsea[n0+i]
+/// of the resident VA, and the column indices cross instead of the spectra.
 template <class ExecSpace>
 void run_batch(GridCtx& g, const st4::Params& q, const st4::Fields& f, const snl1::Config& nc,
                const snl1::Tables& nt, const snl1::RealView1D& nsig, const BatchStep& c,
                int n0, int n, float* spec, const float* wn1, const float* cg1,
                const float* pin, float* psc, float* whitecap, float* taubbl, float* tauice,
-               int* shave) {
+               int* shave, const ww::resident::DevVa* va = nullptr, const int* jsea = nullptr) {
   const ExecSpace ex;
   const Params p = g.p;
   const size_t o0 = static_cast<size_t>(n0), m = static_cast<size_t>(n);
@@ -252,8 +262,13 @@ void run_batch(GridCtx& g, const st4::Params& q, const st4::Fields& f, const snl
     return Kokkos::subview(v, std::make_pair(static_cast<size_t>(0), len));
   };
   constexpr bool fence = !std::is_same_v<ExecSpace, Kokkos::Serial>;
+  const bool resident = va != nullptr;
   ww::timers::Region t_in("srce.batch.h2d", fence);
-  Kokkos::deep_copy(ex, head(g.b_spec, m * nspec), HostUnmanaged<float>(spec + o0 * nspec, m * nspec));
+  if (resident)
+    Kokkos::deep_copy(ex, head(g.b_jsea, m), HostUnmanaged<const int>(jsea + o0, m));
+  else
+    Kokkos::deep_copy(ex, head(g.b_spec, m * nspec),
+                      HostUnmanaged<float>(spec + o0 * nspec, m * nspec));
   Kokkos::deep_copy(ex, head(g.b_wn1, m * nk), HostUnmanaged<const float>(wn1 + o0 * nk, m * nk));
   Kokkos::deep_copy(ex, head(g.b_cg1, m * nk), HostUnmanaged<const float>(cg1 + o0 * nk, m * nk));
   Kokkos::deep_copy(ex, head(g.b_pin, m * WW_SRCE_NPIN),
@@ -286,10 +301,11 @@ void run_batch(GridCtx& g, const st4::Params& q, const st4::Fields& f, const snl
   const Grid grid{g.sig.data(), g.dden.data(), g.ecos.data(), g.esin.data(), g.mapwn.data()};
   const auto SP = g.b_spec, W1 = g.b_wn1, C1 = g.b_cg1, PI = g.b_pin, PS = g.b_psc,
              WC = g.b_whitecap, TB = g.b_taubbl, TI = g.b_tauice, RW = g.b_rw;
-  const auto SH = g.b_shave, IW = g.b_iw;
+  const auto SH = g.b_shave, IW = g.b_iw, JS = g.b_jsea;
   const auto DW = g.b_dw;
   const auto SC = g.b_scal;
   const auto ST = g.b_state;
+  const ww::resident::DevVa VA = resident ? *va : ww::resident::DevVa();
   const size_t nrw = static_cast<size_t>(g.work_reals), niw = static_cast<size_t>(g.work_ints),
                ndw = static_cast<size_t>(srce_work_doubles(p));
   const Real* ns = nsig.data();
@@ -324,8 +340,10 @@ void run_batch(GridCtx& g, const st4::Params& q, const st4::Fields& f, const snl
         });
         team.team_barrier();
         const snl1::TeamScratch w = snl1::snl1_team_scratch(team, level, nc, nt);
-        w3srce_team(team, p, grid, q, f, nc, nt, ns, w, in, SP.data() + ii * p.nspec,
-                    W1.data() + ii * p.nk, C1.data() + ii * p.nk, o, WC.data() + ii * 4,
+        Real* const sp = resident ? VA.data() + static_cast<size_t>(JS(i)) * p.nspec
+                                  : SP.data() + ii * p.nspec;
+        w3srce_team(team, p, grid, q, f, nc, nt, ns, w, in, sp, W1.data() + ii * p.nk,
+                    C1.data() + ii * p.nk, o, WC.data() + ii * 4,
                     TB.data() + ii * 2, TI.data() + ii * 2, ST(i), RW.data() + ii * nrw,
                     IW.data() + ii * niw, DW.data() + ii * ndw);
         team.team_barrier();
@@ -366,7 +384,9 @@ void run_batch(GridCtx& g, const st4::Params& q, const st4::Fields& f, const snl
   t_k.stop();
 
   ww::timers::Region t_out("srce.batch.d2h", fence);
-  Kokkos::deep_copy(ex, HostUnmanaged<float>(spec + o0 * nspec, m * nspec), head(g.b_spec, m * nspec));
+  if (!resident)
+    Kokkos::deep_copy(ex, HostUnmanaged<float>(spec + o0 * nspec, m * nspec),
+                      head(g.b_spec, m * nspec));
   Kokkos::deep_copy(ex, HostUnmanaged<float>(psc + o0 * WW_SRCE_NPSC, m * WW_SRCE_NPSC),
                     head(g.b_psc, m * WW_SRCE_NPSC));
   Kokkos::deep_copy(ex, HostUnmanaged<float>(whitecap + o0 * 4, m * 4), head(g.b_whitecap, m * 4));
@@ -601,11 +621,11 @@ void ww_srce_batch(int igrid, int it, int inflags24, int flogrd57, int flogrd58,
                 "ww_srce_batch: the DIA or ST4 context of this grid is gone");
       return;
     }
-    const long long per_point = batch_bytes_per_point(g);
+    const long long per_point = batch_bytes_per_point(g, true);
     long long fit = batch_cap_bytes() / per_point;
     if (fit < 1) fit = 1;
     const int chunk = static_cast<int>(fit < npts ? fit : npts);
-    batch_reserve(g, chunk);
+    batch_reserve(g, chunk, true);
     const BatchStep c{it, inflags24, flogrd57, flogrd58, dtg};
 #if defined(WW_SRCE_SERIAL_NESTED)
     ww::timers::Region t_call("srce.batch.call", !nested_in_openmp());
@@ -633,6 +653,107 @@ void ww_srce_batch(int igrid, int it, int inflags24, int flogrd57, int flogrd58,
     set_error(WW_KOKKOS_ERR_KERNEL, e.what());
   } catch (...) {
     set_error(WW_KOKKOS_ERR_KERNEL, "ww_srce_batch: unknown exception");
+  }
+}
+
+// ww_srce_batch_va (resident_c.hpp), called by W3KOKKOS_SRCE_BATCH on the fork branch
+// ww3-gpu/kokkos-resident: ww_srce_batch with the spectra read and written in the resident
+// VA (WFIP-0005 unit 2). The arguments are ww_srce_batch's, spec replaced by:
+// | C         | Fortran                          | Type          | Intent | Shape            |
+// | va        | VA(1,0) (W3WDATMD)               | float*        | inout  | nspec x nsealm+1 |
+// | nspec     | SIZE(VA,1)                       | int           | in     |                  |
+// | nsealm    | UBOUND(VA,2)                     | int           | in     |                  |
+// | jsea      | BJSEA(IP) = JSEA of point IP     | const int*    | in     | npts             |
+// The host VA is neither read nor written here: ww::resident::device_va copies it to the
+// device only when the host holds the newer bits, and the state is DEVICE afterwards.
+void ww_srce_batch_va(int igrid, int it, int inflags24, int flogrd57, int flogrd58, float dtg,
+                      float* va, int nspec, int nsealm, int npts, const int* jsea,
+                      const float* wn1, const float* cg1, const float* pin, float* psc,
+                      float* whitecap, float* taubbl, float* tauice, int* shave) {
+  try {
+    const auto it_g = grids().find(igrid);
+    if (it_g == grids().end() || !Kokkos::is_initialized()) {
+      set_error(WW_KOKKOS_ERR_NOT_INITIALISED, "ww_srce_batch_va before ww_srce_init for this grid");
+      return;
+    }
+    if (npts < 0 || (npts > 0 && (va == nullptr || jsea == nullptr || wn1 == nullptr ||
+                                  cg1 == nullptr || pin == nullptr || psc == nullptr ||
+                                  whitecap == nullptr || taubbl == nullptr ||
+                                  tauice == nullptr || shave == nullptr))) {
+      set_error(WW_KOKKOS_ERR_BAD_SHAPE, "ww_srce_batch_va: npts < 0 or a null array");
+      return;
+    }
+    GridCtx& g = it_g->second;
+    if (nspec != g.p.nspec || npts > nsealm) {
+      set_error(WW_KOKKOS_ERR_BAD_SHAPE, "ww_srce_batch_va: SIZE(VA,1) != NSPEC or NPTS > NSEALM");
+      return;
+    }
+    for (int k = 0; k < npts; ++k) {
+      if (jsea[k] < 1 || jsea[k] > nsealm) {
+        set_error(WW_KOKKOS_ERR_BAD_SHAPE, "ww_srce_batch_va: a JSEA outside 1..NSEALM");
+        return;
+      }
+    }
+    g_batch_calls.fetch_add(1, std::memory_order_relaxed);
+    if (npts == 0) {
+      ok();
+      return;
+    }
+    snl1::Config nc;
+    snl1::Tables nt;
+    snl1::RealView1D nsig;
+    st4::Params q;
+    st4::Fields f;
+    // Read at every call, as ww_srce() does (the ST4 module state).
+    if (!snl1::grid_state(igrid, nc, nt, nsig) || !st4::grid_state(igrid, q, f)) {
+      set_error(WW_KOKKOS_ERR_NOT_INITIALISED,
+                "ww_srce_batch_va: the DIA or ST4 context of this grid is gone");
+      return;
+    }
+#if defined(WW_SRCE_SERIAL_NESTED)
+    ww::timers::Region t_call("srce.batch.call", !nested_in_openmp());
+#else
+    ww::timers::Region t_call("srce.batch.call");
+#endif
+    ww::resident::DevVa dva;
+    const int rc = ww::resident::device_va(igrid, va, nspec, nsealm, dva);
+    if (rc != WW_KOKKOS_OK) {
+      set_error(rc, "ww_srce_batch_va: the resident VA refused this call");
+      return;
+    }
+    if (dva.stride(1) != static_cast<size_t>(nspec)) {
+      set_error(WW_KOKKOS_ERR_BAD_SHAPE, "ww_srce_batch_va: the resident VA is padded");
+      return;
+    }
+    const long long per_point = batch_bytes_per_point(g, false);
+    long long fit = batch_cap_bytes() / per_point;
+    if (fit < 1) fit = 1;
+    const int chunk = static_cast<int>(fit < npts ? fit : npts);
+    batch_reserve(g, chunk, false);
+    const BatchStep c{it, inflags24, flogrd57, flogrd58, dtg};
+    for (int n0 = 0; n0 < npts; n0 += chunk) {
+      const int n = (npts - n0 < chunk) ? npts - n0 : chunk;
+#if defined(WW_SRCE_SERIAL_NESTED)
+      if (nested_in_openmp())
+        run_batch<Kokkos::Serial>(g, q, f, nc, nt, nsig, c, n0, n, nullptr, wn1, cg1, pin, psc,
+                                  whitecap, taubbl, tauice, shave, &dva, jsea);
+      else
+#endif
+        run_batch<Kokkos::DefaultExecutionSpace>(g, q, f, nc, nt, nsig, c, n0, n, nullptr, wn1,
+                                                 cg1, pin, psc, whitecap, taubbl, tauice, shave,
+                                                 &dva, jsea);
+      g_batch_launches.fetch_add(1, std::memory_order_relaxed);
+    }
+    ww::resident::device_written(igrid);
+    g_batch_points.fetch_add(npts, std::memory_order_relaxed);
+    g_count.fetch_add(npts, std::memory_order_relaxed);
+    ok();
+  } catch (const std::bad_alloc& e) {
+    set_error(WW_KOKKOS_ERR_RUNTIME, e.what());
+  } catch (const std::exception& e) {
+    set_error(WW_KOKKOS_ERR_KERNEL, e.what());
+  } catch (...) {
+    set_error(WW_KOKKOS_ERR_KERNEL, "ww_srce_batch_va: unknown exception");
   }
 }
 
