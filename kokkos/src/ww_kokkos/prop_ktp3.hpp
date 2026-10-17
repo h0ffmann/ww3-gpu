@@ -84,7 +84,7 @@ struct Ktp3Work {
                 //               VELO(MY*(MX+1)) = NK2*(NTH+1); the largest index W3QCK2 reads with
                 //               CLOSE false is NK2*NTH (spec_W3KTP3.md, quirk 6). The extra column
                 //               exists so a bounds checker never trips, and is zeroed.
-  Real* fla;    // NK2*(NTH+1)   FLA of W3QCK1 (w3uqckmd.F90:171) and W3QCK2 (:630)
+  Real* fla;    // NK2*(NTH+1)   FLA of W3QCK1 (w3uqckmd.F90:232) and W3QCK2 (:630)
 };
 
 /// Reals of work storage w3ktp3 needs for one point.

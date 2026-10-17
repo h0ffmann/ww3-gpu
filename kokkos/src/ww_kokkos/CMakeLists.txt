@@ -1,7 +1,8 @@
 # kokkos/src/ww_kokkos/CMakeLists.txt
 # Sources of the portable kernel library: the DIA port (snl1_*), the ST4 port
 # (st4_*: W3SDS4, W3SIN4, W3SPR4, CALC_USTAR, INSIN4, TABU_*), the W3SRCE unit (srce_*), the
-# propagation unit (prop_*: W3XYP3, W3KTP3, W3QCK1-3, WAVNU1), W3WAVE's support routines
+# propagation unit (prop_*: W3XYP3, W3KTP3, W3QCK1-3, WAVNU1; W3XYP1, W3KTP1, W3XYP2, W3KTP2,
+# W3XYPUG), W3WAVE's support routines
 # (wave_*, updt_*, disp_*: W3GATH, W3SCAT, W3DZXY, W3UWND, W3UTRN, DISTAB, WAVNU2; prop_map*:
 # W3MAP3, W3MAPT), NOAA's operational switches (srce_ref1, srce_ic4; pdlib_*: the unstructured
 # PDLIB solver), the other source-term packages (srce_st0..st6, srce_flx1..5,
@@ -42,6 +43,13 @@ target_sources(ww_kokkos PRIVATE
     prop_wavnu1.hpp
     prop_ktp3.hpp
     prop_xyp3.hpp
+    prop_params1.hpp
+    prop_params2.hpp
+    prop_xyp1.hpp
+    prop_ktp1.hpp
+    prop_xyp2.hpp
+    prop_ktp2.hpp
+    prop_xypug.hpp
     prop.cpp
     wave_gath_scat.hpp
     updt_dzxy.hpp
