@@ -1,7 +1,7 @@
 # W3XYPFSN2_KOKKOS
 
-**Status:** ported and wired, 2026-10-18 (issue #196), inside the batched `W3XYPUG` kernel. Not
-regtested: postponed (ADR-0016) ⚠.
+**Status:** ported and wired, 2026-10-18 (issue #196), inside the batched `W3XYPUG` kernel. Regtested on
+`ww3_tp2.6` `ST4` and `ST4_ASCII`, 2 of 2 entries byte-identical (see W3XYPUG).
 
 The explicit N-scheme of fluctuation-splitting advection on the triangles of an unstructured grid
 without `PDLIB`, for one spectral component: flux Jacobians `KELEM` and Simpson weights `FLALL`
@@ -23,4 +23,4 @@ changed (`LCALC`), then `ITER` explicit sub-steps with the boundary values of `F
 See [W3XYPUG](W3XYPUG_KOKKOS.md), section "The batched kernel with W3XYPFSN2": the parallel
 structure, the per-node gathers that keep the Fortran's addition order, the GIMPLE comparison and
 the builds. No timing (no parity run yet, `AGENTS.md`). The regtest is `ww3_tp2.6` `ST4` and
-`ST4_ASCII` with the resident preset, postponed (ADR-0016) ⚠.
+`ST4_ASCII` with the resident preset, passed 2026-10-18.

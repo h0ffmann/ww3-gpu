@@ -2,8 +2,7 @@
 
 **Status:** ported and wired, 2026-10-18 (issue #196): a batched device kernel with the `FSN`
 scheme `W3XYPFSN2`, on the resident `VA`, called under `WW_KOKKOS_XYP3=1` on an unstructured grid
-without `PDLIB` (PATCH.md section 30). Not regtested: postponed (ADR-0016); the entries that run it
-are `ww3_tp2.6` `ST4` and `ST4_ASCII` ⚠. The serial host translation of 2026-10-16
+without `PDLIB` (PATCH.md section 30). Regtested on `ww3_tp2.6` `ST4` and `ST4_ASCII`, 2 of 2 entries byte-identical (below). The serial host translation of 2026-10-16
 (`prop_xypug.hpp`, below "Arithmetic" and "Review") is kept and is not called.
 
 Spatial propagation of one spectral component on an unstructured grid without `PDLIB`: it turns
@@ -128,8 +127,12 @@ None. No timing without parity (`AGENTS.md`).
 
 ## How it was regtested
 
-Not yet (ADR-0016). The batched kernel's regtest is the matrix entries `ww3_tp2.6` `ST4` and
-`ST4_ASCII` with the resident preset: `WW3GPU_KOKKOS=resident WW3GPU_LAB_SWITCH=ON just ww3-gpu-matrix 4 serial -R '^00[12]:'` ⚠.
+The batched kernel, 2026-10-18 (v): `WW3GPU_KOKKOS=resident WW3GPU_LAB_SWITCH=ON just ww3-gpu-matrix 4
+serial -R '^00[12]:'` at ww3-gpu `d93be6d`, WW3 `84df86e0`: `ww3_tp2.6` `ST4` and `ST4_ASCII`, `test.comp` 0 of 36
+and 0 of 38 files different, `nccmp-tol` PASS, 777 600 components on Kokkos, `WW3GPU_STRICT=ON`
+([record](../../docs/data/ww3gpu_matrix_xypug_tp2.6_2026-10-18.tsv),
+[log](../../docs/log/2026-10-18-xypug-tp2.6.md)). That test turns off `FLCTH`, `FLCK` and `FLSOU`, so `KTP3` and the
+source terms on an unstructured grid were not exercised ⚠. No timing.
 
 The serial host translation, 2026-10-16: not yet, and nothing was run. What was done, 2026-10-16 (v): a scratch translation unit that
 calls `w3xypug` compiled with `prop.cpp`'s `serial-debug` flags (`-std=c++20 -Wall -Wextra

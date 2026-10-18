@@ -47,7 +47,7 @@ Profile: full (bench_small, 120 x 80, 9 520 sea points, 12 h), Release -pg, swit
 |---|---|---|---|---|---|
 | translated | **99.3 %** | 68205 of 263375 (25.90 %) | 314 of 1023 (30.69 %) | 65 of 147 | a Kokkos translation exists in kokkos/src |
 | ported | **99.3 %** | 17732 of 263375 (6.73 %) | 65 of 1023 (6.35 %) | 26 of 147 | WW3 at the WW3/ pin calls the Kokkos code, behind its run-time flag |
-| regtested | **48.6 %** | 2689 of 263375 (1.02 %) | 12 of 1023 (1.17 %) | 6 of 147 | WW3's regtests ran with it on Kokkos and agreed with the Fortran |
+| regtested | **48.6 %** | 3151 of 263375 (1.20 %) | 14 of 1023 (1.37 %) | 7 of 147 | WW3's regtests ran with it on Kokkos and agreed with the Fortran |
 
 The port itself: 61494 lines in 354 files, the C++ under kokkos/src (every .cpp and .hpp line).
 
