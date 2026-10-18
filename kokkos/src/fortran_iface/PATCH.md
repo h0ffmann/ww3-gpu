@@ -7,6 +7,7 @@ Read with `git -C WW3 fetch origin && git -C WW3 branch -r` and `git rev-list --
 
 | h0ffmann/WW3 branch | Head | Against the `WW3/` pin | What it wires |
 |---|---|---|---|
+| `ww3-gpu/integ-fixes` | `711afb80` | one commit on `ww3-gpu/integ-abbb0456` (`b733066b`, the merge of `u1-multi-va`, `u2-strict-preset`, `u8-out-readers` and `u9-cprt` onto `80644ba9`), pushed 2026-10-18 (v, `ls-remote`) | `W3KOKKOS_CPRT`'s two fallbacks to the Fortran `W3CPRT` report to `WW_KOKKOS_STRICT` ([section 28](#28-the-integration-fixes-ww3-gpuinteg-fixes)) |
 | `ww3-gpu/u1-multi-va` | `f330dc53` | five commits on `80644ba9`, pushed 2026-10-18 (v, `ls-remote`) | `ww3_multi`'s exchanges sync only the columns of `VA` they read or write (`W3KOKKOS_VA_READ_COLS`, `W3KOKKOS_VA_WRITE_COLS`, `ww_va_host_wrote_cols`), no read at `W3WAVE`'s return, the ABI `0.10` ([section 26](#26-ww3_multi-and-the-resident-va-column-syncs-no-read-at-w3waves-return-ww3-gpuu1-multi-va)) |
 | `ww3-gpu/kokkos-outg` | `e0cc8ee9` | the `WW3/` pin of h0ffmann/ww3-gpu `goal/42-gpu-step-units45`; one commit on `ww3-gpu/kokkos-prop3dev`, pushed 2026-10-17 (v) | `W3OUTG`'s integrals on the device copy of `VA` (`ww_outg_va`, `W3KOKKOS_OUTGMD`), the host read of `VA` at an output time split per reader, the ABI `0.7` ([section 15](#15-w3outg-on-the-resident-spectrum-ww3-gpukokkos-outg)) |
 | `ww3-gpu/kokkos-prop3dev` | `90631fad` | the parent of `e0cc8ee9`, the `WW3/` pin of h0ffmann/ww3-gpu `goal/42-srce-prop3dev`; one commit on `ww3-gpu/kokkos-resident`, pushed 2026-10-17 (v) | `W3XYP3` and `W3KTP3` batched on the device copy of `VA` (`ww_xyp3_batch_va`, `ww_ktp3_batch_va`), their host syncs only on the Fortran path, the ABI `0.6` ([section 13](#13-the-propagation-on-the-resident-spectrum-ww3-gpukokkos-prop3dev)) |
@@ -2162,3 +2163,56 @@ throwaway `bench_small` variants with partitioning on and the numbers are in
   staged switch for its `PR0` ⚠, because the fork's `KOKKOS` build needs `PR3`. No `matrix.base`
   entry with partitioning builds with `KOKKOS` (`ww3_tnc1` is `PR0`), so the matrix proper did not
   run this part ⚠.
+
+## 28. The integration fixes, `ww3-gpu/integ-fixes`
+
+One fork commit, `711afb80`, on `b733066b` of `ww3-gpu/integ-abbb0456` (sections 23 to 27 merged
+onto `80644ba9`), pushed to h0ffmann/WW3 on 2026-10-18; not at the pin until the integrator moves
+it. No ABI change.
+
+- **The `CPRT` fallbacks report to strict mode.** Section 27 left them out of section 24's count.
+  `W3KOKKOS_CPRT` now calls `KOKKOS_FALLBACK ( 'CPRT', REASON )` on both branches that run the
+  Fortran `W3CPRT` (`w3kokkos_cprtmd.F90:167-175` at `711afb80`): a sea point with a NaN depth, and
+  a spectrum `PTMEAN` cannot take (the kernel's `FALLBACK` flag). With `WW_KOKKOS_STRICT=1` the
+  model stops on `... PART CPRT WOULD RUN ON THE FORTRAN: <REASON>`; without it the call is counted,
+  one per output time that fell back. `W3KOKKOS_CPRT_SETUP` makes the counter when the part is on
+  (`:78-81`), so the line at exit shows `CPRT=0` when nothing fell back. The path that runs the
+  kernel adds one `LOGICAL` store per call and nothing per point. Neither fallback was made to
+  happen in a run: no case here has a NaN depth or a spectrum that trips `PTMEAN` ⚠.
+- **`CPRT` joins the `resident` preset** ([`presets.txt`](presets.txt):
+  `SRCE,XYP3,KTP3,OUTG,IOPE,UPDV,CPRT`). Its consumers changed with it: the shim compiles the file
+  (`just kokkos-test serial-debug` and `openmp-release`), `scripts/ww3-gpu.sh --self-test` checks
+  the seven flags, and `regtests/cmake/selftest.cmake` has `CPRT` in its fixture `parts.d` and in
+  the expected list. The selection words stay `ST4;NL1;PR3;UQ;SHRD;!PDLIB;!MGP;!MGG`: under a set
+  flag `KOKKOS_PART` stops on a switch the part does not cover, and `CPRT` refuses a switch without
+  `SHRD` or with `MPI` or `T` (`w3kokkos_cprtmd.F90:70-76`), a subset of what `OUTG`, already in
+  the preset, refuses (`SHRD` missing, `MPI`, `IG1`, `O8`, `O9`, `T`, `w3kokkos_outgmd.F90:74-80`).
+  So the preset stops on no switch it ran before (v, by reading both set-ups).
+- **The `KOKKOS` build without `PR3`.** The `PR3`-only `USE` at `w3kokkosmd.F90:3183` of
+  `80644ba9` is the one `31a09522` (section 23) put under `W3KOKKOS_HAS_PR3`, and `b733066b`
+  contains that commit (`git merge-base --is-ancestor`, v). Section 27's note that the fork's
+  `KOKKOS` build needs `PR3` was written on `u9-cprt`, which branched before it. No fork change
+  was needed: `ww3_tnc1` (`SHRD PR0`) builds with `KOKKOS` at `b733066b` and at `711afb80` (v,
+  below).
+
+`ww3_tnc1`, matrix entry 38, the serial `matrix.base` entry that writes partition fields (`PHS
+PTP`, `FIELD%PARTITION = '0 1 2'`), on 2026-10-18 (OpenMP backend, gfortran 16.2.0, i9-14900
+shared with other agents, `OMP_NUM_THREADS=4`; never `--gpu`), with `WW3GPU_LAB_SWITCH=ON`,
+`WW3GPU_STRICT=ON`, `WW3GPU_SWITCH_WORDS=PR0;SHRD`, `WW_KOKKOS_VA_POISON=1` and
+`WW_KOKKOS_VA_COUNT=1`:
+
+| `WW3GPU_KOKKOS` | Result |
+|---|---|
+| `resident` | builds; `CPRT=K OUTG=K IOPE=K UPDV=K SRCE=K`, 3 `W3CPRT` Kokkos calls on 243 sea points and 3 partition-field calls of `W3OUTG`; test.comp 0/30 files different; the entry fails its parts-line check, `XYP3,KTP3` not on Kokkos (v) |
+| `SRCE,OUTG,IOPE,UPDV,CPRT` | passes: test.comp 0/30, `CPRT` fallbacks 0, whole-`VA` D2H 0, `calls left on the Fortran ...: SRCE=0 CPRT=0` (v) |
+
+The first row shows a gap of the preset that `CPRT` does not cause: without `PR3` and `UQ`,
+`W3KOKKOS_PROP3_SETUP` compiles its body out (`w3kokkos_prop3md.F90:111-138`), so `XYP3` and `KTP3`
+never reach `KOKKOS_PART`, the run neither stops nor counts them, and only the matrix's parts-line
+check reports it. The selection words keep every `PR0` entry out of a `resident` matrix run.
+
+`bash scripts/ww3-gpu.sh --ww3-gpu smoke|full --cpu --kokkos resident` with `WW_KOKKOS_VA_POISON=1
+WW_KOKKOS_VA_COUNT=1`, at `711afb80` (2026-10-18, same machine, one run each): every model file
+byte-identical to the Fortran of the same executable and every file but the NetCDF to `--ww3`'s,
+`nccmp-tol` PASS; whole-`VA` D2H 37 on smoke and 0 on full, as in section 26; `CPRT=K` with 0 calls,
+since neither case partitions (v).
