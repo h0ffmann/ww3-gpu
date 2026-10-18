@@ -44,6 +44,7 @@
 | entender o WW3, as GPUs e este projeto do zero | [`course/00-orientation.md`](course/00-orientation.md), depois o [livro](https://h0ffmann.github.io/ww3-gpu/book/) |
 | rodar o WW3, depois o WW3 com o port em Kokkos | [começo rápido](#começo-rápido) |
 | ver quais rotinas rodam em Kokkos, e com que velocidade | [onde o projeto está](#onde-o-projeto-está), [`kokkos/PORT_STATUS.md`](kokkos/PORT_STATUS.md) |
+| ler os resultados em CPU, seus limites e o que ainda não foi mostrado, escritos para os modeladores de ondas da NOAA | [`docs/NOAA_PROGRESS_RECORD_202610.md`](docs/NOAA_PROGRESS_RECORD_202610.md), depois a lista de lacunas [`docs/PRODUCTION_READINESS_202610.md`](docs/PRODUCTION_READINESS_202610.md) (em inglês) |
 | ver o sistema em figuras | [`docs/WW3_GPU_VS_NOAA_202610.md`](docs/WW3_GPU_VS_NOAA_202610.md): cinco figuras, também em [PDF](docs/archify/README.md) |
 | trabalhar aqui com um agente de código | [`AGENTS.md`](AGENTS.md), depois [o ciclo de engenharia](#o-ciclo-de-engenharia) |
 | achar o significado de uma palavra ou sigla | [`docs/GLOSSARY.md`](docs/GLOSSARY.md) |
@@ -58,11 +59,11 @@ submódulos. Este repositório guarda só o código em Kokkos e as suas ferramen
 | Diretório | O que é | Usado por |
 |---|---|---|
 | `WW3-noaa/` | o WW3 da NOAA: [NOAA-EMC/WW3](https://github.com/NOAA-EMC/WW3) em `03adda91`, sem mudança | `--ww3`, a referência |
-| `WW3/` | o fork [h0ffmann/WW3](https://github.com/h0ffmann/WW3) em `80644ba9` (branch `ww3-gpu/kokkos-pnt`): o `WW3-noaa/` mais o patch KOKKOS. O patch muda 5 arquivos e acrescenta 6 módulos em `model/src/`, com 4 979 linhas acrescentadas e nenhuma removida | `--ww3-gpu` e a matriz de regtests |
+| `WW3/` | o fork [h0ffmann/WW3](https://github.com/h0ffmann/WW3) em `50a10730` (branch `ww3-gpu/integ-fixes`): o `WW3-noaa/` mais o patch KOKKOS. O patch muda 9 arquivos e acrescenta 7 módulos em `model/src/`, com 5 687 linhas acrescentadas e nenhuma removida | `--ww3-gpu` e a matriz de regtests |
 | `WW4/` | [h0ffmann/WW4](https://github.com/h0ffmann/WW4), `develop` | `--ww4` |
 
-`(v)` Os números do patch vêm de `diff -ruN WW3-noaa/model WW3/model` nesses dois commits, em
-17/10/2026.
+`(v)` Os números do patch vêm de `git -C WW3 diff --stat 03adda91 50a10730 -- model`
+(16 arquivos, 5 687 inserções, 0 remoções), em 18/10/2026.
 
 O fork tem um objetivo só. O WW3 precisa chamar o código em Kokkos de dentro do WW3, por exemplo do
 `W3SRCE` (`model/src/w3srcemd.F90`), e este repositório não edita o WW3. Por isso o fork
