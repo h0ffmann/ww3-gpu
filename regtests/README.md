@@ -30,12 +30,67 @@ pair runs after the matrix, not at the same time: both build and install the Kok
 `kokkos/build/openmp-release`, and two builds there at once can break each other. The pair takes
 about one minute.
 
-`selected` is not WW3's whole matrix. `matrix.base` has 310 entries with `NL1`
-(`just ww3-gpu-matrix-list all`), and a full run takes days. With the resident preset, the driver
-can select only 7 of them; the other entries do not use the physics of the preset, so a Kokkos
-run of them does not test the port (v, `WW3GPU_KOKKOS=resident WW3GPU_LAB_SWITCH=ON just
-ww3-gpu-matrix-list serial|omp|mpi|all`: 7, 0, 0 and 7 entries, 2026-10-18). The selection is
-those 7 minus the 2 that the preset refuses by design, plus the `smoke` pair.
+### What the selection covers
+
+`selected` is not WW3's whole matrix. It is the part of `matrix.base` that runs the code of the
+resident preset, at the pin `WW3/` `80644ba9`:
+
+| Set of `matrix.base` entries | Entries | Share | How it was counted |
+|---|---|---|---|
+| All entries | 758, in 60 tests | 100 % | ⚠ lines that `matrix.base` writes with `$rtst`; a machine section can turn some off |
+| With the DIA (`NL1`) | 310 | 41 % | (v) `just ww3-gpu-matrix-list all` |
+| With ST4 physics (`ST4`) | 136 | 18 % | (v) `WW3GPU_ROUTINES=SDS4 just ww3-gpu-matrix-list all` |
+| That the resident preset can select (`ST4 NL1 PR3 UQ SHRD`, no `PDLIB MGP MGG`) | 7 (7 serial, 0 OpenMP, 0 MPI) | 0.9 % | (v) `WW3GPU_KOKKOS=resident WW3GPU_LAB_SWITCH=ON just ww3-gpu-matrix-list serial`, `omp`, `mpi`, `all` |
+| **Selected** | **5**, plus the `ww3_ts1` pair | **0.7 %** | the 7 minus the 2 unstructured-grid entries that the preset refuses by design |
+
+All counts are from 2026-10-18. The other entries do not run the preset's code: a Kokkos run of
+them is the Fortran again, or the preset stops by design (MPI, unstructured grids, moving grids).
+A full run of the 310 `NL1` entries takes days. The selection runs in hours (see "Time").
+
+### The ww3-gpu code each entry runs
+
+| Entry | Kokkos parts on (`K` in the log) | ww3-gpu code it runs |
+|---|---|---|
+| `ww3_tp2.15`, four variants | `SRCE`, `XYP3`, `KTP3`, `OUTG`, `IOPE`, `UPDV` | `kokkos/src/fortran_iface/srce_shim.cpp` with the ST4 and DIA kernels (`kokkos/src/ww_kokkos/st4_*.hpp`, `snl1_team.hpp`, `srce_kernel.hpp`); `prop3_shim.cpp` (`prop_xyp3.hpp`, `prop_ktp3.hpp`); `outg_shim.cpp` (`iogo_w3outg.hpp`); `resident_shim.cpp` (`VA` on the Kokkos side, `IOPE`, `UPDV`) |
+| `ww3_ts2` `ST4_PR3_UQ` | the same six | the same files |
+| `ww3_ts1` (smoke) | the same six are on | one sea point: `W3SRCE` 2 161 spectra and 2 161 partial host reads of `VA` (`IOPE`); `W3XYP3`, `W3KTP3` and `W3OUTG` make 0 calls |
+
+(v) The `K` flags and the `W3SRCE` spectra (6 900 for `ww3_tp2.15`, 4 632 for `ww3_ts2`) are in
+the record of 2026-10-18; the `ww3_ts1` counts are from a run of the same day. ⚠ The record does
+not count the calls of `XYP3`, `KTP3`, `OUTG`, `IOPE` and `UPDV` per entry, and three
+`ww3_tp2.15` variants have not run yet.
+
+### Threads and parallel entries
+
+The routine is sized for one machine, the owner's workstation, which is also its only runner:
+an Intel Core i9-14900 (24 cores: 8 performance cores with two threads each and 16 efficiency
+cores, 32 hardware threads), 184 GiB of memory that Linux sees (192 GB installed) and 6 TB of
+free disk (v, `lscpu`, `free -g`, `df -h`, 2026-10-18). On it:
+
+| Setting | Value | Why |
+|---|---|---|
+| `jobs` | 5 | the 5 matrix entries run together; the longest one sets the time |
+| threads per entry | 6 (32 / 5) | 30 of the 32 hardware threads; 2 stay for the shell, the runner and the I/O |
+| memory | no limit set | ⚠ not measured per entry; the regional cases of the selection need a few GB each, far below 184 GiB |
+| builds | 5 x `make -j 8` | 40 compile processes on 32 threads, for a few minutes at the start |
+
+On another machine, pass `--jobs` (or the `jobs` input of the workflow) so that `jobs` is at most
+the number of hardware threads.
+
+Each entry gets `nproc/jobs` threads (`OMP_NUM_THREADS`, from the `ww3-gpu-matrix` recipe), so
+`jobs` entries together use at most `nproc` threads. With 5 jobs on 32 hardware threads, each run
+has 6 threads and 30 are in use. `OMP_PROC_BIND` is `false` in every run
+(`regtests/cmake/run_entry.cmake`), so the entries do not pin their threads to the same cores.
+`scripts/regtest_selected.sh` refuses a `jobs` larger than `nproc`: then each entry gets 1
+thread, and the runs compete for cores.
+
+Two cautions:
+
+- WW3's `run_cmake_test` builds each entry with `make -j 8`, whatever `jobs` is. While 5 entries
+  build at the same time, 40 compile processes share the machine. This makes the build slower.
+  It does not change a verdict.
+- The runner is the owner's workstation. Another job on it takes cores from the entries, and
+  libgomp threads that wait spin by default. Do not dispatch the routine while a timing runs.
 
 ### Why these entries
 
