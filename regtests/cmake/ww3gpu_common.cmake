@@ -186,11 +186,13 @@ function(ww3gpu_switch_words out file words)
 endfunction()
 
 # ww3gpu_lab_switch(<out> <switch words> <lab switch words>): the entry's switch with its source-term
-# words (FLXn LNn STn STABn NLn BTn DBn TRn BSn ICn ISn REFn MLIM) replaced by the lab switch's, the
+# words replaced by the lab switch's: every word of WW3's source-term categories (switches.json:
+# stress FLXn, dstress FLDn, s_ln LNn and SEED, sterm STn, stab STABn, s_nl NLn, s_bot BTn, s_db
+# DBn, miche MLIM, s_tr TRn, s_bs BSn, s_ice ICn, s_is ISn, reflection REFn). The lab switch's are the
 # only set the Kokkos W3SRCE translates (W3KOKKOS_SRCE_SETUP's gate in the fork's w3kokkosmd.F90):
 # the entry keeps its grid, forcing, propagation and outputs, and its physics becomes the timed run's.
 function(ww3gpu_lab_switch out words lab)
-  set(re "^((FLX|LN|ST|STAB|NL|BT|DB|TR|BS|IC|IS|REF)[0-9]+|MLIM)$")
+  set(re "^((FLX|FLD|LN|ST|STAB|NL|BT|DB|TR|BS|IC|IS|REF)[0-9]+|MLIM|SEED)$")
   ww3gpu_words(w "${words}")
   ww3gpu_words(l "${lab}")
   set(r "")

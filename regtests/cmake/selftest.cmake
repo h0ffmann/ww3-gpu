@@ -193,6 +193,10 @@ ww3gpu_lab_switch(s "NOGRB SHRD OMPG PR3 UQ FLX0 LN0 ST4 NL1 BT0 DB0 TR0 BS0 IC0
   "F90 NOGRB SHRD PR3 UQ FLX0 LN1 ST4 STAB0 NL1 BT1 DB1 MLIM TR0 BS0 IC0 IS0 REF0 XX0 O0")
 expect("${s}" "NOGRB SHRD OMPG PR3 UQ O0 O1 MGW FLX0 LN1 ST4 STAB0 NL1 BT1 DB1 MLIM TR0 BS0 IC0 IS0 REF0"
   "lab switch: source terms replaced, the rest kept in order")
+ww3gpu_lab_switch(s "DIST MPI PR3 UQ FLX0 SEED FLD2 ST4 NL1 BT1 DB1 TR0 BS0 IC0 IS0 REF0"
+  "F90 SHRD PR3 UQ FLX0 LN1 ST4 STAB0 NL1 BT1 DB1 MLIM TR0 BS0 IC0 IS0 REF0")
+expect("${s}" "DIST MPI PR3 UQ FLX0 LN1 ST4 STAB0 NL1 BT1 DB1 MLIM TR0 BS0 IC0 IS0 REF0"
+  "lab switch: SEED (s_ln) and FLD2 (dstress) replaced too")
 
 # --- the nccmp-tol parser ------------------------------------------------------------------
 set(out "variable   n  dropped  max|d|  rms  max rel  verdict\n-----------\nhs 1 0 0 0 0  PASS\nfp 1 0 0 0 0  FAIL\nlat 1 0 0 0 0  unlisted\nnccmp-tol: note: 'dir' is listed but not in both files\nnccmp-tol: FAIL (2 judged, 1 unlisted)\n")
