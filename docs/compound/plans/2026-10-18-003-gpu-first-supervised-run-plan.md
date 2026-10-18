@@ -102,6 +102,15 @@ every parity argument so far (`docs/log/2026-10-18-cuda-build-only.md`) ⚠.
 Not ranked: skipping `W3SDS4`'s zero-weight terms (12 of 23 products, profile log) changes the
 result for an infinite or NaN input, so it is the owner's decision and its own PR.
 
+**Work in progress elsewhere (2026-10-18).** Branch `goal/eb10363f-4821-noaa-progress-record`
+(another session, not pushed when this was written) builds the `W3SDS4` saturation-integral loop
+interchange (`kokkos/src/ww_kokkos/st4_sds4.hpp`), a DIA direction-halo layout that turns the
+index-table gathers into contiguous loads (`snl1_team.hpp`, `snl1_tables.{hpp,cpp}`), and
+`-fno-math-errno` for the host build (`kokkos/src/ww_kokkos/CMakeLists.txt`). The halo layout
+attacks the same gathers as plan 2 by another route; plan 2 starts from that branch's measured
+result, not before it. Its timing and the GPU run of plan 1 need a resident regtest pass on the
+tree that holds both PRs.
+
 ### Plan 2 in short
 
 A team of eight points, one per AVX2 lane, each lane its own point's arithmetic in the
