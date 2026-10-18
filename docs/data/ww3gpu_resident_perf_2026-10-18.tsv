@@ -1,0 +1,21 @@
+# ww3_shel wall time and WW_KOKKOS_TIMERS regions of the full case (bench_small), resident preset and the Fortran of the same executable. A diagnostic profile, not a speed figure: one run each, on a machine shared with another session.
+# machine	Intel Core i9-14900, 32 hardware threads, the owner's workstation; load1 is the 1-minute load average read just before the run
+# commit	ww3-gpu db2c27c (branch goal/b8e23abb-5182-resident-profile), WW3 80644ba9, switches/switch_lab_ompg plus KOKKOS; Kokkos package with -O3 -march=x86-64-v3 -g
+# build	bash scripts/ww3-gpu.sh --ww3-gpu full --cpu --kokkos resident --build-only, then the Kokkos package reconfigured with -DCMAKE_CXX_FLAGS="-O3 -march=x86-64-v3 -g" and ww3_shel relinked
+# command	kokkos_resident: OMP_PROC_BIND=false OMP_NUM_THREADS=<t> WW_KOKKOS_ALL=0 WW_KOKKOS_SRCE=1 WW_KOKKOS_XYP3=1 WW_KOKKOS_KTP3=1 WW_KOKKOS_OUTG=1 WW_KOKKOS_IOPE=1 WW_KOKKOS_UPDV=1 [WW_KOKKOS_TIMERS=1] ww3_shel; fortran_same_exe: the same with the six part flags at 0; wt-* runs leave OMP_NUM_THREADS unset (32)
+# case	a copy of build/runs/ww3-gpu-full-openmp/kokkos/ (ww3_grid output of scripts/ww3-gpu.sh); out_grd_vs_fortran is cmp of out_grd.ww3 with build/runs/ww3-gpu-full-openmp/fortran/out_grd.ww3
+# date	2026-10-18; outside_kokkos_s is wall_s minus every .call region; NA: timers off
+# log	docs/log/2026-10-18-resident-profile.md
+run	build	omp_threads	load1	wall_s	srce.batch.kernel_s	xyp3.kernel_s	ktp3.kernel_s	outg.kernel_s	va.h2d_s	va.d2h_s	outside_kokkos_s	out_grd_vs_fortran
+k-t32b	kokkos_resident	32	3.46	14.36	12.451	1.090	0.390	0.187	0.001	0.001	0.22	identical
+f-t32b	fortran_same_exe	32	11.75	26.31	NA	NA	NA	NA	NA	NA	NA	identical
+k-t32	kokkos_resident	32	17.58	21.21	18.484	1.599	0.569	0.268	0.001	0.001	0.25	identical
+f-t32	fortran_same_exe	32	25.94	33.02	NA	NA	NA	NA	NA	NA	NA	identical
+k-t16	kokkos_resident	16	29.35	29.21	26.437	1.461	0.687	0.335	0.001	0.001	0.26	identical
+f-t16	fortran_same_exe	16	27.14	36.46	NA	NA	NA	NA	NA	NA	NA	identical
+k-t8	kokkos_resident	8	21.35	47.35	42.579	2.533	1.323	0.643	0.002	0.001	0.23	identical
+f-t8	fortran_same_exe	8	28.34	56.13	NA	NA	NA	NA	NA	NA	NA	identical
+k-t1	kokkos_resident	1	22.76	174.78	156.510	11.036	5.963	0.912	0.007	0.001	0.19	identical
+f-t1	fortran_same_exe	1	8.65	174.27	NA	NA	NA	NA	NA	NA	NA	identical
+wt-timers-32	kokkos_resident	32	35.07	21.46	18.784	1.575	0.526	0.261	0.001	0.001	0.27	identical
+wt-plain-32	kokkos_resident	32	32.02	22.59	NA	NA	NA	NA	NA	NA	NA	identical

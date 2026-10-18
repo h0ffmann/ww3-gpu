@@ -3,7 +3,7 @@
 # and the expansion of $mpi, $np, $nr, $nth and $(( )), has_ounf and opt_of, the row verdict, the
 # nccmp-tol parser, the ftp script's version, URL and cp lines, and the data staging. With WW3/
 # checked out it also asserts the counts at the pin, 99 serial, 50 omp, 161 mpi and 310 in all, and
-# those of the resident preset (WW3GPU_KOKKOS), 10 serial, 4 omp, 43 mpi and 57 in all.
+# those of the resident preset (WW3GPU_KOKKOS), 7 serial, 0 omp, 0 mpi and 7 in all.
 # Runs nothing of WW3.
 cmake_minimum_required(VERSION 3.21)
 include("${CMAKE_CURRENT_LIST_DIR}/ww3gpu_common.cmake")
@@ -189,6 +189,15 @@ expect("${nw}" "15" "selection ANY without words: every switch file but ST4 with
 ww3gpu_sel_desc(d omp ANY "ST4;NL1;!PDLIB")
 expect("${d}" "switch with the words ST4 NL1 !PDLIB and OMPG or OMPH, no MPI; $np = WW3GPU_OMP_THREADS" "selection text for words")
 
+ww3gpu_lab_switch(s "NOGRB SHRD OMPG PR3 UQ FLX0 LN0 ST4 NL1 BT0 DB0 TR0 BS0 IC0 IS0 REF0 O0 O1 MGW"
+  "F90 NOGRB SHRD PR3 UQ FLX0 LN1 ST4 STAB0 NL1 BT1 DB1 MLIM TR0 BS0 IC0 IS0 REF0 XX0 O0")
+expect("${s}" "NOGRB SHRD OMPG PR3 UQ O0 O1 MGW FLX0 LN1 ST4 STAB0 NL1 BT1 DB1 MLIM TR0 BS0 IC0 IS0 REF0"
+  "lab switch: source terms replaced, the rest kept in order")
+ww3gpu_lab_switch(s "DIST MPI PR3 UQ FLX0 SEED FLD2 ST4 NL1 BT1 DB1 TR0 BS0 IC0 IS0 REF0"
+  "F90 SHRD PR3 UQ FLX0 LN1 ST4 STAB0 NL1 BT1 DB1 MLIM TR0 BS0 IC0 IS0 REF0")
+expect("${s}" "DIST MPI PR3 UQ FLX0 LN1 ST4 STAB0 NL1 BT1 DB1 MLIM TR0 BS0 IC0 IS0 REF0"
+  "lab switch: SEED (s_ln) and FLD2 (dstress) replaced too")
+
 # --- the nccmp-tol parser ------------------------------------------------------------------
 set(out "variable   n  dropped  max|d|  rms  max rel  verdict\n-----------\nhs 1 0 0 0 0  PASS\nfp 1 0 0 0 0  FAIL\nlat 1 0 0 0 0  unlisted\nnccmp-tol: note: 'dir' is listed but not in both files\nnccmp-tol: FAIL (2 judged, 1 unlisted)\n")
 ww3gpu_judged_vars(j "${out}")
@@ -234,10 +243,10 @@ if(EXISTS "${ww3}/regtests/bin/matrix.base")
     expect("${n}" "${want}" "WW3@${rev} matrix.base, ${k} entries")
     message(STATUS "ww3gpu_matrix: WW3@${rev} matrix.base: ${n} ${k} entries")
   endforeach()
-  foreach(kv "serial;10" "omp;4" "mpi;43" "all;57")
+  foreach(kv "serial;7" "omp;0" "mpi;0" "all;7")
     list(GET kv 0 k)
     list(GET kv 1 want)
-    ww3gpu_select_entries(P "${ww3}/regtests/bin/matrix.base" "${ww3}/regtests" ${k} ANY "ST4;NL1;PR3;!PDLIB")
+    ww3gpu_select_entries(P "${ww3}/regtests/bin/matrix.base" "${ww3}/regtests" ${k} ANY "ST4;NL1;PR3;UQ;SHRD;!PDLIB;!MGP;!MGG")
     list(LENGTH P_TESTS n)
     expect("${n}" "${want}" "WW3@${rev} matrix.base, ${k} entries of the resident preset")
     message(STATUS "ww3gpu_matrix: WW3@${rev} matrix.base: ${n} ${k} entries of the resident preset")

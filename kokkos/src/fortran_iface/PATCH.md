@@ -1819,3 +1819,17 @@ and leaves a correct run's bits unchanged (v: coast, smoke and full byte-identic
 Not provable on the CPU by any of these: the device copies themselves, the prop3 input cache
 (section 13; a staged diagnostic in `prop3_shim.cpp` would do what `WW_KOKKOS_SRCE_STAGED` does),
 and every CUDA bit ⚠. The regtest matrix did not run ⚠.
+
+## 22. `W3KOKKOS_SRCE_SETUP` on a switch without `LN1`, `BT1` or `DB1`, `ww3-gpu/kokkos-pnt`
+
+A third commit on `ww3-gpu/kokkos-pnt`: `80644ba9`, pushed to h0ffmann/WW3 on 2026-10-18. No ABI
+change. `W3GDATMD` declares `SLNC1`, `FSPM`, `FSHF` only under `W3_LN1`, `SBTC1` under `W3_BT1`
+and `SDBC1`, `SDBC2`, `FDONLY` under `W3_DB1` (`model/src/w3gdatmd.F90:874-876`, `:975`,
+`:993-994` at the pin). `W3KOKKOS_SRCE_SETUP` read all seven without a guard, so every `ST4`+`NL1`
+switch with the KOKKOS switch and without one of those three words stopped in `w3kokkosmd.F90`
+before linking (v, the `WW3GPU_KOKKOS=resident` matrix of 2026-10-18: `ww3_tp2.6` `ST4` (`LN0`),
+`ww3_ts2`, `ww3_ts3` and `mww3_test_05` (`BT0 DB0`)). Each `USE` and `RPAR`/`IPAR` store now sits
+under its switch; without it the packet keeps 0 and the switch gate (`IS_LAB_SWITCH`) leaves
+`W3SRCE` to the Fortran, as before. With the guard, `ww3_tp2.6` `ST4` and `ww3_ts2` `ST4_PR3_UQ`
+build, and their Kokkos runs stop at `WW_SRCE_INIT` code 5 because the preset asks for `SRCE`
+on a switch it does not translate (v, same matrix, entries 1 and 7).

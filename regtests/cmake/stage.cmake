@@ -1,6 +1,6 @@
 # setup:stage: copy every selected test out of WW3/ into <build>/regtests/<test>/, with the ftp
 # data ww3_from_ftp.sh would copy into it, write switch_<s>_KOKKOS (the entry's switch plus
-# KOKKOS) beside each original, and clear the rows of the previous run. WW3/ is only read.
+# KOKKOS; under WW3GPU_LAB_SWITCH with switch_lab_shrd's source terms) beside each original, and clear the rows of the previous run. WW3/ is only read.
 cmake_minimum_required(VERSION 3.21)
 include("${CONFIG}")
 include("${CMAKE_CURRENT_LIST_DIR}/ww3gpu_common.cmake")
@@ -20,6 +20,9 @@ foreach(test IN LISTS tests)
   endif()
 endforeach()
 
+if(WW3GPU_LAB_SWITCH)
+  file(READ "${WW3GPU_ROOT}/switches/switch_lab_shrd" lab)
+endif()
 set(i 0)
 foreach(test IN LISTS E_TESTS)
   list(GET E_OPTS ${i} opts)
@@ -41,6 +44,9 @@ foreach(test IN LISTS E_TESTS)
   file(READ "${from}" s)
   string(REGEX REPLACE "[ \n]+" " " s "${s}")
   string(REGEX REPLACE " +$" "" s "${s}")
+  if(WW3GPU_LAB_SWITCH)
+    ww3gpu_lab_switch(s "${s}" "${lab}")
+  endif()
   file(WRITE "${to}" "${s} KOKKOS\n")
 endforeach()
 list(LENGTH tests nt)

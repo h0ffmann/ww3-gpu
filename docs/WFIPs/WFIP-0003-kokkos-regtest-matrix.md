@@ -182,6 +182,20 @@ must not); for `resident` it defaults to `ST4;NL1;PR3;!PDLIB`, which gives 10 se
 exported in the shell no longer reaches the Fortran run of a pair. Checked by
 `just ww3-gpu-matrix-selftest`; no entry has run with it yet ⚠.
 
+*Update, later on 2026-10-18:* the first run refused every entry by design, so the defaults were
+wrong. The Kokkos `W3SRCE` covers only the lab switch's source terms (`LN1 BT1 DB1 MLIM` with `ST4
+NL1`, the gate of `W3KOKKOS_SRCE_SETUP` in the fork's `w3kokkosmd.F90`), and no `matrix.base`
+switch has them. The Kokkos `W3XYP3` needs `PR3`, `UQ` and `SHRD`, and it refuses `MGP`, `MGG`,
+an unstructured grid and a tripole closure (`w3kokkos_prop3md.F90:112-134` at `WW3@80644ba9`).
+The `resident` words are now `ST4;NL1;PR3;UQ;SHRD;!PDLIB;!MGP;!MGG`: 7 serial entries, 0 `omp`, 0
+`mpi` (v, `WW3GPU_KOKKOS=resident just ww3-gpu-matrix-list serial|omp`). `ww3_tp2.6` stays in the
+selection and is refused by design, because its grid is unstructured and no switch word says so.
+A third option, `WW3GPU_LAB_SWITCH=ON`, builds each entry with `switches/switch_lab_shrd`'s
+source-term words in place of its own. Grid, forcing, propagation and outputs stay the entry's,
+and both runs of a pair build from that one switch file. On a sample, `ww3_tp2.15` (`default`)
+and `ww3_ts2` (`ST4_PR3_UQ`) pass: `test.comp` finds 0 of 23 and 0 of 22 files different, and
+every preset part shows `=K` (v, `docs/data/ww3gpu_matrix_resident_lab_2026-10-18.tsv`).
+
 ## 6. Parity and physics impact
 
 None on the model: no kernel, Fortran or tolerance changes. The tolerances stay those of

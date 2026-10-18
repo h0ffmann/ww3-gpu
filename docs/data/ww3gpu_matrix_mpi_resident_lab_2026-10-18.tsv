@@ -1,0 +1,29 @@
+# date: 2026-10-18T13:47:37Z
+# ww3-gpu commit: db2c27c
+# WW3 commit: 80644ba9 (origin/ww3-gpu/kokkos-pnt)
+# machine: Intel(R) Core(TM) i9-14900, 32 hardware threads (nproc --all), OMP_NUM_THREADS=8 per run, 4 MPI ranks per MPI run, WW3GPU_OMP_NESTED=OFF
+# command: WW3GPU_KOKKOS=resident WW3GPU_LAB_SWITCH=ON WW3GPU_OMP_THREADS=8 just ww3-gpu-matrix 2 mpi -R ^(001|007|008|011):
+# data: /nix/store/97lk2yrkjdjxaniq48mq2p6ciw9y79js-ww3-regtest-data-7.14.2; SCOTCH_PATH: /nix/store/v6003b5s6nr5by0zhncxkg7h4n06gvyq-ptscotch-static-7.0.12; METIS_PATH: /nix/store/2sxmb2qk62pv3f73psif7cc1plwcldns-ww3-metis
+# selection: mpi, switch with the words ST4 NL1 PR3 !PDLIB and MPI; $mpi = mpirun, $np = $nr = WW3GPU_MPI_RANKS, $nth = WW3GPU_OMP_THREADS; WW3GPU_STRICT=ON
+# switch: each entry's source-term words replaced by switches/switch_lab_shrd's (WW3GPU_LAB_SWITCH=ON)
+# Kokkos flags (WW3GPU_KOKKOS, as scripts/ww3-gpu.sh --kokkos): resident = SRCE,XYP3,KTP3,OUTG,IOPE,UPDV; the Fortran runs WW_KOKKOS_ALL=0, every part unset
+n	test	switch	built	ran	kokkos_log	test_comp	nccmp_tol	judged	wall_s	kokkos_spectra	ww3_self	options
+1	ww3_tp2.15	MPI	yes	fortran-only	no	n/a	n/a	-	162	0	-	-s MPI -w work_PR3_UQ_MPI -f -p $mpi -n $np
+7	ww3_ts3	ST4_PR3_UQ_MPI	yes	fortran-only	no	n/a	n/a	-	165	0	-	-s ST4_PR3_UQ_MPI -w work_ST4_PR3_UQ_MPI -f -p $mpi -n $np
+8	mww3_test_05	ST4_PR3_UQ_MPI	yes	fortran-only	no	n/a	n/a	-	256	0	-	-s ST4_PR3_UQ_MPI -w work_ST4_PR3_UQ_MPI -m grdset_a -f -p $mpi -n $np
+11	ww3_ts3	ST4_PR3_UQ_MPI_OMPH	yes	fortran-only	no	n/a	n/a	-	214	0	-	-s ST4_PR3_UQ_MPI_OMPH -w work_ST4_PR3_UQ_MPI_OMPH -f -p $mpi -n $nr -t $nth
+
+# date: 2026-10-18T13:57:10Z
+# ww3-gpu commit: db2c27c
+# WW3 commit: 80644ba9 (origin/ww3-gpu/kokkos-pnt)
+# machine: Intel(R) Core(TM) i9-14900, 32 hardware threads (nproc --all), OMP_NUM_THREADS=8 per run, 4 MPI ranks per MPI run, WW3GPU_OMP_NESTED=OFF
+# command: WW3GPU_KOKKOS=SRCE,KTP3 WW3GPU_SWITCH_WORDS=ST4 NL1 PR3 UQ !PDLIB WW3GPU_LAB_SWITCH=ON WW3GPU_OMP_THREADS=8 just ww3-gpu-matrix 2 mpi -R ^(001|003|004|023):
+# data: /nix/store/97lk2yrkjdjxaniq48mq2p6ciw9y79js-ww3-regtest-data-7.14.2; SCOTCH_PATH: /nix/store/v6003b5s6nr5by0zhncxkg7h4n06gvyq-ptscotch-static-7.0.12; METIS_PATH: /nix/store/2sxmb2qk62pv3f73psif7cc1plwcldns-ww3-metis
+# selection: mpi, switch with the words ST4 NL1 PR3 UQ !PDLIB and MPI; $mpi = mpirun, $np = $nr = WW3GPU_MPI_RANKS, $nth = WW3GPU_OMP_THREADS; WW3GPU_STRICT=ON
+# switch: each entry's source-term words replaced by switches/switch_lab_shrd's (WW3GPU_LAB_SWITCH=ON)
+# Kokkos flags (WW3GPU_KOKKOS, as scripts/ww3-gpu.sh --kokkos): SRCE,KTP3 = SRCE,KTP3; the Fortran runs WW_KOKKOS_ALL=0, every part unset
+n	test	switch	built	ran	kokkos_log	test_comp	nccmp_tol	judged	wall_s	kokkos_spectra	ww3_self	options
+1	ww3_tp2.15	MPI	yes	yes	yes	1/24	PASS	dir,dp,fp,hs	160	SRCE:6900,SDS4:0,SIN4:0,SPR4:0	0/24	-s MPI -w work_PR3_UQ_MPI -f -p $mpi -n $np
+3	ww3_tp2.15	MPI	yes	yes	yes	1/26	PASS	dir,dp,fp,hs	161	SRCE:6900,SDS4:0,SIN4:0,SPR4:0	0/26	-s MPI -i input_rho -w work_PR3_UQ_RHO_MPI -f -p $mpi -n $np
+4	mww3_test_08	ST4_PR3_UQ_MPI	yes	yes	yes	6/24	FAIL	dir,hs	201	SRCE:116928,SDS4:0,SIN4:0,SPR4:0	0/24	-s ST4_PR3_UQ_MPI -w work_ST4_PR3_UQ_MPI -m grdset_a -f -p $mpi -n $np
+23	ww3_ufs1.1	MPI	no	no	no	n/a	n/a	-	4	0	-	-s MPI -w work_c -m grdset_c -f -p $mpi -n $np
