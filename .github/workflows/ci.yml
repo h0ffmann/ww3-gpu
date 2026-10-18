@@ -107,8 +107,13 @@ jobs:
           # in the pinned nix shell rather than against the runner's apt state.
 
   kokkos:
-    name: kokkos (serial-debug + openmp-release)
+    name: kokkos (${{ matrix.preset }})
     runs-on: ubuntu-latest
+    # One job per preset, in parallel: each one is a full configure, build and test.
+    strategy:
+      fail-fast: false
+      matrix:
+        preset: [serial-debug, openmp-release]
     steps:
       # .gitmodules uses ssh URLs a runner cannot clone, hence https below.
       # --no-recommend-shallow: nix asks the flake input for revCount, which a
@@ -135,24 +140,26 @@ jobs:
           curl -fsSL "https://raw.githubusercontent.com/h0ffmann/WW3/$sha/model/src/w3kokkosmd.F90" \
             -o WW3/model/src/w3kokkosmd.F90
 
-      - uses: DeterminateSystems/nix-installer-action@main
-      - uses: DeterminateSystems/magic-nix-cache-action@main
+      # Upstream Nix; picasso's flake pins the toolchain it then builds. The store is cached by
+      # the lock of the pratico flake: picasso's own packages (kokkos-openmp, ptscotch-static,
+      # ww3-metis) are on no public cache and would otherwise build on every run. Only a push to
+      # main saves, from one job, so a pull request never pays the upload.
+      - uses: cachix/install-nix-action@v31
+      - uses: nix-community/cache-nix-action@7df957e333c1e5da7721f60227dbba6d06080569 # v7.0.2
+        with:
+          primary-key: nix-pratico-ww3-${{ runner.os }}-${{ hashFiles('picasso/labs/pratico/flake.nix', 'picasso/labs/pratico/flake.lock') }}
+          restore-prefixes-first-match: nix-pratico-ww3-${{ runner.os }}-
+          save: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && matrix.preset == 'serial-debug' }}
 
-      - name: serial-debug (sanitizers)
+      - name: ${{ matrix.preset }}
+        env:
+          PRESET: ${{ matrix.preset }}
         run: |
-          nix develop ./picasso/labs/pratico#ww3 --command bash -c '
+          nix develop ./picasso/labs/pratico#ww3 --command bash -c "
             cd kokkos &&
-            cmake --preset serial-debug &&
-            cmake --build --preset serial-debug &&
-            ctest --preset serial-debug'
-
-      - name: openmp-release
-        run: |
-          nix develop ./picasso/labs/pratico#ww3 --command bash -c '
-            cd kokkos &&
-            cmake --preset openmp-release &&
-            cmake --build --preset openmp-release &&
-            ctest --preset openmp-release'
+            cmake --preset $PRESET &&
+            cmake --build --preset $PRESET &&
+            ctest --preset $PRESET"
 
   links:
     name: markdown links

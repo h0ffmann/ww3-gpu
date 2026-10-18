@@ -21,6 +21,15 @@
 #                     SDSn for n = 1, 2, 3, 6 (STn), SWL6 (ST6), FLX1..FLX5 (FLXn); SNL1 by default
 #                     (WW3GPU_ALL_ROUTINES, cmake/ww3gpu_common.cmake). The Fortran runs set every
 #                     flag to 0. ADR-0011's ST4 checkpoint runs one at a time.
+#   WW3GPU_KOKKOS       empty (the default): the Kokkos run sets WW3GPU_ROUTINES as above. Otherwise
+#                     the flags of scripts/ww3-gpu.sh --kokkos, so a regtest and a timed run share
+#                     them: resident (SRCE,XYP3,KTP3,OUTG,IOPE,UPDV), all (WW_KOKKOS_ALL=1), none,
+#                     or a comma list of the parts of kokkos/src/fortran_iface/parts.d; the
+#                     selection is then WW3GPU_SWITCH_WORDS alone, and the Kokkos run must show
+#                     each part as <PART>=K in W3INIT's parts line
+#   WW3GPU_SWITCH_WORDS words every selected switch has, !WORD for one it must not have; for
+#                     resident by default ST4;NL1;PR3;!PDLIB (W3SRCE's Kokkos path needs ST4 and
+#                     NL1 and refuses PDLIB, W3XYP3 and W3KTP3 need PR3)
 #   WW3GPU_WW3          the h0ffmann/WW3 ww3-gpu/kokkos-st4 tree; never written (the inputs are staged
 #                     in <build>/regtests/, and record:summary fails when `git status` shows a change)
 #   WW3GPU_DATA         WW3's ftp data, <WW3GPU_DATA>/data_regtests: the store path of
@@ -87,6 +96,34 @@ foreach(_r IN LISTS WW3GPU_ROUTINES)
   endif()
 endforeach()
 ww3gpu_physics(WW3GPU_PHYSICS ${WW3GPU_ROUTINES})
+set(WW3GPU_KOKKOS "" CACHE STRING "The flags of ww3-gpu.sh --kokkos (resident, all, none, PART,...); empty: WW3GPU_ROUTINES")
+set(WW3GPU_SWITCH_WORDS "" CACHE STRING "Words every selected switch has, !WORD for one it must not")
+ww3gpu_parts_d(WW3GPU_PARTS WW3GPU_PART_COUNTS "${WW3GPU_ROOT}/kokkos/src/fortran_iface/parts.d")
+# Every flag a run unsets or sets: the parts.d parts and the routines (the same names, but the
+# routines list stays the reference of WW3GPU_ROUTINES).
+set(WW3GPU_ENV_PARTS ${WW3GPU_PARTS} ${WW3GPU_ALL_ROUTINES})
+list(REMOVE_DUPLICATES WW3GPU_ENV_PARTS)
+set(WW3GPU_ENV_COUNTS ${WW3GPU_PART_COUNTS})
+foreach(u IN LISTS WW3GPU_COUNT_FLAGS)
+  list(APPEND WW3GPU_ENV_COUNTS "WW_KOKKOS_${u}_COUNT")
+endforeach()
+list(REMOVE_DUPLICATES WW3GPU_ENV_COUNTS)
+set(WW3GPU_FLAGS "")
+set(_words "${WW3GPU_SWITCH_WORDS}")
+if(NOT WW3GPU_KOKKOS STREQUAL "")
+  ww3gpu_kokkos_preset(WW3GPU_FLAGS "${WW3GPU_KOKKOS}" "${WW3GPU_PARTS}")
+  if(WW3GPU_FLAGS MATCHES "^ERROR:(.*)")
+    message(FATAL_ERROR "WW3GPU_KOKKOS: ${CMAKE_MATCH_1}")
+  endif()
+  if(WW3GPU_FLAGS STREQUAL "")
+    message(FATAL_ERROR "WW3GPU_KOKKOS=none turns nothing on: the pair would compare the Fortran with itself")
+  endif()
+  set(WW3GPU_PHYSICS ANY)
+  if(_words STREQUAL "" AND WW3GPU_KOKKOS STREQUAL "resident")
+    set(_words "ST4;NL1;PR3;!PDLIB")
+  endif()
+endif()
+set(WW3GPU_WORDS "${_words}")
 if(NOT WW3GPU_MPI_RANKS MATCHES "^[1-9][0-9]*$")
   message(FATAL_ERROR "WW3GPU_MPI_RANKS is a positive integer, not '${WW3GPU_MPI_RANKS}'")
 endif()
@@ -127,19 +164,36 @@ set(_expected_NL1_ST4_serial 105)
 set(_expected_NL1_ST4_omp 50)
 set(_expected_NL1_ST4_mpi 164)
 set(_expected_NL1_ST4_all 318)
+# The resident preset's default words at WW3@769c44f0 (scripts/ww3-gpu.sh --kokkos resident), after the
+# ST4 with FLX5 exclusion (ww3_tp2.15 -i input_rho).
+set(_expected_ANY_ST4_NL1_PR3_NOTPDLIB_serial 10)
+set(_expected_ANY_ST4_NL1_PR3_NOTPDLIB_omp 4)
+set(_expected_ANY_ST4_NL1_PR3_NOTPDLIB_mpi 43)
+set(_expected_ANY_ST4_NL1_PR3_NOTPDLIB_all 57)
 list(JOIN WW3GPU_PHYSICS "_" _phys)
+if(NOT WW3GPU_WORDS STREQUAL "")
+  list(JOIN WW3GPU_WORDS "_" _w)
+  string(REPLACE "!" "NOT" _w "${_w}")
+  string(APPEND _phys "_${_w}")
+endif()
 set(WW3GPU_EXPECTED "${_expected_${_phys}_${WW3GPU_SELECTION}}")
 
-ww3gpu_select_entries(E "${_base}" "${WW3GPU_WW3}/regtests" "${WW3GPU_SELECTION}" "${WW3GPU_PHYSICS}")
+ww3gpu_select_entries(E "${_base}" "${WW3GPU_WW3}/regtests" "${WW3GPU_SELECTION}" "${WW3GPU_PHYSICS}" "${WW3GPU_WORDS}")
 list(LENGTH E_TESTS _count)
-message(STATUS "ww3-gpu-matrix: ${_count} ${WW3GPU_SELECTION} entries of ${_base} with ${WW3GPU_PHYSICS}; Kokkos ${WW3GPU_ROUTINES} on ${WW3GPU_BACKEND}")
+if(WW3GPU_KOKKOS STREQUAL "")
+  set(_what "Kokkos ${WW3GPU_ROUTINES}")
+else()
+  set(_what "Kokkos --kokkos ${WW3GPU_KOKKOS} (${WW3GPU_FLAGS})")
+endif()
+message(STATUS "ww3-gpu-matrix: ${_count} ${WW3GPU_SELECTION} entries of ${_base} with ${WW3GPU_PHYSICS} ${WW3GPU_WORDS}; ${_what} on ${WW3GPU_BACKEND}")
 
 set(_kbuild "${WW3GPU_ROOT}/kokkos/build/${WW3GPU_BACKEND}-release")
 set(_config "${CMAKE_CURRENT_BINARY_DIR}/ww3gpu_config.cmake")
 file(WRITE "${_config}" "# written by ${CMAKE_CURRENT_LIST_FILE}; reconfigure to change\n")
 foreach(kv
     "WW3GPU_ROOT;${WW3GPU_ROOT}" "WW3GPU_WW3;${WW3GPU_WW3}" "WW3GPU_DATA;${WW3GPU_DATA}"
-    "WW3GPU_SELECTION;${WW3GPU_SELECTION}" "WW3GPU_BACKEND;${WW3GPU_BACKEND}" "WW3GPU_ROUTINES;${WW3GPU_ROUTINES}" "WW3GPU_PHYSICS;${WW3GPU_PHYSICS}" "WW3GPU_STRICT;${WW3GPU_STRICT}" "WW3GPU_OMP_NESTED;${WW3GPU_OMP_NESTED}"
+    "WW3GPU_SELECTION;${WW3GPU_SELECTION}" "WW3GPU_BACKEND;${WW3GPU_BACKEND}" "WW3GPU_ROUTINES;${WW3GPU_ROUTINES}" "WW3GPU_PHYSICS;${WW3GPU_PHYSICS}" "WW3GPU_KOKKOS;${WW3GPU_KOKKOS}" "WW3GPU_FLAGS;${WW3GPU_FLAGS}" "WW3GPU_WORDS;${WW3GPU_WORDS}"
+    "WW3GPU_ENV_PARTS;${WW3GPU_ENV_PARTS}" "WW3GPU_ENV_COUNTS;${WW3GPU_ENV_COUNTS}" "WW3GPU_STRICT;${WW3GPU_STRICT}" "WW3GPU_OMP_NESTED;${WW3GPU_OMP_NESTED}"
     "WW3GPU_OMP_THREADS;${WW3GPU_OMP_THREADS}" "WW3GPU_MPI_RANKS;${WW3GPU_MPI_RANKS}" "WW3GPU_EXPECTED;${WW3GPU_EXPECTED}"
     "WW3GPU_OUT;${CMAKE_CURRENT_BINARY_DIR}" "WW3GPU_STAGE;${CMAKE_CURRENT_BINARY_DIR}/regtests"
     "WW3GPU_KBUILD;${_kbuild}" "WW3GPU_KPREFIX;${_kbuild}/install"
