@@ -14,8 +14,8 @@
 # WW3GPU_KOKKOS the Kokkos run takes that preset's flags instead (ww3gpu_kokkos_env), kokkos_log
 # is W3INIT's parts line showing each part on Kokkos, and kokkos_spectra lists every
 # "W3<R> spectra|points computed" counter. Every run sets WW_KOKKOS_ALL and unsets the parts it
-# does not turn on, so no flag is inherited from the shell. The Kokkos run also sets
-# WW_KOKKOS_STRICT=1: a part it asks for that would run the Fortran stops it, so a
+# does not turn on, so no flag is inherited from the shell. A Kokkos run that names its parts (not
+# ALL) also sets WW_KOKKOS_STRICT=1: a part it asks for that would run the Fortran stops it, so a
 # pair never compares the Fortran with itself unseen (kokkos/src/fortran_iface/PATCH.md section
 # 24). Every Kokkos run sets WW_KOKKOS_VA_POISON=1 (section 21) unless the caller's environment
 # has WW_KOKKOS_VA_POISON=0; the Fortran runs never have it.
