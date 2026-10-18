@@ -2211,6 +2211,16 @@ The first row shows a gap of the preset that `CPRT` does not cause: without `PR3
 never reach `KOKKOS_PART`, the run neither stops nor counts them, and only the matrix's parts-line
 check reports it. The selection words keep every `PR0` entry out of a `resident` matrix run.
 
+Closed by a second fork commit, `a304018c` on `711afb80` (the integrator, 2026-10-18):
+`W3KOKKOS_PROP3_SETUP` gains an `#else` branch for a switch without `PR3` and `UQ` that asks
+`KOKKOS_PART ( 'XYP3', .FALSE. )` and `( 'KTP3', .FALSE. )` and registers both. A set flag or a
+preset now stops, and `WW_KOKKOS_ALL=1` counts or, under `WW_KOKKOS_STRICT=1`, stops. On
+`switch_lab_shrd` and `switch_lab_ompg` the preprocessed module (`gfortran -E -P`, `#ww3` shell) is
+the same as before apart from blank lines (v). `ww3_tnc1` with `WW3GPU_KOKKOS=resident`, as above,
+at `a304018c`: the Kokkos run stops in `W3INIT` with `WW_KOKKOS_XYP3=1, BUT ITS KOKKOS TRANSLATION
+DOES NOT COVER THIS SWITCH FILE`, the row reads `ran fortran-only` (v), where at `711afb80` it ran
+with both parts silently on the Fortran.
+
 `bash scripts/ww3-gpu.sh --ww3-gpu smoke|full --cpu --kokkos resident` with `WW_KOKKOS_VA_POISON=1
 WW_KOKKOS_VA_COUNT=1`, at `711afb80` (2026-10-18, same machine, one run each): every model file
 byte-identical to the Fortran of the same executable and every file but the NetCDF to `--ww3`'s,
