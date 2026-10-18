@@ -140,6 +140,13 @@ A mistake in a figure is as welcome as one in the text: the gallery links an iss
   WW3's own regtest run with the Fortran routine and with the Kokkos routine; CTest is the runner,
   not a test of the port's own. A change to `regtests/` runs `just ww3-gpu-matrix-selftest` and
   `just ww3-gpu-matrix-list`. Anything tried that did not become a number in a table, failures included, goes in a dated entry in `docs/log/`.
+- The resident spectrum is never kept consistent by copying all of it (`AGENTS.md`, "Resident
+  spectrum"). When the host writes `VA` between two device kernels (`ww3_multi`'s boundary and
+  nesting updates, for one), sync what was written, where it is written; read the device copy to
+  the host only before an output or a restart that needs it. A whole-spectrum copy per step, per
+  grid or per `W3WAVE` call is refused, even when it is the simpler fix: on a GPU it is a bus
+  transfer every step. A change to the sync reports `WW_KOKKOS_VA_COUNT=1` on `full` before and
+  after.
 - `codemeta.json` is generated from `CITATION.cff` and `.zenodo.json` (`just codemeta`); never
   edit it by hand.
 - Run `just kokkos-test serial-debug` after touching `kokkos/`, and `bash -n` plus

@@ -30,6 +30,10 @@ looser.
   routine it replaces, inside the same WW3 executable; `test.comp` finds no file different on any
   regtest entry that exercises it, and a tolerance is a diagnostic, never the verdict
   ([Bit for bit](#bit-for-bit-with-the-fortran-hard-rule)).
+- **No full-spectrum copy to keep the copies in sync**: once `VA` is resident, no code path
+  copies the whole spectrum between host and device per step, per grid or per `W3WAVE` call to
+  keep the two copies consistent; a host write is followed by a sync of what it wrote, where it
+  writes it ([Resident spectrum](#resident-spectrum-hard-rule)).
 - **Speed is the goal, parity is its condition**: the repository exists to make WW3 run faster
   with Kokkos and CUDA without changing the Fortran's arithmetic; a speed figure carries the
   machine, the command and the median of three runs, and says "regtest pending ⚠" until WW3's
@@ -284,6 +288,27 @@ broken most often:
 - **The memory contract is explicit.** Phase 1 copies per call and exists to validate; phase 2
   keeps the spectrum resident. Never use Unified Memory to avoid thinking about transfers, and never
   read the CUDA kernel column as "the model will be this much faster".
+
+## Resident spectrum (hard rule)
+
+The owner, 18 October 2026: a defect of the resident spectrum is never fixed by copying all of
+it. A whole-spectrum copy is not the optimal solution, and the resident design exists to remove
+those transfers.
+
+- **What it covers.** `VA` and any other array the resident preset binds on the device
+  (`kokkos/src/fortran_iface/resident_shim.cpp`), inside `W3WAVE`'s time loop and between
+  `W3WAVE` calls of `ww3_shel` and `ww3_multi`.
+- **What to do instead.** Sync at the host write that made the copies differ, and only the part
+  written when the shim can (it already moves columns, `resident_shim.cpp:270`, `:290`). Read the
+  device copy to the host only where the host reads it (an output, a restart). A whole-array copy
+  is never chosen because it is simpler.
+- **What is allowed.** The copy when `VA` is bound and the one at the end of the run; the reads
+  before an output or a restart write that needs the whole field; `WW_KOKKOS_VA_CHECK`, a
+  diagnostic, off by default; the per-point parts of phase 1, which copy per call by design and
+  are not resident.
+- **How it is checked.** A change to the resident sync reports `WW_KOKKOS_VA_COUNT=1` (bytes host
+  to device and device to host) on `full` before and after; the whole-spectrum copies per step
+  must not grow, or the change is refused.
 
 ## Bit for bit with the Fortran (hard rule)
 

@@ -46,6 +46,10 @@ compile the module with the flags in `<build>/model/src/CMakeFiles/ww3_lib.dir/f
   (`w3gdatmd.F90:2278`). A shim mirrors that with one context per grid: initialised with W3INIT's
   `IMOD`, selected at the call by `IGRID` (`snl1_shim.cpp`, `contexts()`). One file-static
   context silently breaks `ww3_multi`.
+- **Resident `VA`: sync what the host wrote, never the whole spectrum.** A host write between
+  device kernels (`ww3_multi`'s `WMIOHG`, `WMIOEG`) needs a sync at that write, of what it wrote;
+  marking the host newer at every `W3WAVE` return copies the whole spectrum per call and is
+  refused (`AGENTS.md`, "Resident spectrum"). Count with `WW_KOKKOS_VA_COUNT=1`.
 - **Initialisation follows the Fortran's condition.** `INSNL1` runs only when `IQTPE > 0`
   (`w3iogrmd.F90:1801`); with `IQTYPE <= 0` an `NL1` switch computes GQM and never reaches the port.
 
