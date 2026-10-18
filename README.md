@@ -476,7 +476,7 @@ CI scans the image with Trivy on every change to it and weekly (`.github/workflo
 
 The Kokkos code on the GPU has its own image, `docker/Dockerfile.cuda`: NVIDIA's CUDA 13.4 on
 Ubuntu 26.04, Kokkos 5.2.2 built with CUDA for compute capability 8.9 (the RTX 4090; `KOKKOS_ARCH`
-picks another), and only `--ww3-gpu --gpu` inside. The host needs the NVIDIA driver and the
+picks another), with `--ww3-gpu --gpu` and, as its reference on the CPU, `--ww3`. The host needs the NVIDIA driver and the
 [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)
 for `docker run --gpus all`. As on the host, every `--gpu` run asks the supervising person for
 `yes` at the terminal ([Running on the GPU](AGENTS.md#running-on-the-gpu-hard-rule)).
@@ -501,6 +501,26 @@ Ubuntu's: `--ww3-gpu` still compares the Kokkos and the Fortran DIA inside one e
 bit-for-bit verdict holds in the image; a number from the image is not a number from the pinned
 toolchain of [`docs/TOOLCHAIN.md`](docs/TOOLCHAIN.md), which uses another gfortran.
 
+**Published images.** `.github/workflows/docker-dist.yml` builds both runtime images on a pull
+request that changes them and checks, without running a case, that each holds NOAA's WW3 (`--ww3`,
+compiled from `WW3-noaa/` at its pin) and ww3-gpu (`--ww3-gpu`) and no source file (`just dcheck`
+runs the same check). It never pushes on its own. A person starts it from Actions with `push`
+ticked, and it pushes `ghcr.io/h0ffmann/ww3-gpu:<tag>` (CPU) and `ghcr.io/h0ffmann/ww3-gpu-cuda:<tag>`,
+and `latest` too when the run is on main. The labels `io.github.h0ffmann.ww3-gpu.ww3-noaa` and
+`io.github.h0ffmann.ww3-gpu.ww3` name the two WW3 commits the binaries came from. With a published
+image, anyone can run NOAA's WW3 and ww3-gpu on the same case and compare the outputs with only
+Docker:
+
+```console
+img=ghcr.io/h0ffmann/ww3-gpu:<tag>
+docker inspect "$img" --format '{{json .Config.Labels}}'    # which WW3 commits
+docker run --rm --user "$(id -u):$(id -g)" -v "$PWD/runs:/work/runs" "$img" --ww3 smoke
+docker run --rm --user "$(id -u):$(id -g)" -v "$PWD/runs:/work/runs" "$img" --ww3-gpu smoke
+```
+
+(v) 2026-10-18: `scripts/docker.sh build` and `check` passed on the CPU image (WW3-noaa `03adda9`, WW3 `80644ba`); the CUDA image was not built here ⚠. No image has been pushed yet ⚠. GHCR may create the first push of a package as private; the owner
+then makes it public in the package's settings.
+
 ### 3 · the dev container
 
 `.devcontainer/devcontainer.json` builds the `dev` stage of `docker/Dockerfile`: Ubuntu 26.04 with
@@ -520,6 +540,24 @@ npx --yes @devcontainers/cli@0.89.0 exec --workspace-folder . just smoke-ww3-gpu
   Docker 29.
 - `/nix` lives in the container, so a rebuilt container downloads picasso's toolchain again
   (about 3.1 GB, about a minute on the lab's link).
+
+Without VS Code or the Dev Containers CLI, the dev image alone is enough. `just dbuild-dev` builds
+it, or pull `ghcr.io/h0ffmann/ww3-gpu-dev`, which `.github/workflows/docker-dev.yml` builds on a
+pull request that changes it and pushes only when a person runs it with `push` ticked. `just ddev`
+then opens a shell with this checkout at `/workspaces/ww3-gpu`, and `just ddev <command>` runs one
+command (`DOCKER_IMAGE=ghcr.io/h0ffmann/ww3-gpu-dev:latest` picks the published image). Without
+just:
+
+```console
+docker run --rm -it -v "$PWD:/workspaces/ww3-gpu" -w /workspaces/ww3-gpu ghcr.io/h0ffmann/ww3-gpu-dev:latest
+```
+
+The user inside is `ubuntu` (uid 1000), so files it writes belong to uid 1000 on the host. Run
+`bash scripts/agent_env.sh` once inside when `picasso/` is not checked out. `devcontainer.json`
+takes the published image as its build cache (`cacheFrom`), so Kokkos is not compiled again.
+(v) 2026-10-18: `just dbuild-dev` built, and `docker-dev.yml`'s check found gfortran 15.2.0,
+CMake 4.2.3, just 1.45.0, ShellCheck 0.11.0, Nix 2.34.3 and Kokkos in `/opt/kokkos`. ⚠ `just ddev
+just kokkos-test serial-debug` and the cache from a pushed image are not run yet.
 
 (v) 2026-10-15, CLI 0.89.0, Docker 29.9.1, `main` at `78e5a33`, full clone: `devcontainer up`
 passed, `just kokkos-test serial-debug` passed 10 of 10, `just smoke-ww3-gpu` gave byte-identical
