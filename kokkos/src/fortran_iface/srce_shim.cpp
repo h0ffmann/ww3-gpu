@@ -576,7 +576,7 @@ void run_batch(GridCtx& g, const st4::Params& q, const st4::Fields& f, const snl
         team.team_barrier();
         const snl1::TeamScratch w = snl1::snl1_team_scratch(team, level, nc, nt);
         // SrcePoint holds references, so the team's points are built in place.
-        alignas(SrcePoint) unsigned char mem[kSrceMaxLanes * sizeof(SrcePoint)];
+        alignas(SrcePoint) unsigned char mem[kSrceMaxLanes * sizeof(SrcePoint)] = {};
         SrcePoint* const x = reinterpret_cast<SrcePoint*>(mem);
         for (int l = 0; l < nl; ++l) {
           const int i = i0 + l;

@@ -219,6 +219,21 @@ One run each on a machine shared with another session's regtests (load 9 to 25):
 run took 19.20 s with 1 point per team and 19.23 s and 19.60 s with 8 ⚠, so the layer costs
 nothing visible, and gains nothing yet, as designed.
 
+### `W3SIN4` with one point per vector lane (plan 005, unit L2)
+
+With more than one point per team, `w3srce_lanes` calls `st4::w3sin4_lanes<8>` at both `W3SIN4`
+sites of the integration step (`:1239`, `:2007`): section 1 and the rest of `W3SIN4` per point,
+the stress scan (`w3src4md.F90:696-797`) on vectors of eight `REAL`, one point per lane, each
+lane's operations those of the scalar statement in its order, each lane's stress sums its own
+(`kokkos/src/ww_kokkos/st4_sin4.hpp`, `sin4_scan_lanes`). The scalar `w3sin4_point` is now
+`sin4_prep`, `sin4_scan` and `sin4_tail` with its lines moved verbatim (v, a line comparison).
+
+| Check, 2026-10-18 | Result |
+|---|---|
+| `smoke`, `full`, `WW_KOKKOS_SRCE_LANES=8`, strict, poisoned | every model file byte-identical to the Fortran of the same executable; every file but the NetCDF to `--ww3`'s (v) |
+| `srce.batch.kernel`, `full`, one thread on a performance core, 3 alternated runs each | 105.17 s with 1 point per team, 99.77 s with 8: 5.1 % less (v, [log](../../docs/log/2026-10-18-srce-lanes-sin4.md)) |
+| `bash scripts/ww3-gpu.sh --ww3-gpu smoke --gpu --kokkos resident --build-only` | compiles and links, no warning; the lane path is host-only and a device keeps one point per team; nothing run on a device (v) |
+
 ## Benchmarks
 
 One CPU measurement of the batched path, after the replay above passed on the same tree

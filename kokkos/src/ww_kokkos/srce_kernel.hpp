@@ -284,16 +284,16 @@ struct SrcePoint {
     st.done = 0;
   }
 
-  /// 2. One step of the dynamic integration loop (:1210-2042), up to the DIA.
-  KOKKOS_INLINE_FUNCTION void step_a() const {
-    using srce_detail::mn;
-    using srce_detail::mni;
-    using srce_detail::mx;
-    using srce_detail::mxi;
+  /// 2. One step of the dynamic integration loop (:1210-2042), up to the DIA: step_a_sln1,
+  /// then W3SIN4 (:1239).
+  KOKKOS_INLINE_FUNCTION void step_a_sln1() const {
     st.nsteps = st.nsteps + 1;  // :1212
     w3sln1_point(p, g.sig, g.ecos, g.esin, wn1, st.fhigh, o.ustar, in.u10dir, vsln, dirf,
                  wnf);  // :1223
-    sin4();             // :1239
+  }
+  KOKKOS_INLINE_FUNCTION void step_a() const {
+    step_a_sln1();
+    sin4();  // :1239
   }
 
   /// The step's DIA (:1259-1263), run by the whole team. IQTPE <= 0 (GQM) is left to the
@@ -304,8 +304,14 @@ struct SrcePoint {
                                   const snl1::TeamScratch& nw) const {
     snl1::snl1_team(team, nc, nt, nsig, spec, cg1, o.wnmean * st.depth, vsnl, vdnl, nw);
   }
-  /// The rest of the step, after the DIA; sets st.done after the last one.
+  /// The rest of the step, after the DIA: step_c_main, W3SIN4 (:2007), step_c_end, which
+  /// sets st.done after the last step.
   KOKKOS_INLINE_FUNCTION void step_c() const {
+    step_c_main();
+    sin4();  // :2007
+    step_c_end();
+  }
+  KOKKOS_INLINE_FUNCTION void step_c_main() const {
     using srce_detail::mn;
     using srce_detail::mni;
     using srce_detail::mx;
@@ -419,7 +425,8 @@ struct SrcePoint {
     for (int ik = st.nkh; ik < nk; ++ik)
       for (int ith = 0; ith < nth; ++ith)
         spec[ith + ik * nth] = spec[ith + (ik - 1) * nth] * p.fachfa + static_cast<Real>(0.);
-    sin4();                                            // :2007
+  }
+  KOKKOS_INLINE_FUNCTION void step_c_end() const {
     if (sintail4 < static_cast<Real>(0.5)) spr4();     // :2012
     st.done = st.dttot >= static_cast<Real>(0.9999) * in.dtg ? 1 : 0;  // :2031
   }
@@ -543,21 +550,60 @@ KOKKOS_INLINE_FUNCTION void w3srce_lanes(const TeamMember& team, const snl1::Con
     for (int l = 0; l < nl; ++l) x[l].init();
   });
   team.team_barrier();
+  // W3SIN4 for the points listed in `on`, one point per vector lane (st4::w3sin4_lanes), with
+  // each point's arguments of SrcePoint::sin4.
+  const auto sin4_lanes = [&](const int* on, const int n) {
+    if (n == 0) return;
+    const Real *a[kSrceMaxLanes] = {}, *cg[kSrceMaxLanes] = {}, *k[kSrceMaxLanes] = {};
+    Real u[kSrceMaxLanes] = {}, ustar[kSrceMaxLanes] = {}, drat[kSrceMaxLanes] = {},
+         as[kSrceMaxLanes] = {}, usdir[kSrceMaxLanes] = {}, z0[kSrceMaxLanes] = {};
+    Real *tauwx[kSrceMaxLanes] = {}, *tauwy[kSrceMaxLanes] = {}, *tauwnx[kSrceMaxLanes] = {},
+         *tauwny[kSrceMaxLanes] = {}, *s[kSrceMaxLanes] = {}, *d[kSrceMaxLanes] = {},
+         *work[kSrceMaxLanes] = {};
+    int* llws[kSrceMaxLanes] = {};
+    for (int j = 0; j < n; ++j) {
+      const SrcePoint& y = x[on[j]];
+      a[j] = y.spec;
+      cg[j] = y.cg1;
+      k[j] = y.wn2;
+      u[j] = y.in.u10abs;
+      ustar[j] = y.o.ustar;
+      drat[j] = y.st.drat;
+      as[j] = y.in.as;
+      usdir[j] = y.in.u10dir;
+      z0[j] = y.st.z0;
+      tauwx[j] = &y.o.tauwx;
+      tauwy[j] = &y.o.tauwy;
+      tauwnx[j] = &y.st.tauwax;
+      tauwny[j] = &y.st.tauway;
+      s[j] = y.vsin;
+      d[j] = y.vdin;
+      llws[j] = y.llws;
+      work[j] = y.st4w;
+    }
+    st4::w3sin4_lanes<kSrceMaxLanes>(x[on[0]].q, x[on[0]].f, n, a, cg, k, u, ustar, drat, as,
+                                     usdir, z0, tauwx, tauwy, tauwnx, tauwny, s, d, llws, work);
+  };
   while (true) {
-    // st.done changes only in step_c, so whether a point is in the loop holds for the whole step.
+    // st.done changes only in step_c_end, so the points in the loop are the same for the whole
+    // step.
+    int on[kSrceMaxLanes];
+    int non = 0;
+    for (int l = 0; l < nl; ++l)
+      if (!x[l].st.done) on[non++] = l;
     Kokkos::single(Kokkos::PerTeam(team), [&]() {
-      for (int l = 0; l < nl; ++l)
-        if (!x[l].st.done) x[l].step_a();
+      for (int j = 0; j < non; ++j) x[on[j]].step_a_sln1();
+      sin4_lanes(on, non);  // :1239
     });
     team.team_barrier();
-    for (int l = 0; l < nl; ++l) {
-      if (x[l].st.done) continue;
-      x[l].dia(team, nc, nt, nsig, nw);
+    for (int j = 0; j < non; ++j) {
+      x[on[j]].dia(team, nc, nt, nsig, nw);
       team.team_barrier();
     }
     Kokkos::single(Kokkos::PerTeam(team), [&]() {
-      for (int l = 0; l < nl; ++l)
-        if (!x[l].st.done) x[l].step_c();
+      for (int j = 0; j < non; ++j) x[on[j]].step_c_main();
+      sin4_lanes(on, non);  // :2007
+      for (int j = 0; j < non; ++j) x[on[j]].step_c_end();
     });
     team.team_barrier();
     bool all = true;
