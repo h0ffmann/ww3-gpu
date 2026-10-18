@@ -167,15 +167,31 @@ KOKKOS_INLINE_FUNCTION void w3sds4_point(const Params& p, const Fields& f, const
         if (p.ssdsdth >= static_cast<Real>(180)) {
           for (int i = is0; i < is0 + nth; ++i) bth[i] = bth0[ik - 1];
         } else {
-          for (int ith = 1; ith <= nth; ++ith) {
-            const int is = ith + (ik - 1) * nth;
-            // Full length 2*(MTH/2-1)+1 for any SDSNTH (:2283): the extra terms have weight 0
-            // and index 1, and 0*x is not 0 for an infinite x; the length sets the order.
-            Real val = zero;
-            for (int j = 0; j < nsat; ++j)
-              val = val + f.satweights(j, ith - 1) * a[is0 + f.satindices(j, ith - 1) - 1];
-            bth[is - 1] = val * facsat;
+          // Full length 2*(MTH/2-1)+1 for any SDSNTH (:2283): the extra terms have weight 0
+          // and index 1, and 0*x is not 0 for an infinite x; the length sets the order.
+          // J outside, ITH inside: each BTH(IS) still adds its products in the order
+          // J = 1..NSAT, starting from 0, so its bits are DOT_PRODUCT's; only the NTH sums are
+          // interleaved, which removes the add-latency chain of one sum. bth and a are distinct
+          // work arrays, so the ITH loop carries no dependence.
+          // The transposed tables make the ITH loop's loads contiguous; without them (a Fields not
+          // built by st4_shim) the same products are read from the originals.
+          for (int ith = 0; ith < nth; ++ith) bth[is0 + ith] = zero;
+          const bool tr = f.satweights_t.extent(1) == static_cast<size_t>(nsat);
+          for (int j = 0; j < nsat; ++j) {
+            if (tr) {
+              const Real* const w = &f.satweights_t(0, j);
+              const int* const x = &f.satindices_t(0, j);
+#if defined(_OPENMP) && !defined(__CUDACC__) && !defined(__HIPCC__)
+#pragma omp simd
+#endif
+              for (int ith = 0; ith < nth; ++ith)
+                bth[is0 + ith] = bth[is0 + ith] + w[ith] * a[is0 + x[ith] - 1];
+            } else {
+              for (int ith = 0; ith < nth; ++ith)
+                bth[is0 + ith] = bth[is0 + ith] + f.satweights(j, ith) * a[is0 + f.satindices(j, ith) - 1];
+            }
           }
+          for (int ith = 0; ith < nth; ++ith) bth[is0 + ith] = bth[is0 + ith] * facsat;
           // MAXVAL (:2287), as gfortran lowers it: first element >= -Inf, then strictly greater.
           Real lim = -Kokkos::Experimental::infinity_v<Real>;
           int i = is0;

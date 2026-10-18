@@ -296,6 +296,15 @@ target_sources(ww_kokkos PRIVATE
 # preset. Removing this line is a physics change, not an optimisation.
 target_compile_options(ww_kokkos PRIVATE
     $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-ffp-contract=off>)
+# gfortran's default, which WW3's objects are built with: sqrtf becomes sqrtss alone, without
+# g++'s branch to glibc's sqrtf for a negative argument (both return the same correctly rounded
+# value or NaN), so loops holding a square root can vectorise. Without -ffast-math no other libm
+# call changes (glibc declares no vector variants then). Host compilers only: nvcc_wrapper also
+# reports GNU, and the device keeps its own flags.
+if(NOT Kokkos_ENABLE_CUDA)
+  target_compile_options(ww_kokkos PRIVATE
+      $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-fno-math-errno>)
+endif()
 # nvcc_wrapper reports itself to CMake as GNU, so the flag above lands on the
 # *host* half of the compile only; the device half needs nvcc's own switch.
 if(Kokkos_ENABLE_CUDA)

@@ -258,6 +258,25 @@ dfull-ww4:
 ww3-gpu-matrix-selftest:
     {{ww3_shell}} cmake -P regtests/cmake/selftest.cmake
 
+# scripts/regtest_selected.sh, regtests/README.md "Selected regtests": cases selected, matrix
+# (ww3_tp2.15, ww3_ts2 through the matrix driver) or smoke (ww3_ts1 pair to pair).
+# A few of WW3's regtests as the resident preset's guardrail, CPU only
+regtest-selected jobs="5" cases="selected":
+    bash scripts/regtest_selected.sh --jobs "$1" --cases "$2"
+
+# scripts/runner.sh: pinned release, SHA-256 checked, token from gh at run time, systemd user unit.
+# Register this machine as the self-hosted runner of regtest-selected.yml (`--dry-run` to preview)
+runner-register *args:
+    bash scripts/runner.sh register "$@"
+
+# Stop and unregister this machine's runner, delete its directory (`--dry-run` to preview)
+runner-remove *args:
+    bash scripts/runner.sh remove "$@"
+
+# The local runner service and what GitHub reports for it
+runner-status:
+    bash scripts/runner.sh status
+
 # The same cases on WAVEWATCH IV, built from the WW4/ submodule (h0ffmann/WW4). Exit 5, before
 # any build, when a part the case needs is not ported to WW4 yet (scripts/ww4_parts.py).
 smoke-ww4:
@@ -523,6 +542,10 @@ proposal-docx lang="pt":
 # Proposal PDF -> build/proposal_<lang>.pdf; lang pt|en, style abnt (default) or ieee.
 proposal lang="pt" style="abnt":
     nix develop "{{justfile_directory()}}" --command scripts/build_pdf.sh proposal {{lang}} {{style}}
+
+# One English page of docs/ as a PDF -> pdf/<page>.pdf (pandoc's LaTeX template, xelatex).
+doc-pdf page:
+    OUT_DIR="{{justfile_directory()}}/pdf" nix develop "{{justfile_directory()}}" --command scripts/build_pdf.sh doc "$1"
 
 # Pinned mermaid-cli, Geist and DejaVu Sans (fallback glyphs) from flake.lock's nixpkgs; --force re-renders all (scripts/figures.py).
 # Render every mermaid fence to pubs/figures/mermaid/<id>.pdf|png and rewrite pubs/figures/README.md.

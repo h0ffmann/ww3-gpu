@@ -33,6 +33,8 @@ one CPU thread, from `scripts/ww3-gpu.sh` on the same workstation (`just smoke-w
 | 4 | 2026-09-15 | the kernel alone, 1 000 points | CUDA, RTX 4090 | 0.047 | 24.96 | ms | bench/results/snl1-i9-14900-rtx4090-2026-09-15.json |
 | 5 | 2026-10-14 | ww3_shel, ww3_ts1 (one point) | OpenMP, 1 thread, in WW3 | 2.81 | 2.67 | s | just smoke-ww3-gpu |
 | 6 | 2026-10-14 | ww3_shel, bench_small (9 520 points) | OpenMP, 1 thread, in WW3 | 217.9 | 152.7 | s | just full-ww3-gpu |
+| 7 | 2026-10-18 | the kernel alone, 1 000 points, direction halo | OpenMP, 1 thread | 6.39 | 12.31 | ms | docs/log/2026-10-18-resident-five-speedups.md |
+| 8 | 2026-10-18 | the kernel alone, 1 000 points, direction halo | OpenMP, 32 threads | 2.11 | 2.50 | ms | docs/log/2026-10-18-resident-five-speedups.md |
 <!-- bench:end -->
 
 What they say, read with care:
@@ -40,6 +42,10 @@ What they say, read with care:
 - Steps 1 to 3 are the cost of the parity build (`-ffp-contract=off`, `--fmad=false`): the
   arithmetic of the Fortran, not the fastest the kernel can go
   ([`../PORT_STATUS.md`](../PORT_STATUS.md), "Two things these numbers are not").
+- Steps 7 and 8 are medians of seven alternated runs of `ww_bench_snl1`, `main` (the baseline
+  column) against the direction halo layout of sections 3 and 4 (`snl1_team.hpp`), on a shared
+  machine (load 8.4 to 8.9). Regtest pending ⚠ (ADR-0016); every `full` and `smoke` run of the
+  change was byte-identical to the Fortran.
 - Step 3 against step 4 is the phase-1 copy: on CUDA, 94 % of the shim's time is moving the
   spectrum, not computing it.
 - Steps 5 and 6 are **slower** than the Fortran. Inside WW3, phase 1 calls the shim once per point,

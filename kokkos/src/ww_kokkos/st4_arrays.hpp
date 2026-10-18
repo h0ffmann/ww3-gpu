@@ -95,6 +95,11 @@ struct ArraysT {
   V1<Real> sig, sig2, dsip, dden, dden2, esin, ecos, th;
   V2<Real> satweights, cumulw, dcki, qbi;
   V2<int> satindices, iktab;
+  /// SATWEIGHTS and SATINDICES transposed, (MTH, 2*SDSNTH+1): the direction index runs
+  /// fastest, so W3SDS4's saturation integral reads them contiguously (st4_sds4.hpp). Built by
+  /// st4_shim's upload(); empty elsewhere, and then the kernel reads the originals.
+  V2<Real> satweights_t;
+  V2<int> satindices_t;
   V2<Real> taut, tauhft;
   V3<Real> tauhft2;
   V1<Real> fwtable;

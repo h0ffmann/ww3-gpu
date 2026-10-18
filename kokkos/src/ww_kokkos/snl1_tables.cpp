@@ -249,6 +249,40 @@ Tables make_tables(const Config& c, ConstHostRealView1D sig) {
     ic[7][1].host(isp) = addr(7, 7, ith, ifr);  // IC82
   }
 
+  // The halo form of the same addresses: entry + NTH == IF*NTH + mod(ith0 + shift, NTH). Checked
+  // on every entry, so a table this does not describe keeps the kernel on its gathers.
+  {
+    const int shifts[8] = {ithp, ithp1, ithm, ithm1, -ithp, -ithp1, -ithm, -ithm1};
+    t.halo = std::max(ithp1, ithm1);
+    for (int n = 0; n < 8; ++n) t.itd[n] = shifts[n];
+    t.ifrow = decltype(t.ifrow)("snl1.ifrow", 8, t.nfrchg);
+    auto h_ifrow = Kokkos::create_mirror_view(t.ifrow);
+    for (int n = 1; n <= 8; ++n)
+      for (int ifr = 1; ifr <= t.nfrchg; ++ifr) h_ifrow(n - 1, ifr - 1) = IFn(n, ifr);
+    const auto same = [&](int stored, int itn, int ifn, int isp) {
+      const int ith0 = isp % nth, ifr0 = isp / nth;
+      const int j = ((ith0 + shifts[itn - 1]) % nth + nth) % nth;
+      return stored + nth == h_ifrow(ifn - 1, ifr0) * nth + j;
+    };
+    static const int kIp[2][4][2] = {{{2, 2}, {1, 2}, {2, 1}, {1, 1}}, {{6, 2}, {5, 2}, {6, 1}, {5, 1}}};
+    static const int kIm[2][4][2] = {{{8, 4}, {7, 4}, {8, 3}, {7, 3}}, {{4, 4}, {3, 4}, {4, 3}, {3, 3}}};
+    static const int kIc[8][2][2] = {{{6, 6}, {2, 6}}, {{5, 6}, {1, 6}}, {{6, 5}, {2, 5}},
+                                     {{5, 5}, {1, 5}}, {{4, 8}, {8, 8}}, {{3, 8}, {7, 8}},
+                                     {{4, 7}, {8, 7}}, {{3, 7}, {7, 7}}};
+    bool ok = t.halo < nth;
+    for (int isp = 0; ok && isp < t.nspecx; ++isp)
+      for (int k = 0; k < 2; ++k)
+        for (int j = 0; j < 4; ++j)
+          ok = ok && same(ip[k][j].host(isp), kIp[k][j][0], kIp[k][j][1], isp) &&
+               same(im[k][j].host(isp), kIm[k][j][0], kIm[k][j][1], isp);
+    for (int isp = 0; ok && isp < nspec; ++isp)
+      for (int j = 0; j < 8; ++j)
+        for (int col = 0; col < 2; ++col)
+          ok = ok && same(ic[j][col].host(isp), kIc[j][col][0], kIc[j][col][1], isp);
+    if (!ok) t.halo = 0;
+    Kokkos::deep_copy(t.ifrow, h_ifrow);
+  }
+
   // 8.  Fill scaling array (f**11).
   for (int ifr = 0; ifr < t.nfr; ++ifr) {
     const Real af11a = pow11(sig(ifr) * kTpiInv);

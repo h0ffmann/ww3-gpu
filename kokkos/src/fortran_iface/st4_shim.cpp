@@ -275,6 +275,16 @@ void upload(const HostArrays& h, Fields& d, bool module) {
   d.qbi = to_device(h.qbi);
   d.satindices = to_device(h.satindices);
   d.iktab = to_device(h.iktab);
+  const size_t nsat = h.satweights.extent(0), mth = h.satweights.extent(1);
+  HostArrays::V2<Real> wt("ww_st4.SATWEIGHTS_T", mth, nsat);
+  HostArrays::V2<int> it("ww_st4.SATINDICES_T", mth, nsat);
+  for (size_t j = 0; j < nsat; ++j)
+    for (size_t ith = 0; ith < mth; ++ith) {
+      wt(ith, j) = h.satweights(j, ith);
+      it(ith, j) = h.satindices(j, ith);
+    }
+  d.satweights_t = to_device(wt);
+  d.satindices_t = to_device(it);
 }
 
 /// Values of `b` that are not bitwise equal to `a`'s (both host, same shape).

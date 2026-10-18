@@ -47,6 +47,15 @@ struct Tables {
   IntView1D ic[8][2];
   /// AF11, the (f**11) scaling array. Size NSPECX.
   RealView1D af11;
+
+  /// The same addresses as row and shift, for the host kernel's halo layout (snl1_team.hpp).
+  /// Every table entry above is IT(ITH) + (IF(IFR)-1)*NTH with IT one of eight direction shifts
+  /// wrapped once and IF one of eight frequency maps (w3snl1md.F90:667-727). itd[n-1] is ITn's
+  /// shift and ifrow(n-1, IFR-1) is IFn(IFR), the Fortran row (0 is the zero row). halo is the
+  /// largest shift, or 0 when make_tables found an entry these do not reproduce.
+  int halo;
+  int itd[8];
+  Kokkos::View<int**, Kokkos::LayoutRight, DeviceSpace> ifrow;  ///< (8, NFRCHG)
 };
 
 /// INSNL1 (w3snl1md.F90 lines 483-786). Host-side preprocessing: it computes the

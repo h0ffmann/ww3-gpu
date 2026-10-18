@@ -554,6 +554,10 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | `perf_event_paranoid` | the Linux setting `/proc/sys/kernel/perf_event_paranoid`, which decides what an unprivileged user may sample `(v)` the message `perf stat` printed on the owner's workstation, 2026-10-18 | At 4 (Ubuntu's default there) `perf` refuses every event to a normal user, so the 2026-10-18 profile sampled stacks with gdb instead. | [docs/log/2026-10-18-resident-profile.md](log/2026-10-18-resident-profile.md) |
 | gdb stack sampling | the GNU debugger used as a sampling profiler: the program runs as gdb's child, a signal every fixed interval of run time stops it, and `thread apply all bt` records the stack of every thread `(v)` [docs/log/2026-10-18-resident-profile.md](log/2026-10-18-resident-profile.md) | Works where `perf` is refused (a child may be traced under `ptrace_scope` 1); with `-g` it names inlined frames, so a kernel's time splits by `file:line`. Each stop pauses every thread for as long as gdb takes to print, so it gives shares, not times. | [docs/log/2026-10-18-resident-profile.md](log/2026-10-18-resident-profile.md) |
 | AVX2 / x86-64-v3 / gather | Intel's 256-bit SIMD extension; the x86-64 micro-architecture level that adds AVX2, FMA and others, which `-march=x86-64-v3` targets ⚠ (general knowledge); a vector load from eight scattered addresses (`vgatherdps`) ⚠ | The C++ port is built for x86-64-v3 (`kokkos/CMakePresets.json`), WW3's Fortran for plain x86-64; the DIA's bins-in-lanes loops load through gathers. | [docs/log/2026-10-18-resident-profile.md](log/2026-10-18-resident-profile.md) |
+| `-fmath-errno` / `-fno-math-errno` | GCC options: whether a call such as `sqrtf` must set `errno` on a domain error; g++ defaults to `-fmath-errno`, gfortran to `-fno-math-errno` ⚠ (GCC manual, not read for this row) | With `-fmath-errno` g++ adds a branch to glibc's `sqrtf` for a negative argument beside `sqrtss`; the port reports record it, and item 5.2 of the NOAA record proposes the Fortran's rule for `ww_kokkos`. | [docs/NOAA_PROGRESS_RECORD_202610.md](NOAA_PROGRESS_RECORD_202610.md), [kokkos/port_report/W3SWL6_KOKKOS.md](../kokkos/port_report/W3SWL6_KOKKOS.md) |
+| self-hosted runner | a machine of the owner that runs GitHub Actions jobs for this repository, registered with a token that `gh` asks for at run time `(v)` [scripts/runner.sh](../scripts/runner.sh) | Runs only `regtest-selected.yml`, by hand (`workflow_dispatch`); `just runner-register`, `runner-status`, `runner-remove`. | [regtests/README.md](../regtests/README.md) |
+| `regtest-selected` | the guardrail: a few entries of WW3's `matrix.base` (`ww3_tp2.15`, `ww3_ts2`) through the regtest driver with the resident preset and the lab switch's source terms, and `ww3_ts1` pair to pair `(v)` [scripts/regtest_selected.sh](../scripts/regtest_selected.sh) | Same verdict as the matrix (`WW3GPU_STRICT`, `test.comp`, `nccmp-tol`); a few hours on the owner's machine, never on GitHub's runners. | [regtests/README.md](../regtests/README.md), [.github/workflows/regtest-selected.yml](../.github/workflows/regtest-selected.yml) |
+| DIA halo layout | the host kernel's copy of W3SNL1's work arrays with each frequency row padded by the wrapped neighbouring directions, so that an address `IT(ITH) + (IF(IFR)-1)*NTH` of `INSNL1`'s tables is a row and a fixed shift `(v)` [kokkos/src/ww_kokkos/snl1_team.hpp](../kokkos/src/ww_kokkos/snl1_team.hpp) | Turns the gathers of sections 3 and 4 into contiguous loads with the same values and arithmetic; `make_tables` checks every table entry and keeps the gathers when one does not fit. | [docs/NOAA_PROGRESS_RECORD_202610.md](NOAA_PROGRESS_RECORD_202610.md) |
 | wall-clock | elapsed real time, "seconds per forecast hour of `ww3_shel`" `(v)` [course/09-benchmark-profile-compile-run.md](../course/09-benchmark-profile-compile-run.md) | The proposal's metric (*tempo de execução*); measured with `SYSTEM_CLOCK`, never `CPU_TIME`. | [bench/README.md](../bench/README.md), [pubs/proposal/pt/03-theme.md](../pubs/proposal/pt/03-theme.md) |
 | ASan / UBSan | AddressSanitizer / UndefinedBehaviorSanitizer, `-fsanitize=address,undefined` `(v)` [kokkos/CMakePresets.json](../kokkos/CMakePresets.json) | Turned on by the `serial-debug` preset. | [course/11-kokkos-and-modern-cpp.md](../course/11-kokkos-and-modern-cpp.md) |
 | GoogleTest / GTest | Google's C++ test framework, 1.18.0 pinned `(v)` [kokkos/README.md](../kokkos/README.md) | The framework of WW4's tests and of this repo's `L1_test_*` suites of the intro programs and tools; the port has none (ADR-0010). | [course/12-porting-a-kernel-w3snl1.md](../course/12-porting-a-kernel-w3snl1.md), [course/14-ww4-and-the-future.md](../course/14-ww4-and-the-future.md) |
@@ -780,11 +784,13 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 
 Every term above, alphabetically, with the section it lives in.
 
+- -fmath-errno / -fno-math-errno: [HPC and software](#hpc-and-software)
 - `02-regional-real-forcing`: [This repository's own names](#this-repositorys-own-names)
 - 7.14: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - `ACCESS='STREAM'`: [HPC and software](#hpc-and-software)
 - coast case / `scripts/coast_case.sh`: [This repository's own names](#this-repositorys-own-names)
 - CUDA-aware MPI: [HPC and software](#hpc-and-software)
+- DIA halo layout: [HPC and software](#hpc-and-software)
 - DualView: [HPC and software](#hpc-and-software)
 - `fcheck`: [HPC and software](#hpc-and-software)
 - FLCL: [HPC and software](#hpc-and-software)
@@ -1241,6 +1247,7 @@ Every term above, alphabetically, with the section it lives in.
 - LFACTOR: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - libdevice: [HPC and software](#hpc-and-software)
 - `libm_device.hpp` / `ww::dm` / `WW_KOKKOS_LIBM`: [This repository's own names](#this-repositorys-own-names)
+- `regtest-selected`: [HPC and software](#hpc-and-software)
 - `scripts/libm_bits.sh` / `kokkos/tools/libm_bits/` / `ww::libm`: [This repository's own names](#this-repositorys-own-names)
 - `gen_tables` / `ww_libm_tables.hpp` / `WW_LIBM_HOST_FMA`: [This repository's own names](#this-repositorys-own-names)
 - libmvec / `_ZGVbN4vv_powf`: [This repository's own names](#this-repositorys-own-names)
@@ -1311,6 +1318,7 @@ Every term above, alphabetically, with the section it lives in.
 - RUNRC: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - SECONDHH / VMIN_D / VPLUS_D: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - SECONDHH: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- self-hosted runner: [HPC and software](#hpc-and-software)
 - SENA: [Models, projects and institutions](#models-projects-and-institutions)
 - SET_IOBDP_PDLIB: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - SET_IOBPA_PDLIB: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
