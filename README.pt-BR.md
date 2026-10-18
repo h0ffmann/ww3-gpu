@@ -469,7 +469,7 @@ Cada receita que roda o `scripts/ww3-gpu.sh` no host tem seu par na imagem, com 
 build instala os compiladores e as bibliotecas do Ubuntu, compila o Kokkos 5.2.2 a partir do tarball
 da versão (o Ubuntu empacota uma mais antiga), e o estágio final copia só os programas compilados.
 
-O CI varre a imagem com o Trivy a cada mudança nela e toda semana (`.github/workflows/docker-scan.yml`): uma vulnerabilidade HIGH ou CRITICAL com correção reprova o job. `just dscan` roda a mesma varredura aqui.
+Nenhum workflow do GitHub Actions constrói uma imagem Docker sozinho: todos começam à mão pelo Actions (Run workflow). O `.github/workflows/docker-scan.yml` varre a imagem com o Trivy quando disparado: uma vulnerabilidade HIGH ou CRITICAL com correção reprova o job. `just dscan` roda a mesma varredura aqui.
 
 O código Kokkos na GPU tem sua própria imagem, `docker/Dockerfile.cuda`: o CUDA 13.4 da NVIDIA
 sobre Ubuntu 26.04, o Kokkos 5.2.2 compilado com CUDA para a capacidade de computação 8.9 (a RTX
@@ -499,12 +499,13 @@ dentro de um mesmo executável, então o veredito bit a bit vale na imagem; um n
 imagem não é um número do toolchain fixado de [`docs/TOOLCHAIN.md`](docs/TOOLCHAIN.md), que usa
 outro gfortran.
 
-**Imagens publicadas.** O `.github/workflows/docker-dist.yml` constrói as duas imagens de execução
-num pull request que as muda e confere, sem rodar caso nenhum, que cada uma traz o WW3 da NOAA
+**Imagens publicadas.** O `.github/workflows/docker-dist.yml` só roda quando uma pessoa o dispara
+pelo Actions (Run workflow); nenhum push, pull request ou agendamento o aciona. Ele constrói as
+imagens de execução escolhidas e confere, sem rodar caso nenhum, que cada uma traz o WW3 da NOAA
 (`--ww3`, compilado do `WW3-noaa/` no seu pin) e o ww3-gpu (`--ww3-gpu`) e nenhum arquivo-fonte (o
-`just dcheck` faz a mesma conferência). Ele nunca publica sozinho. Uma pessoa o dispara pelo Actions
-com `push` marcado, e ele publica `ghcr.io/h0ffmann/ww3-gpu:<tag>` (CPU) e
-`ghcr.io/h0ffmann/ww3-gpu-cuda:<tag>`, e também `latest` quando a rodada é na main. Os rótulos
+`just dcheck` faz a mesma conferência). Com `push` marcado, ele também publica
+`ghcr.io/h0ffmann/ww3-gpu:<tag>` (CPU) e `ghcr.io/h0ffmann/ww3-gpu-cuda:<tag>`, e também `latest`
+quando a rodada é na main. Os rótulos
 `io.github.h0ffmann.ww3-gpu.ww3-noaa` e `io.github.h0ffmann.ww3-gpu.ww3` dizem de quais commits do
 WW3 vieram os binários. Com uma imagem publicada, qualquer pessoa roda o WW3 da NOAA e o ww3-gpu no
 mesmo caso e compara as saídas só com o Docker:
@@ -542,7 +543,7 @@ npx --yes @devcontainers/cli@0.89.0 exec --workspace-folder . just smoke-ww3-gpu
 
 Sem o VS Code nem a Dev Containers CLI, a imagem de desenvolvimento basta. O `just dbuild-dev` a
 constrói, ou baixe a `ghcr.io/h0ffmann/ww3-gpu-dev`, que o `.github/workflows/docker-dev.yml`
-constrói num pull request que a muda e só publica quando uma pessoa o dispara com `push` marcado.
+constrói e, com `push` marcado, publica, só quando uma pessoa o dispara pelo Actions.
 O `just ddev` abre então um shell com este clone em `/workspaces/ww3-gpu`, e `just ddev <comando>`
 roda um comando (`DOCKER_IMAGE=ghcr.io/h0ffmann/ww3-gpu-dev:latest` escolhe a imagem publicada).
 Sem o just:

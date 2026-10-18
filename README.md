@@ -472,7 +472,7 @@ become `dsmoke`, `dsmoke-ww3`, and so on. The image needs no Nix and no picasso:
 installs Ubuntu's compilers and libraries, compiles Kokkos 5.2.2 from its release tarball (Ubuntu
 packages an older one), and the final stage copies only the compiled programs.
 
-CI scans the image with Trivy on every change to it and weekly (`.github/workflows/docker-scan.yml`): a HIGH or CRITICAL vulnerability with a fix fails the job. `just dscan` runs the same scan here.
+No GitHub Actions workflow builds a Docker image on its own: every one starts by hand from Actions (Run workflow). `.github/workflows/docker-scan.yml` scans the image with Trivy when run: a HIGH or CRITICAL vulnerability with a fix fails the job. `just dscan` runs the same scan here.
 
 The Kokkos code on the GPU has its own image, `docker/Dockerfile.cuda`: NVIDIA's CUDA 13.4 on
 Ubuntu 26.04, Kokkos 5.2.2 built with CUDA for compute capability 8.9 (the RTX 4090; `KOKKOS_ARCH`
@@ -501,15 +501,15 @@ Ubuntu's: `--ww3-gpu` still compares the Kokkos and the Fortran DIA inside one e
 bit-for-bit verdict holds in the image; a number from the image is not a number from the pinned
 toolchain of [`docs/TOOLCHAIN.md`](docs/TOOLCHAIN.md), which uses another gfortran.
 
-**Published images.** `.github/workflows/docker-dist.yml` builds both runtime images on a pull
-request that changes them and checks, without running a case, that each holds NOAA's WW3 (`--ww3`,
-compiled from `WW3-noaa/` at its pin) and ww3-gpu (`--ww3-gpu`) and no source file (`just dcheck`
-runs the same check). It never pushes on its own. A person starts it from Actions with `push`
-ticked, and it pushes `ghcr.io/h0ffmann/ww3-gpu:<tag>` (CPU) and `ghcr.io/h0ffmann/ww3-gpu-cuda:<tag>`,
-and `latest` too when the run is on main. The labels `io.github.h0ffmann.ww3-gpu.ww3-noaa` and
-`io.github.h0ffmann.ww3-gpu.ww3` name the two WW3 commits the binaries came from. With a published
-image, anyone can run NOAA's WW3 and ww3-gpu on the same case and compare the outputs with only
-Docker:
+**Published images.** `.github/workflows/docker-dist.yml` runs only when a person starts it from
+Actions (Run workflow); no push, pull request or schedule triggers it. It builds the chosen
+runtime images and checks, without running a case, that each holds NOAA's WW3 (`--ww3`, compiled
+from `WW3-noaa/` at its pin) and ww3-gpu (`--ww3-gpu`) and no source file (`just dcheck` runs the
+same check). With `push` ticked it also pushes `ghcr.io/h0ffmann/ww3-gpu:<tag>` (CPU) and
+`ghcr.io/h0ffmann/ww3-gpu-cuda:<tag>`, and `latest` too when the run is on main. The labels
+`io.github.h0ffmann.ww3-gpu.ww3-noaa` and `io.github.h0ffmann.ww3-gpu.ww3` name the two WW3 commits
+the binaries came from. With a published image, anyone can run NOAA's WW3 and ww3-gpu on the same
+case and compare the outputs with only Docker:
 
 ```console
 img=ghcr.io/h0ffmann/ww3-gpu:<tag>
@@ -542,8 +542,8 @@ npx --yes @devcontainers/cli@0.89.0 exec --workspace-folder . just smoke-ww3-gpu
   (about 3.1 GB, about a minute on the lab's link).
 
 Without VS Code or the Dev Containers CLI, the dev image alone is enough. `just dbuild-dev` builds
-it, or pull `ghcr.io/h0ffmann/ww3-gpu-dev`, which `.github/workflows/docker-dev.yml` builds on a
-pull request that changes it and pushes only when a person runs it with `push` ticked. `just ddev`
+it, or pull `ghcr.io/h0ffmann/ww3-gpu-dev`, which `.github/workflows/docker-dev.yml` builds and,
+with `push` ticked, pushes, only when a person starts it from Actions. `just ddev`
 then opens a shell with this checkout at `/workspaces/ww3-gpu`, and `just ddev <command>` runs one
 command (`DOCKER_IMAGE=ghcr.io/h0ffmann/ww3-gpu-dev:latest` picks the published image). Without
 just:

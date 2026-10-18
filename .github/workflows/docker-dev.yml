@@ -3,15 +3,13 @@
 # .devcontainer/devcontainer.json builds. It holds no source: the checkout is mounted
 # (scripts/docker.sh run-dev), so working on ww3-gpu needs only Docker.
 #
-# A pull request that changes the image builds it and checks its tools; nothing is pushed. The
-# image reaches GitHub's registry (ghcr.io/<owner>/ww3-gpu-dev) only from a manual run of this
-# workflow (Actions → docker-dev → Run workflow) with `push` ticked; `latest` moves only when that
-# run is on main.
+# Manual only: no push, pull request or schedule builds it (the owner, 18 October 2026). A run
+# started from Actions → docker-dev → Run workflow builds the image and checks its tools; with
+# `push` ticked it also pushes ghcr.io/<owner>/ww3-gpu-dev, and `latest` moves only when that run
+# is on main.
 name: docker-dev
 
 on:
-  pull_request:
-    paths: [docker/Dockerfile, .devcontainer/**, scripts/docker.sh, .github/workflows/docker-dev.yml]
   workflow_dispatch:
     inputs:
       push:
@@ -27,23 +25,9 @@ permissions:
   contents: read
 
 jobs:
-  build:
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          submodules: false
-      - name: Build the dev stage (scripts/docker.sh build-dev)
-        run: bash scripts/docker.sh build-dev ci
-      - name: Its tools answer
-        run: docker run --rm ww3-gpu-dev:ci bash -c 'gfortran --version | head -1 && cmake --version | head -1 && just --version && shellcheck --version | head -2 && nix --version && test -d /opt/kokkos/include'
-
-  # Only a person starts this job; the push token is this job's alone. The environment `ghcr` is
-  # where the owner can require an approval before each run (Settings → Environments).
-  publish:
-    if: github.event_name == 'workflow_dispatch'
+  # The environment `ghcr` is where the owner can require an approval before each run
+  # (Settings → Environments).
+  image:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     environment: ghcr
