@@ -34,14 +34,15 @@ execution: code
 Decisions taken before planning, each with the reason; the owner can reverse any of them in
 review.
 
-- **B1. The `ww3_multi` fix is at `W3WAVE`'s exit, not in `wm*.F90`.** Gap 2's next step:
-  `W3WAVE` ends with a host read (`w3wavemd.F90:3151-3153` at `80644ba9`) that leaves both
-  copies "equal". Marking the host newer on return costs one host-to-device copy of `VA` at the
-  next call per grid and needs no edit of the `ww3_multi` sources, which keeps the fork's diff
-  inside the files it already changes. Cheaper alternatives (a sync call in each `WMIO*G`) add
-  hunks to three more WW3 files; rejected for the reviewer of gap 12. Measure the copy's cost on
-  `full`; if it is above 2 % of the resident run's wall time ⚠, record it and leave a narrower
-  fix for a later PR.
+- **B1. The `ww3_multi` fix marks the host newer only where `ww3_multi` writes `VA`** (the
+  owner, 2026-10-18: the fix must not cost speed). `W3WAVE` keeps its exit read
+  (`w3wavemd.F90:3151-3153` at `80644ba9`); the host writes of `WMIOHG` (`wminiomd.F90:2264`)
+  and `WMIOEG` (`:3261`, `:3278`, `:3326`, `:3330`) are each followed by
+  `W3KOKKOS_VA_HOST_WRITE` behind `W3_KOKKOS`. `ww3_shel` pays no copy, `ww3_multi` pays one
+  only on a step that writes. Rejected: marking the host newer at `W3WAVE`'s exit, one
+  host-to-device copy of `VA` per grid per step, which on a GPU is a bus transfer the resident
+  design exists to avoid. The cost is one more WW3 file in the fork diff (gap 12). A partial
+  update of the columns written is a further option, taken only if small and clearly correct.
 - **B2. Strict mode is one environment flag, `WW_KOKKOS_STRICT=1`**, read where the parts are
   resolved: `KOKKOS_PART` under `WW_KOKKOS_ALL=1` and the per-call `W3SRCE` gate stop with
   `EXTCDE` and a `NDSE` line naming the part and the reason, instead of falling back. Without
