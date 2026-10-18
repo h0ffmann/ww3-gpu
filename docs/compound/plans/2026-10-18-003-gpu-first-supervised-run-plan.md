@@ -102,12 +102,15 @@ every parity argument so far (`docs/log/2026-10-18-cuda-build-only.md`) ⚠.
 Not ranked: skipping `W3SDS4`'s zero-weight terms (12 of 23 products, profile log) changes the
 result for an infinite or NaN input, so it is the owner's decision and its own PR.
 
-**Work in progress elsewhere (2026-10-18).** Branch `goal/eb10363f-4821-noaa-progress-record`
-(another session, not pushed when this was written) builds the `W3SDS4` saturation-integral loop
+**Work in progress elsewhere (2026-10-18).** PR #193 (branch
+`goal/eb10363f-4821-noaa-progress-record`, another session) builds the `W3SDS4` saturation-integral loop
 interchange (`kokkos/src/ww_kokkos/st4_sds4.hpp`), a DIA direction-halo layout that turns the
 index-table gathers into contiguous loads (`snl1_team.hpp`, `snl1_tables.{hpp,cpp}`), and
 `-fno-math-errno` for the host build (`kokkos/src/ww_kokkos/CMakeLists.txt`). The halo layout
-attacks the same gathers as plan 2 by another route; plan 2 starts from that branch's measured
+attacks the same gathers as plan 2 by another route. That session reports the DIA kernel alone
+(`ww_bench_snl1`, medians of seven) 1.93x faster at one thread and 1.19x at 32 with the halo, and
+the `W3SDS4` interchange about 7 % faster unless `SATWEIGHTS` and `SATINDICES` are transposed;
+end to end not measured ⚠ (PR #193's own record is the source). Plan 2 starts from that
 result, not before it. Its timing and the GPU run of plan 1 need a resident regtest pass on the
 tree that holds both PRs.
 
