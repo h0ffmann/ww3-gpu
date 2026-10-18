@@ -66,3 +66,4 @@ Date, author, issue/PR/WFIP.
 | 2026-10-18 | [The resident preset on WW3's regtest inputs: refused by every matrix.base switch, passed with the lab switch's source terms](2026-10-18-resident-regtest-lab-switch.md) | #42, WFIP-0003 |
 | 2026-10-18 | [The resident preset under MPI: refused by design; SRCE and KTP3 alone run, one entry differs](2026-10-18-resident-mpi-lab-switch.md) | #42, WFIP-0003 |
 | 2026-10-18 | [Where the Kokkos resident run of `full` spends its wall time on the CPU](2026-10-18-resident-profile.md) | #42, WFIP-0005 |
+| 2026-10-18 | [Five bit-neutral speed-ups of the resident preset: three built, two checked, one Fortran change tested](2026-10-18-resident-five-speedups.md) | #42, WFIP-0005 |

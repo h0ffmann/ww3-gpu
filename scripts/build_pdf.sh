@@ -2,15 +2,17 @@
 # build_pdf — the one pandoc + xelatex invocation for every PDF in this repo.
 #   scripts/build_pdf.sh book [abnt|ieee]              -> build/ww3-lab-course.pdf
 #   scripts/build_pdf.sh proposal [pt|en] [abnt|ieee]  -> build/proposal_<lang>.pdf
+#   scripts/build_pdf.sh doc <page.md>                 -> build/<page>.pdf, one English page
 # OUT_DIR overrides build/. Runs inside `nix develop .` (pandoc, xelatex on PATH).
 set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-usage() { sed -n '2,5p' "$0" >&2; exit 2; }
+usage() { sed -n '2,6p' "$0" >&2; exit 2; }
 
 target="${1:-}"; shift || true
 case "$target" in
   book) lang=en; style="${1:-abnt}" ;;
   proposal) lang="${1:-pt}"; style="${2:-abnt}" ;;
+  doc) page="${1:-}"; [ -f "$page" ] || usage; lang=en; style=abnt ;;
   *) usage ;;
 esac
 case "$lang" in pt|en) ;; *) usage ;; esac
@@ -20,7 +22,19 @@ out_dir="${OUT_DIR:-$root/build}"
 mkdir -p "$out_dir"
 csl="$root/pubs/csl/$style.csl"
 
-if [ "$target" = book ]; then
+if [ "$target" = doc ]; then
+  # A page of docs/ as it is: pandoc's own LaTeX template, the page's first heading as title.
+  name="$(basename "$page" .md)"
+  pandoc "$page" \
+    --resource-path "$(dirname "$page")" \
+    --shift-heading-level-by=-1 \
+    --metadata lang=en-US \
+    -V geometry:margin=2.2cm -V fontsize=10pt -V colorlinks=true \
+    -V mainfont="DejaVu Sans" -V monofont="DejaVu Sans Mono" \
+    --pdf-engine=xelatex \
+    -o "$out_dir/$name.pdf"
+  echo "build_pdf: $out_dir/$name.pdf"
+elif [ "$target" = book ]; then
   prep="$out_dir/book"
   # Start from an empty prep dir: a lesson renamed or removed in course/ would
   # otherwise leave its old copy behind and pandoc would see both (duplicate labels).
