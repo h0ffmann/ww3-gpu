@@ -58,7 +58,7 @@ submodules. This repository contains only the Kokkos code and its tools.
 | Directory | What it is | Used by |
 |---|---|---|
 | `WW3-noaa/` | WW3 from NOAA: [NOAA-EMC/WW3](https://github.com/NOAA-EMC/WW3) at `03adda91`, with no change | `--ww3`, the reference |
-| `WW3/` | the fork [h0ffmann/WW3](https://github.com/h0ffmann/WW3) at `50a10730` (branch `ww3-gpu/integ-fixes`): `WW3-noaa/` plus the KOKKOS patch. The patch changes 9 files and adds 7 modules under `model/src/`, with 5 687 added lines and no removed line | `--ww3-gpu` and the regtest matrix |
+| `WW3/` | the fork [h0ffmann/WW3](https://github.com/h0ffmann/WW3) at `50a10730` (branch `ww3-gpu/kokkos-pnt`): `WW3-noaa/` plus the KOKKOS patch. The patch changes 9 files and adds 7 modules under `model/src/`, with 5 687 added lines and no removed line | `--ww3-gpu` and the regtest matrix |
 | `WW4/` | [h0ffmann/WW4](https://github.com/h0ffmann/WW4), `develop` | `--ww4` |
 
 `(v)` The numbers of the patch are from `git -C WW3 diff --stat 03adda91 50a10730 -- model`
