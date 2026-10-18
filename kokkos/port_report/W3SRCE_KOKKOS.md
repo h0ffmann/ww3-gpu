@@ -268,7 +268,7 @@ that stops at the first `IK` with `WN*DEPTH > 6`; in `W3SDB1` `ETOT` and `FMEAN2
 
 **The host code did not change** (v, 2026-10-17). `srce_shim.cpp` compiled with the
 `openmp-release` command of `kokkos/build/openmp-release` (g++ 16.2, `-O3 -march=x86-64-v3
--ffp-contract=off -fopenmp`) at `origin/main` (`d8905a3b`) and at this commit, then each function
+-ffp-contract=off -fopenmp`) at `origin/main` (`b38b5fc8`) and at this commit, then each function
 of the default host path disassembled (`objdump -d --no-show-raw-insn --disassemble=<symbol>`) and
 its floating-point instructions counted by mnemonic (every `v*ss`, `v*ps`, `v*sd`, `v*pd`, compare,
 convert, min, max, sqrt on `xmm`/`ymm`):
@@ -291,7 +291,7 @@ where GCC put a barrier (with one thread per team it returns at once) and the si
 
 | Kernel | Registers | Spill stores / loads | Stack frame | Static smem | Barriers |
 |---|---|---|---|---|---|
-| `w3srce_team`, `origin/main` | 168 | 0 / 0 B | 3 568 B | 16 B | 1 |
+| `w3srce_team`, `origin/main` (`b38b5fc8`) | 168 | 0 / 0 B | 3 568 B | 16 B | 1 |
 | `w3srce_team`, this commit (`WW_KOKKOS_SRCE_TEAM=0` on a device) | 168 | 0 / 0 B | 3 568 B | 16 B | 1 |
 | `w3srce_split`, this commit (the device default) | 203 | 0 / 0 B | 2 640 B | 16 B | 1 |
 
