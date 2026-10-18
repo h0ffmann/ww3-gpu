@@ -143,8 +143,11 @@ endfunction()
 # turns it on, WW_KOKKOS_ALL is 0 except in a Kokkos run whose <flags> has ALL, and the Kokkos run
 # sets every counter of <counts>. The Kokkos run sets WW_KOKKOS_STRICT=1, so a part it asks for
 # that would run the Fortran stops the run instead of comparing the Fortran with itself (PATCH.md
-# section 24); the Fortran runs unset it. No run takes WW_KOKKOS_PRESET from the shell. The
-# Fortran runs never inherit a flag from the shell.
+# section 24); the Fortran runs unset it. Every Kokkos
+# run sets WW_KOKKOS_VA_POISON=1, the missed-sync detector (PATCH.md section 21), unless
+# WW3GPU_VA_POISON is 0 (run_entry.cmake sets it from a caller's WW_KOKKOS_VA_POISON=0); the
+# Fortran runs unset it. No run takes WW_KOKKOS_PRESET from the shell. The Fortran runs never
+# inherit a flag from the shell.
 function(ww3gpu_kokkos_env out k flags parts counts)
   set(e "")
   if(k STREQUAL "K" AND "ALL" IN_LIST flags)
@@ -156,6 +159,15 @@ function(ww3gpu_kokkos_env out k flags parts counts)
     list(APPEND e "WW_KOKKOS_STRICT=1")
   else()
     list(APPEND e "WW_KOKKOS_STRICT=")
+  endif()
+  if(k STREQUAL "K")
+    if(DEFINED WW3GPU_VA_POISON AND WW3GPU_VA_POISON STREQUAL "0")
+      list(APPEND e "WW_KOKKOS_VA_POISON=0")
+    else()
+      list(APPEND e "WW_KOKKOS_VA_POISON=1")
+    endif()
+  else()
+    list(APPEND e "WW_KOKKOS_VA_POISON=")
   endif()
   list(APPEND e "WW_KOKKOS_PRESET=")
   foreach(p IN LISTS parts)

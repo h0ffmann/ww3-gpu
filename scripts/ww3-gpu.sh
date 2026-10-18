@@ -67,6 +67,14 @@
 # ww3_shel.out says how many calls each part made. It fails when the log's "Kokkos parts" line
 # (W3INIT) does not show a listed part as K.
 #
+# Every Kokkos run, with --kokkos or WW3GPU_ROUTINES, has WW_KOKKOS_VA_POISON=1: after each kernel
+# write of the resident VA the stale host copy is filled with NaN, so a host reader that misses
+# its sync changes an output file and the byte comparison fails (PATCH.md section 21). It fills
+# only a copy no correct reader reads, so it cannot change the bits of a correct run; the line
+# "VA host copies poisoned" of ww3_shel.out counts the fills. WW_KOKKOS_VA_POISON=0 in the
+# caller's environment turns it off (a --repeat timing without the fills, for instance). The
+# Fortran runs never have it.
+#
 # --kokkos gpu is the part list for a run on Kokkos' CUDA backend, SRCE alone (ADR-0013): phase 1
 # copies one sea point per call, so W3SRCE routed whole makes one round trip per point and time
 # step with the DIA and ST4 inside it, where SNL1, SDS4, SIN4 and SPR4 routed one by one make one
@@ -168,6 +176,8 @@ kokkos_env() {
   for p in "${parts[@]}"; do printf ' %s' "WW_KOKKOS_$p=1"; done
   echo
 }
+# va_poison: the WW_KOKKOS_VA_POISON of the Kokkos run, 1 unless the caller set it.
+va_poison() { echo "${WW_KOKKOS_VA_POISON:-1}"; }
 # model_files <dir>: the files ww3_shel and ww3_ounf write in a run directory, the gridded and
 # point output, the restarts and the NetCDF fields, one name per line. Each is compared byte for
 # byte: a defect can reach the point output or a restart and leave the field file alone
@@ -262,6 +272,15 @@ if [ "$mode" = self-test ]; then
     || { echo "ww3-gpu: --kokkos gpu: $(kokkos_env 1 "$(kokkos_preset gpu)")" >&2; exit 1; }
   [ "$(kokkos_env 1 "$(kokkos_preset resident)")" = "WW_KOKKOS_ALL=0 WW_KOKKOS_SRCE=1 WW_KOKKOS_XYP3=1 WW_KOKKOS_KTP3=1 WW_KOKKOS_OUTG=1 WW_KOKKOS_IOPE=1 WW_KOKKOS_UPDV=1 WW_KOKKOS_CPRT=1" ] \
     || { echo "ww3-gpu: --kokkos resident: $(kokkos_env 1 "$(kokkos_preset resident)")" >&2; exit 1; }
+  [ "$(unset WW_KOKKOS_VA_POISON; va_poison)" = 1 ] || { echo "ww3-gpu: WW_KOKKOS_VA_POISON is not on by default" >&2; exit 1; }
+  [ "$(WW_KOKKOS_VA_POISON=0 va_poison)" = 0 ] || { echo "ww3-gpu: WW_KOKKOS_VA_POISON=0 did not turn it off" >&2; exit 1; }
+  # The two lines of run_model, read as text: run_model itself runs the model.
+  # shellcheck disable=SC2016
+  grep -qxF '  [ "$k" = 0 ] || flags+=("WW_KOKKOS_VA_POISON=$(va_poison)")' "${BASH_SOURCE[0]}" \
+    || { echo "ww3-gpu: run_model lost the Kokkos run's WW_KOKKOS_VA_POISON" >&2; exit 1; }
+  # shellcheck disable=SC2016
+  grep -qxF '  [ "$k" = 1 ] || unset+=(-u WW_KOKKOS_STRICT -u WW_KOKKOS_VA_POISON)' "${BASH_SOURCE[0]}" \
+    || { echo "ww3-gpu: run_model no longer unsets WW_KOKKOS_VA_POISON in the Fortran run" >&2; exit 1; }
   [ "$(kokkos_preset SNL1,GATH)" = "SNL1,GATH" ] || { echo "ww3-gpu: kokkos_preset changed a part list" >&2; exit 1; }
   # cmp_files: a point output or restart that differs, or exists on one side only, fails; the
   # NetCDF is compared only when asked; logs are never compared.
@@ -584,9 +603,9 @@ run_model() { # <dir> <0|1>: grid, strt, shel, ounf; prints ww3_shel's wall time
   local -a flags=() unset=()
   for r in "${all_parts[@]}"; do unset+=(-u "WW_KOKKOS_$r"); done
   # No preset from the shell in either run (the Fortran run would turn its parts on); strict mode
-  # reaches the Kokkos run only (PATCH.md sections 24 and 25).
+  # reaches the Kokkos run only (PATCH.md sections 24 and 25), and so does the missed-sync poison.
   unset+=(-u WW_KOKKOS_PRESET)
-  [ "$k" = 1 ] || unset+=(-u WW_KOKKOS_STRICT)
+  [ "$k" = 1 ] || unset+=(-u WW_KOKKOS_STRICT -u WW_KOKKOS_VA_POISON)
   if [ -n "$kokkos" ]; then
     read -r -a flags <<<"$(kokkos_env "$k" "$kokkos")"
     [ "$k" = 0 ] || flags+=("${count_flags[@]}")
@@ -596,6 +615,7 @@ run_model() { # <dir> <0|1>: grid, strt, shel, ounf; prints ww3_shel's wall time
       if [ "$k" = 1 ] && [[ " ${routines[*]} " == *" $r "* ]]; then flags+=("WW_KOKKOS_$r=1"); else flags+=("WW_KOKKOS_$r=0"); fi
     done
   fi
+  [ "$k" = 0 ] || flags+=("WW_KOKKOS_VA_POISON=$(va_poison)")
   [ "$k" = 0 ] || [ -z "$timers" ] || flags+=(WW_KOKKOS_TIMERS=1)
   (cd "$d" && "$bin/ww3_grid" > ww3_grid.out 2>&1) || { tail -20 "$d/ww3_grid.out" >&2; return 1; }
   # The forcing and the boundary spectra (the coast case), made by the Fortran in every run, so
@@ -650,7 +670,7 @@ if [ -n "$timers" ]; then
 fi
 # W3WAVE no longer reads VA back at its return (PATCH.md section 26): each host reader outside it
 # syncs what it reads, and ww3_shel reads no VA after its last W3WAVE, so a run may end with the
-# device copy newer. A host reader that misses its sync shows under WW_KOKKOS_VA_POISON=1.
+# device copy newer. A host reader that misses its sync shows under WW_KOKKOS_VA_POISON=1, on here.
 if grep -q "still newer on the device at finalize" "$d1/ww3_shel.out"; then
   echo ">> $(grep -h "still newer on the device at finalize" "$d1/ww3_shel.out" | head -1) (expected: no read at W3WAVE's return)"
 fi
