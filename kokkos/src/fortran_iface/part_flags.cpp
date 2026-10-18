@@ -15,7 +15,8 @@
 // Fortran unless their own flag is "1", so WW_KOKKOS_ALL=1 cannot route them to Kokkos. The PR3
 // propagation of the prop3 unit (W3XYP3, W3KTP3, PATCH.md section 11), W3OUTG of the outg unit
 // (PATCH.md section 15), the partial read of VA before W3IOPE of the pnt unit (section 16) and
-// W3UICE's zeroing of VA repeated on the device by the updv unit (section 17) are opt-in the same
+// W3UICE's zeroing of VA repeated on the device by the updv unit (section 17) and W3CPRT of the
+// cprt unit (section 27) are opt-in the same
 // way until their rows are regtested. ST4_TABLES is opt-in as well (the owner, 2026-10-17): the
 // C++ rebuild of the ST4 tables gives the Fortran's values ("0 values differ", the
 // ST4_TABLES row of PATCH.md) but cost about 8 s serial per run (coast, SRCE 18.3-18.6 s against 26.6-26.7 s with ST4_TABLES,
@@ -89,7 +90,8 @@ void print_fallbacks() {
 constexpr const char* kOptInOnly[] = {"WW_KOKKOS_XYP1", "WW_KOKKOS_KTP1", "WW_KOKKOS_XYP2",
                                       "WW_KOKKOS_KTP2", "WW_KOKKOS_XYPUG", "WW_KOKKOS_XYP3",
                                       "WW_KOKKOS_KTP3", "WW_KOKKOS_OUTG", "WW_KOKKOS_IOPE",
-                                      "WW_KOKKOS_UPDV", "WW_KOKKOS_ST4_TABLES"};
+                                      "WW_KOKKOS_UPDV", "WW_KOKKOS_CPRT",
+                                      "WW_KOKKOS_ST4_TABLES"};
 }  // namespace
 
 extern "C" int ww_kokkos_flag(const char* name) {

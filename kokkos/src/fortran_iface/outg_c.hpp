@@ -81,4 +81,47 @@ int ww_outg_va(int igrid, const int* ipar, int nipar, const float* rpar, int nrp
                const float* ec2, const float* es2, const float* esc, const int* mapsf,
                const int* mapsta, float* const* fields, int nfields);
 
+/// The packed integers of ww_outg_part, in this order.
+enum WwOutgPartIpar {
+  WW_OUTGP_NSEAL = 0,
+  WW_OUTGP_NSEA,     ///< rows of MAPSF
+  WW_OUTGP_NX,       ///< MAPSTA(NY,NX)
+  WW_OUTGP_NY,
+  WW_OUTGP_NROW,     ///< SIZE(PWST) = NSEALM: the rows of every partition field
+  WW_OUTGP_NOSWLL,   ///< NOSWLL: the partition fields are (NROW, 0:NOSWLL)
+  WW_OUTGP_NICP,     ///< SIZE(ICPRT,1) = NSEALM+1
+  WW_OUTGP_NDTP,     ///< SIZE(DTPRT,2), the columns of DTPRT(DIMP,:)
+  WW_OUTGP_DIMP,     ///< DIMP, 15
+  WW_OUTGP_NOGRP,    ///< FLOGRD(NOGRP,NGRPP)
+  WW_OUTGP_NGRPP,
+  WW_OUTGP_FLOUTG,   ///< 1 or 0
+  WW_OUTGP_FLOUTG2,  ///< 1 or 0
+  WW_OUTGP_NIPAR
+};
+
+/// The packed reals of ww_outg_part.
+enum WwOutgPartRpar { WW_OUTGP_UNDEF = 0, WW_OUTGP_WSCUT, WW_OUTGP_NRPAR };
+
+/// The partition fields of ww_outg_part, the order of `fields` (W3ADATMD arrays): the first
+/// fifteen are (NROW, 0:NOSWLL), PWST and PNR (NROW). FLOGRD(4,k) names field k+1.
+enum WwOutgPartField {
+  WW_OUTGP_PHS = 0, WW_OUTGP_PTP, WW_OUTGP_PLP, WW_OUTGP_PDIR, WW_OUTGP_PSI, WW_OUTGP_PWS,
+  WW_OUTGP_PTHP0, WW_OUTGP_PQP, WW_OUTGP_PPE, WW_OUTGP_PGW, WW_OUTGP_PSW, WW_OUTGP_PTM1,
+  WW_OUTGP_PT1, WW_OUTGP_PT2, WW_OUTGP_PEP,
+  WW_OUTGP_N2D,
+  WW_OUTGP_PWST = WW_OUTGP_N2D, WW_OUTGP_PNR,
+  WW_OUTGP_NFIELD
+};
+
+/// Section 6 of W3OUTG (w3iogomd.F90:2242-2340), the partition fields from W3CPRT's table, alone
+/// (ww::iogo::w3outg_part). It reads no VA. W3KOKKOS_OUTG calls it after ww_outg_va when FLPART
+/// is the only reason the Fortran W3OUTG would run (PATCH.md section 27). On a backend that reads
+/// host memory every field is written in place; on a device ICPRT and DTPRT are copied in and only
+/// the fields W3IOGO ('WRITE') writes (FLOGRD(4,k) under FLOUTG, FLOGR2(4,k) under FLOUTG2,
+/// w3iogomd.F90:3283-3367) come back. mapsf (NSEA,3), mapsta (NY,NX), icprt (NICP,2), dtprt
+/// (DIMP,NDTP), flogrd, flogr2 LOGICAL(4) (NOGRP,NGRPP). Returns a WwKokkosStatus.
+int ww_outg_part(const int* ipar, int nipar, const float* rpar, int nrpar, const int* flogrd,
+                 const int* flogr2, const int* mapsf, const int* mapsta, const int* icprt,
+                 const float* dtprt, float* const* fields, int nfields);
+
 }  // extern "C"

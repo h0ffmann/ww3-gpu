@@ -660,6 +660,31 @@ KOKKOS_INLINE_FUNCTION void w3outg_part_point(const W3OutgArgs<ExecSpace>& g, co
   }
 }
 
+/// Section 6 (:2242-2340): 6.a the UNDEF fill of the partition fields over their NSEALM rows,
+/// 6.b the copy from ICPRT and DTPRT per local sea point. It reads no A: of g it uses mapsf,
+/// mapsta, icprt, dtprt and the partition fields only, and s.nseal, s.noswll, s.undef, s.wscut.
+/// No other section reads what it writes, so it may run apart from the rest of W3OUTG.
+template <class ExecSpace>
+void w3outg_part(const ExecSpace& exec, const W3OutgScalars& s, const W3OutgArgs<ExecSpace>& g) {
+  const Real undef = s.undef;
+  const int nsealm = static_cast<int>(g.pwst.extent(0));
+  const int ncol = s.noswll + 1;
+  Kokkos::parallel_for(
+      "ww::iogo::w3outg_part_init", Kokkos::RangePolicy<ExecSpace>(exec, 0, nsealm), KOKKOS_LAMBDA(const int j) {
+        for (int c = 0; c < ncol; ++c) {
+          g.phs(j, c) = undef; g.ptp(j, c) = undef; g.plp(j, c) = undef; g.pdir(j, c) = undef;
+          g.psi(j, c) = undef; g.pws(j, c) = undef; g.pthp0(j, c) = undef; g.pqp(j, c) = undef;
+          g.ppe(j, c) = undef; g.pgw(j, c) = undef; g.psw(j, c) = undef; g.ptm1(j, c) = undef;
+          g.pt1(j, c) = undef; g.pt2(j, c) = undef; g.pep(j, c) = undef;
+        }
+        g.pwst(j) = undef;
+        g.pnr(j) = undef;
+      });
+  Kokkos::parallel_for(
+      "ww::iogo::w3outg_part", Kokkos::RangePolicy<ExecSpace>(exec, 1, s.nseal + 1),
+      KOKKOS_LAMBDA(const int jsea) { w3outg_part_point<ExecSpace>(g, s, jsea); });
+}
+
 /// W3OUTG(A, FLPART, FLOUTG, FLOUTG2), :1201-2380, as switch_lab_shrd (s.ompg false) or
 /// switch_lab_ompg (s.ompg true) compiles it.
 template <class ExecSpace>
@@ -700,23 +725,7 @@ void w3outg(const ExecSpace& exec, const W3OutgScalars& s, const W3OutgFlags& f,
       KOKKOS_LAMBDA(const int jsea) { w3outg_point<ExecSpace>(g, s, l, jsea); });
 
   // 6. (:2242-2340)
-  if (f.flpart) {
-    const int ncol = s.noswll + 1;
-    Kokkos::parallel_for(
-        "ww::iogo::w3outg_part_init", Kokkos::RangePolicy<ExecSpace>(exec, 0, nsealm), KOKKOS_LAMBDA(const int j) {
-          for (int c = 0; c < ncol; ++c) {
-            g.phs(j, c) = undef; g.ptp(j, c) = undef; g.plp(j, c) = undef; g.pdir(j, c) = undef;
-            g.psi(j, c) = undef; g.pws(j, c) = undef; g.pthp0(j, c) = undef; g.pqp(j, c) = undef;
-            g.ppe(j, c) = undef; g.pgw(j, c) = undef; g.psw(j, c) = undef; g.ptm1(j, c) = undef;
-            g.pt1(j, c) = undef; g.pt2(j, c) = undef; g.pep(j, c) = undef;
-          }
-          g.pwst(j) = undef;
-          g.pnr(j) = undef;
-        });
-    Kokkos::parallel_for(
-        "ww::iogo::w3outg_part", Kokkos::RangePolicy<ExecSpace>(exec, 1, s.nseal + 1),
-        KOKKOS_LAMBDA(const int jsea) { w3outg_part_point<ExecSpace>(g, s, jsea); });
-  }
+  if (f.flpart) w3outg_part(exec, s, g);
 
   // :2347-2362
   const bool u3s1 = floloc(6, 8);

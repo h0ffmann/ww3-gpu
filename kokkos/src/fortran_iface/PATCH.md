@@ -2089,3 +2089,76 @@ are [`ww3gpu_matrix_multi_va_2026-10-18.tsv`](../../../docs/data/ww3gpu_matrix_m
   after; no difference can be read from these.
 - `mww3_test_07` (`default`) was not compared: with the lab switch its `ww3_grid` stops in the
   Fortran run too (`ERROR IN READING SDS4`, the entry's namelist against `ST4`'s).
+
+## 27. `W3CPRT` on the resident `VA`, and `W3OUTG`'s partition fields without it, `ww3-gpu/u9-cprt`
+
+One commit on `80644ba9` (section 22), `4f126d85`, pushed to h0ffmann/WW3 on 2026-10-18; not at the
+pin until the integrator merges it. ABI `ww_kokkos` 0.10 (three entry points added: `ww_cprt_va`,
+`ww_cprt_fetch` of [`cprt_c.hpp`](cprt_c.hpp), `ww_outg_part` of [`outg_c.hpp`](outg_c.hpp)).
+Unit U9 of the production plan: at every output time with partitioning on, `W3WAVE` read the whole
+`VA` back from the device for `W3CPRT` (`w3wavemd.F90:2688-2693` at `80644ba9`), again before
+`W3IOSF` (`:2963-2966`), and `W3KOKKOS_OUTG` fell back to the Fortran `W3OUTG`, with its own host
+read, whenever a partition field was asked for (`FLPART`). GFS-Wave writes partitions.
+
+- **The fork.** A unit file, `model/src/w3kokkos_cprtmd.F90` (`W3KOKKOS_CPRTMD`): the flag
+  `KOKKOS_CPRT` from `WW_KOKKOS_CPRT` (opt-in, `kOptInOnly` of [`part_flags.cpp`](part_flags.cpp)),
+  refused outside `SHRD` and under `MPI` or `T`; `W3KOKKOS_CPRT ( IMOD )` packs what `W3CPRT`
+  reads, calls `ww_cprt_va`, allocates `ICPRT` and `DTPRT` as `W3CPRT` does (`w3iosfmd.F90:221-229`,
+  `:320-326`), writes `PTMEAN`'s format 1000 the number of times the kernel counted, and calls
+  `ww_cprt_fetch`. A sea point with a NaN depth, or a spectrum `PTMEAN` cannot take, makes it read
+  `VA` to the host and call the Fortran `W3CPRT` whole instead (the first stops the model there,
+  `:270-274`; the second reads out of bounds in the Fortran,
+  [`PTMEAN_KOKKOS.md`](../../port_report/PTMEAN_KOKKOS.md)). In `w3wavemd.F90`, two hunks: at
+  `:2688` the host read and `CALL W3CPRT` become `IF ( LOCAL .AND. FLPART .AND. KOKKOS_CPRT ) CALL
+  W3KOKKOS_CPRT ( IMOD ) ELSE` the old lines; before `W3IOSF` the host read becomes
+  `IF ( .NOT. KOKKOS_CPRT )`. `W3IOSF` reads `ICPRT`, `DTPRT`, `DW`, `U10`, `U10D`, `CX`, `CY`,
+  `ASF`, `TIME` and the grid, and no `VA` (its `USE` lists, `w3iosfmd.F90:429-453`, v), so it needs
+  no host copy once `W3CPRT` is on Kokkos. In `w3kokkos_outgmd.F90`, `FLPART` no longer forces the
+  Fortran `W3OUTG`: after `ww_outg_va` (run with `FLPART` false, as before), `W3KOKKOS_OUTG` calls
+  `ww_outg_part` for section 6, which reads the table and no `VA` (`w3iogomd.F90:2242-2340`) and
+  whose fields no other section reads. That holds whichever of `W3CPRT` or `W3KOKKOS_CPRT` built
+  the table. `model/src/CMakeLists.txt` asks for `ww_kokkos 0.10`.
+- **The kernel** ([`../ww_kokkos/iosf_w3cprt.hpp`](../ww_kokkos/iosf_w3cprt.hpp), the shim
+  [`cprt_shim.cpp`](cprt_shim.cpp)). The sea points go in chunks (`WW_KOKKOS_CPRT_CHUNK`, by default
+  four per thread on a host backend, 1024 on a device), one work slot per point. Per chunk: a launch
+  runs `W3CPRT` sections 2-4 and `W3PART` (unchanged,
+  [`W3PART_KOKKOS.md`](../../port_report/W3PART_KOKKOS.md)) per point in the Fortran's serial
+  order; an integer reduction counts format-1000 messages and no-peak points; an integer prefix sum
+  over `NP+1` gives each point its first `DTPRT` column and `ICPRT(JSEA+1,2)`; a launch copies
+  `XP(:,0:NP)` there. Integer sums are exact in any order, so the table is in the Fortran's `JSEA`
+  order by construction. The static parity argument is in
+  [`W3CPRT_KOKKOS.md`](../../port_report/W3CPRT_KOKKOS.md).
+- **Memory contract**: phase 2. `VA` is read in `d_va` (`ww::resident::device_va`). On a device the
+  inputs (`MAPSF`, `MAPSTA`, `U10`, `U10D`, `ASF`, `DW`, `CG`, `WN`, the frequency and direction
+  tables, `EWN1`, `ECG1`) are copied in per call, `CG` and `WN` being most of it; `ICPRT` and the
+  `FINSIZ` used columns of `DTPRT` come back. The work slots, 288 kB per point for `NK = NTH = 24`
+  and `IHMAX = 50` (`w3cprt_nreal` and `w3cprt_nint`) (`PTMEAN`'s sums are sized for `NSPEC+1` partitions), live for the run. `ww_outg_part`
+  copies `ICPRT` and `DTPRT` in on a device and only the partition fields `W3IOGO` writes back
+  (`FLOGRD(4,k)` and `FLOGR2(4,k)`, `w3iogomd.F90:3283-3367`). No Unified Memory.
+- **Counters**: `WW_KOKKOS_CPRT_COUNT=1` (calls, sea points, fallbacks, bytes in and back);
+  `WW_KOKKOS_OUTG_COUNT=1` adds the partition-field calls and bytes. **Timers**: `cprt.call`,
+  `cprt.h2d`, `cprt.kernel`, `cprt.d2h`, `outg.part`.
+- **Not covered.** `W3_MPI` (the `DIST` runs keep the single host read of section 11); the
+  `WW_KOKKOS_STRICT` count of section 24 (the two fallbacks above are not reported to it: this
+  branch is on `80644ba9`, without `KOKKOS_FALLBACK`); the `resident` preset of section 25 does not
+  list `CPRT`, so the runs below name the parts.
+
+The checkpoint on the CPU, 2026-10-18 (OpenMP backend, Kokkos 5.2.2, gfortran/g++ 16.2.0, i9-14900
+shared with other agents' jobs, `OMP_NUM_THREADS=4`; never `--gpu`); the commands, the two
+throwaway `bench_small` variants with partitioning on and the numbers are in
+[`docs/log/2026-10-18-cprt-resident.md`](../../../docs/log/2026-10-18-cprt-resident.md):
+
+- `bash scripts/ww3-gpu.sh --ww3-gpu full --cpu --kokkos SRCE,XYP3,KTP3,OUTG,IOPE,UPDV[,CPRT]` with
+  `WW_KOKKOS_VA_POISON=1 WW_KOKKOS_VA_COUNT=1`, five runs on `switch_lab_shrd` and
+  `switch_lab_ompg`: every model file and `partition.ww3` byte-identical to the Fortran of the
+  same executable and to `--ww3` (v). `VA` device-to-host copies in 12 hours with 13 output times:
+  13 before, 1 after (the read at `W3WAVE`'s return, which section 26 removes), with only the
+  partition file and with all 17 partition fields (v). Per output time a device would move back
+  1.14 MB of table and, with every partition field requested, 3.39 MB of fields, against the
+  21.21 MB of `VA`, and in 2.21 MB of inputs (projected on the host backend).
+- WW3's `ww3_tpt1.1`, the five partitioning methods (`-N -g PTM1` .. `PTM5`), through
+  `regtests/cmake/run_entry.cmake` with `WW3GPU_KOKKOS=CPRT`: `test.comp` 0 of 22 files different
+  and `nccmp-tol` PASS on each, 2 Kokkos calls on 18 sea points each (v), with `PR3 UQ` in the
+  staged switch for its `PR0` ⚠, because the fork's `KOKKOS` build needs `PR3`. No `matrix.base`
+  entry with partitioning builds with `KOKKOS` (`ww3_tnc1` is `PR0`), so the matrix proper did not
+  run this part ⚠.
