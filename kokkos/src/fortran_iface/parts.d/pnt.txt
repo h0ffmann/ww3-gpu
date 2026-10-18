@@ -1,3 +1,4 @@
-# The point output's spectra copied back alone from the resident VA, PATCH.md section 16 (resident_shim.cpp); opt-in, not under WW_KOKKOS_ALL
+# The point, boundary and track outputs' spectra copied back alone from the resident VA, PATCH.md sections 17 and 23 (resident_shim.cpp); opt-in, not under WW_KOKKOS_ALL
 # Read by scripts/ww3-gpu.sh: PART <name> (WW_KOKKOS_<name>), COUNT <variable>, FILE <fork path>; PATCH.md section 9.
 PART IOPE
+FILE model/src/w3iotrmd.F90

@@ -5,7 +5,7 @@
 //
 // The Fortran owns VA; this file only copies it whole, host to device or back, when the
 // other side holds the newer bits, or (ww_va_host_read_cols, the pnt unit) copies back the few
-// columns W3IOPE reads without changing which side is newer, or (ww_va_device_zero_cols, the updv
+// columns W3IOPE, W3IOBC ('WRITE') or W3IOTR reads without changing which side is newer, or (ww_va_device_zero_cols, the updv
 // unit) repeats on d_va the zeroing of whole columns that W3UICE made on the host. A copy moves bits and computes nothing. Every call
 // comes from outside an OpenMP parallel region (the Fortran wrappers refuse one), so the
 // contexts and counters need no lock. Views die in Kokkos' finalize hook.
@@ -27,26 +27,33 @@
 #include <algorithm>
 #include <map>
 #include <new>
+#include <utility>
 #include <vector>
 
 namespace ww::resident {
 namespace {
+
+// One column list of the partial read and its buffers. Kept for the run: W3IOPE and W3IOBC ask
+// for the same columns at every output time, so each list is allocated once.
+struct ColSet {
+  std::vector<int> cols;
+  Kokkos::View<int*, DeviceSpace> d_cols;
+  Kokkos::View<float**, Kokkos::LayoutLeft, DeviceSpace> d_buf;
+  Kokkos::View<float**, Kokkos::LayoutLeft, Kokkos::HostSpace> h_buf;
+};
 
 struct Ctx {
   float* host = nullptr;
   int nspec = 0, nsealm = -1;
   DevVa d;
   Side side = Side::Host;
-  // The partial read: the sorted column list of the last call and its device copies, kept
-  // because W3IOPE asks for the same columns at every point-output time.
-  std::vector<int> cols;
+  // The partial read: every sorted column list asked for, the most recent first. W3IOTR's list
+  // changes with the track; past kMaxColSets lists the oldest is dropped.
+  std::vector<ColSet> sets;
   // WW_KOKKOS_VA_CHECK=1: the host bits of VA when the two copies were last made equal, kept up to
   // date by the declared host writes of whole columns (the partial read, the zeroed columns).
   std::vector<float> snap;
   bool snap_ok = false;
-  Kokkos::View<int*, DeviceSpace> d_cols;
-  Kokkos::View<float**, Kokkos::LayoutLeft, DeviceSpace> d_buf;
-  Kokkos::View<float**, Kokkos::LayoutLeft, Kokkos::HostSpace> h_buf;
   size_t count() const { return static_cast<size_t>(nspec) * static_cast<size_t>(nsealm + 1); }
 };
 
@@ -55,6 +62,10 @@ std::map<int, Ctx>& grids() {
   static auto* m = new std::map<int, Ctx>();
   return *m;
 }
+
+// The column lists a grid keeps buffers for: W3IOPE's and W3IOBC's, which repeat, and a few of
+// W3IOTR's, which follow the track.
+constexpr size_t kMaxColSets = 4;
 
 struct Counts {
   long long h2d = 0, d2h = 0, host_reads = 0, host_writes = 0, device_calls = 0;
@@ -95,9 +106,7 @@ void release() {
       std::fprintf(stderr, "ww_kokkos: VA of grid %d was still newer on the device at finalize\n",
                    igrid);
     c.d = DevVa();
-    c.d_cols = {};
-    c.d_buf = {};
-    c.h_buf = {};
+    c.sets.clear();
   }
   grids().clear();
 }
@@ -263,23 +272,31 @@ int host_read_cols(int igrid, float* va, int nspec, int nsealm, int ncol, const 
   }
   if (want.empty()) return WW_KOKKOS_OK;
   const int n = static_cast<int>(want.size());
-  if (want != c->cols) {
-    c->cols = want;
-    c->d_cols = Kokkos::View<int*, DeviceSpace>(
+  const auto hit = std::find_if(c->sets.begin(), c->sets.end(),
+                                [&](const ColSet& s) { return s.cols == want; });
+  if (hit != c->sets.end()) {
+    std::rotate(c->sets.begin(), hit, hit + 1);
+  } else {
+    ColSet s;
+    s.cols = want;
+    s.d_cols = Kokkos::View<int*, DeviceSpace>(
         Kokkos::view_alloc(Kokkos::WithoutInitializing, "ww_va.cols"), n);
-    Kokkos::deep_copy(c->d_cols, Kokkos::View<const int*, Kokkos::HostSpace,
-                                              Kokkos::MemoryTraits<Kokkos::Unmanaged>>(
-                                     c->cols.data(), n));
-    c->d_buf = Kokkos::View<float**, Kokkos::LayoutLeft, DeviceSpace>(
+    Kokkos::deep_copy(s.d_cols, Kokkos::View<const int*, Kokkos::HostSpace,
+                                             Kokkos::MemoryTraits<Kokkos::Unmanaged>>(
+                                    s.cols.data(), n));
+    s.d_buf = Kokkos::View<float**, Kokkos::LayoutLeft, DeviceSpace>(
         Kokkos::view_alloc(Kokkos::WithoutInitializing, "ww_va.cols_buf"), nspec, n);
-    c->h_buf = Kokkos::View<float**, Kokkos::LayoutLeft, Kokkos::HostSpace>(
+    s.h_buf = Kokkos::View<float**, Kokkos::LayoutLeft, Kokkos::HostSpace>(
         Kokkos::view_alloc(Kokkos::WithoutInitializing, "ww_va.cols_host"), nspec, n);
+    if (c->sets.size() >= kMaxColSets) c->sets.pop_back();
+    c->sets.insert(c->sets.begin(), std::move(s));
   }
+  ColSet& cs = c->sets.front();
   {
     ww::timers::Region tc("va.d2h.cols");
     const DevVa d = c->d;
-    const auto dc = c->d_cols;
-    const auto buf = c->d_buf;
+    const auto dc = cs.d_cols;
+    const auto buf = cs.d_buf;
     const size_t ns = static_cast<size_t>(nspec);
     Kokkos::parallel_for(
         "ww_va.gather_cols", Kokkos::RangePolicy<>(0, ns * static_cast<size_t>(n)),
@@ -287,17 +304,17 @@ int host_read_cols(int igrid, float* va, int nspec, int nsealm, int ncol, const 
           const size_t k = i / ns, s = i % ns;
           buf(s, k) = d(s, dc(k));
         });
-    Kokkos::deep_copy(c->h_buf, buf);
+    Kokkos::deep_copy(cs.h_buf, buf);
     Kokkos::fence("ww_va.d2h_cols");
   }
   for (int k = 0; k < n; ++k)
-    std::memcpy(c->host + static_cast<size_t>(c->cols[k]) * static_cast<size_t>(nspec),
-                &c->h_buf(0, k), static_cast<size_t>(nspec) * sizeof(float));
+    std::memcpy(c->host + static_cast<size_t>(cs.cols[k]) * static_cast<size_t>(nspec),
+                &cs.h_buf(0, k), static_cast<size_t>(nspec) * sizeof(float));
   // The host columns just copied are part of what the host holds now.
   if (c->snap_ok)
     for (int k = 0; k < n; ++k)
-      std::memcpy(c->snap.data() + static_cast<size_t>(c->cols[k]) * static_cast<size_t>(nspec),
-                  &c->h_buf(0, k), static_cast<size_t>(nspec) * sizeof(float));
+      std::memcpy(c->snap.data() + static_cast<size_t>(cs.cols[k]) * static_cast<size_t>(nspec),
+                  &cs.h_buf(0, k), static_cast<size_t>(nspec) * sizeof(float));
   ++g_n.part_d2h;
   g_n.part_cols += n;
   g_n.part_bytes += static_cast<double>(static_cast<size_t>(n) * static_cast<size_t>(nspec) *

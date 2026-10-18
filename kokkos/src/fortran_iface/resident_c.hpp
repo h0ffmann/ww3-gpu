@@ -33,7 +33,7 @@
 // The last two, and the byte comparison of every model file in scripts/ww3-gpu.sh, came out of
 // the mutation audit of docs/log/2026-10-17-mutation-audit.md.
 // Under WW_KOKKOS_VA_RESIDENT=1 the partial read stays partial (a HOST array is pushed first, as
-// every host call does), so a column W3IOPE reads and the list misses keeps stale bits there.
+// every host call does), so a column W3IOPE, W3IOBC or W3IOTR reads and the list misses keeps stale bits there.
 //
 // SPDX-License-Identifier: MIT
 #pragma once
@@ -48,8 +48,9 @@ int ww_va_host_read(int igrid, float* va, int nspec, int nsealm);
 /// Before a host write of VA: ww_va_host_read, then state HOST.
 int ww_va_host_write(int igrid, float* va, int nspec, int nsealm);
 
-/// Before W3IOPE (point output) reads VA on the host, with WW_KOKKOS_IOPE=1 (the pnt unit,
-/// PATCH.md section 16): when the device holds the newer bits (state DEVICE), copy back only the
+/// Before W3IOPE (point output), W3IOBC ('WRITE', boundary output) or section 4 of W3IOTR
+/// (track output) reads VA on the host, with WW_KOKKOS_IOPE=1 (the pnt unit, PATCH.md sections
+/// 17 and 23): when the device holds the newer bits (state DEVICE), copy back only the
 /// columns cols[0..ncol) of VA, W3WAVE's JSEA in 0..nsealm (duplicates allowed), gathered on the
 /// device; otherwise (HOST, BOTH) nothing. The state is NOT changed: every other column of the
 /// host VA stays stale, so the next ww_va_host_read still copies the whole array. A column
