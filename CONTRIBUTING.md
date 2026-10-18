@@ -110,7 +110,10 @@ A mistake in a figure is as welcome as one in the text: the gallery links an iss
 ## Ground rules
 
 - Keep the `⚠` / `(v)` convention. Marking uncertainty honestly is the point.
-- Don't vendor WW3 source. Scripts fetch it.
+- Don't vendor WW3 source. Scripts fetch it. The one exception: a Fortran change proposed to NOAA
+  may be kept as a patch under `docs/noaa/`, which `scripts/ww3_fortran_ab.sh` applies to a
+  scratch copy of `WW3-noaa/` to show, with `cmp` and a median of three, that it keeps the bits
+  and what it saves (`AGENTS.md`, "WW3 source is read-only").
 - Don't cite a third party's issues or pull requests: no `NOAA-EMC/WW4#72`, no link to a
   NOAA-EMC/WW3 issue, no "WW4 PR #67", in a file, a commit, or an issue or pull request of this
   repository: GitHub turns each one into a backlink on the upstream item. Describe what it contains

@@ -86,6 +86,10 @@ full-ww3:
 full-ww3-gpu device="cpu":
     bash scripts/ww3-gpu.sh --ww3-gpu full --{{device}}
 
+# A Fortran change proposed to NOAA (a patch under docs/noaa/) against pure WW3: bits and medians.
+fortran-ab patch case="full" repeat="3":
+    bash scripts/ww3_fortran_ab.sh --patch {{patch}} --case {{case}} --repeat {{repeat}}
+
 # The forced case, as written: coast (80 x 50, currents, water levels, ice, boundary input, FLCK).
 coast-ww3:
     bash scripts/ww3-gpu.sh --ww3 coast

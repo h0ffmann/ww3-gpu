@@ -434,6 +434,37 @@ if [ -n "$pre" ]; then
 else
   fork="$root/WW3" noaa="$root/WW3-noaa"
   if [ "$mode" = ww3 ]; then ww3="$noaa"; else ww3="$fork"; fi
+  # WW3GPU_NOAA_PATCH=<file>: --ww3 builds WW3-noaa/ with that patch applied, in a scratch copy
+  # under build/ (AGENTS.md, "WW3 source is read-only": a Fortran change proposed to NOAA is
+  # measured here, never written into a submodule). scripts/ww3_fortran_ab.sh is its caller.
+  if [ "$mode" = ww3 ] && [ -n "${WW3GPU_NOAA_PATCH:-}" ]; then
+    npatch="$(cd "$(dirname "$WW3GPU_NOAA_PATCH")" && pwd)/$(basename "$WW3GPU_NOAA_PATCH")"
+    [ -f "$npatch" ] || { echo "ww3-gpu: WW3GPU_NOAA_PATCH is not a file: $WW3GPU_NOAA_PATCH" >&2; exit 64; }
+    # Outside build/ww3-patched: fresh_for_toolchain empties that directory on a new toolchain.
+    psrc="$root/build/ww3-patched-src/tree" pstamp="$root/build/ww3-patched-src/stamp"
+    stamp="$(git -C "$noaa" rev-parse HEAD) $(sha256sum < "$npatch" | cut -d' ' -f1)"
+    # A new NOAA commit or another patch: extract again. The same pair keeps the tree, so the
+    # build stays incremental.
+    if [ "$(cat "$pstamp" 2>/dev/null)" != "$stamp" ]; then
+      # The stamp goes first: a patch that fails below must not leave a tree a later run trusts.
+      rm -f -- "$pstamp"
+      [[ "$psrc" == "$root/build/"* ]] && rm -rf -- "$psrc"
+      mkdir -p "$psrc"
+      git -C "$noaa" archive HEAD | tar -x -C "$psrc"
+      # patch, not git apply: inside this repository's work tree git apply skips, without a word,
+      # every path outside the current directory, so the copy would build unpatched.
+      (cd "$psrc" && patch -p1 --batch --forward --dry-run < "$npatch" > /dev/null && patch -p1 --batch --forward < "$npatch" > /dev/null) \
+        || { echo "ww3-gpu: $WW3GPU_NOAA_PATCH does not apply to WW3-noaa/ at $(git -C "$noaa" rev-parse --short HEAD)" >&2; exit 64; }
+      # Every file the patch names must now differ from WW3-noaa/'s, or nothing was applied.
+      pfiles="$(sed -n 's#^+++ b/\([^	]*\).*#\1#p' "$npatch")"
+      [ -n "$pfiles" ] || { echo "ww3-gpu: $WW3GPU_NOAA_PATCH names no file (+++ b/<path> lines)" >&2; exit 64; }
+      while IFS= read -r f; do
+        ! cmp -s "$noaa/$f" "$psrc/$f" || { echo "ww3-gpu: $WW3GPU_NOAA_PATCH left $f unchanged" >&2; exit 64; }
+      done <<<"$pfiles"
+      printf '%s\n' "$stamp" > "$pstamp"
+    fi
+    ww3="$psrc"
+  fi
   sm="${ww3#"$root/"}"
   [ -f "$ww3/model/src/CMakeLists.txt" ] || { echo "ww3-gpu: $sm/ is empty: git submodule update --init $sm" >&2; exit 3; }
   # --ww3 is the reference of --ww3-gpu, so the fork must be WW3-noaa/ plus the KOKKOS patch and
@@ -502,6 +533,7 @@ else
 
   # --- WW3 ------------------------------------------------------------------------------------
   if [ "$mode" = ww3 ]; then bdir="$root/build/ww3"; else bdir="$root/build/ww3-gpu-$backend"; fi
+  [ -z "${npatch:-}" ] || bdir="$root/build/ww3-patched"
   fresh_for_toolchain "$bdir"
   switch_file="$bdir/switch"
   # build/ww3 was built from the fork before WW3-noaa/ existed: a new source needs a fresh configure.
@@ -593,12 +625,12 @@ run_model() { # <dir> <0|1>: grid, strt, shel, ounf; prints ww3_shel's wall time
 }
 
 if [ "$mode" = ww3 ]; then
-  d="$runs/ww3-$case_name"
+  d="$runs/ww3${npatch:+-patched}-$case_name"
   [[ "$d" == "$runs/"* ]] && rm -rf -- "$d"
   prepare "$d"
   wall="$(run_model "$d" 0)"
   echo "$wall" > "$d/ww3_shel.wall"
-  echo ">> --ww3 $case_name: ww3_shel finished in ${wall} s; output: $(cd "$d" && ls ww3.*.nc)"
+  echo ">> --ww3${npatch:+ (WW3GPU_NOAA_PATCH=$WW3GPU_NOAA_PATCH)} $case_name: ww3_shel finished in ${wall} s; output: $(cd "$d" && ls ww3.*.nc)"
   exit 0
 fi
 

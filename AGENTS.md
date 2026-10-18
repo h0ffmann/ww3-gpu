@@ -200,7 +200,10 @@ and `scripts/ww3-gpu.sh` stops when the fork differs from it outside the KOKKOS 
 copied into this repository (`CONTRIBUTING.md`, "Don't vendor WW3 source. Scripts fetch it."). The
 exceptions are a `bind(C)` shim module and the caller patch described in
 `kokkos/src/fortran_iface/PATCH.md`, which live on a fork branch, behind a switch, and leave the
-original routine selectable. Every statement about WW3 cites `model/src/<file>.F90:<line>` at the
+original routine selectable. One more exception (the owner, 18 October 2026): a Fortran change
+this repository proposes to NOAA may be kept as a patch of WW3 source under `docs/noaa/`, applied
+only by `scripts/ww3_fortran_ab.sh` to a scratch copy of `WW3-noaa/` under `build/`, never to a
+submodule or to the fork, and only to show with `cmp` that it keeps the bits and what it saves. Every statement about WW3 cites `model/src/<file>.F90:<line>` at the
 pinned commit (`WW3@6d1bcdfe` at the time of writing), never a comment, a paper or memory.
 Namelists are written against the templates in `$WW3/model/nml/` and are `⚠` until executed.
 
