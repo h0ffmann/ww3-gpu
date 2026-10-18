@@ -92,7 +92,9 @@
 #
 # WW3 is built with its own Release flags in both modes. The two runs of --ww3-gpu agree to the
 # tolerances of kokkos/tools/nccmp-tol/tolerances.txt; since 2026-10-15 they are byte-identical
-# (docs/log/2026-10-14-snl1-bitwise-af11.md), and the script says so when they are.
+# (docs/log/2026-10-14-snl1-bitwise-af11.md). On the CPU every model file (gridded and point
+# output, restarts, NetCDF) must be byte-identical to the Fortran run's, and the binary ones to
+# --ww3's, or the run fails; on a GPU the differences are reported (docs/log/2026-10-17-mutation-audit.md).
 set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -161,6 +163,27 @@ kokkos_env() {
   for p in "${parts[@]}"; do printf ' %s' "WW_KOKKOS_$p=1"; done
   echo
 }
+# model_files <dir>: the files ww3_shel and ww3_ounf write in a run directory, the gridded and
+# point output, the restarts and the NetCDF fields, one name per line. Each is compared byte for
+# byte: a defect can reach the point output or a restart and leave the field file alone
+# (docs/log/2026-10-17-mutation-audit.md).
+model_files() {
+  (cd "$1" && find . -maxdepth 1 -type f \( -name 'out_grd.*' -o -name 'out_pnt.*' -o -name 'restart*.ww3' \
+     -o -name 'ww3.*.nc' \) -printf '%f\n' | sort)
+}
+# cmp_files <reference dir> <dir> <what the reference is> [nc]: every model file of either dir, cmp
+# against the other; the NetCDF files only with "nc" (--ww3's carry another switch attribute).
+# Prints one line per file that differs or is missing, and returns 1 when there is one.
+cmp_files() {
+  local f bad=0
+  while read -r f; do
+    [ -n "$f" ] || continue
+    [[ "$f" != ww3.*.nc ]] || [ "${4:-}" = nc ] || continue
+    if [ ! -f "$1/$f" ] || [ ! -f "$2/$f" ]; then echo ">> $f: written in one run only ($3)"; bad=1
+    elif ! cmp -s "$1/$f" "$2/$f"; then echo ">> $f: differs from $3"; bad=1; fi
+  done < <({ model_files "$1"; model_files "$2"; } | sort -u)
+  return "$bad"
+}
 kokkos_preset() { # <all|none|gpu|resident|PART,...>: a preset's part list, anything else unchanged
   case "$1" in
     gpu) echo SRCE ;;
@@ -224,6 +247,21 @@ if [ "$mode" = self-test ]; then
   [ "$(kokkos_env 1 "$(kokkos_preset resident)")" = "WW_KOKKOS_ALL=0 WW_KOKKOS_SRCE=1 WW_KOKKOS_XYP3=1 WW_KOKKOS_KTP3=1 WW_KOKKOS_OUTG=1 WW_KOKKOS_IOPE=1 WW_KOKKOS_UPDV=1" ] \
     || { echo "ww3-gpu: --kokkos resident: $(kokkos_env 1 "$(kokkos_preset resident)")" >&2; exit 1; }
   [ "$(kokkos_preset SNL1,GATH)" = "SNL1,GATH" ] || { echo "ww3-gpu: kokkos_preset changed a part list" >&2; exit 1; }
+  # cmp_files: a point output or restart that differs, or exists on one side only, fails; the
+  # NetCDF is compared only when asked; logs are never compared.
+  t="$(mktemp -d)"
+  mkdir "$t/a" "$t/b"
+  for f in out_grd.ww3 out_pnt.ww3 restart001.ww3 ww3.field.nc log.ww3; do echo "$f" > "$t/a/$f"; cp "$t/a/$f" "$t/b/$f"; done
+  echo other > "$t/b/log.ww3"
+  cmp_files "$t/a" "$t/b" ref nc >/dev/null || { rm -rf -- "$t"; echo "ww3-gpu: cmp_files failed equal model files" >&2; exit 1; }
+  echo other > "$t/b/out_pnt.ww3"
+  if cmp_files "$t/a" "$t/b" ref >/dev/null; then rm -rf -- "$t"; echo "ww3-gpu: cmp_files passed a different out_pnt.ww3" >&2; exit 1; fi
+  cp "$t/a/out_pnt.ww3" "$t/b/" && rm "$t/b/restart001.ww3"
+  if cmp_files "$t/a" "$t/b" ref >/dev/null; then rm -rf -- "$t"; echo "ww3-gpu: cmp_files passed a missing restart" >&2; exit 1; fi
+  cp "$t/a/restart001.ww3" "$t/b/" && echo other > "$t/b/ww3.field.nc"
+  cmp_files "$t/a" "$t/b" ref >/dev/null || { rm -rf -- "$t"; echo "ww3-gpu: cmp_files compared a NetCDF without nc" >&2; exit 1; }
+  if cmp_files "$t/a" "$t/b" ref nc >/dev/null; then rm -rf -- "$t"; echo "ww3-gpu: cmp_files passed a different NetCDF" >&2; exit 1; fi
+  rm -rf -- "$t"
   # coast: no WW4 parts model for it, and every input the case reads is in the fixture or written
   # by scripts/coast_case.sh (whose own self-test needs ncgen, so it runs only where ncgen is).
   "${BASH_SOURCE[0]}" --ww4 coast </dev/null >/dev/null 2>&1 && rc=0 || rc=$?
@@ -580,6 +618,12 @@ if [ -n "$timers" ]; then
       if (name ~ /\.call$/) in_kokkos += s }
     END { printf ">>   %-22s %21s %10.3f s %6.1f %%\n", "outside Kokkos", "", w - in_kokkos, (w > 0 ? 100 * (w - in_kokkos) / w : 0) }'
 fi
+# The resident VA must be current on the host when W3WAVE returns: resident_shim.cpp says so at
+# finalize when it is not (a missing W3KOKKOS_VA_HOST_READ at the return, which no output shows).
+if grep -q "still newer on the device at finalize" "$d1/ww3_shel.out"; then
+  grep -h "still newer on the device at finalize" "$d1/ww3_shel.out" >&2
+  echo "ww3-gpu: the Kokkos run ended with the device's VA newer than WW3's" >&2; exit 1
+fi
 if [ -n "$kokkos" ]; then
   parts_line="$(grep -h "Kokkos parts" "$d1/log.ww3" | head -1 || true)"
   [ -n "$parts_line" ] || { echo "ww3-gpu: no 'Kokkos parts' line in $d1/log.ww3" >&2; exit 1; }
@@ -590,6 +634,19 @@ if [ -n "$kokkos" ]; then
     done
   fi
   grep -h "^ww_kokkos: .*: [0-9]*$" "$d1/ww3_shel.out" | sed 's/^/>> /' || true
+  # The case's expected calls per part (kokkos/tests/fixtures/<case>/counts_resident.txt): a part
+  # that silently falls back to the Fortran writes the Fortran's bits, so only its count shows it.
+  counts="$root/kokkos/tests/fixtures/$case_name/counts_resident.txt"
+  if [ "$kokkos" = "$(kokkos_preset resident)" ] && [ -f "$counts" ] && [ -z "$pre" ] \
+     && [ -z "${WW_KOKKOS_SRCE_BATCH_MIB:-}${WW_KOKKOS_PROP3_BATCH_MIB:-}" ]; then
+    miss=0
+    while IFS= read -r line; do
+      case "$line" in ''|'#'*) continue ;; esac
+      grep -qxF "ww_kokkos: $line" "$d1/ww3_shel.out" || { echo "ww3-gpu: expected 'ww_kokkos: $line' (${counts#"$root/"})" >&2; miss=1; }
+    done < "$counts"
+    [ "$miss" = 0 ] || { echo "ww3-gpu: the Kokkos run's calls per part are not the case's" >&2; exit 1; }
+    echo ">> the calls per part match ${counts#"$root/"}"
+  fi
   kname="Kokkos --kokkos $kokkos"
 else
   for r in "${routines[@]}"; do
@@ -604,6 +661,13 @@ echo ">> --ww3-gpu $case_name ($backend): ww3_shel ${w0} s with the Fortran, ${w
 if cmp -s "$d0/$nc0" "$d1/$nc0"; then echo ">> the two outputs are byte-identical"; fi
 echo ">> $kname against the Fortran, same executable:"
 "$nccmp" "$d0/$nc0" "$d1/$nc0" "${tols[@]}"
+# Bit for bit (AGENTS.md): on the CPU every model file must be the Fortran's, not only the field
+# file nccmp-tol judges within its tolerances. On a GPU the differences are reported, not judged.
+if cmp_files "$d0" "$d1" "the Fortran of the same executable" nc; then
+  echo ">> every model file is byte-identical to the Fortran's: $(model_files "$d1" | tr '\n' ' ')"
+elif [ "$backend" != cuda ]; then
+  echo "ww3-gpu: the Kokkos run's model files are not the Fortran's" >&2; exit 1
+fi
 # Pair to pair with --ww3, pure NOAA WW3 (WW3-noaa/) at the fork's base, without the KOKKOS
 # switch, on the CPU: the agents' regtest for --cpu, and for --gpu the reference whose wall time
 # the GPU run is set against. A GPU image built before it carried --ww3 has no $pre/ww3.
@@ -615,6 +679,11 @@ else
   [ -f "$ref" ] || { echo "ww3-gpu: the --ww3 run wrote no $nc0" >&2; exit 1; }
   echo ">> $kname against --ww3 (pure NOAA WW3, WW3-noaa/), pair to pair:"
   "$nccmp" "$ref" "$d1/$nc0" "${tols[@]}"
+  if cmp_files "$runs/ww3-$case_name" "$d1" "--ww3"; then
+    echo ">> every model file but the NetCDF is byte-identical to --ww3's"
+  elif [ "$backend" != cuda ]; then
+    echo "ww3-gpu: the Kokkos run's model files are not --ww3's" >&2; exit 1
+  fi
   # One run each, so a check that the pieces work, not a benchmark: a timing for a table is the
   # median of three runs after this parity passes (bench/README.md).
   w3="$(cat "$runs/ww3-$case_name/ww3_shel.wall")"

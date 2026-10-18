@@ -37,13 +37,15 @@
 // WW_KOKKOS_PROP3_BATCH_MIB MiB each (default 1024); a step with more components or points than
 // fit runs in several launches.
 //
-// WW_KOKKOS_XYP3_TEAM (diagnostic, PATCH.md section 16) picks how ww_xyp3_batch runs a component:
-// unset or empty, one work item per component running the serial body (above); AUTO or a positive
-// N, one Kokkos team per component, of Kokkos' choice of size or of N threads, whose threads split
-// every loop of W3XYP3 and W3QCK3 in which each iteration writes its own elements (TeamLoops,
+// WW_KOKKOS_XYP3_TEAM (PATCH.md sections 16 and 19) picks how ww_xyp3_batch runs a component: 0,
+// one work item per component running the serial body (above); AUTO or a positive N, one Kokkos
+// team per component, of Kokkos' choice of size or of N threads, whose threads split every loop
+// of W3XYP3 and W3QCK3 in which each iteration writes its own elements (TeamLoops,
 // prop_loops.hpp), the averaging scatter and the boundary update on one thread of the team. Each
-// element gets the same operations in the same order either way. A value that does not parse is
-// reported once and the per-component kernel runs; an N above what the backend can run is refused.
+// element gets the same operations in the same order either way. Unset or empty, the execution
+// space decides: one that reads host memory (Serial, OpenMP) runs the per-component kernel, a
+// device (CUDA) teams of kXyp3DeviceTeam threads. A value that does not parse is reported once and
+// the unset default runs; an N above what the backend can run is refused.
 //
 // WW_KOKKOS_PROP3_COUNT=1 prints, at exit, the calls and the components or point calls each entry
 // point ran (the _va entries counted with their routine, and apart as resident calls), and on a
@@ -160,25 +162,43 @@ long long cap_bytes() {
   return cap;
 }
 
-constexpr int kXyp3PerItem = -1;  // WW_KOKKOS_XYP3_TEAM unset: one work item per component
-constexpr int kXyp3TeamAuto = 0;  // AUTO: Kokkos picks the team size
+constexpr int kXyp3Unset = -2;     // WW_KOKKOS_XYP3_TEAM unset: the execution space decides
+constexpr int kXyp3PerItem = -1;   // 0: one work item per component
+constexpr int kXyp3TeamAuto = 0;   // AUTO: Kokkos picks the team size
+// The device's default team size. The team kernel takes 80 registers for sm_89 and 94 for sm_90
+// (ptxas), so a multiprocessor of 65 536 registers holds 25 or 21 warps: teams of four warps put
+// six or five on one, 768 on the 128 of an RTX 4090 and 660 on the 132 of an H100, and all 576
+// components (NK = NTH = 24) run at once, where teams of eight warps (three or two per
+// multiprocessor) would not. Computed, not measured (PATCH.md section 19).
+constexpr int kXyp3DeviceTeam = 128;
 
-/// WW_KOKKOS_XYP3_TEAM: kXyp3PerItem, kXyp3TeamAuto or a team size N > 0, read once.
-int xyp3_team() {
+/// WW_KOKKOS_XYP3_TEAM: kXyp3Unset, kXyp3PerItem, kXyp3TeamAuto or a team size N > 0, read once.
+int xyp3_team_flag() {
   static const int t = [] {
     const char* v = std::getenv("WW_KOKKOS_XYP3_TEAM");
-    if (v == nullptr || *v == '\0') return kXyp3PerItem;
+    if (v == nullptr || *v == '\0') return kXyp3Unset;
     if (std::strcmp(v, "AUTO") == 0) return kXyp3TeamAuto;
     char* end = nullptr;
     const long x = std::strtol(v, &end, 10);
+    if (end != v && *end == '\0' && x == 0) return kXyp3PerItem;
     if (end != v && *end == '\0' && x > 0 && x <= 4096) return static_cast<int>(x);
     std::fprintf(stderr,
-                 "ww_kokkos: WW_KOKKOS_XYP3_TEAM='%s' ignored (AUTO or a team size), using one "
-                 "work item per component\n",
+                 "ww_kokkos: WW_KOKKOS_XYP3_TEAM='%s' ignored (0, AUTO or a team size), using the "
+                 "default of the execution space\n",
                  v);
-    return kXyp3PerItem;
+    return kXyp3Unset;
   }();
   return t;
+}
+
+/// How execution space E runs a component: the flag, or when it is unset, the per-component
+/// kernel on a space that reads host memory and teams of kXyp3DeviceTeam threads on a device.
+template <class E>
+int xyp3_team() {
+  const int t = xyp3_team_flag();
+  if (t != kXyp3Unset) return t;
+  return Kokkos::SpaceAccessibility<E, Kokkos::HostSpace>::accessible ? kXyp3PerItem
+                                                                       : kXyp3DeviceTeam;
 }
 
 bool nested_in_openmp() {
@@ -467,7 +487,8 @@ int xyp3_batch(const E& e, bool fence, const Xyp3Args& a) {
   const int qoff = p.ny - 1;  // FIELD(i) -> [i + NY - 1]
   const int insea = p.nsea, inspec = p.nspec;
 
-  const int team = xyp3_team();
+  const int team = xyp3_team<E>();
+  const bool team_default = xyp3_team_flag() == kXyp3Unset;
   long long launches = 0;
   for (long long n0 = 0; n0 < nlist; n0 += chunk) {
     const int m = static_cast<int>(std::min(chunk, nlist - n0));
@@ -492,15 +513,18 @@ int xyp3_batch(const E& e, bool fence, const Xyp3Args& a) {
         w3xyp3_loops(lp, p, g, s, isp, dtg, msta, field, field + nf,
                      wi0 + static_cast<size_t>(i) * nwi);
       };
-      Policy pol = team == kXyp3TeamAuto ? Policy(e, m, Kokkos::AUTO) : Policy(e, m, team);
+      int ts = team;
       if (team != kXyp3TeamAuto) {
         const int tmax = Policy(e, m, 1).team_size_max(body, Kokkos::ParallelForTag());
-        if (team > tmax)
+        // The default is clamped, a team size asked for is refused: the bits do not depend on it.
+        if (team_default) ts = std::min(team, tmax);
+        if (ts > tmax)
           return fail(WW_KOKKOS_ERR_UNSUPPORTED,
                       ("ww_xyp3_batch: WW_KOKKOS_XYP3_TEAM=" + std::to_string(team) +
                        " is above this backend's team size limit, " + std::to_string(tmax))
                           .c_str());
       }
+      Policy pol = team == kXyp3TeamAuto ? Policy(e, m, Kokkos::AUTO) : Policy(e, m, ts);
       Kokkos::parallel_for("ww_xyp3_team", pol, body);
       g_team_launches.fetch_add(1, std::memory_order_relaxed);
     } else {

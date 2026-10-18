@@ -1,4 +1,5 @@
-! ww3-gpu coast case: every hourly field ww3_shel writes, into one NetCDF file.
+! ww3-gpu coast case: nine of the hourly fields ww3_shel writes, into one NetCDF file for
+! nccmp-tol; out_grd.ww3, which holds them all, is compared byte for byte.
 &FIELD_NML
   FIELD%TIMESTART  = '20200101 000000'
   FIELD%TIMESTRIDE = '3600'

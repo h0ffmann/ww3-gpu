@@ -18,8 +18,9 @@
 // W3UICE's zeroing of VA repeated on the device by the updv unit (section 17) are opt-in the same
 // way until their rows are regtested. ST4_TABLES is opt-in as well (the owner, 2026-10-17): the
 // C++ rebuild of the ST4 tables gives the Fortran's values ("0 values differ", the
-// ST4_TABLES row of PATCH.md) but costs about 8 s per run (coast, SRCE 18.3-18.6 s against 26.6-26.7 s with ST4_TABLES,
-// commit 4fbffbe), while without it the shim reads the tables the Fortran built, the same bits by
+// ST4_TABLES row of PATCH.md) but cost about 8 s serial per run (coast, SRCE 18.3-18.6 s against 26.6-26.7 s with ST4_TABLES,
+// commit 4fbffbe; under a second since the TABU_* host parallel_for, TABU_TAUHF2_KOKKOS.md),
+// while without it the shim reads the tables the Fortran built, the same bits by
 // construction.
 //
 // SPDX-License-Identifier: MIT
