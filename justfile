@@ -105,7 +105,7 @@ coast-ww3-gpu parts="resident" device="cpu":
 # runs the kernel on Kokkos::Serial). WW3GPU_ROUTINES (SNL1 by default; SDS4, SIN4, SPR4 select the
 # ST4 entries; several with commas) names the routines the Kokkos run turns on. WW3GPU_KOKKOS
 # (resident, all or PART,...) turns on the flags of `scripts/ww3-gpu.sh --kokkos` instead and selects
-# by WW3GPU_SWITCH_WORDS (resident: ST4,NL1,PR3,!PDLIB): `WW3GPU_KOKKOS=resident just ww3-gpu-matrix 4 serial`.
+# by WW3GPU_SWITCH_WORDS (resident: ST4,NL1,PR3,UQ,SHRD,!PDLIB,!MGP,!MGG): `WW3GPU_KOKKOS=resident just ww3-gpu-matrix 4 serial`.
 # WW3GPU_LAB_SWITCH=ON builds every entry with switch_lab_shrd's source-term words (the timed
 # run's physics, which no matrix.base switch has), in a build directory ending in -lab.
 # Record: build/ww3-gpu-matrix-<selection>[-<routines>|-kokkos-<preset>][-lab]/summary.tsv.

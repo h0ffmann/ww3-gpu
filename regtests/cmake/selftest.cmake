@@ -3,7 +3,7 @@
 # and the expansion of $mpi, $np, $nr, $nth and $(( )), has_ounf and opt_of, the row verdict, the
 # nccmp-tol parser, the ftp script's version, URL and cp lines, and the data staging. With WW3/
 # checked out it also asserts the counts at the pin, 99 serial, 50 omp, 161 mpi and 310 in all, and
-# those of the resident preset (WW3GPU_KOKKOS), 10 serial, 4 omp, 43 mpi and 57 in all.
+# those of the resident preset (WW3GPU_KOKKOS), 7 serial, 0 omp, 0 mpi and 7 in all.
 # Runs nothing of WW3.
 cmake_minimum_required(VERSION 3.21)
 include("${CMAKE_CURRENT_LIST_DIR}/ww3gpu_common.cmake")
@@ -239,10 +239,10 @@ if(EXISTS "${ww3}/regtests/bin/matrix.base")
     expect("${n}" "${want}" "WW3@${rev} matrix.base, ${k} entries")
     message(STATUS "ww3gpu_matrix: WW3@${rev} matrix.base: ${n} ${k} entries")
   endforeach()
-  foreach(kv "serial;10" "omp;4" "mpi;43" "all;57")
+  foreach(kv "serial;7" "omp;0" "mpi;0" "all;7")
     list(GET kv 0 k)
     list(GET kv 1 want)
-    ww3gpu_select_entries(P "${ww3}/regtests/bin/matrix.base" "${ww3}/regtests" ${k} ANY "ST4;NL1;PR3;!PDLIB")
+    ww3gpu_select_entries(P "${ww3}/regtests/bin/matrix.base" "${ww3}/regtests" ${k} ANY "ST4;NL1;PR3;UQ;SHRD;!PDLIB;!MGP;!MGG")
     list(LENGTH P_TESTS n)
     expect("${n}" "${want}" "WW3@${rev} matrix.base, ${k} entries of the resident preset")
     message(STATUS "ww3gpu_matrix: WW3@${rev} matrix.base: ${n} ${k} entries of the resident preset")
