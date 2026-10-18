@@ -23,7 +23,7 @@ that means.
 |---|---|---|
 | Does the default build change WW3? | No: the patch removes no line, every line it adds to a WW3 source file is inside a `W3_KOKKOS` preprocessor block, and with `KOKKOS` built and no flag set the Fortran runs | section 2 |
 | Bit-identical to the Fortran on the CPU? | Yes, on every regtest entry run with the preset (sections 4 and 8 list what was not run) | section 4 |
-| Faster on the CPU? | 1.49 times less wall time than NOAA WW3 on `full`, 32 threads, median of three on the merged code, shared machine ⚠; the idle-machine median is still to run | section 3 |
+| Faster on the CPU? | 1.65 times less wall time than NOAA WW3 on `full`, 32 threads, median of ten alternated runs on the merged code; regtest pending ⚠ (22 entries passed, not the whole matrix) | section 3 |
 | GFS-Wave (`DIST MPI`, Intel compiler)? | No. The runtime is single node by design; MPI keeps the Fortran ([ADR-0017](ADRs/ADR-0017-kokkos-port-is-single-node-mpi-stays-fortran.md)) | section 8 |
 | GPU? | The CUDA build compiles; no device run yet | section 8 |
 | Ready for operations or for upstream? | Not yet. Thirteen gaps, ranked, with their next step | [`PRODUCTION_READINESS_202610.md`](PRODUCTION_READINESS_202610.md) |
@@ -45,11 +45,12 @@ that means.
   the Fortran of the same executable. This is true on the test cases `smoke` and `full`, at 1 to
   32 threads, and on 22 entries of the WW3 regtest matrix, `ww3_multi` and OpenMP builds included
   (section 4).
-- **Checked (v), shared machine ⚠.** On one 32-thread node with a `SHRD OMPG` build, on the
-  merged code (`5cd0140`, fork `50a10730`), the median of three alternated runs of `ww3_shel` on
-  the `full` case was 29.83 s for NOAA WW3 and 19.99 s for the Kokkos runtime: 1.49 times less
-  wall time (section 3). The load rose from 1.8 to 24.9 during the runs, so this is not yet the
-  idle-machine median a table needs.
+- **Checked (v).** On one 32-thread node with a `SHRD OMPG` build, on the merged code
+  (`5cd0140`, fork `50a10730`), the median of ten alternated runs of `ww3_shel` on the `full` case
+  was 26.18 s for NOAA WW3 and 15.84 s for the Kokkos runtime: 1.65 times less wall time, every
+  output byte-identical to the first run's (section 3). The machine was idle when the runs started
+  (load 2.3). Regtest pending ⚠: WW3's regtests have passed on this commit for 22 entries
+  (section 4), not for the whole matrix.
 - **Checked (v).** At one thread the Kokkos code and the Fortran take the same time. The gain
   comes from the distribution of the work over threads.
 - **Checked (v).** The gain applies to shared-memory builds only. Under `DIST MPI`, the build of
@@ -110,6 +111,7 @@ fork, runs it twice (all flags at 0, then the preset), then builds and runs pure
 | 18 Oct, final code | not recorded | 32.06 | 30.86 | 18.36 | 1.75 |
 | 18 Oct, after #191, one run (#191's notes) | shared | not run | 31.8 | 46.4 | 0.69 to the same executable |
 | 18 Oct, after #191, median of 3 | 1.8 at start, 18.9 to 24.9 during | 29.83 | 26.54 (run 1 only) | 19.99 | 1.49 |
+| **18 Oct, after #191, median of 10** | **2.3 at start** | **26.18** | 27.09 (run 1 only) | **15.84** | **1.65** |
 
 - **Checked (v).** In every run, the Kokkos output is byte-identical (`cmp`) to the Fortran of the
   same executable. Against NOAA WW3, `out_grd.ww3` and `mod_def.ww3` are byte-identical.
@@ -126,6 +128,16 @@ fork, runs it twice (all flags at 0, then the preset), then builds and runs pure
   load rose because other jobs started during the runs; the spread of the Kokkos runs (14.3 to
   21.0 s) is that load. So the slow run was load, not a regression, as far as a shared machine
   can show ⚠.
+- **Checked (v).** The median of ten, the figure this record quotes: `bash scripts/ww3-gpu.sh
+  --ww3-gpu full --cpu --kokkos resident --repeat 10`, 2026-10-18 21:21 to 21:32 UTC, code tree
+  identical to `5cd0140` (`git diff --stat 5cd0140 -- kokkos scripts regtests switches` empty),
+  after the other session's jobs had stopped. Runs, s: `--ww3` 26.02, 26.08, 24.98, 24.55, 25.76,
+  26.59, 26.28, 26.47, 26.76, 26.76; Kokkos 16.58, 15.04, 14.74, 14.86, 15.71, 16.01, 16.38,
+  15.75, 15.92, 16.02. Every output byte-identical to run 1's.
+- **Assumption ⚠.** The load printed during the timed runs (24.5 before, 27.0 after) is the runs'
+  own 32 threads, which the 1-minute average counts; no other job was running when they started,
+  and the spread of each set is under 13 %. That other jobs did not start during the runs is
+  inferred from that spread, not recorded.
 
 ### Thread scaling (18 October, one run each, shared machine ⚠)
 
@@ -353,9 +365,8 @@ Sections 3 and 4 of `W3SNL1` read the spectrum at the quadruplet bins through th
 
 ## 9. Before a speed is final
 
-1. On an idle machine, run `bash scripts/ww3-gpu.sh --ww3-gpu full --cpu --kokkos resident
-   --repeat 3` on the current `main`, with the load printed before and after. Record the medians
-   in `bench/results/` once WW3's regtests have passed on that commit (ADR-0016).
+1. Record the median of ten of section 3 in `bench/results/` once WW3's regtests have passed on
+   `5cd0140` (ADR-0016); 22 entries have, the rest of the matrix has not.
 2. Time the Fortran per region at 32 threads, to confirm or reject the assumption of section 5.
 3. Compare the thread placements of section 6.1 on the idle machine.
 4. Time the Fortran change of section 7, with and without transposed tables, on an idle machine
