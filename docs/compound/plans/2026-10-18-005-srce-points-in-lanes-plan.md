@@ -86,7 +86,7 @@ change a bit.
 | Unit | What | Done when |
 |---|---|---|
 | S0 | One-thread profile of today's batch, libm separated from the rest | the shares below are measured; the go/no-go of S0 is applied |
-| L1 | The lane layer: teams of `W` points (`W` = 8 for AVX2, a template parameter, 1 reproduces today), point-minor scratch, the per-lane fallback that runs today's scalar routines lane by lane | `full` and `smoke` byte-identical; the wall time with `W` = 1 equal to today's within the run spread |
+| L1 | The lane layer: teams of `W` points (`WW_KOKKOS_SRCE_LANES`, 1 to 8, 1 reproduces today), each section run for the team's points in turn with today's scalar routines | **Done** 2026-10-18: `full` and `smoke` byte-identical with 1 and 8 (`kokkos/port_report/W3SRCE_KOKKOS.md`, "Points per team"). The point-minor scratch moves to L2, the first unit that reads it |
 | L2 | `W3SIN4` on lanes (its stress loop, `st4_sin4.hpp:198-249`) | byte-identical; kernel time of `W3SRCE` measured with and without, 1 thread |
 | L3 | `W3SDS4` on lanes, the libmvec sites left as lane loops | the same |
 | L4 | The integration and the initialisation (`srce_kernel.hpp:177-400`) | the same |
