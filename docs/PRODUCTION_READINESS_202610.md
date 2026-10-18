@@ -38,7 +38,7 @@ regtest matrix yet"). 10 of the 310 rows of `kokkos/ports.tsv` are regtested and
 | # | Gap | (a) | (b) | Smallest next step |
 |---|---|---|---|---|
 | 1 | No regtest switch has the source-term set the Kokkos `W3SRCE` translates; NOAA's UFS regtests miss it too | Blocker | Blocker | Read GFS-Wave's operational switch file at its tag; run the `WW3GPU_LAB_SWITCH` matrix on the MPI and `ww3_multi` entries |
-| 2 | `ww3_multi` writes `VA` on the host between `W3WAVE` calls with no sync; fixed under `SHRD` on 2026-10-18 by column syncs at the exchanges (section 2) | Minor ⚠ | Minor ⚠ | Move the pin to the fork branch; `mww3_test_08` under MPI when the owner runs MPI |
+| 2 | `ww3_multi` writes `VA` on the host between `W3WAVE` calls with no sync; fixed under `SHRD` on 2026-10-18 by column syncs at the exchanges, passed again at the integrated pin `50a10730` (section 2) | Minor ⚠ | Minor ⚠ | `mww3_test_08` under MPI when the owner runs MPI |
 | 3 | MPI: four of the six resident parts are `SHRD` only, the preset stops on `DIST MPI`, the communicator is ignored, the device id is not per rank | Blocker | Major | A resident preset without `XYP3`, `OUTG`, `IOPE`, `UPDV`; one run on `switch_lab_mpi` |
 | 4 | Bit parity measured with gfortran and g++ only; the operational compiler and the GPU are not measured | Blocker | Major | Static argument for the Intel build's math calls; one smoke with it |
 | 5 | Build and packaging: a separate static library, C++20 and CMake 3.25; the install-only configure and the exact Kokkos check are done (U6) | Major | Major | A shared-library build and a recipe for the module systems of an operational centre |
@@ -46,7 +46,7 @@ regtest matrix yet"). 10 of the 310 rows of `kokkos/ports.tsv` are regtested and
 | 7 | Configuration is 61 environment variables, no namelist; the preset lives in a lab script | Major | Major | Smallest form done on `ww3-gpu/u2-strict-preset`: `WW_KOKKOS_PRESET=resident` from one table, `presets.txt`; next, a namelist group read by `W3INIT` |
 | 8 | Observability: log lines on every rank, counters at exit to `stderr`, no provenance in the output files | Major | Minor | Gate the lines by `NAPLOG`; one NetCDF global attribute |
 | 9 | OpenMP inside MPI: the per-point parts are serialised by `!$OMP CRITICAL`; the thread budget per rank is not set by the shim | Major | Minor | Measure the hybrid entries of `ww3_ufs1.1` before claiming a speed for them |
-| 10 | Restart with the resident spectrum: covered by the sync calls, never regtested | Major | Minor | The restart-reproduction pair of `ww3_ufs1.1` (`work_c` against `work_d`) under the lab switch |
+| 10 | Restart with the resident spectrum: covered by the sync calls, never regtested; every `matrix.base` restart pair is `MPI` | Major | Minor | Run `scripts/restart_pair.sh` (a `SHRD` restart pair on `full`, written 2026-10-18, not run) |
 | 11 | `PDLIB` and unstructured grids: translated, not wired, gated out | Minor ⚠ | Major | None for GFS-Wave v16; a wiring unit for `PDLIB` when the owner asks |
 | 12 | The fork patch: 4 082 lines of new Fortran, 819 changed lines in three WW3 files, 58 218 lines of C++ in another repository, most of it LGPL-3.0-or-later, some MIT, 76 files with no licence line | Minor | Blocker | ADR-0018 (Proposed) names the three places `ww_kokkos` could live; the owner chooses, after a legal reading ⚠ |
 | 13 | A stale contract remark: "one spectral grid per process"; edited on the fork branch `ww3-gpu/u1-multi-va` (section 13) | Minor | Minor | Move the pin |
@@ -148,6 +148,15 @@ reading ⚠, not run (ADR-0017); the fork branch waits for the pin bump.
 
 - **(a), (b) now Minor** under `SHRD` ⚠: shown on the four `PR3 UQ` `grdset_a`-type entries and
   one moving grid, with the lab switch's source terms, not on GFS-Wave's grids.
+
+**Update, 2026-10-18 (plan 002, U3).** On the integrated pin (`WW3/` `50a10730`, `CPRT` in the
+preset), agent A's commands again gave `test.comp` 0 files different with the host copy poisoned
+on `mww3_test_01` to `_04` (resident) and on both `mww3_test_05` moving-grid entries
+(`SRCE,OUTG,IOPE,UPDV`), and the five `mww3_test_05` `ST4` OMPG entries passed with `CPRT` too (v,
+[log](log/2026-10-18-u3-regtests-v2.md)). Whole-`VA` copies device to host: `_02` 8 → 0, `_03`
+216 → 3, the others unchanged (v). `mww3_test_01` to `_04` have `FLSOU` false, so they test the
+exchanges and the propagation, not `W3SRCE` (v). `mww3_test_07` fails in the Fortran run as well
+(its `SDS4` namelist under the lab switch). `mww3_test_08` (MPI) is still not run.
 
 ## 3. MPI
 
@@ -372,6 +381,14 @@ the UFS case (`work_c`, then `work_d` from its restart, compared by `test.comp`;
 - **(a) Major** until that pair passes; GFS-Wave cycles from restarts.
 - **(b) Minor.**
 - **Next step.** That pair under `WW3GPU_LAB_SWITCH=ON` with the per-point parts and `SRCE`.
+
+**Update, 2026-10-18 (plan 002, U3).** `ww3_ufs1.1` is an `MPI` case, as is every other
+`rstrt_b4b` pair of `matrix.base` (`ww3_tp2.17` with `PDLIB`; v, `matrix.base:2048-2067`,
+`:2171-2205` at `50a10730`), and the resident preset stops under `MPI` (ADR-0017). No entry
+restarts a `SHRD` case. [`scripts/restart_pair.sh`](../scripts/restart_pair.sh) is the smallest
+equivalent on `full` with `switch_lab_shrd`: a 00:00 to 12:00 run and a 06:00 to 12:00 run from
+its own 06:00 restart, for the Fortran and the resident Kokkos of one executable, compared with
+`cmp`. It was not run ⚠ ([log](log/2026-10-18-u3-regtests-v2.md)); the gap stays Major for (a).
 
 ## 11. `PDLIB` and unstructured grids
 

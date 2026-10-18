@@ -71,3 +71,4 @@ Date, author, issue/PR/WFIP.
 | 2026-10-18 | [The boundary and track outputs read only their columns of the resident `VA`](2026-10-18-resident-output-readers.md) | #42, WFIP-0005 |
 | 2026-10-18 | [`ww3_multi` and the resident `VA`: the defect reproduced, column syncs at the exchanges, no read at `W3WAVE`'s return](2026-10-18-ww3-multi-resident-va.md) | plan 2026-10-18-002 U1 + U7, WFIP-0005 |
 | 2026-10-18 | [`W3CPRT` on the resident `VA`: partitioning without copying the spectrum back](2026-10-18-cprt-resident.md) | plan 2026-10-18-002 U9, WFIP-0005 |
+| 2026-10-18 | [U3 on the integrated pin: the resident serial, OMPG, `ww3_multi` and `ww3_tnc1` entries; the restart pair designed, not run](2026-10-18-u3-regtests-v2.md) | plan 2026-10-18-002 U3, #191 |

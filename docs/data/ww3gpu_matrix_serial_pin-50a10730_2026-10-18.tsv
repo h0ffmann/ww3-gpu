@@ -1,0 +1,42 @@
+# Unit U3 of docs/compound/plans/2026-10-18-002-production-single-node-plan.md; record: docs/log/2026-10-18-u3-regtests-v2.md.
+# Block 1: the owner's run, in the worktree ~/code/ww3-gpu-pr191 at daaef07d, as written by record:summary. Block 2: the same command by the U3 agent in its worktree, with OMP_NUM_THREADS=4.
+# Rows 1 and 2 (ww3_tp2.6 ST4, ST4_ASCII) are FAIL in both blocks: the Kokkos run stops in W3INIT with "WW_KOKKOS_XYP3=1, BUT ITS KOKKOS TRANSLATION DOES NOT COVER THIS SWITCH FILE"
+# (logs/1.K.log:160 of the owner's build): LIMON is an unstructured grid, which W3KOKKOS_PROP3_SETUP refuses (WW3/model/src/w3kokkos_prop3md.F90:122,134 at 50a10730), as docs/log/2026-10-18-resident-regtest-lab-switch.md:51 records.
+# The owner decided on 2026-10-18 to keep both as FAIL rows, with no change to the selection, the verdict or the parts; issue #196 is the port of the unstructured path.
+#
+# date: 2026-10-18T18:29:19Z
+# ww3-gpu commit: daaef07d
+# WW3 commit: 50a10730 (origin/ww3-gpu/integ-fixes)
+# machine: Intel(R) Core(TM) i9-14900, 32 hardware threads (nproc --all), OMP_NUM_THREADS=8 per run, WW3GPU_OMP_NESTED=OFF
+# command: WW3GPU_KOKKOS=resident WW3GPU_LAB_SWITCH=ON just ww3-gpu-matrix 4 serial
+# data: /nix/store/97lk2yrkjdjxaniq48mq2p6ciw9y79js-ww3-regtest-data-7.14.2; SCOTCH_PATH: /nix/store/v6003b5s6nr5by0zhncxkg7h4n06gvyq-ptscotch-static-7.0.12; METIS_PATH: /nix/store/2sxmb2qk62pv3f73psif7cc1plwcldns-ww3-metis
+# selection: serial, switch with the words ST4 NL1 PR3 UQ SHRD !PDLIB !MGP !MGG, none of MPI, OMPG, OMPH; WW3GPU_STRICT=ON
+# switch: each entry's source-term words replaced by switches/switch_lab_shrd's (WW3GPU_LAB_SWITCH=ON)
+# Kokkos flags (WW3GPU_KOKKOS, as scripts/ww3-gpu.sh --kokkos): resident = SRCE,XYP3,KTP3,OUTG,IOPE,UPDV,CPRT; the Fortran runs WW_KOKKOS_ALL=0, every part unset
+n	test	switch	built	ran	kokkos_log	test_comp	nccmp_tol	judged	wall_s	kokkos_spectra	ww3_self	options
+1	ww3_tp2.6	ST4	yes	fortran-only	no	n/a	n/a	-	202	SRCE:0,SDS4:0,SIN4:0,SPR4:0	-	-s ST4 -w work_ST4
+2	ww3_tp2.6	ST4_ASCII	yes	fortran-only	no	n/a	n/a	-	197	SRCE:0,SDS4:0,SIN4:0,SPR4:0	-	-s ST4_ASCII -w work_ST4_ASCII
+3	ww3_tp2.15	default	yes	yes	yes	0/23	PASS	dir,dp,fp,hs	159	SRCE:6900,SDS4:0,SIN4:0,SPR4:0	-	-w work_PR3_UQ
+4	ww3_tp2.15	default	yes	yes	yes	0/23	PASS	dir,dp,fp,hs	979	SRCE:137000,SDS4:0,SIN4:0,SPR4:0	-	-w work_5km -g 5km
+5	ww3_tp2.15	default	yes	yes	yes	0/23	PASS	dir,dp,fp,hs	141	SRCE:6624,SDS4:0,SIN4:0,SPR4:0	-	-i input_const -w work_PR3_UQ_CONST
+6	ww3_tp2.15	default	yes	yes	yes	0/25	PASS	dir,dp,fp,hs	153	SRCE:6900,SDS4:0,SIN4:0,SPR4:0	-	-i input_rho -w work_PR3_UQ_RHO
+7	ww3_ts2	ST4_PR3_UQ	yes	yes	yes	0/22	n/a	-	117	SRCE:4632,SDS4:0,SIN4:0,SPR4:0	-	-s ST4_PR3_UQ -w work_ST4_PR3_UQ
+#
+# The VA diagnostics were set in the environment of the U3 agent's runs and the summary does not record them: WW_KOKKOS_VA_POISON=1 WW_KOKKOS_VA_COUNT=1.
+# date: 2026-10-18T18:09:13Z
+# ww3-gpu commit: daaef07
+# WW3 commit: 50a10730 (origin/ww3-gpu/integ-fixes)
+# machine: Intel(R) Core(TM) i9-14900, 32 hardware threads (nproc --all), OMP_NUM_THREADS=4 per run, WW3GPU_OMP_NESTED=OFF
+# command: WW3GPU_KOKKOS=resident WW3GPU_LAB_SWITCH=ON WW3GPU_OMP_THREADS=4 just ww3-gpu-matrix 4 serial
+# data: /nix/store/97lk2yrkjdjxaniq48mq2p6ciw9y79js-ww3-regtest-data-7.14.2; SCOTCH_PATH: /nix/store/v6003b5s6nr5by0zhncxkg7h4n06gvyq-ptscotch-static-7.0.12; METIS_PATH: /nix/store/2sxmb2qk62pv3f73psif7cc1plwcldns-ww3-metis
+# selection: serial, switch with the words ST4 NL1 PR3 UQ SHRD !PDLIB !MGP !MGG, none of MPI, OMPG, OMPH; WW3GPU_STRICT=ON
+# switch: each entry's source-term words replaced by switches/switch_lab_shrd's (WW3GPU_LAB_SWITCH=ON)
+# Kokkos flags (WW3GPU_KOKKOS, as scripts/ww3-gpu.sh --kokkos): resident = SRCE,XYP3,KTP3,OUTG,IOPE,UPDV,CPRT; the Fortran runs WW_KOKKOS_ALL=0, every part unset
+n	test	switch	built	ran	kokkos_log	test_comp	nccmp_tol	judged	wall_s	kokkos_spectra	ww3_self	options
+1	ww3_tp2.6	ST4	yes	fortran-only	no	n/a	n/a	-	127	SRCE:0,SDS4:0,SIN4:0,SPR4:0	-	-s ST4 -w work_ST4
+2	ww3_tp2.6	ST4_ASCII	yes	fortran-only	no	n/a	n/a	-	132	SRCE:0,SDS4:0,SIN4:0,SPR4:0	-	-s ST4_ASCII -w work_ST4_ASCII
+3	ww3_tp2.15	default	yes	yes	yes	0/23	PASS	dir,dp,fp,hs	95	SRCE:6900,SDS4:0,SIN4:0,SPR4:0	-	-w work_PR3_UQ
+4	ww3_tp2.15	default	yes	yes	yes	0/23	PASS	dir,dp,fp,hs	545	SRCE:137000,SDS4:0,SIN4:0,SPR4:0	-	-w work_5km -g 5km
+5	ww3_tp2.15	default	yes	yes	yes	0/23	PASS	dir,dp,fp,hs	87	SRCE:6624,SDS4:0,SIN4:0,SPR4:0	-	-i input_const -w work_PR3_UQ_CONST
+6	ww3_tp2.15	default	yes	yes	yes	0/25	PASS	dir,dp,fp,hs	82	SRCE:6900,SDS4:0,SIN4:0,SPR4:0	-	-i input_rho -w work_PR3_UQ_RHO
+7	ww3_ts2	ST4_PR3_UQ	yes	yes	yes	0/22	n/a	-	72	SRCE:4632,SDS4:0,SIN4:0,SPR4:0	-	-s ST4_PR3_UQ -w work_ST4_PR3_UQ
