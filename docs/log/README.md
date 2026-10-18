@@ -63,3 +63,4 @@ Date, author, issue/PR/WFIP.
 | 2026-10-17 | [The source-term inputs kept on the device (WFIP-0005 unit 4), and why unit 5 waits](2026-10-17-resident-unit4.md) | #42, WFIP-0005 |
 | 2026-10-17 | [A mutation audit of the resident-step pieces: which deliberate breakages the CPU checks catch](2026-10-17-mutation-audit.md) | #42, WFIP-0005 |
 | 2026-10-17 | [Handover: the `goal/42-gpu-fast` integration branch, stopped for another session](2026-10-17-gpu-fast-handover.md) | #42, WFIP-0005 |
+| 2026-10-18 | [The resident preset under MPI: refused by design; SRCE and KTP3 alone run, one entry differs](2026-10-18-resident-mpi-lab-switch.md) | #42, WFIP-0003 |
