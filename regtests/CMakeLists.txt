@@ -232,7 +232,7 @@ set_tests_properties(record:summary PROPERTIES FIXTURES_CLEANUP ww3-gpu LABELS "
 
 set(_n 0)
 foreach(test IN LISTS E_TESTS)
-  list(GET E_OPTS ${_n} opts)
+  ww3gpu_entry_opts(opts "${E_OPTS}" ${_n})
   math(EXPR _n "${_n} + 1")
   ww3gpu_words(o "${opts}")
   ww3gpu_opt_of(sw -s ${o})

@@ -296,11 +296,25 @@ endfunction()
 
 # ww3gpu_select_entries(<prefix> <matrix.base> <regtests dir> <serial|omp|mpi|all> [<physics>
 # [<words>]]): every kept entry, in order, as two parallel lists <prefix>_TESTS and <prefix>_OPTS
-# (the entry's options, $ww3 and the test dropped, space-joined). <physics> is a list of switch
+# (the entry's options, $ww3 and the test dropped, space-joined; an entry with none is
+# WW3GPU_NO_OPTS, since a CMake list cannot hold an empty first item, and ww3gpu_entry_opts reads
+# it back as empty). <physics> is a list of switch
 # words, NL1 by default, ANY for no physics filter; every entry whose switch has one of them and
 # passes ww3gpu_switch_words on <words> is in exactly one of serial (none of MPI, OMPG, OMPH), omp
 # (OMPG or OMPH, no MPI) and mpi (MPI); all is the three. A line whose switch file is missing is
 # dropped, and so is a switch with both ST4 and FLX5, which KOKKOS refuses.
+set(WW3GPU_NO_OPTS "<no-options>")
+
+# ww3gpu_entry_opts(<out> <opts list> <i>): the options of entry <i> of a <prefix>_OPTS list of
+# ww3gpu_select_entries, empty for an entry that has none.
+function(ww3gpu_entry_opts out optl i)
+  list(GET optl ${i} o)
+  if(o STREQUAL "${WW3GPU_NO_OPTS}")
+    set(o "")
+  endif()
+  set(${out} "${o}" PARENT_SCOPE)
+endfunction()
+
 function(ww3gpu_select_entries prefix base rt kind)
   set(phys "${ARGV4}")
   if(phys STREQUAL "")
@@ -372,6 +386,9 @@ function(ww3gpu_select_entries prefix base rt kind)
       continue()
     endif()
     list(JOIN tok " " opts)
+    if(opts STREQUAL "")
+      set(opts "${WW3GPU_NO_OPTS}")
+    endif()
     list(APPEND tests "${test}")
     list(APPEND optl "${opts}")
   endforeach()

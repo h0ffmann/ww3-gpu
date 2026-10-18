@@ -77,6 +77,26 @@ expect("${M_OPTS}" "-s MP -w work_MP;-s MH -w work_MH -f -p $mpi -n $nr -t $nth;
 ww3gpu_select_entries(A "${t}/rt/bin/matrix.base" "${t}/rt" all)
 list(LENGTH A_TESTS na)
 expect("${na}" "12" "all selection, the three together")
+# An entry with no options at all, first in the selection: its options must stay an item of
+# <prefix>_OPTS, or every later entry reads the options of the next one (and the last is out of range).
+file(MAKE_DIRECTORY "${t}/rt0/c/input" "${t}/rt0/bin")
+file(WRITE "${t}/rt0/c/input/switch" "F90 SHRD ST4 NL1\n")
+file(WRITE "${t}/rt0/c/input/switch_K1" "F90 SHRD ST4 NL1\n")
+file(WRITE "${t}/rt0/bin/matrix.base" [=[
+    echo "$rtst $ww3 c" >> matrix.body
+    echo "$rtst -s K1 -w work_K1 $ww3 c" >> matrix.body
+    echo "$rtst $ww3 c" >> matrix.body
+]=])
+ww3gpu_select_entries(Z "${t}/rt0/bin/matrix.base" "${t}/rt0" serial)
+list(LENGTH Z_TESTS nzt)
+list(LENGTH Z_OPTS nzo)
+expect("${nzt}|${nzo}" "3|3" "an entry with no options first: one options item per test")
+set(zo "")
+foreach(i 0 1 2)
+  ww3gpu_entry_opts(o "${Z_OPTS}" ${i})
+  list(APPEND zo "[${o}]")
+endforeach()
+expect("${zo}" "[];[-s K1 -w work_K1];[]" "an entry with no options first: the options, read back")
 ww3gpu_select_entries(T "${t}/rt/bin/matrix.base" "${t}/rt" serial ST4)
 expect("${T_TESTS}" "a;a;a;a;b;b;a;b" "serial selection by ST4, tests (NL3 and NL1X are in)")
 ww3gpu_physics(w SDS4 SNL1 SPR4 SIN4)
