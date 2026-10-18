@@ -209,6 +209,19 @@ dbuild-cuda tag="local":
 drun-cuda *args:
     bash scripts/docker.sh run-cuda {{args}}
 
+# Build the dev image ww3-gpu-dev:<tag>, the dev stage of docker/Dockerfile (no sources inside)
+dbuild-dev tag="local":
+    bash scripts/docker.sh build-dev {{tag}}
+
+# DOCKER_IMAGE=ghcr.io/h0ffmann/ww3-gpu-dev:latest uses the published image.
+# A shell (or a command) in the dev image with this checkout mounted: `just ddev just kokkos-test serial-debug`
+ddev *args:
+    bash scripts/docker.sh run-dev {{args}}
+
+# A runtime image holds NOAA's WW3 and ww3-gpu compiled, and no source file (docker-dist.yml)
+dcheck image="ww3-gpu:local":
+    bash scripts/docker.sh check {{image}}
+
 # NOAA's WW3 (--ww3, the Fortran on the CPU) against --ww3-gpu on CUDA (--kokkos gpu: W3SRCE on
 # Kokkos, the rest of WW3 in Fortran): parity first, then <runs> runs of each and their medians.
 # Asks the supervising human for "yes" (AGENTS.md). `dperf-ww3-gpu` is the same in the GPU image.

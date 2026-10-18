@@ -1,0 +1,60 @@
+# docker-dev — the development image: the `dev` stage of docker/Dockerfile (Ubuntu 26.04, Ubuntu's
+# compilers and netCDF, Kokkos 5.2.2, the gate tools, Nix for picasso), the image
+# .devcontainer/devcontainer.json builds. It holds no source: the checkout is mounted
+# (scripts/docker.sh run-dev), so working on ww3-gpu needs only Docker.
+#
+# Manual only: no push, pull request or schedule builds it (the owner, 18 October 2026). A run
+# started from Actions → docker-dev → Run workflow builds the image and checks its tools; with
+# `push` ticked it also pushes ghcr.io/<owner>/ww3-gpu-dev, and `latest` moves only when that run
+# is on main.
+name: docker-dev
+
+on:
+  workflow_dispatch:
+    inputs:
+      push:
+        description: Push the image to ghcr.io (unticked, the run only builds and checks it)
+        type: boolean
+        default: false
+      tag:
+        description: Image tag (empty, sha-<short commit>)
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  # The environment `ghcr` is where the owner can require an approval before each run
+  # (Settings → Environments).
+  image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment: ghcr
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: false
+      - name: Build the dev stage (scripts/docker.sh build-dev)
+        run: bash scripts/docker.sh build-dev ci
+      - name: Its tools answer
+        run: docker run --rm ww3-gpu-dev:ci bash -c 'gfortran --version | head -1 && cmake --version | head -1 && just --version && shellcheck --version | head -2 && nix --version && test -d /opt/kokkos/include'
+      - name: Push to ghcr.io
+        if: inputs.push
+        env:
+          TAG: ${{ inputs.tag }}
+          OWNER: ${{ github.repository_owner }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="${TAG:-sha-${GITHUB_SHA::7}}"
+          [[ "$tag" =~ ^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$ ]] || { echo "bad tag: $tag" >&2; exit 64; }
+          [ "$tag" != latest ] || { echo "latest is set only by a run on main" >&2; exit 64; }
+          image="ghcr.io/${OWNER,,}/ww3-gpu-dev"
+          refs=("$image:$tag")
+          [ "$GITHUB_REF" = refs/heads/main ] && refs+=("$image:latest")
+          echo "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          bash scripts/docker.sh push ww3-gpu-dev:ci "${refs[@]}"
+          printf 'Pushed:\n' >> "$GITHUB_STEP_SUMMARY"; printf -- '- %s\n' "${refs[@]}" >> "$GITHUB_STEP_SUMMARY"

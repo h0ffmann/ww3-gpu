@@ -5,12 +5,15 @@
 // over https. CPU only; a GPU gate (`just kokkos-cuda-test`) needs a host with a driver. The
 // first `nix develop` downloads the toolchain; later ones hit the store. Open a full clone, not a
 // git worktree: a worktree's .git points into a repository the container does not mount.
+// cacheFrom reuses the published dev image (.github/workflows/docker-dev.yml, pushed by hand
+// only), so Kokkos is not rebuilt; while none is pushed the build runs in full.
 {
   "name": "ww3-gpu",
   "build": {
     "dockerfile": "../docker/Dockerfile",
     "context": "..",
-    "target": "dev"
+    "target": "dev",
+    "cacheFrom": "ghcr.io/h0ffmann/ww3-gpu-dev:latest"
   },
   "remoteUser": "ubuntu",
   "postCreateCommand": "bash scripts/agent_env.sh",

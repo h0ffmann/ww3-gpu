@@ -1,17 +1,12 @@
 # docker-scan — builds docker/Dockerfile, the image this repository distributes, and scans it with
 # Trivy (free, open source): the job fails on any HIGH or CRITICAL vulnerability that has a fix,
 # in an Ubuntu package or in a binary of the image. Unfixed ones are reported, not fatal: there
-# is nothing to upgrade to. Weekly too, since new CVEs land without any change here.
+# is nothing to upgrade to. Manual only (Actions → docker-scan → Run workflow): no Docker image
+# is built by a push, a pull request or a schedule (the owner, 18 October 2026); `just dscan`
+# runs the same scan locally.
 name: docker-scan
 
 on:
-  pull_request:
-    paths: [docker/**, .dockerignore, scripts/ww3-gpu.sh, scripts/docker.sh, kokkos/**, WW3, WW4, .github/workflows/docker-scan.yml]
-  push:
-    branches: [main]
-    paths: [docker/**, .dockerignore, scripts/ww3-gpu.sh, scripts/docker.sh, kokkos/**, WW3, WW4, .github/workflows/docker-scan.yml]
-  schedule:
-    - cron: "17 6 * * 1"
   workflow_dispatch:
 
 permissions:

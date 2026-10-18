@@ -52,7 +52,10 @@ COPY WW3-noaa/ WW3-noaa/
 COPY switches/switch_lab_ompg switches/
 
 ENV P=/opt/ww3-gpu/prebuilt
-RUN cmake -S kokkos --preset cuda-release -B /build/kokkos -DCMAKE_PREFIX_PATH=/opt/kokkos \
+# WW_KOKKOS_LIBM=OFF: the device's glibc libm (WFIP-0006) needs gen_tables to find the hidden
+# __svml_spow_data in libmvec.so.1, and Ubuntu ships libmvec stripped (no .symtab), so the
+# kernels call CUDA's libdevice here and a GPU run is judged by tolerance (ADR-0014).
+RUN cmake -S kokkos --preset cuda-release -B /build/kokkos -DCMAKE_PREFIX_PATH=/opt/kokkos -DWW_KOKKOS_LIBM=OFF \
  && cmake --build /build/kokkos \
  && cmake --install /build/kokkos --prefix /opt/ww_kokkos \
  && install -D -m 755 /build/kokkos/tools/nccmp-tol/nccmp-tol "$P/bin/nccmp-tol" \
@@ -87,7 +90,7 @@ ARG WW3_REV=?
 ARG WW3_NOAA_REV=?
 RUN { echo "ww3-gpu ${WW3_GPU_REV}"; echo "WW3 ${WW3_REV} (h0ffmann/WW3)"; \
       echo "WW3-noaa ${WW3_NOAA_REV} (NOAA-EMC/WW3)"; \
-      echo "kokkos ${KOKKOS_VERSION} CUDA ${KOKKOS_ARCH}"; nvcc --version | tail -1; \
+      echo "kokkos ${KOKKOS_VERSION} CUDA ${KOKKOS_ARCH} WW_KOKKOS_LIBM=OFF (libdevice)"; nvcc --version | tail -1; \
       gfortran --version | head -1; cmake --version | head -1; } > /opt/ww3-gpu/BUILD_INFO
 
 FROM ${CUDA_RUNTIME}
@@ -100,6 +103,8 @@ RUN useradd --create-home --shell /bin/bash wave
 COPY --chmod=755 scripts/ww3-gpu.sh /opt/ww3-gpu/scripts/ww3-gpu.sh
 # Its list of Kokkos parts, one file per wiring unit.
 COPY kokkos/src/fortran_iface/parts.d/ /opt/ww3-gpu/kokkos/src/fortran_iface/parts.d/
+# The switch the programs were built with: ww3-gpu.sh reads it before any run (WW3GPU_SWITCH).
+COPY switches/switch_lab_ompg /opt/ww3-gpu/switches/switch_lab_ompg
 ENV WW3GPU_PREBUILT=/opt/ww3-gpu/prebuilt \
     WW3GPU_RUNS=/work/runs
 WORKDIR /work

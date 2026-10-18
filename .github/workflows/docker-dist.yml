@@ -1,0 +1,85 @@
+# docker-dist — the distribution images, binaries only: NOAA's WW3 at the WW3-noaa/ pin (--ww3)
+# and ww3-gpu (--ww3-gpu, the fork with the Kokkos port) compiled side by side, so a user can run a
+# case with both and compare the outputs pair to pair (scripts/ww3-gpu.sh is the entry point).
+#   cpu   docker/Dockerfile       ghcr.io/<owner>/ww3-gpu        Kokkos on OpenMP, plus WW4
+#   cuda  docker/Dockerfile.cuda  ghcr.io/<owner>/ww3-gpu-cuda   Kokkos on CUDA, --ww3 on the CPU
+# The final stage of each keeps the compiled programs, their runtime libraries and the case
+# inputs; `scripts/docker.sh check` fails when a source file or either WW3 is missing. The labels
+# io.github.h0ffmann.ww3-gpu.ww3-noaa and .ww3 name the two WW3 commits the binaries came from.
+#
+# Manual only: no push, pull request or schedule builds them (the owner, 18 October 2026). A run
+# started from Actions → docker-dist → Run workflow builds and checks the chosen images (nothing
+# runs on a GPU: the CUDA image is only compiled); with `push` ticked it also pushes them, and
+# `latest` moves only when that run is on main. The CPU image's vulnerability scan is
+# docker-scan.yml, manual too.
+name: docker-dist
+
+on:
+  workflow_dispatch:
+    inputs:
+      flavour:
+        description: Which image
+        type: choice
+        options: [both, cpu, cuda]
+        default: both
+      push:
+        description: Push to ghcr.io (unticked, the run only builds and checks)
+        type: boolean
+        default: false
+      tag:
+        description: Image tag, e.g. a release 0.5.0 (empty, sha-<short commit>)
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  # The environment `ghcr` is where the owner can require an approval before each run
+  # (Settings → Environments).
+  image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    environment: ghcr
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        flavour: ${{ fromJSON(inputs.flavour == 'both' && '["cpu","cuda"]' || format('["{0}"]', inputs.flavour)) }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: false
+      - name: Free disk space
+        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL && df -h /
+      - name: Fetch WW3, WW3-noaa and WW4 at their pins
+        run: bash scripts/docker.sh submodules
+      - name: Build
+        env:
+          FLAVOUR: ${{ matrix.flavour }}
+        run: |
+          if [ "$FLAVOUR" = cuda ]; then bash scripts/docker.sh build-cuda ci; else bash scripts/docker.sh build ci; fi
+      - name: Binaries only, both WW3s present
+        env:
+          FLAVOUR: ${{ matrix.flavour }}
+        run: bash scripts/docker.sh check "$([ "$FLAVOUR" = cuda ] && echo ww3-gpu-cuda || echo ww3-gpu):ci"
+      - name: Push to ghcr.io
+        if: inputs.push
+        env:
+          FLAVOUR: ${{ matrix.flavour }}
+          TAG: ${{ inputs.tag }}
+          OWNER: ${{ github.repository_owner }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          name=ww3-gpu; [ "$FLAVOUR" = cuda ] && name=ww3-gpu-cuda
+          tag="${TAG:-sha-${GITHUB_SHA::7}}"
+          [[ "$tag" =~ ^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$ ]] || { echo "bad tag: $tag" >&2; exit 64; }
+          [ "$tag" != latest ] || { echo "latest is set only by a run on main" >&2; exit 64; }
+          image="ghcr.io/${OWNER,,}/$name"
+          refs=("$image:$tag")
+          [ "$GITHUB_REF" = refs/heads/main ] && refs+=("$image:latest")
+          echo "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          bash scripts/docker.sh push "$name:ci" "${refs[@]}"
+          printf 'Pushed:\n' >> "$GITHUB_STEP_SUMMARY"; printf -- '- %s\n' "${refs[@]}" >> "$GITHUB_STEP_SUMMARY"
