@@ -61,7 +61,7 @@ WW3GPU_KOKKOS=resident WW3GPU_LAB_SWITCH=ON WW3GPU_OMP_THREADS=2 just ww3-gpu-ma
 | `full` copy with `SKW`, strict unset, domain cut to 2 h | exit 0, `End of program`, `SRCE=0 CPRT=0 OUTG=3` (v) |
 | `WW3GPU_KOKKOS=all just ww3-gpu-matrix-list serial` | 363 entries; 38 with `PR0;SHRD` (v) |
 | `all`, `ww3_tnc1` (entry 38, `PR0 SHRD`) | runs and passes: test.comp 0/30, 10 of 16 parts on Kokkos, `calls left on the Fortran: MAP3=1 MAPT=1 SRCE=1`; before this change strict mode would have stopped it in `W3INIT` (v, run; the stop itself not re-run) |
-| resident matrix, 4 serial jobs | MATRIXRESULT |
+| resident matrix, 4 serial jobs, merged with `origin/main` at `0cfb595`, pin `fac74069`: 5 of 7 entries PASS (`ww3_tp2.15` x4, `test.comp` 0 of 23, 23, 23, 25 files different, `nccmp-tol` PASS; `ww3_ts2:ST4_PR3_UQ` 0 of 22, no `nccmp-tol` reference), 2 FAIL by design (`ww3_tp2.6` `ST4` and `ST4_ASCII`: unstructured mesh, `W3INIT` stops on `XYP3`, `ran=fortran-only`; the owner keeps them FAIL); every passing Kokkos run ends `calls left on the Fortran: SRCE=0 CPRT=0 OUTG=0`; 729.7 s wall, load average 12 to 25 on the shared machine; the run asked for no `WBT` or `SKW`, so strict mode's new `W3OUTG` stop did not fire in it (v, `build/ww3-gpu-matrix-serial-kokkos-resident-lab/summary.tsv`) |
 
 Two things the runs show beyond the question:
 
@@ -80,5 +80,9 @@ Two things the runs show beyond the question:
   stop.
 - Units 2 and 3 change a gate's invocation, and unit 1 adds a stop: a person reviews them before
   the merge (AGENTS.md, "Never cheat a regtest tool").
+- The matrix command, run in the worktree of this branch: `WW3GPU_KOKKOS=resident
+  WW3GPU_LAB_SWITCH=ON WW3GPU_OMP_THREADS=2 just ww3-gpu-matrix 4 serial` (exit 8 from the two
+  `ww3_tp2.6` entries only). Regtest verdict of this commit: the entries above; the full ADR-0016
+  validation phase is still the owner's.
 - Next: a supervised GPU run reads the POISON count with the others; `smoke`'s `WBT` and `SKW`
   stay on the Fortran until those fields are translated.
