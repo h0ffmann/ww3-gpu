@@ -41,14 +41,14 @@ regtest matrix yet"). 10 of the 310 rows of `kokkos/ports.tsv` are regtested and
 | 2 | `ww3_multi` writes `VA` on the host between `W3WAVE` calls with no sync | Blocker | Blocker | Mark the host newer when `W3WAVE` returns; run `mww3_test_0x` with `WW_KOKKOS_VA_CHECK=1` |
 | 3 | MPI: four of the six resident parts are `SHRD` only, the preset stops on `DIST MPI`, the communicator is ignored, the device id is not per rank | Blocker | Major | A resident preset without `XYP3`, `OUTG`, `IOPE`, `UPDV`; one run on `switch_lab_mpi` |
 | 4 | Bit parity measured with gfortran and g++ only; the operational compiler and the GPU are not measured | Blocker | Major | Static argument for the Intel build's math calls; one smoke with it |
-| 5 | Build and packaging: a separate static library whose install needs GoogleTest and NetCDF, an unversioned Kokkos, C++20 and CMake 3.25 | Major | Blocker | An install-only configure with Kokkos as the one dependency, its version recorded in `ww_kokkosConfig.cmake` |
+| 5 | Build and packaging: a separate static library, C++20 and CMake 3.25; the install-only configure and the exact Kokkos check are done (U6) | Major | Major | A shared-library build and a recipe for the module systems of an operational centre |
 | 6 | `WW_KOKKOS_ALL=1` and `W3KOKKOS_SRCE_ON` fall back to the Fortran without a word | Major | Minor | A strict flag that turns every fallback into a stop, and a per-run fallback count |
 | 7 | Configuration is 61 environment variables, no namelist; the preset lives in a lab script | Major | Major | A namelist group read by `W3INIT`, the environment as override, the effective set printed once |
 | 8 | Observability: log lines on every rank, counters at exit to `stderr`, no provenance in the output files | Major | Minor | Gate the lines by `NAPLOG`; one NetCDF global attribute |
 | 9 | OpenMP inside MPI: the per-point parts are serialised by `!$OMP CRITICAL`; the thread budget per rank is not set by the shim | Major | Minor | Measure the hybrid entries of `ww3_ufs1.1` before claiming a speed for them |
 | 10 | Restart with the resident spectrum: covered by the sync calls, never regtested | Major | Minor | The restart-reproduction pair of `ww3_ufs1.1` (`work_c` against `work_d`) under the lab switch |
 | 11 | `PDLIB` and unstructured grids: translated, not wired, gated out | Minor ⚠ | Major | None for GFS-Wave v16; a wiring unit for `PDLIB` when the owner asks |
-| 12 | The fork patch: 4 082 lines of new Fortran, 819 changed lines in three WW3 files, the C++ in another repository under another licence | Minor | Blocker | An ADR on where `ww_kokkos` lives for upstream |
+| 12 | The fork patch: 4 082 lines of new Fortran, 819 changed lines in three WW3 files, 58 218 lines of C++ in another repository, most of it LGPL-3.0-or-later, some MIT, 76 files with no licence line | Minor | Blocker | ADR-0018 (Proposed) names the three places `ww_kokkos` could live; the owner chooses, after a legal reading ⚠ |
 | 13 | A stale contract remark: "one spectral grid per process" | Minor | Minor | Edit the remark in the fork |
 
 The sections below give the evidence of each gap. The ranked top five closes the page.
@@ -214,9 +214,9 @@ What a WW3 build needs today:
 |---|---|---|
 | A separately built, installed `ww_kokkos` | `find_package(ww_kokkos 0.9 REQUIRED)` (v, `WW3 model/src/CMakeLists.txt:43`) | Upstream has no place to fetch it from |
 | A static archive only | `add_library(ww_kokkos STATIC)` (v, `kokkos/CMakeLists.txt:52`) | No shared build for a coupled system that links WW3 as a library |
-| GoogleTest, NetCDF C and Fortran, a Fortran compiler to configure the library | `find_package(GTest REQUIRED)`, `pkg_check_modules(NETCDF ...)`, `NETCDFF` (v, `kokkos/CMakeLists.txt:12`, `:33-37`) | The install needs the test and tool dependencies |
+| GoogleTest, NetCDF C and Fortran, a Fortran compiler to configure the library | `find_package(GTest REQUIRED)`, `pkg_check_modules(NETCDF ...)`, `NETCDFF` under `WW_KOKKOS_BUILD_TESTS` (default ON), and C and Fortran enabled only then (v, `kokkos/CMakeLists.txt`) | Closed (U6): `-DWW_KOKKOS_BUILD_TESTS=OFF` configures with C++ only and searches Kokkos only (see below) |
 | C++20, CMake 3.25 | v, `kokkos/CMakeLists.txt:11`, `:14` | WW3 asks for CMake 3.19 (v, `WW3/CMakeLists.txt:4`) |
-| Kokkos, unversioned | `find_package(Kokkos REQUIRED)` and `find_dependency(Kokkos)` (v, `kokkos/CMakeLists.txt:26`, `:83-85`) | WW3's configure may find a Kokkos other than the one the archive was built with; only `WW_KOKKOS_ARCH`, optional, checks the architecture (v, `:27-32`) |
+| Kokkos, pinned by the package | `kokkos/cmake/ww_kokkosConfig.cmake.in`: `find_dependency(Kokkos <Kokkos_VERSION> EXACT)`, then `Kokkos_DEVICES` and `Kokkos_ARCH` compared with the values recorded at build time (v) | Closed (U6): another Kokkos is a configure error of WW3's `find_package(ww_kokkos 0.9 REQUIRED)`, unchanged in the fork |
 | A version contract | `SameMajorVersion` at 0.9.0, entry points only added (v, `kokkos/CMakeLists.txt:86-90`) | Sound for a 0.x series, but no symbol check enforces "only added" ⚠ |
 | Contraction off in the kernels | `-ffp-contract=off`, `--fmad=false`, `PRIVATE` to `ww_kokkos` (v, `kokkos/src/ww_kokkos/CMakeLists.txt:297-303`) | Correct where it is; WW3's side does not check it was built this way |
 | `ww3_lib` links `ww_kokkos::ww_kokkos` `PUBLIC` | v, `WW3 model/src/CMakeLists.txt:44` | WW3's exported targets (v, `:285-299`) then name a package a consumer must also find ⚠ (no consumer built) |
@@ -226,9 +226,19 @@ What a WW3 build needs today:
 - **(a) Major.** NCEP can build it by hand; it cannot pin it as one more library in its stack
   without the items above.
 - **(b) Blocker.** An upstream optional dependency must configure with its own dependencies only.
-- **Next step.** An option (`WW_BUILD_TESTS`, default on here) that skips GoogleTest, NetCDF,
-  the tools and the Fortran language for an install-only configure; write `Kokkos_VERSION` and
-  the enabled backends into `ww_kokkosConfig.cmake` and check them in WW3's `find_package`.
+- **State (U6, 2026-10-18).** `WW_KOKKOS_BUILD_TESTS=OFF` is the install-only configure
+  (`kokkos/README.md`, "Install-only build"). Traced with `cmake --trace-expand` in the `#ww3`
+  shell, it ran `find_package(Kokkos REQUIRED)` and, inside Kokkos' config,
+  `find_package(OpenMP REQUIRED COMPONENTS CXX)`, and no other `find_package` or
+  `pkg_check_modules`; `Kokkos_DIR` is the only package directory in its cache (v). The
+  installed config records Kokkos 5.2.2, `OPENMP;SERIAL`, no architecture (v). WW3 built
+  against that prefix with `WW3GPU_KOKKOS_PREFIX=<prefix> scripts/ww3-gpu.sh --ww3-gpu smoke
+  --cpu` (v, 2026-10-18): WW3's cache names that prefix as `ww_kokkos_DIR`; the Kokkos and the
+  Fortran runs of the same executable wrote byte-identical files (`out_grd.ww3`, `out_pnt.ww3`,
+  `restart.ww3`, the NetCDF), and against `--ww3` every binary model file was byte-identical and
+  `nccmp-tol` found 0 difference in every NetCDF field. No fork change was needed.
+- **Next step.** A shared build of `ww_kokkos` for a coupled system, and the CMake and C++
+  minimums against what an operational centre's module system provides ⚠.
 
 ## 6. Failure behaviour
 
@@ -342,16 +352,22 @@ batched `W3SRCE` is compiled only `!defined(W3_PDLIB)` (v, `w3wavemd.F90:452`, `
 `diff -r` of the fork against `WW3-noaa/` (v, today): six new modules, 4 082 lines
 (`w3kokkos*md.F90`), and 114, 456 and 249 changed lines in `w3initmd.F90`, `w3srcemd.F90`,
 `w3wavemd.F90`, plus a `kokkos` category in `switches.json` and the CMake block of section 5. The
-Fortran is LGPL-3.0-or-later (v, `w3kokkosmd.F90:33`); the C++ it calls is MIT (v, the 12
-`SPDX` lines of `kokkos/src/fortran_iface/*.cpp`) and lives here, not in WW3. The `#ifdef
+Fortran is LGPL-3.0-or-later (v, `w3kokkosmd.F90:33`). The C++ it calls lives here, not in WW3:
+58 218 lines in 347 files under `kokkos/src/`, of which 249 files carry `LGPL-3.0-or-later` (the
+kernels translated from WW3, all in `ww_kokkos/`), 22 carry `MIT` (the shims, timers, fixture
+reader) and 76 carry no line (v, `grep SPDX-License-Identifier`, 2026-10-18). An earlier version
+of this section called the C++ MIT; the count corrects it. The `#ifdef
 W3_KOKKOS` hunks inside `W3WAVE`'s time loop are what a reviewer reads; with the `KOKKOS` switch
 off they compile to the original.
 
 - **(a) Minor.** Operations can run the fork.
 - **(b) Blocker.** Upstream needs to know where the C++ comes from, who maintains it, and how its
   version is pinned.
-- **Next step.** An ADR: `ww_kokkos` as an external package WW3 finds, as a submodule of WW3, or
-  inside `model/src`; the licences permit each ⚠ (no legal reading).
+- **State (U6, 2026-10-18).** [ADR-0018](ADRs/ADR-0018-where-ww-kokkos-lives-for-upstream.md),
+  Proposed, sets out the three options (an external package WW3 finds, a submodule of WW3,
+  sources inside `model/src`) with the size and licence of each; only the first was built.
+- **Next step.** The owner's choice among them, after a legal reading of the licence of the
+  translated C++ and of the files with no licence line ⚠.
 
 ## 13. A stale remark in the contract
 
@@ -381,11 +397,10 @@ Ranked by what blocks both targets first, then by how much of GFS-Wave's run it 
    (`model/src/CMakeLists.txt:113-115`) calls another math library; no GPU run compared the
    device libm. Next: the static argument for the Intel build's transcendental calls, then one
    smoke.
-5. **The library cannot be installed as a plain dependency.** Its configure needs GoogleTest,
-   NetCDF and Fortran, C++20 and CMake 3.25, and records no Kokkos version
-   (`kokkos/CMakeLists.txt:11-37`, `:83-85`); the C++ lives outside WW3 under another licence.
-   Next: an install-only option, the Kokkos version in the package config, and an ADR on where
-   `ww_kokkos` lives.
+5. **Where the library lives for upstream is open.** Since U6 it installs with Kokkos as its one
+   dependency and pins that Kokkos exactly (`kokkos/README.md`, "Install-only build"); it still
+   needs C++20 and CMake 3.25, and its C++ lives outside WW3, mostly under WW3's licence.
+   Next: the owner's choice among the options of ADR-0018, after a legal reading.
 
 ## How the checks were made
 

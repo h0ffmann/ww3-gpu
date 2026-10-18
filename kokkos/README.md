@@ -154,7 +154,7 @@ Trans. Parallel Distrib. Syst.* 33(4), 805–817, 2022,
 ```
 CMakeLists.txt        top level: options, find_package, the ww_kokkos target
 CMakePresets.json     serial-debug, openmp-release, cuda-release, cuda-h100-release
-cmake/                CompilerWarnings.cmake -- the one warning policy
+cmake/                CompilerWarnings.cmake (the one warning policy), ww_kokkosConfig.cmake.in
 src/ww_kokkos/        real.hpp (float32 + helpers), spectrum_fixtures.hpp (JONSWAP, cos^2),
                       snl1_{config,tables,dia} (the DIA port), fixture_io (fixture reader)
 src/fortran_iface/    ww_kokkos_c.hpp + snl1_shim.cpp (the C ABI, built into ww_kokkos),
@@ -227,6 +227,50 @@ Two things the names do *not* promise:
 |---|---|---|
 | `WW_ENABLE_FORTRAN` | `ON` | build the Fortran interface module `W3KOKKOSMD` and `intro_06` |
 | `WW_DETERMINISTIC` | `OFF` | pin reductions to a fixed summation order for bit-reproducible validation runs |
+| `WW_KOKKOS_BUILD_TESTS` | `ON` | build the intro programs, the GoogleTest suites and the NetCDF tools; `OFF` is the install-only configure below |
+
+### Install-only build: `ww_kokkos` with Kokkos as its one dependency
+
+WW3 built with the `KOKKOS` switch links the installed `ww_kokkos` package
+(`find_package(ww_kokkos 0.9 REQUIRED)`, v, `WW3/model/src/CMakeLists.txt:43` at `WW3@80644ba9`).
+`-DWW_KOKKOS_BUILD_TESTS=OFF` configures only that package: the project enables C++ alone, and
+GoogleTest, NetCDF, the intro programs, the tools and the Fortran module are left out
+(`WW_ENABLE_FORTRAN` is forced off: WW3 compiles `W3KOKKOSMD` in its own build). The kernels and
+their flags do not change: `-ffp-contract=off` and, on CUDA, `--fmad=false` stay `PRIVATE` to
+`ww_kokkos` (`src/ww_kokkos/CMakeLists.txt`).
+
+```bash
+# inside nix develop ./picasso/labs/pratico#ww3, from the repository root
+cmake -S kokkos -B kokkos/build/install-only -G Ninja -DCMAKE_BUILD_TYPE=Release \
+      "-DCMAKE_CXX_FLAGS=-O3 -march=x86-64-v3" -DWW_KOKKOS_BUILD_TESTS=OFF
+cmake --build kokkos/build/install-only -j8
+cmake --install kokkos/build/install-only --prefix <prefix>
+# then WW3 against it (scripts/ww3-gpu.sh still builds openmp-release, for nccmp-tol):
+WW3GPU_KOKKOS_PREFIX=<prefix> scripts/ww3-gpu.sh --ww3-gpu smoke --cpu
+```
+
+The installed `ww_kokkosConfig.cmake` (from `cmake/ww_kokkosConfig.cmake.in`) records the
+`Kokkos_VERSION`, `Kokkos_DEVICES` and `Kokkos_ARCH` of the Kokkos the archive was compiled
+against, asks for `find_dependency(Kokkos <version> EXACT)`, and sets `ww_kokkos_FOUND` false with
+a message when the Kokkos found has other backends or another architecture. `EXACT` works because
+Kokkos' `KokkosConfigVersion.cmake` is CMake's basic version file, which sets
+`PACKAGE_VERSION_EXACT` when the requested version string equals its own (v, read in the
+`kokkos-openmp-5.2.2` store path of the `#ww3` shell, 2026-10-18).
+
+What the configure searched, read from `cmake --trace-expand` (v, 2026-10-18): `find_package(Kokkos
+REQUIRED)` in this tree, and `find_package(OpenMP REQUIRED COMPONENTS CXX)` from Kokkos' own
+`find_dependency`; no other `find_package` or `pkg_check_modules` call ran, and `Kokkos_DIR` is the
+only package directory in the cache. The `#ww3` shell's Kokkos is 5.2.2 with `OPENMP;SERIAL` and no
+architecture. The 25 object files of `ww_kokkos` are byte-identical to the `openmp-release`
+preset's (`diff -r -q` of the two `CMakeFiles/ww_kokkos.dir`, v, 2026-10-18): the option changes
+what is configured around the library, not the library.
+
+The refusals, checked with a one-line consumer project (`find_package(ww_kokkos 0.9 REQUIRED)`)
+on 2026-10-18 (v): with the installed config, it finds Kokkos 5.2.2; with `-DKokkos_DIR` pointed
+at a Kokkos 5.2.0 it still takes 5.2.2 and ignores 5.2.0; with the recorded version edited to
+5.2.1 it stops with "Could not find a configuration file for package "Kokkos" that exactly matches
+requested version"; with the recorded backends edited to `CUDA;SERIAL` it stops with the
+config's own message.
 
 ## Intro programs
 

@@ -85,6 +85,10 @@
 # itself (picasso/labs/pratico: #ww3, or #cuda for --gpu).
 # Builds go to build/<ww3|ww3-gpu-BACKEND>/, runs to build/runs/<mode>-<case>[-BACKEND]/ ($WW3GPU_RUNS).
 #
+# WW3GPU_KOKKOS_PREFIX=<dir> (--ww3-gpu) builds WW3 against the ww_kokkos package installed in
+# <dir>, for instance by an install-only configure (kokkos/README.md), in place of the one this
+# script installs from kokkos/build/<backend>-release; that build still runs, for nccmp-tol.
+#
 # WW3GPU_PREBUILT=<prefix> runs programs built beforehand and builds nothing, with no Nix: the
 # Docker image (docker/Dockerfile) sets it. <prefix> holds ww3/bin and ww3-gpu-openmp/bin (WW3's
 # programs), bin/nccmp-tol, cases/ (ww3_ts1, bench_small, ww4/<case>), and ww4/ (ww4_standalone
@@ -490,14 +494,19 @@ else
   preset="${backend}-release"
   kbuild="$root/kokkos/build/$preset"
   kprefix="$kbuild/install"
+  if [ -n "${WW3GPU_KOKKOS_PREFIX:-}" ]; then
+    kprefix="$(cd "$WW3GPU_KOKKOS_PREFIX" 2>/dev/null && pwd)" \
+      || { echo "ww3-gpu: WW3GPU_KOKKOS_PREFIX=$WW3GPU_KOKKOS_PREFIX is not a directory" >&2; exit 64; }
+  fi
   if [ "$mode" = ww3-gpu ]; then
     fresh_for_toolchain "$kbuild"
     [ -f "$kbuild/CMakeCache.txt" ] || cmake -S "$root/kokkos" --preset "$preset" >/dev/null
     # nvcc writes its errors to stdout: keep them in a log and show them, or the build fails silently.
     cmake --build "$kbuild" -j"$jobs" > "$kbuild/build.log" 2>&1 \
       || { grep -E -A8 "FAILED|error" "$kbuild/build.log" | head -60; echo "ww3-gpu: the Kokkos build ($preset) failed; $kbuild/build.log" >&2; exit 1; }
-    cmake --install "$kbuild" --prefix "$kprefix" >/dev/null
-    echo ">> ww_kokkos ($preset) installed in $kprefix"
+    cmake --install "$kbuild" --prefix "$kbuild/install" >/dev/null
+    echo ">> ww_kokkos ($preset) installed in $kbuild/install"
+    [ -z "${WW3GPU_KOKKOS_PREFIX:-}" ] || echo ">> WW3 links the ww_kokkos package in $kprefix (WW3GPU_KOKKOS_PREFIX)"
   fi
 
   # --- WW3 ------------------------------------------------------------------------------------
@@ -516,6 +525,11 @@ else
     printf '%s\n' "$switch_now" > "$switch_file"
     [ -d "$bdir/ww3" ] && [[ "$bdir/ww3" == "$root/build/"* ]] && rm -rf -- "$bdir/ww3"
   fi
+  # Another ww_kokkos package needs a fresh configure: WW3's cache holds the ww_kokkos_DIR it found.
+  if [ "$mode" = ww3-gpu ] && [ "$(cat "$bdir/kprefix" 2>/dev/null || echo "$kbuild/install")" != "$kprefix" ]; then
+    [ -d "$bdir/ww3" ] && [[ "$bdir/ww3" == "$root/build/"* ]] && rm -rf -- "$bdir/ww3"
+  fi
+  [ "$mode" != ww3-gpu ] || printf '%s\n' "$kprefix" > "$bdir/kprefix"
   if [ ! -f "$bdir/ww3/CMakeCache.txt" ]; then
     args=(-S "$ww3" -B "$bdir/ww3" -DSWITCH="$switch_file" -DCMAKE_BUILD_TYPE=Release)
     if [ "$mode" = ww3-gpu ]; then

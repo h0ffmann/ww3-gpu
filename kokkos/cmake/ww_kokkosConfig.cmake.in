@@ -1,0 +1,41 @@
+# ww_kokkosConfig.cmake, generated from kokkos/cmake/ww_kokkosConfig.cmake.in.
+# libww_kokkos.a holds Kokkos templates instantiated against one Kokkos install. A consumer
+# that found another one (another version, another backend set, another GPU architecture)
+# would link code compiled for one Kokkos with the runtime of another, so the config asks
+# for the same version EXACT and checks the backends and architecture after it.
+#
+# SPDX-License-Identifier: MIT
+include(CMakeFindDependencyMacro)
+
+set(ww_kokkos_Kokkos_VERSION "@Kokkos_VERSION@")
+set(ww_kokkos_Kokkos_DEVICES "@Kokkos_DEVICES@")
+set(ww_kokkos_Kokkos_ARCH "@Kokkos_ARCH@")
+
+# KokkosConfigVersion.cmake sets PACKAGE_VERSION_EXACT when the requested version string
+# equals its own, so EXACT accepts this Kokkos and no other.
+find_dependency(Kokkos ${ww_kokkos_Kokkos_VERSION} EXACT)
+
+set(_ww_kokkos_have_devices ${Kokkos_DEVICES})
+set(_ww_kokkos_want_devices ${ww_kokkos_Kokkos_DEVICES})
+set(_ww_kokkos_have_arch ${Kokkos_ARCH})
+set(_ww_kokkos_want_arch ${ww_kokkos_Kokkos_ARCH})
+list(SORT _ww_kokkos_have_devices)
+list(SORT _ww_kokkos_want_devices)
+list(SORT _ww_kokkos_have_arch)
+list(SORT _ww_kokkos_want_arch)
+if(NOT "${_ww_kokkos_have_devices}" STREQUAL "${_ww_kokkos_want_devices}"
+   OR NOT "${_ww_kokkos_have_arch}" STREQUAL "${_ww_kokkos_want_arch}")
+  set(ww_kokkos_FOUND FALSE)
+  string(CONCAT ww_kokkos_NOT_FOUND_MESSAGE
+      "ww_kokkos was built against Kokkos ${ww_kokkos_Kokkos_VERSION} with backends "
+      "'${ww_kokkos_Kokkos_DEVICES}' and architecture '${ww_kokkos_Kokkos_ARCH}'; the Kokkos "
+      "found (${Kokkos_DIR}) has backends '${Kokkos_DEVICES}' and architecture '${Kokkos_ARCH}'. "
+      "Point CMAKE_PREFIX_PATH or Kokkos_ROOT at the Kokkos ww_kokkos was built with.")
+  return()
+endif()
+unset(_ww_kokkos_have_devices)
+unset(_ww_kokkos_want_devices)
+unset(_ww_kokkos_have_arch)
+unset(_ww_kokkos_want_arch)
+
+include("${CMAKE_CURRENT_LIST_DIR}/ww_kokkosTargets.cmake")
