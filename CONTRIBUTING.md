@@ -146,7 +146,9 @@ A mistake in a figure is as welcome as one in the text: the gallery links an iss
   the host only before an output or a restart that needs it. A whole-spectrum copy per step, per
   grid or per `W3WAVE` call is refused, even when it is the simpler fix: on a GPU it is a bus
   transfer every step. A change to the sync reports `WW_KOKKOS_VA_COUNT=1` on `full` before and
-  after.
+  after. `scripts/ww3-gpu.sh` and `just ww3-gpu-matrix` set `WW_KOKKOS_VA_POISON=1` in every Kokkos
+  run, so a host reader that misses its sync reads NaN and fails the byte comparison;
+  `WW_KOKKOS_VA_POISON=0` in the caller's environment turns it off, and the Fortran runs never have it.
 - `codemeta.json` is generated from `CITATION.cff` and `.zenodo.json` (`just codemeta`); never
   edit it by hand.
 - Run `just kokkos-test serial-debug` after touching `kokkos/`, and `bash -n` plus

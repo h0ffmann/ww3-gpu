@@ -72,3 +72,4 @@ Date, author, issue/PR/WFIP.
 | 2026-10-18 | [`ww3_multi` and the resident `VA`: the defect reproduced, column syncs at the exchanges, no read at `W3WAVE`'s return](2026-10-18-ww3-multi-resident-va.md) | plan 2026-10-18-002 U1 + U7, WFIP-0005 |
 | 2026-10-18 | [`W3CPRT` on the resident `VA`: partitioning without copying the spectrum back](2026-10-18-cprt-resident.md) | plan 2026-10-18-002 U9, WFIP-0005 |
 | 2026-10-18 | [U3 on the integrated pin: the resident serial, OMPG, `ww3_multi` and `ww3_tnc1` entries; the restart pair designed, not run](2026-10-18-u3-regtests-v2.md) | plan 2026-10-18-002 U3, #191 |
+| 2026-10-18 | [Strict mode sees `W3OUTG`'s Fortran fallback, stops only where a run names its parts, and the missed-sync poison is on by default](2026-10-18-strict-outg-poison.md) | #191 review findings 1 to 3 |
