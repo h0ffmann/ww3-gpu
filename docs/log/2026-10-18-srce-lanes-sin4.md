@@ -77,6 +77,18 @@ take less time when eight sea points run it at once, one per vector lane?
   no warning. `smoke` (`ww3_ts1`, one sea point) takes one point per team under the default: a
   launch with fewer points than 8 x threads does.
 
+- (v) WW3's regtests with the default, `just regtest-selected` at `919c5cf` (`WW3@50a10730`,
+  2026-10-18 22:05 to 22:15 UTC, the resident preset, lab switch, strict, 6 threads per run):
+  `ww3_tp2.15` default, `-g 5km`, `input_const`, `input_rho` and `ww3_ts2` `ST4_PR3_UQ` give
+  `test.comp` 0/23, 0/23, 0/23, 0/25, 0/22, `nccmp-tol` PASS, no second Fortran run needed, and
+  `smoke` byte-identical; the same verdicts as `main`'s run of the same selection (the owner's,
+  `5cd0140`). The Kokkos logs give 276 points per batched launch for the four `ww3_tp2.15` entries
+  (5 480 for `-g 5km`), at least the 48 of 8 lanes x 6 threads, so they ran the lane path;
+  `ww3_ts2` has 24 points per launch and ran one point per team.
+- ⚠ Entries 3, 5, 6 and 7 took 100 to 112 s against 40 to 53 s in `main`'s run. `ww3_ts2` did not
+  take the lane path and slowed by the same factor, and the load was 17.7 when the run started,
+  so the machine and not the lanes is taken as the cause; not measured.
+
 ## What it changes
 
 The lane layer pays where a per-point loop has ordered sums and branches g++ will not vectorise.
