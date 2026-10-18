@@ -195,6 +195,10 @@ WFIP-0006) with the host, and every flag's parity note says "GPU ⚠ never run" 
 (ADR-0014). WCOSS2 has no GPUs (the `WCOSS2` row of [`GLOSSARY.md`](GLOSSARY.md)), so for (a)
 today the GPU is not the path; GFS-Wave's spectral grid, 50 x 36, also needs the DIA's level-1
 scratch on the RTX 4090 (v, `kokkos/PORT_STATUS.md:63`), a speed matter, not a parity one.
+The CUDA build of the fork for the resident preset compiles, build only, with no warning in a
+wired part (v, [`log/2026-10-18-cuda-build-only.md`](log/2026-10-18-cuda-build-only.md)); the
+owner's supervised run follows
+[`GPU_SUPERVISED_RUN_CHECKLIST_202610.md`](GPU_SUPERVISED_RUN_CHECKLIST_202610.md).
 
 **Real kind.** The interface is `REAL(C_FLOAT)`; "a WW3 built with an 8-byte default REAL needs a
 different ABI" (v, `w3kokkosmd.F90:30-31`).

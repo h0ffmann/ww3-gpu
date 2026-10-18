@@ -520,6 +520,8 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | NVMe | ⚠ Non-Volatile Memory Express (not expanded in the repo) | Fast local storage named among today's lab-machine features. | [pubs/proposal/pt/05-justification.md](../pubs/proposal/pt/05-justification.md) |
 | FP32 / FP64 / float32 | single / double precision; WW3's default `REAL` is 4 bytes, `ww::Real` is `float` `(v)` [kokkos/src/ww_kokkos/real.hpp](../kokkos/src/ww_kokkos/real.hpp) | The port keeps `float` state and accumulates in `double`. | [course/11-kokkos-and-modern-cpp.md](../course/11-kokkos-and-modern-cpp.md) |
 | FMA / `-ffp-contract` / `--fmad` | fused multiply-add and the GCC / nvcc flags that control contraction `(v)` [kokkos/README.md](../kokkos/README.md) | One rounding where the Fortran does two; `ww_kokkos` builds with `-ffp-contract=off` and `--fmad=false` for bit parity. | [course/12-porting-a-kernel-w3snl1.md](../course/12-porting-a-kernel-w3snl1.md), [kokkos/PORT_STATUS.md](../kokkos/PORT_STATUS.md) |
+| `--expt-relaxed-constexpr` / nvcc `#20013-D` | nvcc's flag that lets device code call a `constexpr` host function, and the warning it prints without it `(v)` the CUDA build log, [docs/log/2026-10-18-cuda-build-only.md](log/2026-10-18-cuda-build-only.md) | Not set in the lab's CUDA Kokkos; the 48 warnings of 2026-10-18 are the host-only lambdas of the translated, unwired `DO_OUTPUT_EXCHANGES`. | [docs/log/2026-10-18-cuda-build-only.md](log/2026-10-18-cuda-build-only.md) |
+| `#pragma GCC novector` | a GCC 14+ pragma that stops the vectoriser on the next loop `(v)` `g++ -fopt-info-vec-all` ("dont-vectorize loop") | Keeps the Fortran's operand order where g++'s vector body swaps an add; nvcc warns `#1675-D` and still passes it to the host g++. | [kokkos/src/ww_kokkos/uost_uost_sourceterm_compute.hpp](../kokkos/src/ww_kokkos/uost_uost_sourceterm_compute.hpp) |
 | ULP | ⚠ unit in the last place (not expanded in the repo) | The granularity of float rounding; the budget of a bit-parity test. | [kokkos/src/ww_kokkos/snl1_config.hpp](../kokkos/src/ww_kokkos/snl1_config.hpp) |
 | `powi()` / `pow11()` | integer-power helpers that reproduce gfortran's multiplication chain for `x**n` `(v)` [kokkos/README.md](../kokkos/README.md) | Why the port is bit-for-bit rather than "close": `x**n` is not `std::pow`. | [course/12-porting-a-kernel-w3snl1.md](../course/12-porting-a-kernel-w3snl1.md) |
 | Kokkos | ⚠ the Sandia-led C++ performance-portability library (not expanded; 5.2.0 pinned `(v)` [kokkos/README.md](../kokkos/README.md)) | One kernel source runs on Serial, OpenMP or CUDA backends chosen at build time; the abstraction WW4 proposes too. | [course/11-kokkos-and-modern-cpp.md](../course/11-kokkos-and-modern-cpp.md) |
@@ -1054,6 +1056,7 @@ Every term above, alphabetically, with the section it lives in.
 - EXPAND: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - EXPND2: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - EXTCDE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- `--expt-relaxed-constexpr` / nvcc `#20013-D`: [HPC and software](#hpc-and-software)
 - `extern "C"`: [HPC and software](#hpc-and-software)
 - EXTIOF / EXTOPN: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - F, E: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
@@ -1127,6 +1130,7 @@ Every term above, alphabetically, with the section it lives in.
 - F_ZHAO_V1: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - GAULEG / INSNLGQM: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - GAULEG: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- `#pragma GCC novector`: [HPC and software](#hpc-and-software)
 - gdb stack sampling: [HPC and software](#hpc-and-software)
 - GEBCO: [HPC and software](#hpc-and-software)
 - GEFS-Wave: [Models, projects and institutions](#models-projects-and-institutions)

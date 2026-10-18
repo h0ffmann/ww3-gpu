@@ -209,6 +209,11 @@ on the search path. `WW_KOKKOS_ARCH=HOPPER90` makes the configure call Kokkos' `
 backends and/or architectures requested" (v, 2026-10-17) instead of building `sm_89` code under
 an H100 name. `scripts/ww3-gpu.sh --gpu` still builds `cuda-release`.
 
+`just kokkos-cuda-test` ends with `ctest` on the CUDA default execution space, which is a device
+run and the owner's. To build only: `cmake -S kokkos --preset cuda-release` and
+`cmake --build kokkos/build/cuda-release` in the `#cuda` shell. The owner's supervised GPU run
+follows [`docs/GPU_SUPERVISED_RUN_CHECKLIST_202610.md`](../docs/GPU_SUPERVISED_RUN_CHECKLIST_202610.md).
+
 Two things the names do *not* promise:
 
 - **The backend comes from the shell, not from the preset.** OpenMP is the default
