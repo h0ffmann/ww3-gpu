@@ -103,4 +103,5 @@ libraries on `LD_LIBRARY_PATH`. A bench record names the driver it ran with.
 | Vale | 3.15.2 | `.github/workflows/ci.yml:65` |
 | Trivy | 0.76.0 | `.github/workflows/docker-scan.yml:47` |
 | `actions/checkout` | v7 | every workflow |
-| Nix installer | `DeterminateSystems/nix-installer-action@main` (not pinned); `cachix/install-nix-action@v31` for Pages | `ci.yml:138`, `health.yml:43`, `pages.yml:46` |
+| Nix installer | `cachix/install-nix-action@v31` (upstream Nix) | `ci.yml:147`, `health.yml:44`, `pages.yml:46` |
+| Nix store cache | `nix-community/cache-nix-action` v7.0.2, pinned by SHA; saved only on a push to `main` | `ci.yml:148`, `health.yml:45` |

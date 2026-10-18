@@ -40,8 +40,13 @@ jobs:
             }
           done
 
-      - uses: DeterminateSystems/nix-installer-action@main
-      - uses: DeterminateSystems/magic-nix-cache-action@main
+      # The same shell and cache as ci.yml's kokkos job, which saves it on main; restored here only.
+      - uses: cachix/install-nix-action@v31
+      - uses: nix-community/cache-nix-action@7df957e333c1e5da7721f60227dbba6d06080569 # v7.0.2
+        with:
+          primary-key: nix-pratico-ww3-${{ runner.os }}-${{ hashFiles('picasso/labs/pratico/flake.nix', 'picasso/labs/pratico/flake.lock') }}
+          restore-prefixes-first-match: nix-pratico-ww3-${{ runner.os }}-
+          save: false
 
       - name: h1 — WW3 with the Kokkos DIA on the CPU, against the Fortran and --ww3
         run: bash scripts/ww3-gpu.sh --ww3-gpu smoke --cpu
