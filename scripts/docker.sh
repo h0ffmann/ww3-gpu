@@ -12,7 +12,8 @@
 #   scripts/docker.sh build-dev [tag]      build ww3-gpu-dev:<tag>, the dev stage of docker/Dockerfile
 #   scripts/docker.sh run-dev [cmd]        a shell (or cmd) in the dev image, this checkout mounted
 #   scripts/docker.sh submodules           fetch WW3, WW3-noaa and WW4 at their pins over https
-#   scripts/docker.sh check <image>        a runtime image holds both WW3s compiled and no source file
+#   scripts/docker.sh check <image>        a runtime image holds both WW3s compiled and no source file,
+#                                          and its entry point starts (--build-only, no run)
 #   scripts/docker.sh push <image> <ref>...   tag a local image as each ref and push it (by hand only)
 #   scripts/docker.sh --dry-run <cmd> ...  print the docker command, run nothing
 #   scripts/docker.sh --self-test
@@ -72,7 +73,7 @@ if [ "${1:-}" = --self-test ]; then
     grep -q -- "$want" <<<"$out" || { echo "docker: push lost '$want': $out" >&2; exit 1; }
   done
   out="$(bash "${BASH_SOURCE[0]}" --dry-run check ww3-gpu:t1)"
-  for want in "--entrypoint sh ww3-gpu:t1" BUILD_INFO "binaries only"; do
+  for want in "--entrypoint sh ww3-gpu:t1" BUILD_INFO "binaries only" "--ww3 smoke --build-only" "--ww3-gpu smoke --build-only"; do
     grep -q -- "$want" <<<"$out" || { echo "docker: check lost '$want': $out" >&2; exit 1; }
   done
   bash "${BASH_SOURCE[0]}" --dry-run push ww3-gpu:t1 >/dev/null 2>&1 && { echo "docker: push without a ref" >&2; exit 1; }
@@ -159,7 +160,13 @@ case "$cmd" in
       src=$(find /opt/ww3-gpu /work -type f \( -name "*.[fF]90" -o -name "*.ftn" -o -name "*.[ch]" \
             -o -name "*.[ch]pp" -o -name "*.cu" -o -name CMakeLists.txt \) | head)
       [ -z "$src" ] || { echo "sources in the image:" >&2; echo "$src" >&2; exit 1; }
-      echo "binaries only: ok"' ;;
+      echo "binaries only: ok"'
+    # The entry point must get past its argument and file checks in both modes; --build-only
+    # stops before any run (and --gpu --build-only needs neither a GPU nor a person).
+    gpu=()
+    if [ -z "$dry" ] && docker run --rm --entrypoint test "$img" -d /opt/ww3-gpu/prebuilt/ww3-gpu-cuda; then gpu=(--gpu); fi
+    do_or_say docker run --rm "$img" --ww3 smoke --build-only
+    do_or_say docker run --rm "$img" --ww3-gpu smoke "${gpu[@]}" --build-only ;;
   push)
     # Never called by CI on its own: .github/workflows/docker-*.yml run it only from a manual
     # workflow_dispatch with push set.

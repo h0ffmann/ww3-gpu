@@ -148,6 +148,8 @@ RUN useradd --create-home --shell /bin/bash wave
 COPY --chmod=755 scripts/ww3-gpu.sh /opt/ww3-gpu/scripts/ww3-gpu.sh
 # Its list of Kokkos parts, one file per wiring unit.
 COPY kokkos/src/fortran_iface/parts.d/ /opt/ww3-gpu/kokkos/src/fortran_iface/parts.d/
+# The switch the programs were built with: ww3-gpu.sh reads it before any run (WW3GPU_SWITCH).
+COPY switches/switch_lab_ompg /opt/ww3-gpu/switches/switch_lab_ompg
 ENV WW3GPU_PREBUILT=/opt/ww3-gpu/prebuilt \
     WW3GPU_RUNS=/work/runs \
     OMP_PROC_BIND=false
