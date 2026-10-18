@@ -240,6 +240,16 @@ Record nvcc, Kokkos, g++ host, gfortran, driver, and the `CMakeCache.txt` lines 
 `WW_KOKKOS_LIBM`, `CMAKE_CUDA_ARCHITECTURES`, contraction flags. Read the warnings against
 `docs/log/2026-10-18-cuda-build-only.md`'s list; a new warning in a wired part stops phase B.
 
+**A3b. The host compiler of the CUDA build.** gfortran is 16.2.0 in both builds, but
+`nvcc_wrapper` compiles the host half of every `.cpp` with g++ 14.4.0, against 16.2.0 for the CPU
+build and every static parity argument (`docs/log/2026-10-18-cuda-build-only.md:25-26`,
+`:74-77`). Before phase B, one of two things: build the library on the OpenMP backend with g++
+14.4.0 and run `smoke` and `full` resident pair to pair with the Fortran (byte-identical, or a
+defect to fix before the GPU run); or compare the `-O3` GIMPLE of the host-side shim paths under
+both compilers. Record why the `#cuda` shell pins g++ 14.4 (presumably the newest host GCC nvcc
+12.9 accepts ⚠, from NVIDIA's support matrix). Without it, a GPU difference cannot be split into
+the device's share and the host compile's.
+
 **A4. The same commands on the CPU first.** On the frozen commit:
 `bash scripts/ww3-gpu.sh --ww3-gpu {smoke,full,coast} --cpu --kokkos resident`, each byte-identical
 to the Fortran and to `--ww3` (NetCDF attribute aside); `WW_KOKKOS_VA_COUNT=1` and
