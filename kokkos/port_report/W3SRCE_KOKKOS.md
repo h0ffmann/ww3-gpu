@@ -195,6 +195,30 @@ The copies removed are about 0.05 s of host `memcpy` per run on this CPU; the ke
 differences are the machine's load, not the change. What the change exists for is a device, where
 3.13 MB per step no longer crosses PCIe ⚠ (never run).
 
+## Points per team (plan 005, unit L1)
+
+The batched kernel's sections are member functions of `SrcePoint`
+(`kokkos/src/ww_kokkos/srce_kernel.hpp`): `init`, `step_a`, `dia`, `step_c` and `finish`, whose
+bodies are the statements of the one-point kernel moved without a change (v, every line of the
+four bodies found verbatim, in order, in the new file, 2026-10-18). `w3srce_team` composes them
+for one point as before. `w3srce_lanes` runs them for up to eight points per team: each section for
+every point still in the integration loop, one after the other, and each point's DIA on the whole
+team. A point reads and writes only its own arguments and work arrays, so the order in which the
+points of a team take their turns cannot change a bit. `WW_KOKKOS_SRCE_LANES` (1 to 8, default 1,
+host backends only) sets the number; the exit counters print it. This unit vectorises nothing yet:
+it is the layer the later units of
+[plan 005](../../docs/compound/plans/2026-10-18-005-srce-points-in-lanes-plan.md) vectorise across.
+
+| Check, 2026-10-18, `WW3@50a10730`, `switch_lab_ompg` | `WW_KOKKOS_SRCE_LANES` | Result |
+|---|---|---|
+| `bash scripts/ww3-gpu.sh --ww3-gpu smoke --cpu --kokkos resident`, `WW_KOKKOS_STRICT=1 WW_KOKKOS_VA_POISON=1` | 1 and 8 | every model file byte-identical to the Fortran of the same executable (`out_grd.ww3`, `out_pnt.ww3`, `restart.ww3`, `ww3.196806.nc`); every file but the NetCDF to `--ww3`'s, `nccmp-tol` PASS (v) |
+| the same on `full` | 1 and 8 | the same verdicts (`out_grd.ww3`, `ww3.field.nc`) (v) |
+| `just kokkos-test openmp-release`, `serial-debug` | | 11/11, 11/11, no warning (v) |
+
+One run each on a machine shared with another session's regtests (load 9 to 25): `full`'s Kokkos
+run took 19.20 s with 1 point per team and 19.23 s and 19.60 s with 8 ⚠, so the layer costs
+nothing visible, and gains nothing yet, as designed.
+
 ## Benchmarks
 
 One CPU measurement of the batched path, after the replay above passed on the same tree

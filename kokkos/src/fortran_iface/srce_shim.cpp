@@ -26,6 +26,7 @@
 #include <atomic>
 #include <cstdio>
 #include <cstdlib>
+#include <new>
 #include <cstring>
 #include <exception>
 #include <map>
@@ -132,12 +133,37 @@ const Flags& flags() {
                        env_is_one("WW_KOKKOS_SRCE_STAGED")};
   return f;
 }
+/// Points per team of the batched launch on a host backend: WW_KOKKOS_SRCE_LANES, 1 to
+/// kSrceMaxLanes, read once; 1, the default, is one point per team. A team of several points
+/// runs each point's statements as one point alone runs them (w3srce_lanes), so the value
+/// changes which points share a team, never a bit (plan 2026-10-18-005). A device keeps one
+/// point per team.
+int srce_lanes() {
+  static const int lanes = [] {
+    int w = 1;
+    if (const char* v = std::getenv("WW_KOKKOS_SRCE_LANES")) {
+      char* end = nullptr;
+      const long x = std::strtol(v, &end, 10);
+      if (end != v && *end == '\0' && x >= 1 && x <= kSrceMaxLanes)
+        w = static_cast<int>(x);
+      else
+        std::fprintf(stderr, "ww_kokkos: WW_KOKKOS_SRCE_LANES='%s' ignored, using 1\n", v);
+    }
+    return w;
+  }();
+  return lanes;
+}
+
 void print_count() {
   std::fprintf(stderr, "ww_kokkos: W3SRCE spectra computed: %lld\n", g_count.load());
   // One count per line, "<name>: <n>", the form scripts/ww3-gpu.sh prints.
   std::fprintf(stderr, "ww_kokkos: W3SRCE batched calls: %lld\n", g_batch_calls.load());
   std::fprintf(stderr, "ww_kokkos: W3SRCE batched launches: %lld\n", g_batch_launches.load());
   std::fprintf(stderr, "ww_kokkos: W3SRCE batched points: %lld\n", g_batch_points.load());
+  std::fprintf(stderr, "ww_kokkos: W3SRCE batch points per team (WW_KOKKOS_SRCE_LANES): %d\n",
+               Kokkos::SpaceAccessibility<Kokkos::DefaultExecutionSpace, Kokkos::HostSpace>::accessible
+                   ? srce_lanes()
+                   : 1);
   long long nc = 0, bc = 0, ns = 0, bs = 0;
   for (int k = 0; k < kNumIn; ++k) {
     nc += g_in_copies[k].load();
@@ -456,76 +482,132 @@ void run_batch(GridCtx& g, const st4::Params& q, const st4::Fields& f, const snl
                ndw = static_cast<size_t>(srce_work_doubles(p));
   const Real* ns = nsig.data();
   ww::timers::Region t_k("srce.batch.kernel", fence);
+  // A point's inputs, and its INOUT scalars into and out of SC(i): copies, the same for
+  // either launch below.
+  const auto point_in = KOKKOS_LAMBDA(const size_t ii) {
+    const Real* x = PI.data() + ii * WW_SRCE_NPIN;
+    return PointIn{c.it,
+                     c.inflags24,
+                     c.flogrd57,
+                     c.flogrd58,
+                     x[WW_SRCE_IN_D_INP],
+                     x[WW_SRCE_IN_U10ABS],
+                     x[WW_SRCE_IN_U10DIR],
+                     x[WW_SRCE_IN_AS],
+                     x[WW_SRCE_IN_ICE],
+                     c.dtg,
+                     x[WW_SRCE_IN_DAIR],
+                     x[WW_SRCE_IN_COEF]};;
+  };
+  const auto load_scalars = KOKKOS_LAMBDA(const int i) {
+    const Real* y = PS.data() + static_cast<size_t>(i) * WW_SRCE_NPSC;
+    PointScalars& o = SC(i);
+    o = PointScalars{y[WW_SRCE_SC_USTAR],  y[WW_SRCE_SC_USTDIR], y[WW_SRCE_SC_TAUWX],
+                     y[WW_SRCE_SC_TAUWY],  y[WW_SRCE_SC_DTDYN],  y[WW_SRCE_SC_FCUT],
+                     y[WW_SRCE_SC_TAUOX],  y[WW_SRCE_SC_TAUOY],  y[WW_SRCE_SC_TAUWIX],
+                     y[WW_SRCE_SC_TAUWIY], y[WW_SRCE_SC_TAUWNX], y[WW_SRCE_SC_TAUWNY],
+                     y[WW_SRCE_SC_PHIAW],  y[WW_SRCE_SC_CHARN],  y[WW_SRCE_SC_TWS],
+                     y[WW_SRCE_SC_PHIOC],  y[WW_SRCE_SC_PHIBBL], y[WW_SRCE_SC_PHICE],
+                     y[WW_SRCE_SC_TAUOCX], y[WW_SRCE_SC_TAUOCY], y[WW_SRCE_SC_WNMEAN],
+                     SH(i)};
+  };
+  const auto store_scalars = KOKKOS_LAMBDA(const int i) {
+    Real* y = PS.data() + static_cast<size_t>(i) * WW_SRCE_NPSC;
+    const PointScalars& o = SC(i);
+    y[WW_SRCE_SC_USTAR] = o.ustar;
+    y[WW_SRCE_SC_USTDIR] = o.ustdir;
+    y[WW_SRCE_SC_TAUWX] = o.tauwx;
+    y[WW_SRCE_SC_TAUWY] = o.tauwy;
+    y[WW_SRCE_SC_DTDYN] = o.dtdyn;
+    y[WW_SRCE_SC_FCUT] = o.fcut;
+    y[WW_SRCE_SC_TAUOX] = o.tauox;
+    y[WW_SRCE_SC_TAUOY] = o.tauoy;
+    y[WW_SRCE_SC_TAUWIX] = o.tauwix;
+    y[WW_SRCE_SC_TAUWIY] = o.tauwiy;
+    y[WW_SRCE_SC_TAUWNX] = o.tauwnx;
+    y[WW_SRCE_SC_TAUWNY] = o.tauwny;
+    y[WW_SRCE_SC_PHIAW] = o.phiaw;
+    y[WW_SRCE_SC_CHARN] = o.charn;
+    y[WW_SRCE_SC_TWS] = o.tws;
+    y[WW_SRCE_SC_PHIOC] = o.phioc;
+    y[WW_SRCE_SC_PHIBBL] = o.phibbl;
+    y[WW_SRCE_SC_PHICE] = o.phice;
+    y[WW_SRCE_SC_TAUOCX] = o.tauocx;
+    y[WW_SRCE_SC_TAUOCY] = o.tauocy;
+    y[WW_SRCE_SC_WNMEAN] = o.wnmean;
+    SH(i) = o.shave;
+  };
+  const auto spectrum = KOKKOS_LAMBDA(const int i) {
+    return resident ? VA.data() + static_cast<size_t>(JS(i)) * p.nspec
+                    : SP.data() + static_cast<size_t>(i) * p.nspec;
+  };
   const auto body = KOKKOS_LAMBDA(const Member& team) {
         const int i = team.league_rank();
         const size_t ii = static_cast<size_t>(i);
-        const Real* x = PI.data() + ii * WW_SRCE_NPIN;
-        const PointIn in{c.it,
-                         c.inflags24,
-                         c.flogrd57,
-                         c.flogrd58,
-                         x[WW_SRCE_IN_D_INP],
-                         x[WW_SRCE_IN_U10ABS],
-                         x[WW_SRCE_IN_U10DIR],
-                         x[WW_SRCE_IN_AS],
-                         x[WW_SRCE_IN_ICE],
-                         c.dtg,
-                         x[WW_SRCE_IN_DAIR],
-                         x[WW_SRCE_IN_COEF]};
-        Real* y = PS.data() + ii * WW_SRCE_NPSC;
+        const PointIn in = point_in(ii);
         PointScalars& o = SC(i);
-        Kokkos::single(Kokkos::PerTeam(team), [&]() {
-          o = PointScalars{y[WW_SRCE_SC_USTAR],  y[WW_SRCE_SC_USTDIR], y[WW_SRCE_SC_TAUWX],
-                           y[WW_SRCE_SC_TAUWY],  y[WW_SRCE_SC_DTDYN],  y[WW_SRCE_SC_FCUT],
-                           y[WW_SRCE_SC_TAUOX],  y[WW_SRCE_SC_TAUOY],  y[WW_SRCE_SC_TAUWIX],
-                           y[WW_SRCE_SC_TAUWIY], y[WW_SRCE_SC_TAUWNX], y[WW_SRCE_SC_TAUWNY],
-                           y[WW_SRCE_SC_PHIAW],  y[WW_SRCE_SC_CHARN],  y[WW_SRCE_SC_TWS],
-                           y[WW_SRCE_SC_PHIOC],  y[WW_SRCE_SC_PHIBBL], y[WW_SRCE_SC_PHICE],
-                           y[WW_SRCE_SC_TAUOCX], y[WW_SRCE_SC_TAUOCY], y[WW_SRCE_SC_WNMEAN],
-                           SH(i)};
-        });
+        Kokkos::single(Kokkos::PerTeam(team), [&]() { load_scalars(i); });
         team.team_barrier();
         const snl1::TeamScratch w = snl1::snl1_team_scratch(team, level, nc, nt);
-        Real* const sp = resident ? VA.data() + static_cast<size_t>(JS(i)) * p.nspec
-                                  : SP.data() + ii * p.nspec;
-        w3srce_team(team, p, grid, q, f, nc, nt, ns, w, in, sp, W1.data() + ii * p.nk,
+        w3srce_team(team, p, grid, q, f, nc, nt, ns, w, in, spectrum(i), W1.data() + ii * p.nk,
                     C1.data() + ii * p.nk, o, WC.data() + ii * 4,
                     TB.data() + ii * 2, TI.data() + ii * 2, ST(i), RW.data() + ii * nrw,
                     IW.data() + ii * niw, DW.data() + ii * ndw);
         team.team_barrier();
-        Kokkos::single(Kokkos::PerTeam(team), [&]() {
-          y[WW_SRCE_SC_USTAR] = o.ustar;
-          y[WW_SRCE_SC_USTDIR] = o.ustdir;
-          y[WW_SRCE_SC_TAUWX] = o.tauwx;
-          y[WW_SRCE_SC_TAUWY] = o.tauwy;
-          y[WW_SRCE_SC_DTDYN] = o.dtdyn;
-          y[WW_SRCE_SC_FCUT] = o.fcut;
-          y[WW_SRCE_SC_TAUOX] = o.tauox;
-          y[WW_SRCE_SC_TAUOY] = o.tauoy;
-          y[WW_SRCE_SC_TAUWIX] = o.tauwix;
-          y[WW_SRCE_SC_TAUWIY] = o.tauwiy;
-          y[WW_SRCE_SC_TAUWNX] = o.tauwnx;
-          y[WW_SRCE_SC_TAUWNY] = o.tauwny;
-          y[WW_SRCE_SC_PHIAW] = o.phiaw;
-          y[WW_SRCE_SC_CHARN] = o.charn;
-          y[WW_SRCE_SC_TWS] = o.tws;
-          y[WW_SRCE_SC_PHIOC] = o.phioc;
-          y[WW_SRCE_SC_PHIBBL] = o.phibbl;
-          y[WW_SRCE_SC_PHICE] = o.phice;
-          y[WW_SRCE_SC_TAUOCX] = o.tauocx;
-          y[WW_SRCE_SC_TAUOCY] = o.tauocy;
-          y[WW_SRCE_SC_WNMEAN] = o.wnmean;
-          SH(i) = o.shave;
-        });
+        Kokkos::single(Kokkos::PerTeam(team), [&]() { store_scalars(i); });
       };
   // With no more points than threads no thread gets a second point under either schedule, and
   // the dynamic one costs a rendezvous of every thread per launch (ww3_ts1, one sea point, 2 161
   // launches: srce.batch.kernel 0.51-0.53 s static, 0.80-0.97 s dynamic, 32 threads). The
   // schedule decides only which thread runs a point, never the point's arithmetic.
-  if (n > ex.concurrency())
-    Kokkos::parallel_for("ww_srce_batch", policy, body);
-  else
-    Kokkos::parallel_for("ww_srce_batch", Kokkos::TeamPolicy<ExecSpace>(policy), body);
+  bool launched = false;
+  if constexpr (Kokkos::SpaceAccessibility<ExecSpace, Kokkos::HostSpace>::accessible) {
+    const int lanes = srce_lanes();
+    if (lanes > 1) {
+      const int league = (n + lanes - 1) / lanes;
+      const auto body_lanes = KOKKOS_LAMBDA(const Member& team) {
+        const int i0 = team.league_rank() * lanes;
+        const int nl = n - i0 < lanes ? n - i0 : lanes;
+        PointIn in[kSrceMaxLanes];
+        for (int l = 0; l < nl; ++l) in[l] = point_in(static_cast<size_t>(i0 + l));
+        Kokkos::single(Kokkos::PerTeam(team), [&]() {
+          for (int l = 0; l < nl; ++l) load_scalars(i0 + l);
+        });
+        team.team_barrier();
+        const snl1::TeamScratch w = snl1::snl1_team_scratch(team, level, nc, nt);
+        // SrcePoint holds references, so the team's points are built in place.
+        alignas(SrcePoint) unsigned char mem[kSrceMaxLanes * sizeof(SrcePoint)];
+        SrcePoint* const x = reinterpret_cast<SrcePoint*>(mem);
+        for (int l = 0; l < nl; ++l) {
+          const int i = i0 + l;
+          const size_t ii = static_cast<size_t>(i);
+          new (x + l) SrcePoint(p, grid, q, f, in[l], spectrum(i), W1.data() + ii * p.nk,
+                                C1.data() + ii * p.nk, SC(i), WC.data() + ii * 4,
+                                TB.data() + ii * 2, TI.data() + ii * 2, ST(i),
+                                RW.data() + ii * nrw, IW.data() + ii * niw, DW.data() + ii * ndw);
+        }
+        w3srce_lanes(team, nc, nt, ns, w, x, nl);
+        team.team_barrier();
+        Kokkos::single(Kokkos::PerTeam(team), [&]() {
+          for (int l = 0; l < nl; ++l) store_scalars(i0 + l);
+        });
+      };
+      Policy lp(league, Kokkos::AUTO);
+      lp.set_scratch_size(level, Kokkos::PerTeam(scratch));
+      lp.set_chunk_size(1);
+      if (league > ex.concurrency())
+        Kokkos::parallel_for("ww_srce_batch", lp, body_lanes);
+      else
+        Kokkos::parallel_for("ww_srce_batch", Kokkos::TeamPolicy<ExecSpace>(lp), body_lanes);
+      launched = true;
+    }
+  }
+  if (!launched) {
+    if (n > ex.concurrency())
+      Kokkos::parallel_for("ww_srce_batch", policy, body);
+    else
+      Kokkos::parallel_for("ww_srce_batch", Kokkos::TeamPolicy<ExecSpace>(policy), body);
+  }
   ex.fence();
   t_k.stop();
 
