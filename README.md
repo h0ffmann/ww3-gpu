@@ -149,7 +149,7 @@ with `--kokkos`:
 | `none` | none | the Fortran only, in the Kokkos build |
 | `all` | all the parts of the build (`WW_KOKKOS_ALL=1`), but not the opt-in parts below | the widest test of the translation |
 | `gpu` | `SRCE` | the default of `--gpu`: all of `W3SRCE` in each call ([ADR-0013](docs/ADRs/ADR-0013-operational-parts-default-to-kokkos.md)) |
-| `resident` | `SRCE,XYP3,KTP3,OUTG,IOPE,UPDV` | the full time step on Kokkos, with the spectrum kept on the Kokkos side ([next section](#what---kokkos-resident-does)) |
+| `resident` | `SRCE,XYP3,KTP3,OUTG,IOPE,UPDV,CPRT` | the full time step on Kokkos, with the spectrum kept on the Kokkos side ([next section](#what---kokkos-resident-does)) |
 | a list, for example `SNL1,SDS4` | the parts in the list | a test of one part at a time |
 
 ### what `--kokkos resident` does

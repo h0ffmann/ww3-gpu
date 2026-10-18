@@ -75,10 +75,11 @@
 # tables for SRCE alone (WW3/model/src/w3initmd.F90:759,771). --kokkos resident adds the PR3/UQ
 # propagation (XYP3, KTP3, opt-in, kokkos/src/fortran_iface/PATCH.md §11 and §13) and W3OUTG (OUTG,
 # opt-in, §15), the partial read before the point output (IOPE, opt-in, §16) and W3UICE's zeroing
-# of VA repeated on the device (UPDV, opt-in, §17): with SRCE on the resident VA, the spectrum then
+# of VA repeated on the device (UPDV, opt-in, §17) and W3CPRT's partitioning (CPRT, opt-in, §27):
+# with SRCE on the resident VA, the spectrum then
 # crosses only for the host readers of VA at output times, not for the gridded fields, the point
 # output copies back only the spectra it interpolates, and an ice update copies none (WFIP-0005
-# units 1 to 5). It is not a default: XYP3, KTP3, OUTG, IOPE and UPDV are not regtested. --kokkos gpu is the default of --gpu when
+# units 1 to 5). It is not a default: XYP3, KTP3, OUTG, IOPE, UPDV and CPRT are not regtested. --kokkos gpu is the default of --gpu when
 # neither --kokkos nor WW3GPU_ROUTINES is given. The Fortran run of the pair is unchanged.
 #
 # --cpu is Kokkos' OpenMP backend, --gpu its CUDA backend. The script enters the pinned toolchain
@@ -259,7 +260,7 @@ if [ "$mode" = self-test ]; then
   [ "$(kokkos_env 0 all)" = "WW_KOKKOS_ALL=0" ] || { echo "ww3-gpu: the Fortran run of --kokkos all: $(kokkos_env 0 all)" >&2; exit 1; }
   [ "$(kokkos_env 1 "$(kokkos_preset gpu)")" = "WW_KOKKOS_ALL=0 WW_KOKKOS_SRCE=1" ] \
     || { echo "ww3-gpu: --kokkos gpu: $(kokkos_env 1 "$(kokkos_preset gpu)")" >&2; exit 1; }
-  [ "$(kokkos_env 1 "$(kokkos_preset resident)")" = "WW_KOKKOS_ALL=0 WW_KOKKOS_SRCE=1 WW_KOKKOS_XYP3=1 WW_KOKKOS_KTP3=1 WW_KOKKOS_OUTG=1 WW_KOKKOS_IOPE=1 WW_KOKKOS_UPDV=1" ] \
+  [ "$(kokkos_env 1 "$(kokkos_preset resident)")" = "WW_KOKKOS_ALL=0 WW_KOKKOS_SRCE=1 WW_KOKKOS_XYP3=1 WW_KOKKOS_KTP3=1 WW_KOKKOS_OUTG=1 WW_KOKKOS_IOPE=1 WW_KOKKOS_UPDV=1 WW_KOKKOS_CPRT=1" ] \
     || { echo "ww3-gpu: --kokkos resident: $(kokkos_env 1 "$(kokkos_preset resident)")" >&2; exit 1; }
   [ "$(kokkos_preset SNL1,GATH)" = "SNL1,GATH" ] || { echo "ww3-gpu: kokkos_preset changed a part list" >&2; exit 1; }
   # cmp_files: a point output or restart that differs, or exists on one side only, fails; the
