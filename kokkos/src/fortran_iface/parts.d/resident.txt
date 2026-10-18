@@ -3,3 +3,4 @@
 COUNT WW_KOKKOS_VA_COUNT
 FILE model/src/wminiomd.F90
 FILE model/src/wmwavemd.F90
+FILE model/src/wmesmfmd.F90

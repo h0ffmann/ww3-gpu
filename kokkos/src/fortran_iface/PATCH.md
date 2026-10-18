@@ -2226,3 +2226,26 @@ WW_KOKKOS_VA_COUNT=1`, at `711afb80` (2026-10-18, same machine, one run each): e
 byte-identical to the Fortran of the same executable and every file but the NetCDF to `--ww3`'s,
 `nccmp-tol` PASS; whole-`VA` D2H 37 on smoke and 0 on full, as in section 26; `CPRT=K` with 0 calls,
 since neither case partitions (v).
+
+## 29. The ESMF cap reads the resident `VA` before its exports, `ww3-gpu/integ-fixes`
+
+Fork commit `50a10730` on `a304018c`, 2026-10-18. Section 26 removed the read at `W3WAVE`'s return
+and synced every host use of `VA` in `ww3_shel` and `ww3_multi`. `wmesmfmd.F90`, the ESMF cap of
+`ww3_multi` (built only with `MULTI_ESMF`, `model/src/CMakeLists.txt:193-199`), reads the export
+grid's `VA` on the host after `WMWAVE` in `SetExport` (`wmesmfmd.F90:2824-3046` at `a304018c`):
+`W3OUTG` under `USE_W3OUTG_FOR_EXPORT`, `CalcCharnk` and `CalcRoughl` (`W3SPR3`/`W3SPR4` on
+`va(:,jsea)`), `CalcStokes3D`, `CalcPStokes`, `CalcBotcur`, `CalcRadstr2D`. Every one reads the
+whole field, so one `W3KOKKOS_VA_HOST_READ` after the grid's `w3set*` calls covers them; the
+"Resident spectrum" rule allows a whole-field read before an output that needs every point. Its
+`w3uini ( va )` at `:2180` runs in `InitializeP3` before the resident `VA` is bound (the C++ side
+binds it on the first sync, `w3kokkos_residentmd.F90:68-70`), so it needs no sync.
+
+- Without `KOKKOS`, `gfortran -E -P` with `switch_lab_shrd` gives `WW3-noaa/`'s file apart from the
+  `__LINE__` values `ESMF_LOGERR_PASSTHRU` writes into error messages and the include-path comment
+  (v); with `KOKKOS`, only the `USE` and the read are added (v).
+- Not compiled and not run: there is no ESMF library here ⚠. No regtest of this repository builds
+  `MULTI_ESMF`, so the matrix evidence of section 26 and of U3 holds at this commit.
+- Not covered: the NUOPC cap of the UFS (`wav_comp_nuopc.F90`, `wav_import_export.F90`,
+  `wav_restart_mod.F90`), which is not in the fork at `a304018c`; `production/GFS.v17` has it, with
+  16 and 13 uses of `VA` in the last two (v, `git show`). The pin move to that branch
+  ([plan](../../../docs/compound/plans/2026-10-18-004-pin-gfs-v17-plan.md)) lists and syncs them.
