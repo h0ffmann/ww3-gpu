@@ -38,7 +38,7 @@
 #                     DB1 MLIM ...), the only set the Kokkos W3SRCE translates; no matrix.base
 #                     switch has it. The entry keeps its inputs, grid and propagation; its outputs
 #                     are no longer WW3's reference outputs, and only the pair is compared
-#   WW3GPU_WW3          the h0ffmann/WW3 ww3-gpu/kokkos-st4 tree; never written (the inputs are staged
+#   WW3GPU_WW3          the h0ffmann/WW3 ww3-gpu/kokkos-pnt tree; never written (the inputs are staged
 #                     in <build>/regtests/, and record:summary fails when `git status` shows a change)
 #   WW3GPU_DATA         WW3's ftp data, <WW3GPU_DATA>/data_regtests: the store path of
 #                     `nix build ./picasso/labs/pratico#ww3-regtest-data` (`just ww3-gpu-matrix` passes
@@ -73,7 +73,7 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/ww3gpu_common.cmake")
 set(WW3GPU_SELECTION serial CACHE STRING "Which matrix.base entries: serial, omp, mpi or all")
 set_property(CACHE WW3GPU_SELECTION PROPERTY STRINGS serial omp mpi all)
 set(WW3GPU_ROUTINES SNL1 CACHE STRING "The routines the Kokkos run turns on: a list of WW3GPU_ALL_ROUTINES")
-set(WW3GPU_WW3 "${WW3GPU_ROOT}/WW3" CACHE PATH "The WW3 tree (h0ffmann/WW3, ww3-gpu/kokkos-st4), read-only")
+set(WW3GPU_WW3 "${WW3GPU_ROOT}/WW3" CACHE PATH "The WW3 tree (h0ffmann/WW3, ww3-gpu/kokkos-pnt), read-only")
 set(WW3GPU_BACKEND openmp CACHE STRING "The Kokkos backend: openmp or cuda")
 set_property(CACHE WW3GPU_BACKEND PROPERTY STRINGS openmp cuda)
 if(NOT WW3GPU_BACKEND MATCHES "^(openmp|cuda)$")
@@ -144,7 +144,7 @@ if(NOT EXISTS "${_base}")
   message(FATAL_ERROR "${WW3GPU_WW3} has no regtests/bin/matrix.base: git submodule update --init WW3")
 endif()
 if(NOT EXISTS "${WW3GPU_WW3}/model/src/w3kokkosmd.F90")
-  message(FATAL_ERROR "${WW3GPU_WW3} is not the ww3-gpu/kokkos-st4 branch of h0ffmann/WW3 (no model/src/w3kokkosmd.F90)")
+  message(FATAL_ERROR "${WW3GPU_WW3} is not the ww3-gpu/kokkos-pnt branch of h0ffmann/WW3 (no model/src/w3kokkosmd.F90)")
 endif()
 ww3gpu_ftp_version(_ftpver _ftpurl "${WW3GPU_WW3}/model/bin/ww3_from_ftp.sh")
 set(WW3GPU_DATA "" CACHE PATH "WW3's ftp data, <WW3GPU_DATA>/data_regtests (pratico's ww3-regtest-data)")

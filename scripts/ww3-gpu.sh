@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ww3-gpu — run WAVEWATCH three ways. WW3's Fortran comes from two submodules: WW3-noaa/ is pure
 # NOAA-EMC/WW3 at the commit the fork branched from, and WW3/ is the fork (the h0ffmann/WW3 branch
-# ww3-gpu/kokkos-wire-base: WW3-noaa plus the KOKKOS switch and the shim calls). WW4's C++ comes only from
+# ww3-gpu/kokkos-pnt, which holds the pin: WW3-noaa plus the KOKKOS switch and the shim calls). WW4's C++ comes only from
 # the WW4/ submodule (h0ffmann/WW4, develop); this repository holds the Kokkos port and nothing of
 # either model's source:
 #
@@ -503,8 +503,8 @@ else
     fi
   fi
   if [ "$mode" = ww3-gpu ] && [ ! -f "$ww3/model/src/w3kokkosmd.F90" ]; then
-    echo "ww3-gpu: WW3/ is not the ww3-gpu/kokkos-wire-base branch of h0ffmann/WW3 (no model/src/w3kokkosmd.F90):" >&2
-    echo "      git -C WW3 fetch origin ww3-gpu/kokkos-wire-base && git -C WW3 switch ww3-gpu/kokkos-wire-base" >&2
+    echo "ww3-gpu: WW3/ is not the ww3-gpu/kokkos-pnt branch of h0ffmann/WW3 (no model/src/w3kokkosmd.F90):" >&2
+    echo "      git submodule update --init WW3   (the pin; h0ffmann/WW3 ww3-gpu/kokkos-pnt follows it)" >&2
     exit 3
   fi
   jobs="${JOBS:-$(nproc)}"

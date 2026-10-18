@@ -4,7 +4,7 @@
 // write of ww3_multi's exchanges, section 26): declarations only.
 // resident_shim.cpp implements the ww_va_* calls, srce_shim.cpp ww_srce_batch_va;
 // model/src/w3kokkos_residentmd.F90 and w3kokkosmd.F90 on the fork
-// (h0ffmann/WW3 ww3-gpu/kokkos-resident) mirror them. The rules of ww_kokkos_c.hpp hold:
+// (h0ffmann/WW3 ww3-gpu/kokkos-pnt) mirror them. The rules of ww_kokkos_c.hpp hold:
 // Fortran order, caller-owned arrays, float is WW3's REAL, nothing throws.
 //
 // One context per grid `igrid` (W3GDATMD's IGRID): VA(NSPEC,0:NSEALM) of that grid,
