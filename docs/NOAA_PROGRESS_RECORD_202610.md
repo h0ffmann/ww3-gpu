@@ -1,13 +1,32 @@
 # A bit-identical Kokkos runtime for WAVEWATCH III: CPU results and five speed-ups
 
-18 October 2026. Status: **WIP.** This record is for wave-modelling physicists and WW3
+18 October 2026, updated the same day after #191 merged (`5cd0140`). Status: **WIP.** This record is for wave-modelling physicists and WW3
 developers. It gives the CPU results of an optional C++/Kokkos runtime for WAVEWATCH III® (WW3),
 their limits, and the result of five speed-ups that do not change one output bit. One of them is
 a change to the Fortran of `W3SDS4` that any ST4 build can use.
 
 Code references are `file:line`. The Fortran is pure NOAA WW3 at commit `03adda91` or the fork
-at commit `80644ba9`, whose `w3src4md.F90`, `w3snl1md.F90` and `w3pro3md.F90` are identical to
-`03adda91`'s. The C++ paths are those of the port (`kokkos/...`).
+at commit `50a10730`, whose `w3src4md.F90`, `w3snl1md.F90` and `w3pro3md.F90` are identical to
+`03adda91`'s (v, `git -C WW3 diff --quiet 03adda91 50a10730 -- <file>`, 2026-10-18). The C++
+paths are those of the port (`kokkos/...`).
+
+**What changed with #191.** The fork pin moved from `80644ba9` to `50a10730`. The resident preset
+has a seventh part, `CPRT` (the spectral partitioning). `ww3_multi`, OpenMP builds and the
+partition output are now shown bit-identical (section 4). The spectrum is no longer copied back
+to the host in steady state (section 2). A fallback to the Fortran can now stop the run (strict
+mode). The first version's speed figures were measured before these changes; section 3 says what
+that means.
+
+## Status at a glance
+
+| Question | Answer | Where |
+|---|---|---|
+| Does the default build change WW3? | No: the patch removes no line, every line it adds to a WW3 source file is inside a `W3_KOKKOS` preprocessor block, and with `KOKKOS` built and no flag set the Fortran runs | section 2 |
+| Bit-identical to the Fortran on the CPU? | Yes, on every regtest entry run with the preset (sections 4 and 8 list what was not run) | section 4 |
+| Faster on the CPU? | 1.65 times less wall time than NOAA WW3 on `full`, 32 threads, median of ten alternated runs on the merged code; regtest pending ⚠ (22 entries passed, not the whole matrix) | section 3 |
+| GFS-Wave (`DIST MPI`, Intel compiler)? | No. The runtime is single node by design; MPI keeps the Fortran ([ADR-0017](ADRs/ADR-0017-kokkos-port-is-single-node-mpi-stays-fortran.md)) | section 8 |
+| GPU? | The CUDA build compiles; no device run yet | section 8 |
+| Ready for operations or for upstream? | Not yet. Thirteen gaps, ranked, with their next step | [`PRODUCTION_READINESS_202610.md`](PRODUCTION_READINESS_202610.md) |
 
 ## How to read the marks
 
@@ -24,10 +43,14 @@ at commit `80644ba9`, whose `w3src4md.F90`, `w3snl1md.F90` and `w3pro3md.F90` ar
   executable runs the original Fortran.
 - **Checked (v).** On the CPU, the "resident" configuration gives output files byte-identical to
   the Fortran of the same executable. This is true on the test cases `smoke` and `full`, at 1 to
-  32 threads, and on two inputs of the WW3 regtests (section 4).
-- **Checked (v), single runs ⚠.** On one 32-thread node with a `SHRD OMPG` build, `ww3_shel`
-  took 1.5 to 2.4 times less wall time than WW3 built from the same commit, on the `full` case
-  (section 3). The machine was shared. No result is a median of three on an idle machine yet.
+  32 threads, and on 22 entries of the WW3 regtest matrix, `ww3_multi` and OpenMP builds included
+  (section 4).
+- **Checked (v).** On one 32-thread node with a `SHRD OMPG` build, on the merged code
+  (`5cd0140`, fork `50a10730`), the median of ten alternated runs of `ww3_shel` on the `full` case
+  was 26.18 s for NOAA WW3 and 15.84 s for the Kokkos runtime: 1.65 times less wall time, every
+  output byte-identical to the first run's (section 3). The machine was idle when the runs started
+  (load 2.3). Regtest pending ⚠: WW3's regtests have passed on this commit for 22 entries
+  (section 4), not for the whole matrix.
 - **Checked (v).** At one thread the Kokkos code and the Fortran take the same time. The gain
   comes from the distribution of the work over threads.
 - **Checked (v).** The gain applies to shared-memory builds only. Under `DIST MPI`, the build of
@@ -48,12 +71,25 @@ with fractional steps: spatial propagation (`W3XYP3`, the third-order UQ scheme,
 (`W3SRCE`). The runtime keeps these steps and their arithmetic. It moves them to C++/Kokkos.
 
 - **Checked (v).** The fork adds the switch `KOKKOS`, a branch at each call site and
-  `bind(C)` interfaces. Each part has a flag `WW_KOKKOS_<PART>`. Unset or `0` runs the Fortran
+  `bind(C)` interfaces. At `50a10730` it changes 9 files and adds 7 modules under `model/src/`:
+  5 687 lines added, none removed (`git -C WW3 diff --stat 03adda91 50a10730 -- model`). Each
+  added line in a WW3 source file sits inside an `#if` on `W3_KOKKOS` (a script over the
+  `git diff -U0` hunks, 2026-10-18). Each part has a flag `WW_KOKKOS_<PART>`. Unset or `0` runs the Fortran
   routine, which stays compiled in the same executable.
-- **Checked (v).** The "resident" preset sets six parts: `SRCE` (all of `W3SRCE` for every sea
+- **Checked (v).** The "resident" preset sets seven parts: `SRCE` (all of `W3SRCE` for every sea
   point in one batched launch: `W3SIN4`, `W3SDS4`, `W3SNL1`, `W3SPR4` and the integration),
-  `XYP3`, `KTP3`, `OUTG`, `IOPE` and `UPDV`. The spectrum `VA` stays in Kokkos memory between
-  time steps. It goes back to the host only before a Fortran routine reads it.
+  `XYP3`, `KTP3`, `OUTG`, `IOPE`, `UPDV` and `CPRT` (`kokkos/src/fortran_iface/presets.txt`). One
+  variable selects it: `WW_KOKKOS_PRESET=resident`, read by `W3INIT`. A part flag set by hand
+  still wins.
+- **Checked (v).** The spectrum `VA` stays in Kokkos memory between time steps and between
+  `W3WAVE` calls. A Fortran routine that reads or writes it moves only the columns it touches.
+  On `full`, `WW_KOKKOS_VA_COUNT=1` counts one whole-spectrum copy to the device (when `VA` is
+  bound) and none back (`docs/log/2026-10-18-ww3-multi-resident-va.md`).
+- **Checked (v).** With `WW_KOKKOS_STRICT=1`, a part that would fall back to the Fortran stops the
+  run with its reason. Without it, the run prints one line at exit with the number of calls left
+  on the Fortran. The regtest driver's Kokkos runs use strict mode.
+- **Checked (v).** `WW_KOKKOS_VA_POISON=1` fills a stale host copy of `VA` with NaN, so a missed
+  sync changes the output instead of passing silently. Every regtest run of section 4 used it.
 - **Checked (v).** The C++ is compiled with contraction off (`-ffp-contract=off`), so no fused
   multiply-add changes a rounding.
 
@@ -73,6 +109,9 @@ fork, runs it twice (all flags at 0, then the preset), then builds and runs pure
 | 18 Oct, morning | not recorded | 24.81 | 23.38 | 15.51 | 1.60 |
 | 18 Oct, quietest | 3.5 / 11.8 | not run | 26.31 | 14.36 | 1.83 to the same executable |
 | 18 Oct, final code | not recorded | 32.06 | 30.86 | 18.36 | 1.75 |
+| 18 Oct, after #191, one run (#191's notes) | shared | not run | 31.8 | 46.4 | 0.69 to the same executable |
+| 18 Oct, after #191, median of 3 | 1.8 at start, 18.9 to 24.9 during | 29.83 | 26.54 (run 1 only) | 19.99 | 1.49 |
+| **18 Oct, after #191, median of 10** | **2.3 at start** | **26.18** | 27.09 (run 1 only) | **15.84** | **1.65** |
 
 - **Checked (v).** In every run, the Kokkos output is byte-identical (`cmp`) to the Fortran of the
   same executable. Against NOAA WW3, `out_grd.ww3` and `mod_def.ww3` are byte-identical.
@@ -81,6 +120,24 @@ fork, runs it twice (all flags at 0, then the preset), then builds and runs pure
 - **Assumption ⚠.** The same NOAA build took 24.8 s in one run and 43.1 s in another. The load of
   other jobs on the machine explains this spread. A number for a table needs the median of three
   runs on an idle machine.
+- **Checked (v), shared machine ⚠.** The first four rows were measured before #191. After it, one
+  loaded run had the Kokkos runtime slower than the Fortran (46.4 s against 31.8 s). The median
+  of three on the merged code then gave `--ww3` 29.83, 32.97, 29.21 s and Kokkos 20.95, 19.99,
+  14.28 s, every output byte-identical to run 1's. Command: `bash scripts/ww3-gpu.sh --ww3-gpu
+  full --cpu --kokkos resident --repeat 3` at `5cd0140`, 2026-10-18 19:55 to 20:00 UTC. The
+  load rose because other jobs started during the runs; the spread of the Kokkos runs (14.3 to
+  21.0 s) is that load. So the slow run was load, not a regression, as far as a shared machine
+  can show ⚠.
+- **Checked (v).** The median of ten, the figure this record quotes: `bash scripts/ww3-gpu.sh
+  --ww3-gpu full --cpu --kokkos resident --repeat 10`, 2026-10-18 21:21 to 21:32 UTC, code tree
+  identical to `5cd0140` (`git diff --stat 5cd0140 -- kokkos scripts regtests switches` empty),
+  after the other session's jobs had stopped. Runs, s: `--ww3` 26.02, 26.08, 24.98, 24.55, 25.76,
+  26.59, 26.28, 26.47, 26.76, 26.76; Kokkos 16.58, 15.04, 14.74, 14.86, 15.71, 16.01, 16.38,
+  15.75, 15.92, 16.02. Every output byte-identical to run 1's.
+- **Assumption ⚠.** The load printed during the timed runs (24.5 before, 27.0 after) is the runs'
+  own 32 threads, which the 1-minute average counts; no other job was running when they started,
+  and the spread of each set is under 13 %. That other jobs did not start during the runs is
+  inferred from that spread, not recorded.
 
 ### Thread scaling (18 October, one run each, shared machine ⚠)
 
@@ -96,13 +153,35 @@ depend on the number of threads.
 
 ## 4. Bit parity: what is shown and what is not
 
-- **Checked (v).** Two inputs of the WW3 regtests pass with the resident preset: `ww3_tp2.15`
-  (`test.comp` finds 0 of 23 files different, `nccmp-tol` PASS) and `ww3_ts2` `ST4_PR3_UQ`
-  (0 of 22). Both runs used the source-term switches of the test build (`BT1 DB1 LN1 MLIM`),
-  because no `ST4 NL1` switch file of the regtests has this set.
+Every run below: fork `50a10730`, the source-term switches of the test build (`BT1 DB1 LN1
+MLIM`, because no `ST4 NL1` switch file of the regtests has this set), strict mode, the host copy
+of `VA` poisoned. `test.comp` compares every output file of the Kokkos run with the Fortran run of
+the same executable; "0/23" means 0 of 23 files differ. Source:
+[`docs/log/2026-10-18-u3-regtests-v2.md`](log/2026-10-18-u3-regtests-v2.md) and its summary
+tables in `docs/data/ww3gpu_matrix_*_pin-50a10730_2026-10-18.tsv`.
+
+| Entries | Program, build | Parts | `test.comp` |
+|---|---|---|---|
+| `ww3_tp2.15` (4 inputs), `ww3_ts2` `ST4_PR3_UQ` | `ww3_shel`, serial | resident | 0/23, 0/23, 0/23, 0/25, 0/22 |
+| `ww3_ts3`, 5 propagation schemes | `ww3_shel`, `OMPG` | `SRCE,OUTG,IOPE,UPDV,CPRT` | 0/20 each |
+| `mww3_test_05`, 5 propagation schemes | `ww3_multi`, `OMPG` | `SRCE,OUTG,IOPE,UPDV,CPRT` | 0/27 each |
+| `mww3_test_05` `ST1`, `ST4_PR3_UQ_OMP` | `ww3_multi`, `OMPG` | `SRCE,OUTG,IOPE,UPDV` | 0/27 each |
+| `mww3_test_01` to `_04` | `ww3_multi`, serial | resident | 0/22, 0/23, 0/34, 0/25 |
+| `ww3_tnc1` (partition fields) | `ww3_shel`, serial, `PR0` | `SRCE,OUTG,IOPE,UPDV,CPRT` | 0/30 |
+
+- **Checked (v).** `nccmp-tol` passes on every entry it judged. No entry needed a second Fortran
+  run to excuse a file, because no file differed.
+- **Checked (v).** `XYP3` and `KTP3` refuse a moving grid, so `ww3_ts3` and `mww3_test_05` ran
+  without them. `mww3_test_01` to `_04` turn the source terms off in their grid inputs, so they
+  test the exchanges between grids, the propagation and the outputs on the resident spectrum, not
+  `W3SRCE`.
+- **Checked (v).** Four entries fail, and stay failed by the owner's decision: `ww3_tp2.6`
+  (`ST4`, `ST4_ASCII`) and `ww3_tnc1` with the full preset stop at start-up, because `XYP3` does
+  not cover an unstructured grid or `PR0`; `mww3_test_07` fails in the Fortran run too (its
+  `ww3_grid` namelist read against the test switch). None is marked expected-to-fail.
 - **Checked (v).** The DIA (`W3SNL1`) alone passes the `NL1` entries of the regtest matrix.
-- **Not shown.** Parity with the Intel compiler; parity on a GPU (judged by tolerance);
-  `ww3_multi` with the resident spectrum; restart reproduction.
+- **Not shown.** Parity with the Intel compiler; parity on a GPU (judged by tolerance); restart
+  reproduction (`scripts/restart_pair.sh` exists and has not run); `ww3_multi` under MPI.
 
 ## 5. Where the CPU time goes
 
@@ -273,12 +352,21 @@ Sections 3 and 4 of `W3SNL1` read the spectrum at the quadruplet bins through th
   `BT1 DB1 LN1 MLIM`). Other sets run the Fortran.
 - **Assumption ⚠.** Bit parity is shown for gfortran and g++ on x86-64 only.
 - **WIP.** On a GPU, the device must give glibc's bits for `expf`, `logf` and `powf`. Device
-  copies of glibc's functions exist; no device run has compared them yet.
+  copies of glibc's functions exist; no device run has compared them yet. The CUDA build of the
+  preset compiles and links (`--build-only`, `docs/log/2026-10-18-cuda-build-only.md`); it has
+  not run on a device.
+- **Checked (v).** `XYP3` covers rectilinear and curvilinear grids only; an unstructured grid
+  stops the preset at start-up. The unstructured (`PDLIB`) path is translated and not wired.
+- **Assumption ⚠.** The ESMF cap (`wmesmfmd.F90`) reads the resident `VA` before its exports.
+  It was not compiled here: no ESMF library is installed.
+- **Checked (v).** Most of the C++ is LGPL-3.0-or-later, like the WW3 source it translates (249
+  of 347 files under `kokkos/src`). Where the library would live upstream is open
+  ([ADR-0018](ADRs/ADR-0018-where-ww-kokkos-lives-for-upstream.md), Proposed).
 
 ## 9. Before a speed is final
 
-1. On an idle machine, run `bash scripts/ww3-gpu.sh --ww3-gpu full --cpu --kokkos resident
-   --repeat 3`, before and after the changes of section 6. Record the medians.
+1. Record the median of ten of section 3 in `bench/results/` once WW3's regtests have passed on
+   `5cd0140` (ADR-0016); 22 entries have, the rest of the matrix has not.
 2. Time the Fortran per region at 32 threads, to confirm or reject the assumption of section 5.
 3. Compare the thread placements of section 6.1 on the idle machine.
 4. Time the Fortran change of section 7, with and without transposed tables, on an idle machine
@@ -289,6 +377,10 @@ Sections 3 and 4 of `W3SNL1` read the spectrum at the quadruplet bins through th
 | What | Command |
 |---|---|
 | Parity and wall time, CPU | `bash scripts/ww3-gpu.sh --ww3-gpu full --cpu --kokkos resident` |
+| Median of three, alternated with NOAA WW3 | add `--repeat 3` |
+| Stop on any fallback; catch a missed sync | `WW_KOKKOS_STRICT=1 WW_KOKKOS_VA_POISON=1` in the environment |
+| The regtest entries of section 4 | the commands of `docs/log/2026-10-18-u3-regtests-v2.md`, "What was done" |
+| Restart reproduction, `SHRD` | `scripts/restart_pair.sh` (not run yet) |
 | The same on the point case | `bash scripts/ww3-gpu.sh --ww3-gpu smoke --cpu --kokkos resident` |
 | Per-part timers | add `WW_KOKKOS_TIMERS=1` to the Kokkos run, or `--timers` |
 | DIA kernel alone | `OMP_PROC_BIND=false OMP_NUM_THREADS=<t> kokkos/build/openmp-release/tests/ww_bench_snl1` |

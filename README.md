@@ -43,6 +43,7 @@
 | learn about WW3, GPUs and this project from the start | [`course/00-orientation.md`](course/00-orientation.md), then the [book](https://h0ffmann.github.io/ww3-gpu/book/) |
 | run WW3, then WW3 with the Kokkos port | [quick start](#quick-start) |
 | see which routines run on Kokkos, and how fast | [where it stands](#where-it-stands), [`kokkos/PORT_STATUS.md`](kokkos/PORT_STATUS.md) |
+| read the CPU results, their limits and what is not shown yet, as written for NOAA's wave modellers | [`docs/NOAA_PROGRESS_RECORD_202610.md`](docs/NOAA_PROGRESS_RECORD_202610.md), then the gap list [`docs/PRODUCTION_READINESS_202610.md`](docs/PRODUCTION_READINESS_202610.md) |
 | see the system in figures | [`docs/WW3_GPU_VS_NOAA_202610.md`](docs/WW3_GPU_VS_NOAA_202610.md): five figures, also as [PDF files](docs/archify/README.md) |
 | work here with a coding agent | [`AGENTS.md`](AGENTS.md), then [the engineering loop](#the-engineering-loop) |
 | find the meaning of a word or an abbreviation | [`docs/GLOSSARY.md`](docs/GLOSSARY.md) |
@@ -57,11 +58,11 @@ submodules. This repository contains only the Kokkos code and its tools.
 | Directory | What it is | Used by |
 |---|---|---|
 | `WW3-noaa/` | WW3 from NOAA: [NOAA-EMC/WW3](https://github.com/NOAA-EMC/WW3) at `03adda91`, with no change | `--ww3`, the reference |
-| `WW3/` | the fork [h0ffmann/WW3](https://github.com/h0ffmann/WW3) at `80644ba9` (branch `ww3-gpu/kokkos-pnt`): `WW3-noaa/` plus the KOKKOS patch. The patch changes 5 files and adds 6 modules under `model/src/`, with 4 979 added lines and no removed line | `--ww3-gpu` and the regtest matrix |
+| `WW3/` | the fork [h0ffmann/WW3](https://github.com/h0ffmann/WW3) at `50a10730` (branch `ww3-gpu/kokkos-pnt`): `WW3-noaa/` plus the KOKKOS patch. The patch changes 9 files and adds 7 modules under `model/src/`, with 5 687 added lines and no removed line | `--ww3-gpu` and the regtest matrix |
 | `WW4/` | [h0ffmann/WW4](https://github.com/h0ffmann/WW4), `develop` | `--ww4` |
 
-`(v)` The numbers of the patch are from `diff -ruN WW3-noaa/model WW3/model` at these two commits,
-on 2026-10-17.
+`(v)` The numbers of the patch are from `git -C WW3 diff --stat 03adda91 50a10730 -- model`
+(16 files, 5 687 insertions, 0 deletions), on 2026-10-18.
 
 The fork has one purpose. WW3 must call the Kokkos code from inside WW3, for example from
 `W3SRCE` (`model/src/w3srcemd.F90`), and this repository does not edit WW3. Thus the fork adds the

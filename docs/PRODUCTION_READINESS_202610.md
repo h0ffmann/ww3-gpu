@@ -7,6 +7,11 @@ at `03adda91`, the fork's base), every `kokkos/` line at this repository's `db2c
 regtest or timing was run for this page: where a gap needs a run to be closed, the run is its next
 step.
 
+**Update, 2026-10-18, after #191 (`5cd0140`).** The pin is now `50a10730`, which carries the
+strict mode and preset commits (`f0cbe70d`, `237ca0de`) and the contract edit (`f330dc53`) (v,
+`git -C WW3 merge-base --is-ancestor <commit> 50a10730`). Rows 6, 7 and 13 say so; the other rows
+are as read on 2026-10-18 before the merge.
+
 ## The question
 
 Two targets, judged separately:
@@ -42,14 +47,14 @@ regtest matrix yet"). 10 of the 310 rows of `kokkos/ports.tsv` are regtested and
 | 3 | MPI: four of the six resident parts are `SHRD` only, the preset stops on `DIST MPI`, the communicator is ignored, the device id is not per rank | Blocker | Major | A resident preset without `XYP3`, `OUTG`, `IOPE`, `UPDV`; one run on `switch_lab_mpi` |
 | 4 | Bit parity measured with gfortran and g++ only; the operational compiler and the GPU are not measured | Blocker | Major | Static argument for the Intel build's math calls; one smoke with it |
 | 5 | Build and packaging: a separate static library, C++20 and CMake 3.25; the install-only configure and the exact Kokkos check are done (U6) | Major | Major | A shared-library build and a recipe for the module systems of an operational centre |
-| 6 | `WW_KOKKOS_ALL=1` and `W3KOKKOS_SRCE_ON` fall back to the Fortran without a word | Major | Minor | Done on fork branch `ww3-gpu/u2-strict-preset`, not yet at the pin: `WW_KOKKOS_STRICT=1` stops, otherwise one fallback-count line at exit; the matrix's Kokkos runs set it |
-| 7 | Configuration is 61 environment variables, no namelist; the preset lives in a lab script | Major | Major | Smallest form done on `ww3-gpu/u2-strict-preset`: `WW_KOKKOS_PRESET=resident` from one table, `presets.txt`; next, a namelist group read by `W3INIT` |
+| 6 | `WW_KOKKOS_ALL=1` and `W3KOKKOS_SRCE_ON` fall back to the Fortran without a word | Major | Minor | Done, at the pin `50a10730` since #191: `WW_KOKKOS_STRICT=1` stops, otherwise one fallback-count line at exit; the matrix's Kokkos runs set it |
+| 7 | Configuration is 61 environment variables, no namelist; the preset lives in a lab script | Major | Major | Smallest form done, at the pin `50a10730` since #191: `WW_KOKKOS_PRESET=resident` from one table, `presets.txt`; next, a namelist group read by `W3INIT` |
 | 8 | Observability: log lines on every rank, counters at exit to `stderr`, no provenance in the output files | Major | Minor | Gate the lines by `NAPLOG`; one NetCDF global attribute |
 | 9 | OpenMP inside MPI: the per-point parts are serialised by `!$OMP CRITICAL`; the thread budget per rank is not set by the shim | Major | Minor | Measure the hybrid entries of `ww3_ufs1.1` before claiming a speed for them |
 | 10 | Restart with the resident spectrum: covered by the sync calls, never regtested; every `matrix.base` restart pair is `MPI` | Major | Minor | Run `scripts/restart_pair.sh` (a `SHRD` restart pair on `full`, written 2026-10-18, not run) |
 | 11 | `PDLIB` and unstructured grids: translated, not wired, gated out | Minor ⚠ | Major | None for GFS-Wave v16; a wiring unit for `PDLIB` when the owner asks |
 | 12 | The fork patch: 4 082 lines of new Fortran, 819 changed lines in three WW3 files, 58 218 lines of C++ in another repository, most of it LGPL-3.0-or-later, some MIT, 76 files with no licence line | Minor | Blocker | ADR-0018 (Proposed) names the three places `ww_kokkos` could live; the owner chooses, after a legal reading ⚠ |
-| 13 | A stale contract remark: "one spectral grid per process"; edited on the fork branch `ww3-gpu/u1-multi-va` (section 13) | Minor | Minor | Move the pin |
+| 13 | A stale contract remark: "one spectral grid per process"; edited on the fork branch `ww3-gpu/u1-multi-va` (section 13) | Minor | Minor | Closed: at the pin `50a10730` since #191 |
 
 The sections below give the evidence of each gap. The ranked top five closes the page.
 
@@ -293,7 +298,7 @@ asked for Kokkos and got the Fortran learns it only from one log line or a `*_CO
 - **(b) Minor.** The default is the Fortran anyway.
 - **Next step.** `WW_KOKKOS_STRICT=1`: `KOKKOS_PART` and the `SRCE` gate stop instead of falling
   back, and `W3KOKKOS_SRCE_ON` counts its Fortran calls for one line at the end of the run.
-- **Done (2026-10-18), not yet at the pin.** Fork branch `ww3-gpu/u2-strict-preset` (`f0cbe70d`):
+- **Done (2026-10-18), at the pin `50a10730` since #191.** Fork branch `ww3-gpu/u2-strict-preset` (`f0cbe70d`):
   `KOKKOS_PART` under `WW_KOKKOS_ALL=1`, the two `W3SRCE` set-up fallbacks and a new per-step gate
   `W3KOKKOS_SRCE_STEP` call `KOKKOS_FALLBACK`, which stops with `EXTCDE` and a `NDSE` line
   naming the part and the reason under `WW_KOKKOS_STRICT=1`, and otherwise counts; the shim
@@ -319,7 +324,7 @@ script (v, `scripts/ww3-gpu.sh:190`), so a production job card would repeat it b
   ⚠ (convention, not a rule read today).
 - **Next step.** A `&KOKKOS_NML` group read in `W3INIT` that sets the same flags, the
   environment kept as override for tests, and the effective set written once to the log.
-- **Done in its smallest form (2026-10-18), not yet at the pin.** `WW_KOKKOS_PRESET=resident`,
+- **Done in its smallest form (2026-10-18), at the pin `50a10730` since #191.** `WW_KOKKOS_PRESET=resident`,
   read by `W3INIT` through the shim (fork `237ca0de` on `ww3-gpu/u2-strict-preset`): the part
   list is one line of `kokkos/src/fortran_iface/presets.txt`, which CMake compiles into
   `part_flags.cpp` and `scripts/ww3-gpu.sh --kokkos resident` and the matrix's
@@ -434,7 +439,8 @@ and misleads a reviewer of (b). Remark b of the same block, on concurrent calls,
 
 **Update, 2026-10-18 (plan 002, U7).** Remark a now says one context per grid, keyed by the grid
 index, with `W3INIT` passing `IMOD`; remark b is kept (v, fork commit `f330dc53` on
-`ww3-gpu/u1-multi-va`, `w3kokkosmd.F90:99-104`). Closed once the pin moves.
+`ww3-gpu/u1-multi-va`, `w3kokkosmd.F90:99-104`). Closed: the pin `50a10730` carries it (v,
+`git -C WW3 merge-base --is-ancestor f330dc53 50a10730`, 2026-10-18).
 
 ## Ranked top five
 
