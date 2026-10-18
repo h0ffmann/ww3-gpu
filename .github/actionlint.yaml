@@ -1,0 +1,4 @@
+# actionlint: the custom label of the self-hosted runner (scripts/runner.sh, regtest-selected.yml).
+self-hosted-runner:
+  labels:
+    - ww3-gpu

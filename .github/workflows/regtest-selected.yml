@@ -1,0 +1,87 @@
+# regtest-selected: a few of WW3's own regtests as a guardrail for the resident Kokkos preset, on
+# the owner's machine. It runs scripts/regtest_selected.sh: the ww3_tp2.15 and ww3_ts2 entries of
+# matrix.base through the regtests/ driver (WFIP-0003) with WW3GPU_KOKKOS=resident and
+# WW3GPU_LAB_SWITCH=ON, and ww3_ts1 pair to pair (`scripts/ww3-gpu.sh --ww3-gpu smoke --cpu
+# --kokkos resident`). The acceptance criteria are the driver's own (WW3GPU_STRICT=ON, test.comp,
+# nccmp-tol); this file adds none. regtests/README.md, "Selected regtests", has the selection.
+#
+# Self-hosted, so by hand only. The repository is public, and this job runs the checked-out code
+# on the owner's machine: it never gains a push, pull_request, pull_request_target, schedule or
+# workflow_call trigger, its runs-on stays a literal, and `scripts/runner.sh check-workflows`
+# fails when either changes. That check covers this repository's workflows only, not one that a
+# fork's pull request adds, so the runner is ephemeral: `just runner-register` just before the
+# dispatch, one job, then it unregisters itself. CPU only: never --gpu (AGENTS.md, "Running on
+# the GPU").
+name: regtest-selected
+
+on:
+  workflow_dispatch:
+    inputs:
+      jobs:
+        description: "matrix entries run at once (1 to 16)"
+        default: "4"
+      cases:
+        description: "what to run"
+        type: choice
+        options: [all, matrix, smoke]
+        default: all
+
+permissions:
+  contents: read
+
+concurrency:
+  group: regtest-selected
+  cancel-in-progress: false
+
+jobs:
+  selected:
+    name: selected regtests (resident, CPU)
+    # Only the owner, only on this repository: a fork's dispatch never reaches the machine.
+    if: github.repository == 'h0ffmann/ww3-gpu' && github.actor == github.repository_owner
+    runs-on: [self-hosted, Linux, X64, ww3-gpu]
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: false
+          persist-credentials: false
+
+      - name: Check the inputs
+        env:
+          JOBS: ${{ inputs.jobs }}
+          CASES: ${{ inputs.cases }}
+        run: |
+          [[ "$JOBS" =~ ^([1-9]|1[0-6])$ ]] || { echo "::error::jobs is 1 to 16"; exit 64; }
+          [[ "$CASES" =~ ^(all|matrix|smoke)$ ]] || { echo "::error::cases is all, matrix or smoke"; exit 64; }
+          for t in nix just git; do command -v "$t" >/dev/null || { echo "::error::$t is not on the runner's PATH"; exit 3; }; done
+          bash scripts/runner.sh check-workflows
+
+      # As health.yml: https, not the ssh URLs of .gitmodules, and the pinned SHA when a topic
+      # branch does not carry it.
+      - name: Fetch the pratico toolchain, the WW3 fork and pure NOAA WW3 at their pinned commits
+        run: |
+          for sm in picasso WW3 WW3-noaa; do
+            depth=""; [ "$sm" != picasso ] && depth="--depth 1"
+            # shellcheck disable=SC2086
+            git -c url.https://github.com/.insteadOf=git@github.com: \
+              submodule update --init --no-recommend-shallow $depth "$sm" || {
+              sha=$(git ls-tree HEAD "$sm" | awk '{print $3}')
+              git -C "$sm" -c url.https://github.com/.insteadOf=git@github.com: fetch $depth origin "$sha"
+              git -C "$sm" checkout -q "$sha"
+            }
+          done
+
+      - name: Selected regtests, resident preset, in the pinned pratico shell
+        env:
+          JOBS: ${{ inputs.jobs }}
+          CASES: ${{ inputs.cases }}
+        run: bash scripts/regtest_selected.sh --jobs "$JOBS" --cases "$CASES"
+
+      - name: Keep the log and the matrix summary
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: regtest-selected-${{ github.run_id }}
+          path: build/regtest-selected/
+          if-no-files-found: warn
+          retention-days: 30
