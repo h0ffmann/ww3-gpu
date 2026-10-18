@@ -204,8 +204,10 @@ four bodies found verbatim, in order, in the new file, 2026-10-18). `w3srce_team
 for one point as before. `w3srce_lanes` runs them for up to eight points per team: each section for
 every point still in the integration loop, one after the other, and each point's DIA on the whole
 team. A point reads and writes only its own arguments and work arrays, so the order in which the
-points of a team take their turns cannot change a bit. `WW_KOKKOS_SRCE_LANES` (1 to 8, default 1,
-host backends only) sets the number; the exit counters print it. This unit vectorises nothing yet:
+points of a team take their turns cannot change a bit. `WW_KOKKOS_SRCE_LANES` (1 to 8, host
+backends only) sets the most points per team; the exit counters print it. It defaulted to 1 in
+L1; since L2 the default is 8 (the owner, 2026-10-18), and a launch with fewer points than
+8 x threads takes one point per team, so every thread still gets a team. This unit vectorises nothing yet:
 it is the layer the later units of
 [plan 005](../../docs/compound/plans/2026-10-18-005-srce-points-in-lanes-plan.md) vectorise across.
 
@@ -232,6 +234,7 @@ lane's operations those of the scalar statement in its order, each lane's stress
 |---|---|
 | `smoke`, `full`, `WW_KOKKOS_SRCE_LANES=8`, strict, poisoned | every model file byte-identical to the Fortran of the same executable; every file but the NetCDF to `--ww3`'s (v) |
 | `srce.batch.kernel`, `full`, one thread on a performance core, 3 alternated runs each | 105.17 s with 1 point per team, 99.77 s with 8: 5.1 % less (v, [log](../../docs/log/2026-10-18-srce-lanes-sin4.md)) |
+| `ww3_shel`, `full`, 32 threads, 3 alternated runs each | 15.88 s with 1, 15.47 s with the default 8: 2.6 % less (v, the same log) |
 | `bash scripts/ww3-gpu.sh --ww3-gpu smoke --gpu --kokkos resident --build-only` | compiles and links, no warning; the lane path is host-only and a device keeps one point per team; nothing run on a device (v) |
 
 ## Benchmarks

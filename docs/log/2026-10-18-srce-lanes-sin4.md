@@ -66,6 +66,17 @@ take less time when eight sea points run it at once, one per vector lane?
   earlier runs, as the thread moved between performance and efficiency cores. No 32-thread
   figure is given: the machine was shared during those runs.
 
+- (v) 32 threads, the owner's default of 8 points per team (2026-10-18), `full`, `ww3_shel` wall
+  time, Kokkos run only, alternated, 22:13 to 22:20 UTC: 15.88, 15.92, 15.84 s with
+  `WW_KOKKOS_SRCE_LANES=1`, 15.44, 15.54, 15.47 s with the default; medians 15.88 and 15.47 s,
+  2.6 % less, every `out_grd.ww3` byte-identical. The 1-minute load read before each run rose from
+  22 to 38: these back-to-back 32-thread runs themselves ⚠ (inferred; each set agrees within
+  0.1 s). The script is `default8.sh` below.
+- (v) With the default and no variable set: `smoke` and `full` byte-identical to the Fortran of the
+  same executable (strict, poisoned), `just kokkos-test serial-debug` and `openmp-release` 11/11,
+  no warning. `smoke` (`ww3_ts1`, one sea point) takes one point per team under the default: a
+  launch with fewer points than 8 x threads does.
+
 ## What it changes
 
 The lane layer pays where a per-point loop has ordered sums and branches g++ will not vectorise.
@@ -95,6 +106,38 @@ for rep in 1 2 3; do
     k=$(grep -E "srce.batch.kernel" "$d/ww3_shel.err" | head -1 | tr -s " ")
     same=$(cmp -s "$d/out_grd.ww3" "$case_dir/out_grd.ww3" && echo identical || echo DIFFERENT)
     echo "rep $rep lanes $w: [$k], out_grd.ww3 $same, load $l0 -> $(cut -d' ' -f1 /proc/loadavg)"
+  done
+done
+```
+
+`default8.sh`, the 32-thread comparison of the default (its first part runs the gates and the
+parity checks above):
+
+```bash
+#!/usr/bin/env bash
+set -uo pipefail
+cd /home/hoffmann/code/ww3-gpu-2
+S=/tmp/claude-1000/-home-hoffmann-code-ww3-gpu-2/ec4548a3-46a8-46e2-be0a-2d74c3e7eecf/scratchpad
+for b in serial-debug openmp-release; do
+  just kokkos-test $b > $S/kt-$b.log 2>&1; echo "$b exit=$? $(grep -E 'tests passed' $S/kt-$b.log | tail -1) warnings=$(grep -c 'warning:' $S/kt-$b.log)"
+done
+for c in smoke full; do
+  env -u WW_KOKKOS_SRCE_LANES WW_KOKKOS_STRICT=1 WW_KOKKOS_VA_POISON=1 bash scripts/ww3-gpu.sh --ww3-gpu $c --cpu --kokkos resident > $S/$c-default.log 2>&1
+  echo "$c exit=$?"; grep -E "points per team|^>> (every|the two)" $S/$c-default.log
+done
+# 32 threads, full, Kokkos only, alternated: lanes 1 against the default
+exe=build/ww3-gpu-openmp/ww3/bin/ww3_shel; case_dir=build/runs/ww3-gpu-full-openmp/kokkos
+for rep in 1 2 3; do
+  for w in 1 default; do
+    d=$S/t32/$w-$rep; rm -rf $d; mkdir -p $d
+    for f in ST4TABUHF2.bin depth.inp mask.inp mod_def.ww3 namelists.nml ww3_shel.nml; do cp $case_dir/$f $d/; done
+    l0=$(cut -d' ' -f1 /proc/loadavg)
+    if [ $w = 1 ]; then lv=(WW_KOKKOS_SRCE_LANES=1); else lv=(); fi
+    t0=$(date +%s.%N)
+    (cd $d && env -u WW_KOKKOS_SRCE_LANES OMP_PROC_BIND=false WW_KOKKOS_ALL=0 WW_KOKKOS_PRESET=resident "${lv[@]}" /home/hoffmann/code/ww3-gpu-2/$exe > out 2> err)
+    t1=$(date +%s.%N)
+    same=$(cmp -s $d/out_grd.ww3 $case_dir/out_grd.ww3 && echo identical || echo DIFFERENT)
+    echo "rep $rep lanes $w: ww3_shel $(echo "$t1 - $t0" | bc) s, out_grd.ww3 $same, load $l0"
   done
 done
 ```

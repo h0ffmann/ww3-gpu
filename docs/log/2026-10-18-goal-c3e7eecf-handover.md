@@ -13,7 +13,7 @@ record, and nothing here was re-run for this entry.
 | The record's speed figure: median of ten alternated runs on `main`'s code (`5cd0140`), `full`, 32 threads, NOAA WW3 26.18 s, Kokkos resident 15.84 s, 1.65 times less wall time, every output byte-identical to run 1's; regtest pending ⚠ (22 entries, not the whole matrix) | PR #197; the record, section 3 |
 | Plan 005, sea points in the vector lanes of the batched `W3SRCE`, with its per-lane parity argument and units S0 to L7 | `docs/compound/plans/2026-10-18-005-srce-points-in-lanes-plan.md` |
 | S0: one thread of the resident batch is 51.1 % scalar per-point code lanes can reach, 39.0 % DIA, 8.9 % libm and libmvec | `docs/log/2026-10-18-srce-lanes-s0-profile.md` |
-| L1: `SrcePoint` sections with the kernel's bodies moved verbatim, `w3srce_lanes`, `WW_KOKKOS_SRCE_LANES` (1 to 8, default 1, host only); `smoke` and `full` byte-identical with 1 and 8 | `kokkos/port_report/W3SRCE_KOKKOS.md`, "Points per team" |
+| L1: `SrcePoint` sections with the kernel's bodies moved verbatim, `w3srce_lanes`, `WW_KOKKOS_SRCE_LANES` (1 to 8, host only; default 1 in #197, 8 since #199); `smoke` and `full` byte-identical with 1 and 8 | `kokkos/port_report/W3SRCE_KOKKOS.md`, "Points per team" |
 | PR #198's conflict with `main` resolved by a merge (no history rewritten) | merge commit `41f4197` |
 
 ## Open work
