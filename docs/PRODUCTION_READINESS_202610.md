@@ -38,7 +38,7 @@ regtest matrix yet"). 10 of the 310 rows of `kokkos/ports.tsv` are regtested and
 | # | Gap | (a) | (b) | Smallest next step |
 |---|---|---|---|---|
 | 1 | No regtest switch has the source-term set the Kokkos `W3SRCE` translates; NOAA's UFS regtests miss it too | Blocker | Blocker | Read GFS-Wave's operational switch file at its tag; run the `WW3GPU_LAB_SWITCH` matrix on the MPI and `ww3_multi` entries |
-| 2 | `ww3_multi` writes `VA` on the host between `W3WAVE` calls with no sync | Blocker | Blocker | Mark the host newer when `W3WAVE` returns; run `mww3_test_0x` with `WW_KOKKOS_VA_CHECK=1` |
+| 2 | `ww3_multi` writes `VA` on the host between `W3WAVE` calls with no sync; fixed under `SHRD` on 2026-10-18 by column syncs at the exchanges (section 2) | Minor ⚠ | Minor ⚠ | Move the pin to the fork branch; `mww3_test_08` under MPI when the owner runs MPI |
 | 3 | MPI: four of the six resident parts are `SHRD` only, the preset stops on `DIST MPI`, the communicator is ignored, the device id is not per rank | Blocker | Major | A resident preset without `XYP3`, `OUTG`, `IOPE`, `UPDV`; one run on `switch_lab_mpi` |
 | 4 | Bit parity measured with gfortran and g++ only; the operational compiler and the GPU are not measured | Blocker | Major | Static argument for the Intel build's math calls; one smoke with it |
 | 5 | Build and packaging: a separate static library, C++20 and CMake 3.25; the install-only configure and the exact Kokkos check are done (U6) | Major | Major | A shared-library build and a recipe for the module systems of an operational centre |
@@ -49,7 +49,7 @@ regtest matrix yet"). 10 of the 310 rows of `kokkos/ports.tsv` are regtested and
 | 10 | Restart with the resident spectrum: covered by the sync calls, never regtested | Major | Minor | The restart-reproduction pair of `ww3_ufs1.1` (`work_c` against `work_d`) under the lab switch |
 | 11 | `PDLIB` and unstructured grids: translated, not wired, gated out | Minor ⚠ | Major | None for GFS-Wave v16; a wiring unit for `PDLIB` when the owner asks |
 | 12 | The fork patch: 4 082 lines of new Fortran, 819 changed lines in three WW3 files, 58 218 lines of C++ in another repository, most of it LGPL-3.0-or-later, some MIT, 76 files with no licence line | Minor | Blocker | ADR-0018 (Proposed) names the three places `ww_kokkos` could live; the owner chooses, after a legal reading ⚠ |
-| 13 | A stale contract remark: "one spectral grid per process" | Minor | Minor | Edit the remark in the fork |
+| 13 | A stale contract remark: "one spectral grid per process"; edited on the fork branch `ww3-gpu/u1-multi-va` (section 13) | Minor | Minor | Move the pin |
 
 The sections below give the evidence of each gap. The ranked top five closes the page.
 
@@ -130,6 +130,24 @@ per grid too (v, `snl1_shim.cpp:83-89`), so several grids in one process are sup
 - **Next step.** Replace the read at `w3wavemd.F90:3153` with `W3KOKKOS_VA_HOST_WRITE`, which
   costs one host-to-device copy of `VA` at the next call; run the `mww3_test_01` to `_03`
   entries with `WW_KOKKOS_VA_CHECK=1` under the lab switch.
+
+**Update, 2026-10-18 (plan 002, U1).** Reproduced and fixed under `SHRD`
+([log](log/2026-10-18-ww3-multi-resident-va.md), `PATCH.md` section 26). With the lab switch
+and the resident preset, `WW_KOKKOS_VA_CHECK=1` stopped `mww3_test_02`, `_03` and `_04`
+(`grdset_a`), and without it they differed from the Fortran in 5, 10 and 4 files, with
+`ww3_self` 0 (v). The step above was not taken: on a GPU it adds a whole copy of `VA` per grid
+per call, which the owner refused. Instead each `ww3_multi` routine that reads or writes `VA`
+between `W3WAVE` calls (`WMIOBS`, `WMIOHS`, `WMIOES`, `WMIOHG`, `WMIOEG`, and `WMWAVE`'s
+unified point output) syncs only the columns of its own loop, and `W3WAVE` no longer reads
+`VA` back at its return, since `ww3_shel` reads none after it. This adds `wminiomd.F90` and
+`wmwavemd.F90` to the fork's diff. After, the six `mww3_test_01` to `_05` entries gave
+`test.comp` 0 files different, also with the host copy poisoned, and no entry's whole-array
+copies went up: `_04` went from 864 to 0 device-to-host copies, and `ww3_shel` full from 1 to 0
+(v). Left open: `mww3_test_08` (MPI), whose six differing files the same defect explains by
+reading ⚠, not run (ADR-0017); the fork branch waits for the pin bump.
+
+- **(a), (b) now Minor** under `SHRD` ⚠: shown on the four `PR3 UQ` `grdset_a`-type entries and
+  one moving grid, with the lab switch's source terms, not on GFS-Wave's grids.
 
 ## 3. MPI
 
@@ -397,6 +415,10 @@ grid's tables". The shim keeps one context per grid index in a map (v, `snl1_shi
 `W3INIT` calls `WW_SNL1_INIT` with `IMOD` (v, `w3initmd.F90:764`). The remark describes phase 1
 and misleads a reviewer of (b). Remark b of the same block, on concurrent calls, is still true.
 
+**Update, 2026-10-18 (plan 002, U7).** Remark a now says one context per grid, keyed by the grid
+index, with `W3INIT` passing `IMOD`; remark b is kept (v, fork commit `f330dc53` on
+`ww3-gpu/u1-multi-va`, `w3kokkosmd.F90:99-104`). Closed once the pin moves.
+
 ## Ranked top five
 
 Ranked by what blocks both targets first, then by how much of GFS-Wave's run it decides.
@@ -408,7 +430,9 @@ Ranked by what blocks both targets first, then by how much of GFS-Wave's run it 
 2. **`ww3_multi` writes `VA` behind the resident copy.** `wminiomd.F90:2264`, `:3261-3330`
    write it between `W3WAVE` calls; `W3WAVE` returns with "both equal" (`w3wavemd.F90:3153`,
    `resident_shim.cpp:221-240`). GFS-Wave is a `ww3_multi` mosaic. Next: a host write at
-   `W3WAVE`'s return, then `mww3_test_0x` with `WW_KOKKOS_VA_CHECK=1`.
+   `W3WAVE`'s return, then `mww3_test_0x` with `WW_KOKKOS_VA_CHECK=1`. Update, 2026-10-18:
+   fixed under `SHRD` with column syncs at the exchanges and no read at the return, the
+   `mww3_test_01` to `_05` entries byte-identical (section 2); `mww3_test_08` (MPI) not run.
 3. **The resident preset cannot run under `DIST MPI`.** `XYP3`, `OUTG`, `IOPE`, `UPDV` are
    `SHRD` only and the preset sets them explicitly, which stops the model
    (`w3kokkos_prop3md.F90:127-129`, `w3kokkosmd.F90:1197-1201`); the batched `W3SRCE` never ran

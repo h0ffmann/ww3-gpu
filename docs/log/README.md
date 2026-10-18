@@ -69,3 +69,4 @@ Date, author, issue/PR/WFIP.
 | 2026-10-18 | [Five bit-neutral speed-ups of the resident preset: three built, two checked, one Fortran change tested](2026-10-18-resident-five-speedups.md) | #42, WFIP-0005 |
 | 2026-10-18 | [The CUDA build of `ww_kokkos` and of the fork for the resident preset, build only: 51 nvcc warnings, none in a wired part](2026-10-18-cuda-build-only.md) | plan 2026-10-18-002 U5, ADR-0014 |
 | 2026-10-18 | [The boundary and track outputs read only their columns of the resident `VA`](2026-10-18-resident-output-readers.md) | #42, WFIP-0005 |
+| 2026-10-18 | [`ww3_multi` and the resident `VA`: the defect reproduced, column syncs at the exchanges, no read at `W3WAVE`'s return](2026-10-18-ww3-multi-resident-va.md) | plan 2026-10-18-002 U1 + U7, WFIP-0005 |

@@ -647,11 +647,11 @@ if [ -n "$timers" ]; then
       if (name ~ /\.call$/) in_kokkos += s }
     END { printf ">>   %-22s %21s %10.3f s %6.1f %%\n", "outside Kokkos", "", w - in_kokkos, (w > 0 ? 100 * (w - in_kokkos) / w : 0) }'
 fi
-# The resident VA must be current on the host when W3WAVE returns: resident_shim.cpp says so at
-# finalize when it is not (a missing W3KOKKOS_VA_HOST_READ at the return, which no output shows).
+# W3WAVE no longer reads VA back at its return (PATCH.md section 26): each host reader outside it
+# syncs what it reads, and ww3_shel reads no VA after its last W3WAVE, so a run may end with the
+# device copy newer. A host reader that misses its sync shows under WW_KOKKOS_VA_POISON=1.
 if grep -q "still newer on the device at finalize" "$d1/ww3_shel.out"; then
-  grep -h "still newer on the device at finalize" "$d1/ww3_shel.out" >&2
-  echo "ww3-gpu: the Kokkos run ended with the device's VA newer than WW3's" >&2; exit 1
+  echo ">> $(grep -h "still newer on the device at finalize" "$d1/ww3_shel.out" | head -1) (expected: no read at W3WAVE's return)"
 fi
 if [ -n "$kokkos" ]; then
   parts_line="$(grep -h "Kokkos parts" "$d1/log.ww3" | head -1 || true)"

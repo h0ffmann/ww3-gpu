@@ -7,6 +7,7 @@ Read with `git -C WW3 fetch origin && git -C WW3 branch -r` and `git rev-list --
 
 | h0ffmann/WW3 branch | Head | Against the `WW3/` pin | What it wires |
 |---|---|---|---|
+| `ww3-gpu/u1-multi-va` | `f330dc53` | five commits on `80644ba9`, pushed 2026-10-18 (v, `ls-remote`) | `ww3_multi`'s exchanges sync only the columns of `VA` they read or write (`W3KOKKOS_VA_READ_COLS`, `W3KOKKOS_VA_WRITE_COLS`, `ww_va_host_wrote_cols`), no read at `W3WAVE`'s return, the ABI `0.10` ([section 26](#26-ww3_multi-and-the-resident-va-column-syncs-no-read-at-w3waves-return-ww3-gpuu1-multi-va)) |
 | `ww3-gpu/kokkos-outg` | `e0cc8ee9` | the `WW3/` pin of h0ffmann/ww3-gpu `goal/42-gpu-step-units45`; one commit on `ww3-gpu/kokkos-prop3dev`, pushed 2026-10-17 (v) | `W3OUTG`'s integrals on the device copy of `VA` (`ww_outg_va`, `W3KOKKOS_OUTGMD`), the host read of `VA` at an output time split per reader, the ABI `0.7` ([section 15](#15-w3outg-on-the-resident-spectrum-ww3-gpukokkos-outg)) |
 | `ww3-gpu/kokkos-prop3dev` | `90631fad` | the parent of `e0cc8ee9`, the `WW3/` pin of h0ffmann/ww3-gpu `goal/42-srce-prop3dev`; one commit on `ww3-gpu/kokkos-resident`, pushed 2026-10-17 (v) | `W3XYP3` and `W3KTP3` batched on the device copy of `VA` (`ww_xyp3_batch_va`, `ww_ktp3_batch_va`), their host syncs only on the Fortran path, the ABI `0.6` ([section 13](#13-the-propagation-on-the-resident-spectrum-ww3-gpukokkos-prop3dev)) |
 | `ww3-gpu/kokkos-resident` | `513954a6` | the parent of `90631fad`, the `WW3/` pin of h0ffmann/ww3-gpu `goal/42-srce-resident`; two commits on `ww3-gpu/kokkos-prop3`, pushed 2026-10-17 (v) | the resident spectrum: `VA` synced at W3WAVE's host statements (`W3KOKKOS_RESIDENTMD`) and `W3SRCE` batched on the device copy of `VA` (`ww_srce_batch_va`), the ABI `0.5` ([section 12](#12-the-resident-spectrum-on-ww3-gpukokkos-resident)) |
@@ -1988,3 +1989,103 @@ once per `W3INIT`. No namelist: the next step of gap 7.
 Checked the same way as section 24 (2026-10-18): `WW_KOKKOS_PRESET=resident` alone gives the
 parts line of `--kokkos resident` character for character and the same four model files (`cmp`,
 v); `WW_KOKKOS_PRESET=bogus` stops with the line above (v).
+## 26. `ww3_multi` and the resident `VA`: column syncs, no read at `W3WAVE`'s return, `ww3-gpu/u1-multi-va`
+
+Five commits on `80644ba9` (section 22), pushed to h0ffmann/WW3 on 2026-10-18: `3bbd1557`
+(`W3KOKKOS_RESIDENTMD` and the ABI), `bb5c516e` (`wminiomd.F90`), `f4df761a` (`wmwavemd.F90`),
+`5ef94512` (`w3wavemd.F90`) and `f330dc53` (the remark of gap 13 of
+[`PRODUCTION_READINESS_202610.md`](../../../docs/PRODUCTION_READINESS_202610.md)). Unit U1 + U7
+of [the production single-node plan](../../../docs/compound/plans/2026-10-18-002-production-single-node-plan.md),
+under the resident-spectrum rule of `AGENTS.md`. The ABI is `ww_kokkos` 0.10.0 (one entry point
+added, `ww_va_host_wrote_cols`); the fork asks for `0.10`.
+
+**The defect.** `ww3_multi` reads and writes the `VA` of a grid on the host between two `W3WAVE`
+calls of that grid. Before this change `W3WAVE` ended with a whole-array read
+(`w3wavemd.F90:3151-3153` at `80644ba9`), which left both copies "equal"; the writes below then
+changed the host copy with no sync, and the next kernel on the device copy (`W3XYP3`, `W3KTP3` or
+the batched `W3SRCE`) read it without the nesting update. `WW_KOKKOS_VA_CHECK=1` stops such a run;
+without it the outputs differ (the table below).
+
+**Every host use of `VA` outside `W3WAVE`** in the drivers at `80644ba9`, read with
+`grep -n "VA" ww3_shel.F90 wm*.F90` and every routine those files call that takes `VA` (v,
+2026-10-18):
+
+| Site (line at `80644ba9`) | Use | Under `W3_KOKKOS` now |
+|---|---|---|
+| `WMIOBS`, `wminiomd.F90:374` | reads `VA(:,JSEA)` at the boundary points it sends, `JSEA` from `NBI2S(IOFF+I,2)` (`SHRD`) or `INIT_GET_JSEA_ISPROC` (`DIST`, local points only) | `W3KOKKOS_VA_READ_COLS` with that list, per receiving grid (`wminiomd.F90:365-384` at `f330dc53`) |
+| `WMIOHS`, `:1636`, `:1640` | reads `VA(:,JSEA)`, `JSEA = HGSTGE(J,IMOD)%ISEND(I,1)`, `I = 1..NR` | `W3KOKKOS_VA_READ_COLS` with `ISEND(1:NR,1)` (`:1651-1659`) |
+| `WMIOHG`, `:2264` | writes every element of `VA(:,JSEA)`, `JSEA = HGSTGE(IMOD,J)%LJSEA(IS)`, `IS = 1..NTOT`, reads none | `W3KOKKOS_VA_WRITE_COLS` with `LJSEA(1:NTOT)` after the loop (`:2318-2327`) |
+| `WMIOES`, `:2726`, `:2732`, `:2736` | reads `VA(:,JSEA)`, `JSEA = EQSTGE(J,IMOD)%SJS(I)`, `I = 1..NR` | `W3KOKKOS_VA_READ_COLS` with `SJS(1:NR)` (`:2772-2780`) |
+| `WMIOEG`, `:3261`, `:3278`, `:3326`, `:3330` | reads and writes `VA(:,JSEA)`: `JSEA = EQSTGE(IMOD,IMOD)%JSEA(I)` (2.a) and `EQSTGE(IMOD,J)%JSEA(I)` for every other grid with `NREC > 0` (2.b, SMC included) | the union of those lists, read before 2.a and stored after 2.b (`:3341-3363`, `:3457-3463`) |
+| `WMWAVE`, `wmwavemd.F90:1367` | `W3IOPE ( VA )`, the unified point output | as before `W3WAVE`'s own `W3IOPE`: `W3KOKKOS_IOPE_READ` under `WW_KOKKOS_IOPE=1`, otherwise `W3KOKKOS_VA_HOST_READ`; under `MPI` a host read before the `W3MPIP` requests start (`wmwavemd.F90:1365-1370`, `:1379-1387`) |
+| `ww3_shel.F90` | none: `VA` is named only in commented-out lines (`:1950-2003`) | nothing |
+| `WMINIT` (`wminitmd.F90:2993-3006`) | calls `WMIOBS` before any kernel ran | covered by the `WMIOBS` row |
+
+`W3IOBC`, `W3IORS`, `W3IOSF`, `W3IOTR` and `W3OUTG` read `VA` only when `W3WAVE` calls them,
+and the sites of sections 12, 15, 17 and 23 sync them. `wmupdtmd.F90:1407-1844` names a local
+scalar `VA`, not the spectrum. `WMIOBG` writes `BBPI0`/`BBPIN`, not `VA`. `PDLIB_exchange2Dreal_zero
+( VA )` after `WMIOHG` and `WMIOEG` runs only under `PDLIB`, where no resident part is allowed
+(sections 13, 15, 17), so the state stays `HOST` there.
+
+- **`W3KOKKOS_VA_READ_COLS ( N, COLS )`**, `W3KOKKOS_VA_WRITE_COLS ( N, COLS )`
+  (`w3kokkos_residentmd.F90:86-132` at `f330dc53`): `COLS` are `JSEA`, `0..NSEALM`, of the
+  current grid (`IGRID`, `VA` of `W3SETG`/`W3SETW`); `N < 1` does nothing; both stop the model
+  inside an OpenMP parallel region, as every sync. The read is `ww_va_host_read_cols` (section 17).
+- **`ww_va_host_wrote_cols`** (`resident_shim.cpp`, declared in `resident_c.hpp`): with the state
+  `DEVICE` or `BOTH`, the listed host columns are packed into the list's host buffer, copied once
+  to the device buffer and scattered into `d_va` by one `parallel_for` (`ww_va.scatter_cols`); with
+  `HOST`, nothing. The state is not changed. It shares the column lists of the partial read
+  (section 23), now up to eight per grid (`kMaxColSets`): `ww3_multi` uses one list per
+  neighbouring grid and direction at every exchange. Bits move and nothing is computed. Under
+  `WW_KOKKOS_VA_CHECK=1` the listed columns are taken as written and every other column must still
+  hold the bits of the last sync; under `WW_KOKKOS_VA_RESIDENT=1` `d_va` is then copied back
+  whole, so a column written and not listed shows in the output.
+- **`W3WAVE`'s return** no longer reads `VA` back (section 12's `:3083` row, `:3151-3153` at
+  `80644ba9`). A run of `ww3_shel` may end with the device copy newer; `resident_shim.cpp`
+  still says so at finalize, and `scripts/ww3-gpu.sh` now prints that line instead of failing on
+  it (the check of mutant A2 in section 21 guarded the read this change removes). The check that
+  a host reader missed its sync is `WW_KOKKOS_VA_POISON=1`.
+- **Why `wminiomd.F90` and `wmwavemd.F90` join the fork's diff.** The plan's first choice (B1)
+  marked the host newer at `W3WAVE`'s return, inside the files the fork already changed; the owner
+  rejected it on 2026-10-18, because on a GPU it costs a whole host-to-device copy of `VA` per
+  grid per call. The syncs belong where `ww3_multi` reads and writes, and they move only the
+  columns exchanged. Both files are `FILE` lines of `parts.d/resident.txt`, so
+  `scripts/ww3-gpu.sh --ww3` still accepts the fork.
+- **Without `KOKKOS`**, `gfortran -E -P` of `w3wavemd.F90`, `wminiomd.F90` and `wmwavemd.F90` with
+  `switches/switch_lab_shrd` and with `mww3_test_08`'s `switch_ST4_PR3_UQ_MPI` is identical to
+  `WW3-noaa/`'s, blank lines and the include path in one comment aside (v, 2026-10-18). With
+  `KOKKOS` and that MPI switch, `ww3_multi` builds (v, `cmake -S <fork> -DSWITCH=<switch + KOKKOS>
+  -DWW_KOKKOS=ON`, `cmake --build ... --target ww3_multi`); it was not run (ADR-0017).
+
+The checkpoint on the CPU, 2026-10-18 (OpenMP backend, gfortran 16.2.0, Intel Core i9-14900
+shared with other sessions, 2 matrix jobs of 4 threads; never `--gpu`), with
+`WW3GPU_LAB_SWITCH=ON` and `WW3GPU_STRICT=ON`, before (`80644ba9`) and after (`f330dc53`'s tree).
+[The log](../../../docs/log/2026-10-18-ww3-multi-resident-va.md) has the commands; the summaries
+are [`ww3gpu_matrix_multi_va_2026-10-18.tsv`](../../../docs/data/ww3gpu_matrix_multi_va_2026-10-18.tsv).
+
+| Entry, parts | Before, `VA_CHECK=1` | Before, plain: test.comp | After, poisoned and plain: test.comp | Whole `VA` D2H, before → after | Columns after (read; stored) |
+|---|---|---|---|---|---|
+| 33 `mww3_test_01` `PR3_UQ`, `resident` | runs | 0/22 | 0/22 | 24 (24.13 MB) → 12 (12.07 MB) | 1 440 (3.46 MB); 0 |
+| 34 `mww3_test_02` `PR3_UQ` `grdset_a`, `resident` | stops: 2 columns of grid 1 changed | 5/23, `ww3_self` 0/23 | 0/23 | 384 (853.40 MB) → 8 (32.29 MB) | 28 032 (67.28 MB); 18 432 (44.24 MB) |
+| 38 `mww3_test_03` `PR3_UQ` `grdset_a`, `resident` | stops: 110 columns of grid 1 | 10/34, `ww3_self` 0/34 | 0/34 | 216 (441.68 MB) → 216 (441.68 MB) | 100 224 (192.43 MB); 49 680 (95.39 MB) |
+| 43 `mww3_test_04` `PR3_UQ` `grdset_a`, `resident` | stops: 240 columns of grid 2 | 4/25, `ww3_self` 0/25 | 0/25 | 864 (3 002.99 MB) → 0 | 384 372 (737.99 MB); 71 388 (137.07 MB) |
+| 2, 8 `mww3_test_05` `ST1`/`ST4_PR3_UQ_OMP` (moving grid), `SRCE,OUTG,IOPE,UPDV` | stops: 138 columns of grid 2 | 0/27 | 0/27 | 156 (790.79 MB) → 156 (790.79 MB) | 66 120 (158.69 MB); 6 312 (15.15 MB) |
+
+- Every after run is byte-identical with the host copy poisoned, so no host reader of `VA` outside
+  `W3WAVE` on these entries reads a column it did not sync (v).
+- The whole-array copies went down or stayed; none went up (v, `WW_KOKKOS_VA_COUNT=1`). In 38 the
+  216 that stay are one per step of the `W3OUTG` fallback inside `W3WAVE` (`W3OUTG Kokkos calls: 0`
+  in that run), and in `mww3_test_05` the 156 each way are the host write of the Fortran
+  propagation (`XYP3` and `KTP3` refuse a moving grid): the output block and the Fortran
+  propagation, not the exchanges.
+- `mww3_test_05` passes before without the diagnostic because, with `XYP3` and `KTP3` off, a
+  host write of the Fortran propagation (`w3wavemd.F90:1885` or `:2037`) comes before any kernel
+  in each step and declares the host newer, as gap 2 predicted.
+- `ww3_shel`: `bash scripts/ww3-gpu.sh --ww3-gpu full|smoke --cpu --kokkos resident`, plain and
+  with `WW_KOKKOS_VA_POISON=1 WW_KOKKOS_VA_CHECK=1`: every model file byte-identical to the
+  Fortran's and every file but the NetCDF to `--ww3`'s, `nccmp-tol` PASS; whole-`VA` D2H on full
+  1 → 0 (one copy of 21.21 MB per run), on smoke 37 → 37 (the output readers of section 23) (v).
+  Wall time of full, one run each on the shared machine ⚠: 40.86 s before, 43.99 s and 32.35 s
+  after; no difference can be read from these.
+- `mww3_test_07` (`default`) was not compared: with the lab switch its `ww3_grid` stops in the
+  Fortran run too (`ERROR IN READING SDS4`, the entry's namelist against `ST4`'s).

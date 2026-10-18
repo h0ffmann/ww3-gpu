@@ -1,3 +1,5 @@
-# The resident spectrum VA, WFIP-0005 units 1 and 2 (resident_shim.cpp): no part of its own
+# The resident spectrum VA, WFIP-0005 units 1 and 2 (resident_shim.cpp): no part of its own; its column syncs in ww3_multi (PATCH.md section 26)
 # Read by scripts/ww3-gpu.sh: PART <name> (WW_KOKKOS_<name>), COUNT <variable>, FILE <fork path>; PATCH.md section 9.
 COUNT WW_KOKKOS_VA_COUNT
+FILE model/src/wminiomd.F90
+FILE model/src/wmwavemd.F90

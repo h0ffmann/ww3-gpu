@@ -18,7 +18,7 @@ if(WW_KOKKOS_BUILD_TESTS)
 else()
   set(ww_languages CXX)
 endif()
-project(ww3_gpu_kokkos VERSION 0.9.0 LANGUAGES ${ww_languages})
+project(ww3_gpu_kokkos VERSION 0.10.0 LANGUAGES ${ww_languages})
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -100,8 +100,8 @@ install(EXPORT ww_kokkosTargets NAMESPACE ww_kokkos::
 # architecture are written into the config, which refuses any other (cmake/ww_kokkosConfig.cmake.in).
 configure_file(cmake/ww_kokkosConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/ww_kokkosConfig.cmake @ONLY)
 # Entry points are only added, never removed or changed, so an install satisfies any
-# request of the same major version up to its own (0.9.0 accepts find_package(ww_kokkos
-# 0.3), 0.4, 0.5, 0.6, 0.7 and 0.8). Removing or changing an entry point needs a major bump (PATCH.md, "The fork today").
+# request of the same major version up to its own (0.10.0 accepts find_package(ww_kokkos
+# 0.3), 0.4, 0.5, 0.6, 0.7, 0.8 and 0.9). Removing or changing an entry point needs a major bump (PATCH.md, "The fork today").
 write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/ww_kokkosConfigVersion.cmake
     COMPATIBILITY SameMajorVersion)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/ww_kokkosConfig.cmake
