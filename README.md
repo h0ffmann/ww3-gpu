@@ -476,7 +476,7 @@ No GitHub Actions workflow builds a Docker image on its own: every one starts by
 
 The Kokkos code on the GPU has its own image, `docker/Dockerfile.cuda`: NVIDIA's CUDA 13.4 on
 Ubuntu 26.04, Kokkos 5.2.2 built with CUDA for compute capability 8.9 (the RTX 4090; `KOKKOS_ARCH`
-picks another), with `--ww3-gpu --gpu` and, as its reference on the CPU, `--ww3`. The host needs the NVIDIA driver and the
+picks another), with `--ww3-gpu --gpu` and, as its reference on the CPU, `--ww3`. Its kernels call CUDA's libdevice, not the device copies of glibc's libm (`WW_KOKKOS_LIBM=OFF`: Ubuntu ships libmvec stripped, and the copies need a symbol of it), so a GPU run in the image is judged by tolerance ([ADR-0014](docs/ADRs/ADR-0014-gpu-runs-judged-by-tolerance.md)). The host needs the NVIDIA driver and the
 [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)
 for `docker run --gpus all`. As on the host, every `--gpu` run asks the supervising person for
 `yes` at the terminal ([Running on the GPU](AGENTS.md#running-on-the-gpu-hard-rule)).
