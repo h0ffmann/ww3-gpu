@@ -280,7 +280,9 @@ reference, not of the port. It is not needed now.
 
 ## What is not shown
 
-- No device run: that the device's bits equal the host's is ⚠ until `--device` runs.
+- No device run: that the device's bits equal the host's is ⚠ until `--device` runs. The
+  owner's supervised run does it first, and records it here:
+  [`GPU_SUPERVISED_RUN_CHECKLIST_202610.md`](GPU_SUPERVISED_RUN_CHECKLIST_202610.md), step 1.
 - No kernel of `kokkos/src` calls these headers yet; [WFIP-0006](WFIPs/WFIP-0006-device-libm-bits.md)
   is the design, and until it is done ADR-0014's verdict by tolerance stands.
 - `mvec_powf` was checked against one CPU's libmvec; a second vendor's `rcpps` was not seen ⚠.

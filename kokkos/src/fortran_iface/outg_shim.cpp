@@ -5,9 +5,10 @@
 // The caller is W3WAVE (w3wavemd.F90) through W3KOKKOS_OUTG of w3kokkos_outgmd.F90 on the fork,
 // at a field-output time, outside any OpenMP region, in place of CALL W3OUTG (VA, FLPFLD, FLOUTG,
 // FLOUTG2). W3KOKKOS_OUTG calls the Fortran W3OUTG instead when a field this unit does not compute
-// is requested: the partitions of section 6 (FLPFLD; they read W3CPRT's table, built on the host
-// from VA), CALC_U3STOKES (FLOLOC(6,8), (6,12)), SKEWNESS (FLOLOC(8,7..9)) and CALC_WBT
-// (FLOLOC(2,17)). So ww::iogo::w3outg runs here with FLPART false and no hook requested.
+// is requested: CALC_U3STOKES (FLOLOC(6,8), (6,12)), SKEWNESS (FLOLOC(8,7..9)) and CALC_WBT
+// (FLOLOC(2,17)). So ww::iogo::w3outg runs here with FLPART false and no hook requested; the
+// partition fields of section 6 (FLPFLD), which read W3CPRT's table and no VA, are ww_outg_part's,
+// called after it (PATCH.md section 27).
 //
 // Memory contract (phase 2). A reads d_va of the grid (ww::resident::device_va), so VA crosses
 // only when the host holds the newer bits, and W3WAVE makes no host read of VA for this call. On a
@@ -376,8 +377,142 @@ int run(int igrid, const int* ipar, const float* rpar, const int* flogrd, const 
   return WW_KOKKOS_OK;
 }
 
+std::atomic<long long> g_part_calls{0}, g_part_back{0}, g_part_back_bytes{0};
+
+void print_part_counts() {
+  const char* proj = kHostReadable ? " (projected for a device, none made)" : "";
+  std::fprintf(stderr, "ww_kokkos: W3OUTG partition-field Kokkos calls: %lld\n", g_part_calls.load());
+  std::fprintf(stderr, "ww_kokkos: W3OUTG partition fields copied back D2H%s: %lld\n", proj, g_part_back.load());
+  std::fprintf(stderr, "ww_kokkos: W3OUTG partition bytes copied back D2H%s: %lld\n", proj,
+               g_part_back_bytes.load());
+}
+[[maybe_unused]] const bool g_part_count_on = [] {
+  const char* v = std::getenv("WW_KOKKOS_OUTG_COUNT");
+  const bool c = v != nullptr && std::strcmp(v, "1") == 0;
+  if (c) std::atexit(print_part_counts);
+  return c;
+}();
+
+/// The device buffers of section 6, kept between calls (unused on a host backend).
+struct PartBufs {
+  D2<int> mapsf, mapsta, icprt;
+  D2<Real> dtprt;
+  D2<Real> f2[WW_OUTGP_N2D];
+  D1<Real> f1[WW_OUTGP_NFIELD - WW_OUTGP_N2D];
+};
+PartBufs& part_bufs() {
+  static auto* b = new PartBufs();  // never destroyed, as every shim's state
+  static bool hooked = false;
+  if (!hooked && Kokkos::is_initialized()) {
+    hooked = true;
+    Kokkos::push_finalize_hook([] { *b = PartBufs(); });
+  }
+  return *b;
+}
+
+int run_part(const int* ipar, const float* rpar, const int* flogrd, const int* flogr2, const int* mapsf,
+             const int* mapsta, const int* icprt, const float* dtprt, float* const* fields) {
+  const int nseal = ipar[WW_OUTGP_NSEAL], nsea = ipar[WW_OUTGP_NSEA], nx = ipar[WW_OUTGP_NX];
+  const int ny = ipar[WW_OUTGP_NY], nrow = ipar[WW_OUTGP_NROW], noswll = ipar[WW_OUTGP_NOSWLL];
+  const int nicp = ipar[WW_OUTGP_NICP], ndtp = ipar[WW_OUTGP_NDTP], nogrp = ipar[WW_OUTGP_NOGRP];
+  const int ngrpp = ipar[WW_OUTGP_NGRPP];
+  if (nseal < 0 || nsea < nseal || nx < 1 || ny < 1 || nrow < nseal || noswll < 0 || nicp < nseal + 1 ||
+      ndtp < 1 || ipar[WW_OUTGP_DIMP] != 15 || nogrp < 4 || ngrpp < 17)
+    return fail(WW_KOKKOS_ERR_BAD_SHAPE, "ww_outg_part: bad sizes");
+  for (int k = 0; k < WW_OUTGP_NFIELD; ++k)
+    if (fields[k] == nullptr) return fail(WW_KOKKOS_ERR_BAD_SHAPE, "ww_outg_part: a null field");
+  const bool floutg = ipar[WW_OUTGP_FLOUTG] != 0, floutg2 = ipar[WW_OUTGP_FLOUTG2] != 0;
+  const auto want = [&](int j) {
+    const int k = 3 + (j - 1) * nogrp;  // FLOGRD(4,j)
+    return (floutg && flogrd[k] != 0) || (floutg2 && flogr2[k] != 0);
+  };
+
+  ww::timers::Region tcall("outg.part");
+  PartBufs& b = part_bufs();
+  ww::iogo::W3OutgScalars s{};
+  s.nseal = nseal;
+  s.noswll = noswll;
+  s.undef = rpar[WW_OUTGP_UNDEF];
+  s.wscut = rpar[WW_OUTGP_WSCUT];
+  Args g;
+  const size_t nr = static_cast<size_t>(nrow), nc = static_cast<size_t>(noswll) + 1;
+  const auto pin2 = [&](D2<int>& buf, const char* name, const int* p, size_t n0, size_t n1) {
+    if (in_place()) return U2<const int>(p, n0, n1);
+    ensure(buf, name, n0, n1);
+    Kokkos::deep_copy(buf, H2<const int>(p, n0, n1));
+    return U2<const int>(buf.data(), n0, n1);
+  };
+  g.mapsf = pin2(b.mapsf, "ww_outg.part.mapsf", mapsf, static_cast<size_t>(nsea), 3);
+  g.mapsta = pin2(b.mapsta, "ww_outg.part.mapsta", mapsta, static_cast<size_t>(ny), static_cast<size_t>(nx));
+  g.icprt = pin2(b.icprt, "ww_outg.part.icprt", icprt, static_cast<size_t>(nicp), 2);
+  if (in_place()) {
+    g.dtprt = U2<const Real>(dtprt, 15, static_cast<size_t>(ndtp));
+  } else {
+    ensure(b.dtprt, "ww_outg.part.dtprt", 15, static_cast<size_t>(ndtp));
+    Kokkos::deep_copy(b.dtprt, H2<const Real>(dtprt, 15, static_cast<size_t>(ndtp)));
+    g.dtprt = U2<const Real>(b.dtprt.data(), 15, static_cast<size_t>(ndtp));
+  }
+  Args::V2<Real>* o2[WW_OUTGP_N2D] = {&g.phs, &g.ptp, &g.plp, &g.pdir, &g.psi, &g.pws, &g.pthp0, &g.pqp,
+                                      &g.ppe, &g.pgw, &g.psw, &g.ptm1, &g.pt1, &g.pt2, &g.pep};
+  for (int k = 0; k < WW_OUTGP_N2D; ++k) {
+    if (in_place()) {
+      *o2[k] = U2<Real>(fields[k], nr, nc);
+    } else {
+      ensure(b.f2[k], "ww_outg.part.field2", nr, nc);
+      *o2[k] = U2<Real>(b.f2[k].data(), nr, nc);
+    }
+  }
+  Args::V1<Real>* o1[WW_OUTGP_NFIELD - WW_OUTGP_N2D] = {&g.pwst, &g.pnr};
+  for (int k = 0; k < WW_OUTGP_NFIELD - WW_OUTGP_N2D; ++k) {
+    if (in_place()) {
+      *o1[k] = U1<Real>(fields[WW_OUTGP_N2D + k], nr);
+    } else {
+      ensure(b.f1[k], "ww_outg.part.field1", nr);
+      *o1[k] = U1<Real>(b.f1[k].data(), nr);
+    }
+  }
+  ww::iogo::w3outg_part(Exec(), s, g);
+  Exec().fence("ww_outg_part");
+  for (int k = 0; k < WW_OUTGP_NFIELD; ++k) {
+    if (!want(k + 1)) continue;
+    const size_t n = k < WW_OUTGP_N2D ? nr * nc : nr;
+    if (!in_place()) {
+      if (k < WW_OUTGP_N2D)
+        Kokkos::deep_copy(H2<Real>(fields[k], nr, nc), b.f2[k]);
+      else
+        Kokkos::deep_copy(H1<Real>(fields[k], nr), b.f1[k - WW_OUTGP_N2D]);
+    }
+    g_part_back.fetch_add(1, std::memory_order_relaxed);
+    g_part_back_bytes.fetch_add(static_cast<long long>(n * sizeof(float)), std::memory_order_relaxed);
+  }
+  if (!in_place()) Exec().fence("ww_outg_part d2h");
+  g_part_calls.fetch_add(1, std::memory_order_relaxed);
+  return WW_KOKKOS_OK;
+}
+
 }  // namespace
 }  // namespace ww::outgshim
+
+extern "C" int ww_outg_part(const int* ipar, int nipar, const float* rpar, int nrpar, const int* flogrd,
+                            const int* flogr2, const int* mapsf, const int* mapsta, const int* icprt,
+                            const float* dtprt, float* const* fields, int nfields) {
+  using namespace ww::outgshim;
+  if (ipar == nullptr || rpar == nullptr || nipar != WW_OUTGP_NIPAR || nrpar != WW_OUTGP_NRPAR ||
+      nfields != WW_OUTGP_NFIELD || fields == nullptr || flogrd == nullptr || flogr2 == nullptr ||
+      mapsf == nullptr || mapsta == nullptr || icprt == nullptr || dtprt == nullptr)
+    return fail(WW_KOKKOS_ERR_BAD_SHAPE, "ww_outg_part: bad packet");
+  try {
+    if (!Kokkos::is_initialized()) return fail(WW_KOKKOS_ERR_NOT_INITIALISED, "before ww_kokkos_init");
+    if (nested_in_openmp()) return fail(WW_KOKKOS_ERR_UNSUPPORTED, "inside an OpenMP region");
+    return run_part(ipar, rpar, flogrd, flogr2, mapsf, mapsta, icprt, dtprt, fields);
+  } catch (const std::bad_alloc& e) {
+    return fail(WW_KOKKOS_ERR_RUNTIME, e.what());
+  } catch (const std::exception& e) {
+    return fail(WW_KOKKOS_ERR_KERNEL, e.what());
+  } catch (...) {
+    return fail(WW_KOKKOS_ERR_KERNEL, "unknown exception");
+  }
+}
 
 extern "C" int ww_outg_va(int igrid, const int* ipar, int nipar, const float* rpar, int nrpar,
                           const int* flogrd, const int* flogr2, const int* flogrr, float* va, int nspec,

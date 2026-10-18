@@ -38,18 +38,18 @@ regtest matrix yet"). 10 of the 310 rows of `kokkos/ports.tsv` are regtested and
 | # | Gap | (a) | (b) | Smallest next step |
 |---|---|---|---|---|
 | 1 | No regtest switch has the source-term set the Kokkos `W3SRCE` translates; NOAA's UFS regtests miss it too | Blocker | Blocker | Read GFS-Wave's operational switch file at its tag; run the `WW3GPU_LAB_SWITCH` matrix on the MPI and `ww3_multi` entries |
-| 2 | `ww3_multi` writes `VA` on the host between `W3WAVE` calls with no sync | Blocker | Blocker | Mark the host newer when `W3WAVE` returns; run `mww3_test_0x` with `WW_KOKKOS_VA_CHECK=1` |
+| 2 | `ww3_multi` writes `VA` on the host between `W3WAVE` calls with no sync; fixed under `SHRD` on 2026-10-18 by column syncs at the exchanges, passed again at the integrated pin `50a10730` (section 2) | Minor ⚠ | Minor ⚠ | `mww3_test_08` under MPI when the owner runs MPI |
 | 3 | MPI: four of the six resident parts are `SHRD` only, the preset stops on `DIST MPI`, the communicator is ignored, the device id is not per rank | Blocker | Major | A resident preset without `XYP3`, `OUTG`, `IOPE`, `UPDV`; one run on `switch_lab_mpi` |
 | 4 | Bit parity measured with gfortran and g++ only; the operational compiler and the GPU are not measured | Blocker | Major | Static argument for the Intel build's math calls; one smoke with it |
-| 5 | Build and packaging: a separate static library whose install needs GoogleTest and NetCDF, an unversioned Kokkos, C++20 and CMake 3.25 | Major | Blocker | An install-only configure with Kokkos as the one dependency, its version recorded in `ww_kokkosConfig.cmake` |
-| 6 | `WW_KOKKOS_ALL=1` and `W3KOKKOS_SRCE_ON` fall back to the Fortran without a word | Major | Minor | A strict flag that turns every fallback into a stop, and a per-run fallback count |
-| 7 | Configuration is 61 environment variables, no namelist; the preset lives in a lab script | Major | Major | A namelist group read by `W3INIT`, the environment as override, the effective set printed once |
+| 5 | Build and packaging: a separate static library, C++20 and CMake 3.25; the install-only configure and the exact Kokkos check are done (U6) | Major | Major | A shared-library build and a recipe for the module systems of an operational centre |
+| 6 | `WW_KOKKOS_ALL=1` and `W3KOKKOS_SRCE_ON` fall back to the Fortran without a word | Major | Minor | Done on fork branch `ww3-gpu/u2-strict-preset`, not yet at the pin: `WW_KOKKOS_STRICT=1` stops, otherwise one fallback-count line at exit; the matrix's Kokkos runs set it |
+| 7 | Configuration is 61 environment variables, no namelist; the preset lives in a lab script | Major | Major | Smallest form done on `ww3-gpu/u2-strict-preset`: `WW_KOKKOS_PRESET=resident` from one table, `presets.txt`; next, a namelist group read by `W3INIT` |
 | 8 | Observability: log lines on every rank, counters at exit to `stderr`, no provenance in the output files | Major | Minor | Gate the lines by `NAPLOG`; one NetCDF global attribute |
 | 9 | OpenMP inside MPI: the per-point parts are serialised by `!$OMP CRITICAL`; the thread budget per rank is not set by the shim | Major | Minor | Measure the hybrid entries of `ww3_ufs1.1` before claiming a speed for them |
-| 10 | Restart with the resident spectrum: covered by the sync calls, never regtested | Major | Minor | The restart-reproduction pair of `ww3_ufs1.1` (`work_c` against `work_d`) under the lab switch |
+| 10 | Restart with the resident spectrum: covered by the sync calls, never regtested; every `matrix.base` restart pair is `MPI` | Major | Minor | Run `scripts/restart_pair.sh` (a `SHRD` restart pair on `full`, written 2026-10-18, not run) |
 | 11 | `PDLIB` and unstructured grids: translated, not wired, gated out | Minor ⚠ | Major | None for GFS-Wave v16; a wiring unit for `PDLIB` when the owner asks |
-| 12 | The fork patch: 4 082 lines of new Fortran, 819 changed lines in three WW3 files, the C++ in another repository under another licence | Minor | Blocker | An ADR on where `ww_kokkos` lives for upstream |
-| 13 | A stale contract remark: "one spectral grid per process" | Minor | Minor | Edit the remark in the fork |
+| 12 | The fork patch: 4 082 lines of new Fortran, 819 changed lines in three WW3 files, 58 218 lines of C++ in another repository, most of it LGPL-3.0-or-later, some MIT, 76 files with no licence line | Minor | Blocker | ADR-0018 (Proposed) names the three places `ww_kokkos` could live; the owner chooses, after a legal reading ⚠ |
+| 13 | A stale contract remark: "one spectral grid per process"; edited on the fork branch `ww3-gpu/u1-multi-va` (section 13) | Minor | Minor | Move the pin |
 
 The sections below give the evidence of each gap. The ranked top five closes the page.
 
@@ -131,6 +131,33 @@ per grid too (v, `snl1_shim.cpp:83-89`), so several grids in one process are sup
   costs one host-to-device copy of `VA` at the next call; run the `mww3_test_01` to `_03`
   entries with `WW_KOKKOS_VA_CHECK=1` under the lab switch.
 
+**Update, 2026-10-18 (plan 002, U1).** Reproduced and fixed under `SHRD`
+([log](log/2026-10-18-ww3-multi-resident-va.md), `PATCH.md` section 26). With the lab switch
+and the resident preset, `WW_KOKKOS_VA_CHECK=1` stopped `mww3_test_02`, `_03` and `_04`
+(`grdset_a`), and without it they differed from the Fortran in 5, 10 and 4 files, with
+`ww3_self` 0 (v). The step above was not taken: on a GPU it adds a whole copy of `VA` per grid
+per call, which the owner refused. Instead each `ww3_multi` routine that reads or writes `VA`
+between `W3WAVE` calls (`WMIOBS`, `WMIOHS`, `WMIOES`, `WMIOHG`, `WMIOEG`, and `WMWAVE`'s
+unified point output) syncs only the columns of its own loop, and `W3WAVE` no longer reads
+`VA` back at its return, since `ww3_shel` reads none after it. This adds `wminiomd.F90` and
+`wmwavemd.F90` to the fork's diff. After, the six `mww3_test_01` to `_05` entries gave
+`test.comp` 0 files different, also with the host copy poisoned, and no entry's whole-array
+copies went up: `_04` went from 864 to 0 device-to-host copies, and `ww3_shel` full from 1 to 0
+(v). Left open: `mww3_test_08` (MPI), whose six differing files the same defect explains by
+reading ⚠, not run (ADR-0017); the fork branch waits for the pin bump.
+
+- **(a), (b) now Minor** under `SHRD` ⚠: shown on the four `PR3 UQ` `grdset_a`-type entries and
+  one moving grid, with the lab switch's source terms, not on GFS-Wave's grids.
+
+**Update, 2026-10-18 (plan 002, U3).** On the integrated pin (`WW3/` `50a10730`, `CPRT` in the
+preset), agent A's commands again gave `test.comp` 0 files different with the host copy poisoned
+on `mww3_test_01` to `_04` (resident) and on both `mww3_test_05` moving-grid entries
+(`SRCE,OUTG,IOPE,UPDV`), and the five `mww3_test_05` `ST4` OMPG entries passed with `CPRT` too (v,
+[log](log/2026-10-18-u3-regtests-v2.md)). Whole-`VA` copies device to host: `_02` 8 → 0, `_03`
+216 → 3, the others unchanged (v). `mww3_test_01` to `_04` have `FLSOU` false, so they test the
+exchanges and the propagation, not `W3SRCE` (v). `mww3_test_07` fails in the Fortran run as well
+(its `SDS4` namelist under the lab switch). `mww3_test_08` (MPI) is still not run.
+
 ## 3. MPI
 
 *Scope, 2026-10-18:* out of scope by decision. The port is single node, and an MPI build keeps
@@ -195,6 +222,10 @@ WFIP-0006) with the host, and every flag's parity note says "GPU ⚠ never run" 
 (ADR-0014). WCOSS2 has no GPUs (the `WCOSS2` row of [`GLOSSARY.md`](GLOSSARY.md)), so for (a)
 today the GPU is not the path; GFS-Wave's spectral grid, 50 x 36, also needs the DIA's level-1
 scratch on the RTX 4090 (v, `kokkos/PORT_STATUS.md:63`), a speed matter, not a parity one.
+The CUDA build of the fork for the resident preset compiles, build only, with no warning in a
+wired part (v, [`log/2026-10-18-cuda-build-only.md`](log/2026-10-18-cuda-build-only.md)); the
+owner's supervised run follows
+[`GPU_SUPERVISED_RUN_CHECKLIST_202610.md`](GPU_SUPERVISED_RUN_CHECKLIST_202610.md).
 
 **Real kind.** The interface is `REAL(C_FLOAT)`; "a WW3 built with an 8-byte default REAL needs a
 different ABI" (v, `w3kokkosmd.F90:30-31`).
@@ -214,9 +245,9 @@ What a WW3 build needs today:
 |---|---|---|
 | A separately built, installed `ww_kokkos` | `find_package(ww_kokkos 0.9 REQUIRED)` (v, `WW3 model/src/CMakeLists.txt:43`) | Upstream has no place to fetch it from |
 | A static archive only | `add_library(ww_kokkos STATIC)` (v, `kokkos/CMakeLists.txt:52`) | No shared build for a coupled system that links WW3 as a library |
-| GoogleTest, NetCDF C and Fortran, a Fortran compiler to configure the library | `find_package(GTest REQUIRED)`, `pkg_check_modules(NETCDF ...)`, `NETCDFF` (v, `kokkos/CMakeLists.txt:12`, `:33-37`) | The install needs the test and tool dependencies |
+| GoogleTest, NetCDF C and Fortran, a Fortran compiler to configure the library | `find_package(GTest REQUIRED)`, `pkg_check_modules(NETCDF ...)`, `NETCDFF` under `WW_KOKKOS_BUILD_TESTS` (default ON), and C and Fortran enabled only then (v, `kokkos/CMakeLists.txt`) | Closed (U6): `-DWW_KOKKOS_BUILD_TESTS=OFF` configures with C++ only and searches Kokkos only (see below) |
 | C++20, CMake 3.25 | v, `kokkos/CMakeLists.txt:11`, `:14` | WW3 asks for CMake 3.19 (v, `WW3/CMakeLists.txt:4`) |
-| Kokkos, unversioned | `find_package(Kokkos REQUIRED)` and `find_dependency(Kokkos)` (v, `kokkos/CMakeLists.txt:26`, `:83-85`) | WW3's configure may find a Kokkos other than the one the archive was built with; only `WW_KOKKOS_ARCH`, optional, checks the architecture (v, `:27-32`) |
+| Kokkos, pinned by the package | `kokkos/cmake/ww_kokkosConfig.cmake.in`: `find_dependency(Kokkos <Kokkos_VERSION> EXACT)`, then `Kokkos_DEVICES` and `Kokkos_ARCH` compared with the values recorded at build time (v) | Closed (U6): another Kokkos is a configure error of WW3's `find_package(ww_kokkos 0.9 REQUIRED)`, unchanged in the fork |
 | A version contract | `SameMajorVersion` at 0.9.0, entry points only added (v, `kokkos/CMakeLists.txt:86-90`) | Sound for a 0.x series, but no symbol check enforces "only added" ⚠ |
 | Contraction off in the kernels | `-ffp-contract=off`, `--fmad=false`, `PRIVATE` to `ww_kokkos` (v, `kokkos/src/ww_kokkos/CMakeLists.txt:297-303`) | Correct where it is; WW3's side does not check it was built this way |
 | `ww3_lib` links `ww_kokkos::ww_kokkos` `PUBLIC` | v, `WW3 model/src/CMakeLists.txt:44` | WW3's exported targets (v, `:285-299`) then name a package a consumer must also find ⚠ (no consumer built) |
@@ -226,9 +257,19 @@ What a WW3 build needs today:
 - **(a) Major.** NCEP can build it by hand; it cannot pin it as one more library in its stack
   without the items above.
 - **(b) Blocker.** An upstream optional dependency must configure with its own dependencies only.
-- **Next step.** An option (`WW_BUILD_TESTS`, default on here) that skips GoogleTest, NetCDF,
-  the tools and the Fortran language for an install-only configure; write `Kokkos_VERSION` and
-  the enabled backends into `ww_kokkosConfig.cmake` and check them in WW3's `find_package`.
+- **State (U6, 2026-10-18).** `WW_KOKKOS_BUILD_TESTS=OFF` is the install-only configure
+  (`kokkos/README.md`, "Install-only build"). Traced with `cmake --trace-expand` in the `#ww3`
+  shell, it ran `find_package(Kokkos REQUIRED)` and, inside Kokkos' config,
+  `find_package(OpenMP REQUIRED COMPONENTS CXX)`, and no other `find_package` or
+  `pkg_check_modules`; `Kokkos_DIR` is the only package directory in its cache (v). The
+  installed config records Kokkos 5.2.2, `OPENMP;SERIAL`, no architecture (v). WW3 built
+  against that prefix with `WW3GPU_KOKKOS_PREFIX=<prefix> scripts/ww3-gpu.sh --ww3-gpu smoke
+  --cpu` (v, 2026-10-18): WW3's cache names that prefix as `ww_kokkos_DIR`; the Kokkos and the
+  Fortran runs of the same executable wrote byte-identical files (`out_grd.ww3`, `out_pnt.ww3`,
+  `restart.ww3`, the NetCDF), and against `--ww3` every binary model file was byte-identical and
+  `nccmp-tol` found 0 difference in every NetCDF field. No fork change was needed.
+- **Next step.** A shared build of `ww_kokkos` for a coupled system, and the CMake and C++
+  minimums against what an operational centre's module system provides ⚠.
 
 ## 6. Failure behaviour
 
@@ -252,6 +293,15 @@ asked for Kokkos and got the Fortran learns it only from one log line or a `*_CO
 - **(b) Minor.** The default is the Fortran anyway.
 - **Next step.** `WW_KOKKOS_STRICT=1`: `KOKKOS_PART` and the `SRCE` gate stop instead of falling
   back, and `W3KOKKOS_SRCE_ON` counts its Fortran calls for one line at the end of the run.
+- **Done (2026-10-18), not yet at the pin.** Fork branch `ww3-gpu/u2-strict-preset` (`f0cbe70d`):
+  `KOKKOS_PART` under `WW_KOKKOS_ALL=1`, the two `W3SRCE` set-up fallbacks and a new per-step gate
+  `W3KOKKOS_SRCE_STEP` call `KOKKOS_FALLBACK`, which stops with `EXTCDE` and a `NDSE` line
+  naming the part and the reason under `WW_KOKKOS_STRICT=1`, and otherwise counts; the shim
+  prints `ww_kokkos: calls left on the Fortran (WW_KOKKOS_STRICT=1 stops instead): SRCE=<n> ...`
+  at exit on every process, as the `*_COUNT` lines do. The flag is read once; the per-point
+  `W3KOKKOS_SRCE_ON` is unchanged. The regtest matrix's Kokkos run sets `WW_KOKKOS_STRICT=1`
+  (`regtests/cmake/ww3gpu_common.cmake`, `ww3gpu_kokkos_env`). `PATCH.md` section 24 has the
+  runs that show it.
 
 ## 7. Configuration surface
 
@@ -269,6 +319,14 @@ script (v, `scripts/ww3-gpu.sh:190`), so a production job card would repeat it b
   ⚠ (convention, not a rule read today).
 - **Next step.** A `&KOKKOS_NML` group read in `W3INIT` that sets the same flags, the
   environment kept as override for tests, and the effective set written once to the log.
+- **Done in its smallest form (2026-10-18), not yet at the pin.** `WW_KOKKOS_PRESET=resident`,
+  read by `W3INIT` through the shim (fork `237ca0de` on `ww3-gpu/u2-strict-preset`): the part
+  list is one line of `kokkos/src/fortran_iface/presets.txt`, which CMake compiles into
+  `part_flags.cpp` and `scripts/ww3-gpu.sh --kokkos resident` and the matrix's
+  `WW3GPU_KOKKOS=resident` read, so they cannot drift. A set `WW_KOKKOS_<PART>` still wins, an
+  unknown name stops the model, and the parts line stays the effective set, with the preset's
+  name on the line before it. A job card then carries one variable instead of six. The
+  namelist group remains the next step. `PATCH.md` section 25.
 
 ## 8. Observability
 
@@ -324,6 +382,14 @@ the UFS case (`work_c`, then `work_d` from its restart, compared by `test.comp`;
 - **(b) Minor.**
 - **Next step.** That pair under `WW3GPU_LAB_SWITCH=ON` with the per-point parts and `SRCE`.
 
+**Update, 2026-10-18 (plan 002, U3).** `ww3_ufs1.1` is an `MPI` case, as is every other
+`rstrt_b4b` pair of `matrix.base` (`ww3_tp2.17` with `PDLIB`; v, `matrix.base:2048-2067`,
+`:2171-2205` at `50a10730`), and the resident preset stops under `MPI` (ADR-0017). No entry
+restarts a `SHRD` case. [`scripts/restart_pair.sh`](../scripts/restart_pair.sh) is the smallest
+equivalent on `full` with `switch_lab_shrd`: a 00:00 to 12:00 run and a 06:00 to 12:00 run from
+its own 06:00 restart, for the Fortran and the resident Kokkos of one executable, compared with
+`cmp`. It was not run ⚠ ([log](log/2026-10-18-u3-regtests-v2.md)); the gap stays Major for (a).
+
 ## 11. `PDLIB` and unstructured grids
 
 29 rows of `kokkos/ports.tsv` translate `PDLIB` routines (`pdlib_w3profsmd`, `w3parall`); none
@@ -342,16 +408,22 @@ batched `W3SRCE` is compiled only `!defined(W3_PDLIB)` (v, `w3wavemd.F90:452`, `
 `diff -r` of the fork against `WW3-noaa/` (v, today): six new modules, 4 082 lines
 (`w3kokkos*md.F90`), and 114, 456 and 249 changed lines in `w3initmd.F90`, `w3srcemd.F90`,
 `w3wavemd.F90`, plus a `kokkos` category in `switches.json` and the CMake block of section 5. The
-Fortran is LGPL-3.0-or-later (v, `w3kokkosmd.F90:33`); the C++ it calls is MIT (v, the 12
-`SPDX` lines of `kokkos/src/fortran_iface/*.cpp`) and lives here, not in WW3. The `#ifdef
+Fortran is LGPL-3.0-or-later (v, `w3kokkosmd.F90:33`). The C++ it calls lives here, not in WW3:
+58 218 lines in 347 files under `kokkos/src/`, of which 249 files carry `LGPL-3.0-or-later` (the
+kernels translated from WW3, all in `ww_kokkos/`), 22 carry `MIT` (the shims, timers, fixture
+reader) and 76 carry no line (v, `grep SPDX-License-Identifier`, 2026-10-18). An earlier version
+of this section called the C++ MIT; the count corrects it. The `#ifdef
 W3_KOKKOS` hunks inside `W3WAVE`'s time loop are what a reviewer reads; with the `KOKKOS` switch
 off they compile to the original.
 
 - **(a) Minor.** Operations can run the fork.
 - **(b) Blocker.** Upstream needs to know where the C++ comes from, who maintains it, and how its
   version is pinned.
-- **Next step.** An ADR: `ww_kokkos` as an external package WW3 finds, as a submodule of WW3, or
-  inside `model/src`; the licences permit each ⚠ (no legal reading).
+- **State (U6, 2026-10-18).** [ADR-0018](ADRs/ADR-0018-where-ww-kokkos-lives-for-upstream.md),
+  Proposed, sets out the three options (an external package WW3 finds, a submodule of WW3,
+  sources inside `model/src`) with the size and licence of each; only the first was built.
+- **Next step.** The owner's choice among them, after a legal reading of the licence of the
+  translated C++ and of the files with no licence line ⚠.
 
 ## 13. A stale remark in the contract
 
@@ -359,6 +431,10 @@ off they compile to the original.
 grid's tables". The shim keeps one context per grid index in a map (v, `snl1_shim.cpp:83-89`), and
 `W3INIT` calls `WW_SNL1_INIT` with `IMOD` (v, `w3initmd.F90:764`). The remark describes phase 1
 and misleads a reviewer of (b). Remark b of the same block, on concurrent calls, is still true.
+
+**Update, 2026-10-18 (plan 002, U7).** Remark a now says one context per grid, keyed by the grid
+index, with `W3INIT` passing `IMOD`; remark b is kept (v, fork commit `f330dc53` on
+`ww3-gpu/u1-multi-va`, `w3kokkosmd.F90:99-104`). Closed once the pin moves.
 
 ## Ranked top five
 
@@ -371,7 +447,9 @@ Ranked by what blocks both targets first, then by how much of GFS-Wave's run it 
 2. **`ww3_multi` writes `VA` behind the resident copy.** `wminiomd.F90:2264`, `:3261-3330`
    write it between `W3WAVE` calls; `W3WAVE` returns with "both equal" (`w3wavemd.F90:3153`,
    `resident_shim.cpp:221-240`). GFS-Wave is a `ww3_multi` mosaic. Next: a host write at
-   `W3WAVE`'s return, then `mww3_test_0x` with `WW_KOKKOS_VA_CHECK=1`.
+   `W3WAVE`'s return, then `mww3_test_0x` with `WW_KOKKOS_VA_CHECK=1`. Update, 2026-10-18:
+   fixed under `SHRD` with column syncs at the exchanges and no read at the return, the
+   `mww3_test_01` to `_05` entries byte-identical (section 2); `mww3_test_08` (MPI) not run.
 3. **The resident preset cannot run under `DIST MPI`.** `XYP3`, `OUTG`, `IOPE`, `UPDV` are
    `SHRD` only and the preset sets them explicitly, which stops the model
    (`w3kokkos_prop3md.F90:127-129`, `w3kokkosmd.F90:1197-1201`); the batched `W3SRCE` never ran
@@ -381,11 +459,10 @@ Ranked by what blocks both targets first, then by how much of GFS-Wave's run it 
    (`model/src/CMakeLists.txt:113-115`) calls another math library; no GPU run compared the
    device libm. Next: the static argument for the Intel build's transcendental calls, then one
    smoke.
-5. **The library cannot be installed as a plain dependency.** Its configure needs GoogleTest,
-   NetCDF and Fortran, C++20 and CMake 3.25, and records no Kokkos version
-   (`kokkos/CMakeLists.txt:11-37`, `:83-85`); the C++ lives outside WW3 under another licence.
-   Next: an install-only option, the Kokkos version in the package config, and an ADR on where
-   `ww_kokkos` lives.
+5. **Where the library lives for upstream is open.** Since U6 it installs with Kokkos as its one
+   dependency and pins that Kokkos exactly (`kokkos/README.md`, "Install-only build"); it still
+   needs C++20 and CMake 3.25, and its C++ lives outside WW3, mostly under WW3's licence.
+   Next: the owner's choice among the options of ADR-0018, after a legal reading.
 
 ## How the checks were made
 

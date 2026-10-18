@@ -154,7 +154,7 @@ Trans. Parallel Distrib. Syst.* 33(4), 805–817, 2022,
 ```
 CMakeLists.txt        top level: options, find_package, the ww_kokkos target
 CMakePresets.json     serial-debug, openmp-release, cuda-release, cuda-h100-release
-cmake/                CompilerWarnings.cmake -- the one warning policy
+cmake/                CompilerWarnings.cmake (the one warning policy), ww_kokkosConfig.cmake.in
 src/ww_kokkos/        real.hpp (float32 + helpers), spectrum_fixtures.hpp (JONSWAP, cos^2),
                       snl1_{config,tables,dia} (the DIA port), fixture_io (fixture reader)
 src/fortran_iface/    ww_kokkos_c.hpp + snl1_shim.cpp (the C ABI, built into ww_kokkos),
@@ -209,6 +209,11 @@ on the search path. `WW_KOKKOS_ARCH=HOPPER90` makes the configure call Kokkos' `
 backends and/or architectures requested" (v, 2026-10-17) instead of building `sm_89` code under
 an H100 name. `scripts/ww3-gpu.sh --gpu` still builds `cuda-release`.
 
+`just kokkos-cuda-test` ends with `ctest` on the CUDA default execution space, which is a device
+run and the owner's. To build only: `cmake -S kokkos --preset cuda-release` and
+`cmake --build kokkos/build/cuda-release` in the `#cuda` shell. The owner's supervised GPU run
+follows [`docs/GPU_SUPERVISED_RUN_CHECKLIST_202610.md`](../docs/GPU_SUPERVISED_RUN_CHECKLIST_202610.md).
+
 Two things the names do *not* promise:
 
 - **The backend comes from the shell, not from the preset.** OpenMP is the default
@@ -227,6 +232,50 @@ Two things the names do *not* promise:
 |---|---|---|
 | `WW_ENABLE_FORTRAN` | `ON` | build the Fortran interface module `W3KOKKOSMD` and `intro_06` |
 | `WW_DETERMINISTIC` | `OFF` | pin reductions to a fixed summation order for bit-reproducible validation runs |
+| `WW_KOKKOS_BUILD_TESTS` | `ON` | build the intro programs, the GoogleTest suites and the NetCDF tools; `OFF` is the install-only configure below |
+
+### Install-only build: `ww_kokkos` with Kokkos as its one dependency
+
+WW3 built with the `KOKKOS` switch links the installed `ww_kokkos` package
+(`find_package(ww_kokkos 0.9 REQUIRED)`, v, `WW3/model/src/CMakeLists.txt:43` at `WW3@80644ba9`).
+`-DWW_KOKKOS_BUILD_TESTS=OFF` configures only that package: the project enables C++ alone, and
+GoogleTest, NetCDF, the intro programs, the tools and the Fortran module are left out
+(`WW_ENABLE_FORTRAN` is forced off: WW3 compiles `W3KOKKOSMD` in its own build). The kernels and
+their flags do not change: `-ffp-contract=off` and, on CUDA, `--fmad=false` stay `PRIVATE` to
+`ww_kokkos` (`src/ww_kokkos/CMakeLists.txt`).
+
+```bash
+# inside nix develop ./picasso/labs/pratico#ww3, from the repository root
+cmake -S kokkos -B kokkos/build/install-only -G Ninja -DCMAKE_BUILD_TYPE=Release \
+      "-DCMAKE_CXX_FLAGS=-O3 -march=x86-64-v3" -DWW_KOKKOS_BUILD_TESTS=OFF
+cmake --build kokkos/build/install-only -j8
+cmake --install kokkos/build/install-only --prefix <prefix>
+# then WW3 against it (scripts/ww3-gpu.sh still builds openmp-release, for nccmp-tol):
+WW3GPU_KOKKOS_PREFIX=<prefix> scripts/ww3-gpu.sh --ww3-gpu smoke --cpu
+```
+
+The installed `ww_kokkosConfig.cmake` (from `cmake/ww_kokkosConfig.cmake.in`) records the
+`Kokkos_VERSION`, `Kokkos_DEVICES` and `Kokkos_ARCH` of the Kokkos the archive was compiled
+against, asks for `find_dependency(Kokkos <version> EXACT)`, and sets `ww_kokkos_FOUND` false with
+a message when the Kokkos found has other backends or another architecture. `EXACT` works because
+Kokkos' `KokkosConfigVersion.cmake` is CMake's basic version file, which sets
+`PACKAGE_VERSION_EXACT` when the requested version string equals its own (v, read in the
+`kokkos-openmp-5.2.2` store path of the `#ww3` shell, 2026-10-18).
+
+What the configure searched, read from `cmake --trace-expand` (v, 2026-10-18): `find_package(Kokkos
+REQUIRED)` in this tree, and `find_package(OpenMP REQUIRED COMPONENTS CXX)` from Kokkos' own
+`find_dependency`; no other `find_package` or `pkg_check_modules` call ran, and `Kokkos_DIR` is the
+only package directory in the cache. The `#ww3` shell's Kokkos is 5.2.2 with `OPENMP;SERIAL` and no
+architecture. The 25 object files of `ww_kokkos` are byte-identical to the `openmp-release`
+preset's (`diff -r -q` of the two `CMakeFiles/ww_kokkos.dir`, v, 2026-10-18): the option changes
+what is configured around the library, not the library.
+
+The refusals, checked with a one-line consumer project (`find_package(ww_kokkos 0.9 REQUIRED)`)
+on 2026-10-18 (v): with the installed config, it finds Kokkos 5.2.2; with `-DKokkos_DIR` pointed
+at a Kokkos 5.2.0 it still takes 5.2.2 and ignores 5.2.0; with the recorded version edited to
+5.2.1 it stops with "Could not find a configuration file for package "Kokkos" that exactly matches
+requested version"; with the recorded backends edited to `CUDA;SERIAL` it stops with the
+config's own message.
 
 ## Intro programs
 
@@ -362,11 +411,18 @@ this is the short form.
 | partial | `WW_KOKKOS_<PART>=1` for each part wanted | `--kokkos SNL1,SDS4` | the listed parts |
 | full | `WW_KOKKOS_ALL=1` | `--kokkos all` | every wired part whose translation covers the switch file |
 | GPU preset | `WW_KOKKOS_ALL=0 WW_KOKKOS_SRCE=1` | `--kokkos gpu` (the default of `--gpu`) | `W3SRCE` with the source terms it calls (ADR-0013) |
-| resident preset | `WW_KOKKOS_ALL=0`, `WW_KOKKOS_<PART>=1` for `SRCE`, `XYP3`, `KTP3`, `OUTG`, `IOPE`, `UPDV` | `--kokkos resident` | the parts that keep the spectrum `VA` on the device (WFIP-0005 units 1 to 5, #173, #179); not a default: none of its parts is regtested yet ([`ports.tsv`](ports.tsv)) |
+| resident preset | `WW_KOKKOS_PRESET=resident`, or `WW_KOKKOS_ALL=0` and `WW_KOKKOS_<PART>=1` for `SRCE`, `XYP3`, `KTP3`, `OUTG`, `IOPE`, `UPDV`, `CPRT` (the line of [`presets.txt`](src/fortran_iface/presets.txt)) | `--kokkos resident` | the parts that keep the spectrum `VA` on the device (WFIP-0005 units 1 to 5, #173, #179); not a default: none of its parts is regtested yet ([`ports.tsv`](ports.tsv)) |
 
 An explicitly set `WW_KOKKOS_<PART>` wins over `WW_KOKKOS_ALL`; one C function,
 `ww_kokkos_flag` in `src/fortran_iface/part_flags.cpp`, resolves both for the Fortran and the
-shims. `W3INIT` writes one line to `log.ww3` naming each part and where it ran. "Full" is 100 %
+shims. `WW_KOKKOS_PRESET=<name>` turns on the parts of one line of
+[`src/fortran_iface/presets.txt`](src/fortran_iface/presets.txt) as if each were set to `1`; a set
+`WW_KOKKOS_<PART>` still wins and an unknown name stops `W3INIT`. `W3INIT` writes one line to
+`log.ww3` naming each part and where it ran, the effective set. Where a part asked on Kokkos would
+run the Fortran (`WW_KOKKOS_ALL=1` on a switch file its translation does not cover, or a `W3SRCE`
+step with a branch the kernel leaves to the Fortran), the model runs the Fortran and the shim
+prints one line at exit with the count per part; `WW_KOKKOS_STRICT=1` stops the model there
+instead, with a line naming the part and the reason (PATCH.md sections 24 and 25). "Full" is 100 %
 of the wired parts, not of WW3: their share of the profiled run time is in
 [`PORT_STATUS.md`](PORT_STATUS.md) (`python3 scripts/port_score.py --write`), and the I/O,
 set-up and the rest of the propagation stay Fortran. A part that is wired but whose `regtested`

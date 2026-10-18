@@ -67,3 +67,8 @@ Date, author, issue/PR/WFIP.
 | 2026-10-18 | [The resident preset under MPI: refused by design; SRCE and KTP3 alone run, one entry differs](2026-10-18-resident-mpi-lab-switch.md) | #42, WFIP-0003 |
 | 2026-10-18 | [Where the Kokkos resident run of `full` spends its wall time on the CPU](2026-10-18-resident-profile.md) | #42, WFIP-0005 |
 | 2026-10-18 | [Five bit-neutral speed-ups of the resident preset: three built, two checked, one Fortran change tested](2026-10-18-resident-five-speedups.md) | #42, WFIP-0005 |
+| 2026-10-18 | [The CUDA build of `ww_kokkos` and of the fork for the resident preset, build only: 51 nvcc warnings, none in a wired part](2026-10-18-cuda-build-only.md) | plan 2026-10-18-002 U5, ADR-0014 |
+| 2026-10-18 | [The boundary and track outputs read only their columns of the resident `VA`](2026-10-18-resident-output-readers.md) | #42, WFIP-0005 |
+| 2026-10-18 | [`ww3_multi` and the resident `VA`: the defect reproduced, column syncs at the exchanges, no read at `W3WAVE`'s return](2026-10-18-ww3-multi-resident-va.md) | plan 2026-10-18-002 U1 + U7, WFIP-0005 |
+| 2026-10-18 | [`W3CPRT` on the resident `VA`: partitioning without copying the spectrum back](2026-10-18-cprt-resident.md) | plan 2026-10-18-002 U9, WFIP-0005 |
+| 2026-10-18 | [U3 on the integrated pin: the resident serial, OMPG, `ww3_multi` and `ww3_tnc1` entries; the restart pair designed, not run](2026-10-18-u3-regtests-v2.md) | plan 2026-10-18-002 U3, #191 |

@@ -1,0 +1,4 @@
+# W3CPRT's spectral partitioning on the resident VA, PATCH.md section 27 (cprt_shim.cpp); opt-in, not under WW_KOKKOS_ALL
+# Read by scripts/ww3-gpu.sh: PART <name> (WW_KOKKOS_<name>), COUNT <variable>, FILE <fork path>; PATCH.md section 9.
+PART CPRT
+COUNT WW_KOKKOS_CPRT_COUNT

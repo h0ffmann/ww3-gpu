@@ -150,7 +150,7 @@ duas rodadas. Escolha as partes com `--kokkos`:
 | `none` | nenhuma | só o Fortran, no build com Kokkos |
 | `all` | todas as partes do build (`WW_KOKKOS_ALL=1`), menos as opcionais abaixo | o teste mais amplo da tradução |
 | `gpu` | `SRCE` | o padrão do `--gpu`: o `W3SRCE` inteiro em cada chamada ([ADR-0013](docs/ADRs/ADR-0013-operational-parts-default-to-kokkos.md)) |
-| `resident` | `SRCE,XYP3,KTP3,OUTG,IOPE,UPDV` | o passo de tempo inteiro em Kokkos, com o espectro guardado do lado do Kokkos ([próxima seção](#o-que-o---kokkos-resident-faz)) |
+| `resident` | `SRCE,XYP3,KTP3,OUTG,IOPE,UPDV,CPRT` | o passo de tempo inteiro em Kokkos, com o espectro guardado do lado do Kokkos ([próxima seção](#o-que-o---kokkos-resident-faz)) |
 | uma lista, por exemplo `SNL1,SDS4` | as partes da lista | o teste de uma parte por vez |
 
 ### o que o `--kokkos resident` faz

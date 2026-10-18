@@ -83,10 +83,32 @@ function(ww3gpu_parts_d parts counts dir)
   set(${counts} "${c}" PARENT_SCOPE)
 endfunction()
 
+# The presets of WW_KOKKOS_PRESET (PATCH.md section 25), the file the shim compiles and
+# scripts/ww3-gpu.sh reads; WW3GPU_PRESETS_TXT may point elsewhere (selftest.cmake).
+if(NOT DEFINED WW3GPU_PRESETS_TXT)
+  set(WW3GPU_PRESETS_TXT "${CMAKE_CURRENT_LIST_DIR}/../../kokkos/src/fortran_iface/presets.txt")
+endif()
+
+# ww3gpu_preset_parts(<out> <name>): the PART,... list of PRESET <name> in WW3GPU_PRESETS_TXT, or
+# empty when the file has no such preset.
+function(ww3gpu_preset_parts out name)
+  set(r "")
+  if(EXISTS "${WW3GPU_PRESETS_TXT}")
+    file(STRINGS "${WW3GPU_PRESETS_TXT}" lines REGEX "^PRESET ")
+    foreach(l IN LISTS lines)
+      if(l MATCHES "^PRESET ([a-z][a-z0-9_]*) ([A-Z][A-Z0-9_]*(,[A-Z][A-Z0-9_]*)*)$" AND CMAKE_MATCH_1 STREQUAL name)
+        set(r "${CMAKE_MATCH_2}")
+        break()
+      endif()
+    endforeach()
+  endif()
+  set(${out} "${r}" PARENT_SCOPE)
+endfunction()
+
 # ww3gpu_kokkos_preset(<out> <spec> <parts>): the flags the Kokkos run of WW3GPU_KOKKOS sets, as
-# scripts/ww3-gpu.sh --kokkos does: "all" is ALL (WW_KOKKOS_ALL=1), "resident" the part list of
-# that preset (kokkos_preset in ww3-gpu.sh), "none" nothing, and a comma list its parts, each of
-# <parts>; <out> is ERROR:<why> for anything else.
+# scripts/ww3-gpu.sh --kokkos does: "all" is ALL (WW_KOKKOS_ALL=1), a preset of presets.txt
+# (resident) its part list, "none" nothing, and a comma list its parts, each of <parts>; <out> is
+# ERROR:<why> for anything else.
 function(ww3gpu_kokkos_preset out spec parts)
   if(spec STREQUAL "all")
     set(${out} ALL PARENT_SCOPE)
@@ -94,8 +116,13 @@ function(ww3gpu_kokkos_preset out spec parts)
   elseif(spec STREQUAL "none")
     set(${out} "" PARENT_SCOPE)
     return()
-  elseif(spec STREQUAL "resident")
-    set(spec "SRCE,XYP3,KTP3,OUTG,IOPE,UPDV")
+  elseif(spec MATCHES "^[a-z][a-z0-9_]*$")
+    ww3gpu_preset_parts(pl "${spec}")
+    if(pl STREQUAL "")
+      set(${out} "ERROR:'${spec}' is not a preset of ${WW3GPU_PRESETS_TXT}" PARENT_SCOPE)
+      return()
+    endif()
+    set(spec "${pl}")
   endif()
   string(REPLACE "," ";" l "${spec}")
   if(l STREQUAL "")
@@ -114,7 +141,10 @@ endfunction()
 # ww3gpu_kokkos_env(<out> <F|K|G> <flags> <parts> <counts>): the environment of one run, a list of
 # NAME=VALUE, NAME= meaning unset. Every WW_KOKKOS_<part> of <parts> is unset unless the Kokkos run
 # turns it on, WW_KOKKOS_ALL is 0 except in a Kokkos run whose <flags> has ALL, and the Kokkos run
-# sets every counter of <counts>. The Fortran runs never inherit a flag from the shell.
+# sets every counter of <counts>. The Kokkos run sets WW_KOKKOS_STRICT=1, so a part it asks for
+# that would run the Fortran stops the run instead of comparing the Fortran with itself (PATCH.md
+# section 24); the Fortran runs unset it. No run takes WW_KOKKOS_PRESET from the shell. The
+# Fortran runs never inherit a flag from the shell.
 function(ww3gpu_kokkos_env out k flags parts counts)
   set(e "")
   if(k STREQUAL "K" AND "ALL" IN_LIST flags)
@@ -122,6 +152,12 @@ function(ww3gpu_kokkos_env out k flags parts counts)
   else()
     list(APPEND e "WW_KOKKOS_ALL=0")
   endif()
+  if(k STREQUAL "K")
+    list(APPEND e "WW_KOKKOS_STRICT=1")
+  else()
+    list(APPEND e "WW_KOKKOS_STRICT=")
+  endif()
+  list(APPEND e "WW_KOKKOS_PRESET=")
   foreach(p IN LISTS parts)
     if(k STREQUAL "K" AND p IN_LIST flags)
       list(APPEND e "WW_KOKKOS_${p}=1")
@@ -260,11 +296,25 @@ endfunction()
 
 # ww3gpu_select_entries(<prefix> <matrix.base> <regtests dir> <serial|omp|mpi|all> [<physics>
 # [<words>]]): every kept entry, in order, as two parallel lists <prefix>_TESTS and <prefix>_OPTS
-# (the entry's options, $ww3 and the test dropped, space-joined). <physics> is a list of switch
+# (the entry's options, $ww3 and the test dropped, space-joined; an entry with none is
+# WW3GPU_NO_OPTS, since a CMake list cannot hold an empty first item, and ww3gpu_entry_opts reads
+# it back as empty). <physics> is a list of switch
 # words, NL1 by default, ANY for no physics filter; every entry whose switch has one of them and
 # passes ww3gpu_switch_words on <words> is in exactly one of serial (none of MPI, OMPG, OMPH), omp
 # (OMPG or OMPH, no MPI) and mpi (MPI); all is the three. A line whose switch file is missing is
 # dropped, and so is a switch with both ST4 and FLX5, which KOKKOS refuses.
+set(WW3GPU_NO_OPTS "<no-options>")
+
+# ww3gpu_entry_opts(<out> <opts list> <i>): the options of entry <i> of a <prefix>_OPTS list of
+# ww3gpu_select_entries, empty for an entry that has none.
+function(ww3gpu_entry_opts out optl i)
+  list(GET optl ${i} o)
+  if(o STREQUAL "${WW3GPU_NO_OPTS}")
+    set(o "")
+  endif()
+  set(${out} "${o}" PARENT_SCOPE)
+endfunction()
+
 function(ww3gpu_select_entries prefix base rt kind)
   set(phys "${ARGV4}")
   if(phys STREQUAL "")
@@ -336,6 +386,9 @@ function(ww3gpu_select_entries prefix base rt kind)
       continue()
     endif()
     list(JOIN tok " " opts)
+    if(opts STREQUAL "")
+      set(opts "${WW3GPU_NO_OPTS}")
+    endif()
     list(APPEND tests "${test}")
     list(APPEND optl "${opts}")
   endforeach()

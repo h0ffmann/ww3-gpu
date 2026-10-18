@@ -73,6 +73,7 @@ target_sources(ww_kokkos PRIVATE
     part_fld.hpp
     part_ptmean.hpp
     part_w3part.hpp
+    iosf_w3cprt.hpp
     pdlib_params.hpp
     pdlib_fsn2.hpp
     pdlib_fspsi2.hpp

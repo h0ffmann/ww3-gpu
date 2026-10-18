@@ -75,15 +75,20 @@
 # tables for SRCE alone (WW3/model/src/w3initmd.F90:759,771). --kokkos resident adds the PR3/UQ
 # propagation (XYP3, KTP3, opt-in, kokkos/src/fortran_iface/PATCH.md §11 and §13) and W3OUTG (OUTG,
 # opt-in, §15), the partial read before the point output (IOPE, opt-in, §16) and W3UICE's zeroing
-# of VA repeated on the device (UPDV, opt-in, §17): with SRCE on the resident VA, the spectrum then
+# of VA repeated on the device (UPDV, opt-in, §17) and W3CPRT's partitioning (CPRT, opt-in, §27):
+# with SRCE on the resident VA, the spectrum then
 # crosses only for the host readers of VA at output times, not for the gridded fields, the point
 # output copies back only the spectra it interpolates, and an ice update copies none (WFIP-0005
-# units 1 to 5). It is not a default: XYP3, KTP3, OUTG, IOPE and UPDV are not regtested. --kokkos gpu is the default of --gpu when
+# units 1 to 5). It is not a default: XYP3, KTP3, OUTG, IOPE, UPDV and CPRT are not regtested. --kokkos gpu is the default of --gpu when
 # neither --kokkos nor WW3GPU_ROUTINES is given. The Fortran run of the pair is unchanged.
 #
 # --cpu is Kokkos' OpenMP backend, --gpu its CUDA backend. The script enters the pinned toolchain
 # itself (picasso/labs/pratico: #ww3, or #cuda for --gpu).
 # Builds go to build/<ww3|ww3-gpu-BACKEND>/, runs to build/runs/<mode>-<case>[-BACKEND]/ ($WW3GPU_RUNS).
+#
+# WW3GPU_KOKKOS_PREFIX=<dir> (--ww3-gpu) builds WW3 against the ww_kokkos package installed in
+# <dir>, for instance by an install-only configure (kokkos/README.md), in place of the one this
+# script installs from kokkos/build/<backend>-release; that build still runs, for nccmp-tol.
 #
 # WW3GPU_PREBUILT=<prefix> runs programs built beforehand and builds nothing, with no Nix: the
 # Docker image (docker/Dockerfile) sets it. <prefix> holds ww3/bin and ww3-gpu-openmp/bin (WW3's
@@ -184,12 +189,23 @@ cmp_files() {
   done < <({ model_files "$1"; model_files "$2"; } | sort -u)
   return "$bad"
 }
+# The presets of WW_KOKKOS_PRESET, "PRESET <name> <PART,...>" lines (PATCH.md section 25): the shim
+# compiles the same file, so --kokkos resident and WW_KOKKOS_PRESET=resident cannot drift.
+presets_txt="$root/kokkos/src/fortran_iface/presets.txt"
 kokkos_preset() { # <all|none|gpu|resident|PART,...>: a preset's part list, anything else unchanged
+  local key name list
   case "$1" in
-    gpu) echo SRCE ;;
-    resident) echo SRCE,XYP3,KTP3,OUTG,IOPE,UPDV ;;
-    *) echo "$1" ;;
+    gpu) echo SRCE; return ;;
+    all|none|*,*) echo "$1"; return ;;
   esac
+  [ -f "$presets_txt" ] || { echo "ww3-gpu: no $presets_txt" >&2; exit 3; }
+  while read -r key name list; do
+    if [ "$key" = PRESET ] && [ "$name" = "$1" ]; then
+      [[ $list =~ ^[A-Z][A-Z0-9_]*(,[A-Z][A-Z0-9_]*)*$ ]] || { echo "ww3-gpu: $presets_txt: bad part list of $name" >&2; exit 3; }
+      echo "$list"; return
+    fi
+  done < "$presets_txt"
+  echo "$1"
 }
 if [ -n "$kokkos" ]; then
   [ "$mode" = ww3-gpu ] || [ "$mode" = self-test ] || { echo "ww3-gpu: --kokkos is for --ww3-gpu only" >&2; exit 64; }
@@ -244,7 +260,7 @@ if [ "$mode" = self-test ]; then
   [ "$(kokkos_env 0 all)" = "WW_KOKKOS_ALL=0" ] || { echo "ww3-gpu: the Fortran run of --kokkos all: $(kokkos_env 0 all)" >&2; exit 1; }
   [ "$(kokkos_env 1 "$(kokkos_preset gpu)")" = "WW_KOKKOS_ALL=0 WW_KOKKOS_SRCE=1" ] \
     || { echo "ww3-gpu: --kokkos gpu: $(kokkos_env 1 "$(kokkos_preset gpu)")" >&2; exit 1; }
-  [ "$(kokkos_env 1 "$(kokkos_preset resident)")" = "WW_KOKKOS_ALL=0 WW_KOKKOS_SRCE=1 WW_KOKKOS_XYP3=1 WW_KOKKOS_KTP3=1 WW_KOKKOS_OUTG=1 WW_KOKKOS_IOPE=1 WW_KOKKOS_UPDV=1" ] \
+  [ "$(kokkos_env 1 "$(kokkos_preset resident)")" = "WW_KOKKOS_ALL=0 WW_KOKKOS_SRCE=1 WW_KOKKOS_XYP3=1 WW_KOKKOS_KTP3=1 WW_KOKKOS_OUTG=1 WW_KOKKOS_IOPE=1 WW_KOKKOS_UPDV=1 WW_KOKKOS_CPRT=1" ] \
     || { echo "ww3-gpu: --kokkos resident: $(kokkos_env 1 "$(kokkos_preset resident)")" >&2; exit 1; }
   [ "$(kokkos_preset SNL1,GATH)" = "SNL1,GATH" ] || { echo "ww3-gpu: kokkos_preset changed a part list" >&2; exit 1; }
   # cmp_files: a point output or restart that differs, or exists on one side only, fails; the
@@ -490,14 +506,19 @@ else
   preset="${backend}-release"
   kbuild="$root/kokkos/build/$preset"
   kprefix="$kbuild/install"
+  if [ -n "${WW3GPU_KOKKOS_PREFIX:-}" ]; then
+    kprefix="$(cd "$WW3GPU_KOKKOS_PREFIX" 2>/dev/null && pwd)" \
+      || { echo "ww3-gpu: WW3GPU_KOKKOS_PREFIX=$WW3GPU_KOKKOS_PREFIX is not a directory" >&2; exit 64; }
+  fi
   if [ "$mode" = ww3-gpu ]; then
     fresh_for_toolchain "$kbuild"
     [ -f "$kbuild/CMakeCache.txt" ] || cmake -S "$root/kokkos" --preset "$preset" >/dev/null
     # nvcc writes its errors to stdout: keep them in a log and show them, or the build fails silently.
     cmake --build "$kbuild" -j"$jobs" > "$kbuild/build.log" 2>&1 \
       || { grep -E -A8 "FAILED|error" "$kbuild/build.log" | head -60; echo "ww3-gpu: the Kokkos build ($preset) failed; $kbuild/build.log" >&2; exit 1; }
-    cmake --install "$kbuild" --prefix "$kprefix" >/dev/null
-    echo ">> ww_kokkos ($preset) installed in $kprefix"
+    cmake --install "$kbuild" --prefix "$kbuild/install" >/dev/null
+    echo ">> ww_kokkos ($preset) installed in $kbuild/install"
+    [ -z "${WW3GPU_KOKKOS_PREFIX:-}" ] || echo ">> WW3 links the ww_kokkos package in $kprefix (WW3GPU_KOKKOS_PREFIX)"
   fi
 
   # --- WW3 ------------------------------------------------------------------------------------
@@ -516,6 +537,11 @@ else
     printf '%s\n' "$switch_now" > "$switch_file"
     [ -d "$bdir/ww3" ] && [[ "$bdir/ww3" == "$root/build/"* ]] && rm -rf -- "$bdir/ww3"
   fi
+  # Another ww_kokkos package needs a fresh configure: WW3's cache holds the ww_kokkos_DIR it found.
+  if [ "$mode" = ww3-gpu ] && [ "$(cat "$bdir/kprefix" 2>/dev/null || echo "$kbuild/install")" != "$kprefix" ]; then
+    [ -d "$bdir/ww3" ] && [[ "$bdir/ww3" == "$root/build/"* ]] && rm -rf -- "$bdir/ww3"
+  fi
+  [ "$mode" != ww3-gpu ] || printf '%s\n' "$kprefix" > "$bdir/kprefix"
   if [ ! -f "$bdir/ww3/CMakeCache.txt" ]; then
     args=(-S "$ww3" -B "$bdir/ww3" -DSWITCH="$switch_file" -DCMAKE_BUILD_TYPE=Release)
     if [ "$mode" = ww3-gpu ]; then
@@ -557,6 +583,10 @@ run_model() { # <dir> <0|1>: grid, strt, shel, ounf; prints ww3_shel's wall time
   local d="$1" k="$2" t0 t1 r
   local -a flags=() unset=()
   for r in "${all_parts[@]}"; do unset+=(-u "WW_KOKKOS_$r"); done
+  # No preset from the shell in either run (the Fortran run would turn its parts on); strict mode
+  # reaches the Kokkos run only (PATCH.md sections 24 and 25).
+  unset+=(-u WW_KOKKOS_PRESET)
+  [ "$k" = 1 ] || unset+=(-u WW_KOKKOS_STRICT)
   if [ -n "$kokkos" ]; then
     read -r -a flags <<<"$(kokkos_env "$k" "$kokkos")"
     [ "$k" = 0 ] || flags+=("${count_flags[@]}")
@@ -618,11 +648,11 @@ if [ -n "$timers" ]; then
       if (name ~ /\.call$/) in_kokkos += s }
     END { printf ">>   %-22s %21s %10.3f s %6.1f %%\n", "outside Kokkos", "", w - in_kokkos, (w > 0 ? 100 * (w - in_kokkos) / w : 0) }'
 fi
-# The resident VA must be current on the host when W3WAVE returns: resident_shim.cpp says so at
-# finalize when it is not (a missing W3KOKKOS_VA_HOST_READ at the return, which no output shows).
+# W3WAVE no longer reads VA back at its return (PATCH.md section 26): each host reader outside it
+# syncs what it reads, and ww3_shel reads no VA after its last W3WAVE, so a run may end with the
+# device copy newer. A host reader that misses its sync shows under WW_KOKKOS_VA_POISON=1.
 if grep -q "still newer on the device at finalize" "$d1/ww3_shel.out"; then
-  grep -h "still newer on the device at finalize" "$d1/ww3_shel.out" >&2
-  echo "ww3-gpu: the Kokkos run ended with the device's VA newer than WW3's" >&2; exit 1
+  echo ">> $(grep -h "still newer on the device at finalize" "$d1/ww3_shel.out" | head -1) (expected: no read at W3WAVE's return)"
 fi
 if [ -n "$kokkos" ]; then
   parts_line="$(grep -h "Kokkos parts" "$d1/log.ww3" | head -1 || true)"

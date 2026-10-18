@@ -23,7 +23,8 @@
 #                     flag to 0. ADR-0011's ST4 checkpoint runs one at a time.
 #   WW3GPU_KOKKOS       empty (the default): the Kokkos run sets WW3GPU_ROUTINES as above. Otherwise
 #                     the flags of scripts/ww3-gpu.sh --kokkos, so a regtest and a timed run share
-#                     them: resident (SRCE,XYP3,KTP3,OUTG,IOPE,UPDV), all (WW_KOKKOS_ALL=1), none,
+#                     them: a preset of kokkos/src/fortran_iface/presets.txt (resident:
+#                     SRCE,XYP3,KTP3,OUTG,IOPE,UPDV,CPRT), all (WW_KOKKOS_ALL=1), none,
 #                     or a comma list of the parts of kokkos/src/fortran_iface/parts.d; the
 #                     selection is then WW3GPU_SWITCH_WORDS alone, and the Kokkos run must show
 #                     each part as <PART>=K in W3INIT's parts line
@@ -231,7 +232,7 @@ set_tests_properties(record:summary PROPERTIES FIXTURES_CLEANUP ww3-gpu LABELS "
 
 set(_n 0)
 foreach(test IN LISTS E_TESTS)
-  list(GET E_OPTS ${_n} opts)
+  ww3gpu_entry_opts(opts "${E_OPTS}" ${_n})
   math(EXPR _n "${_n} + 1")
   ww3gpu_words(o "${opts}")
   ww3gpu_opt_of(sw -s ${o})

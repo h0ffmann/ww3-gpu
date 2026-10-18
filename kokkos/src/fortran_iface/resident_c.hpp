@@ -1,7 +1,7 @@
 // kokkos/src/fortran_iface/resident_c.hpp
 // The C ABI of the resident spectrum (WFIP-0005 units 1 and 2, the partial read of the pnt
-// unit, PATCH.md section 16, and the zeroed columns of the updv unit, section 17): declarations
-// only.
+// unit, PATCH.md section 16, the zeroed columns of the updv unit, section 17, and the partial
+// write of ww3_multi's exchanges, section 26): declarations only.
 // resident_shim.cpp implements the ww_va_* calls, srce_shim.cpp ww_srce_batch_va;
 // model/src/w3kokkos_residentmd.F90 and w3kokkosmd.F90 on the fork
 // (h0ffmann/WW3 ww3-gpu/kokkos-resident) mirror them. The rules of ww_kokkos_c.hpp hold:
@@ -33,7 +33,7 @@
 // The last two, and the byte comparison of every model file in scripts/ww3-gpu.sh, came out of
 // the mutation audit of docs/log/2026-10-17-mutation-audit.md.
 // Under WW_KOKKOS_VA_RESIDENT=1 the partial read stays partial (a HOST array is pushed first, as
-// every host call does), so a column W3IOPE reads and the list misses keeps stale bits there.
+// every host call does), so a column W3IOPE, W3IOBC or W3IOTR reads and the list misses keeps stale bits there.
 //
 // SPDX-License-Identifier: MIT
 #pragma once
@@ -48,13 +48,24 @@ int ww_va_host_read(int igrid, float* va, int nspec, int nsealm);
 /// Before a host write of VA: ww_va_host_read, then state HOST.
 int ww_va_host_write(int igrid, float* va, int nspec, int nsealm);
 
-/// Before W3IOPE (point output) reads VA on the host, with WW_KOKKOS_IOPE=1 (the pnt unit,
-/// PATCH.md section 16): when the device holds the newer bits (state DEVICE), copy back only the
+/// Before W3IOPE (point output), W3IOBC ('WRITE', boundary output) or section 4 of W3IOTR
+/// (track output) reads VA on the host, with WW_KOKKOS_IOPE=1 (the pnt unit, PATCH.md sections
+/// 17 and 23): when the device holds the newer bits (state DEVICE), copy back only the
 /// columns cols[0..ncol) of VA, W3WAVE's JSEA in 0..nsealm (duplicates allowed), gathered on the
 /// device; otherwise (HOST, BOTH) nothing. The state is NOT changed: every other column of the
 /// host VA stays stale, so the next ww_va_host_read still copies the whole array. A column
 /// outside 0..nsealm is BAD_SHAPE. va, nspec, nsealm as for ww_va_host_read.
 int ww_va_host_read_cols(int igrid, float* va, int nspec, int nsealm, int ncol, const int* cols);
+
+/// After host statements that wrote the columns cols[0..ncol) of VA and no other (ww3_multi's
+/// WMIOHG and WMIOEG between W3WAVE calls, PATCH.md section 26; a column they also read needs
+/// ww_va_host_read_cols first): with state DEVICE or BOTH those host columns are copied into
+/// d_va, packed into one buffer (only their bytes cross); with HOST nothing. The state is NOT
+/// changed. Duplicates allowed; a column outside 0..nsealm is BAD_SHAPE. Under
+/// WW_KOKKOS_VA_CHECK=1 the listed columns are taken as written and every other column must
+/// still hold the bits of the last sync. Under WW_KOKKOS_VA_RESIDENT=1 d_va is then copied back
+/// whole, so a column written and not listed shows in the output.
+int ww_va_host_wrote_cols(int igrid, float* va, int nspec, int nsealm, int ncol, const int* cols);
 
 /// Before a host statement whose only writes of VA set whole columns to 0, which
 /// ww_va_device_zero_cols then repeats on d_va (W3UICE under WW_KOKKOS_UPDV=1, the updv unit,
