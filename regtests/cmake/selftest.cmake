@@ -189,6 +189,11 @@ expect("${nw}" "15" "selection ANY without words: every switch file but ST4 with
 ww3gpu_sel_desc(d omp ANY "ST4;NL1;!PDLIB")
 expect("${d}" "switch with the words ST4 NL1 !PDLIB and OMPG or OMPH, no MPI; $np = WW3GPU_OMP_THREADS" "selection text for words")
 
+ww3gpu_lab_switch(s "NOGRB SHRD OMPG PR3 UQ FLX0 LN0 ST4 NL1 BT0 DB0 TR0 BS0 IC0 IS0 REF0 O0 O1 MGW"
+  "F90 NOGRB SHRD PR3 UQ FLX0 LN1 ST4 STAB0 NL1 BT1 DB1 MLIM TR0 BS0 IC0 IS0 REF0 XX0 O0")
+expect("${s}" "NOGRB SHRD OMPG PR3 UQ O0 O1 MGW FLX0 LN1 ST4 STAB0 NL1 BT1 DB1 MLIM TR0 BS0 IC0 IS0 REF0"
+  "lab switch: source terms replaced, the rest kept in order")
+
 # --- the nccmp-tol parser ------------------------------------------------------------------
 set(out "variable   n  dropped  max|d|  rms  max rel  verdict\n-----------\nhs 1 0 0 0 0  PASS\nfp 1 0 0 0 0  FAIL\nlat 1 0 0 0 0  unlisted\nnccmp-tol: note: 'dir' is listed but not in both files\nnccmp-tol: FAIL (2 judged, 1 unlisted)\n")
 ww3gpu_judged_vars(j "${out}")

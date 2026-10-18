@@ -106,7 +106,9 @@ coast-ww3-gpu parts="resident" device="cpu":
 # ST4 entries; several with commas) names the routines the Kokkos run turns on. WW3GPU_KOKKOS
 # (resident, all or PART,...) turns on the flags of `scripts/ww3-gpu.sh --kokkos` instead and selects
 # by WW3GPU_SWITCH_WORDS (resident: ST4,NL1,PR3,!PDLIB): `WW3GPU_KOKKOS=resident just ww3-gpu-matrix 4 serial`.
-# Record: build/ww3-gpu-matrix-<selection>[-<routines>|-kokkos-<preset>]/summary.tsv.
+# WW3GPU_LAB_SWITCH=ON builds every entry with switch_lab_shrd's source-term words (the timed
+# run's physics, which no matrix.base switch has), in a build directory ending in -lab.
+# Record: build/ww3-gpu-matrix-<selection>[-<routines>|-kokkos-<preset>][-lab]/summary.tsv.
 ww3-gpu-matrix jobs="8" selection="serial" *ctest_args:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -127,10 +129,11 @@ ww3-gpu-matrix jobs="8" selection="serial" *ctest_args:
     routines="${WW3GPU_ROUTINES:-SNL1}"; routines="${routines//[ ,]/;}"
     kk="${WW3GPU_KOKKOS:-}" words="${WW3GPU_SWITCH_WORDS:-}"; words="${words//[ ,]/;}"
     b="{{ww3gpu_build}}$sel"; [ "$routines" = SNL1 ] || b="$b-${routines//;/-}"; [ -z "$kk" ] || b="{{ww3gpu_build}}$sel-kokkos-${kk//,/-}"
+    lab="${WW3GPU_LAB_SWITCH:-OFF}"; [ "$lab" = OFF ] || b="$b-lab"
     {{ww3_shell}} cmake -S regtests -B "$b" -DWW3GPU_SELECTION="$sel" -DWW3GPU_OMP_THREADS="$t" \
       -DWW3GPU_MPI_RANKS="${WW3GPU_MPI_RANKS:-4}" -DWW3GPU_DATA="$data" -DWW3GPU_ROUTINES="$routines" \
-      -DWW3GPU_KOKKOS="$kk" -DWW3GPU_SWITCH_WORDS="$words" -DWW3GPU_OMP_NESTED="${WW3GPU_OMP_NESTED:-OFF}" >/dev/null
-    WW3GPU_COMMAND="${WW3GPU_ROUTINES:+WW3GPU_ROUTINES=$WW3GPU_ROUTINES }${kk:+WW3GPU_KOKKOS=$kk }${WW3GPU_SWITCH_WORDS:+WW3GPU_SWITCH_WORDS=$WW3GPU_SWITCH_WORDS }${WW3GPU_OMP_THREADS:+WW3GPU_OMP_THREADS=$WW3GPU_OMP_THREADS }${WW3GPU_OMP_NESTED:+WW3GPU_OMP_NESTED=$WW3GPU_OMP_NESTED }just ww3-gpu-matrix $*" {{ww3_shell}} ctest --test-dir "$b" -j "$jobs" --output-on-failure "${rest[@]}"
+      -DWW3GPU_KOKKOS="$kk" -DWW3GPU_SWITCH_WORDS="$words" -DWW3GPU_LAB_SWITCH="$lab" -DWW3GPU_OMP_NESTED="${WW3GPU_OMP_NESTED:-OFF}" >/dev/null
+    WW3GPU_COMMAND="${WW3GPU_ROUTINES:+WW3GPU_ROUTINES=$WW3GPU_ROUTINES }${kk:+WW3GPU_KOKKOS=$kk }${WW3GPU_SWITCH_WORDS:+WW3GPU_SWITCH_WORDS=$WW3GPU_SWITCH_WORDS }${WW3GPU_LAB_SWITCH:+WW3GPU_LAB_SWITCH=$WW3GPU_LAB_SWITCH }${WW3GPU_OMP_THREADS:+WW3GPU_OMP_THREADS=$WW3GPU_OMP_THREADS }${WW3GPU_OMP_NESTED:+WW3GPU_OMP_NESTED=$WW3GPU_OMP_NESTED }just ww3-gpu-matrix $*" {{ww3_shell}} ctest --test-dir "$b" -j "$jobs" --output-on-failure "${rest[@]}"
 
 # WW3's regtest matrix with the Kokkos runs on Kokkos' CUDA backend (WFIP-0003, WW3GPU_BACKEND=cuda):
 # per entry, the Fortran and the CUDA Kokkos of one executable built with nvcc_wrapper, test.comp
@@ -162,8 +165,9 @@ ww3-gpu-matrix-list selection="serial":
     routines="${WW3GPU_ROUTINES:-SNL1}"; routines="${routines//[ ,]/;}"
     kk="${WW3GPU_KOKKOS:-}" words="${WW3GPU_SWITCH_WORDS:-}"; words="${words//[ ,]/;}"
     b="{{ww3gpu_build}}{{selection}}"; [ "$routines" = SNL1 ] || b="$b-${routines//;/-}"; [ -z "$kk" ] || b="{{ww3gpu_build}}{{selection}}-kokkos-${kk//,/-}"
+    lab="${WW3GPU_LAB_SWITCH:-OFF}"; [ "$lab" = OFF ] || b="$b-lab"
     {{ww3_shell}} cmake -S regtests -B "$b" -DWW3GPU_SELECTION="{{selection}}" -DWW3GPU_ROUTINES="$routines" \
-      -DWW3GPU_KOKKOS="$kk" -DWW3GPU_SWITCH_WORDS="$words" >/dev/null
+      -DWW3GPU_KOKKOS="$kk" -DWW3GPU_SWITCH_WORDS="$words" -DWW3GPU_LAB_SWITCH="$lab" >/dev/null
     {{ww3_shell}} ctest --test-dir "$b" -N -L entry -FA ".*"
 
 # WW3's regtest data kept on NOAA's ftp (ww3_tp2.15's wind.nc, ...), SHA-256 pinned: pratico's
