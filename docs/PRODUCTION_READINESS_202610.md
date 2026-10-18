@@ -293,7 +293,7 @@ script (v, `scripts/ww3-gpu.sh:190`), so a production job card would repeat it b
 - **Next step.** A `&KOKKOS_NML` group read in `W3INIT` that sets the same flags, the
   environment kept as override for tests, and the effective set written once to the log.
 - **Done in its smallest form (2026-10-18), not yet at the pin.** `WW_KOKKOS_PRESET=resident`,
-  read by `W3INIT` through the shim (fork `dca49b00` on `ww3-gpu/u2-strict-preset`): the part
+  read by `W3INIT` through the shim (fork `237ca0de` on `ww3-gpu/u2-strict-preset`): the part
   list is one line of `kokkos/src/fortran_iface/presets.txt`, which CMake compiles into
   `part_flags.cpp` and `scripts/ww3-gpu.sh --kokkos resident` and the matrix's
   `WW3GPU_KOKKOS=resident` read, so they cannot drift. A set `WW_KOKKOS_<PART>` still wins, an

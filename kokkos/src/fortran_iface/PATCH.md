@@ -1916,7 +1916,7 @@ Four places ran the Fortran for a part asked on Kokkos and said so only in the p
 `W3KOKKOS_SRCE_SETUP` on a switch file that is not the lab switch's source terms, `W3INIT`
 without `ST4` and `NL1`, and the per-step `W3SRCE` gate (`IQTPE <= 0`, Liu's ice dispersion,
 `TAUWBUG = 0` with `IT > 0`). Each now calls `KOKKOS_FALLBACK ( PART, REASON )`
-(`w3kokkosmd.F90:1257-1269` at `dca49b00`):
+(`w3kokkosmd.F90:1257-1269` at `237ca0de`):
 
 - **`WW_KOKKOS_STRICT=1`**: `*** WAVEWATCH III ERROR IN W3KOKKOSMD : WW_KOKKOS_STRICT=1 AND PART
   <PART> WOULD RUN ON THE FORTRAN: <REASON>` on `NDSE`, then `EXTCDE(1)`, on every rank.
@@ -1927,7 +1927,7 @@ without `ST4` and `NL1`, and the per-step `W3SRCE` gate (`IQTPE <= 0`, Liu's ice
   line appears only when some part could fall back.
 
 **The hot path.** The per-step gate is a new function, `W3KOKKOS_SRCE_STEP ( IT )`
-(`w3kokkosmd.F90:1913-1918`), which `W3WAVE` calls once per step in place of
+(`w3kokkosmd.F90:1912-1917`), which `W3WAVE` calls once per step in place of
 `W3KOKKOS_SRCE_ON` before the batch (`w3wavemd.F90:2407`), outside the `!$OMP PARALLEL` loop over
 sea points. It returns `W3KOKKOS_SRCE_ON ( IT )` and adds one test of two `LOGICAL`s; only on
 the fallback branch does it call `SRCE_FALLBACK`, which under the default is one call and one
@@ -1943,9 +1943,23 @@ when the step's gate was false, so counting the step is complete without a count
 would fall back now fails at run time instead. This changes how a comparison is invoked and is
 reviewed by a person before it merges (AGENTS.md, "Never cheat a regtest tool").
 
+**What it was checked on** (2026-10-18, i9-14900, `OMP_NUM_THREADS=8`, the machine shared with
+three other jobs, so every wall time is one run and ⚠). The runs re-ran `ww3_grid`, `ww3_strt`,
+`ww3_shel` and `ww3_ounf` in a copy of the smoke case's Kokkos directory with every `WW_KOKKOS_*`
+unset and only the variables named:
+
+| Run | Result |
+|---|---|
+| `bash scripts/ww3-gpu.sh --ww3-gpu smoke --cpu --kokkos resident`, before (`80644ba9`) and after | every model file byte-identical to the Fortran's, and the after run's four files identical (`cmp`) to the before run's (v); `ww3_shel` with Kokkos 3.96 s before, 3.65 s and 10.93 s after (load average 17 during the second) ⚠ |
+| the same smoke, `WW_KOKKOS_ALL=1` | `SRCE=0` in the line at exit (v) |
+| smoke with `TAUWBUG = 0` in `&SIN4`, `WW_KOKKOS_ALL=1` | `ww_kokkos: calls left on the Fortran (WW_KOKKOS_STRICT=1 stops instead): SRCE=2160` (v) |
+| the same, `WW_KOKKOS_STRICT=1` | stops: `... WW_KOKKOS_STRICT=1 AND PART SRCE WOULD RUN ON THE FORTRAN: TAUWBUG = 0 (SINTAILPAR(4) <= 0.5) WITH IT > 0, WHICH NO TRANSLATION CAN REPRODUCE` (v) |
+| `switch_lab_ompg` with `WNT2` for `WNT1` (a scratch copy, not committed), `--kokkos all` | `UWND=1 SRCE=0` at exit; the pair byte-identical (v) |
+| the same build, `WW_KOKKOS_ALL=1 WW_KOKKOS_STRICT=1` | stops: `... PART UWND WOULD RUN ON THE FORTRAN: WW_KOKKOS_ALL=1 ASKS FOR IT, BUT ITS KOKKOS TRANSLATION DOES NOT COVER THIS SWITCH FILE` (v) |
+
 ## 25. `WW_KOKKOS_PRESET`: the resident part list in one table, `ww3-gpu/u2-strict-preset`
 
-Fork commit `dca49b00` on `ww3-gpu/u2-strict-preset` (the child of `f0cbe70d`); not at the pin
+Fork commit `237ca0de` on `ww3-gpu/u2-strict-preset` (the child of `f0cbe70d`); not at the pin
 until the integrator merges it. Gap 7 of
 [`PRODUCTION_READINESS_202610.md`](../../../docs/PRODUCTION_READINESS_202610.md), smallest form.
 One ABI entry, `ww_kokkos_preset_status`; `w3kokkosmd.F90` +24 -1 lines.
@@ -1965,8 +1979,12 @@ One ABI entry, `ww_kokkos_preset_status`; `w3kokkosmd.F90` +24 -1 lines.
 - **The matrix**: `ww3gpu_kokkos_preset` reads it for `WW3GPU_KOKKOS=<name>`; `selftest.cmake`
   checks a fixture table and that the real `resident` names only parts of `parts.d`.
 
-`W3KOKKOS_SETUP` (`w3kokkosmd.F90:1182-1188` at `dca49b00`) stops on a name the file lacks:
+`W3KOKKOS_SETUP` (`w3kokkosmd.F90:1182-1188` at `237ca0de`) stops on a name the file lacks:
 `*** WAVEWATCH III ERROR IN W3KOKKOSMD : WW_KOKKOS_PRESET=<name> IS NOT A PRESET OF
 kokkos/src/fortran_iface/presets.txt`. `W3KOKKOS_REPORT` writes `  Kokkos preset
 (WW_KOKKOS_PRESET): resident` on the line before the parts line, which stays the effective set,
 once per `W3INIT`. No namelist: the next step of gap 7.
+
+Checked the same way as section 24 (2026-10-18): `WW_KOKKOS_PRESET=resident` alone gives the
+parts line of `--kokkos resident` character for character and the same four model files (`cmp`,
+v); `WW_KOKKOS_PRESET=bogus` stops with the line above (v).
