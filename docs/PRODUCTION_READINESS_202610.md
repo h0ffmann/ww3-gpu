@@ -133,6 +133,10 @@ per grid too (v, `snl1_shim.cpp:83-89`), so several grids in one process are sup
 
 ## 3. MPI
 
+*Scope, 2026-10-18:* out of scope by decision. The port is single node, and an MPI build keeps
+the Fortran path ([ADR-0017](ADRs/ADR-0017-kokkos-port-is-single-node-mpi-stays-fortran.md),
+Accepted). The findings below stay as the starting point for the ADR that would supersede it.
+
 **One Kokkos runtime per process, not per communicator.** `WW_KOKKOS_INIT` takes an MPI handle
 and discards it: "the communicator is accepted and ignored on purpose" (v,
 `kokkos/src/fortran_iface/snl1_shim.cpp:196-199`); `W3INIT` passes `-1` (v,
