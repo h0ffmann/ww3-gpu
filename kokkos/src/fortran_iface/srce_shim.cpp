@@ -133,21 +133,21 @@ const Flags& flags() {
                        env_is_one("WW_KOKKOS_SRCE_STAGED")};
   return f;
 }
-/// Points per team of the batched launch on a host backend: WW_KOKKOS_SRCE_LANES, 1 to
-/// kSrceMaxLanes, read once; 1, the default, is one point per team. A team of several points
-/// runs each point's statements as one point alone runs them (w3srce_lanes), so the value
-/// changes which points share a team, never a bit (plan 2026-10-18-005). A device keeps one
-/// point per team.
+/// The most points per team of the batched launch on a host backend: WW_KOKKOS_SRCE_LANES, 1 to
+/// kSrceMaxLanes, read once; kSrceMaxLanes by default (the owner, 2026-10-18), 1 for one point
+/// per team. A team of several points runs each point's statements as one point alone runs them
+/// (w3srce_lanes), so the value changes which points share a team, never a bit (plan
+/// 2026-10-18-005). A device keeps one point per team.
 int srce_lanes() {
   static const int lanes = [] {
-    int w = 1;
+    int w = kSrceMaxLanes;
     if (const char* v = std::getenv("WW_KOKKOS_SRCE_LANES")) {
       char* end = nullptr;
       const long x = std::strtol(v, &end, 10);
       if (end != v && *end == '\0' && x >= 1 && x <= kSrceMaxLanes)
         w = static_cast<int>(x);
       else
-        std::fprintf(stderr, "ww_kokkos: WW_KOKKOS_SRCE_LANES='%s' ignored, using 1\n", v);
+        std::fprintf(stderr, "ww_kokkos: WW_KOKKOS_SRCE_LANES='%s' ignored, using %d\n", v, w);
     }
     return w;
   }();
@@ -160,7 +160,7 @@ void print_count() {
   std::fprintf(stderr, "ww_kokkos: W3SRCE batched calls: %lld\n", g_batch_calls.load());
   std::fprintf(stderr, "ww_kokkos: W3SRCE batched launches: %lld\n", g_batch_launches.load());
   std::fprintf(stderr, "ww_kokkos: W3SRCE batched points: %lld\n", g_batch_points.load());
-  std::fprintf(stderr, "ww_kokkos: W3SRCE batch points per team (WW_KOKKOS_SRCE_LANES): %d\n",
+  std::fprintf(stderr, "ww_kokkos: W3SRCE batch points per team at most (WW_KOKKOS_SRCE_LANES): %d\n",
                Kokkos::SpaceAccessibility<Kokkos::DefaultExecutionSpace, Kokkos::HostSpace>::accessible
                    ? srce_lanes()
                    : 1);
@@ -562,7 +562,10 @@ void run_batch(GridCtx& g, const st4::Params& q, const st4::Fields& f, const snl
   // schedule decides only which thread runs a point, never the point's arithmetic.
   bool launched = false;
   if constexpr (Kokkos::SpaceAccessibility<ExecSpace, Kokkos::HostSpace>::accessible) {
-    const int lanes = srce_lanes();
+    // Fewer points than lanes x threads: one point per team, so every thread still gets work
+    // (ww3_ts1 has one sea point, full 9 520). Like the schedule below, this decides only which
+    // points share a team.
+    const int lanes = n >= srce_lanes() * ex.concurrency() ? srce_lanes() : 1;
     if (lanes > 1) {
       const int league = (n + lanes - 1) / lanes;
       const auto body_lanes = KOKKOS_LAMBDA(const Member& team) {
@@ -576,7 +579,7 @@ void run_batch(GridCtx& g, const st4::Params& q, const st4::Fields& f, const snl
         team.team_barrier();
         const snl1::TeamScratch w = snl1::snl1_team_scratch(team, level, nc, nt);
         // SrcePoint holds references, so the team's points are built in place.
-        alignas(SrcePoint) unsigned char mem[kSrceMaxLanes * sizeof(SrcePoint)];
+        alignas(SrcePoint) unsigned char mem[kSrceMaxLanes * sizeof(SrcePoint)] = {};
         SrcePoint* const x = reinterpret_cast<SrcePoint*>(mem);
         for (int l = 0; l < nl; ++l) {
           const int i = i0 + l;
