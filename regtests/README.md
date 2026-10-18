@@ -47,6 +47,53 @@ All counts are from 2026-10-18. The other entries do not run the preset's code: 
 them is the Fortran again, or the preset stops by design (MPI, unstructured grids, moving grids).
 A full run of the 310 `NL1` entries takes days. The selection runs in hours (see "Time").
 
+### How much of the Kokkos port the selection runs
+
+The resident preset with the lab switch's source terms (`ST4 NL1 LN1 BT1 DB1 MLIM`, `PR3 UQ`)
+runs 16 rows of `kokkos/ports.tsv`. The shares below use the same inputs as
+`scripts/port_score.py`: `kokkos/ports.tsv`, the gprof profile `docs/data/ww3_full_gprof.tsv`
+(the `full` case, Fortran, 131.4 s of self time) and the measured WW3 size at the pin.
+
+| Measure | Selection | Translated (all rows) | Ported (`wired` yes) |
+|---|---|---|---|
+| Routines | **16** | 310 (the selection: 5.2 %) | 60 (the selection: 27 %) |
+| Run time of the `full` profile | **99.0 %** | 99.3 % | 99.3 % |
+| WW3 lines of these routines | **8 742** of 263 375 (3.3 %) | 67 699 (25.7 %) | 17 022 (6.5 %) |
+| Kokkos C++ of these rows | **9 143 lines** in 28 files (15.6 % of the 58 497 lines of `kokkos/src`) | 51 746 lines in 320 files | 15 062 lines in 69 files |
+
+(v) Computed 2026-10-18 from those files. ⚠ The C++ count takes the files that each row names
+in its `kokkos` column; shared headers that every kernel includes (`real.hpp`,
+`libm_device.hpp`, the timers) and `resident_shim.cpp` are not in it. So the selection runs
+almost all of the measured run time, in a small part of the code. The other 294 translated rows,
+for example ST1, ST2, ST3, ST6, the other flux and bottom terms and the I/O routines, run in no
+selected entry.
+
+The 16 routines, by their share of the `full` profile:
+
+| Routine | Part | Share of the profile | WW3 lines | `regtested` in `kokkos/ports.tsv` |
+|---|---|---|---|---|
+| `W3SNL1` (DIA) | `SRCE` | 48.4 % | 359 | yes |
+| `W3SDS4` | `SRCE` | 23.2 % | 617 | no |
+| `W3SIN4` | `SRCE` | 12.7 % | 581 | no |
+| `W3SRCE` | `SRCE` | 5.6 % | 2 223 | no |
+| `W3SPR4` | `SRCE` | 3.1 % | 243 | no |
+| `W3XYP3` | `XYP3` | 3.0 % | 837 | no |
+| `W3QCK3` (UQ, inside `W3XYP3`) | `XYP3` | 1.1 % | 412 | no |
+| `W3QCK1` (inside `W3KTP3`) | `KTP3` | 0.9 % | 364 | no |
+| `W3SDB1` | `SRCE` | 0.4 % | 287 | no |
+| `W3KTP3` | `KTP3` | 0.3 % | 443 | no |
+| `W3SBT1` | `SRCE` | 0.2 % | 198 | no |
+| `W3SLN1` | `SRCE` | 0.1 % | 156 | no |
+| `INSNL1` (the DIA's tables, at set-up) | `SRCE` | 0.0 % | 304 | yes |
+| `CALC_USTAR` | `SRCE` | 0.0 % | 163 | no |
+| `W3QCK2` (inside `W3KTP3`, only when `FLCK` is on) | `KTP3` | 0.0 % | 375 | no |
+| `W3OUTG` | `OUTG` | 0.0 % | 1 180 | no |
+
+⚠ `W3QCK2` runs only in an entry with `FLCK` on; which selected entries set it was not read.
+`IOPE` and `UPDV` are not routines of the ledger: they keep the host copy of `VA` current for
+`W3IOPE` and `W3UICE` (`kokkos/src/fortran_iface/resident_shim.cpp`). A pass of the selection is
+the evidence that can move these `regtested` cells to "yes".
+
 ### The ww3-gpu code each entry runs
 
 | Entry | Kokkos parts on (`K` in the log) | ww3-gpu code it runs |
