@@ -76,3 +76,4 @@ Date, author, issue/PR/WFIP.
 | 2026-10-18 | [Handover of goal `abbb0456`: what #191 delivered, the open branches (the review follow-up, plan 006, the Fortran A/B harness), what waits on the owner, the traps met](2026-10-18-goal-abbb0456-handover.md) | PR #191, PR #198 |
 | 2026-10-18 | [`W3SIN4`'s stress scan with one sea point per vector lane: bit-identical, 5.1 % off the one-thread `W3SRCE` kernel](2026-10-18-srce-lanes-sin4.md) | plan 2026-10-18-005 L2 |
 | 2026-10-18 | [Handover of goal `c3e7eecf`: the NOAA record and its ten-run median, plan 005 up to L2 (#199), what waits on the owner, the traps met](2026-10-18-goal-c3e7eecf-handover.md) | PR #197, PR #199 |
+| 2026-10-18 | [`W3SDS4` with one sea point per vector lane: bit-identical, 19 % off the one-thread `W3SRCE` kernel after L2](2026-10-18-srce-lanes-sds4.md) | plan 2026-10-18-005 L3 |

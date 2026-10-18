@@ -237,6 +237,23 @@ lane's operations those of the scalar statement in its order, each lane's stress
 | `ww3_shel`, `full`, 32 threads, 3 alternated runs each | 15.88 s with 1, 15.47 s with the default 8: 2.6 % less (v, the same log) |
 | `bash scripts/ww3-gpu.sh --ww3-gpu smoke --gpu --kokkos resident --build-only` | compiles and links, no warning; the lane path is host-only and a device keeps one point per team; nothing run on a device (v) |
 
+### `W3SDS4` with one point per vector lane (plan 005, unit L3)
+
+`w3srce_lanes` calls `st4::w3sds4_lanes<8>` once per step for the points still in the loop
+(`:1303`). `w3sds4_point` is now the parts `sds4_prep`, `sds4_mss`, `sds4_sat`, `sds4_case1`,
+`sds4_case2`, `sds4_case3`, `sds4_turb` and `sds4_whitecap` (`kokkos/src/ww_kokkos/st4_sds4.hpp`),
+its lines moved without a change (v, a line comparison). The mean-square-slope sums
+(`w3src4md.F90:2228-2254`), the saturation integral (`:2262-2290`) and the wave-turbulence and
+cumulative loops (`:2533-2575`) run on vectors of eight `REAL`, one point per lane, each lane's
+sums its own and in the routine's order; the libmvec sites stay one grouped call per point.
+
+| Check, 2026-10-18 | Result |
+|---|---|
+| `smoke`, `full`, `WW_KOKKOS_SRCE_LANES` 1 and 8, strict, poisoned | every model file byte-identical to the Fortran of the same executable; every file but the NetCDF to `--ww3`'s (v) |
+| `just regtest-selected` | `ww3_tp2.15` x4 and `ww3_ts2` `ST4_PR3_UQ`: `test.comp` 0 files different, `nccmp-tol` PASS (v) |
+| `srce.batch.kernel`, `full`, one thread on a performance core, 3 alternated runs each | 104.99 s with 1 point per team, 80.55 s with 8: 23.3 % less, L2 and L3 together (v, [log](../../docs/log/2026-10-18-srce-lanes-sds4.md)) |
+| `--gpu --build-only` | compiles and links, no warning; nothing run on a device (v) |
+
 ## Benchmarks
 
 One CPU measurement of the batched path, after the replay above passed on the same tree
