@@ -543,6 +543,7 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | mirror / `deep_copy` / `create_mirror_view` | a host View with the same layout as a device View, and the explicit copy between them `(v)` [course/11-kokkos-and-modern-cpp.md](../course/11-kokkos-and-modern-cpp.md) | A no-op on a host backend, a PCIe transfer on CUDA. | [kokkos/intro/01_views.cpp](../kokkos/intro/01_views.cpp) |
 | parallel_for / parallel_reduce / parallel_scan | Kokkos' loop, reduction and prefix-sum patterns `(v)` [course/11-kokkos-and-modern-cpp.md](../course/11-kokkos-and-modern-cpp.md) | The equivalents of `DO`, `SUM`/`MAXLOC` and a prefix sum; reductions use reducers such as `Kokkos::MaxLoc`, never atomics. | [kokkos/intro/02_parallel_for.cpp](../kokkos/intro/02_parallel_for.cpp), [kokkos/intro/03_reduce_and_scan.cpp](../kokkos/intro/03_reduce_and_scan.cpp) |
 | RangePolicy / MDRangePolicy / TeamPolicy | 1-D, multi-dimensional (`Rank<2>`) and team-of-threads execution policies `(v)` [course/11-kokkos-and-modern-cpp.md](../course/11-kokkos-and-modern-cpp.md) | The DIA uses `TeamPolicy(npts, Kokkos::AUTO)`: one team per sea point. | [kokkos/src/ww_kokkos/snl1_dia.cpp](../kokkos/src/ww_kokkos/snl1_dia.cpp) |
+| `Kokkos::single` / points in lanes | `Kokkos::single(Kokkos::PerTeam(team), f)` runs `f` on one thread of the team `(v)` [kokkos/src/ww_kokkos/srce_kernel.hpp](../kokkos/src/ww_kokkos/srce_kernel.hpp); *points in lanes* is a layout where one vector lane holds one sea point, so a statement runs for `W` points at once, each in its own order | The batched `W3SRCE` runs everything but the DIA inside `Kokkos::single`; plan 005 puts `W` points in the lanes of those routines. | [docs/compound/plans/2026-10-18-005-srce-points-in-lanes-plan.md](compound/plans/2026-10-18-005-srce-points-in-lanes-plan.md) |
 | scratch / `team_scratch(0)` / `TeamThreadRange` / `team_barrier` | per-team level-0 scratch memory (shared memory on a GPU), the intra-team loop, and the barrier between writing and reading scratch `(v)` [course/11-kokkos-and-modern-cpp.md](../course/11-kokkos-and-modern-cpp.md) | Replaces `W3SNL1`'s ten automatic arrays; ~28 KB for `NK=25, NTH=24`. | [kokkos/intro/05_team_scratch.cpp](../kokkos/intro/05_team_scratch.cpp) |
 | fence / `Kokkos::fence()` | wait for all outstanding device work `(v)` [course/11-kokkos-and-modern-cpp.md](../course/11-kokkos-and-modern-cpp.md) | Required before the host reads a result, before a mirror dies, before a timer; not to be sprinkled. | [kokkos/intro/06_interop_bindc.cpp](../kokkos/intro/06_interop_bindc.cpp) |
 | KOKKOS_LAMBDA / KOKKOS_INLINE_FUNCTION | the capture-by-value lambda macro and the host+device function annotation `(v)` [course/11-kokkos-and-modern-cpp.md](../course/11-kokkos-and-modern-cpp.md) | What a kernel body may be made of: Views, scalars and inline helpers, no host memory. | [kokkos/src/ww_kokkos/spectrum_fixtures.hpp](../kokkos/src/ww_kokkos/spectrum_fixtures.hpp) |
@@ -1251,6 +1252,7 @@ Every term above, alphabetically, with the section it lives in.
 - HOMOG_COUNT: [WW3 programs and files](#ww3-programs-and-files)
 - HOMOG_COUNT / HOMOG_INPUT: [WW3 programs and files](#ww3-programs-and-files)
 - HOMOG_INPUT: [WW3 programs and files](#ww3-programs-and-files)
+- Kokkos::single: [HPC and software](#hpc-and-software)
 - LCLO / L360: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - LDSOL: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - LDSOLC: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1317,6 +1319,7 @@ Every term above, alphabetically, with the section it lives in.
 - PGMRES: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - `__powisf2`: [This repository's own names](#this-repositorys-own-names)
 - pnt_wght.<ext>.nc / out.pnt_wght.<ext>.nc: [WW3 programs and files](#ww3-programs-and-files)
+- points in lanes: [HPC and software](#hpc-and-software)
 - POS_TRICK / ListISPprevDir / ListISPnextDir / ListISPprevFreq / ListISPnextFreq: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - PRINT_MEMCHECK: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - QFunc / VpFunc / VmFunc / UFunc / TFunc / ASymSmatTimVec: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
