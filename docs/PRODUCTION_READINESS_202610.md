@@ -393,7 +393,16 @@ the UFS case (`work_c`, then `work_d` from its restart, compared by `test.comp`;
 restarts a `SHRD` case. [`scripts/restart_pair.sh`](../scripts/restart_pair.sh) is the smallest
 equivalent on `full` with `switch_lab_shrd`: a 00:00 to 12:00 run and a 06:00 to 12:00 run from
 its own 06:00 restart, for the Fortran and the resident Kokkos of one executable, compared with
-`cmp`. It was not run ⚠ ([log](log/2026-10-18-u3-regtests-v2.md)); the gap stays Major for (a).
+`cmp`. It was not run when written ⚠ ([log](log/2026-10-18-u3-regtests-v2.md)).
+
+**Update, 2026-10-18 (restart pair run).** The pair ran once at `b828041` with `WW3/` at `50a10730`,
+4 threads, `WW_KOKKOS_VA_POISON=1`, `WW_KOKKOS_STRICT=1`: the 06:00-to-12:00 run from the 06:00
+restart gives the bytes of the run cut from the cold start (`out_grd.ww3` and the 12:00 restart),
+for the Fortran and for the resident Kokkos, and every file of the Kokkos runs equals the
+Fortran's (v, `cmp`, 9 comparisons, exit 0;
+[log](log/2026-10-18-resident-restart-pair.md)). It covers one `SHRD` case on the OpenMP backend,
+one restart and 12 hours; `MPI` restart, the CUDA backend and `ww3_multi` are not covered ⚠. The
+gap stays open for those, and for (a) until the owner accepts one case as enough.
 
 ## 11. `PDLIB` and unstructured grids
 
