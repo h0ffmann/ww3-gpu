@@ -140,6 +140,34 @@ gets a section in `kokkos/src/fortran_iface/PATCH.md`.
   the installed config records the Kokkos version and backends; WW3 builds against that prefix
   (`just smoke-ww3-gpu` on it); `just kokkos-test serial-debug` still passes.
 
+### U8. No whole-spectrum copy in the output readers (agent F)
+
+The owner, 2026-10-18: the resident spectrum is the design, with no copies; where code still
+needs one, port what removes it. `W3WAVE` stays Fortran and calls the Kokkos parts, so every
+host statement that reads `VA` needs a current host copy. U8 replaces the whole-array reads
+before `W3IOTR`, `W3IOBC 'WRITE'` and the OASIS send (`w3wavemd.F90:2934-2975` at `80644ba9`)
+with column reads of the points each one reads, as `W3KOKKOS_IOPE_READ` does. The restart
+reads stay (the rule allows them). Every run uses `WW_KOKKOS_VA_POISON=1`: `WW_KOKKOS_VA_CHECK`
+catches an unsynced host write, not a stale host read.
+
+### U9. Partitioning on the device (agent G)
+
+`W3CPRT` reads every point's spectrum at each output time with partitioning on
+(`w3wavemd.F90:2691`). U9 translates it per point onto the resident `VA` and copies only the
+partition fields back, or stops before code with the obstacle for the owner.
+
+### U1, extended. The `ww3_multi` exchange on the device (agent A)
+
+The gather and scatter of the exchanged points of `WMIOBG`, `WMIOHG` and `WMIOEG` run as a
+kernel on the resident `VA`, so only those points' spectra cross. The exit read of `W3WAVE`
+(`w3wavemd.F90:3151-3153`) is removed.
+
+### Next, not in this PR: zero copies on a host backend
+
+On Kokkos' OpenMP backend the device copy of `VA` is a second host array. An unmanaged View over
+the Fortran `VA` would remove the copies there entirely ⚠ (the measured copy cost on `full` is
+0.002 s, `docs/log/2026-10-18-resident-profile.md`, so this is about memory, not time).
+
 ## Integration and gates (the integrator)
 
 Merge the fork branches, push `ww3-gpu/kokkos-pnt`, bump `WW3/`, cherry-pick the units' commits,
