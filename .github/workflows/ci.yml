@@ -29,6 +29,13 @@ jobs:
           bash scripts/branch_name.sh --self-test
           test -f .agents/skills/eli5/SKILL.md
 
+      # regtest-selected.yml runs on the owner's machine: only by hand, only by the owner.
+      - name: Self-hosted workflows are dispatch-only and owner-only; the runner scripts pass their self-tests
+        run: |
+          bash scripts/runner.sh --self-test
+          bash scripts/runner.sh check-workflows
+          bash scripts/regtest_selected.sh --self-test
+
       - name: Figures have headers, reading cards and current renders
         run: python3 scripts/figures.py check
 

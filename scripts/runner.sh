@@ -5,7 +5,7 @@
 #   scripts/runner.sh remove   [--dry-run]   stop the service, unregister, delete the directory
 #   scripts/runner.sh status                 the local service and what GitHub reports
 #   scripts/runner.sh check-workflows        refuse a self-hosted workflow with any trigger but
-#                                            workflow_dispatch
+#                                            workflow_dispatch, or without the owner-only job if:
 #   scripts/runner.sh --self-test
 #
 # The only workflow that uses this runner is .github/workflows/regtest-selected.yml (dispatch
@@ -80,8 +80,16 @@ workflow_triggers() {  # file -> its trigger names, one per line
   ' "$1" | sed '/^$/d'
 }
 
-check_workflows() {  # dir -> 0 when every self-hosted workflow is dispatch-only
-  local f bad=0 trig
+# The job condition every self-hosted workflow must carry: by hand, and by the owner only, also on a
+# re-run (github.triggering_actor is who re-runs; github.actor stays the first actor).
+OWNER_GUARD=(
+  "github.event_name == 'workflow_dispatch'"
+  "github.actor == github.repository_owner"
+  "github.triggering_actor == github.repository_owner"
+)
+
+check_workflows() {  # dir -> 0 when every self-hosted workflow is dispatch-only and owner-only
+  local f bad=0 trig g
   for f in "$1"/*.yml "$1"/*.yaml; do
     [ -f "$f" ] || continue
     grep -qE '^[^#]*self-hosted' "$f" || continue
@@ -90,6 +98,12 @@ check_workflows() {  # dir -> 0 when every self-hosted workflow is dispatch-only
       echo "runner: $f runs on self-hosted and has the triggers '$trig'; only workflow_dispatch is allowed" >&2
       bad=1
     fi
+    for g in "${OWNER_GUARD[@]}"; do
+      if ! grep -E '^[[:space:]]*if:' "$f" | grep -qF "$g"; then
+        echo "runner: $f runs on self-hosted without '$g' in its job's if:" >&2
+        bad=1
+      fi
+    done
     if grep -qE '^[^#]*runs-on:.*\$\{\{' "$f"; then
       echo "runner: $f has an expression in runs-on; a self-hosted workflow names its labels literally" >&2
       bad=1
@@ -210,8 +224,15 @@ self_test() {
     "$(checksum_ok "$t/a" ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad && echo y || echo n)" y
   ok "a file with another one does not" "$(checksum_ok "$t/a" "$RUNNER_SHA256" && echo y || echo n)" n
   mkdir -p "$t/wf"
-  printf 'on:\n  workflow_dispatch:\n    inputs:\n      jobs:\njobs:\n  a:\n    runs-on: [self-hosted, ww3-gpu]\n' >"$t/wf/ok.yml"
-  ok "a dispatch-only self-hosted workflow passes" "$(check_workflows "$t/wf" 2>/dev/null && echo y || echo n)" y
+  local guard="    if: github.event_name == 'workflow_dispatch' && github.actor == github.repository_owner && github.triggering_actor == github.repository_owner"
+  printf 'on:\n  workflow_dispatch:\n    inputs:\n      jobs:\njobs:\n  a:\n%s\n    runs-on: [self-hosted, ww3-gpu]\n' "$guard" >"$t/wf/ok.yml"
+  ok "a dispatch-only, owner-only self-hosted workflow passes" "$(check_workflows "$t/wf" 2>/dev/null && echo y || echo n)" y
+  printf 'on:\n  workflow_dispatch:\njobs:\n  a:\n    if: github.actor == github.repository_owner\n    runs-on: [self-hosted]\n' >"$t/wf/noguard.yml"
+  ok "without the triggering_actor and event checks it fails" "$(check_workflows "$t/wf" 2>/dev/null && echo y || echo n)" n
+  rm "$t/wf/noguard.yml"
+  printf 'on:\n  workflow_dispatch:\njobs:\n  a:\n    # if: %s\n    runs-on: [self-hosted]\n' "github.event_name == 'workflow_dispatch' && github.actor == github.repository_owner && github.triggering_actor == github.repository_owner" >"$t/wf/comment.yml"
+  ok "a guard in a comment does not count" "$(check_workflows "$t/wf" 2>/dev/null && echo y || echo n)" n
+  rm "$t/wf/comment.yml"
   printf 'on:\n  pull_request:\n  workflow_dispatch:\njobs:\n  a:\n    runs-on: [self-hosted]\n' >"$t/wf/pr.yml"
   ok "a self-hosted workflow on pull_request fails" "$(check_workflows "$t/wf" 2>/dev/null && echo y || echo n)" n
   rm "$t/wf/pr.yml"
@@ -242,7 +263,7 @@ case "$cmd" in
   register) register ;;
   remove) remove ;;
   status) status ;;
-  check-workflows) check_workflows "$root/.github/workflows" && echo "runner: every self-hosted workflow is dispatch-only" ;;
+  check-workflows) check_workflows "$root/.github/workflows" && echo "runner: every self-hosted workflow is dispatch-only and owner-only" ;;
   --self-test) self_test ;;
   -h|--help|"") usage ;;
   *) echo "runner: unknown command '$cmd'" >&2; usage ;;

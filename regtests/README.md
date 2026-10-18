@@ -178,8 +178,21 @@ pinned toolchain into the Nix store. The workflow stops after 300 minutes.
 ### On the self-hosted runner
 
 [`.github/workflows/regtest-selected.yml`](../.github/workflows/regtest-selected.yml) runs the
-same script on the owner's machine. It starts only by hand (`workflow_dispatch`), only for the
-repository owner, and never on the GPU. It uploads `build/regtest-selected/` as an artifact.
+same script on the owner's machine. It never runs on GPU.
+
+Who can start it:
+
+- Only by hand. The workflow has no trigger but `workflow_dispatch`: no `push`, `pull_request`,
+  `pull_request_target`, `schedule` or `workflow_call`. So it never runs for a pull request or
+  after a merge.
+- Only the repository owner. The job runs only when `github.event_name` is `workflow_dispatch`
+  and both `github.actor` and `github.triggering_actor` are `github.repository_owner`, in the
+  repository `h0ffmann/ww3-gpu`. `github.triggering_actor` covers a re-run: on a re-run
+  `github.actor` stays the first actor, and the person who pressed "Re-run" is the triggering
+  actor. For another person the job is skipped and never reaches the runner.
+- CI keeps it so. The `lint` job of `ci.yml` runs `scripts/runner.sh check-workflows` on every
+  pull request. It fails when a workflow that uses `self-hosted` has another trigger, an
+  expression in `runs-on`, or a job `if:` without those three conditions. It uploads `build/regtest-selected/` as an artifact.
 
 To set up the runner, do these steps on the owner's machine, outside a Nix shell:
 

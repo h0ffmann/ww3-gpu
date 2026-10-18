@@ -36,8 +36,10 @@ concurrency:
 jobs:
   selected:
     name: selected regtests (resident, CPU)
-    # Only the owner, only on this repository: a fork's dispatch never reaches the machine.
-    if: github.repository == 'h0ffmann/ww3-gpu' && github.actor == github.repository_owner
+    # Only by hand, only the owner, only on this repository. github.actor stays the first actor on a
+    # re-run; github.triggering_actor is who pressed the button, so both must be the owner.
+    # scripts/runner.sh check-workflows (CI, lint job) refuses a self-hosted job without this line.
+    if: github.repository == 'h0ffmann/ww3-gpu' && github.event_name == 'workflow_dispatch' && github.actor == github.repository_owner && github.triggering_actor == github.repository_owner
     runs-on: [self-hosted, Linux, X64, ww3-gpu]
     timeout-minutes: 300
     steps:
