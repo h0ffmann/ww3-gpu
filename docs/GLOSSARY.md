@@ -551,6 +551,9 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | automatic array | a local array sized at run time from module variables, e.g. `UE(1-NTH:NSPECY)` `(v)` [course/10-modern-fortran-refactoring.md](../course/10-modern-fortran-refactoring.md) | The per-call stack workspace the port moves into team scratch. | [course/12-porting-a-kernel-w3snl1.md](../course/12-porting-a-kernel-w3snl1.md) |
 | `-pg` / gprof | GCC profiling instrumentation and the GNU profiler `(v)` [kokkos/tools/profile/README.md](../kokkos/tools/profile/README.md) | `gprof_table.sh` rebuilds WW3 with `-pg` into `build-pg` and reduces `gprof -b` to a phase table. | [course/09-benchmark-profile-compile-run.md](../course/09-benchmark-profile-compile-run.md) |
 | perf | the Linux kernel's sampling profiler (`perf record -g`) `(v)` [kokkos/tools/profile/README.md](../kokkos/tools/profile/README.md) | Not in the pratico shell; `perf_table.sh` exits 3 without it. | [course/09-benchmark-profile-compile-run.md](../course/09-benchmark-profile-compile-run.md) |
+| `perf_event_paranoid` | the Linux setting `/proc/sys/kernel/perf_event_paranoid`, which decides what an unprivileged user may sample `(v)` the message `perf stat` printed on the owner's workstation, 2026-10-18 | At 4 (Ubuntu's default there) `perf` refuses every event to a normal user, so the 2026-10-18 profile sampled stacks with gdb instead. | [docs/log/2026-10-18-resident-profile.md](log/2026-10-18-resident-profile.md) |
+| gdb stack sampling | the GNU debugger used as a sampling profiler: the program runs as gdb's child, a signal every fixed interval of run time stops it, and `thread apply all bt` records the stack of every thread `(v)` [docs/log/2026-10-18-resident-profile.md](log/2026-10-18-resident-profile.md) | Works where `perf` is refused (a child may be traced under `ptrace_scope` 1); with `-g` it names inlined frames, so a kernel's time splits by `file:line`. Each stop pauses every thread for as long as gdb takes to print, so it gives shares, not times. | [docs/log/2026-10-18-resident-profile.md](log/2026-10-18-resident-profile.md) |
+| AVX2 / x86-64-v3 / gather | Intel's 256-bit SIMD extension; the x86-64 micro-architecture level that adds AVX2, FMA and others, which `-march=x86-64-v3` targets ⚠ (general knowledge); a vector load from eight scattered addresses (`vgatherdps`) ⚠ | The C++ port is built for x86-64-v3 (`kokkos/CMakePresets.json`), WW3's Fortran for plain x86-64; the DIA's bins-in-lanes loops load through gathers. | [docs/log/2026-10-18-resident-profile.md](log/2026-10-18-resident-profile.md) |
 | wall-clock | elapsed real time, "seconds per forecast hour of `ww3_shel`" `(v)` [course/09-benchmark-profile-compile-run.md](../course/09-benchmark-profile-compile-run.md) | The proposal's metric (*tempo de execução*); measured with `SYSTEM_CLOCK`, never `CPU_TIME`. | [bench/README.md](../bench/README.md), [pubs/proposal/pt/03-theme.md](../pubs/proposal/pt/03-theme.md) |
 | ASan / UBSan | AddressSanitizer / UndefinedBehaviorSanitizer, `-fsanitize=address,undefined` `(v)` [kokkos/CMakePresets.json](../kokkos/CMakePresets.json) | Turned on by the `serial-debug` preset. | [course/11-kokkos-and-modern-cpp.md](../course/11-kokkos-and-modern-cpp.md) |
 | GoogleTest / GTest | Google's C++ test framework, 1.18.0 pinned `(v)` [kokkos/README.md](../kokkos/README.md) | The framework of WW4's tests and of this repo's `L1_test_*` suites of the intro programs and tools; the port has none (ADR-0010). | [course/12-porting-a-kernel-w3snl1.md](../course/12-porting-a-kernel-w3snl1.md), [course/14-ww4-and-the-future.md](../course/14-ww4-and-the-future.md) |
@@ -832,6 +835,7 @@ Every term above, alphabetically, with the section it lives in.
 - ATMUX: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - ATMUXR: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - automatic array: [HPC and software](#hpc-and-software)
+- AVX2 / x86-64-v3 / gather: [HPC and software](#hpc-and-software)
 - AWESOME-WW3: [This repository's own names](#this-repositorys-own-names)
 - AWI: [Models, projects and institutions](#models-projects-and-institutions)
 - B4B: [WW3 switches](#ww3-switches)
@@ -1115,6 +1119,7 @@ Every term above, alphabetically, with the section it lives in.
 - F_ZHAO_V1: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - GAULEG / INSNLGQM: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - GAULEG: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- gdb stack sampling: [HPC and software](#hpc-and-software)
 - GEBCO: [HPC and software](#hpc-and-software)
 - GEFS-Wave: [Models, projects and institutions](#models-projects-and-institutions)
 - GEFS: [HPC and software](#hpc-and-software)
@@ -1746,6 +1751,7 @@ Every term above, alphabetically, with the section it lives in.
 - PDLIB: [WW3 switches](#ww3-switches)
 - per-field comparator: [This repository's own names](#this-repositorys-own-names)
 - perf: [HPC and software](#hpc-and-software)
+- `perf_event_paranoid`: [HPC and software](#hpc-and-software)
 - `perf_table.sh`: [This repository's own names](#this-repositorys-own-names)
 - `-pg`: [HPC and software](#hpc-and-software)
 - `-pg` / gprof: [HPC and software](#hpc-and-software)

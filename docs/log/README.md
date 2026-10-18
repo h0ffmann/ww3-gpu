@@ -65,3 +65,4 @@ Date, author, issue/PR/WFIP.
 | 2026-10-17 | [Handover: the `goal/42-gpu-fast` integration branch, stopped for another session](2026-10-17-gpu-fast-handover.md) | #42, WFIP-0005 |
 | 2026-10-18 | [The resident preset on WW3's regtest inputs: refused by every matrix.base switch, passed with the lab switch's source terms](2026-10-18-resident-regtest-lab-switch.md) | #42, WFIP-0003 |
 | 2026-10-18 | [The resident preset under MPI: refused by design; SRCE and KTP3 alone run, one entry differs](2026-10-18-resident-mpi-lab-switch.md) | #42, WFIP-0003 |
+| 2026-10-18 | [Where the Kokkos resident run of `full` spends its wall time on the CPU](2026-10-18-resident-profile.md) | #42, WFIP-0005 |
