@@ -58,6 +58,7 @@
 #include "fortran_iface/prop3_c.hpp"
 #include "fortran_iface/resident_c.hpp"
 #include "fortran_iface/timers.hpp"
+#include "fortran_iface/xypug_c.hpp"
 
 #include <Kokkos_Core.hpp>
 
@@ -119,6 +120,7 @@ void print_counts() {
   }
   std::fprintf(stderr, "ww_kokkos: W3XYP3 team launches (WW_KOKKOS_XYP3_TEAM): %lld\n",
                g_team_launches.load());
+  ww_xypug_report();  // the unstructured-grid unit's counters (xypug_shim.cpp)
 }
 
 /// WW_KOKKOS_PROP3_COUNT=1 registers the exit print when the library loads, so a run in which

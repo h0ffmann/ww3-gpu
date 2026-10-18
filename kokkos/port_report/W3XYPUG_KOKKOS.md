@@ -1,9 +1,10 @@
 # W3XYPUG_KOKKOS
 
-**Status:** ported, phase 1 (translated). Not wired into WW3, not regtested: the owner asked
-for translation only on 2026-10-16, with no test run. Its checkpoint (ADR-0011) needs the four
-scheme hooks, a shim and the `W3WAVE` wiring first. Reviewed statically by a fresh reviewer on
-2026-10-16: no arithmetic defect, one citation fixed (see Review).
+**Status:** ported and wired, 2026-10-18 (issue #196): a batched device kernel with the `FSN`
+scheme `W3XYPFSN2`, on the resident `VA`, called under `WW_KOKKOS_XYP3=1` on an unstructured grid
+without `PDLIB` (PATCH.md section 30). Not regtested: postponed (ADR-0016); the entries that run it
+are `ww3_tp2.6` `ST4` and `ST4_ASCII` ⚠. The serial host translation of 2026-10-16
+(`prop_xypug.hpp`, below "Arithmetic" and "Review") is kept and is not called.
 
 Spatial propagation of one spectral component on an unstructured grid without `PDLIB`: it turns
 `VQ` into the action `AC`, builds the advection velocities `C` (group velocity, plus the current
@@ -67,13 +68,70 @@ and `C = VLCFL*REAL(IOBDP)` (integer to floating conversions exact, products ele
 `maxss` operand order. One defect, a citation: the `DMIN` comment cited `w3profsmd.F90:1667-1674`,
 now `:1650` (the `USE`) and `:1674` (the comparison). No arithmetic defect.
 
+## The batched kernel with W3XYPFSN2 (issue #196), 2026-10-18
+
+The owner asked for this port out of the wall-time order (ADR-0002) so that `ww3_tp2.6`, an
+unstructured grid (`LIMON`, `EXPFSN = T`, `regtests/ww3_tp2.6/input/namelists_LIMON.nml:6`), gets a
+parity verdict under the resident preset instead of the start-up stop
+`WW_KOKKOS_XYP3=1, BUT ITS KOKKOS TRANSLATION DOES NOT COVER THIS SWITCH FILE`.
+
+| | |
+|---|---|
+| WW3 code replaced | `W3WAVE` section 3.6.3, the `ISPEC` loop of `W3GATH`, `W3XYPUG`, `W3SCAT` (`w3wavemd.F90:2050-2135` at the fork pin), on `GTYPE = UNGTYPE` |
+| Routines translated | `W3XYPUG` (`w3profsmd.F90:69-272`), `W3XYPFSN2` (`:470-727`, see [W3XYPFSN2](W3XYPFSN2_KOKKOS.md)), `W3GATH` and `W3SCAT` under `W3_SHRD` |
+| Not translated | `SETDEPTH` (`:1601-1678`): the Fortran wrapper calls it once per step instead of once per component. It writes only `IOBDP` (`:1672-1676`) from `DW` and `DMIN` (`:1650-1651`), and the replaced loop writes neither, so `IOBDP` has the same bits (v, read 2026-10-18). `W3CFLUG` (`:274-467`): called only for the CFL output field (`w3wavemd.F90:1776`, `FLOGRD(9,3)`), and it does not read `VA` |
+| Kokkos code | [`ug_xypug.hpp`](../src/ww_kokkos/ug_xypug.hpp), [`xypug_shim.cpp`](../src/fortran_iface/xypug_shim.cpp), [`xypug_c.hpp`](../src/fortran_iface/xypug_c.hpp) (argument table), package `ww_kokkos` 0.11.0 |
+| Fortran caller | fork branch `ww3-gpu/xypug-196`: `W3KOKKOS_XYPUG` and the set-up in `w3kokkos_prop3md.F90`, the call-site hunk in `w3wavemd.F90`; the Fortran loop stays selectable with `WW_KOKKOS_XYP3=0` |
+| Covered | `SHRD`, `PR3` with `UQ`, scheme `FSN` alone (`FSPSI`, `FSFCT`, `FSNIMP` false), no `PDLIB`, `MGP`, `MGG`, `REF1`. Every other case keeps the start-up stop under an explicit flag |
+
+**Parallel structure.** One team per spectral component, as the batched `W3XYP3`. Inside a
+component, the per-triangle quantities (`KELEM`, `NM`, `FLALL`, `UTILDE`) are independent per
+triangle. The Fortran's scatter sums `KKSUM(NI) = KKSUM(NI) + KELEM(:,IE)` and
+`ST(NI) = ST(NI) + KELEM(:,IE)*(U(NI)-UTILDE)` (`:630-634`, `:683-688`) become per-node gathers
+over a list of (triangle, corner) pairs built once per grid in ascending `IE`, then corner. Each
+node receives the same additions in the same order, starting from `0.d0`, so no sum is reordered
+and no atomic is used. The CFL minimum and `ITER` (`:638-659`) and the boundary loop under `FLBPI`
+(`:704-721`, the last `IBI` wins on a repeated node) run on one thread of the team in the
+Fortran's order. Nothing depends on the team size or the backend.
+
+**Arithmetic (v, translator, 2026-10-18).** gfortran 16.2 `-O3` GIMPLE and assembly of
+`w3profsmd.F90` under the switch of `ww3_tp2.6`, compared with the `openmp-release` GIMPLE of the
+kernel (`-ffp-contract=off`, no `vfmadd` in the object): the same operations, types and order,
+including `LAMBDA = DBLE((C1+C2)+C3)*ONESIXTH` summed in `REAL`, `DTMAXGL = (double)1e11f`,
+`MAX(..., (double)1e-9f)`, `SUM(MIN(0,KTMP))` as `((m1+0.0)+m2)+m3`, `DOT_PRODUCT` as
+`((f1*u1+0.0)+f2*u2)+f3*u3`, and the `minsd`/`maxsd`/`maxss` operand order with the constant as
+source. `NINT` is `lround`; the port computes `round` cast to `long` with a guard beyond 2^63, so
+no device `round` is relied on there. ⚠ Device `/`, `fmod` and `round` on CUDA were not run.
+
+**Fresh review (v, 2026-10-18).** An independent reviewer re-read the Fortran, the kernel, the
+shim and the fork's caller against the same gfortran objects and the kernel's GIMPLE, and
+confirmed all ten claims: the per-node gathers give each node the Fortran's additions in the
+Fortran's order (the scatters compile to load, add, store per corner after a `memset` to 0), the
+mixed `REAL`/`REAL(8)`/`INTEGER*1` types, the `MIN`/`MAX` operand order, `ITER`, the boundary
+update, `W3GATH`/`W3SCAT` (only `VA(ISPEC, ISEA)` with `MAPSTA /= 0` is written), no result that
+depends on the team size or the backend, the indexing of every array against its bounds and the
+wrapper's packing, the set-up's refusals, and `SETDEPTH` once per step. No defect. It also
+cross-checked the 2026-10-16 serial translation, which agrees on every `W3XYPUG` operation. Its
+smaller findings were fixed: line cites of `W3XYPFSN2` and `W3XYPUG` in the kernel's comments, the
+`w3wavemd.F90` cites at the new pin, a glibc 2.44 note, a misleading comment, and a `MAPSTA` size
+check in the fork's wrapper (`84df86e0`).
+
+**Builds (v, 2026-10-18).** `just kokkos-test serial-debug` and `just kokkos-test openmp-release`:
+no warning, 11/11 (the tools' and lessons' tests; the port has none, ADR-0010). The `cuda-release`
+preset configures and builds (`cmake --preset cuda-release`, `cmake --build`); nothing ran on a
+GPU. The fork's `ww3_lib` compiles for the `ww3_tp2.6` switch and `switch_lab_shrd`, each with
+`KOKKOS`. Without `KOKKOS`, the preprocessed `w3wavemd.F90` is identical to the pin's.
+
 ## Benchmarks
 
 None. No timing without parity (`AGENTS.md`).
 
 ## How it was regtested
 
-Not yet, and nothing was run. What was done, 2026-10-16 (v): a scratch translation unit that
+Not yet (ADR-0016). The batched kernel's regtest is the matrix entries `ww3_tp2.6` `ST4` and
+`ST4_ASCII` with the resident preset: `WW3GPU_KOKKOS=resident WW3GPU_LAB_SWITCH=ON just ww3-gpu-matrix 4 serial -R '^00[12]:'` ⚠.
+
+The serial host translation, 2026-10-16: not yet, and nothing was run. What was done, 2026-10-16 (v): a scratch translation unit that
 calls `w3xypug` compiled with `prop.cpp`'s `serial-debug` flags (`-std=c++20 -Wall -Wextra
 -Wpedantic -Wshadow -Wconversion -ffp-contract=off`, ASan and UBSan) with no warning, and its code
 was generated; the same unit at `-O3` was read in assembly. `prop.cpp` does not include the

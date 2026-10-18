@@ -1,10 +1,10 @@
 # The global numbers of the Kokkos port, written by scripts/port_score.py --write; do not edit.
 # WW3@03adda91. The website reads this file (site/content).
 # name	share	count	what
-of the run time, translated	99.3 %	313 of 1 023 routines	a Kokkos translation exists in kokkos/src; the profile's self time, full (bench_small, 120 x 80, 9 520 sea points, 12 h)
-of the run time, ported	99.3 %	63 of 1 023 routines	WW3 at the WW3/ pin calls the Kokkos code, behind its run-time flag; the profile's self time, full (bench_small, 120 x 80, 9 520 sea points, 12 h)
+of the run time, translated	99.3 %	314 of 1 023 routines	a Kokkos translation exists in kokkos/src; the profile's self time, full (bench_small, 120 x 80, 9 520 sea points, 12 h)
+of the run time, ported	99.3 %	65 of 1 023 routines	WW3 at the WW3/ pin calls the Kokkos code, behind its run-time flag; the profile's self time, full (bench_small, 120 x 80, 9 520 sea points, 12 h)
 of the run time, regtested	48.6 %	12 of 1 023 routines	WW3's regtests ran with it on Kokkos and agreed with the Fortran; the profile's self time, full (bench_small, 120 x 80, 9 520 sea points, 12 h)
-of the lines of code, translated	25.80 %	67 947 of 263 375	Fortran lines of the translated routines, of every line in WW3's model/src, in 65 of 147 files
-of the lines of code, ported	6.56 %	17 270 of 263 375	Fortran lines of the ported routines, of every line in WW3's model/src, in 25 of 147 files
+of the lines of code, translated	25.90 %	68 205 of 263 375	Fortran lines of the translated routines, of every line in WW3's model/src, in 65 of 147 files
+of the lines of code, ported	6.73 %	17 732 of 263 375	Fortran lines of the ported routines, of every line in WW3's model/src, in 26 of 147 files
 of the lines of code, regtested	1.02 %	2 689 of 263 375	Fortran lines of the regtested routines, of every line in WW3's model/src, in 6 of 147 files
-lines of Kokkos C++	60 563	in 351 files	under kokkos/src: the port itself
+lines of Kokkos C++	61 494	in 354 files	under kokkos/src: the port itself

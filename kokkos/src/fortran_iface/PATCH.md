@@ -2251,6 +2251,85 @@ binds it on the first sync, `w3kokkos_residentmd.F90:68-70`), so it needs no syn
   16 and 13 uses of `VA` in the last two (v, `git show`). The pin move to that branch
   ([plan](../../../docs/compound/plans/2026-10-18-004-pin-gfs-v17-plan.md)) lists and syncs them.
 
+## 30. `W3XYPUG` and `W3KTP3` on an unstructured grid, `ww3-gpu/xypug-196`
+
+Fork commits `14525d7c`, `05482109` (`find_package(ww_kokkos 0.11)`) and `84df86e0` (the `MAPSTA`
+size check) on `50a10730` (`ww3-gpu/integ-fixes`), 2026-10-18, branch `ww3-gpu/xypug-196`; issue #196.
+`ww3_tp2.6` (the LIMON unstructured grid, `EXPFSN = T`, `SHRD PR3 UQ`, no `PDLIB`) stopped under
+the `resident` preset: `W3KOKKOS_PROP3_SETUP` gave `XYP3` and `KTP3` unsupported on `UNGTYPE`, so
+`KOKKOS_PART ( 'XYP3', .FALSE. )` stopped the model in `W3INIT` (`w3kokkosmd.F90:1233-1251`). The
+part keeps its name: `XYP3` is `W3WAVE` section 3.6.3's spatial step, which on `UNGTYPE` is
+`W3XYPUG`. The C entry point is `ww_xypug_batch_va` of [`xypug_c.hpp`](xypug_c.hpp), a new entry
+point, so the package version is `0.11.0` and the fork asks for `0.11`.
+
+The hunks, at `14525d7c`:
+
+- **The set-up** (`w3kokkos_prop3md.F90:132-180`). Inside the `PR3`-and-`UQ` branch, `OKU` is
+  `GTYPE == UNGTYPE`, false under `PDLIB`, `MGP` or `MGG` as `OKG` is. `KTP3` is supported on
+  `OKG .OR. OKU`, still refused under `REFRX`. `XYP3` on `UNGTYPE` (`OKXU`) needs, besides `OKU`,
+  `SHRD`, no `REF1` (`W3XYPFSN2` has a `REF1` branch, `w3profsmd.F90:682-686`), and the N scheme:
+  `FSN` true, `FSPSI`, `FSFCT`, `FSNIMP` false. Every other case gives `.FALSE.` as before, so a set
+  flag or a preset stops and `WW_KOKKOS_ALL=1` falls back and counts.
+- **`W3KOKKOS_XYPUG ( FACX, FACY, DTG, LCALC )`** (`w3kokkos_prop3md.F90:261-350` at `84df86e0`) and its
+  interface block (`:103-119`). It packs `ON(ISPEC) = IAPPRO(ISPEC) == IAPROC` as `W3KOKKOS_XYP3`
+  does, calls `SETDEPTH` once, widens `IOBP` (`INTEGER*2`), `IOBPD`, `IOBDP`, `IOBPA` (`INTEGER*1`)
+  into `SAVE`d `C_INT` arrays (resized when `NSPEC`, `NX` or `NTH` change), computes `RD1`, `RD2`
+  as `W3XYPUG` does (`w3profsmd.F90:241-247`: `DSEC21 ( TBPI0, TIME )` and `DSEC21 ( TBPI0,
+  TBPIN )` under `FLBPI`, else `1.` and `0.`, `REAL`), and passes `ITER(NK,NTH)` in and out and
+  `VA` with `SIZE(VA,1)` and `UBOUND(VA,2)`, as the other `_va` forms. Without `FLBPI` it passes
+  one-element dummies for `ISBPI`, `BBPI0`, `BBPIN` and `NBI = 0`, as `W3KOKKOS_XYP3` does: those
+  arrays are not allocated then, and `W3XYPFSN2` reads them only under `FLBPI`
+  (`w3profsmd.F90:694-720`). A non-zero status stops through `PROP3_CHECK` (`EXTCDE`). It
+  re-checks at the call that the grid is `UNGTYPE` with `FSN`, for a later grid of a multi-grid run,
+  and that `MAPSTA` holds `NX` nodes (`NY = 1`), which the shim relies on (`84df86e0`).
+- **The call site** (`w3wavemd.F90:2053-2060`). Under `KOKKOS_XYP3`, `GTYPE == UNGTYPE` calls
+  `W3KOKKOS_XYPUG ( FACX, FACX, DTG, UGDTUPDATE )`, the arguments `W3WAVE` gives `W3XYPUG`
+  (`:2097-2103`; `FACX` is `1./(DERA*RADIUS)` with `FLAGLL`, else `1.`, set at `:1994-1999` just
+  before). Other grids call `W3KOKKOS_XYP3` as before; with `WW_KOKKOS_XYP3=0` the original
+  `DO ISPEC` loop runs. Without `KOKKOS`, `gfortran -E -P` of the file is the same as at
+  `50a10730` (v).
+- **`W3KOKKOS_KTP3`** (`w3kokkos_prop3md.F90:351-431` at `84df86e0`). The stop for a grid that is not regular
+  or curvilinear now lets `UNGTYPE` through, and on `UNGTYPE` a point with `IOBP(ISEA) /= 1` is
+  skipped before the `MAPSTA(IY,IX) == 1` test (`:399-402`). Both sections do that on a grid
+  without `PDLIB` (`w3wavemd.F90:1904-1914` for 3.6.2, `:2288-2298` for 3.6.4, at `14525d7c`);
+  they differ only in where `DEPTH = MAX ( DMIN, DW(ISEA) )` is computed (inside the `MAPSTA` test
+  in 3.6.2, `:1915`, before the `IOBP` test in 3.6.4, `:2286`), which gives the same value, since
+  the loop writes neither `DW` nor `DMIN`. So one selection serves both call sites
+  (`:1887-1888`, `:2270-2271`), each under `IF ( FLCTH .OR. FLCK )`. `IXrel = IX` without `PDLIB`,
+  so `DDDX(IY,IX)` and the others are packed as before. The index of `IOBP` is `ISEA`, as in
+  `W3WAVE`, although `IOBP` is dimensioned by node (`NX`).
+
+**When `FSN` and the others are known.** They are per grid, `MPARS(IMOD)%SCHMS%FSN` and so on
+(`w3gdatmd.F90:1039-1048`, pointers at `:2850-2854`), read from `mod_def.ww3` by `W3IOGR ( 'READ'
+)` for `UNGTYPE` (`w3iogrmd.F90:1002-1004`). `W3INIT` calls `W3IOGR` at `w3initmd.F90:746` and
+`W3KOKKOS_UNITS_SETUP` at `:852`, so the set-up reads them after they are set; it reads them
+through `MPARS(IMOD)`, not the pointers, so the answer does not depend on which grid `W3SETG` last
+selected (v, by reading).
+
+**Why `SETDEPTH` once is enough.** `W3XYPUG` calls it once per component
+(`w3profsmd.F90:202`). It writes only `IOBDP`: `IOBDP = 1`, then `IOBDP(IP) = 0` where `DW(IP) <
+DMIN + DTHR` for `IP = 1, NX` (`:1672-1676`); it reads `DW` (`W3ADATMD`) and `DMIN`
+(`W3GDATMD`) and nothing else (`:1650-1651`). In the loop it replaces, `W3GATH` writes only
+`FIELD` under `SHRD` (`w3wavemd.F90:3427-3435`), `W3SCAT` only `VA` (`:3749`), and `W3XYPUG` with
+`W3XYPFSN2` write `VQ`, `ITER` and `IOBDP` through `SETDEPTH` (`w3profsmd.F90:69-272`,
+`:470-727`). None writes `DW` or `DMIN`, so every call after the first writes the same `IOBDP` (v,
+by reading). The wrapper calls it only when some component is on this process, as `W3XYPUG` is
+called only for those; under `SHRD` that is every component.
+
+**Not covered and what to check.**
+
+- Built, not run: the shim (`xypug_shim.cpp`) indexes `CLATS(1:NSEA)` from 0, as the wrapper
+  passes it; `kokkos-test serial-debug` and `openmp-release` pass and `cuda-release` compiles. A
+  fresh review on 2026-10-18 found no defect in the kernel, the shim or this caller (port report
+  [W3XYPUG](../../port_report/W3XYPUG_KOKKOS.md)). The regtest verdict on `ww3_tp2.6` is pending ⚠.
+- Other parts of the `resident` preset on `UNGTYPE`: none of the set-ups of `SRCE`, `OUTG`, `IOPE`,
+  `UPDV`, `CPRT` tests the grid type (grep of `RLGTYPE`, `UNGTYPE` in `w3kokkos*.F90`, v). The
+  `UNGTYPE` branches of `W3WAVE` outside 3.6.2 to 3.6.4 (`UG_GRADIENTS` for `DCXDX` and `DDDX`,
+  `W3CFLUG`) read `CX`, `CY`, `DW`, `CG`, never `VA`, so they need no sync (v, by reading). `MAPSTA`
+  is `MAPSTA(NY,NX)` with `NY = 1`, and `W3SCAT` indexes it as one dimension by `IXY` (`:3749`);
+  the `XYP3` wrapper's `NX*NY` sizes hold for it. Whether `W3SRCE`, `W3OUTG` and `W3CPRT` on
+  Kokkos give the Fortran's bits on an unstructured grid was not checked ⚠.
+
 ## 31. `W3OUTG`'s Fortran fallback reports to strict mode, `ww3-gpu/strict-outg`
 
 One fork commit, `fac74069`, on `50a10730`, 2026-10-18; it touches only `w3kokkos_outgmd.F90`. No
@@ -2298,4 +2377,3 @@ with `calls left on the Fortran (...): SRCE=0 CPRT=0 OUTG=37`, one per output ti
 model file byte-identical to the Fortran of the same executable and every file but the NetCDF to
 `--ww3`'s (v). At `50a10730` no `OUTG` counter exists, so the line names `SRCE` and `CPRT` alone (v, by reading the set-up; that run was not repeated). The `full` case asks for `HS`
 alone and ends with `OUTG=0` and 13 `W3OUTG` Kokkos calls (v).
-
