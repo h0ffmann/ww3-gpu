@@ -98,3 +98,33 @@ sea points run its loops at once, one per vector lane?
 
 `lanes_1t.sh` of [the L2 entry](2026-10-18-srce-lanes-sin4.md#how-to-repeat), with `repo` set to
 the checkout, after `bash scripts/ww3-gpu.sh --ww3-gpu full --cpu --kokkos resident`.
+
+## Rerun at the combined pin `fac74069`, 2026-10-18
+
+Branch `goal/abbb0456-8241-strict-outg-poison` at `debb1b0`, `WW3/` at `fac74069` (strict mode
+stops a run when `W3OUTG` falls back to the Fortran), Kokkos OpenMP backend, never `--gpu`. For
+`WW_KOKKOS_SRCE_LANES` 1 and 8, `WW_KOKKOS_VA_POISON=1`, with and without `WW_KOKKOS_STRICT=1`:
+
+```bash
+WW_KOKKOS_SRCE_LANES=<1|8> WW_KOKKOS_VA_POISON=1 [WW_KOKKOS_STRICT=1] \
+  bash scripts/ww3-gpu.sh --ww3-gpu <smoke|full> --cpu --kokkos resident
+```
+
+| Case | Strict | Lanes 1 and 8 |
+|---|---|---|
+| `smoke` | off | exit 0; every model file byte-identical to the Fortran of the same executable (`out_grd.ww3`, `out_pnt.ww3`, `restart.ww3`, `ww3.196806.nc`), every file but the NetCDF byte-identical to `--ww3`'s, `nccmp-tol` PASS |
+| `smoke` | on | exit 1, the run stops in `W3OUTG` (below); no comparison was made |
+| `full` | off | exit 0; `out_grd.ww3`, `ww3.field.nc` byte-identical to the Fortran's, every file but the NetCDF byte-identical to `--ww3`'s, `nccmp-tol` PASS |
+| `full` | on | exit 0; the same as off |
+
+(v) The stop, `smoke`, both lane counts:
+`*** WAVEWATCH III ERROR IN W3KOKKOSMD : WW_KOKKOS_STRICT=1 AND PART OUTG WOULD RUN ON THE FORTRAN:
+A SKEWNESS FIELD IS REQUESTED (FLOLOC(8,7:9), SKEWNESS), WHICH THE TRANSLATION LEAVES TO THE
+FORTRAN W3OUTG`. This is the follow-up of `fac74069` doing what it was written to do: `smoke`
+requests a skewness field, which `W3OUTG` leaves to the Fortran. The earlier byte-identical
+`smoke` result under strict (above) was at `50a10730`, where strict did not stop on this. The bit
+verdict for `smoke` at `fac74069` is the non-strict run; its fallback count printed at exit shows
+no call left on the Fortran for `SRCE` and `CPRT` (`W3CPRT` fallbacks 0). `full` is unchanged by
+the new pin. Also at the combined HEAD: `just kokkos-test serial-debug` and `openmp-release` exit
+0; `just regtest-selected` passed; `bash scripts/ww3-gpu.sh --ww3-gpu smoke --gpu --kokkos
+resident --build-only` exit 0, nothing run on a device.

@@ -64,3 +64,16 @@ would have shown as NaN or a different byte.
 - The matrix's `rstrt_b4b` pairs remain `MPI` and out of reach of the preset.
 - `README.md` and `docs/NOAA_PROGRESS_RECORD_202610.md` may still say the pair was never run; not
   edited here.
+
+## Rerun at the combined pin `fac74069`, 2026-10-18
+
+Branch `goal/abbb0456-8241-strict-outg-poison` at `debb1b0`, `WW3/` at `fac74069` (strict mode
+stops a run when `W3OUTG` falls back to the Fortran). The same two commands as above, 4 threads,
+`WW_KOKKOS_VA_POISON=1`; the script was not edited and keeps `WW_KOKKOS_STRICT=1` for the Kokkos
+runs.
+
+Exit 0 (v): the same nine comparisons are identical (`out_grd.ww3` 2 594 586 bytes, the restarts
+21 618 432 bytes). Kokkos runs: one host-to-device and two (`a`) or one (`b`) device-to-host copies
+of `VA`, calls left on the Fortran `SRCE=0 CPRT=0 OUTG=0`. The strict stop did not fire because
+this case requests neither `WBT` nor `SKW`. A case that does request them (`smoke`) stops at
+`fac74069`: see the [lanes log](2026-10-18-srce-lanes-sds4.md#rerun-at-the-combined-pin-fac74069-2026-10-18).
