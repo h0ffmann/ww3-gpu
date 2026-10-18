@@ -103,7 +103,7 @@ Not ranked: skipping `W3SDS4`'s zero-weight terms (12 of 23 products, profile lo
 result for an infinite or NaN input, so it is the owner's decision and its own PR.
 
 **Work in progress elsewhere (2026-10-18).** PR #193 (branch
-`goal/eb10363f-4821-noaa-progress-record`, another session) builds the `W3SDS4` saturation-integral loop
+`goal/eb10363f-4821-noaa-progress-record`, another session, merged 2026-10-18) builds the `W3SDS4` saturation-integral loop
 interchange (`kokkos/src/ww_kokkos/st4_sds4.hpp`), a DIA direction-halo layout that turns the
 index-table gathers into contiguous loads (`snl1_team.hpp`, `snl1_tables.{hpp,cpp}`), and
 `-fno-math-errno` for the host build (`kokkos/src/ww_kokkos/CMakeLists.txt`). The halo layout
@@ -202,8 +202,12 @@ of three; one run on a many-core EPYC node if the owner has one.
   `build/ww3` also rebuilds inside `#cuda` and again on the next CPU run (`:480-487`).
 - `run_dir`s are deleted at every start (`build/runs/ww3-gpu-<case>-cuda/`); `WW3GPU_RUNS`
   moves them.
-- Docker's CUDA image is another toolchain (CUDA 13.4, no OpenMP, counts check skipped): not
-  used for this run.
+- Docker's CUDA image is another toolchain (CUDA 13.4, no OpenMP, counts check skipped) and, since
+  PR #192, builds with `WW_KOKKOS_LIBM=OFF` (`docker/Dockerfile.cuda`), so its kernels call CUDA's
+  libm, not the device copies of glibc's functions: not used for this run. Which value each kind of
+  build should use is the owner's decision in
+  [`KOKKOS_LIBM_ON_VS_OFF.md`](../../KOKKOS_LIBM_ON_VS_OFF.md) (PR #194); A3 records the value the
+  run's build has (`WW_KOKKOS_LIBM` in `CMakeCache.txt`).
 
 ### Phase A: preparation by agents (next session, no device run)
 
