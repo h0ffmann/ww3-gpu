@@ -54,6 +54,137 @@ set(WW3GPU_ALL_ROUTINES SNL1 SDS4 SIN4 SPR4 SPR0 SPR1 SIN1 SDS1 SPR2 SIN2 SDS2 S
 # The WW_KOKKOS_<U>_COUNT flags: each shim prints its routines' counts at exit when its flag is 1.
 set(WW3GPU_COUNT_FLAGS SNL1 ST4 ST0 ST1 ST2 ST3 ST6 SWL FLX)
 
+# ww3gpu_parts_d(<parts> <counts> <dir>): the PART names and COUNT variables of <dir>/*.txt, the
+# registry scripts/ww3-gpu.sh reads (kokkos/src/fortran_iface/parts.d, PATCH.md section 9); FILE
+# lines and # comments are skipped, any other line stops configure.
+function(ww3gpu_parts_d parts counts dir)
+  file(GLOB fs "${dir}/*.txt")
+  list(SORT fs)
+  if(NOT fs)
+    message(FATAL_ERROR "ww3gpu_matrix: no ${dir}/*.txt")
+  endif()
+  set(p "")
+  set(c "")
+  foreach(f IN LISTS fs)
+    file(STRINGS "${f}" lines)
+    foreach(l IN LISTS lines)
+      if(l MATCHES "^[ \t]*(#|$)" OR l MATCHES "^FILE ")
+        continue()
+      elseif(l MATCHES "^PART ([A-Z][A-Z0-9_]*)$")
+        list(APPEND p "${CMAKE_MATCH_1}")
+      elseif(l MATCHES "^COUNT (WW_KOKKOS_[A-Z0-9_]+_COUNT)$")
+        list(APPEND c "${CMAKE_MATCH_1}")
+      else()
+        message(FATAL_ERROR "ww3gpu_matrix: ${f}: unknown line '${l}'")
+      endif()
+    endforeach()
+  endforeach()
+  set(${parts} "${p}" PARENT_SCOPE)
+  set(${counts} "${c}" PARENT_SCOPE)
+endfunction()
+
+# ww3gpu_kokkos_preset(<out> <spec> <parts>): the flags the Kokkos run of WW3GPU_KOKKOS sets, as
+# scripts/ww3-gpu.sh --kokkos does: "all" is ALL (WW_KOKKOS_ALL=1), "resident" the part list of
+# that preset (kokkos_preset in ww3-gpu.sh), "none" nothing, and a comma list its parts, each of
+# <parts>; <out> is ERROR:<why> for anything else.
+function(ww3gpu_kokkos_preset out spec parts)
+  if(spec STREQUAL "all")
+    set(${out} ALL PARENT_SCOPE)
+    return()
+  elseif(spec STREQUAL "none")
+    set(${out} "" PARENT_SCOPE)
+    return()
+  elseif(spec STREQUAL "resident")
+    set(spec "SRCE,XYP3,KTP3,OUTG,IOPE,UPDV")
+  endif()
+  string(REPLACE "," ";" l "${spec}")
+  if(l STREQUAL "")
+    set(${out} "ERROR:empty" PARENT_SCOPE)
+    return()
+  endif()
+  foreach(p IN LISTS l)
+    if(NOT p IN_LIST parts)
+      set(${out} "ERROR:'${p}' is not all, none, resident or a part of parts.d" PARENT_SCOPE)
+      return()
+    endif()
+  endforeach()
+  set(${out} "${l}" PARENT_SCOPE)
+endfunction()
+
+# ww3gpu_kokkos_env(<out> <F|K|G> <flags> <parts> <counts>): the environment of one run, a list of
+# NAME=VALUE, NAME= meaning unset. Every WW_KOKKOS_<part> of <parts> is unset unless the Kokkos run
+# turns it on, WW_KOKKOS_ALL is 0 except in a Kokkos run whose <flags> has ALL, and the Kokkos run
+# sets every counter of <counts>. The Fortran runs never inherit a flag from the shell.
+function(ww3gpu_kokkos_env out k flags parts counts)
+  set(e "")
+  if(k STREQUAL "K" AND "ALL" IN_LIST flags)
+    list(APPEND e "WW_KOKKOS_ALL=1")
+  else()
+    list(APPEND e "WW_KOKKOS_ALL=0")
+  endif()
+  foreach(p IN LISTS parts)
+    if(k STREQUAL "K" AND p IN_LIST flags)
+      list(APPEND e "WW_KOKKOS_${p}=1")
+    else()
+      list(APPEND e "WW_KOKKOS_${p}=")
+    endif()
+  endforeach()
+  foreach(c IN LISTS counts)
+    if(k STREQUAL "K")
+      list(APPEND e "${c}=1")
+    else()
+      list(APPEND e "${c}=")
+    endif()
+  endforeach()
+  set(${out} "${e}" PARENT_SCOPE)
+endfunction()
+
+# ww3gpu_parts_line_check(<out> <line> <flags>): the parts of <flags> that the W3INIT parts line
+# ("Kokkos parts (K Kokkos, F Fortran): SNL1=K ... (n of m on Kokkos)", the fork's w3kokkosmd.F90)
+# does not show on Kokkos, comma-separated, empty when all are; for ALL, "ALL" unless n > 0; "line"
+# when there is no parts line.
+function(ww3gpu_parts_line_check out line flags)
+  if(NOT line MATCHES "Kokkos parts \\(K Kokkos, F Fortran\\):(.*)\\(([0-9]+) of [0-9]+ on Kokkos\\)")
+    set(${out} line PARENT_SCOPE)
+    return()
+  endif()
+  set(body " ${CMAKE_MATCH_1} ")
+  set(non "${CMAKE_MATCH_2}")
+  set(miss "")
+  foreach(p IN LISTS flags)
+    if(p STREQUAL "ALL")
+      if(non EQUAL 0)
+        list(APPEND miss ALL)
+      endif()
+    elseif(NOT body MATCHES " ${p}=K ")
+      list(APPEND miss "${p}")
+    endif()
+  endforeach()
+  list(JOIN miss "," miss)
+  set(${out} "${miss}" PARENT_SCOPE)
+endfunction()
+
+# ww3gpu_switch_words(<out> <switch file> <words>): TRUE when the switch has every word of <words>
+# and none of its !WORD entries; TRUE for an empty list.
+function(ww3gpu_switch_words out file words)
+  foreach(w IN LISTS words)
+    if(w MATCHES "^!(.+)$")
+      ww3gpu_has_word(h "${file}" "${CMAKE_MATCH_1}")
+      if(h)
+        set(${out} FALSE PARENT_SCOPE)
+        return()
+      endif()
+    else()
+      ww3gpu_has_word(h "${file}" "${w}")
+      if(NOT h)
+        set(${out} FALSE PARENT_SCOPE)
+        return()
+      endif()
+    endif()
+  endforeach()
+  set(${out} TRUE PARENT_SCOPE)
+endfunction()
+
 # ww3gpu_routine_word(<out> <routine>): the physics switch a routine of WW3GPU_ROUTINES needs,
 # NL1 for SNL1, STn for SPRn, SINn and SDSn, ST6 for SWL6 (W3SWLDMD exists only with ST6), FLXn
 # for FLXn; empty for any other name.
@@ -102,16 +233,21 @@ function(ww3gpu_physics out)
   set(${out} "${w}" PARENT_SCOPE)
 endfunction()
 
-# ww3gpu_select_entries(<prefix> <matrix.base> <regtests dir> <serial|omp|mpi|all> [<physics>]):
-# every kept entry, in order, as two parallel lists <prefix>_TESTS and <prefix>_OPTS (the entry's
-# options, $ww3 and the test dropped, space-joined). <physics> is a list of switch words, NL1 by
-# default; every entry whose switch has one of them is in exactly one of serial (none of MPI,
-# OMPG, OMPH), omp (OMPG or OMPH, no MPI) and mpi (MPI); all is the three. A line whose switch
-# file is missing is dropped, and so is a switch with both ST4 and FLX5, which KOKKOS refuses.
+# ww3gpu_select_entries(<prefix> <matrix.base> <regtests dir> <serial|omp|mpi|all> [<physics>
+# [<words>]]): every kept entry, in order, as two parallel lists <prefix>_TESTS and <prefix>_OPTS
+# (the entry's options, $ww3 and the test dropped, space-joined). <physics> is a list of switch
+# words, NL1 by default, ANY for no physics filter; every entry whose switch has one of them and
+# passes ww3gpu_switch_words on <words> is in exactly one of serial (none of MPI, OMPG, OMPH), omp
+# (OMPG or OMPH, no MPI) and mpi (MPI); all is the three. A line whose switch file is missing is
+# dropped, and so is a switch with both ST4 and FLX5, which KOKKOS refuses.
 function(ww3gpu_select_entries prefix base rt kind)
   set(phys "${ARGV4}")
   if(phys STREQUAL "")
     set(phys NL1)
+  endif()
+  set(words "")
+  if(ARGC GREATER 5)
+    set(words "${ARGV5}")
   endif()
   list(JOIN phys "|" phys)
   file(STRINGS "${base}" lines REGEX "echo \"\\$rtst .*\" *>> *matrix\\.body")
@@ -153,10 +289,15 @@ function(ww3gpu_select_entries prefix base rt kind)
     if(st4 AND flx5)
       continue()
     endif()
-    ww3gpu_has_word(nl1 "${f}" "${phys}")
+    if(phys STREQUAL "ANY")
+      set(nl1 TRUE)
+    else()
+      ww3gpu_has_word(nl1 "${f}" "${phys}")
+    endif()
+    ww3gpu_switch_words(wok "${f}" "${words}")
     ww3gpu_has_word(mpi "${f}" "MPI")
     ww3gpu_has_word(omp "${f}" "OMPG|OMPH")
-    if(NOT nl1)
+    if(NOT nl1 OR NOT wok)
       continue()
     endif()
     if(mpi)
@@ -185,6 +326,16 @@ function(ww3gpu_sel_desc out kind)
     set(w NL1)
   endif()
   list(JOIN w " or " w)
+  if(ARGC GREATER 3 AND NOT "${ARGV3}" STREQUAL "")
+    list(JOIN ARGV3 " " ws)
+    if(w STREQUAL "ANY")
+      set(w "the words ${ws}")
+    else()
+      string(APPEND w " and the words ${ws}")
+    endif()
+  elseif(w STREQUAL "ANY")
+    set(w "any physics")
+  endif()
   if(kind STREQUAL "omp")
     set(${out} "switch with ${w} and OMPG or OMPH, no MPI; $np = WW3GPU_OMP_THREADS" PARENT_SCOPE)
   elseif(kind STREQUAL "mpi")

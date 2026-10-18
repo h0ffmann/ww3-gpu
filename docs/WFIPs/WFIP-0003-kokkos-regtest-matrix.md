@@ -170,6 +170,18 @@ runner: every test it runs is one of WW3's regtests, with the Fortran DIA and wi
 so this is not a test of the port's own and ADR-0010 holds. The tables of 2026-10-14 and 2026-10-15
 were written by the shell script; no table from the CTest driver is committed yet ⚠.
 
+*Update, 2026-10-18:* for the CPU validation of the resident preset
+([`docs/compound/plans/2026-10-18-001-cpu-resident-validation-plan.md`](../compound/plans/2026-10-18-001-cpu-resident-validation-plan.md)),
+two configure options. `WW3GPU_KOKKOS` gives the Kokkos run the flags of `scripts/ww3-gpu.sh
+--kokkos` (`resident`, `all` or a list of the parts of `kokkos/src/fortran_iface/parts.d`), so the
+regtest and the timed run share them, and the entry then also needs W3INIT's parts line to show each
+part as `<PART>=K`. `WW3GPU_SWITCH_WORDS` selects by words the switch must have (`!WORD` for one it
+must not); for `resident` it defaults to `ST4;NL1;PR3;!PDLIB`, which gives 10 serial, 4 `omp`, 43
+`mpi` entries at `WW3@769c44f0` (v) (`WW3GPU_KOKKOS=resident just ww3-gpu-matrix-list serial`,
+2026-10-18). Every run now sets `WW_KOKKOS_ALL` and unsets the parts it does not turn on, so a flag
+exported in the shell no longer reaches the Fortran run of a pair. Checked by
+`just ww3-gpu-matrix-selftest`; no entry has run with it yet ⚠.
+
 ## 6. Parity and physics impact
 
 None on the model: no kernel, Fortran or tolerance changes. The tolerances stay those of

@@ -4,7 +4,7 @@
 # Columns: n, test, switch, built, ran, kokkos_log, test_comp (files differing/compared, WW3's
 # test.comp), nccmp_tol (PASS/FAIL/MISSING/n/a, kokkos/tools/nccmp-tol/tolerances.txt), judged
 # variables, wall_s, kokkos_spectra (the spectra the Kokkos routine computed, summed over the
-# processes, <R>:<n>,... when WW3GPU_ROUTINES names several; 0 when the grid calls GQM), ww3_self (files two Fortran runs of the same executable
+# processes, <R>:<n>,... when WW3GPU_ROUTINES names several or WW3GPU_KOKKOS is set; 0 when the grid calls GQM), ww3_self (files two Fortran runs of the same executable
 # write differently, - when not measured: test_comp counts only the others), and the entry's matrix.base options, which tell apart entries of one test
 # and switch. nccmp_tol is n/a when the test has no ww3_ounf input, MISSING when it has one and
 # either run wrote no ww3.*.nc.
@@ -50,8 +50,9 @@ if(DEFINED ENV{WW3GPU_COMMAND})
 else()
   set(cmd "ctest --test-dir ${WW3GPU_OUT}")
 endif()
-ww3gpu_sel_desc(desc "${WW3GPU_SELECTION}" "${WW3GPU_PHYSICS}")
+ww3gpu_sel_desc(desc "${WW3GPU_SELECTION}" "${WW3GPU_PHYSICS}" "${WW3GPU_WORDS}")
 list(JOIN WW3GPU_ROUTINES " " routines)
+list(JOIN WW3GPU_FLAGS "," flags)
 
 set(t "# date: ${date}\n")
 string(APPEND t "# ww3-gpu commit: ${rev}\n")
@@ -60,7 +61,11 @@ string(APPEND t "# machine: ${model}, ${nall} hardware threads (nproc --all), ${
 string(APPEND t "# command: ${cmd}\n")
 string(APPEND t "# data: ${WW3GPU_DATA}; SCOTCH_PATH: $ENV{SCOTCH_PATH}; METIS_PATH: $ENV{METIS_PATH}\n")
 string(APPEND t "# selection: ${WW3GPU_SELECTION}, ${desc}; WW3GPU_STRICT=${WW3GPU_STRICT}\n")
-string(APPEND t "# Kokkos routines (WW3GPU_ROUTINES): ${routines}\n")
+if(WW3GPU_KOKKOS STREQUAL "")
+  string(APPEND t "# Kokkos routines (WW3GPU_ROUTINES): ${routines}\n")
+else()
+  string(APPEND t "# Kokkos flags (WW3GPU_KOKKOS, as scripts/ww3-gpu.sh --kokkos): ${WW3GPU_KOKKOS} = ${flags}; the Fortran runs WW_KOKKOS_ALL=0, every part unset\n")
+endif()
 string(APPEND t "n\ttest\tswitch\tbuilt\tran\tkokkos_log\ttest_comp\tnccmp_tol\tjudged\twall_s\tkokkos_spectra\tww3_self\toptions\n")
 file(GLOB rows "${WW3GPU_OUT}/rows/*.tsv")
 list(SORT rows COMPARE NATURAL)
