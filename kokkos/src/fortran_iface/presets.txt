@@ -1,0 +1,8 @@
+# The run-time presets of WW_KOKKOS_PRESET=<name> (part_flags.cpp, PATCH.md section 25), one line each:
+# PRESET <name> <PART,PART,...>. The one list: CMake compiles it into part_flags.cpp, and
+# scripts/ww3-gpu.sh --kokkos <name> and the matrix's WW3GPU_KOKKOS=<name> read it, so the three
+# cannot drift. Every part is a PART of parts.d.
+#
+# resident: W3SRCE batched and the PR3 propagation, W3OUTG, the point output's read and W3UICE's
+# write of VA on the resident spectrum (WFIP-0005; PATCH.md sections 11 and 15 to 18).
+PRESET resident SRCE,XYP3,KTP3,OUTG,IOPE,UPDV

@@ -23,6 +23,26 @@ target_sources(ww_kokkos PRIVATE
     timers.hpp
     timers.cpp)
 
+# presets.txt, the one list of WW_KOKKOS_PRESET's presets (scripts/ww3-gpu.sh and the regtest
+# matrix read the same file), as the initializer part_flags.cpp includes.
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/presets.txt")
+file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/presets.txt" _ww_preset_lines)
+set(_ww_presets "")
+foreach(_l IN LISTS _ww_preset_lines)
+  if(_l MATCHES "^[ \t]*(#|$)")
+    continue()
+  elseif(_l MATCHES "^PRESET ([a-z][a-z0-9_]*) ([A-Z][A-Z0-9_]*(,[A-Z][A-Z0-9_]*)*)$")
+    string(APPEND _ww_presets "    {\"${CMAKE_MATCH_1}\", \"${CMAKE_MATCH_2}\"},\n")
+  else()
+    message(FATAL_ERROR "presets.txt: unknown line '${_l}'")
+  endif()
+endforeach()
+file(CONFIGURE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/ww_kokkos_presets.inc"
+    CONTENT "// Generated from presets.txt by fortran_iface/CMakeLists.txt; do not edit.\n${_ww_presets}"
+    @ONLY)
+target_include_directories(ww_kokkos PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
+
 set(WW_W3KOKKOSMD "${CMAKE_CURRENT_SOURCE_DIR}/../../../WW3/model/src/w3kokkosmd.F90"
     CACHE FILEPATH "WW3's w3kokkosmd.F90 (the WW3/ submodule, branch ww3-gpu/kokkos-wire-base)")
 

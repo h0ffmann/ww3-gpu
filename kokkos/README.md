@@ -411,11 +411,18 @@ this is the short form.
 | partial | `WW_KOKKOS_<PART>=1` for each part wanted | `--kokkos SNL1,SDS4` | the listed parts |
 | full | `WW_KOKKOS_ALL=1` | `--kokkos all` | every wired part whose translation covers the switch file |
 | GPU preset | `WW_KOKKOS_ALL=0 WW_KOKKOS_SRCE=1` | `--kokkos gpu` (the default of `--gpu`) | `W3SRCE` with the source terms it calls (ADR-0013) |
-| resident preset | `WW_KOKKOS_ALL=0`, `WW_KOKKOS_<PART>=1` for `SRCE`, `XYP3`, `KTP3`, `OUTG`, `IOPE`, `UPDV` | `--kokkos resident` | the parts that keep the spectrum `VA` on the device (WFIP-0005 units 1 to 5, #173, #179); not a default: none of its parts is regtested yet ([`ports.tsv`](ports.tsv)) |
+| resident preset | `WW_KOKKOS_PRESET=resident`, or `WW_KOKKOS_ALL=0` and `WW_KOKKOS_<PART>=1` for `SRCE`, `XYP3`, `KTP3`, `OUTG`, `IOPE`, `UPDV` (the line of [`presets.txt`](src/fortran_iface/presets.txt)) | `--kokkos resident` | the parts that keep the spectrum `VA` on the device (WFIP-0005 units 1 to 5, #173, #179); not a default: none of its parts is regtested yet ([`ports.tsv`](ports.tsv)) |
 
 An explicitly set `WW_KOKKOS_<PART>` wins over `WW_KOKKOS_ALL`; one C function,
 `ww_kokkos_flag` in `src/fortran_iface/part_flags.cpp`, resolves both for the Fortran and the
-shims. `W3INIT` writes one line to `log.ww3` naming each part and where it ran. "Full" is 100 %
+shims. `WW_KOKKOS_PRESET=<name>` turns on the parts of one line of
+[`src/fortran_iface/presets.txt`](src/fortran_iface/presets.txt) as if each were set to `1`; a set
+`WW_KOKKOS_<PART>` still wins and an unknown name stops `W3INIT`. `W3INIT` writes one line to
+`log.ww3` naming each part and where it ran, the effective set. Where a part asked on Kokkos would
+run the Fortran (`WW_KOKKOS_ALL=1` on a switch file its translation does not cover, or a `W3SRCE`
+step with a branch the kernel leaves to the Fortran), the model runs the Fortran and the shim
+prints one line at exit with the count per part; `WW_KOKKOS_STRICT=1` stops the model there
+instead, with a line naming the part and the reason (PATCH.md sections 24 and 25). "Full" is 100 %
 of the wired parts, not of WW3: their share of the profiled run time is in
 [`PORT_STATUS.md`](PORT_STATUS.md) (`python3 scripts/port_score.py --write`), and the I/O,
 set-up and the rest of the propagation stay Fortran. A part that is wired but whose `regtested`

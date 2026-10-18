@@ -42,8 +42,8 @@ regtest matrix yet"). 10 of the 310 rows of `kokkos/ports.tsv` are regtested and
 | 3 | MPI: four of the six resident parts are `SHRD` only, the preset stops on `DIST MPI`, the communicator is ignored, the device id is not per rank | Blocker | Major | A resident preset without `XYP3`, `OUTG`, `IOPE`, `UPDV`; one run on `switch_lab_mpi` |
 | 4 | Bit parity measured with gfortran and g++ only; the operational compiler and the GPU are not measured | Blocker | Major | Static argument for the Intel build's math calls; one smoke with it |
 | 5 | Build and packaging: a separate static library, C++20 and CMake 3.25; the install-only configure and the exact Kokkos check are done (U6) | Major | Major | A shared-library build and a recipe for the module systems of an operational centre |
-| 6 | `WW_KOKKOS_ALL=1` and `W3KOKKOS_SRCE_ON` fall back to the Fortran without a word | Major | Minor | A strict flag that turns every fallback into a stop, and a per-run fallback count |
-| 7 | Configuration is 61 environment variables, no namelist; the preset lives in a lab script | Major | Major | A namelist group read by `W3INIT`, the environment as override, the effective set printed once |
+| 6 | `WW_KOKKOS_ALL=1` and `W3KOKKOS_SRCE_ON` fall back to the Fortran without a word | Major | Minor | Done on fork branch `ww3-gpu/u2-strict-preset`, not yet at the pin: `WW_KOKKOS_STRICT=1` stops, otherwise one fallback-count line at exit; the matrix's Kokkos runs set it |
+| 7 | Configuration is 61 environment variables, no namelist; the preset lives in a lab script | Major | Major | Smallest form done on `ww3-gpu/u2-strict-preset`: `WW_KOKKOS_PRESET=resident` from one table, `presets.txt`; next, a namelist group read by `W3INIT` |
 | 8 | Observability: log lines on every rank, counters at exit to `stderr`, no provenance in the output files | Major | Minor | Gate the lines by `NAPLOG`; one NetCDF global attribute |
 | 9 | OpenMP inside MPI: the per-point parts are serialised by `!$OMP CRITICAL`; the thread budget per rank is not set by the shim | Major | Minor | Measure the hybrid entries of `ww3_ufs1.1` before claiming a speed for them |
 | 10 | Restart with the resident spectrum: covered by the sync calls, never regtested | Major | Minor | The restart-reproduction pair of `ww3_ufs1.1` (`work_c` against `work_d`) under the lab switch |
@@ -266,6 +266,15 @@ asked for Kokkos and got the Fortran learns it only from one log line or a `*_CO
 - **(b) Minor.** The default is the Fortran anyway.
 - **Next step.** `WW_KOKKOS_STRICT=1`: `KOKKOS_PART` and the `SRCE` gate stop instead of falling
   back, and `W3KOKKOS_SRCE_ON` counts its Fortran calls for one line at the end of the run.
+- **Done (2026-10-18), not yet at the pin.** Fork branch `ww3-gpu/u2-strict-preset` (`f0cbe70d`):
+  `KOKKOS_PART` under `WW_KOKKOS_ALL=1`, the two `W3SRCE` set-up fallbacks and a new per-step gate
+  `W3KOKKOS_SRCE_STEP` call `KOKKOS_FALLBACK`, which stops with `EXTCDE` and a `NDSE` line
+  naming the part and the reason under `WW_KOKKOS_STRICT=1`, and otherwise counts; the shim
+  prints `ww_kokkos: calls left on the Fortran (WW_KOKKOS_STRICT=1 stops instead): SRCE=<n> ...`
+  at exit on every process, as the `*_COUNT` lines do. The flag is read once; the per-point
+  `W3KOKKOS_SRCE_ON` is unchanged. The regtest matrix's Kokkos run sets `WW_KOKKOS_STRICT=1`
+  (`regtests/cmake/ww3gpu_common.cmake`, `ww3gpu_kokkos_env`). `PATCH.md` section 24 has the
+  runs that show it.
 
 ## 7. Configuration surface
 
@@ -283,6 +292,14 @@ script (v, `scripts/ww3-gpu.sh:190`), so a production job card would repeat it b
   ⚠ (convention, not a rule read today).
 - **Next step.** A `&KOKKOS_NML` group read in `W3INIT` that sets the same flags, the
   environment kept as override for tests, and the effective set written once to the log.
+- **Done in its smallest form (2026-10-18), not yet at the pin.** `WW_KOKKOS_PRESET=resident`,
+  read by `W3INIT` through the shim (fork `dca49b00` on `ww3-gpu/u2-strict-preset`): the part
+  list is one line of `kokkos/src/fortran_iface/presets.txt`, which CMake compiles into
+  `part_flags.cpp` and `scripts/ww3-gpu.sh --kokkos resident` and the matrix's
+  `WW3GPU_KOKKOS=resident` read, so they cannot drift. A set `WW_KOKKOS_<PART>` still wins, an
+  unknown name stops the model, and the parts line stays the effective set, with the preset's
+  name on the line before it. A job card then carries one variable instead of six. The
+  namelist group remains the next step. `PATCH.md` section 25.
 
 ## 8. Observability
 

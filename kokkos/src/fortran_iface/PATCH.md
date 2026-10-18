@@ -1899,3 +1899,74 @@ section 17 (v). The matrix driver drops the empty options of a first-kept entry
 list adds nothing), so `ww3_tr1` cannot be configured there; it ran through
 `regtests/cmake/run_entry.cmake` directly, with a copy of the configured `ww3gpu_config.cmake`
 whose parts are `SRCE,OUTG,IOPE,UPDV` ⚠. Nothing ran on a GPU ⚠.
+
+## 24. `WW_KOKKOS_STRICT`: a fallback to the Fortran stops or is counted, `ww3-gpu/u2-strict-preset`
+
+Fork commit `f0cbe70d` on `ww3-gpu/u2-strict-preset`, branched from `80644ba9` and pushed to
+h0ffmann/WW3 on 2026-10-18; not at the pin until the integrator merges it into
+`ww3-gpu/kokkos-pnt`. Gap 6 of
+[`PRODUCTION_READINESS_202610.md`](../../../docs/PRODUCTION_READINESS_202610.md). Three ABI
+entries in [`part_flags.cpp`](part_flags.cpp) (`ww_kokkos_strict`, `ww_kokkos_fallback_slot`,
+`ww_kokkos_fallback_add`); `w3kokkosmd.F90` +85 lines, `w3initmd.F90` +6 -1, `w3wavemd.F90` 2
+changed.
+
+Four places ran the Fortran for a part asked on Kokkos and said so only in the parts line:
+`KOKKOS_PART` under `WW_KOKKOS_ALL=1` on a switch file a translation does not cover (`GATH`,
+`SCAT`, `UWND`, `UTRN`, `MAP3`, `MAPT`; the opt-in parts are never on under the master),
+`W3KOKKOS_SRCE_SETUP` on a switch file that is not the lab switch's source terms, `W3INIT`
+without `ST4` and `NL1`, and the per-step `W3SRCE` gate (`IQTPE <= 0`, Liu's ice dispersion,
+`TAUWBUG = 0` with `IT > 0`). Each now calls `KOKKOS_FALLBACK ( PART, REASON )`
+(`w3kokkosmd.F90:1257-1269` at `dca49b00`):
+
+- **`WW_KOKKOS_STRICT=1`**: `*** WAVEWATCH III ERROR IN W3KOKKOSMD : WW_KOKKOS_STRICT=1 AND PART
+  <PART> WOULD RUN ON THE FORTRAN: <REASON>` on `NDSE`, then `EXTCDE(1)`, on every rank.
+- **Unset (the default)**: the Fortran, as before, and the shim counts the call. At exit each
+  process prints one line to `stderr`, as the `*_COUNT` lines do:
+  `ww_kokkos: calls left on the Fortran (WW_KOKKOS_STRICT=1 stops instead): SRCE=0`. A set-up
+  fallback counts 1 per `W3INIT`; `SRCE` counts the time steps whose batch ran the Fortran. The
+  line appears only when some part could fall back.
+
+**The hot path.** The per-step gate is a new function, `W3KOKKOS_SRCE_STEP ( IT )`
+(`w3kokkosmd.F90:1913-1918`), which `W3WAVE` calls once per step in place of
+`W3KOKKOS_SRCE_ON` before the batch (`w3wavemd.F90:2407`), outside the `!$OMP PARALLEL` loop over
+sea points. It returns `W3KOKKOS_SRCE_ON ( IT )` and adds one test of two `LOGICAL`s; only on
+the fallback branch does it call `SRCE_FALLBACK`, which under the default is one call and one
+increment of a plain counter (`ww_kokkos_fallback_add`; no lock, the caller is serial). The
+counter's slot is made once in `W3KOKKOS_SRCE_SETUP`. `WW_KOKKOS_STRICT` is read once by the shim
+(a function-local static) and cached in `KOKKOS_STRICT` by `W3KOKKOS_SETUP`. The per-point
+`W3KOKKOS_SRCE_ON` of the Fortran loop (`w3wavemd.F90:2485`) is unchanged: that loop runs only
+when the step's gate was false, so counting the step is complete without a counter in the loop.
+
+**The matrix.** `ww3gpu_kokkos_env` (`regtests/cmake/ww3gpu_common.cmake`) sets
+`WW_KOKKOS_STRICT=1` in the Kokkos run of every pair and unsets it in the Fortran runs (`F`,
+`G`), so a pair can no longer compare the Fortran with itself unseen: an entry whose Kokkos run
+would fall back now fails at run time instead. This changes how a comparison is invoked and is
+reviewed by a person before it merges (AGENTS.md, "Never cheat a regtest tool").
+
+## 25. `WW_KOKKOS_PRESET`: the resident part list in one table, `ww3-gpu/u2-strict-preset`
+
+Fork commit `dca49b00` on `ww3-gpu/u2-strict-preset` (the child of `f0cbe70d`); not at the pin
+until the integrator merges it. Gap 7 of
+[`PRODUCTION_READINESS_202610.md`](../../../docs/PRODUCTION_READINESS_202610.md), smallest form.
+One ABI entry, `ww_kokkos_preset_status`; `w3kokkosmd.F90` +24 -1 lines.
+
+[`presets.txt`](presets.txt) holds one line per preset, `PRESET <name> <PART,...>`; today only
+`PRESET resident SRCE,XYP3,KTP3,OUTG,IOPE,UPDV`, the list that was a line of
+`scripts/ww3-gpu.sh`. Three readers, one file:
+
+- **The shim.** `CMakeLists.txt` here turns the file into `ww_kokkos_presets.inc` at configure
+  time, and `part_flags.cpp` includes it. `ww_kokkos_flag` reads `WW_KOKKOS_PRESET` once: a set
+  `WW_KOKKOS_<PART>` still wins, then a part of the preset is on as if set to `1` (so a part the
+  switch file does not cover stops the model, as under `--kokkos resident`), then the opt-in
+  list and `WW_KOKKOS_ALL` decide as before.
+- **`scripts/ww3-gpu.sh`**: `kokkos_preset` reads the `PRESET` lines, so `--kokkos resident`
+  sets the same six `WW_KOKKOS_<PART>=1`. Both runs of a pair unset `WW_KOKKOS_PRESET`, and the
+  Fortran run unsets `WW_KOKKOS_STRICT`.
+- **The matrix**: `ww3gpu_kokkos_preset` reads it for `WW3GPU_KOKKOS=<name>`; `selftest.cmake`
+  checks a fixture table and that the real `resident` names only parts of `parts.d`.
+
+`W3KOKKOS_SETUP` (`w3kokkosmd.F90:1182-1188` at `dca49b00`) stops on a name the file lacks:
+`*** WAVEWATCH III ERROR IN W3KOKKOSMD : WW_KOKKOS_PRESET=<name> IS NOT A PRESET OF
+kokkos/src/fortran_iface/presets.txt`. `W3KOKKOS_REPORT` writes `  Kokkos preset
+(WW_KOKKOS_PRESET): resident` on the line before the parts line, which stays the effective set,
+once per `W3INIT`. No namelist: the next step of gap 7.

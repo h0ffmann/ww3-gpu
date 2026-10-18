@@ -188,12 +188,23 @@ cmp_files() {
   done < <({ model_files "$1"; model_files "$2"; } | sort -u)
   return "$bad"
 }
+# The presets of WW_KOKKOS_PRESET, "PRESET <name> <PART,...>" lines (PATCH.md section 25): the shim
+# compiles the same file, so --kokkos resident and WW_KOKKOS_PRESET=resident cannot drift.
+presets_txt="$root/kokkos/src/fortran_iface/presets.txt"
 kokkos_preset() { # <all|none|gpu|resident|PART,...>: a preset's part list, anything else unchanged
+  local key name list
   case "$1" in
-    gpu) echo SRCE ;;
-    resident) echo SRCE,XYP3,KTP3,OUTG,IOPE,UPDV ;;
-    *) echo "$1" ;;
+    gpu) echo SRCE; return ;;
+    all|none|*,*) echo "$1"; return ;;
   esac
+  [ -f "$presets_txt" ] || { echo "ww3-gpu: no $presets_txt" >&2; exit 3; }
+  while read -r key name list; do
+    if [ "$key" = PRESET ] && [ "$name" = "$1" ]; then
+      [[ $list =~ ^[A-Z][A-Z0-9_]*(,[A-Z][A-Z0-9_]*)*$ ]] || { echo "ww3-gpu: $presets_txt: bad part list of $name" >&2; exit 3; }
+      echo "$list"; return
+    fi
+  done < "$presets_txt"
+  echo "$1"
 }
 if [ -n "$kokkos" ]; then
   [ "$mode" = ww3-gpu ] || [ "$mode" = self-test ] || { echo "ww3-gpu: --kokkos is for --ww3-gpu only" >&2; exit 64; }
@@ -571,6 +582,10 @@ run_model() { # <dir> <0|1>: grid, strt, shel, ounf; prints ww3_shel's wall time
   local d="$1" k="$2" t0 t1 r
   local -a flags=() unset=()
   for r in "${all_parts[@]}"; do unset+=(-u "WW_KOKKOS_$r"); done
+  # No preset from the shell in either run (the Fortran run would turn its parts on); strict mode
+  # reaches the Kokkos run only (PATCH.md sections 24 and 25).
+  unset+=(-u WW_KOKKOS_PRESET)
+  [ "$k" = 1 ] || unset+=(-u WW_KOKKOS_STRICT)
   if [ -n "$kokkos" ]; then
     read -r -a flags <<<"$(kokkos_env "$k" "$kokkos")"
     [ "$k" = 0 ] || flags+=("${count_flags[@]}")

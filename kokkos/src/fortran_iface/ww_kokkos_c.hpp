@@ -874,6 +874,22 @@ int ww_st6_last_error(void);
 /// variable other than "1" is off whatever WW_KOKKOS_ALL says.
 int ww_kokkos_flag(const char* name);
 
+/// WW_KOKKOS_PRESET (presets.txt): 0 unset or empty, 1 a preset of presets.txt, -1 any other
+/// name, which W3KOKKOS_SETUP turns into a stop. Its parts are on in ww_kokkos_flag as if set to 1.
+int ww_kokkos_preset_status(void);
+
+/// 1 when WW_KOKKOS_STRICT is "1": a part asked on Kokkos that would run the Fortran stops the
+/// model instead (W3KOKKOSMD, KOKKOS_FALLBACK). Read once per process.
+int ww_kokkos_strict(void);
+
+/// The counter of Fortran fallbacks of `part` (at most 24 characters), created on first use; -1
+/// when the name is too long or the table is full. Call at set-up, serially; the first call
+/// registers one line at exit that prints every counter.
+int ww_kokkos_fallback_slot(const char* part);
+
+/// One more call of the slot's part on the Fortran: one increment, no lock (callers are serial).
+void ww_kokkos_fallback_add(int slot);
+
 // ---------------------------------------------------------------------------
 // W3WAVE's per-step support routines (wave_support_shim.cpp): W3GATH, W3SCAT
 // (W3_SHRD), W3UWND (WNT1, RWND), W3UTRN (IC0), W3DZXY, W3MAP3, W3MAPT (PR3), and
