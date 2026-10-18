@@ -18,13 +18,13 @@ on:
   workflow_dispatch:
     inputs:
       jobs:
-        description: "matrix entries run at once (1 to 16)"
-        default: "4"
+        description: "matrix entries run at once (1 to 16); 5 runs every selected entry together"
+        default: "5"
       cases:
-        description: "what to run"
+        description: "selected = the matrix entries and the smoke pair (not WW3's whole matrix)"
         type: choice
-        options: [all, matrix, smoke]
-        default: all
+        options: [selected, matrix, smoke]
+        default: selected
 
 permissions:
   contents: read
@@ -52,7 +52,7 @@ jobs:
           CASES: ${{ inputs.cases }}
         run: |
           [[ "$JOBS" =~ ^([1-9]|1[0-6])$ ]] || { echo "::error::jobs is 1 to 16"; exit 64; }
-          [[ "$CASES" =~ ^(all|matrix|smoke)$ ]] || { echo "::error::cases is all, matrix or smoke"; exit 64; }
+          [[ "$CASES" =~ ^(selected|matrix|smoke)$ ]] || { echo "::error::cases is selected, matrix or smoke"; exit 64; }
           for t in nix just git; do command -v "$t" >/dev/null || { echo "::error::$t is not on the runner's PATH"; exit 3; }; done
           bash scripts/runner.sh check-workflows
 

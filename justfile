@@ -258,10 +258,10 @@ dfull-ww4:
 ww3-gpu-matrix-selftest:
     {{ww3_shell}} cmake -P regtests/cmake/selftest.cmake
 
-# scripts/regtest_selected.sh, regtests/README.md "Selected regtests": cases all, matrix
+# scripts/regtest_selected.sh, regtests/README.md "Selected regtests": cases selected, matrix
 # (ww3_tp2.15, ww3_ts2 through the matrix driver) or smoke (ww3_ts1 pair to pair).
 # A few of WW3's regtests as the resident preset's guardrail, CPU only
-regtest-selected jobs="4" cases="all":
+regtest-selected jobs="5" cases="selected":
     bash scripts/regtest_selected.sh --jobs "$1" --cases "$2"
 
 # scripts/runner.sh: pinned release, SHA-256 checked, token from gh at run time, systemd user unit.

@@ -13,7 +13,7 @@ use the existing driver and its acceptance criteria. They add no test and no ver
 
 ### What runs
 
-`just regtest-selected [jobs] [all|matrix|smoke]` runs
+`just regtest-selected [jobs] [selected|matrix|smoke]` runs
 [`scripts/regtest_selected.sh`](../scripts/regtest_selected.sh), which runs two commands:
 
 1. `WW3GPU_KOKKOS=resident WW3GPU_LAB_SWITCH=ON just ww3-gpu-matrix <jobs> serial -R ':(ww3_tp2\.15|ww3_ts2):'`
@@ -21,6 +21,21 @@ use the existing driver and its acceptance criteria. They add no test and no ver
 
 `WW3GPU_STRICT` stays `ON`. An entry fails when `test.comp` finds one file different. The
 script writes its log and a copy of the matrix `summary.tsv` to `build/regtest-selected/`.
+
+`selected` (the default) runs both. `matrix` and `smoke` run one of them. The matrix entries run
+`jobs` at a time, in parallel (`ctest -j`), and each entry gives one verdict, pass or fail, in
+`summary.tsv`. The default `jobs` is 5, so all selected matrix entries run together, each with
+`nproc/5` threads. The slowest entry (`-g 5km`) then sets the time of the matrix. The `smoke`
+pair runs after the matrix, not at the same time: both build and install the Kokkos package in
+`kokkos/build/openmp-release`, and two builds there at once can break each other. The pair takes
+about one minute.
+
+`selected` is not WW3's whole matrix. `matrix.base` has 310 entries with `NL1`
+(`just ww3-gpu-matrix-list all`), and a full run takes days. With the resident preset, the driver
+can select only 7 of them; the other entries do not use the physics of the preset, so a Kokkos
+run of them does not test the port (v, `WW3GPU_KOKKOS=resident WW3GPU_LAB_SWITCH=ON just
+ww3-gpu-matrix-list serial|omp|mpi|all`: 7, 0, 0 and 7 entries, 2026-10-18). The selection is
+those 7 minus the 2 that the preset refuses by design, plus the `smoke` pair.
 
 ### Why these entries
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # regtest_selected.sh -- a few of WW3's own regtests as a guardrail for the resident Kokkos preset.
 #
-#   scripts/regtest_selected.sh [--jobs N] [--cases all|matrix|smoke] [--dry-run]
+#   scripts/regtest_selected.sh [--jobs N] [--cases selected|matrix|smoke] [--dry-run]
 #   scripts/regtest_selected.sh --self-test
 #
 # It adds no test and no verdict of its own (ADR-0010). It runs two existing commands, with their
@@ -26,7 +26,7 @@ SUMMARY_DIR="build/ww3-gpu-matrix-serial-kokkos-resident-lab"
 usage() { sed -n '2,/^set -euo/{/^set -euo/!p}' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 64; }
 
 valid_jobs()  { [[ "$1" =~ ^[1-9][0-9]?$ ]]; }
-valid_cases() { [[ "$1" =~ ^(all|matrix|smoke)$ ]]; }
+valid_cases() { [[ "$1" =~ ^(selected|matrix|smoke)$ ]]; }
 
 matrix_cmd() {  # jobs -> the command, one word per line
   printf '%s\n' env WW3GPU_KOKKOS=resident WW3GPU_LAB_SWITCH=ON just ww3-gpu-matrix "$1" serial -R "$REGEX"
@@ -42,6 +42,8 @@ self_test() {
   t "jobs 0 is not" "$(valid_jobs 0 && echo y || echo n)" n
   t "jobs with a shell word is not" "$(valid_jobs '4;id' && echo y || echo n)" n
   t "cases matrix is valid" "$(valid_cases matrix && echo y || echo n)" y
+  t "cases selected is valid" "$(valid_cases selected && echo y || echo n)" y
+  t "'all' is not a case: it would read as WW3's whole matrix" "$(valid_cases all && echo y || echo n)" n
   t "an unknown case is not" "$(valid_cases gpu && echo y || echo n)" n
   t "the matrix runs the resident preset" "$(matrix_cmd 4 | grep -c '^WW3GPU_KOKKOS=resident$')" 1
   t "with the lab switch's source terms" "$(matrix_cmd 4 | grep -c '^WW3GPU_LAB_SWITCH=ON$')" 1
@@ -58,7 +60,7 @@ self_test() {
   [ "$f" -eq 0 ]
 }
 
-jobs=4 cases=all dry=0
+jobs=5 cases=selected dry=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --self-test) self_test; exit $? ;;
@@ -71,7 +73,7 @@ while [ $# -gt 0 ]; do
   shift
 done
 valid_jobs "$jobs" || { echo "regtest_selected: --jobs is 1 to 99, not '$jobs'" >&2; exit 64; }
-valid_cases "$cases" || { echo "regtest_selected: --cases is all, matrix or smoke, not '$cases'" >&2; exit 64; }
+valid_cases "$cases" || { echo "regtest_selected: --cases is selected, matrix or smoke, not '$cases'" >&2; exit 64; }
 unset WW3GPU_GPU_CONFIRMED
 
 cd "$root"
