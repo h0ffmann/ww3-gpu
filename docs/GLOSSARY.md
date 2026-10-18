@@ -198,6 +198,7 @@ lab files are in that state and are flagged below.
 | switch_default, switch_Ifremer2, switch_NCEP_st4 | upstream reference switch files in `WW3/model/bin/` `(v)` | 30 upstream files exist; `NCEP_st4` and `Ifremer2` both pair `ST4` with `FLX0`. | [switches/README.md](../switches/README.md), [course/01-build.md](../course/01-build.md) |
 | switch_NCEP_st2 / switch_USACE_1 / switch_NRL3 | upstream reference switch files in `WW3-noaa/model/bin/` `(v)`: `ST2 STAB2 FLX3` with `NL1`, `PR3 UQ`, `DIST MPI` / `ST1 STAB0 FLX1` with `NL1`, `BT4`, `PDLIB SCOTCH` / `ST6 STAB0 FLX4` with `NL1`, `BT1`, `DB1`, `SEED` | The upstream sets that carry the `ST2`, `ST1` and `ST6` physics; the port reports translate against the lab switch with those keys swapped in. | [kokkos/port_report/INPTAB_KOKKOS.md](../kokkos/port_report/INPTAB_KOKKOS.md) |
 | switch_PR3_UQ, switch_MPI | per-regtest switch files under `WW3/regtests/<test>/input/` `(v)` | What `just rt ww3_tp1.1 PR3_UQ` builds with. | [course/09-benchmark-profile-compile-run.md](../course/09-benchmark-profile-compile-run.md) |
+| switch_NCEP_st4sbs / switch_NCEP_glwu / switch_NCEP_gwm / switch_NWS_rwps | NCEP's and the NWS's other reference switch files in `WW3-noaa/model/bin/` `(v)` | Against the Kokkos `W3SRCE` gate: `st4sbs` passes; `glwu` has `NL3`, `gwm` lacks `MLIM`, `rwps` has `PDLIB IC4 REF1 TR1` `(v)` `model/src/w3kokkosmd.F90:1767-1784` at `WW3@80644ba9`. | [docs/PRODUCTION_READINESS_202610.md](PRODUCTION_READINESS_202610.md) |
 
 ## WW3 programs and files
 
@@ -483,6 +484,7 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | AINIT / AINIT2 / INFLAGS1 | "Flag for array initialization" (`AINIT(2)`) and "Array consolidating the above six" input flags `(v)` `w3adatmd.F90:318`, `w3idatmd.F90:99` | The conditions under which `W3SETA` re-points its alias groups. | [kokkos/port_report/W3SETA_KOKKOS.md](../kokkos/port_report/W3SETA_KOKKOS.md) |
 | NAPROC / UNDEF | "Number of processors for computation" / "Value for undefined parameters in gridded output fields" `(v)` `w3odatmd.F90:102`, `:82-83` | `W3XDMA` sizes the full-grid X arrays as `NSEALM*NAPROC` and fills most with `UNDEF`. | [kokkos/port_report/W3XDMA_KOKKOS.md](../kokkos/port_report/W3XDMA_KOKKOS.md) |
 | OUTFLAGS / NXXX / X* arrays | `W3XDMA`'s `LOGICAL OUTFLAGS(NOGRP,NGRPP)` argument, its local full-grid size `NSEALM*NAPROC`, and the 93 full-grid output copies of `WADAT` (`XHS` ... `XUSERO`) `(v)` `w3adatmd.F90:1555`, `:1560`, `:1596`, `:414-497` | Allocated by `W3XDMA`, gathered into by `DO_OUTPUT_EXCHANGES`, named by `W3XETA`'s aliases; `XUSERO`'s shape follows `OUTFLAGS(10,2)` alone, a WW3 defect kept as written. | [kokkos/port_report/W3XDMA_KOKKOS.md](../kokkos/port_report/W3XDMA_KOKKOS.md) |
+| WMWAVE / WMIOHG / WMIOEG | "Run multi-grid version of WAVEWATCH III" / "Gather internal high-to-low data for a given model" / "Gather internal same-rank data for a given model" `(v)` `model/src/wmwavemd.F90:85`, `wminiomd.F90:1714`, `:2814` | `ww3_multi`'s driver and two of its exchanges between grids; the exchanges write a grid's `VA` on the host between its `W3WAVE` calls, which the resident spectrum's sync calls do not see. | [docs/PRODUCTION_READINESS_202610.md](PRODUCTION_READINESS_202610.md) |
 | W3FLDG / W3FLDO | "Update input fields in the WAVEWATCH III generic shell from a WAVEWATCH III shell data file or write from preprocessor" / "Open and prepare WAVEWATCH III field files as used by the generic shell and the field preprocessor" `(v)` `w3fldsmd.F90:964-965`, `:116-117` | `W3FLDG` reads or writes one time record and the field records of `wind.ww3`, `level.ww3`, `current.ww3` and the others, gfortran unformatted big-endian; `W3FLDO` opens the unit and writes or checks its 40-byte header record (file id, field id, grid dimensions, filler, tide flag). | [kokkos/port_report/W3FLDG_KOKKOS.md](../kokkos/port_report/W3FLDG_KOKKOS.md), [kokkos/port_report/W3FLDO_KOKKOS.md](../kokkos/port_report/W3FLDO_KOKKOS.md) |
 
 ## HPC and software
@@ -610,6 +612,9 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | H100 NVL | an H100 variant with 94 GB of memory per GPU `(v)` RDHPCS Ursa user guide, read 2026-10-16; that it is a PCIe card is general knowledge ⚠ | The GPU of NOAA's Ursa nodes; whether the UFSC node has an NVL, PCIe or SXM H100 is not recorded ⚠. | [docs/H100_OPTIMIZATION_STRATEGY_202610.md](H100_OPTIMIZATION_STRATEGY_202610.md) |
 | SYPD | simulated years per (wall-clock) day `(v)` (Koldunov et al. 2026, Fig. 7) | Throughput unit of climate runs; FESOM2-Kokkos reached 1.3 to 3.5 SYPD at 32 GPU nodes. | [notes/202610170112-fesom2-went-through-c-ww3-goes-straight-to-kokkos.md](../notes/202610170112-fesom2-went-through-c-ww3-goes-straight-to-kokkos.md) |
 | A100 / MI250X | NVIDIA's Ampere data-centre GPU, 80 GB on Levante / AMD's GPU of two compute dies, which the runtime sees as two devices `(v)` (Koldunov et al. 2026, §6, §6.3) | The FESOM2 port's development GPU and its AMD target through Kokkos's HIP backend; neither is used here. | [notes/202610170112-fesom2-went-through-c-ww3-goes-straight-to-kokkos.md](../notes/202610170112-fesom2-went-through-c-ww3-goes-straight-to-kokkos.md) |
+| ABI | application binary interface: the calling convention, symbol names and data layout two separately compiled pieces of code agree on ⚠ (general knowledge) | Here, the `bind(C)` entry points of `ww_kokkos_c.hpp` with `REAL(C_FLOAT)` arguments; an 8-byte default `REAL` would need another one `(v)` `model/src/w3kokkosmd.F90:30-31`. | [docs/PRODUCTION_READINESS_202610.md](PRODUCTION_READINESS_202610.md) |
+| MPI_ABORT | the MPI call that ends every process of a communicator ⚠ (general knowledge) | What WW3's `EXTCDE` calls on `MPI_COMM_WORLD` for a non-zero exit code, so a failed Kokkos call stops every rank `(v)` `model/src/w3servmd.F90:1200`. | [docs/PRODUCTION_READINESS_202610.md](PRODUCTION_READINESS_202610.md) |
+| map_device_id_by | a Kokkos initialization setting that chooses how a process picks its GPU `(v)` `include/impl/Kokkos_InitializationSettings.hpp:33` of Kokkos 5.2.2; its default not read ⚠ | Overridden by the shim, which sets the device id from `WW_KOKKOS_DEVICE_ID` or 0. | [docs/PRODUCTION_READINESS_202610.md](PRODUCTION_READINESS_202610.md) |
 | `fcheck` | FESOM2's result check: compares global means of a test run against "truth values" in the setup's `setup.yml` `(v)` (FESOM/fesom2 `9271ae92`, `setups/test_pi/setup.yml:58-64`, `.github/workflows/fesom2_main.yml`); the tool is not in that repository, so its tolerance is ⚠ | FESOM2's regression check in CI, which the port paper does not mention. | [notes/202610170112-fesom2-went-through-c-ww3-goes-straight-to-kokkos.md](../notes/202610170112-fesom2-went-through-c-ww3-goes-straight-to-kokkos.md) |
 
 ## This repository's own names
@@ -747,6 +752,9 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | W3setaTargets | this repository's record of which model each W3SETA/W3XETA pointer group names (`base`, `ainit`, `x`, `fl_all`, `cur`, `wind`, `taua`, `rhoa`, `iter`, `nlinit`) `(v)`, defined in [kokkos/src/ww_kokkos/adat_wadat.hpp](../kokkos/src/ww_kokkos/adat_wadat.hpp), set by [kokkos/src/ww_kokkos/adat_w3seta.hpp](../kokkos/src/ww_kokkos/adat_w3seta.hpp) | Stands for Fortran pointer association that persists across calls; `IADATA` itself is `Wadats::iadata`. | [kokkos/port_report/W3SETA_KOKKOS.md](../kokkos/port_report/W3SETA_KOKKOS.md), [kokkos/port_report/W3XETA_KOKKOS.md](../kokkos/port_report/W3XETA_KOKKOS.md) |
 | FULL / PARTIAL / default (Kokkos modes) | FULL: `WW_KOKKOS_ALL=1`, every wired part on Kokkos where its translation covers the switch file; PARTIAL: `WW_KOKKOS_<PART>=1` for a list of parts, or `WW3GPU_ROUTINES=<R>,...` in the matrix; default: no flag set, every part the Fortran `(v)` `kokkos/src/fortran_iface/PATCH.md` §7 on the wiring branch, `regtests/CMakeLists.txt:19-22` | `scripts/ww3-gpu.sh --kokkos all|none|<PART,...>`; a FULL matrix mode is planned, not implemented; FULL on wired-but-unregtested parts is for development only (ADR-0012). | [docs/ADRs/ADR-0012-translate-and-wire-now-regtest-matrix-on-the-h100.md](ADRs/ADR-0012-translate-and-wire-now-regtest-matrix-on-the-h100.md) |
 | static parity | the bit-parity argument made without running WW3: the `-O3` GIMPLE and object code of the Fortran routine and of the C++ kernel compared operation by operation `(v)` ADR-0011, "The discipline", item 4 | What a translated routine carries until the regtest matrix judges it; recorded as ⚠ in its port report. | [docs/ADRs/ADR-0011-port-in-units-regtest-at-checkpoints.md](ADRs/ADR-0011-port-in-units-regtest-at-checkpoints.md), [docs/ADRs/ADR-0012-translate-and-wire-now-regtest-matrix-on-the-h100.md](ADRs/ADR-0012-translate-and-wire-now-regtest-matrix-on-the-h100.md) |
+| KOKKOS_PART / W3KOKKOS_REPORT | the function of `W3KOKKOSMD` that turns a part's flag and its switch coverage into its `LOGICAL`, stopping when `WW_KOKKOS_<PART>=1` names an uncovered switch file, and the routine that writes the parts line (`K` or `F` per part) `(v)` `model/src/w3kokkosmd.F90:1188-1203`, `:1239-1317` | The one log line that says which parts ran on Kokkos. | [docs/PRODUCTION_READINESS_202610.md](PRODUCTION_READINESS_202610.md) |
+| WW3GPU_LAB_SWITCH | a CMake option of the regtest matrix driver: each entry's source-term switches are replaced by `switches/switch_lab_shrd`'s, the rest of the entry kept `(v)` commit `db2c27c`, `regtests/cmake/stage.cmake` | The way the matrix reaches the Kokkos `W3SRCE`, since no `matrix.base` switch passes its gate. | [docs/PRODUCTION_READINESS_202610.md](PRODUCTION_READINESS_202610.md) |
+| WW_KOKKOS_STRICT / KOKKOS_NML / WW_BUILD_TESTS (proposed) | names proposed on 2026-10-18 for a flag that turns every fallback to the Fortran into a stop, a namelist group for the run-time flags, and a CMake option for an install-only configure of `ww_kokkos`; none exists ⚠ | Next steps of the production gap list. | [docs/PRODUCTION_READINESS_202610.md](PRODUCTION_READINESS_202610.md) |
 | twin kernel (FESOM2) | the C original of a kernel, kept beside its Kokkos rewrite and run on the same live state when `FESOM_KK_VERIFY` is set; Serial must match it exactly `(v)` (Koldunov et al. 2026, §4.4) | This repository has no twin: the Fortran routine is the reference, selected by its `WW_KOKKOS_<PART>` flag, and compared only inside WW3's regtests (ADR-0010). | [notes/202610170112-fesom2-went-through-c-ww3-goes-straight-to-kokkos.md](../notes/202610170112-fesom2-went-through-c-ww3-goes-straight-to-kokkos.md) |
 
 ## Citation and licensing
@@ -778,6 +786,7 @@ Every term above, alphabetically, with the section it lives in.
 - H2D / D2H: [HPC and software](#hpc-and-software)
 - `LIBERROR_*`: [HPC and software](#hpc-and-software)
 - A100 / MI250X: [HPC and software](#hpc-and-software)
+- ABI: [HPC and software](#hpc-and-software)
 - A2A / `para:*`: [This repository's own names](#this-repositorys-own-names)
 - ABNT: [HPC and software](#hpc-and-software)
 - ABPI0 / ABPIN / ABPOS: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
@@ -1538,6 +1547,8 @@ Every term above, alphabetically, with the section it lives in.
 - KOKKOS_LAMBDA: [HPC and software](#hpc-and-software)
 - KOKKOS_LAMBDA / KOKKOS_INLINE_FUNCTION: [HPC and software](#hpc-and-software)
 - KOKKOS_SNL1: [This repository's own names](#this-repositorys-own-names)
+- KOKKOS_NML (proposed): [This repository's own names](#this-repositorys-own-names)
+- KOKKOS_PART / W3KOKKOS_REPORT: [This repository's own names](#this-repositorys-own-names)
 - `kokkos_spectra` / `ww3_self` / `WW_KOKKOS_SNL1_COUNT`: [This repository's own names](#this-repositorys-own-names)
 - `--kokkos gpu` / `--kokkos resident` / `just perf-ww3-gpu`: [This repository's own names](#this-repositorys-own-names)
 - Leanpub / Markua: [HPC and software](#hpc-and-software)
@@ -1572,6 +1583,7 @@ Every term above, alphabetically, with the section it lives in.
 - LRB4: [WW3 switches](#ww3-switches)
 - LTA: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - Managed Memory: [HPC and software](#hpc-and-software)
+- map_device_id_by: [HPC and software](#hpc-and-software)
 - mapsta.ww3: [WW3 programs and files](#ww3-programs-and-files)
 - marola: [Models, projects and institutions](#models-projects-and-institutions)
 - mask.ww3: [WW3 programs and files](#ww3-programs-and-files)
@@ -1596,6 +1608,7 @@ Every term above, alphabetically, with the section it lives in.
 - mod_def.ww3: [WW3 programs and files](#ww3-programs-and-files)
 - MPI: [WW3 switches](#ww3-switches)
 - MPI: [HPC and software](#hpc-and-software)
+- MPI_ABORT: [HPC and software](#hpc-and-software)
 - MPIBDI: [WW3 switches](#ww3-switches)
 - MPIT: [WW3 switches](#ww3-switches)
 - MPRF: [WW3 switches](#ww3-switches)
@@ -1907,6 +1920,7 @@ Every term above, alphabetically, with the section it lives in.
 - `switch_lab_st6`: [This repository's own names](#this-repositorys-own-names)
 - switch_MPI: [WW3 switches](#ww3-switches)
 - switch_NCEP_st4: [WW3 switches](#ww3-switches)
+- switch_NCEP_st4sbs / switch_NCEP_glwu / switch_NCEP_gwm / switch_NWS_rwps: [WW3 switches](#ww3-switches)
 - switch_PR3_UQ: [WW3 switches](#ww3-switches)
 - switch_PR3_UQ, switch_MPI: [WW3 switches](#ww3-switches)
 - SXY: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
@@ -2107,6 +2121,9 @@ Every term above, alphabetically, with the section it lives in.
 - wm*md.F90 (WMESMFMD: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - wm*md.F90 (WMESMFMD, WMSCRPMD, …): [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - WMSCRPMD: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- WMWAVE / WMIOHG / WMIOEG: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- WW3GPU_LAB_SWITCH: [This repository's own names](#this-repositorys-own-names)
+- WW_KOKKOS_STRICT / WW_BUILD_TESTS (proposed): [This repository's own names](#this-repositorys-own-names)
 - WND: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - WNMEAN: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - WNT0: [WW3 switches](#ww3-switches)
