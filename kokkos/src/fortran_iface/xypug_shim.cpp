@@ -291,6 +291,8 @@ int batch(Ctx& c, const Args& a, float* dva) {
   put_if_changed(s.esin, c.sh_esin, a.esin, static_cast<size_t>(a.nth), "ww_xypug.esin", skip);
   static const int layout = speedup_flag("WW_KOKKOS_XYPUG_LAYOUT", true) ? 1 : 0;
   s.layout = layout;
+  static const int cfl_par = speedup_flag("WW_KOKKOS_XYPUG_CFL_PAR", true) ? 1 : 0;
+  s.cfl_par = cfl_par;
   const size_t ncg = static_cast<size_t>(a.nk + 2) * (nsea + 1);
   if (layout != 0) {
     // CG(IK,ISEA) as cg[IK*(NSEA+1) + ISEA]; IOBPD(ITH,IP) as iobpd[ITH*NX + IP]: same values.

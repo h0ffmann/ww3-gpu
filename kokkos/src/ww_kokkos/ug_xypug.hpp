@@ -36,7 +36,8 @@
 //    same sub-step, which ends at a barrier before any node is updated.
 //  * DTSI(IP) = DBLE(DT)/DBLE(ITER)/SI(IP) (:662-664) is computed where it is used, from the same
 //    operands in the same order, so it has the same bits.
-// The CFL minimum over IP (:645-650), ITER (:651-659) and the boundary update over IBI
+// The CFL minimum over IP (:645-650; with the cfl_par switch its divisions are made in the KKSUM
+// pass, per node, and only the min chain is serial), ITER (:651-659) and the boundary update over IBI
 // (:694-720, duplicate IP: the last IBI wins) run on one thread of the team, in the Fortran's
 // order. No reduction or atomic: the bits do not depend on the team size or the backend.
 //
@@ -148,6 +149,9 @@ struct XypugStep {
   /// KELEM stored in the node lists' order (g.pos); IOBPD as [ITH][IP] and CG as [IK][ISEA]
   /// (the shim uploads the transposed copies: iobpd(ith*NX + p), cg(ik*(NSEA+1) + isea)).
   int layout = 0;
+  /// the per-node DTMAXEXP divisions of the CFL step made in parallel (over KKSUM in place); the
+  /// minimum scan stays on one thread in ascending IP
+  int cfl_par = 0;
   float facx = 0.f, facy = 0.f, dtg = 0.f, rd1 = 1.f, rd2 = 0.f;
   Kokkos::View<int*, Mem> mapsta, iobp, iobpd, iobdp, iobpa, bnd_isea, bnd_ip, iter, lst;
   Kokkos::View<float*, Mem> clats, ecos, esin, cg, cx, cy, bbpi0, bbpin;
@@ -228,6 +232,7 @@ void xypug_launch(const ExecSpace& exec, const XypugGrid<typename ExecSpace::mem
   const int lcalc = s.lcalc;
   const int fuse_ut = s.fuse_ut;
   const int lay = s.layout;
+  const int cfl_par = s.cfl_par;
   const std::size_t nsea1 = static_cast<std::size_t>(s.nsea) + 1;
   const auto pos = g.pos;
   const float facx = s.facx;
@@ -403,6 +408,12 @@ void xypug_launch(const ExecSpace& exec, const XypugGrid<typename ExecSpace::mem
             for (int j = node_off(p); j < node_off(p + 1); ++j)
               acc = acc + kelem[lay != 0 ? j : node_ent(j)];
             kksum[p] = acc;
+            // :647 for this node, where :646 will take it; KKSUM is read nowhere else, so its
+            // slot holds DTMAXEXP for the scan below.
+            if (cfl_par != 0 && (iobp(p) == 1 || fsbccfl != 0)) {
+              const double q = acc * static_cast<double>(iobdp(p));
+              kksum[p] = si(p) / max_sd(q, kKkFloor);
+            }
           });
           t.team_barrier();
           // :644-659 on one thread: the MIN chain depends on the order of IP.
@@ -413,8 +424,13 @@ void xypug_launch(const ExecSpace& exec, const XypugGrid<typename ExecSpace::mem
                 for (int p = 0; p < nx; ++p) {
                   if (iobp(p) == 1 || fsbccfl != 0) {  // :646
                     // :647, KKSUM*IOBDP in REAL(8), MAX with 1e-9, SI / that.
-                    const double q = kksum[p] * static_cast<double>(iobdp(p));
-                    const double dtmaxexp = si(p) / max_sd(q, kKkFloor);
+                    double dtmaxexp;
+                    if (cfl_par != 0) {
+                      dtmaxexp = kksum[p];  // the same two operations, made in the pass above
+                    } else {
+                      const double q = kksum[p] * static_cast<double>(iobdp(p));
+                      dtmaxexp = si(p) / max_sd(q, kKkFloor);
+                    }
                     // :648, minsd: DTMAXGL < DTMAXEXP ? DTMAXGL : DTMAXEXP.
                     dtmaxgl = (dtmaxgl < dtmaxexp) ? dtmaxgl : dtmaxexp;
                   }
