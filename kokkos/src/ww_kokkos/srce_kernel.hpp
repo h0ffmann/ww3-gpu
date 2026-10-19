@@ -5,8 +5,12 @@
 // WW3 heritage: WW3/model/src/w3srcemd.F90:190-2412 (W3SRCE) at NOAA-EMC/WW3
 // 03adda91 (WW3-noaa/), as switches/switch_lab_shrd compiles it (ST4 NL1 LN1 BT1
 // DB1 MLIM, srce_call = srce_direct); author H. L. Tolman and the authors listed
-// in its header. The other branches stay in the Fortran: the caller hunk
-// (W3KOKKOS_SRCE_ON on the fork) and ww_srce_init refuse them.
+// in its header. Three more branches are translated, each selected at run time by the flag
+// the Fortran side derives from the same switch (srce_params.hpp I_LN1, I_SEED, I_FLD2): no
+// W3SLN1 (VSLN stays 0, :884-886 and no call at :1222), SEED (:1970-1982) and FLD2 (CALC_FPI and
+// W3FLD2, :2278-2301, with HSTOT of :1816-1847); lines of WW3-noaa/ at 03adda91. The other
+// branches stay in the Fortran: the caller hunk (W3KOKKOS_SRCE_ON on the fork) and ww_srce_init
+// refuse them.
 //
 // Arithmetic: the -O3 GIMPLE of w3srcemd.F90 (gfortran 16.2, WW3's Release
 // flags) is the reference, statement by statement; each statement below keeps
@@ -19,9 +23,10 @@
 // b; each site passes its operands in the order of the build's maxss/minss
 // (read from w3srcemd.o), which is not always the GIMPLE order.
 //
-// Not ported, dead under this switch: PHINL, HSTOT, FACTOR2 outside the ice
+// Not ported, dead under these switches: PHINL, FACTOR2 outside the ice
 // block, COSI, TAUSCX/Y, FHIGI, FIRST, TAUNUX/Y (-O3 drops them as well, or
-// nothing reads them).
+// nothing reads them). HSTOT is read by the FLD2 branch only; it is summed in every call of the
+// kernel, which changes no other value.
 #pragma once
 
 #include <Kokkos_Core.hpp>
@@ -32,7 +37,9 @@
 #include "snl1_tables.hpp"
 #include "snl1_team.hpp"
 #include "srce_bt1.hpp"
+#include "srce_calc_fpi.hpp"
 #include "srce_db1.hpp"
+#include "srce_fld2.hpp"
 #include "srce_ln1.hpp"
 #include "srce_params.hpp"
 #include "st4_arrays.hpp"
@@ -84,6 +91,10 @@ struct PointScalars {
   Real ustar, ustdir, tauwx, tauwy, dtdyn, fcut, tauox, tauoy, tauwix, tauwiy, tauwnx,
       tauwny, phiaw, charn, tws, phioc, phibbl, phice, tauocx, tauocy, wnmean;
   int shave;
+  /// FPI of W3SRCE: INOUT, set by CALC_FPI under FLD2 and passed through otherwise.
+  Real fpi;
+  /// ww::fld2::Fld2Status bits of the W3FLD2 call (0 when none or none set).
+  int fld2_status;
 };
 
 /// W3SRCE's local scalars that live across the barriers of the team.
@@ -91,6 +102,7 @@ struct State {
   Real depth, drat, icescaleln, icescalein, icescalenl, icescaleds;
   Real emean, fmean, fmean1, amax, cd, z0, fmeanws, dlwmean, fage, fhigh;
   Real dttot, dt, hdt, tauwax, tauway;
+  Real hstot;  ///< HSTOT of the last step (:1816-1847), read by the FLD2 branch
   int nsteps, nkh, nkh1, nspech;
   int done;
 };
@@ -98,11 +110,14 @@ struct State {
 /// Reals of per-point work (no allocation in a kernel): 18 arrays of NSPEC
 /// (DAM, WN2, VSLN, VSIN, VDIN, VSNL, VDNL, VSDS, VDDS, VSBT, VDBT, VS, VD,
 /// VSDB, VDDB, SPECINIT, SPEC2, BRLAMBDA), DIRF(NTH), WNF(NK), CBETA(NK), and
-/// the largest of the ST4 routines' work.
+/// the largest of the ST4 routines' work (and W3FLD2's, with FLD2).
 inline int srce_work_reals(const Params& p, const st4::Params& q) {
   int st4w = st4::sds4_work_reals(q);
   if (st4::sin4_work_reals(q) > st4w) st4w = st4::sin4_work_reals(q);
   if (st4::spr4_work_reals(q) > st4w) st4w = st4::spr4_work_reals(q);
+  // W3FLD2 runs after the last ST4 call of the point, in the same slice.
+  if (p.fld2 && ww::fld2::work_reals(p.nth, p.nktmax) > st4w)
+    st4w = ww::fld2::work_reals(p.nth, p.nktmax);
   return 18 * p.nspec + p.nth + 2 * p.nk + st4w;
 }
 /// Ints: LLWS(NSPEC) and the largest of the ST4 routines' int work.
@@ -288,8 +303,10 @@ struct SrcePoint {
   /// then W3SIN4 (:1239).
   KOKKOS_INLINE_FUNCTION void step_a_sln1() const {
     st.nsteps = st.nsteps + 1;  // :1212
-    w3sln1_point(p, g.sig, g.ecos, g.esin, wn1, st.fhigh, o.ustar, in.u10dir, vsln, dirf,
-                 wnf);  // :1223
+    // :1222-1224, W3_LN1 only; without it VSLN keeps the 0 of :884-886 for the whole call.
+    if (p.ln1)
+      w3sln1_point(p, g.sig, g.ecos, g.esin, wn1, st.fhigh, o.ustar, in.u10dir, vsln, dirf,
+                   wnf);
   }
   KOKKOS_INLINE_FUNCTION void step_a() const {
     step_a_sln1();
@@ -394,6 +411,7 @@ struct SrcePoint {
     }
 
     whitecap[2] = 0;  // :1815
+    Real hstot = 0;   // :1816
     for (int ik = 0; ik < nk; ++ik) {  // :1817-1845, IK then ITH, serial
       const Real factor = g.dden[ik] / cg1[ik];
       for (int ith = 0; ith < nth; ++ith) {
@@ -403,9 +421,11 @@ struct SrcePoint {
         o.phibbl = o.phibbl -
                    ((vsbt[is] * dt) * factor) / mx(static_cast<Real>(1.) - vdbt[is] * dt, 1);
         if (vsin[is] > static_cast<Real>(0.)) whitecap[2] = whitecap[2] + spec[is] * factor;
+        hstot = hstot + spec[is] * factor;  // :1843
       }
     }
     whitecap[2] = Kokkos::sqrt(whitecap[2]) * static_cast<Real>(4.);  // :1846
+    st.hstot = Kokkos::sqrt(hstot) * static_cast<Real>(4.);           // :1847
     o.tauwix = o.tauwix + (o.tauwx * st.drat) * dt;                  // :1848-1851
     o.tauwiy = o.tauwiy + (o.tauwy * st.drat) * dt;
     o.tauwnx = o.tauwnx + (st.drat * st.tauwax) * dt;
@@ -432,6 +452,27 @@ struct SrcePoint {
       if (st.emean > em && st.emean > static_cast<Real>(1.E-30)) {
         for (int is = 0; is < nspec; ++is) spec[is] = em * (spec[is] / st.emean);
         st.emean = em;
+      }
+    }
+    // :1970-1982, SEED: the floor of the spectrum above the cut-off. UC = FACSD*GRAV/SIG is one
+    // product and one quotient; WN1**3 is (w*w)*w; MAX(0.,x) and MIN(1.,.) are maxss/minss with
+    // the operands of the object (x first, then 0 or 1); the spectrum MAX takes the new value
+    // first, so a tie (or a NaN) keeps the old one.
+    if (p.seed) {
+      for (int ik = mni(nk, st.nkh); ik <= nk; ++ik) {
+        const Real uc = (p.facsd * kGrav) / g.sig[ik - 1];
+        const Real w = wn1[ik - 1];
+        Real slev = ((mn(mx(in.u10abs / uc - static_cast<Real>(1.), static_cast<Real>(0.)),
+                         static_cast<Real>(1.)) *
+                      6.25E-4F) /
+                     ((w * w) * w)) /
+                    g.sig[ik - 1];
+        if (in.inflags24) slev = (static_cast<Real>(1.) - in.ice) * slev;
+        for (int ith = 1; ith <= nth; ++ith) {
+          const Real c = mx(dm::cosf(in.u10dir - f.th(ith - 1)), static_cast<Real>(0.));
+          const int is = ith + (ik - 1) * nth - 1;
+          spec[is] = mx(slev * (c * c), spec[is]);
+        }
       }
     }
     // :1985-1997, the tail; "+ 0." kept (it turns -0. into +0.).
@@ -509,6 +550,25 @@ struct SrcePoint {
       o.phice = (((static_cast<Real>(-1.) * kDwat) * kGrav) * o.phice) / dtg;
       tauice[0] = tauice[0] / dtg;
       tauice[1] = tauice[1] / dtg;
+    }
+    // :2278-2301, FLD2: the equivalent peak frequency of the input, then the wind stress of the
+    // wave spectrum from W3FLD2 above 10 m/s and a significant wave height of 0.5 m, else the
+    // constant FLDALPHA as Charnock parameter. FPI/TPI is MIN(.,2.) with FPI/TPI first (minss);
+    // COEF*U10ABS is one product, COS and SIN of U10DIR one sincosf. WNF (NK) is CALC_FPI's work.
+    if (p.fld2) {
+      calc_fpi(spec, cg1, o.fpi, vsin, nk, nth, q.xfr, g.sig, g.dden, q.fte, p.fttr, wnf);
+      if (in.u10abs > static_cast<Real>(10.) && st.hstot > static_cast<Real>(0.5)) {
+        const Real fpia = mn(o.fpi / kTpi, static_cast<Real>(2.));
+        Real su = 0, cu = 0;
+        sincos_r(in.u10dir, su, cu);
+        const Real cw = in.u10abs * in.coef;
+        o.fld2_status = ww::fld2::w3fld2(spec, fpia, cw * cu, cw * su, q.zzwnd, st.depth, in.dair,
+                                         nk, nth, q.xfr, q.dth, g.sig, f.th, p.tail_id,
+                                         p.tail_lev, p.tail_tran1, p.tail_tran2, o.ustar,
+                                         o.ustdir, o.charn, st4w, p.nktmax);
+      } else {
+        o.charn = p.fldalpha;
+      }
     }
     if (in.it == 0)  // :2348
       for (int is = 0; is < nspec; ++is) spec[is] = specinit[is];

@@ -39,9 +39,11 @@ Read at the pin `aa382393` (v, files named):
 
 ## The gap
 
-The fork's gate for the batched W3SRCE (`WW3/model/src/w3kokkosmd.F90:1838-1845`) requires
-`BT1 DB1 LN1 MLIM` and refuses `FLD1 FLD2` and `SEED`. The ufs switch has `FLD2` and `SEED` and
-lacks `LN1`, so every source-term call of a GFS-Wave run is the Fortran today. W3SRCE's branches
+The fork's gate for the batched W3SRCE (`WW3/model/src/w3kokkosmd.F90:1840-1846` at
+`aa382393`) requires `BT1 DB1 LN1 MLIM` and refuses `FLD1 FLD2` and `SEED`. The ufs switch has
+`FLD2` and `SEED` and lacks `LN1`, so a GFS-Wave run's W3SRCE is the Fortran today; the per-point
+`W3SNL1`, `W3SIN4`, `W3SDS4` and `W3SPR4` already run on Kokkos under it (v, U2,
+`docs/log/2026-10-19-gfs-wave-switch.md`). W3SRCE's branches
 for those switches are at `w3srcemd.F90:531, 534, 826, 938, 2388, 2734, 2747` (v).
 
 ## Units

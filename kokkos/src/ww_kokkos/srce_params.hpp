@@ -1,12 +1,13 @@
 // kokkos/src/ww_kokkos/srce_params.hpp
-// The scalars and grid arrays W3SRCE and its Fortran callees W3SLN1, W3SBT1 and
-// W3SDB1 read, and how they cross the C ABI.
+// The scalars and grid arrays W3SRCE and its Fortran callees W3SLN1, W3SBT1, W3SDB1 and
+// (under FLD2) W3FLD2 read, and how they cross the C ABI.
 //
 // WW3 heritage: WW3/model/src/w3srcemd.F90:190-2412 (W3SRCE, the USE lists at
 // :497-579), w3sln1md.F90:56-211, w3sbt1md.F90:88-285, w3sdb1md.F90:96-382, at
-// NOAA-EMC/WW3 03adda91 (WW3-noaa/), as switches/switch_lab_shrd compiles them.
-// They read W3GDATMD, W3IDATMD's INFLAGS2 and CONSTANTS. ST4's own scalars stay in st4_params.hpp, W3SNL1's in
-// snl1_config.hpp: the W3SRCE kernel reads them from those contexts.
+// NOAA-EMC/WW3 03adda91 (WW3-noaa/), as switches/switch_lab_shrd compiles them, and with the
+// SEED, FLD2 and LN1-absent branches (the GFS-Wave regtests' switch, goal be5bdbea-3817). They
+// read W3GDATMD, W3IDATMD's INFLAGS2 and CONSTANTS. ST4's own scalars stay in st4_params.hpp,
+// W3SNL1's in snl1_config.hpp: the W3SRCE kernel reads them from those contexts.
 //
 // As for ST4, the Fortran side packs the scalars into REAL(C_FLOAT) RPAR and
 // INTEGER(C_INT) IPAR at the 0-based indices below; W3KOKKOSMD on the fork
@@ -55,6 +56,12 @@ enum Rpar : int {
   R_SBTC1,     // W3GDATMD SBTC1
   R_SDBC1,     // W3GDATMD SDBC1
   R_SDBC2,     // W3GDATMD SDBC2
+  R_FACSD,     // W3GDATMD FACSD (SEED, w3srcemd.F90:1972)
+  R_FTTR,      // W3GDATMD FTTR (CALC_FPI under FLD2)
+  R_FLDALPHA,  // W3GDATMD FLDALPHA (CHARN when W3FLD2 is not called)
+  R_TAIL_LEV,  // W3GDATMD TAIL_LEV, TAIL_TRAN1, TAIL_TRAN2: what INFLD copies for W3FLD2
+  R_TAIL_TRAN1,
+  R_TAIL_TRAN2,
   NRPAR
 };
 
@@ -68,7 +75,12 @@ enum Ipar : int {
   I_IC_NUMERICS,   // W3GDATMD IC_NUMERICS, 0/1
   I_FDONLY,        // W3GDATMD FDONLY, 0/1
   I_LAB_SWITCH,    // 1 when the build has exactly the source-term switches the kernel
-                   // translates (ST4 NL1 LN1 BT1 DB1 MLIM FLX0 STAB0 IC0 IS0 REF0 TR0 BS0)
+                   // translates: ST4 NL1 BT1 DB1 MLIM FLX0 STAB0 IC0 IS0 REF0 TR0 BS0, with
+                   // LN1, or with LN0 or SEED in its place, and with SEED and FLD2 each in or out
+  I_LN1,           // 1 when W3SLN1 is called (W3_LN1); 0: VSLN stays 0 (:938-940, no call)
+  I_SEED,          // 1 under W3_SEED (:1970-1982)
+  I_FLD2,          // 1 under W3_FLD2 (:2278-2301)
+  I_TAIL_ID,       // W3GDATMD TAIL_ID (INFLD's Tail_Choice)
   NIPAR
 };
 
@@ -80,6 +92,10 @@ struct Params {
   Real facp, xflt, xrel, fhmax, ffxfm, ffxpm, ffxfa;
   Real icescales[4];  ///< ICESCALES(1:4): icescales[i-1]
   Real slnc1, fspm, fshf, sbtc1, sdbc1, sdbc2;
+  Real facsd, fttr, fldalpha, tail_lev, tail_tran1, tail_tran2;
+  int ln1, seed, fld2, tail_id;
+  /// Not packed: the most spectral bins W3FLD2 extends the spectrum to (shim, from SIG(NK), XFR).
+  int nktmax;
 };
 
 inline Params unpack(const float* r, const int* i) {
@@ -111,6 +127,16 @@ inline Params unpack(const float* r, const int* i) {
   p.sbtc1 = r[R_SBTC1];
   p.sdbc1 = r[R_SDBC1];
   p.sdbc2 = r[R_SDBC2];
+  p.facsd = r[R_FACSD];
+  p.fttr = r[R_FTTR];
+  p.fldalpha = r[R_FLDALPHA];
+  p.tail_lev = r[R_TAIL_LEV];
+  p.tail_tran1 = r[R_TAIL_TRAN1];
+  p.tail_tran2 = r[R_TAIL_TRAN2];
+  p.ln1 = i[I_LN1];
+  p.seed = i[I_SEED];
+  p.fld2 = i[I_FLD2];
+  p.tail_id = i[I_TAIL_ID];
   return p;
 }
 

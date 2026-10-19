@@ -221,7 +221,7 @@ int ww_srce_init(int igrid, const float* rpar, int nrpar, const int* ipar, int n
 /// in the order of the Fortran dummy list. spec (nspec), whitecap (4), taubbl
 /// (2), tauice (2) and every pointer scalar are INOUT; wn1, cg1 (nk) IN;
 /// inflags24, flogrd57, flogrd58 are INFLAGS2(4), FLOGRD(5,7), FLOGRD(5,8) as
-/// 0/1; shave is SHAVEIO as 0/1. Status in ww_srce_last_error().
+/// 0/1; fpi is FPI (INOUT, written under FLD2); shave is SHAVEIO as 0/1. Status in ww_srce_last_error().
 void ww_srce(int igrid, int it, int inflags24, int flogrd57, int flogrd58, float* spec,
              const float* wn1, const float* cg1, float d_inp, float u10abs, float u10dir,
              float as, float ice, float dtg, float dair, float coef, float* ustar,
@@ -229,7 +229,7 @@ void ww_srce(int igrid, int it, int inflags24, int flogrd57, int flogrd58, float
              float* tauox, float* tauoy, float* tauwix, float* tauwiy, float* tauwnx,
              float* tauwny, float* phiaw, float* charn, float* tws, float* phioc,
              float* whitecap, float* phibbl, float* taubbl, float* tauice, float* phice,
-             float* tauocx, float* tauocy, float* wnmean, int* shave);
+             float* tauocx, float* tauocy, float* wnmean, float* fpi, int* shave);
 
 /// Row indices of ww_srce_batch()'s per-point input packet pin(WW_SRCE_NPIN, npts):
 /// the by-value scalars of ww_srce() that differ from point to point.
@@ -252,7 +252,7 @@ enum WwSrceBatchScal {
   WW_SRCE_SC_TAUWIX, WW_SRCE_SC_TAUWIY, WW_SRCE_SC_TAUWNX, WW_SRCE_SC_TAUWNY,
   WW_SRCE_SC_PHIAW, WW_SRCE_SC_CHARN, WW_SRCE_SC_TWS, WW_SRCE_SC_PHIOC,
   WW_SRCE_SC_PHIBBL, WW_SRCE_SC_PHICE, WW_SRCE_SC_TAUOCX, WW_SRCE_SC_TAUOCY,
-  WW_SRCE_SC_WNMEAN, WW_SRCE_NPSC
+  WW_SRCE_SC_WNMEAN, WW_SRCE_SC_FPI, WW_SRCE_NPSC
 };
 
 /// ww_srce() for `npts` points in one call (phase 2, one launch per time step):
