@@ -127,11 +127,11 @@ None. No timing without parity (`AGENTS.md`).
 
 ## How it was regtested
 
-The batched kernel, 2026-10-18 (v): `WW3GPU_KOKKOS=resident WW3GPU_LAB_SWITCH=ON just ww3-gpu-matrix 4
-serial -R '^00[12]:'` at ww3-gpu `d93be6d`, WW3 `84df86e0` (the fork branch was since rebased onto `fac74069` as `aa382393`; the matrix is not rerun on it yet ⚠): `ww3_tp2.6` `ST4` and `ST4_ASCII`, `test.comp` 0 of 36
+The batched kernel, 2026-10-19 (v): `WW3GPU_KOKKOS=resident WW3GPU_LAB_SWITCH=ON just ww3-gpu-matrix 4
+serial -R '^00[12]:'` at ww3-gpu `94b3118`, WW3 `aa382393` (the fork branch rebased onto `fac74069`; first run 2026-10-18 at `84df86e0` gave the same counts): `ww3_tp2.6` `ST4` and `ST4_ASCII`, `test.comp` 0 of 36
 and 0 of 38 files different, `nccmp-tol` PASS, 777 600 components on Kokkos, `WW3GPU_STRICT=ON`
-([record](../../docs/data/ww3gpu_matrix_xypug_tp2.6_2026-10-18.tsv),
-[log](../../docs/log/2026-10-18-xypug-tp2.6.md)). That test turns off `FLCTH`, `FLCK` and `FLSOU`, so `KTP3` and the
+([record](../../docs/data/ww3gpu_matrix_xypug_tp2.6_2026-10-19.tsv),
+[log](../../docs/log/2026-10-19-xypug-tp2.6-rebased.md), [first run](../../docs/log/2026-10-18-xypug-tp2.6.md)). That test turns off `FLCTH`, `FLCK` and `FLSOU`, so `KTP3` and the
 source terms on an unstructured grid were not exercised ⚠. No timing.
 
 The serial host translation, 2026-10-16: not yet, and nothing was run. What was done, 2026-10-16 (v): a scratch translation unit that

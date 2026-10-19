@@ -23,4 +23,5 @@ changed (`LCALC`), then `ITER` explicit sub-steps with the boundary values of `F
 See [W3XYPUG](W3XYPUG_KOKKOS.md), section "The batched kernel with W3XYPFSN2": the parallel
 structure, the per-node gathers that keep the Fortran's addition order, the GIMPLE comparison and
 the builds. No timing (no parity run yet, `AGENTS.md`). The regtest is `ww3_tp2.6` `ST4` and
-`ST4_ASCII` with the resident preset, passed 2026-10-18.
+`ST4_ASCII` with the resident preset, passed 2026-10-18 at WW3 `84df86e0` and again 2026-10-19 on the rebased pin `aa382393`
+([log](../../docs/log/2026-10-19-xypug-tp2.6-rebased.md)).
