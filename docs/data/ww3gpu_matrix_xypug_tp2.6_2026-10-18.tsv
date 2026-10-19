@@ -1,0 +1,12 @@
+# date: 2026-10-18T19:10:41Z
+# ww3-gpu commit: d93be6d
+# WW3 commit: 84df86e0 (origin/ww3-gpu/xypug-196)
+# machine: Intel(R) Core(TM) i9-14900, 32 hardware threads (nproc --all), OMP_NUM_THREADS=8 per run, WW3GPU_OMP_NESTED=OFF
+# command: WW3GPU_KOKKOS=resident WW3GPU_LAB_SWITCH=ON just ww3-gpu-matrix 4 serial -R ^00[12]:
+# data: /nix/store/97lk2yrkjdjxaniq48mq2p6ciw9y79js-ww3-regtest-data-7.14.2; SCOTCH_PATH: /nix/store/v6003b5s6nr5by0zhncxkg7h4n06gvyq-ptscotch-static-7.0.12; METIS_PATH: /nix/store/2sxmb2qk62pv3f73psif7cc1plwcldns-ww3-metis
+# selection: serial, switch with the words ST4 NL1 PR3 UQ SHRD !PDLIB !MGP !MGG, none of MPI, OMPG, OMPH; WW3GPU_STRICT=ON
+# switch: each entry's source-term words replaced by switches/switch_lab_shrd's (WW3GPU_LAB_SWITCH=ON)
+# Kokkos flags (WW3GPU_KOKKOS, as scripts/ww3-gpu.sh --kokkos): resident = SRCE,XYP3,KTP3,OUTG,IOPE,UPDV,CPRT; the Fortran runs WW_KOKKOS_ALL=0, every part unset
+n	test	switch	built	ran	kokkos_log	test_comp	nccmp_tol	judged	wall_s	kokkos_spectra	ww3_self	options
+1	ww3_tp2.6	ST4	yes	yes	yes	0/36	PASS	hs,t0m1	118	SRCE:0,SDS4:0,SIN4:0,SPR4:0,XYPUG:777600	-	-s ST4 -w work_ST4
+2	ww3_tp2.6	ST4_ASCII	yes	yes	yes	0/38	PASS	hs,t0m1	123	SRCE:0,SDS4:0,SIN4:0,SPR4:0,XYPUG:777600	-	-s ST4_ASCII -w work_ST4_ASCII
