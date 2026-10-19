@@ -143,7 +143,29 @@ alternated runs, load below 2 at the start of each; raw rows in
 | all four on | 6.57 | 36.50 |
 
 Only `FUSE_UT` and the sum at 32 threads are outside the spread of the runs. The model's total time
-was not compared ⚠.
+was not compared ⚠ in that table.
+
+CPU re-measurement, 2026-10-19, regtest pending ⚠ (log section "CPU re-measurement"; raw rows
+[`docs/data/xypug_speedups_cpu_rerun_2026-10-19.tsv`](../../docs/data/xypug_speedups_cpu_rerun_2026-10-19.tsv)).
+Same entry and machine, three interleaved rounds (not five: the load wait made five pass the time
+budget), the whole `ww3_shel` `Elapsed time` added, OpenMP only, no GPU. Median in seconds, kernel
+and whole `ww3_shel`; "real" means the medians differ by more than the larger min-max spread:
+
+| Config | 32 threads kernel | 32 threads `ww3_shel` | 8 threads kernel | 8 threads `ww3_shel` | 1 thread kernel | 1 thread `ww3_shel` |
+|---|---|---|---|---|---|---|
+| all four off | 7.87 | 9.78 | 8.75 | 10.46 | 36.59 | 38.26 |
+| `FUSE_UT` only | 6.88 | 8.81 | 7.37 | 9.02 | 35.89 | 37.54 |
+| `SKIP_H2D` only | 7.84 | 9.35 | 8.12 | 9.53 | n/a | n/a |
+| `LAYOUT` only | 7.76 | 9.73 | 8.28 | 10.00 | n/a | n/a |
+| `CFL_PAR` only | 7.86 | 9.78 | 8.72 | 10.44 | n/a | n/a |
+| all four on | 6.51 | 8.05 | 7.05 | 8.46 | 35.97 | 37.64 |
+
+Verdict on the CPU: `FUSE_UT` helps (real at 32, 8 and 1 threads). `SKIP_H2D` helps the whole run at
+32 threads (`ww3_shel` minus 0.43 s alone and plus 0.84 s when removed from all-on, both real;
+`xypug.h2d` 0.42 s to 0.05 s) and is inside the spread in the kernel timer alone; at 8 threads its
+`ww3_shel` gain is at the edge of the spread ⚠. `LAYOUT` and `CFL_PAR` are inside the spread
+alone and as leave-one-out; they do not help on this CPU and do not hurt. The leave-one-out runs
+(all on except one) are in the log, 32 threads only.
 
 ## How it was regtested
 

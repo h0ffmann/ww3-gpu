@@ -227,7 +227,7 @@ can use alone. Four items are built. Two items needed no change.
 | 6.3 `W3XYP3` load balance | rank 5 | no change | Checked (v) | already in place |
 | 6.4 `W3SDS4` saturation integral | rank 2 | built | Checked (v) | loop 1.7 to 1.9 times faster |
 | 6.5 DIA halo layout | rank 1 | built | Checked (v) | kernel 1.93 times faster, 1 thread |
-| 6.6 `W3XYPUG` four switches | unstructured grids | built | Checked (v), regtest pending ⚠ | kernel 1.21 times faster at 32 threads, 1.03 at 1 thread |
+| 6.6 `W3XYPUG` four switches | unstructured grids | built | Checked (v), regtest pending ⚠ | kernel 1.21 times faster at 32 threads, 1.03 at 1 thread; whole `ww3_shel` 1.21 times at 32 threads (CPU re-run, 3 rounds); `FUSE_UT` and `SKIP_H2D` help, `LAYOUT` and `CFL_PAR` inside the spread |
 
 **Checked (v), for all items.** With the final code, `full` and `smoke` give model files
 byte-identical to the Fortran of the same executable, and `nccmp-tol` passes against NOAA WW3
@@ -322,6 +322,16 @@ Four changes to the batched kernel of issue #196, each with its own switch
   6.79 s at 32 threads. The other three are inside the spread on this CPU; the uploads fall from
   0.43 s to 0.06 s. Not measured on a GPU or for the whole `ww3_shel` run ⚠.
   Log: `docs/log/2026-10-19-xypug-speedups.md`.
+- **Speed on the CPU, per switch. Checked (v), 3 rounds, one entry, regtest pending ⚠.** Re-timed the
+  same day with the whole `ww3_shel` time (`Elapsed time`), median of three interleaved rounds, a
+  difference counted only above the larger min-max spread. At 32 threads all off 9.78 s, all on
+  8.05 s (kernel 7.87 s and 6.51 s); at 8 threads 10.46 s and 8.46 s; at 1 thread 38.26 s and
+  37.64 s. `FUSE_UT` helps (real at 32, 8 and 1 threads, about 1 s of `ww3_shel` at 32 and 8
+  threads). `SKIP_H2D` helps the whole run at 32 threads (minus 0.43 s alone, plus 0.84 s when
+  removed from all-on) and is inside the spread in the kernel timer alone; at 8 threads it is at
+  the edge ⚠. `LAYOUT` and `CFL_PAR` are inside the spread alone and as leave-one-out: no gain on
+  the CPU, no loss. Their target is the GPU, not measured ⚠. Raw rows:
+  `docs/data/xypug_speedups_cpu_rerun_2026-10-19.tsv`.
 
 ## 7. The Fortran change for WW3: `W3SDS4`
 
