@@ -7,9 +7,9 @@
 #   docker build -f docker/Dockerfile.ondaseventos --target dev  -t ww3-ondaseventos-dev .
 #   docker build -f docker/Dockerfile.ondaseventos               -t ww3-ondaseventos .
 #
-# Base: Ubuntu 22.04 = what Linux Mint 21 is built on (Mint 22 = 24.04: --build-arg UBUNTU=ubuntu:24.04).
-# Python is the distro's (3.10 on 22.04, 3.12 on 24.04).
-ARG UBUNTU=ubuntu:22.04
+# Base: debian:bookworm-slim (OpenMPI 4.1, Python 3.11). Any Linux host runs it; only copying the
+# binaries out to run natively needs a matching distro.
+ARG BASE=debian:bookworm-slim
 # NOAA-EMC/WW3 has no 7.14 tag (tags stop at 6.07.1); 7.14 is the VERSION file on develop, so
 # the pin is a commit, the same one as the WW3-noaa submodule. The build fails if VERSION differs.
 ARG WW3_VERSION=7.14
@@ -19,7 +19,7 @@ ARG WW3_REF=03adda91a1421898ac1ac4433f909e8519e13800
 # Unconfirmed against ondaseventos' real build; add PDLIB (needs SCOTCH/METIS) for unstructured MPI.
 ARG WW3_SWITCH="NOGRB NC4 DIST MPI PR3 UQ ST4 STAB0 FLX0 LN1 NL1 IC0 IS0 REF0 BT1 DB1 MLIM TR0 BS0 WNX1 WNT1 CRX1 CRT1 O0 O1 O2 O4 O5 O6 O7"
 
-FROM ${UBUNTU} AS toolchain
+FROM ${BASE} AS toolchain
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
       gfortran g++ cmake make git pkg-config ca-certificates \
@@ -29,10 +29,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 FROM toolchain AS dev
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
-      python3 python3-pip netcdf-bin \
+      python3 python3-venv netcdf-bin \
  && rm -rf /var/lib/apt/lists/* \
- && pip install --no-cache-dir xarray netCDF4 numpy pandas matplotlib cartopy ecmwf-opendata \
+ && python3 -m venv /opt/venv \
+ && /opt/venv/bin/pip install --no-cache-dir xarray netCDF4 numpy pandas matplotlib cartopy ecmwf-opendata \
       cfgrib eccodes scipy natsort tenacity ipython
+# bookworm's pip refuses system-wide installs (PEP 668), hence the venv
+ENV PATH=/opt/venv/bin:$PATH
 
 FROM toolchain AS build
 ARG WW3_VERSION
@@ -48,10 +51,14 @@ RUN echo "${WW3_SWITCH}" > /tmp/switch \
  && for p in grid strt prnc shel bounc ounf ounp; do test -x "/opt/ww3/bin/ww3_$p"; done \
  && { echo "WW3 ${WW3_VERSION} ${WW3_REF}"; echo "switch: ${WW3_SWITCH}"; } > /opt/ww3/BUILD_INFO
 
-FROM ${UBUNTU} AS dist
+FROM ${BASE} AS dist
 ARG DEBIAN_FRONTEND=noninteractive
-RUN apt-get update && apt-get install -y --no-install-recommends openmpi-bin libnetcdff7 libgfortran5 \
+# openssh-client: mpirun aborts without an rsh/ssh agent, even on a single node
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      openmpi-bin libnetcdff7 libgfortran5 openssh-client \
  && rm -rf /var/lib/apt/lists/*
+# containers run as root by default and OpenMPI refuses that otherwise
+ENV OMPI_ALLOW_RUN_AS_ROOT=1 OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1
 COPY --from=build /opt/ww3/bin/ /usr/local/bin/
 COPY --from=build /opt/ww3/BUILD_INFO /usr/local/share/ww3/BUILD_INFO
 # ST4TABUHF2.bin is not a build product: ww3_grid writes it into its working directory on first use.
