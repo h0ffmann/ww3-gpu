@@ -123,7 +123,27 @@ GPU. The fork's `ww3_lib` compiles for the `ww3_tp2.6` switch and `switch_lab_sh
 
 ## Benchmarks
 
-None. No timing without parity (`AGENTS.md`).
+Regtest pending ⚠ (ADR-0016): parity of the two `ww3_tp2.6` entries is checked (0/36 and 0/38 files
+different, `nccmp-tol` PASS, at `106263d`), the rest of the matrix is not.
+
+Four bit-neutral speed-ups, each with a switch (`WW_KOKKOS_XYPUG_FUSE_UT`, `_SKIP_H2D`, `_LAYOUT`,
+`_CFL_PAR`, default on, `0` is the earlier code). Which operations moved and why the bits stay is in
+[the log](../../docs/log/2026-10-19-xypug-speedups.md). `xypug.kernel` of the `ww3_tp2.6` `ST4`
+entry, resident preset, 600 calls, OpenMP backend, Intel Core i9-14900 (32 threads), median of three
+alternated runs, load below 2 at the start of each; raw rows in
+[`docs/data/xypug_speedups_tp2.6_2026-10-19.tsv`](../../docs/data/xypug_speedups_tp2.6_2026-10-19.tsv):
+
+| Config | 32 threads (s) | 1 thread (s) |
+|---|---|---|
+| all four off | 7.97 | 37.43 |
+| `FUSE_UT` only | 6.79 | 36.14 |
+| `SKIP_H2D` only (`xypug.h2d` 0.43 s to 0.06 s) | 8.10 | 37.00 |
+| `LAYOUT` only | 7.96 | 36.82 |
+| `CFL_PAR` only | 7.81 | 36.92 |
+| all four on | 6.57 | 36.50 |
+
+Only `FUSE_UT` and the sum at 32 threads are outside the spread of the runs. The model's total time
+was not compared ⚠.
 
 ## How it was regtested
 
