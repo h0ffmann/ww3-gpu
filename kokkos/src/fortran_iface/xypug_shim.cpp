@@ -117,6 +117,17 @@ std::map<int, Ctx>& contexts() {
 
 std::mutex g_mutex;
 
+/// A bit-neutral speed-up's switch, read once: "1" on, "0" off, unset or other the default.
+/// Each is WW_KOKKOS_XYPUG_<NAME>; with a switch off the code is the translation as first
+/// written (docs/log/2026-10-19-xypug-speedups.md).
+bool speedup_flag(const char* name, bool def) {
+  const char* v = std::getenv(name);
+  if (v == nullptr) return def;
+  if (std::strcmp(v, "1") == 0) return true;
+  if (std::strcmp(v, "0") == 0) return false;
+  return def;
+}
+
 template <class T>
 void grow(Kokkos::View<T*, Mem>& v, size_t n, const char* name) {
   const size_t want = std::max<size_t>(n, 1);
@@ -233,6 +244,8 @@ int batch(Ctx& c, const Args& a, float* dva) {
   s.flbpi = a.flbpi;
   s.fsbccfl = a.fsbccfl;
   s.lcalc = a.lcalc;
+  static const int fuse_ut = speedup_flag("WW_KOKKOS_XYPUG_FUSE_UT", true) ? 1 : 0;
+  s.fuse_ut = fuse_ut;
   s.facx = a.facx;
   s.facy = a.facy;
   s.dtg = a.dtg;

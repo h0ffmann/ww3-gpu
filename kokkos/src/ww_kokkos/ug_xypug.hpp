@@ -125,6 +125,9 @@ template <class Mem>
 struct XypugStep {
   int nsea = 0, nk = 0, nth = 0, nspec = 0, nbi = 0;
   int flcur = 0, flbpi = 0, fsbccfl = 0, lcalc = 0;
+  /// Run-time switches of the bit-neutral speed-ups (WW_KOKKOS_XYPUG_*, xypug_shim.cpp); 0 is
+  /// the translation as first written.
+  int fuse_ut = 0;  ///< first sub-step's UTILDE computed in the per-triangle pass
   float facx = 0.f, facy = 0.f, dtg = 0.f, rd1 = 1.f, rd2 = 0.f;
   Kokkos::View<int*, Mem> mapsta, iobp, iobpd, iobdp, iobpa, bnd_isea, bnd_ip, iter, lst;
   Kokkos::View<float*, Mem> clats, ecos, esin, cg, cx, cy, bbpi0, bbpin;
@@ -203,6 +206,7 @@ void xypug_launch(const ExecSpace& exec, const XypugGrid<typename ExecSpace::mem
   const int flbpi = s.flbpi;
   const int fsbccfl = s.fsbccfl;
   const int lcalc = s.lcalc;
+  const int fuse_ut = s.fuse_ut;
   const float facx = s.facx;
   const float facy = s.facy;
   const float dtg = s.dtg;
@@ -287,6 +291,12 @@ void xypug_launch(const ExecSpace& exec, const XypugGrid<typename ExecSpace::mem
         });
         t.team_barrier();
 
+        // ITER(IK,ITH), column major (NK,NTH).
+        const int iter_at = (ith - 1) * nk + (ik - 1);
+        // FLALL is read by the sub-steps 2..ITER only when the first one is fused; ITER is known
+        // here only without LCALC (it is read from the caller), else it is stored.
+        const bool store_flall = fuse_ut == 0 || lcalc != 0 || iter_v(iter_at) > 1;
+
         // W3XYPFSN2 :605-636, one triangle per index.
         Kokkos::parallel_for(Kokkos::TeamThreadRange(t, ntri), [&](const int e) {
           const int i1 = trigp(3 * e) - 1;
@@ -337,14 +347,24 @@ void xypug_launch(const ExecSpace& exec, const XypugGrid<typename ExecSpace::mem
           const double fl311 = 2.0 * fl31 + fl32;
           const double fl312 = 2.0 * fl32 + fl31;
           // :632-634, (a + b) * ONESIXTH, then + KELEM after the MAX of :619.
-          flall[3 * e] = (fl311 + fl212) * kOneSixth + kk1;
-          flall[3 * e + 1] = (fl111 + fl312) * kOneSixth + kk2;
-          flall[3 * e + 2] = (fl211 + fl112) * kOneSixth + kk3;
+          const double fa1 = (fl311 + fl212) * kOneSixth + kk1;
+          const double fa2 = (fl111 + fl312) * kOneSixth + kk2;
+          const double fa3 = (fl211 + fl112) * kOneSixth + kk3;
+          if (store_flall) {
+            flall[3 * e] = fa1;
+            flall[3 * e + 1] = fa2;
+            flall[3 * e + 2] = fa3;
+          }
+          if (fuse_ut != 0) {
+            // :671 of the first sub-step with the registers just computed: the same products
+            // and sums in the same order as the sub-step loop below; AC is complete (barrier).
+            double d = fa1 * ac[i1] + 0.0;
+            d = d + fa2 * ac[i2];
+            d = d + fa3 * ac[i3];
+            utilde[e] = nm[e] * d;
+          }
         });
         t.team_barrier();
-
-        // ITER(IK,ITH), column major (NK,NTH).
-        const int iter_at = (ith - 1) * nk + (ik - 1);
         int iter = 0;
         if (lcalc != 0) {
           // :638-643, KKSUM = 0.d0, then in IE order KKSUM(NI) + KELEM(:,IE).
@@ -391,13 +411,16 @@ void xypug_launch(const ExecSpace& exec, const XypugGrid<typename ExecSpace::mem
         // :666-722, the sub-steps; the trip count is ITER(IK,ITH) read once.
         for (int it = 1; it <= iter; ++it) {
           // :671, UTILDE = NM*DOT_PRODUCT(FLALL(:,IE),U(NI)): ((f1*u1 + 0.) + f2*u2) + f3*u3.
-          Kokkos::parallel_for(Kokkos::TeamThreadRange(t, ntri), [&](const int e) {
-            double d = flall[3 * e] * ac[trigp(3 * e) - 1] + 0.0;
-            d = d + flall[3 * e + 1] * ac[trigp(3 * e + 1) - 1];
-            d = d + flall[3 * e + 2] * ac[trigp(3 * e + 2) - 1];
-            utilde[e] = nm[e] * d;
-          });
-          t.team_barrier();
+          // The first sub-step's was made in the pre-pass when fuse_ut is on (U is still AC).
+          if (it > 1 || fuse_ut == 0) {
+            Kokkos::parallel_for(Kokkos::TeamThreadRange(t, ntri), [&](const int e) {
+              double d = flall[3 * e] * ac[trigp(3 * e) - 1] + 0.0;
+              d = d + flall[3 * e + 1] * ac[trigp(3 * e + 1) - 1];
+              d = d + flall[3 * e + 2] * ac[trigp(3 * e + 2) - 1];
+              utilde[e] = nm[e] * d;
+            });
+            t.team_barrier();
+          }
 
           // :667-668 (U = AC, ST = 0.d0), :672 as a gather in IE order, :675-690 per node.
           Kokkos::parallel_for(Kokkos::TeamThreadRange(t, nx), [&](const int p) {
