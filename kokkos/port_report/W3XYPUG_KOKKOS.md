@@ -15,7 +15,7 @@ back into `VQ`. The `PDLIB` sibling is [PDLIB_W3XYPUG](PDLIB_W3XYPUG_KOKKOS.md).
 | | |
 |---|---|
 | WW3 routine | `W3XYPUG`, `model/src/w3profsmd.F90:69-272` at NOAA-EMC/WW3 `03adda91` (byte-identical in `WW3/` at the fork pin, `cmp`), called from `w3wavemd.F90:1970`, `:1973`, `:1976` (one per `PR1`/`PR2`/`PR3`), as the switch of `ww3_tp2.6` compiles it (`SHRD PR3 UQ ... REF0`) |
-| Kokkos code | [`../src/ww_kokkos/prop_xypug.hpp`](../src/ww_kokkos/prop_xypug.hpp), a header-only host function `w3xypug`, serial, in the Fortran's structure and order; it calls the ported `SETDEPTH` ([SETDEPTH](SETDEPTH_KOKKOS.md)) directly |
+| Kokkos code | [`../src/ww_kokkos/prop_xypug.hpp`](../src/ww_kokkos/prop_xypug.hpp), a header-only host function `w3xypug`, serial, in the Fortran's structure and order; the header (the host path, not called by WW3) calls the ported `SETDEPTH` ([SETDEPTH](SETDEPTH_KOKKOS.md)) directly; the batched shim does not: it takes `IOBDP` from the Fortran `SETDEPTH`, called once per step (`xypug_c.hpp:11-13`) |
 | Hooks | `XypugHooks`: `dsec21` and the four schemes `W3XYPFSN2`, `W3XYPFSPSI2`, `W3XYPFSFCT2`, `W3XYPFSNIMP` (`w3profsmd.F90:470`, `:730`, `:1290`, `:988`), which have no Kokkos translation. A hook the flags reach and that is missing aborts |
 | C shim | none yet |
 | Plan | [`PROPAGATION_KOKKOS_PLAN_202610.md`](../../docs/PROPAGATION_KOKKOS_PLAN_202610.md), issue #42 |
@@ -61,7 +61,7 @@ and `C = VLCFL*REAL(IOBDP)` (integer to floating conversions exact, products ele
 `DSEC21(TBPI0,TIME)` before `DSEC21(TBPI0,TBPIN)`; the scheme selection and the contiguous
 `C(NX,2)`, `AC(NX)` descriptors the Fortran builds for the schemes; `REAL(AC)` for every node
 (`cvtsd2ss`, `cvtpd2ps`, both round to nearest); the final `maxss %xmm1,%xmm0` with `%xmm1` from
-`pxor`, which is `x > 0 ? x : +0`, the C++ expression. The ported `SETDEPTH` is called with
+`pxor`, which is `x > 0 ? x : +0`, the C++ expression. In the header, the ported `SETDEPTH` is called with
 `IOBDP(1:MX)` and `DW(0:)`. The header compiles with the `serial-debug` flags (ASan, UBSan,
 `-Wconversion`, `-ffp-contract=off`) without a warning; at `-O3` its object has no FMA and the same
 `maxss` operand order. One defect, a citation: the `DMIN` comment cited `w3profsmd.F90:1667-1674`,
@@ -78,7 +78,7 @@ parity verdict under the resident preset instead of the start-up stop
 |---|---|
 | WW3 code replaced | `W3WAVE` section 3.6.3, the `ISPEC` loop of `W3GATH`, `W3XYPUG`, `W3SCAT` (`w3wavemd.F90:2050-2135` at the fork pin), on `GTYPE = UNGTYPE` |
 | Routines translated | `W3XYPUG` (`w3profsmd.F90:69-272`), `W3XYPFSN2` (`:470-727`, see [W3XYPFSN2](W3XYPFSN2_KOKKOS.md)), `W3GATH` and `W3SCAT` under `W3_SHRD` |
-| Not translated | `SETDEPTH` (`:1601-1678`): the Fortran wrapper calls it once per step instead of once per component. It writes only `IOBDP` (`:1672-1676`) from `DW` and `DMIN` (`:1650-1651`), and the replaced loop writes neither, so `IOBDP` has the same bits (v, read 2026-10-18). `W3CFLUG` (`:274-467`): called only for the CFL output field (`w3wavemd.F90:1776`, `FLOGRD(9,3)`), and it does not read `VA` |
+| Not translated | `SETDEPTH` (`:1601-1678`): the Fortran wrapper calls it once per step instead of once per component. It writes only `IOBDP` (`:1672-1676`) from `DW` and `DMIN` (`:1650-1651`), and the replaced loop writes neither, so `IOBDP` has the same bits (v, read 2026-10-18). `W3CFLUG` (`:274-467`): called only for the CFL output field (`w3wavemd.F90:1776` is the guard `IF ( FLOGRD(9,3).AND. UGDTUPDATE )`, the call is at `:1800`), and it does not read `VA` |
 | Kokkos code | [`ug_xypug.hpp`](../src/ww_kokkos/ug_xypug.hpp), [`xypug_shim.cpp`](../src/fortran_iface/xypug_shim.cpp), [`xypug_c.hpp`](../src/fortran_iface/xypug_c.hpp) (argument table), package `ww_kokkos` 0.11.0 |
 | Fortran caller | fork branch `ww3-gpu/xypug-196-rebased`: `W3KOKKOS_XYPUG` and the set-up in `w3kokkos_prop3md.F90`, the call-site hunk in `w3wavemd.F90`; the Fortran loop stays selectable with `WW_KOKKOS_XYP3=0` |
 | Covered | `SHRD`, `PR3` with `UQ`, scheme `FSN` alone (`FSPSI`, `FSFCT`, `FSNIMP` false), no `PDLIB`, `MGP`, `MGG`, `REF1`. Every other case keeps the start-up stop under an explicit flag |

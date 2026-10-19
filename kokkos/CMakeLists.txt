@@ -101,7 +101,7 @@ install(EXPORT ww_kokkosTargets NAMESPACE ww_kokkos::
 configure_file(cmake/ww_kokkosConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/ww_kokkosConfig.cmake @ONLY)
 # Entry points are only added, never removed or changed, so an install satisfies any
 # request of the same major version up to its own (0.11.0 accepts find_package(ww_kokkos
-# 0.3), 0.4, 0.5, 0.6, 0.7, 0.8, 0.9 and 0.10). Removing or changing an entry point needs a major bump (PATCH.md, "The fork today").
+# 0.3), 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.10 and 0.11 itself). Removing or changing an entry point needs a major bump (PATCH.md, "The fork today").
 write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/ww_kokkosConfigVersion.cmake
     COMPATIBILITY SameMajorVersion)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/ww_kokkosConfig.cmake

@@ -197,6 +197,7 @@ int upload_geometry(Ctx& c, const Args& a) {
   c.sh_si.assign(a.si, a.si + a.nx);
   c.sh_mapsf3.assign(mapsf3, mapsf3 + a.nsea);
   c.geom_valid = true;
+  Exec().fence("ww_xypug_upload_geometry");  // the put() sources (off, ent, isea_of) are locals
   return WW_KOKKOS_OK;
 }
 

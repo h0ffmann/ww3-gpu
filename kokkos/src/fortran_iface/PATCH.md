@@ -2321,7 +2321,7 @@ called only for those; under `SHRD` that is every component.
 - Built, not run: the shim (`xypug_shim.cpp`) indexes `CLATS(1:NSEA)` from 0, as the wrapper
   passes it; `kokkos-test serial-debug` and `openmp-release` pass and `cuda-release` compiles. A
   fresh review on 2026-10-18 found no defect in the kernel, the shim or this caller (port report
-  [W3XYPUG](../../port_report/W3XYPUG_KOKKOS.md)). The regtest verdict on `ww3_tp2.6` is pending ⚠.
+  [W3XYPUG](../../port_report/W3XYPUG_KOKKOS.md)). The regtest verdict on `ww3_tp2.6` at WW3 `aa382393` / ww3-gpu `94b3118`: `ST4` `test.comp` 0 of 36 files different, `ST4_ASCII` 0 of 38, `nccmp-tol` PASS (v, [log](../../../docs/log/2026-10-19-xypug-tp2.6-rebased.md)).
 - Other parts of the `resident` preset on `UNGTYPE`: none of the set-ups of `SRCE`, `OUTG`, `IOPE`,
   `UPDV`, `CPRT` tests the grid type (grep of `RLGTYPE`, `UNGTYPE` in `w3kokkos*.F90`, v). The
   `UNGTYPE` branches of `W3WAVE` outside 3.6.2 to 3.6.4 (`UG_GRADIENTS` for `DCXDX` and `DDDX`,
