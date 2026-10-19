@@ -16,8 +16,8 @@ back into `VQ`. The `PDLIB` sibling is [PDLIB_W3XYPUG](PDLIB_W3XYPUG_KOKKOS.md).
 |---|---|
 | WW3 routine | `W3XYPUG`, `model/src/w3profsmd.F90:69-272` at NOAA-EMC/WW3 `03adda91` (byte-identical in `WW3/` at the fork pin, `cmp`), called from `w3wavemd.F90:1970`, `:1973`, `:1976` (one per `PR1`/`PR2`/`PR3`), as the switch of `ww3_tp2.6` compiles it (`SHRD PR3 UQ ... REF0`) |
 | Kokkos code | [`../src/ww_kokkos/prop_xypug.hpp`](../src/ww_kokkos/prop_xypug.hpp), a header-only host function `w3xypug`, serial, in the Fortran's structure and order; the header (the host path, not called by WW3) calls the ported `SETDEPTH` ([SETDEPTH](SETDEPTH_KOKKOS.md)) directly; the batched shim does not: it takes `IOBDP` from the Fortran `SETDEPTH`, called once per step (`xypug_c.hpp:11-13`) |
-| Hooks | `XypugHooks`: `dsec21` and the four schemes `W3XYPFSN2`, `W3XYPFSPSI2`, `W3XYPFSFCT2`, `W3XYPFSNIMP` (`w3profsmd.F90:470`, `:730`, `:1290`, `:988`), which have no Kokkos translation. A hook the flags reach and that is missing aborts |
-| C shim | none yet |
+| Hooks | `XypugHooks` (the host path): `dsec21` and the four schemes `W3XYPFSN2`, `W3XYPFSPSI2`, `W3XYPFSFCT2`, `W3XYPFSNIMP` (`w3profsmd.F90:470`, `:730`, `:1290`, `:988`). A hook the flags reach and that is missing aborts. The batched kernel translates `W3XYPFSN2` only ([W3XYPFSN2](W3XYPFSN2_KOKKOS.md)); the other three stay on the Fortran and the Kokkos part refuses them at start-up |
+| C shim | [`../src/fortran_iface/xypug_shim.cpp`](../src/fortran_iface/xypug_shim.cpp), entry `ww_xypug_batch_va` with its argument table in [`xypug_c.hpp`](../src/fortran_iface/xypug_c.hpp), the batched kernel [`../src/ww_kokkos/ug_xypug.hpp`](../src/ww_kokkos/ug_xypug.hpp) on the resident `VA`; called from the fork's `W3KOKKOS_XYPUG` (PATCH.md section 30) |
 | Plan | [`PROPAGATION_KOKKOS_PLAN_202610.md`](../../docs/PROPAGATION_KOKKOS_PLAN_202610.md), issue #42 |
 
 ## Arithmetic
