@@ -8,8 +8,9 @@
 // geometry on the device (TRIGP, IEN, SI, the node lists built from TRIGP and the node to sea
 // point map built from MAPSF(:,3)), uploaded again only when a host shadow of TRIGP, IEN, SI or
 // MAPSF(:,3) differs from the last call. The per-call inputs (CG, CX, CY, CLATS, ECOS, ESIN,
-// MAPSTA, IOBP, IOBPD, IOBDP, IOBPA, the boundary arrays under FLBPI, ITER) are copied every call;
-// they are small next to VA. ITER is copied back whole after the launches: only the ITER(IK,ITH)
+// MAPSTA, IOBP, IOBPD, IOBDP, IOBPA) are compared with a host shadow and copied when they differ
+// (WW_KOKKOS_XYPUG_SKIP_H2D=0 copies them every call); the boundary arrays under FLBPI and ITER
+// are copied every call; they are small next to VA. ITER is copied back whole after the launches: only the ITER(IK,ITH)
 // of the components run under LCALC change. Work buffers are kept between calls and grown on
 // demand, at most WW_KOKKOS_PROP3_BATCH_MIB MiB (default 1024, the prop3 cap); a step with more
 // components than fit runs in several launches. No Unified Memory.
@@ -99,6 +100,9 @@ struct Ctx {
   std::vector<int> sh_trigp, sh_mapsf3;
   std::vector<double> sh_ien, sh_si;
   bool geom_valid = false;
+  /// Host shadows of the per-call inputs as last uploaded (WW_KOKKOS_XYPUG_SKIP_H2D).
+  std::vector<int> sh_mapsta, sh_iobp, sh_iobpd, sh_iobdp, sh_iobpa;
+  std::vector<float> sh_clats, sh_ecos, sh_esin, sh_cg, sh_cx, sh_cy;
   ww::ug::XypugGrid<Mem> g;
   ww::ug::XypugStep<Mem> s;
   ww::ug::XypugWork<Mem> w;
@@ -150,6 +154,17 @@ void put(Kokkos::View<T*, Mem>& v, const T* p, size_t n, const char* name) {
 template <class T>
 bool same(const std::vector<T>& sh, const T* p, size_t n) {
   return sh.size() == n && (n == 0 || std::memcmp(sh.data(), p, n * sizeof(T)) == 0);
+}
+
+/// put(), skipped when `skip` and the n elements equal (bit for bit, memcmp) the ones last
+/// uploaded, kept in sh. The device copy then holds the same bits, so the kernel reads the same
+/// values; a NaN or a -0 is compared by its bits.
+template <class T>
+void put_if_changed(Kokkos::View<T*, Mem>& v, std::vector<T>& sh, const T* p, size_t n,
+                    const char* name, bool skip) {
+  if (skip && v.extent(0) >= std::max<size_t>(n, 1) && same(sh, p, n)) return;
+  put(v, p, n, name);
+  if (skip) sh.assign(p, p + n);
 }
 
 /// The arguments as received, with IPAR/RPAR unpacked.
@@ -253,17 +268,20 @@ int batch(Ctx& c, const Args& a, float* dva) {
   s.rd2 = a.rd2;
   const size_t nx = static_cast<size_t>(a.nx);
   const size_t nsea = static_cast<size_t>(a.nsea);
-  put(s.mapsta, a.mapsta, nx, "ww_xypug.mapsta");
-  put(s.clats, a.clats, nsea, "ww_xypug.clats");
-  put(s.ecos, a.ecos, static_cast<size_t>(a.nth), "ww_xypug.ecos");
-  put(s.esin, a.esin, static_cast<size_t>(a.nth), "ww_xypug.esin");
-  put(s.cg, a.cg, static_cast<size_t>(a.nk + 2) * (nsea + 1), "ww_xypug.cg");
-  put(s.cx, a.cx, nsea + 1, "ww_xypug.cx");
-  put(s.cy, a.cy, nsea + 1, "ww_xypug.cy");
-  put(s.iobp, a.iobp, nx, "ww_xypug.iobp");
-  put(s.iobpd, a.iobpd, static_cast<size_t>(a.nth) * nx, "ww_xypug.iobpd");
-  put(s.iobdp, a.iobdp, nx, "ww_xypug.iobdp");
-  put(s.iobpa, a.iobpa, nx, "ww_xypug.iobpa");
+  static const bool skip = speedup_flag("WW_KOKKOS_XYPUG_SKIP_H2D", true);
+  put_if_changed(s.mapsta, c.sh_mapsta, a.mapsta, nx, "ww_xypug.mapsta", skip);
+  put_if_changed(s.clats, c.sh_clats, a.clats, nsea, "ww_xypug.clats", skip);
+  put_if_changed(s.ecos, c.sh_ecos, a.ecos, static_cast<size_t>(a.nth), "ww_xypug.ecos", skip);
+  put_if_changed(s.esin, c.sh_esin, a.esin, static_cast<size_t>(a.nth), "ww_xypug.esin", skip);
+  put_if_changed(s.cg, c.sh_cg, a.cg, static_cast<size_t>(a.nk + 2) * (nsea + 1), "ww_xypug.cg",
+                 skip);
+  put_if_changed(s.cx, c.sh_cx, a.cx, nsea + 1, "ww_xypug.cx", skip);
+  put_if_changed(s.cy, c.sh_cy, a.cy, nsea + 1, "ww_xypug.cy", skip);
+  put_if_changed(s.iobp, c.sh_iobp, a.iobp, nx, "ww_xypug.iobp", skip);
+  put_if_changed(s.iobpd, c.sh_iobpd, a.iobpd, static_cast<size_t>(a.nth) * nx, "ww_xypug.iobpd",
+                 skip);
+  put_if_changed(s.iobdp, c.sh_iobdp, a.iobdp, nx, "ww_xypug.iobdp", skip);
+  put_if_changed(s.iobpa, c.sh_iobpa, a.iobpa, nx, "ww_xypug.iobpa", skip);
   put(s.iter, a.iter, static_cast<size_t>(a.nk) * static_cast<size_t>(a.nth), "ww_xypug.iter");
   put(s.lst, lst.data(), lst.size(), "ww_xypug.lst");
   if (a.flbpi != 0) {
