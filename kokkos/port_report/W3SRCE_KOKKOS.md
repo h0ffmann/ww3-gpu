@@ -290,3 +290,13 @@ The resident path: the runs of [Resident spectrum](#resident-spectrum-wfip-0005-
 compiled, never run; the fork branch built and linked `ww3_shel` with `KOKKOS`, not run. The
 checkpoint (plan §7) adds `SRCE` to `WW3GPU_ROUTINES` and runs `just smoke-ww3-gpu`,
 `just full-ww3-gpu` and `just ww3-gpu-matrix` on the CPU.
+
+## SEED, FLD2 and no LN1 (2026-10-19, goal be5bdbea-3817)
+
+The kernel also translates, each chosen by a flag of the packet, the switch without `LN1` (`VSLN` stays 0, no `W3SLN1`
+call; `LN0` or `SEED` in its place), `SEED` (`w3srcemd.F90:1970-1982`) and `FLD2` (`CALC_FPI` and `W3FLD2`, `:2278-2301`,
+with the `HSTOT` of `:1816-1847`; [W3FLD2](W3FLD2_KOKKOS.md), [APPENDTAIL](APPENDTAIL_KOKKOS.md)). The fork gate admits them
+(`PATCH.md` section 32, fork branch `ww3-gpu/gfs-srce-be5bdbea`); `FLD1` and the other switches stay refused. The switch of
+WW3's GFS-Wave regtests (`ww3_ufs1.2/input/switch_MPI_OMPH`) now takes the batched path. Static parity and the CPU runs:
+[`docs/log/2026-10-19-gfs-srce-seed-fld2.md`](../../docs/log/2026-10-19-gfs-srce-seed-fld2.md); regtests postponed (ADR-0016).
+`FPI` is a new row of the batch's scalar packet, written back to `FPIS` under `FLD2`.

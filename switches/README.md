@@ -34,6 +34,7 @@ start from `$WW3/model/bin/switch_default` or `switch_Ifremer2` and edit one gro
 | `switch_lab_shrd` | Serial. Start here. Easiest to debug, fine for the course examples. |
 | `switch_lab_ompg` | `switch_lab_shrd` plus `OMPG` (OpenMP over the sea points and spectral bins of `W3WAVE`, as upstream's `SHRD OMPG` regtest switches). What `scripts/ww3-gpu.sh` builds `--ww3` and `--ww3-gpu` with, so every comparison with pure WW3 is OpenMP against OpenMP; `WW3GPU_SWITCH=switch_lab_shrd` builds the serial one. |
 | `switch_lab_mpi`  | `DIST MPI`: distributed memory. Use once examples work; run with `mpirun -np N ./ww3_shel`. |
+| `switch_lab_gfs`  | `switch_lab_ompg` with `SEED FLD2` in place of `LN1`: the source-term keys of the GFS-Wave regtests' switch (`ww3_ufs1.2/input/switch_MPI_OMPH`), serial and OpenMP. For the pair-to-pair check of the batched `W3SRCE`'s `SEED`, `FLD2` and no-`LN1` branches: `WW3GPU_SWITCH=switch_lab_gfs bash scripts/ww3-gpu.sh --ww3-gpu smoke --cpu --kokkos SRCE`. |
 | `switch_lab_st6`  | Same as MPI but swaps the source-term package to `ST6` (observation-based) so you can A/B it against `ST4`. |
 
 ## Reading a switch line

@@ -39,6 +39,7 @@
 #include "ww_kokkos/real.hpp"
 #include "ww_kokkos/resident_state.hpp"
 #include "ww_kokkos/snl1_team.hpp"
+#include "ww_kokkos/srce_fld2.hpp"
 #include "ww_kokkos/srce_kernel.hpp"
 #include "ww_kokkos/srce_params.hpp"
 
@@ -269,6 +270,24 @@ V to_device(const char* name, const T* data, int n) {
 template <class T>
 using HostUnmanaged =
     Kokkos::View<T*, Kokkos::HostSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
+
+/// The W3FLD2 events of `n` points whose shave word carries Fld2Status << 1 above bit 0: print
+/// what the Fortran PRINT* lines say, clear the bits, and make a bin count over the work array a
+/// kernel error (the point's FLD2 result was not computed).
+void report_fld2(int* shave, int n) {
+  for (int i = 0; i < n; ++i) {
+    const int st = shave[i] >> 1;
+    if (st == 0) continue;
+    shave[i] &= 1;
+    if (st & ww::fld2::kStatusNoConverge)
+      std::printf(" Attn: Stress not converged for windspeed (W3FLD2 on Kokkos)\n");
+    if (st & ww::fld2::kStatusBulk)
+      std::printf(" Attn: W3FLD2 failed, using bulk stress (on Kokkos)\n");
+    if (st & ww::fld2::kStatusCapacity)
+      set_error(WW_KOKKOS_ERR_KERNEL,
+                "W3FLD2: the extended spectrum is longer than the work array (nkt_max)");
+  }
+}
 
 /// One point on ExecSpace: stage in, the team kernel, stage out.
 template <class ExecSpace>
@@ -509,7 +528,7 @@ void run_batch(GridCtx& g, const st4::Params& q, const st4::Fields& f, const snl
                      y[WW_SRCE_SC_PHIAW],  y[WW_SRCE_SC_CHARN],  y[WW_SRCE_SC_TWS],
                      y[WW_SRCE_SC_PHIOC],  y[WW_SRCE_SC_PHIBBL], y[WW_SRCE_SC_PHICE],
                      y[WW_SRCE_SC_TAUOCX], y[WW_SRCE_SC_TAUOCY], y[WW_SRCE_SC_WNMEAN],
-                     SH(i)};
+                     SH(i),                y[WW_SRCE_SC_FPI],    0};
   };
   const auto store_scalars = KOKKOS_LAMBDA(const int i) {
     Real* y = PS.data() + static_cast<size_t>(i) * WW_SRCE_NPSC;
@@ -535,7 +554,10 @@ void run_batch(GridCtx& g, const st4::Params& q, const st4::Fields& f, const snl
     y[WW_SRCE_SC_TAUOCX] = o.tauocx;
     y[WW_SRCE_SC_TAUOCY] = o.tauocy;
     y[WW_SRCE_SC_WNMEAN] = o.wnmean;
-    SH(i) = o.shave;
+    y[WW_SRCE_SC_FPI] = o.fpi;
+    // Bit 0 is SHAVE; bits 1 and up are ww::fld2::Fld2Status << 1, read and cleared by
+    // report_fld2 after the launch, so the caller only ever sees 0 or 1.
+    SH(i) = o.shave | (o.fld2_status << 1);
   };
   const auto spectrum = KOKKOS_LAMBDA(const int i) {
     return resident ? VA.data() + static_cast<size_t>(JS(i)) * p.nspec
@@ -628,6 +650,7 @@ void run_batch(GridCtx& g, const st4::Params& q, const st4::Fields& f, const snl
   }
   ex.fence();
   t_out.stop();
+  if (p.fld2) report_fld2(shave + o0, n);
   if (resident) {
     if (!st.in_place || st.keep) {
       g_out_copies.fetch_add(5, std::memory_order_relaxed);
@@ -672,7 +695,7 @@ int ww_srce_init(int igrid, const float* rpar, int nrpar, const int* ipar, int n
                 "ww_srce_init: the Kokkos W3SRCE translates switch_lab_shrd's source terms only");
       return WW_KOKKOS_ERR_UNSUPPORTED;
     }
-    const Params p = unpack(rpar, ipar);
+    Params p = unpack(rpar, ipar);
     if (p.nk <= 0 || p.nth <= 0 || p.nspec != p.nk * p.nth) {
       set_error(WW_KOKKOS_ERR_BAD_SHAPE, "ww_srce_init: nspec != nk*nth");
       return WW_KOKKOS_ERR_BAD_SHAPE;
@@ -691,6 +714,7 @@ int ww_srce_init(int igrid, const float* rpar, int nrpar, const int* ipar, int n
       set_error(WW_KOKKOS_ERR_BAD_SHAPE, "ww_srce_init: NK/NTH differ from the DIA or ST4 context");
       return WW_KOKKOS_ERR_BAD_SHAPE;
     }
+    if (p.fld2) p.nktmax = ww::fld2::nkt_max(p.nk, sig[p.nk - 1], q.xfr);
     GridCtx g;
     g.p = p;
     g.sig = to_device<DevReal1D>("ww_srce.sig", sig, p.nk);
@@ -704,7 +728,7 @@ int ww_srce_init(int igrid, const float* rpar, int nrpar, const int* ipar, int n
     g.whitecap = DevReal1D("ww_srce.whitecap", 4);
     g.taubbl = DevReal1D("ww_srce.taubbl", 2);
     g.tauice = DevReal1D("ww_srce.tauice", 2);
-    g.work_reals = srce_work_reals(p, q);
+    g.work_reals = srce_work_reals(g.p, q);
     g.work_ints = srce_work_ints(p, q);
     g.rw = DevReal1D("ww_srce.rw", g.work_reals);
     g.iw = DevInt1D("ww_srce.iw", g.work_ints);
@@ -741,7 +765,7 @@ void ww_srce(int igrid, int it, int inflags24, int flogrd57, int flogrd58, float
              float* tauox, float* tauoy, float* tauwix, float* tauwiy, float* tauwnx,
              float* tauwny, float* phiaw, float* charn, float* tws, float* phioc,
              float* whitecap, float* phibbl, float* taubbl, float* tauice, float* phice,
-             float* tauocx, float* tauocy, float* wnmean, int* shave) {
+             float* tauocx, float* tauocy, float* wnmean, float* fpi, int* shave) {
   try {
     const auto it_g = grids().find(igrid);
     if (it_g == grids().end() || !Kokkos::is_initialized()) {
@@ -769,7 +793,7 @@ void ww_srce(int igrid, int it, int inflags24, int flogrd57, int flogrd58, float
 #endif
     PointScalars o{*ustar,  *ustdir, *tauwx,  *tauwy, *dtdyn,  *fcut,  *tauox, *tauoy,
                    *tauwix, *tauwiy, *tauwnx, *tauwny, *phiaw, *charn, *tws,  *phioc,
-                   *phibbl, *phice,  *tauocx, *tauocy, *wnmean, *shave};
+                   *phibbl, *phice,  *tauocx, *tauocy, *wnmean, *shave, *fpi,   0};
 #if defined(WW_SRCE_SERIAL_NESTED)
     if (nested_in_openmp())
       run<Kokkos::Serial>(g, q, f, nc, nt, nsig, in, spec, wn1, cg1, o, whitecap, taubbl, tauice);
@@ -798,7 +822,12 @@ void ww_srce(int igrid, int it, int inflags24, int flogrd57, int flogrd58, float
     *tauocx = o.tauocx;
     *tauocy = o.tauocy;
     *wnmean = o.wnmean;
+    *fpi = o.fpi;
     *shave = o.shave;
+    {
+      int st = o.fld2_status << 1;
+      report_fld2(&st, 1);
+    }
     g_count.fetch_add(1, std::memory_order_relaxed);
     ok();
   } catch (const std::bad_alloc& e) {
