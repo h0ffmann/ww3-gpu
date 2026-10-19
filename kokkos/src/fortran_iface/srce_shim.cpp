@@ -902,7 +902,7 @@ void ww_srce_batch(int igrid, int it, int inflags24, int flogrd57, int flogrd58,
 }
 
 // ww_srce_batch_va (resident_c.hpp), called by W3KOKKOS_SRCE_BATCH on the fork branch
-// ww3-gpu/kokkos-resident: ww_srce_batch with the spectra read and written in the resident
+// ww3-gpu/kokkos-pnt: ww_srce_batch with the spectra read and written in the resident
 // VA (WFIP-0005 unit 2). The arguments are ww_srce_batch's, spec replaced by:
 // | C         | Fortran                          | Type          | Intent | Shape            |
 // | va        | VA(1,0) (W3WDATMD)               | float*        | inout  | nspec x nsealm+1 |

@@ -14,13 +14,19 @@
 # WW3GPU_KOKKOS the Kokkos run takes that preset's flags instead (ww3gpu_kokkos_env), kokkos_log
 # is W3INIT's parts line showing each part on Kokkos, and kokkos_spectra lists every
 # "W3<R> spectra|points computed" counter. Every run sets WW_KOKKOS_ALL and unsets the parts it
-# does not turn on, so no flag is inherited from the shell. The Kokkos run also sets
-# WW_KOKKOS_STRICT=1: a part it asks for that would run the Fortran stops it, so a pair never
-# compares the Fortran with itself unseen (kokkos/src/fortran_iface/PATCH.md section 24).
+# does not turn on, so no flag is inherited from the shell. A Kokkos run that names its parts (not
+# ALL) also sets WW_KOKKOS_STRICT=1: a part it asks for that would run the Fortran stops it, so a
+# pair never compares the Fortran with itself unseen (kokkos/src/fortran_iface/PATCH.md section
+# 24). Every Kokkos run sets WW_KOKKOS_VA_POISON=1 (section 21) unless the caller's environment
+# has WW_KOKKOS_VA_POISON=0; the Fortran runs never have it.
 cmake_minimum_required(VERSION 3.21)
 include("${CONFIG}")
 include("${CMAKE_CURRENT_LIST_DIR}/ww3gpu_common.cmake")
 ww3gpu_require_gpu_confirmation()
+# Read once, before run() rewrites the environment of the runs.
+if("$ENV{WW_KOKKOS_VA_POISON}" STREQUAL "0")
+  set(WW3GPU_VA_POISON 0)
+endif()
 
 # Not string(TIMESTAMP): it honours SOURCE_DATE_EPOCH, which the Nix shell sets to 1980.
 execute_process(COMMAND date +%s OUTPUT_VARIABLE t0 OUTPUT_STRIP_TRAILING_WHITESPACE)

@@ -311,14 +311,27 @@ struct SrcePoint {
     sin4();  // :2007
     step_c_end();
   }
+  KOKKOS_INLINE_FUNCTION void sds4() const {
+    st4::w3sds4_point(q, f, spec, wn1, cg1, o.ustar, o.ustdir, st.depth, in.dair,
+                      st.dlwmean, in.flogrd57, in.flogrd58, vsds, vdds, brlambda, whitecap,
+                      st4w, st4iw);  // :1303
+  }
+  /// The same arguments, for st4::w3sds4_lanes.
+  KOKKOS_INLINE_FUNCTION st4::Sds4Args sds4_args() const {
+    return st4::Sds4Args{spec, wn1, cg1, o.ustar, o.ustdir, st.depth, in.dair, st.dlwmean,
+                         in.flogrd57, in.flogrd58, vsds, vdds, brlambda, whitecap};
+  }
+  KOKKOS_INLINE_FUNCTION st4::Sds4Work sds4_work() const { return st4::sds4_layout(q, st4w, st4iw); }
+  /// The step after the DIA, W3SDS4 (:1303) and then step_c_after_sds4.
   KOKKOS_INLINE_FUNCTION void step_c_main() const {
+    sds4();
+    step_c_after_sds4();
+  }
+  KOKKOS_INLINE_FUNCTION void step_c_after_sds4() const {
     using srce_detail::mn;
     using srce_detail::mni;
     using srce_detail::mx;
     using srce_detail::mxi;
-    st4::w3sds4_point(q, f, spec, wn1, cg1, o.ustar, o.ustdir, st.depth, in.dair,
-                      st.dlwmean, in.flogrd57, in.flogrd58, vsds, vdds, brlambda, whitecap,
-                      st4w, st4iw);  // :1303
     bool lbreak = false;
     w3sdb1_point(p, g.sig, g.dden, spec, st.depth, st.emean, st.fmean, o.wnmean, cg1,
                  lbreak, vsdb, vddb, eb);  // :1321; LBREAK is not read by W3SRCE
@@ -584,6 +597,17 @@ KOKKOS_INLINE_FUNCTION void w3srce_lanes(const TeamMember& team, const snl1::Con
     st4::w3sin4_lanes<kSrceMaxLanes>(x[on[0]].q, x[on[0]].f, n, a, cg, k, u, ustar, drat, as,
                                      usdir, z0, tauwx, tauwy, tauwnx, tauwny, s, d, llws, work);
   };
+  // W3SDS4 for the points listed in `on`, one point per vector lane (st4::w3sds4_lanes).
+  const auto sds4_lanes = [&](const int* on, const int n) {
+    if (n == 0) return;
+    st4::Sds4Args pt[kSrceMaxLanes];
+    st4::Sds4Work wk[kSrceMaxLanes];
+    for (int j = 0; j < n; ++j) {
+      pt[j] = x[on[j]].sds4_args();
+      wk[j] = x[on[j]].sds4_work();
+    }
+    st4::w3sds4_lanes<kSrceMaxLanes>(x[on[0]].q, x[on[0]].f, n, pt, wk);
+  };
   while (true) {
     // st.done changes only in step_c_end, so the points in the loop are the same for the whole
     // step.
@@ -601,7 +625,8 @@ KOKKOS_INLINE_FUNCTION void w3srce_lanes(const TeamMember& team, const snl1::Con
       team.team_barrier();
     }
     Kokkos::single(Kokkos::PerTeam(team), [&]() {
-      for (int j = 0; j < non; ++j) x[on[j]].step_c_main();
+      sds4_lanes(on, non);  // :1303
+      for (int j = 0; j < non; ++j) x[on[j]].step_c_after_sds4();
       sin4_lanes(on, non);  // :2007
       for (int j = 0; j < non; ++j) x[on[j]].step_c_end();
     });

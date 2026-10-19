@@ -181,7 +181,7 @@ tables in `docs/data/ww3gpu_matrix_*_pin-50a10730_2026-10-18.tsv`.
   `ww3_grid` namelist read against the test switch). None is marked expected-to-fail.
 - **Checked (v).** The DIA (`W3SNL1`) alone passes the `NL1` entries of the regtest matrix.
 - **Not shown.** Parity with the Intel compiler; parity on a GPU (judged by tolerance); restart
-  reproduction (`scripts/restart_pair.sh` exists and has not run); `ww3_multi` under MPI.
+  reproduction beyond one `SHRD` case (`scripts/restart_pair.sh` ran on `full` at `WW3/` `50a10730` and `fac74069`, OpenMP backend, 12 hours, every comparison identical; [log](log/2026-10-18-resident-restart-pair.md)); `ww3_multi` under MPI.
 
 ## 5. Where the CPU time goes
 
@@ -380,7 +380,7 @@ Sections 3 and 4 of `W3SNL1` read the spectrum at the quadruplet bins through th
 | Median of three, alternated with NOAA WW3 | add `--repeat 3` |
 | Stop on any fallback; catch a missed sync | `WW_KOKKOS_STRICT=1 WW_KOKKOS_VA_POISON=1` in the environment |
 | The regtest entries of section 4 | the commands of `docs/log/2026-10-18-u3-regtests-v2.md`, "What was done" |
-| Restart reproduction, `SHRD` | `scripts/restart_pair.sh` (not run yet) |
+| Restart reproduction, `SHRD` | `scripts/restart_pair.sh` (ran at `WW3/` `50a10730` and `fac74069`, [log](log/2026-10-18-resident-restart-pair.md)) |
 | The same on the point case | `bash scripts/ww3-gpu.sh --ww3-gpu smoke --cpu --kokkos resident` |
 | Per-part timers | add `WW_KOKKOS_TIMERS=1` to the Kokkos run, or `--timers` |
 | DIA kernel alone | `OMP_PROC_BIND=false OMP_NUM_THREADS=<t> kokkos/build/openmp-release/tests/ww_bench_snl1` |

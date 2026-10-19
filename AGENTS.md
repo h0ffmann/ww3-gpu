@@ -308,7 +308,10 @@ those transfers.
   are not resident.
 - **How it is checked.** A change to the resident sync reports `WW_KOKKOS_VA_COUNT=1` (bytes host
   to device and device to host) on `full` before and after; the whole-spectrum copies per step
-  must not grow, or the change is refused.
+  must not grow, or the change is refused. Every Kokkos run of `scripts/ww3-gpu.sh` and of
+  `just ww3-gpu-matrix` has `WW_KOKKOS_VA_POISON=1`: the stale host `VA` is filled with NaN after
+  each kernel write, so a host reader that misses its sync changes an output file and the byte
+  comparison fails. A caller's `WW_KOKKOS_VA_POISON=0` turns it off; the Fortran runs never have it.
 
 ## Bit for bit with the Fortran (hard rule)
 

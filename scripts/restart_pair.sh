@@ -90,7 +90,7 @@ run() { # <mode> <a|b>
   grep -q "End of program" "$d/ww3_shel.out" || { echo "restart_pair: ww3_shel did not finish in $d" >&2; return 1; }
   if [ "$1" = kokkos ]; then
     local p line
-    line="$(grep -h "Kokkos parts" "$d/ww3_shel.out" | head -1)"
+    line="$(grep -h "Kokkos parts" "$d/log.ww3" | head -1 || true)"
     for p in ${preset//,/ }; do
       [[ "$line" == *"$p=K"* ]] || { echo "restart_pair: $d: $p is not K in '$line'" >&2; return 1; }
     done

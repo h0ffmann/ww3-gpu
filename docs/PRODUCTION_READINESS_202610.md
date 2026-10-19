@@ -47,11 +47,11 @@ regtest matrix yet"). 10 of the 310 rows of `kokkos/ports.tsv` are regtested and
 | 3 | MPI: four of the six resident parts are `SHRD` only, the preset stops on `DIST MPI`, the communicator is ignored, the device id is not per rank | Blocker | Major | A resident preset without `XYP3`, `OUTG`, `IOPE`, `UPDV`; one run on `switch_lab_mpi` |
 | 4 | Bit parity measured with gfortran and g++ only; the operational compiler and the GPU are not measured | Blocker | Major | Static argument for the Intel build's math calls; one smoke with it |
 | 5 | Build and packaging: a separate static library, C++20 and CMake 3.25; the install-only configure and the exact Kokkos check are done (U6) | Major | Major | A shared-library build and a recipe for the module systems of an operational centre |
-| 6 | `WW_KOKKOS_ALL=1` and `W3KOKKOS_SRCE_ON` fall back to the Fortran without a word | Major | Minor | Done, at the pin `50a10730` since #191: `WW_KOKKOS_STRICT=1` stops, otherwise one fallback-count line at exit; the matrix's Kokkos runs set it |
-| 7 | Configuration is 61 environment variables, no namelist; the preset lives in a lab script | Major | Major | Smallest form done, at the pin `50a10730` since #191: `WW_KOKKOS_PRESET=resident` from one table, `presets.txt`; next, a namelist group read by `W3INIT` |
+| 6 | `WW_KOKKOS_ALL=1` and `W3KOKKOS_SRCE_ON` fall back to the Fortran without a word | Major | Minor | Done: `WW_KOKKOS_STRICT=1` stops, otherwise one fallback-count line at exit, `W3OUTG`'s fallback included since `ww3-gpu/strict-outg`; the matrix's Kokkos runs set it when they name their parts (section 6) |
+| 7 | Configuration is 61 environment variables, no namelist; the preset lives in a lab script | Major | Major | Smallest form done on `ww3-gpu/u2-strict-preset`: `WW_KOKKOS_PRESET=resident` from one table, `presets.txt`; next, a namelist group read by `W3INIT` |
 | 8 | Observability: log lines on every rank, counters at exit to `stderr`, no provenance in the output files | Major | Minor | Gate the lines by `NAPLOG`; one NetCDF global attribute |
 | 9 | OpenMP inside MPI: the per-point parts are serialised by `!$OMP CRITICAL`; the thread budget per rank is not set by the shim | Major | Minor | Measure the hybrid entries of `ww3_ufs1.1` before claiming a speed for them |
-| 10 | Restart with the resident spectrum: covered by the sync calls, never regtested; every `matrix.base` restart pair is `MPI` | Major | Minor | Run `scripts/restart_pair.sh` (a `SHRD` restart pair on `full`, written 2026-10-18, not run) |
+| 10 | Restart with the resident spectrum: covered by the sync calls, never regtested; every `matrix.base` restart pair is `MPI` | Major | Minor | Run `scripts/restart_pair.sh` (a `SHRD` restart pair on `full`); it passed at `WW3/` `50a10730` and again at `fac74069` (strict mode there stops a run that asks for `WBT` or `SKW`; this case asks for neither), [log](log/2026-10-18-resident-restart-pair.md) |
 | 11 | `PDLIB` and unstructured grids: translated, not wired, gated out | Minor ⚠ | Major | None for GFS-Wave v16; a wiring unit for `PDLIB` when the owner asks |
 | 12 | The fork patch: 4 082 lines of new Fortran, 819 changed lines in three WW3 files, 58 218 lines of C++ in another repository, most of it LGPL-3.0-or-later, some MIT, 76 files with no licence line | Minor | Blocker | ADR-0018 (Proposed) names the three places `ww_kokkos` could live; the owner chooses, after a legal reading ⚠ |
 | 13 | A stale contract remark: "one spectral grid per process"; edited on the fork branch `ww3-gpu/u1-multi-va` (section 13) | Minor | Minor | Closed: at the pin `50a10730` since #191 |
@@ -307,6 +307,17 @@ asked for Kokkos and got the Fortran learns it only from one log line or a `*_CO
   `W3KOKKOS_SRCE_ON` is unchanged. The regtest matrix's Kokkos run sets `WW_KOKKOS_STRICT=1`
   (`regtests/cmake/ww3gpu_common.cmake`, `ww3gpu_kokkos_env`). `PATCH.md` section 24 has the
   runs that show it.
+- **Update, 2026-10-18 (the follow-up of #191, its code review's findings 1 to 3).** Three changes,
+  [log](log/2026-10-18-strict-outg-poison.md):
+  - `W3KOKKOS_OUTG`'s call of the Fortran `W3OUTG` for a field its translation leaves to the
+    Fortran (U3 Stokes, skewness, `WBT`, an unallocated 3-D field) now goes through
+    `KOKKOS_FALLBACK`: it stops under `WW_KOKKOS_STRICT=1` and is counted otherwise (fork branch
+    `ww3-gpu/strict-outg`, `PATCH.md` section 31). Before, strict mode did not see it.
+  - The matrix sets `WW_KOKKOS_STRICT=1` only for a Kokkos run that names its parts
+    (`WW3GPU_KOKKOS=resident` or a part list); under `WW3GPU_KOKKOS=all` a part the entry's
+    switch does not cover is counted, not stopped, so an entry without `PR3` runs.
+  - `WW_KOKKOS_VA_POISON=1`, the missed-sync detector, is on in every Kokkos run of
+    `scripts/ww3-gpu.sh` and of the matrix, off in the Fortran runs; a caller's `=0` turns it off.
 
 ## 7. Configuration surface
 
@@ -393,7 +404,16 @@ the UFS case (`work_c`, then `work_d` from its restart, compared by `test.comp`;
 restarts a `SHRD` case. [`scripts/restart_pair.sh`](../scripts/restart_pair.sh) is the smallest
 equivalent on `full` with `switch_lab_shrd`: a 00:00 to 12:00 run and a 06:00 to 12:00 run from
 its own 06:00 restart, for the Fortran and the resident Kokkos of one executable, compared with
-`cmp`. It was not run ⚠ ([log](log/2026-10-18-u3-regtests-v2.md)); the gap stays Major for (a).
+`cmp`. It was not run when written ⚠ ([log](log/2026-10-18-u3-regtests-v2.md)).
+
+**Update, 2026-10-18 (restart pair run).** The pair ran once at `b828041` with `WW3/` at `50a10730`,
+4 threads, `WW_KOKKOS_VA_POISON=1`, `WW_KOKKOS_STRICT=1`: the 06:00-to-12:00 run from the 06:00
+restart gives the bytes of the run cut from the cold start (`out_grd.ww3` and the 12:00 restart),
+for the Fortran and for the resident Kokkos, and every file of the Kokkos runs equals the
+Fortran's (v, `cmp`, 9 comparisons, exit 0;
+[log](log/2026-10-18-resident-restart-pair.md)). It covers one `SHRD` case on the OpenMP backend,
+one restart and 12 hours; `MPI` restart, the CUDA backend and `ww3_multi` are not covered ⚠. The
+gap stays open for those, and for (a) until the owner accepts one case as enough.
 
 ## 11. `PDLIB` and unstructured grids
 

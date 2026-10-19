@@ -141,10 +141,15 @@ endfunction()
 # ww3gpu_kokkos_env(<out> <F|K|G> <flags> <parts> <counts>): the environment of one run, a list of
 # NAME=VALUE, NAME= meaning unset. Every WW_KOKKOS_<part> of <parts> is unset unless the Kokkos run
 # turns it on, WW_KOKKOS_ALL is 0 except in a Kokkos run whose <flags> has ALL, and the Kokkos run
-# sets every counter of <counts>. The Kokkos run sets WW_KOKKOS_STRICT=1, so a part it asks for
-# that would run the Fortran stops the run instead of comparing the Fortran with itself (PATCH.md
-# section 24); the Fortran runs unset it. No run takes WW_KOKKOS_PRESET from the shell. The
-# Fortran runs never inherit a flag from the shell.
+# sets every counter of <counts>. A Kokkos run that names its parts (a preset or a part list, not
+# ALL) sets WW_KOKKOS_STRICT=1, so a part it asks for that would run the Fortran stops the run
+# instead of comparing the Fortran with itself (PATCH.md section 24). Under ALL a part the entry's
+# switch does not cover is counted at exit, not stopped: ALL asks for every part the build covers,
+# and ww3gpu_parts_line_check accepts partial coverage. The Fortran runs unset it. Every Kokkos
+# run sets WW_KOKKOS_VA_POISON=1, the missed-sync detector (PATCH.md section 21), unless
+# WW3GPU_VA_POISON is 0 (run_entry.cmake sets it from a caller's WW_KOKKOS_VA_POISON=0); the
+# Fortran runs unset it. No run takes WW_KOKKOS_PRESET from the shell. The Fortran runs never
+# inherit a flag from the shell.
 function(ww3gpu_kokkos_env out k flags parts counts)
   set(e "")
   if(k STREQUAL "K" AND "ALL" IN_LIST flags)
@@ -152,10 +157,19 @@ function(ww3gpu_kokkos_env out k flags parts counts)
   else()
     list(APPEND e "WW_KOKKOS_ALL=0")
   endif()
-  if(k STREQUAL "K")
+  if(k STREQUAL "K" AND NOT "ALL" IN_LIST flags)
     list(APPEND e "WW_KOKKOS_STRICT=1")
   else()
     list(APPEND e "WW_KOKKOS_STRICT=")
+  endif()
+  if(k STREQUAL "K")
+    if(DEFINED WW3GPU_VA_POISON AND WW3GPU_VA_POISON STREQUAL "0")
+      list(APPEND e "WW_KOKKOS_VA_POISON=0")
+    else()
+      list(APPEND e "WW_KOKKOS_VA_POISON=1")
+    endif()
+  else()
+    list(APPEND e "WW_KOKKOS_VA_POISON=")
   endif()
   list(APPEND e "WW_KOKKOS_PRESET=")
   foreach(p IN LISTS parts)

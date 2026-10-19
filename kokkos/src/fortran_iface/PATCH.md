@@ -7,6 +7,7 @@ Read with `git -C WW3 fetch origin && git -C WW3 branch -r` and `git rev-list --
 
 | h0ffmann/WW3 branch | Head | Against the `WW3/` pin | What it wires |
 |---|---|---|---|
+| `ww3-gpu/strict-outg` | `fac74069` | one commit on `50a10730` (the pin before it, also the head of `ww3-gpu/kokkos-pnt`), pushed 2026-10-18 (v, `ls-remote`) | `W3KOKKOS_OUTG`'s call of the Fortran `W3OUTG` reports to `WW_KOKKOS_STRICT` ([section 31](#31-w3outgs-fortran-fallback-reports-to-strict-mode-ww3-gpustrict-outg)) |
 | `ww3-gpu/integ-fixes` | `711afb80` | one commit on `ww3-gpu/integ-abbb0456` (`b733066b`, the merge of `u1-multi-va`, `u2-strict-preset`, `u8-out-readers` and `u9-cprt` onto `80644ba9`), pushed 2026-10-18 (v, `ls-remote`) | `W3KOKKOS_CPRT`'s two fallbacks to the Fortran `W3CPRT` report to `WW_KOKKOS_STRICT` ([section 28](#28-the-integration-fixes-ww3-gpuinteg-fixes)) |
 | `ww3-gpu/u1-multi-va` | `f330dc53` | five commits on `80644ba9`, pushed 2026-10-18 (v, `ls-remote`) | `ww3_multi`'s exchanges sync only the columns of `VA` they read or write (`W3KOKKOS_VA_READ_COLS`, `W3KOKKOS_VA_WRITE_COLS`, `ww_va_host_wrote_cols`), no read at `W3WAVE`'s return, the ABI `0.10` ([section 26](#26-ww3_multi-and-the-resident-va-column-syncs-no-read-at-w3waves-return-ww3-gpuu1-multi-va)) |
 | `ww3-gpu/kokkos-outg` | `e0cc8ee9` | the `WW3/` pin of h0ffmann/ww3-gpu `goal/42-gpu-step-units45`; one commit on `ww3-gpu/kokkos-prop3dev`, pushed 2026-10-17 (v) | `W3OUTG`'s integrals on the device copy of `VA` (`ww_outg_va`, `W3KOKKOS_OUTGMD`), the host read of `VA` at an output time split per reader, the ABI `0.7` ([section 15](#15-w3outg-on-the-resident-spectrum-ww3-gpukokkos-outg)) |
@@ -2249,3 +2250,52 @@ binds it on the first sync, `w3kokkos_residentmd.F90:68-70`), so it needs no syn
   `wav_restart_mod.F90`), which is not in the fork at `a304018c`; `production/GFS.v17` has it, with
   16 and 13 uses of `VA` in the last two (v, `git show`). The pin move to that branch
   ([plan](../../../docs/compound/plans/2026-10-18-004-pin-gfs-v17-plan.md)) lists and syncs them.
+
+## 31. `W3OUTG`'s Fortran fallback reports to strict mode, `ww3-gpu/strict-outg`
+
+One fork commit, `fac74069`, on `50a10730`, 2026-10-18; it touches only `w3kokkos_outgmd.F90`. No
+ABI change and no new entry point: `KOKKOS_FALLBACK` and `ww_kokkos_fallback_slot` are section 24's.
+Section 30 is held by the unstructured-propagation port (h0ffmann/ww3-gpu#196).
+
+`W3KOKKOS_OUTG` runs the Fortran `W3OUTG` whole, after a host read of `VA`, when a requested field
+is one its translation leaves to the Fortran: U3 Stokes (`FLOLOC(6,8)`, `(6,12)`,
+`CALC_U3STOKES`), skewness (`FLOLOC(8,7:9)`, `SKEWNESS`), `WBT` (`FLOLOC(2,17)`, `CALC_WBT`), or a
+requested 3-D or `P2SMS` field that is not allocated (`E3DF(1,K)` or `P2MSF(1)` `<= 0`). Section 24
+left that branch out: under `WW_KOKKOS_STRICT=1` it neither stopped nor counted, and the parts line
+showed `OUTG=K` while the Fortran wrote the fields (the code review of #191, finding 3).
+
+- **The branch calls `KOKKOS_FALLBACK ( 'OUTG', REASON )`** before `W3KOKKOS_VA_HOST_READ`
+  (`w3kokkos_outgmd.F90:138-157` at `fac74069`), with one reason per kind of field, in the order
+  above: `A U3 STOKES FIELD IS REQUESTED ...`, `A SKEWNESS FIELD IS REQUESTED ...`, `THE WBT FIELD
+  IS REQUESTED ...`, `A REQUESTED 3-D OR P2SMS FIELD IS NOT ALLOCATED ...`. With
+  `WW_KOKKOS_STRICT=1` the model stops on `... PART OUTG WOULD RUN ON THE FORTRAN: <REASON>`;
+  without it each output time that falls back is counted.
+- **`W3KOKKOS_OUTG_SETUP` makes the `OUTG` counter** when the part is on (`:89-91`), as
+  `W3KOKKOS_CPRT_SETUP` does, so the line at exit shows `OUTG=0` when nothing fell back.
+- **Nothing changes on the kernel path or per point.** The condition `FORT` is the one before;
+  only its `THEN` branch gained the call.
+- **A build without `KOKKOS` is unchanged.** `gfortran -E -P` (16.2.0, the `#ww3` shell's
+  compiler) of all 143 `model/src/*.F90` at `50a10730` and at `fac74069`, with `switch_lab_shrd`'s
+  words as `-DW3_<word>`, blank lines dropped: 142 identical, and the one that differs is
+  `w3kokkos_outgmd.F90`, which `model/src/CMakeLists.txt` compiles only under `WW_KOKKOS` (its
+  glob of `w3kokkos_*md.F90`, `:25-85`) (v). With `-DW3_KOKKOS` that file gains 30 lines and loses
+  only the four it rewrites: two lines of the header comment and the two `USE` lines that now
+  import `C_NULL_CHAR`, `KOKKOS_FALLBACK` and `WW_KOKKOS_FALLBACK_SLOT` (v).
+
+The stop, shown on a scratch copy of the `full` case's Kokkos run directory whose `ww3_shel.nml`
+asks for `TYPE%FIELD%LIST = 'HS SKW'` (the fixture `kokkos/tests/fixtures/bench_small` is
+unchanged), with the parts of the `resident` preset, `WW_KOKKOS_VA_POISON=1` and
+`WW_KOKKOS_OUTG_COUNT=1`, 2026-10-18 (OpenMP backend, 8 threads, gfortran 16.2.0; never `--gpu`):
+
+| Run | Result |
+|---|---|
+| `WW_KOKKOS_STRICT=1` | `ww3_shel` exit 1 at the first output time, `*** WAVEWATCH III ERROR IN W3KOKKOSMD : WW_KOKKOS_STRICT=1 AND PART OUTG WOULD RUN ON THE FORTRAN: A SKEWNESS FIELD IS REQUESTED (FLOLOC(8,7:9), SKEWNESS), WHICH THE TRANSLATION LEAVES TO THE FORTRAN W3OUTG` (v) |
+| strict unset, the domain cut to `20200101 020000` (three output times; the Fortran `SKEWNESS` at every point made the twelve-hour run take over an hour on the shared machine, so it was stopped) | `ww3_shel` exit 0, `End of program`, `calls left on the Fortran (WW_KOKKOS_STRICT=1 stops instead): SRCE=0 CPRT=0 OUTG=3`, `W3OUTG Kokkos calls: 0` (v) |
+
+The `smoke` case (`ww3_ts1`) asks for `WBT` and `SKW` among its fields, so its `OUTG` has always
+taken this branch: `scripts/ww3-gpu.sh --ww3-gpu smoke --cpu --kokkos resident` at `fac74069` ends
+with `calls left on the Fortran (...): SRCE=0 CPRT=0 OUTG=37`, one per output time, with every
+model file byte-identical to the Fortran of the same executable and every file but the NetCDF to
+`--ww3`'s (v). At `50a10730` no `OUTG` counter exists, so the line names `SRCE` and `CPRT` alone (v, by reading the set-up; that run was not repeated). The `full` case asks for `HS`
+alone and ends with `OUTG=0` and 13 `W3OUTG` Kokkos calls (v).
+
