@@ -167,3 +167,42 @@ spectrum counts, not measured ⚠).
 - The pair to pair with `--ww3` for this case, and the ranks and threads of the operational
   layout (`OMPH`, several ranks), were not run.
 - `ports.tsv`'s `ww3_rev` and the profile stamps keep their old values.
+
+## Addendum: ufs1.2 (the GFSv16 three-grid case), measured and stopped
+
+2026-10-19, same goal. The owner asked for `ww3_ufs1.2` (`aoc_9km`, `gnh_10m`, `gsh_15m`, 50 x 36
+spectrum, 24 h) as the GFS case in addition to `ww3_ufs1.1` `grdset_c`.
+
+**Forcing.** `~/src/ww3-data` does not exist on this machine. The forcing and grids are in the
+pinned regtest data used above, `/nix/store/97lk2yrkjdjxaniq48mq2p6ciw9y79js-ww3-regtest-data-7.14.2`:
+`gfs_wind.nc`, `ice.nc` and `current.nc` under `data_regtests/ww3_ufs1.1/input/` (which
+`model/bin/ww3_from_ftp.sh` copies into `ww3_ufs1.2/input/`), the `*.bot`, `*.mask`, `*.obs` files and
+the two `rmp_src_to_dst_conserv_*.nc` remap files under `data_regtests/ww3_ufs1.2/input/`. Nothing
+was downloaded.
+
+**Entry.** `matrix.base:2229-2234` gives the base entry `-s MPI_OMPH -w work_a -m grdset_a`,
+entry 338 in the `mpi` selection (339 is the restart pair `grdset_b`).
+
+**Command.** `WW3GPU_KOKKOS=all WW3GPU_MPI_RANKS=16 WW3GPU_OMP_THREADS=2 just ww3-gpu-matrix 1 mpi -R '^338:'`
+on the i9-14900 (32 threads), `WW3@aa382393`, ww3-gpu `eafc912`. The build and the setup finished
+and the Fortran run reached its first half-hour step; I stopped it by hand before the pair
+completed, so there is no `test.comp`, `nccmp-tol` or fallback count for ufs1.2 ⚠.
+
+**Why stopped.** From `ww3_multi.out`: initialisation reached 2021-04-01 00:00 at 19:42:18 and
+the 00:30 step at 19:44:06, 108 s for the first half hour (it includes start-up). If the other 47
+half hours cost the same, one Fortran run takes about 85 min and the Fortran/Kokkos pair about
+3 h ⚠ (a two-point extrapolation, load average 70 while two jobs shared the node, so the
+real figure may be lower). Each of the 16 ranks held about 12.4 GB resident (`ps` RSS of three
+ranks), roughly 200 GB for 16 ranks against 184 GB of RAM ⚠ (three ranks sampled), so a 16 rank
+run is also near the memory limit of this node. A single-rank gprof run would be several times
+slower than 16 ranks and needs the same 12 GB per rank, so `docs/data/ww3_gfs12_gprof.tsv` was not
+made and `profile_case.sh` has no `gfs12` case.
+
+**Ranking against ufs1.1.** Not measured, so the question is open. What can be said from the
+code: `W3SNL1`, `W3SIN4`, `W3SDS4` and `W3SPR4` scale with `NK x NTH` (900 here, 216 in ufs1.1),
+`W3FLD2` with the points and the wind step, and propagation with the points and the number
+of components, so a 50 x 36 spectrum should raise the source-term share of ufs1.1's table
+above ⚠ (a reading of the loops, not a profile).
+
+**To finish.** Fewer ranks and a shorter stop time (`DOMAIN%STOP` of `ww3_multi_grdset_a.inp`) with
+the memory per rank checked first; the owner's call on the time budget.
