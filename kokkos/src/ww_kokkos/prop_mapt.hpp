@@ -28,6 +28,8 @@
 // element no other ISEA writes, and reads only ATRNX/ATRNY, which W3UTRN finished.
 // No reduction, no accumulation across points. Cells that are not sea points keep
 // what MAPTRN held, as in the Fortran.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <Kokkos_Core.hpp>

@@ -8,6 +8,8 @@
 // Arithmetic checked against gfortran 16.2 -O3 GIMPLE of w3sbt1md.F90 (WW3's own
 // flags, switch_lab_shrd): no libm call, MAX as MAX_EXPR, the CBETA loop scalar,
 // S = D*A vectorised element by element (no bits change).
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <Kokkos_Core.hpp>

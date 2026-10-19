@@ -8,6 +8,7 @@
 // file next to the Fortran and check it field by field. SIG travels separately
 // because W3SNL1 wants it on the device and INSNL1 wants it on the host.
 //
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

@@ -18,6 +18,8 @@
 // FRK/FRG, VCTH, FKC, DWNI, the theta fluxes and both VA updates are vectorised
 // element by element, which changes no bits; the only vectorised reduction,
 // FDDMAX, is translated with the object's lane grouping (see 2.a).
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <Kokkos_Core.hpp>

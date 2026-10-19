@@ -12,6 +12,8 @@
 // does when the file is absent or does not match; it neither reads nor writes it.
 // Arithmetic follows the -O3 GIMPLE of w3src4md (operand order of each product
 // as the dump shows; ZLOG**4 as (z*z)*(z*z), gfortran's -O3 power tree).
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #include <cmath>
 
 #include <Kokkos_Core.hpp>

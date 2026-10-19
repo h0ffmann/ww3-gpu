@@ -8,6 +8,7 @@
 // friction velocity moved by the gustiness spread, averaged. false is STAB0.
 // TAUHFT, DELUST and DELALP are what TABU_TAUHF builds (srce_st3_tabu_tauhf.hpp).
 // ⚠ On a device sincosf, logf, expf, powf and sqrtf are CUDA's, not glibc's.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

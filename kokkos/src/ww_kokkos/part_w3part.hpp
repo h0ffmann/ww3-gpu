@@ -24,6 +24,7 @@
 //   earlier PTMEAN call may have counted one, and the Fortran call writes its own format 1000.
 //
 // ⚠ On a device cosf (and PTMEAN's libm calls) and roundf are CUDA's, not glibc's.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

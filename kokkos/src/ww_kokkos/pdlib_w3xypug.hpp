@@ -6,6 +6,7 @@
 // routine's own object is the same with REF1). Not ported: W3_S, W3_DEBUGSOLVER, W3_MGP (no PDLIB
 // switch has them) and NOCGTABLE (no W3_ prefix, CMake never defines it). Evidence:
 // kokkos/port_report/PDLIB_W3XYPUG_KOKKOS.md.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

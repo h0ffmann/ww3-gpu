@@ -5,6 +5,7 @@
 // WW3 heritage: WW3-noaa/model/src/w3snl1md.F90:1310-1346 at NOAA-EMC/WW3 03adda91, adapted
 // from TOMAWAC (M. Benoit, E. Gagnaire-Renou). Evidence: kokkos/port_report/GAULEG_KOKKOS.md.
 // Host only: std::cos is glibc's cos, which the object calls (no libmvec variant).
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

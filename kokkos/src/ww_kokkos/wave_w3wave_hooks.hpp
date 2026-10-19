@@ -27,6 +27,8 @@
 //
 // LOGICAL arguments are int: gfortran's default LOGICAL is 4 bytes, .TRUE. is
 // 1, and W3WAVE's tests are `!= 0` in the -O3 GIMPLE.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 extern "C" {

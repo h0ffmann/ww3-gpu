@@ -5,6 +5,7 @@
 // WW3 heritage: WW3-noaa/model/src/w3wavset.F90:2281-2418 at NOAA-EMC/WW3 03adda91;
 // authors Mathieu Dutour-Sikiric, Aron Roland.
 // Evidence: kokkos/port_report/FD_COMPUTE_LH_STRESS_KOKKOS.md.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

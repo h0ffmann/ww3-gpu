@@ -3,6 +3,7 @@
 // Ng (2000), for one frequency of W3SBT9. Phase 1, translated, not regtested.
 // WW3 heritage: WW3-noaa/model/src/w3sbt9md.F90:429-557 at NOAA-EMC/WW3 03adda91;
 // authors E. Rogers, M. Orzech. Evidence: kokkos/port_report/NG_KOKKOS.md.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

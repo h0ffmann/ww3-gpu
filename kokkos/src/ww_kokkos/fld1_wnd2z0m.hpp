@@ -6,6 +6,7 @@
 // authors B. G. Reichl, J. Meixner (2016 HWRF z0).
 // Evidence: kokkos/port_report/WND2Z0M_KOKKOS.md.
 // ⚠ On a device logf, expf are CUDA's, not glibc's.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

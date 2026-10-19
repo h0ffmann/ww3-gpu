@@ -19,6 +19,8 @@
 // (spec_W3XYP3.md, section 3). The whole routine runs serially for one ISP, in
 // source order, as W3WAVE calls it (w3wavemd.F90:1944-2001, no OpenMP there
 // under this switch).
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <Kokkos_Core.hpp>

@@ -5,6 +5,7 @@
 // WW3 heritage: WW3-noaa/model/src/w3profsmd_pdlib.F90:3531-3787 at NOAA-EMC/WW3 03adda91;
 // A. Roland, M. Dutour-Sikiric. Evidence: kokkos/port_report/CALCARRAY_JACOBI_VEC_KOKKOS.md.
 // kRef1 is the W3_REF1 build (:3743-3754); W3_MGP and NOCGTABLE are not ported.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

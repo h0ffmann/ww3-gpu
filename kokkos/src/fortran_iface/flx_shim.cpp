@@ -17,6 +17,7 @@
 // N1MAX: the bits W3FLX2/W3FLX3 read, by construction. The C++ DISTAB
 // (disp_distab.hpp) is a translation not yet regtested, so it replaces them only
 // with WW_KOKKOS_FLX_TABLES=1, which also reports how many values differ.
+// SPDX-License-Identifier: MIT
 
 #include "fortran_iface/ww_kokkos_c.hpp"
 #include "fortran_iface/timers.hpp"

@@ -26,6 +26,7 @@
 //                    out of bounds (:1436, :1489). The shim calls the Fortran PTMEAN for that point.
 //
 // ⚠ On a device cosf, logf, atan2f and fmodf are CUDA's, not glibc's.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

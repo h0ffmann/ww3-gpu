@@ -8,6 +8,7 @@
 // sig points at SIG(1) inside SIG(0:NK+1): with NK = 2 or 3 the Fortran reads SIG(0), sig[-1].
 // Unchecked, as in the Fortran: ISP+1 <= NK and NK+ISP <= 100 (the columns of SA).
 // ⚠ On a device logf, tanhf, sinf and sqrtf are CUDA's, not glibc's.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

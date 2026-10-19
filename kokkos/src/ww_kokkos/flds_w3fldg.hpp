@@ -41,6 +41,8 @@
 // passes one scratch array XXX for several of them, ww3_shel.F90:2142-2145) see each statement
 // complete before the next. Times and flags are host-side. The function fences exec before
 // every return.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <array>

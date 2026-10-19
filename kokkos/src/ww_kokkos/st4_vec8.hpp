@@ -2,6 +2,7 @@
 // Eight lanes of REAL and their masks, GCC's vector extensions, for the routines that run one
 // sea point per lane (plan 2026-10-18-005). Host code only: the lane path runs on host backends.
 // Arithmetic on these types is lane-wise IEEE; with -ffp-contract=off nothing fuses.
+// SPDX-License-Identifier: MIT
 #pragma once
 
 #include <cstring>

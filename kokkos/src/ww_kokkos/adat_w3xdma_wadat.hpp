@@ -30,6 +30,8 @@
 //
 // A zero-extent Fortran array (NXXX <= 0) is still ASSOCIATED; a zero-extent View
 // carries no such flag. WadatScalars::ainit2 is the record that the arrays exist.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <vector>

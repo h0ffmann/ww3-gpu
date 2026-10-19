@@ -3,6 +3,7 @@
 // limiter and a positive filter, one direction at a time. Phase 1, translated, not regtested.
 // WW3 heritage: WW3-noaa/model/src/w3psmcmd.F90:2821-2890 at NOAA-EMC/WW3 03adda91;
 // author Jian-Guo Li. Evidence: kokkos/port_report/SMCKUNO2_KOKKOS.md.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

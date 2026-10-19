@@ -4,6 +4,7 @@
 // Phase 1, translated, not regtested.
 // WW3 heritage: WW3-noaa/model/src/w3src6md.F90:566-770 at NOAA-EMC/WW3 03adda91;
 // authors S. Zieger, Q. Liu. Evidence: kokkos/port_report/W3SDS6_KOKKOS.md.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

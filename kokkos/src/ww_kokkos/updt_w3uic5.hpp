@@ -16,6 +16,7 @@
 // ICEF then ICEDMAX. The loop :1761-1773 is not vectorised.
 //
 // Evidence: kokkos/port_report/W3UIC5_KOKKOS.md.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

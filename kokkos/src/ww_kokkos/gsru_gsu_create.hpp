@@ -9,6 +9,7 @@
 // (byte-identical to NOAA-EMC/WW3 03adda91: git -C WW3 diff 03adda91 HEAD -- model/src/w3gsrumd.F90
 // is empty); author T. J. Campbell (NRL), w3gsrumd.F90:21. Evidence:
 // kokkos/port_report/GSU_CREATE_KOKKOS.md.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 //
 // Ported: every statement switches/switch_lab_shrd compiles. The routine has one #ifdef, W3_S

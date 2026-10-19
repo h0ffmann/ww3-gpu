@@ -11,6 +11,8 @@
 // the allocation shapes of w3gdatmd.F90:1733-1756, w3wdatmd.F90:491, 561-573
 // and w3adatmd.F90:1004-1021, 1164-1252, 1290-1294, 1312-1325, 1344-1350,
 // 1375-1393, 1450. Every index map below is written Fortran -> C++.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <Kokkos_Core.hpp>

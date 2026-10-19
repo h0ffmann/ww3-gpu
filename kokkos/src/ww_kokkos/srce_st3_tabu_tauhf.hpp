@@ -6,6 +6,7 @@
 // kokkos/port_report/W3SRC3MD_TABU_TAUHF_KOKKOS.md.
 // Not the ST4 routine of st4_tabu_tauhf.cpp: ST3's takes a frequency (OMEGAC = TPI*FRMAX).
 // Host only: expf, logf and sqrtf are glibc's, as in w3src3md.o.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

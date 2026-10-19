@@ -9,6 +9,8 @@
 // function w3sin4): folded constants, x**4 as (x*x)*(x*x), x**5 as x2*(x2*x),
 // x**3 as x*(x*x), a REAL exponent as powf. Branches under W3_T, W3_T0, W3_T1 and
 // W3_S are debug output and are not ported.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <Kokkos_Core.hpp>

@@ -5,6 +5,7 @@
 // WW3 heritage: WW3-noaa/model/src/w3sic3md.F90:839-981 at NOAA-EMC/WW3 03adda91;
 // authors E. Rogers, S. Zieger (from Zhao and Shen's Clarkson code).
 // Evidence: kokkos/port_report/WN_CMPLX_V1_KOKKOS.md.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

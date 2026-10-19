@@ -13,6 +13,8 @@
 // sincosf call (__builtin_cexpif), EXP is scalar expf (the loop is not
 // vectorised), MIN/MAX are MIN_EXPR/MAX_EXPR. The DIRF and S loops are
 // vectorised element by element, which changes no bits.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <Kokkos_Core.hpp>

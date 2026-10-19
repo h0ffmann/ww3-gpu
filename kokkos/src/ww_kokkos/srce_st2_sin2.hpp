@@ -7,6 +7,7 @@
 // BETATB, DSIGA and DDRAG are W3SRC2MD module state that INPTAB fills
 // (srce_st2_inptab.hpp); this header only reads them.
 // ⚠ On a device sinf, cosf and logf are CUDA's, not glibc's.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

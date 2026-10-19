@@ -4,6 +4,7 @@
 // WW3 heritage: WW3-noaa/model/src/w3profsmd.F90:4684-4710 at NOAA-EMC/WW3 03adda91;
 // authors A. Roland, F. Ardhuin (the routine is J. Dongarra's, LINPACK 1978).
 // Evidence: kokkos/port_report/DDOT_KOKKOS.md.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

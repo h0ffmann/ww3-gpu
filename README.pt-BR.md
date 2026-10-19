@@ -810,9 +810,11 @@ cada versão ([`swh-save.yml`](.github/workflows/swh-save.yml)).
 | O quê | De quem | Termos |
 |---|---|---|
 | Este repositório | Matheus Hoffmann | MIT ([`LICENSE`](LICENSE)) |
-| Os kernels traduzidos do WW3 (lista na seção [licensing](README.md#licensing)) | obras derivadas do WW3 | `LGPL-3.0-or-later`, informada na linha `SPDX-License-Identifier` de cada arquivo |
+| O C++ traduzido do Fortran do WW3: os arquivos de [`kokkos/src/ww_kokkos/`](kokkos/src/ww_kokkos/) cujo cabeçalho cita um "WW3 heritage" | obras derivadas do WW3; copyright do National Weather Service (NWS), NOAA | `LGPL-3.0-or-later`, na linha `SPDX-License-Identifier` de cada arquivo, com o copyright do NWS em `SPDX-FileCopyrightText` |
 | Skills de terceiros (`humanizar`, `humanizer`, `ponytail*`, `sharingan`) | seus autores | as licenças deles, fixadas em [`.claude/skills/skills.lock`](.claude/skills/skills.lock) |
 | ai-memory, usado e não copiado | Fabio Akita | MIT |
+
+Os textos das licenças estão em [`LICENSES/`](LICENSES/) e a divisão por diretório está em [`NOTICE`](NOTICE). Isto é organização de conformidade, não parecer jurídico.
 
 ## marcas
 

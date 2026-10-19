@@ -5,6 +5,7 @@
 // WW3 heritage: WW3-noaa/model/src/w3wavset.F90:892-1005 at NOAA-EMC/WW3 03adda91;
 // authors M. Dutour-Sikiric, A. Roland. Evidence:
 // kokkos/port_report/TRIG_WAVE_SETUP_APPLY_PRECOND_KOKKOS.md.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

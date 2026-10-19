@@ -27,6 +27,8 @@
 // the caller's grid search object GSU), IS_IN_UNGRID (w3triamd.F90:1582-1762), the
 // NetCDF-Fortran calls (IoppNetcdf, with the Fortran arguments) and the formatted output unit.
 // A path that reaches an empty hook ends with kExitMissingHook.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <array>

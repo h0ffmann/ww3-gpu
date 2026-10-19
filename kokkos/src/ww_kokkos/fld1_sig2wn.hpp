@@ -5,6 +5,7 @@
 // authors B. G. Reichl, Newton iteration by X. Chen (2018).
 // Evidence: kokkos/port_report/SIG2WN_KOKKOS.md.
 // ⚠ On a device tanhf and coshf are CUDA's, not glibc's.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

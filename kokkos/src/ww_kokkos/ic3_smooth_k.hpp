@@ -3,6 +3,7 @@
 // dispersion relation by linear interpolation in sigma. Phase 1, translated, not regtested.
 // WW3 heritage: WW3-noaa/model/src/w3sic3md.F90:2497-2535 at NOAA-EMC/WW3 03adda91;
 // authors E. Rogers, S. Zieger, S. Cheng. Evidence: kokkos/port_report/SMOOTH_K_KOKKOS.md.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

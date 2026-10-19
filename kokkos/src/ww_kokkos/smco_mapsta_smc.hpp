@@ -3,6 +3,7 @@
 // MAPSMC it gives for ww3_ounf's regridded output. Phase 1, translated, not regtested.
 // WW3 heritage: WW3-noaa/model/src/w3smcomd.F90:518-568 at NOAA-EMC/WW3 03adda91;
 // author C. Bunney. Evidence: kokkos/port_report/MAPSTA_SMC_KOKKOS.md.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

@@ -22,6 +22,8 @@
 // Not ported, dead under this switch: PHINL, HSTOT, FACTOR2 outside the ice
 // block, COSI, TAUSCX/Y, FHIGI, FIRST, TAUNUX/Y (-O3 drops them as well, or
 // nothing reads them).
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <Kokkos_Core.hpp>

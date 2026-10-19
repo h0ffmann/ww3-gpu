@@ -5,6 +5,7 @@
 // WW3 heritage: WW3-noaa/model/src/w3profsmd.F90:3801-3886 at NOAA-EMC/WW3 03adda91;
 // module authors A. Roland, F. Ardhuin (SPARSKIT routine, Y. Saad).
 // Evidence: kokkos/port_report/RUNRC_KOKKOS.md.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

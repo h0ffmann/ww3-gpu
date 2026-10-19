@@ -873,11 +873,11 @@ you ran. A new patch release is cut every Friday when `main` has changed, or by 
 | What | Whose | Terms |
 |---|---|---|
 | This repository | Matheus Hoffmann | MIT ([`LICENSE`](LICENSE)) |
-| The kernels translated from WW3: `kokkos/src/ww_kokkos/snl1_*`, `kokkos/src/fortran_iface/w3kokkosmd.F90`, the patch in `kokkos/src/fortran_iface/PATCH.md` | derived works of WW3 | `LGPL-3.0-or-later`, stated in each file's `SPDX-License-Identifier` line |
+| The C++ translated from WW3 Fortran: the files of [`kokkos/src/ww_kokkos/`](kokkos/src/ww_kokkos/) whose header cites a "WW3 heritage" | derived works of WW3; copyright National Weather Service (NWS), NOAA | `LGPL-3.0-or-later`, in each file's `SPDX-License-Identifier` line, with the NWS copyright in `SPDX-FileCopyrightText` |
 | Vendored skills (`humanizar`, `humanizer`, `ponytail*`, `sharingan`) | their authors | their own licences, pinned in [`.claude/skills/skills.lock`](.claude/skills/skills.lock) |
 | ai-memory, used and not vendored | Fabio Akita | MIT |
 
-No WW3 source is vendored here. `scripts/01_get_ww3.sh` clones it, and upstream regression-test
+The texts are in [`LICENSES/`](LICENSES/) and the split by directory is in [`NOTICE`](NOTICE). This is compliance housekeeping, not legal advice. No WW3 source is vendored here. `scripts/01_get_ww3.sh` clones it, and upstream regression-test
 inputs are fetched, not redistributed. Third-party tools listed in
 `docs/AWESOME-WW3_202609.md` keep their own licences.
 
