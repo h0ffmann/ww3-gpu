@@ -8,8 +8,9 @@
 // geometry on the device (TRIGP, IEN, SI, the node lists built from TRIGP and the node to sea
 // point map built from MAPSF(:,3)), uploaded again only when a host shadow of TRIGP, IEN, SI or
 // MAPSF(:,3) differs from the last call. The per-call inputs (CG, CX, CY, CLATS, ECOS, ESIN,
-// MAPSTA, IOBP, IOBPD, IOBDP, IOBPA, the boundary arrays under FLBPI, ITER) are copied every call;
-// they are small next to VA. ITER is copied back whole after the launches: only the ITER(IK,ITH)
+// MAPSTA, IOBP, IOBPD, IOBDP, IOBPA) are compared with a host shadow and copied when they differ
+// (WW_KOKKOS_XYPUG_SKIP_H2D=0 copies them every call); the boundary arrays under FLBPI and ITER
+// are copied every call; they are small next to VA. ITER is copied back whole after the launches: only the ITER(IK,ITH)
 // of the components run under LCALC change. Work buffers are kept between calls and grown on
 // demand, at most WW_KOKKOS_PROP3_BATCH_MIB MiB (default 1024, the prop3 cap); a step with more
 // components than fit runs in several launches. No Unified Memory.
@@ -99,6 +100,9 @@ struct Ctx {
   std::vector<int> sh_trigp, sh_mapsf3;
   std::vector<double> sh_ien, sh_si;
   bool geom_valid = false;
+  /// Host shadows of the per-call inputs as last uploaded (WW_KOKKOS_XYPUG_SKIP_H2D).
+  std::vector<int> sh_mapsta, sh_iobp, sh_iobpd, sh_iobdp, sh_iobpa;
+  std::vector<float> sh_clats, sh_ecos, sh_esin, sh_cg, sh_cx, sh_cy;
   ww::ug::XypugGrid<Mem> g;
   ww::ug::XypugStep<Mem> s;
   ww::ug::XypugWork<Mem> w;
@@ -116,6 +120,17 @@ std::map<int, Ctx>& contexts() {
 }
 
 std::mutex g_mutex;
+
+/// A bit-neutral speed-up's switch, read once: "1" on, "0" off, unset or other the default.
+/// Each is WW_KOKKOS_XYPUG_<NAME>; with a switch off the code is the translation as first
+/// written (docs/log/2026-10-19-xypug-speedups.md).
+bool speedup_flag(const char* name, bool def) {
+  const char* v = std::getenv(name);
+  if (v == nullptr) return def;
+  if (std::strcmp(v, "1") == 0) return true;
+  if (std::strcmp(v, "0") == 0) return false;
+  return def;
+}
 
 template <class T>
 void grow(Kokkos::View<T*, Mem>& v, size_t n, const char* name) {
@@ -139,6 +154,29 @@ void put(Kokkos::View<T*, Mem>& v, const T* p, size_t n, const char* name) {
 template <class T>
 bool same(const std::vector<T>& sh, const T* p, size_t n) {
   return sh.size() == n && (n == 0 || std::memcmp(sh.data(), p, n * sizeof(T)) == 0);
+}
+
+/// put(), skipped when `skip` and the n elements equal (bit for bit, memcmp) the ones last
+/// uploaded, kept in sh. The device copy then holds the same bits, so the kernel reads the same
+/// values; a NaN or a -0 is compared by its bits.
+template <class T>
+void put_if_changed(Kokkos::View<T*, Mem>& v, std::vector<T>& sh, const T* p, size_t n,
+                    const char* name, bool skip) {
+  if (skip && v.extent(0) >= std::max<size_t>(n, 1) && same(sh, p, n)) return;
+  put(v, p, n, name);
+  if (skip) sh.assign(p, p + n);
+}
+
+/// put_if_changed() of tr(p) instead of p: the array as the kernel's layout switch reads it, made
+/// only when the host array changed (or the skip is off).
+template <class T, class Tr>
+void put_t_if_changed(Kokkos::View<T*, Mem>& v, std::vector<T>& sh, const T* p, size_t n,
+                      const char* name, bool skip, Tr tr) {
+  if (skip && v.extent(0) >= std::max<size_t>(n, 1) && same(sh, p, n)) return;
+  std::vector<T> t(n);
+  tr(p, t.data());
+  put(v, t.data(), n, name);
+  if (skip) sh.assign(p, p + n);
 }
 
 /// The arguments as received, with IPAR/RPAR unpacked.
@@ -175,6 +213,9 @@ int upload_geometry(Ctx& c, const Args& a) {
   std::vector<int> fill(off.begin(), off.end() - 1);
   for (size_t j = 0; j < nt3; ++j) ent[static_cast<size_t>(fill[a.trigp[j] - 1]++)] = static_cast<int>(j);
 
+  std::vector<int> pos(nt3 > 0 ? nt3 : 1);  // the inverse of ent
+  for (size_t j = 0; j < nt3; ++j) pos[static_cast<size_t>(ent[j])] = static_cast<int>(j);
+
   std::vector<int> isea_of(static_cast<size_t>(a.nx), 0);
   for (int isea = 1; isea <= a.nsea; ++isea) {
     const int ixy = mapsf3[isea - 1];
@@ -192,11 +233,13 @@ int upload_geometry(Ctx& c, const Args& a) {
   put(c.g.node_isea, isea_of.data(), isea_of.size(), "ww_xypug.node_isea");
   put(c.g.node_off, off.data(), off.size(), "ww_xypug.node_off");
   put(c.g.node_ent, ent.data(), nt3, "ww_xypug.node_ent");
+  put(c.g.pos, pos.data(), nt3, "ww_xypug.pos");
   c.sh_trigp.assign(a.trigp, a.trigp + nt3);
   c.sh_ien.assign(a.ien, a.ien + nien);
   c.sh_si.assign(a.si, a.si + a.nx);
   c.sh_mapsf3.assign(mapsf3, mapsf3 + a.nsea);
   c.geom_valid = true;
+  Exec().fence("ww_xypug_upload_geometry");  // the put() sources (off, ent, pos, isea_of) are locals
   return WW_KOKKOS_OK;
 }
 
@@ -232,6 +275,8 @@ int batch(Ctx& c, const Args& a, float* dva) {
   s.flbpi = a.flbpi;
   s.fsbccfl = a.fsbccfl;
   s.lcalc = a.lcalc;
+  static const int fuse_ut = speedup_flag("WW_KOKKOS_XYPUG_FUSE_UT", true) ? 1 : 0;
+  s.fuse_ut = fuse_ut;
   s.facx = a.facx;
   s.facy = a.facy;
   s.dtg = a.dtg;
@@ -239,17 +284,39 @@ int batch(Ctx& c, const Args& a, float* dva) {
   s.rd2 = a.rd2;
   const size_t nx = static_cast<size_t>(a.nx);
   const size_t nsea = static_cast<size_t>(a.nsea);
-  put(s.mapsta, a.mapsta, nx, "ww_xypug.mapsta");
-  put(s.clats, a.clats, nsea, "ww_xypug.clats");
-  put(s.ecos, a.ecos, static_cast<size_t>(a.nth), "ww_xypug.ecos");
-  put(s.esin, a.esin, static_cast<size_t>(a.nth), "ww_xypug.esin");
-  put(s.cg, a.cg, static_cast<size_t>(a.nk + 2) * (nsea + 1), "ww_xypug.cg");
-  put(s.cx, a.cx, nsea + 1, "ww_xypug.cx");
-  put(s.cy, a.cy, nsea + 1, "ww_xypug.cy");
-  put(s.iobp, a.iobp, nx, "ww_xypug.iobp");
-  put(s.iobpd, a.iobpd, static_cast<size_t>(a.nth) * nx, "ww_xypug.iobpd");
-  put(s.iobdp, a.iobdp, nx, "ww_xypug.iobdp");
-  put(s.iobpa, a.iobpa, nx, "ww_xypug.iobpa");
+  static const bool skip = speedup_flag("WW_KOKKOS_XYPUG_SKIP_H2D", true);
+  put_if_changed(s.mapsta, c.sh_mapsta, a.mapsta, nx, "ww_xypug.mapsta", skip);
+  put_if_changed(s.clats, c.sh_clats, a.clats, nsea, "ww_xypug.clats", skip);
+  put_if_changed(s.ecos, c.sh_ecos, a.ecos, static_cast<size_t>(a.nth), "ww_xypug.ecos", skip);
+  put_if_changed(s.esin, c.sh_esin, a.esin, static_cast<size_t>(a.nth), "ww_xypug.esin", skip);
+  static const int layout = speedup_flag("WW_KOKKOS_XYPUG_LAYOUT", true) ? 1 : 0;
+  s.layout = layout;
+  static const int cfl_par = speedup_flag("WW_KOKKOS_XYPUG_CFL_PAR", true) ? 1 : 0;
+  s.cfl_par = cfl_par;
+  const size_t ncg = static_cast<size_t>(a.nk + 2) * (nsea + 1);
+  if (layout != 0) {
+    // CG(IK,ISEA) as cg[IK*(NSEA+1) + ISEA]; IOBPD(ITH,IP) as iobpd[ITH*NX + IP]: same values.
+    const size_t nk2 = static_cast<size_t>(a.nk) + 2;
+    put_t_if_changed(s.cg, c.sh_cg, a.cg, ncg, "ww_xypug.cg", skip, [&](const float* p, float* o) {
+      for (size_t isea = 0; isea <= nsea; ++isea)
+        for (size_t ik = 0; ik < nk2; ++ik) o[ik * (nsea + 1) + isea] = p[isea * nk2 + ik];
+    });
+    const size_t nth = static_cast<size_t>(a.nth);
+    put_t_if_changed(s.iobpd, c.sh_iobpd, a.iobpd, nth * nx, "ww_xypug.iobpd", skip,
+                     [&](const int* p, int* o) {
+                       for (size_t ip = 0; ip < nx; ++ip)
+                         for (size_t ith = 0; ith < nth; ++ith) o[ith * nx + ip] = p[ip * nth + ith];
+                     });
+  } else {
+    put_if_changed(s.cg, c.sh_cg, a.cg, ncg, "ww_xypug.cg", skip);
+    put_if_changed(s.iobpd, c.sh_iobpd, a.iobpd, static_cast<size_t>(a.nth) * nx,
+                   "ww_xypug.iobpd", skip);
+  }
+  put_if_changed(s.cx, c.sh_cx, a.cx, nsea + 1, "ww_xypug.cx", skip);
+  put_if_changed(s.cy, c.sh_cy, a.cy, nsea + 1, "ww_xypug.cy", skip);
+  put_if_changed(s.iobp, c.sh_iobp, a.iobp, nx, "ww_xypug.iobp", skip);
+  put_if_changed(s.iobdp, c.sh_iobdp, a.iobdp, nx, "ww_xypug.iobdp", skip);
+  put_if_changed(s.iobpa, c.sh_iobpa, a.iobpa, nx, "ww_xypug.iobpa", skip);
   put(s.iter, a.iter, static_cast<size_t>(a.nk) * static_cast<size_t>(a.nth), "ww_xypug.iter");
   put(s.lst, lst.data(), lst.size(), "ww_xypug.lst");
   if (a.flbpi != 0) {

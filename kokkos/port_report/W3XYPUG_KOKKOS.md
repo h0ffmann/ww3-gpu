@@ -15,9 +15,9 @@ back into `VQ`. The `PDLIB` sibling is [PDLIB_W3XYPUG](PDLIB_W3XYPUG_KOKKOS.md).
 | | |
 |---|---|
 | WW3 routine | `W3XYPUG`, `model/src/w3profsmd.F90:69-272` at NOAA-EMC/WW3 `03adda91` (byte-identical in `WW3/` at the fork pin, `cmp`), called from `w3wavemd.F90:1970`, `:1973`, `:1976` (one per `PR1`/`PR2`/`PR3`), as the switch of `ww3_tp2.6` compiles it (`SHRD PR3 UQ ... REF0`) |
-| Kokkos code | [`../src/ww_kokkos/prop_xypug.hpp`](../src/ww_kokkos/prop_xypug.hpp), a header-only host function `w3xypug`, serial, in the Fortran's structure and order; it calls the ported `SETDEPTH` ([SETDEPTH](SETDEPTH_KOKKOS.md)) directly |
-| Hooks | `XypugHooks`: `dsec21` and the four schemes `W3XYPFSN2`, `W3XYPFSPSI2`, `W3XYPFSFCT2`, `W3XYPFSNIMP` (`w3profsmd.F90:470`, `:730`, `:1290`, `:988`), which have no Kokkos translation. A hook the flags reach and that is missing aborts |
-| C shim | none yet |
+| Kokkos code | [`../src/ww_kokkos/prop_xypug.hpp`](../src/ww_kokkos/prop_xypug.hpp), a header-only host function `w3xypug`, serial, in the Fortran's structure and order; the header (the host path, not called by WW3) calls the ported `SETDEPTH` ([SETDEPTH](SETDEPTH_KOKKOS.md)) directly; the batched shim does not: it takes `IOBDP` from the Fortran `SETDEPTH`, called once per step (`xypug_c.hpp:11-13`) |
+| Hooks | `XypugHooks` (the host path): `dsec21` and the four schemes `W3XYPFSN2`, `W3XYPFSPSI2`, `W3XYPFSFCT2`, `W3XYPFSNIMP` (`w3profsmd.F90:470`, `:730`, `:1290`, `:988`). A hook the flags reach and that is missing aborts. The batched kernel translates `W3XYPFSN2` only ([W3XYPFSN2](W3XYPFSN2_KOKKOS.md)); the other three stay on the Fortran and the Kokkos part refuses them at start-up |
+| C shim | [`../src/fortran_iface/xypug_shim.cpp`](../src/fortran_iface/xypug_shim.cpp), entry `ww_xypug_batch_va` with its argument table in [`xypug_c.hpp`](../src/fortran_iface/xypug_c.hpp), the batched kernel [`../src/ww_kokkos/ug_xypug.hpp`](../src/ww_kokkos/ug_xypug.hpp) on the resident `VA`; called from the fork's `W3KOKKOS_XYPUG` (PATCH.md section 30) |
 | Plan | [`PROPAGATION_KOKKOS_PLAN_202610.md`](../../docs/PROPAGATION_KOKKOS_PLAN_202610.md), issue #42 |
 
 ## Arithmetic
@@ -61,7 +61,7 @@ and `C = VLCFL*REAL(IOBDP)` (integer to floating conversions exact, products ele
 `DSEC21(TBPI0,TIME)` before `DSEC21(TBPI0,TBPIN)`; the scheme selection and the contiguous
 `C(NX,2)`, `AC(NX)` descriptors the Fortran builds for the schemes; `REAL(AC)` for every node
 (`cvtsd2ss`, `cvtpd2ps`, both round to nearest); the final `maxss %xmm1,%xmm0` with `%xmm1` from
-`pxor`, which is `x > 0 ? x : +0`, the C++ expression. The ported `SETDEPTH` is called with
+`pxor`, which is `x > 0 ? x : +0`, the C++ expression. In the header, the ported `SETDEPTH` is called with
 `IOBDP(1:MX)` and `DW(0:)`. The header compiles with the `serial-debug` flags (ASan, UBSan,
 `-Wconversion`, `-ffp-contract=off`) without a warning; at `-O3` its object has no FMA and the same
 `maxss` operand order. One defect, a citation: the `DMIN` comment cited `w3profsmd.F90:1667-1674`,
@@ -78,7 +78,7 @@ parity verdict under the resident preset instead of the start-up stop
 |---|---|
 | WW3 code replaced | `W3WAVE` section 3.6.3, the `ISPEC` loop of `W3GATH`, `W3XYPUG`, `W3SCAT` (`w3wavemd.F90:2050-2135` at the fork pin), on `GTYPE = UNGTYPE` |
 | Routines translated | `W3XYPUG` (`w3profsmd.F90:69-272`), `W3XYPFSN2` (`:470-727`, see [W3XYPFSN2](W3XYPFSN2_KOKKOS.md)), `W3GATH` and `W3SCAT` under `W3_SHRD` |
-| Not translated | `SETDEPTH` (`:1601-1678`): the Fortran wrapper calls it once per step instead of once per component. It writes only `IOBDP` (`:1672-1676`) from `DW` and `DMIN` (`:1650-1651`), and the replaced loop writes neither, so `IOBDP` has the same bits (v, read 2026-10-18). `W3CFLUG` (`:274-467`): called only for the CFL output field (`w3wavemd.F90:1776`, `FLOGRD(9,3)`), and it does not read `VA` |
+| Not translated | `SETDEPTH` (`:1601-1678`): the Fortran wrapper calls it once per step instead of once per component. It writes only `IOBDP` (`:1672-1676`) from `DW` and `DMIN` (`:1650-1651`), and the replaced loop writes neither, so `IOBDP` has the same bits (v, read 2026-10-18). `W3CFLUG` (`:274-467`): called only for the CFL output field (`w3wavemd.F90:1776` is the guard `IF ( FLOGRD(9,3).AND. UGDTUPDATE )`, the call is at `:1800`), and it does not read `VA` |
 | Kokkos code | [`ug_xypug.hpp`](../src/ww_kokkos/ug_xypug.hpp), [`xypug_shim.cpp`](../src/fortran_iface/xypug_shim.cpp), [`xypug_c.hpp`](../src/fortran_iface/xypug_c.hpp) (argument table), package `ww_kokkos` 0.11.0 |
 | Fortran caller | fork branch `ww3-gpu/xypug-196-rebased`: `W3KOKKOS_XYPUG` and the set-up in `w3kokkos_prop3md.F90`, the call-site hunk in `w3wavemd.F90`; the Fortran loop stays selectable with `WW_KOKKOS_XYP3=0` |
 | Covered | `SHRD`, `PR3` with `UQ`, scheme `FSN` alone (`FSPSI`, `FSFCT`, `FSNIMP` false), no `PDLIB`, `MGP`, `MGG`, `REF1`. Every other case keeps the start-up stop under an explicit flag |
@@ -123,7 +123,49 @@ GPU. The fork's `ww3_lib` compiles for the `ww3_tp2.6` switch and `switch_lab_sh
 
 ## Benchmarks
 
-None. No timing without parity (`AGENTS.md`).
+Regtest pending ⚠ (ADR-0016): parity of the two `ww3_tp2.6` entries is checked (0/36 and 0/38 files
+different, `nccmp-tol` PASS, at `106263d`), the rest of the matrix is not.
+
+Four bit-neutral speed-ups, each with a switch (`WW_KOKKOS_XYPUG_FUSE_UT`, `_SKIP_H2D`, `_LAYOUT`,
+`_CFL_PAR`, default on, `0` is the earlier code). Which operations moved and why the bits stay is in
+[the log](../../docs/log/2026-10-19-xypug-speedups.md). `xypug.kernel` of the `ww3_tp2.6` `ST4`
+entry, resident preset, 600 calls, OpenMP backend, Intel Core i9-14900 (32 threads), median of three
+alternated runs, load below 2 at the start of each; raw rows in
+[`docs/data/xypug_speedups_tp2.6_2026-10-19.tsv`](../../docs/data/xypug_speedups_tp2.6_2026-10-19.tsv):
+
+| Config | 32 threads (s) | 1 thread (s) |
+|---|---|---|
+| all four off | 7.97 | 37.43 |
+| `FUSE_UT` only | 6.79 | 36.14 |
+| `SKIP_H2D` only (`xypug.h2d` 0.43 s to 0.06 s) | 8.10 | 37.00 |
+| `LAYOUT` only | 7.96 | 36.82 |
+| `CFL_PAR` only | 7.81 | 36.92 |
+| all four on | 6.57 | 36.50 |
+
+Only `FUSE_UT` and the sum at 32 threads are outside the spread of the runs. The model's total time
+was not compared ⚠ in that table.
+
+CPU re-measurement, 2026-10-19, regtest pending ⚠ (log section "CPU re-measurement"; raw rows
+[`docs/data/xypug_speedups_cpu_rerun_2026-10-19.tsv`](../../docs/data/xypug_speedups_cpu_rerun_2026-10-19.tsv)).
+Same entry and machine, three interleaved rounds (not five: the load wait made five pass the time
+budget), the whole `ww3_shel` `Elapsed time` added, OpenMP only, no GPU. Median in seconds, kernel
+and whole `ww3_shel`; "real" means the medians differ by more than the larger min-max spread:
+
+| Config | 32 threads kernel | 32 threads `ww3_shel` | 8 threads kernel | 8 threads `ww3_shel` | 1 thread kernel | 1 thread `ww3_shel` |
+|---|---|---|---|---|---|---|
+| all four off | 7.87 | 9.78 | 8.75 | 10.46 | 36.59 | 38.26 |
+| `FUSE_UT` only | 6.88 | 8.81 | 7.37 | 9.02 | 35.89 | 37.54 |
+| `SKIP_H2D` only | 7.84 | 9.35 | 8.12 | 9.53 | n/a | n/a |
+| `LAYOUT` only | 7.76 | 9.73 | 8.28 | 10.00 | n/a | n/a |
+| `CFL_PAR` only | 7.86 | 9.78 | 8.72 | 10.44 | n/a | n/a |
+| all four on | 6.51 | 8.05 | 7.05 | 8.46 | 35.97 | 37.64 |
+
+Verdict on the CPU: `FUSE_UT` helps (real at 32, 8 and 1 threads). `SKIP_H2D` helps the whole run at
+32 threads (`ww3_shel` minus 0.43 s alone and plus 0.84 s when removed from all-on, both real;
+`xypug.h2d` 0.42 s to 0.05 s) and is inside the spread in the kernel timer alone; at 8 threads its
+`ww3_shel` gain is at the edge of the spread ⚠. `LAYOUT` and `CFL_PAR` are inside the spread
+alone and as leave-one-out; they do not help on this CPU and do not hurt. The leave-one-out runs
+(all on except one) are in the log, 32 threads only.
 
 ## How it was regtested
 
