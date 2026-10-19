@@ -28,6 +28,9 @@
 //    that order onto 0.d0 (memset), and within one IE the three K in order (GIMPLE: load, add,
 //    store per K, no temporary), so the gather makes the same additions on the same operands in
 //    the same order, even for a triangle that lists a node twice.
+//    With the layout switch KELEM(3,IE) is stored at pos(3*(IE-1)+K-1), the place of that term in
+//    its node's list, so the two gathers read kelem contiguously; each node still adds its terms
+//    in the same order. IOBPD and CG are read from copies with the node or sea index fastest.
 //  * The update :675-688 reads U(IP) and ST(IP) of its own node only, so it is fused with the ST
 //    gather; AC = U (:690) makes U and AC one array: a node's U is read by the UTILDE pass of the
 //    same sub-step, which ends at a barrier before any node is updated.
@@ -85,6 +88,16 @@ KOKKOS_INLINE_FUNCTION int nint32(double x) {
 KOKKOS_INLINE_FUNCTION int iabs32(int n) {
   return (n < 0) ? static_cast<int>(0u - static_cast<unsigned int>(n)) : n;
 }
+
+/// CG(IK,ISEA) of the per-call array: as the Fortran lays it, CG(0:NK+1,0:NSEA) with IK fastest
+/// (isea*(NK+2) + ik), or with `lay`, ISEA fastest (ik*(NSEA+1) + isea; the shim's copy), so
+/// that the nodes of a loop read neighbouring addresses. The value is the same element.
+template <class V>
+KOKKOS_INLINE_FUNCTION float cg_at(const V& cg, int lay, std::size_t isea, int ik, int nk2,
+                                   std::size_t nsea1) {
+  return lay != 0 ? cg(static_cast<std::size_t>(ik) * nsea1 + isea)
+                  : cg(isea * static_cast<std::size_t>(nk2) + static_cast<std::size_t>(ik));
+}
 }  // namespace xypug_detail
 
 /// The grid's geometry, uploaded when it changes. Fortran arrays are flattened column major,
@@ -106,16 +119,20 @@ struct XypugGrid {
   Kokkos::View<int*, Mem> node_isea;
   Kokkos::View<int*, Mem> node_off;
   Kokkos::View<int*, Mem> node_ent;
+  /// pos(3*(IE-1) + K-1) = j with node_ent(j) = 3*(IE-1) + K-1: where that term sits in its
+  /// node's list, for the layout switch.
+  Kokkos::View<int*, Mem> pos;
 };
 
 /// The per-call inputs, copied every call:
 ///   mapsta  MAPSTA(NY*NX), NY = 1: MAPSTA(IXY) = mapsta(IXY-1), read by W3SCAT
 ///   clats   CLATS(ISEA) = clats(ISEA-1)
 ///   ecos, esin  ECOS(ITH) = ecos(ITH-1)
-///   cg      CG(0:NK+1,0:NSEA): CG(IK,ISEA) = cg(ISEA*(NK+2) + IK)
+///   cg      CG(0:NK+1,0:NSEA): CG(IK,ISEA) = cg(ISEA*(NK+2) + IK), or with layout cg(IK*(NSEA+1) + ISEA)
 ///   cx, cy  CX(0:NSEA): CX(ISEA) = cx(ISEA)
 ///   iobp, iobdp, iobpa  IOBP(IP) = iobp(IP-1), widened from INTEGER*2 / INTEGER*1
-///   iobpd   IOBPD(NTH,NX): IOBPD(ITH,IP) = iobpd((IP-1)*NTH + ITH-1)
+///   iobpd   IOBPD(NTH,NX): IOBPD(ITH,IP) = iobpd((IP-1)*NTH + ITH-1), or with layout
+///           iobpd((ITH-1)*NX + IP-1)
 ///   bnd_isea, bnd_ip  ISBPI(IBI) and MAPSF(ISBPI(IBI),1) for IBI = 1..NBI (flbpi only)
 ///   bbpi0, bbpin  BBPI0(NSPEC,0:NBI): BBPI0(ISP,IBI) = bbpi0(IBI*NSPEC + ISP-1)
 ///   iter    ITER(NK,NTH): ITER(IK,ITH) = iter((ITH-1)*NK + IK-1), read, and written under lcalc
@@ -128,6 +145,9 @@ struct XypugStep {
   /// Run-time switches of the bit-neutral speed-ups (WW_KOKKOS_XYPUG_*, xypug_shim.cpp); 0 is
   /// the translation as first written.
   int fuse_ut = 0;  ///< first sub-step's UTILDE computed in the per-triangle pass
+  /// KELEM stored in the node lists' order (g.pos); IOBPD as [ITH][IP] and CG as [IK][ISEA]
+  /// (the shim uploads the transposed copies: iobpd(ith*NX + p), cg(ik*(NSEA+1) + isea)).
+  int layout = 0;
   float facx = 0.f, facy = 0.f, dtg = 0.f, rd1 = 1.f, rd2 = 0.f;
   Kokkos::View<int*, Mem> mapsta, iobp, iobpd, iobdp, iobpa, bnd_isea, bnd_ip, iter, lst;
   Kokkos::View<float*, Mem> clats, ecos, esin, cg, cx, cy, bbpi0, bbpin;
@@ -207,6 +227,9 @@ void xypug_launch(const ExecSpace& exec, const XypugGrid<typename ExecSpace::mem
   const int fsbccfl = s.fsbccfl;
   const int lcalc = s.lcalc;
   const int fuse_ut = s.fuse_ut;
+  const int lay = s.layout;
+  const std::size_t nsea1 = static_cast<std::size_t>(s.nsea) + 1;
+  const auto pos = g.pos;
   const float facx = s.facx;
   const float facy = s.facy;
   const float dtg = s.dtg;
@@ -270,7 +293,7 @@ void xypug_launch(const ExecSpace& exec, const XypugGrid<typename ExecSpace::mem
           float vlx = 0.0f;  // VLCFLX = 0. (:197)
           float vly = 0.0f;  // VLCFLY = 0. (:198)
           if (isea > 0) {
-            const float cgv = cg(static_cast<std::size_t>(isea) * nk2 + ik);
+            const float cgv = cg_at(cg, lay, static_cast<std::size_t>(isea), ik, nk2, nsea1);
             const float cl = clats(isea - 1);
             // :209, (VQ/CG)*CLATS.
             vq = va_row[static_cast<std::size_t>(isea) * nspec] / cgv * cl;
@@ -326,9 +349,16 @@ void xypug_launch(const ExecSpace& exec, const XypugGrid<typename ExecSpace::mem
           const double kk1 = max_sd(k1, 0.0);
           const double kk2 = max_sd(k2, 0.0);
           const double kk3 = max_sd(k3, 0.0);
-          kelem[3 * e] = kk1;
-          kelem[3 * e + 1] = kk2;
-          kelem[3 * e + 2] = kk3;
+          if (lay != 0) {
+            // the node lists' order: where the gathers below read these three terms
+            kelem[pos(3 * e)] = kk1;
+            kelem[pos(3 * e + 1)] = kk2;
+            kelem[pos(3 * e + 2)] = kk3;
+          } else {
+            kelem[3 * e] = kk1;
+            kelem[3 * e + 1] = kk2;
+            kelem[3 * e + 2] = kk3;
+          }
           // :620-625, REAL times REAL(8): each C widened.
           const double c1i1 = c1[i1], c2i1 = c2[i1];
           const double c1i2 = c1[i2], c2i2 = c2[i2];
@@ -370,7 +400,8 @@ void xypug_launch(const ExecSpace& exec, const XypugGrid<typename ExecSpace::mem
           // :638-643, KKSUM = 0.d0, then in IE order KKSUM(NI) + KELEM(:,IE).
           Kokkos::parallel_for(Kokkos::TeamThreadRange(t, nx), [&](const int p) {
             double acc = 0.0;
-            for (int j = node_off(p); j < node_off(p + 1); ++j) acc = acc + kelem[node_ent(j)];
+            for (int j = node_off(p); j < node_off(p + 1); ++j)
+              acc = acc + kelem[lay != 0 ? j : node_ent(j)];
             kksum[p] = acc;
           });
           t.team_barrier();
@@ -428,14 +459,16 @@ void xypug_launch(const ExecSpace& exec, const XypugGrid<typename ExecSpace::mem
             double st = 0.0;
             for (int j = node_off(p); j < node_off(p + 1); ++j) {
               const int ek = node_ent(j);
-              st = st + kelem[ek] * (u - utilde[ek / 3]);
+              st = st + kelem[lay != 0 ? j : ek] * (u - utilde[ek / 3]);
             }
             const double dtsi = dt_iter / si(p);
             // :680, (DTSI*ST)*DBLE(1-IOBPA) (the integer difference converted), U minus that,
             // MAX with 0, then DBLE(IOBPD(ITH,IP)) times it.
             const double a = (dtsi * st) * static_cast<double>(1 - iobpa(p));
             const double v = max_sd(u - a, 0.0);
-            ac[p] = static_cast<double>(iobpd(static_cast<std::size_t>(p) * nth + ith0)) * v;
+            const std::size_t ib = lay != 0 ? static_cast<std::size_t>(ith0) * nx + p
+                                            : static_cast<std::size_t>(p) * nth + ith0;
+            ac[p] = static_cast<double>(iobpd(ib)) * v;
           });
           t.team_barrier();
 
@@ -459,7 +492,8 @@ void xypug_launch(const ExecSpace& exec, const XypugGrid<typename ExecSpace::mem
                 const std::size_t q = static_cast<std::size_t>(ibi) * nspec + (isp - 1);
                 // :715-716, in REAL, widened on the store.
                 const float b = (rd1 * bbpi0(q) + rd2 * bbpin(q)) /
-                                cg(static_cast<std::size_t>(isb) * nk2 + ik) * clats(isb - 1);
+                                cg_at(cg, lay, static_cast<std::size_t>(isb), ik, nk2, nsea1) *
+                                clats(isb - 1);
                 ac[p - 1] = static_cast<double>(b);
               }
             });
@@ -473,7 +507,8 @@ void xypug_launch(const ExecSpace& exec, const XypugGrid<typename ExecSpace::mem
           const int isea = node_isea(p);
           if (isea > 0 && mapsta(p) != 0) {
             const float vq = static_cast<float>(ac[p]);
-            const float x = cg(static_cast<std::size_t>(isea) * nk2 + ik) / clats(isea - 1) * vq;
+            const float x =
+                cg_at(cg, lay, static_cast<std::size_t>(isea), ik, nk2, nsea1) / clats(isea - 1) * vq;
             va_row[static_cast<std::size_t>(isea) * nspec] = max_ss(x, 0.0f);
           }
         });

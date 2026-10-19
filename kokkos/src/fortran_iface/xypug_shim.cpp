@@ -167,6 +167,18 @@ void put_if_changed(Kokkos::View<T*, Mem>& v, std::vector<T>& sh, const T* p, si
   if (skip) sh.assign(p, p + n);
 }
 
+/// put_if_changed() of tr(p) instead of p: the array as the kernel's layout switch reads it, made
+/// only when the host array changed (or the skip is off).
+template <class T, class Tr>
+void put_t_if_changed(Kokkos::View<T*, Mem>& v, std::vector<T>& sh, const T* p, size_t n,
+                      const char* name, bool skip, Tr tr) {
+  if (skip && v.extent(0) >= std::max<size_t>(n, 1) && same(sh, p, n)) return;
+  std::vector<T> t(n);
+  tr(p, t.data());
+  put(v, t.data(), n, name);
+  if (skip) sh.assign(p, p + n);
+}
+
 /// The arguments as received, with IPAR/RPAR unpacked.
 struct Args {
   int nx, ntri, nk, nth, nspec, nsea, nbi, flcur, flbpi, fsbccfl, lcalc;
@@ -201,6 +213,9 @@ int upload_geometry(Ctx& c, const Args& a) {
   std::vector<int> fill(off.begin(), off.end() - 1);
   for (size_t j = 0; j < nt3; ++j) ent[static_cast<size_t>(fill[a.trigp[j] - 1]++)] = static_cast<int>(j);
 
+  std::vector<int> pos(nt3 > 0 ? nt3 : 1);  // the inverse of ent
+  for (size_t j = 0; j < nt3; ++j) pos[static_cast<size_t>(ent[j])] = static_cast<int>(j);
+
   std::vector<int> isea_of(static_cast<size_t>(a.nx), 0);
   for (int isea = 1; isea <= a.nsea; ++isea) {
     const int ixy = mapsf3[isea - 1];
@@ -218,6 +233,7 @@ int upload_geometry(Ctx& c, const Args& a) {
   put(c.g.node_isea, isea_of.data(), isea_of.size(), "ww_xypug.node_isea");
   put(c.g.node_off, off.data(), off.size(), "ww_xypug.node_off");
   put(c.g.node_ent, ent.data(), nt3, "ww_xypug.node_ent");
+  put(c.g.pos, pos.data(), nt3, "ww_xypug.pos");
   c.sh_trigp.assign(a.trigp, a.trigp + nt3);
   c.sh_ien.assign(a.ien, a.ien + nien);
   c.sh_si.assign(a.si, a.si + a.nx);
@@ -273,13 +289,30 @@ int batch(Ctx& c, const Args& a, float* dva) {
   put_if_changed(s.clats, c.sh_clats, a.clats, nsea, "ww_xypug.clats", skip);
   put_if_changed(s.ecos, c.sh_ecos, a.ecos, static_cast<size_t>(a.nth), "ww_xypug.ecos", skip);
   put_if_changed(s.esin, c.sh_esin, a.esin, static_cast<size_t>(a.nth), "ww_xypug.esin", skip);
-  put_if_changed(s.cg, c.sh_cg, a.cg, static_cast<size_t>(a.nk + 2) * (nsea + 1), "ww_xypug.cg",
-                 skip);
+  static const int layout = speedup_flag("WW_KOKKOS_XYPUG_LAYOUT", true) ? 1 : 0;
+  s.layout = layout;
+  const size_t ncg = static_cast<size_t>(a.nk + 2) * (nsea + 1);
+  if (layout != 0) {
+    // CG(IK,ISEA) as cg[IK*(NSEA+1) + ISEA]; IOBPD(ITH,IP) as iobpd[ITH*NX + IP]: same values.
+    const size_t nk2 = static_cast<size_t>(a.nk) + 2;
+    put_t_if_changed(s.cg, c.sh_cg, a.cg, ncg, "ww_xypug.cg", skip, [&](const float* p, float* o) {
+      for (size_t isea = 0; isea <= nsea; ++isea)
+        for (size_t ik = 0; ik < nk2; ++ik) o[ik * (nsea + 1) + isea] = p[isea * nk2 + ik];
+    });
+    const size_t nth = static_cast<size_t>(a.nth);
+    put_t_if_changed(s.iobpd, c.sh_iobpd, a.iobpd, nth * nx, "ww_xypug.iobpd", skip,
+                     [&](const int* p, int* o) {
+                       for (size_t ip = 0; ip < nx; ++ip)
+                         for (size_t ith = 0; ith < nth; ++ith) o[ith * nx + ip] = p[ip * nth + ith];
+                     });
+  } else {
+    put_if_changed(s.cg, c.sh_cg, a.cg, ncg, "ww_xypug.cg", skip);
+    put_if_changed(s.iobpd, c.sh_iobpd, a.iobpd, static_cast<size_t>(a.nth) * nx,
+                   "ww_xypug.iobpd", skip);
+  }
   put_if_changed(s.cx, c.sh_cx, a.cx, nsea + 1, "ww_xypug.cx", skip);
   put_if_changed(s.cy, c.sh_cy, a.cy, nsea + 1, "ww_xypug.cy", skip);
   put_if_changed(s.iobp, c.sh_iobp, a.iobp, nx, "ww_xypug.iobp", skip);
-  put_if_changed(s.iobpd, c.sh_iobpd, a.iobpd, static_cast<size_t>(a.nth) * nx, "ww_xypug.iobpd",
-                 skip);
   put_if_changed(s.iobdp, c.sh_iobdp, a.iobdp, nx, "ww_xypug.iobdp", skip);
   put_if_changed(s.iobpa, c.sh_iobpa, a.iobpa, nx, "ww_xypug.iobpa", skip);
   put(s.iter, a.iter, static_cast<size_t>(a.nk) * static_cast<size_t>(a.nth), "ww_xypug.iter");
