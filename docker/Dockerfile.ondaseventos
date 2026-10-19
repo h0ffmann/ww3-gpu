@@ -1,0 +1,64 @@
+# syntax=docker/dockerfile:1
+# Images for ondaseventos (an operational WAVEWATCH III forecast system), which uses NOAA WW3
+# v7.14 with MPI + NetCDF + ST4. Two targets, no sources from this repository (WW3 is cloned):
+#   dev   toolchain + OpenMPI 4 + NetCDF/HDF5 + the Python stack; ondaseventos does `FROM` it
+#   dist  (last, the default) the compiled ww3_* programs on PATH in /usr/local/bin, runtime libs only
+#
+#   docker build -f docker/Dockerfile.ondaseventos --target dev  -t ww3-ondaseventos-dev .
+#   docker build -f docker/Dockerfile.ondaseventos               -t ww3-ondaseventos .
+#
+# Base: debian:bookworm-slim (OpenMPI 4.1, Python 3.11). Any Linux host runs it; only copying the
+# binaries out to run natively needs a matching distro.
+ARG BASE=debian:bookworm-slim
+# NOAA-EMC/WW3 has no 7.14 tag (tags stop at 6.07.1); 7.14 is the VERSION file on develop, so
+# the pin is a commit, the same one as the WW3-noaa submodule. The build fails if VERSION differs.
+ARG WW3_VERSION=7.14
+ARG WW3_REF=03adda91a1421898ac1ac4433f909e8519e13800
+# NCEP_st4 (ST4, MPI) plus NC4 for NetCDF I/O, NCO dropped, GRB off.
+# FLX3 cannot be used: WW3 7.14 rejects ST4 with FLX1-4 (check_switches), so FLX0 as NCEP_st4 and Ifremer1 do.
+# Unconfirmed against ondaseventos' real build; add PDLIB (needs SCOTCH/METIS) for unstructured MPI.
+ARG WW3_SWITCH="NOGRB NC4 DIST MPI PR3 UQ ST4 STAB0 FLX0 LN1 NL1 IC0 IS0 REF0 BT1 DB1 MLIM TR0 BS0 WNX1 WNT1 CRX1 CRT1 O0 O1 O2 O4 O5 O6 O7"
+
+FROM ${BASE} AS toolchain
+ARG DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      gfortran g++ cmake make git pkg-config ca-certificates \
+      openmpi-bin libopenmpi-dev libnetcdf-dev libnetcdff-dev libhdf5-dev \
+ && rm -rf /var/lib/apt/lists/*
+
+FROM toolchain AS dev
+ARG DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      python3 python3-venv netcdf-bin \
+ && rm -rf /var/lib/apt/lists/* \
+ && python3 -m venv /opt/venv \
+ && /opt/venv/bin/pip install --no-cache-dir xarray netCDF4 numpy pandas matplotlib cartopy ecmwf-opendata \
+      cfgrib eccodes scipy natsort tenacity ipython
+# bookworm's pip refuses system-wide installs (PEP 668), hence the venv
+ENV PATH=/opt/venv/bin:$PATH
+
+FROM toolchain AS build
+ARG WW3_VERSION
+ARG WW3_REF
+ARG WW3_SWITCH
+RUN git init -q /src && git -C /src fetch -q --depth 1 https://github.com/NOAA-EMC/WW3 "${WW3_REF}" \
+ && git -C /src checkout -q FETCH_HEAD \
+ && test "$(cat /src/VERSION)" = "${WW3_VERSION}"
+RUN echo "${WW3_SWITCH}" > /tmp/switch \
+ && cmake -S /src -B /build -DSWITCH=/tmp/switch -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/opt/ww3 \
+ && cmake --build /build -j"$(nproc)" \
+ && mkdir -p /opt/ww3/bin && cp /build/bin/ww3_* /opt/ww3/bin/ \
+ && for p in grid strt prnc shel bounc ounf ounp; do test -x "/opt/ww3/bin/ww3_$p"; done \
+ && { echo "WW3 ${WW3_VERSION} ${WW3_REF}"; echo "switch: ${WW3_SWITCH}"; } > /opt/ww3/BUILD_INFO
+
+FROM ${BASE} AS dist
+ARG DEBIAN_FRONTEND=noninteractive
+# openssh-client: mpirun aborts without an rsh/ssh agent, even on a single node
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      openmpi-bin libnetcdff7 libgfortran5 openssh-client \
+ && rm -rf /var/lib/apt/lists/*
+# containers run as root by default and OpenMPI refuses that otherwise
+ENV OMPI_ALLOW_RUN_AS_ROOT=1 OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1
+COPY --from=build /opt/ww3/bin/ /usr/local/bin/
+COPY --from=build /opt/ww3/BUILD_INFO /usr/local/share/ww3/BUILD_INFO
+# ST4TABUHF2.bin is not a build product: ww3_grid writes it into its working directory on first use.
