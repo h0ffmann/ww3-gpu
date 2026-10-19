@@ -6,127 +6,175 @@
 # checkpoint of a translated routine, passed when regtested is yes. googletest: the port has no
 # tests of its own (ADR-0010). test_comp and nccmp_tol quote the regtest record.
 priority	routine	ww3_file	self_pct	profile	state	claim	translated	wired	checkpoint	regtested	test_comp	nccmp_tol	googletest	report
-1	init	—	0.65	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-2	finalise.0	—	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-3	finalise.0.constprop.0	—	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-4	main	—	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-5	w3gdatmd:w3dimug	model/src/w3gdatmd.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-6	w3gdatmd:w3dimx	model/src/w3gdatmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-7	w3gdatmd:w3gntx	model/src/w3gdatmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-8	w3gdatmd:w3nmod	model/src/w3gdatmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-9	w3gsrumd:get_fdw3.constprop.0	model/src/w3gsrumd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-10	w3gsrumd:w3cgdm_r4	model/src/w3gsrumd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-11	w3gsrumd:w3fdwt_r8	model/src/w3gsrumd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-12	w3gsrumd:w3gsuc_ptr_r8	model/src/w3gsrumd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-13	w3gsrumd:w3nnsc	model/src/w3gsrumd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-14	w3idatmd:w3dimi	model/src/w3idatmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-15	w3idatmd:w3ninp	model/src/w3idatmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-16	w3idatmd:w3seti	model/src/w3idatmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-17	w3initmd:w3mpii	model/src/w3initmd.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-18	w3initmd:w3mpip	model/src/w3initmd.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-19	w3iogomd:w3readflgrd	model/src/w3iogomd.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-20	w3iopomd:nf90_err_check	model/src/w3iopomd.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-21	w3nmlshelmd:read_domain_nml	model/src/w3nmlshelmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-22	w3nmlshelmd:read_homogeneous_nml	model/src/w3nmlshelmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-23	w3nmlshelmd:read_input_nml	model/src/w3nmlshelmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-24	w3nmlshelmd:read_output_date_nml	model/src/w3nmlshelmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-25	w3nmlshelmd:read_output_path_nml	model/src/w3nmlshelmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-26	w3nmlshelmd:read_output_type_nml	model/src/w3nmlshelmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-27	w3nmlshelmd:report_domain_nml	model/src/w3nmlshelmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-28	w3nmlshelmd:report_homogeneous_nml	model/src/w3nmlshelmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-29	w3nmlshelmd:report_input_nml	model/src/w3nmlshelmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-30	w3nmlshelmd:report_output_date_nml	model/src/w3nmlshelmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-31	w3nmlshelmd:report_output_path_nml	model/src/w3nmlshelmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-32	w3nmlshelmd:report_output_type_nml	model/src/w3nmlshelmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-33	w3nmlshelmd:w3nmlshel	model/src/w3nmlshelmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-34	w3odatmd:w3dmo2	model/src/w3odatmd.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-35	w3odatmd:w3dmo5	model/src/w3odatmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-36	w3odatmd:w3nout	model/src/w3odatmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-37	w3odatmd:w3seto	model/src/w3odatmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-38	w3parall:synchronize_ipgl_etc_array	model/src/w3parall.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-39	w3servmd:itrace	model/src/w3servmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-40	w3servmd:nextln	model/src/w3servmd.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-41	w3servmd:print_memcheck	model/src/w3servmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-42	w3servmd:str_to_upper	model/src/w3servmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-43	w3servmd:strsplit	model/src/w3servmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-44	w3servmd:wwdate	model/src/w3servmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-45	w3servmd:wwtime	model/src/w3servmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-46	w3timemd:d2j	model/src/w3timemd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-47	w3timemd:dsec21	model/src/w3timemd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-48	w3timemd:stme21	model/src/w3timemd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-49	w3timemd:t2d	model/src/w3timemd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-50	w3timemd:tdiff	model/src/w3timemd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-51	w3timemd:tick21	model/src/w3timemd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-52	w3triamd:coordmax	model/src/w3triamd.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-53	w3triamd:fix_periodcity	model/src/w3triamd.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-54	w3triamd:is_in_ungrid	model/src/w3triamd.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-55	w3triamd:nvectri	model/src/w3triamd.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-56	w3triamd:spatial_grid	model/src/w3triamd.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-57	w3triamd:ug_gradients	model/src/w3triamd.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-58	w3triamd:w3nestug	model/src/w3triamd.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-59	w3updtmd:w3ubpt	model/src/w3updtmd.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-60	w3updtmd:w3ucur	model/src/w3updtmd.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-61	w3wdatmd:w3dimw	model/src/w3wdatmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-62	w3wdatmd:w3ndat	model/src/w3wdatmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-63	w3wdatmd:w3setw	model/src/w3wdatmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-64	yowelementpool:belongto	model/src/yowelementpool.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-65	yowexchangemodule:creatempitypes	model/src/yowexchangemodule.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-66	yowexchangemodule:finalizeexchangemodule	model/src/yowexchangemodule.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-67	yowexchangemodule:initnbrdomains	model/src/yowexchangemodule.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-68	yowexchangemodule:pdlib_exchange1dreal	model/src/yowexchangemodule.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-69	yowexchangemodule:pdlib_exchange2dreal_zero	model/src/yowexchangemodule.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-70	yowexchangemodule:setdimsize	model/src/yowexchangemodule.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-71	yowfunction:computelistnp_listnpa_listiplg	model/src/yowfunction.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-72	yowfunction:computelistnp_listnpa_listiplg_kernel	model/src/yowfunction.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-73	yownodepool:connnodes	model/src/yownodepool.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-74	yownodepool:insertconnnode	model/src/yownodepool.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-75	yownodepool:nodes	model/src/yownodepool.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-76	yowpdlibmain:assignmesh	model/src/yowpdlibmain.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-77	yowpdlibmain:computeia_ja_posi_nnz	model/src/yowpdlibmain.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-78	yowpdlibmain:computetria_ien_si_ccon	model/src/yowpdlibmain.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-79	yowpdlibmain:exchangeghostids	model/src/yowpdlibmain.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-80	yowpdlibmain:findconndomains	model/src/yowpdlibmain.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-81	yowpdlibmain:findconnnodes	model/src/yowpdlibmain.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-82	yowpdlibmain:findghostnodes	model/src/yowpdlibmain.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-83	yowpdlibmain:initfromgriddim	model/src/yowpdlibmain.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-84	yowpdlibmain:initmpi	model/src/yowpdlibmain.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-85	yowpdlibmain:postpartition	model/src/yowpdlibmain.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-86	yowpdlibmain:postpartition2	model/src/yowpdlibmain.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-87	yowpdlibmain:prepartition	model/src/yowpdlibmain.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-88	yowpdlibmain:real_mpi_barrier_pdlib	model/src/yowpdlibmain.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-89	yowpdlibmain:runparmetis	model/src/yowpdlibmain.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-90	yowrankmodule:exchangeiplg	model/src/yowrankmodule.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
-91	yowrankmodule:initrankmodule	model/src/yowrankmodule.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+1	w3fld2md:w3fld2	model/src/w3fld2md.F90	11.81	gfs	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+2	init	—	1.66	gfs	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+3	w3cspcmd:w3cspc	model/src/w3cspcmd.F90	0.20	gfs	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+4	w3gsrumd:w3gfcl_r8	model/src/w3gsrumd.F90	0.16	gfs	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+5	w3gsrumd:w3cgdm_r4	model/src/w3gsrumd.F90	0.08	gfs	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+6	w3updtmd:w3ucur	model/src/w3updtmd.F90	0.08	gfs	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+7	w3fld1md:appendtail	model/src/w3fld1md.F90	0.04	gfs	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+8	finalise.0	—	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+9	finalise.0.constprop.0	—	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+10	main	—	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+11	w3gdatmd:w3dimug	model/src/w3gdatmd.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+12	w3gdatmd:w3dimx	model/src/w3gdatmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+13	w3gdatmd:w3gntx	model/src/w3gdatmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+14	w3gdatmd:w3nmod	model/src/w3gdatmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+15	w3gsrumd:get_fdw3	model/src/w3gsrumd.F90	0.00	gfs	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+16	w3gsrumd:get_fdw3.constprop.0	model/src/w3gsrumd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+17	w3gsrumd:getpqr	model/src/w3gsrumd.F90	0.00	gfs	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+18	w3gsrumd:w3ckcl_r8	model/src/w3gsrumd.F90	0.00	gfs	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+19	w3gsrumd:w3fdwt_r8	model/src/w3gsrumd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+20	w3gsrumd:w3grmp_r4	model/src/w3gsrumd.F90	0.00	gfs	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+21	w3gsrumd:w3grmp_r8	model/src/w3gsrumd.F90	0.00	gfs	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+22	w3gsrumd:w3gsuc_ptr_r8	model/src/w3gsrumd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+23	w3gsrumd:w3nnsc	model/src/w3gsrumd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+24	w3idatmd:w3dimi	model/src/w3idatmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+25	w3idatmd:w3ninp	model/src/w3idatmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+26	w3idatmd:w3seti	model/src/w3idatmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+27	w3initmd:w3mpii	model/src/w3initmd.F90	0.00	gfs	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+28	w3initmd:w3mpip	model/src/w3initmd.F90	0.00	gfs	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+29	w3iogomd:w3readflgrd	model/src/w3iogomd.F90	0.00	gfs	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+30	w3iopomd:nf90_err_check	model/src/w3iopomd.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+31	w3nmlshelmd:read_domain_nml	model/src/w3nmlshelmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+32	w3nmlshelmd:read_homogeneous_nml	model/src/w3nmlshelmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+33	w3nmlshelmd:read_input_nml	model/src/w3nmlshelmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+34	w3nmlshelmd:read_output_date_nml	model/src/w3nmlshelmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+35	w3nmlshelmd:read_output_path_nml	model/src/w3nmlshelmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+36	w3nmlshelmd:read_output_type_nml	model/src/w3nmlshelmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+37	w3nmlshelmd:report_domain_nml	model/src/w3nmlshelmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+38	w3nmlshelmd:report_homogeneous_nml	model/src/w3nmlshelmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+39	w3nmlshelmd:report_input_nml	model/src/w3nmlshelmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+40	w3nmlshelmd:report_output_date_nml	model/src/w3nmlshelmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+41	w3nmlshelmd:report_output_path_nml	model/src/w3nmlshelmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+42	w3nmlshelmd:report_output_type_nml	model/src/w3nmlshelmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+43	w3nmlshelmd:w3nmlshel	model/src/w3nmlshelmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+44	w3odatmd:w3dmo2	model/src/w3odatmd.F90	0.00	gfs	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+45	w3odatmd:w3dmo5	model/src/w3odatmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+46	w3odatmd:w3nout	model/src/w3odatmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+47	w3odatmd:w3seto	model/src/w3odatmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+48	w3parall:synchronize_ipgl_etc_array	model/src/w3parall.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+49	w3servmd:itrace	model/src/w3servmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+50	w3servmd:nextln	model/src/w3servmd.F90	0.00	gfs	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+51	w3servmd:print_memcheck	model/src/w3servmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+52	w3servmd:str_to_upper	model/src/w3servmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+53	w3servmd:strsplit	model/src/w3servmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+54	w3servmd:wwdate	model/src/w3servmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+55	w3servmd:wwtime	model/src/w3servmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+56	w3timemd:d2j	model/src/w3timemd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+57	w3timemd:dsec21	model/src/w3timemd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+58	w3timemd:stme21	model/src/w3timemd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+59	w3timemd:t2d	model/src/w3timemd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+60	w3timemd:tdiff	model/src/w3timemd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+61	w3timemd:tick21	model/src/w3timemd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+62	w3triamd:coordmax	model/src/w3triamd.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+63	w3triamd:fix_periodcity	model/src/w3triamd.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+64	w3triamd:is_in_ungrid	model/src/w3triamd.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+65	w3triamd:nvectri	model/src/w3triamd.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+66	w3triamd:spatial_grid	model/src/w3triamd.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+67	w3triamd:ug_gradients	model/src/w3triamd.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+68	w3triamd:w3nestug	model/src/w3triamd.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+69	w3updtmd:w3ubpt	model/src/w3updtmd.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+70	w3updtmd:w3uice	model/src/w3updtmd.F90	0.00	gfs	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+71	w3wdatmd:w3dimw	model/src/w3wdatmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+72	w3wdatmd:w3ndat	model/src/w3wdatmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+73	w3wdatmd:w3setw	model/src/w3wdatmd.F90	0.00	full	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+74	wmfinlmd:wmfinl	model/src/wmfinlmd.F90	0.00	gfs	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+75	wmgridmd:wmgeql	model/src/wmgridmd.F90	0.00	gfs	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+76	wmgridmd:wmghgh	model/src/wmgridmd.F90	0.00	gfs	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+77	wmgridmd:wmglow	model/src/wmgridmd.F90	0.00	gfs	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+78	wmgridmd:wmrspc	model/src/wmgridmd.F90	0.00	gfs	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+79	wminiomd:wmiobf	model/src/wminiomd.F90	0.00	gfs	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+80	wminiomd:wmiobg	model/src/wminiomd.F90	0.00	gfs	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+81	wminiomd:wmiobs	model/src/wminiomd.F90	0.00	gfs	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+82	wminiomd:wmioef	model/src/wminiomd.F90	0.00	gfs	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+83	wminiomd:wmioes	model/src/wminiomd.F90	0.00	gfs	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+84	wminiomd:wmiohf	model/src/wminiomd.F90	0.00	gfs	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+85	wminiomd:wmiohs	model/src/wminiomd.F90	0.00	gfs	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+86	wminitmd:wminit	model/src/wminitmd.F90	0.00	gfs	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+87	wmiopomd:wmiopo	model/src/wmiopomd.F90	0.00	gfs	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+88	wmiopomd:wmiopp	model/src/wmiopomd.F90	0.00	gfs	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+89	wmmdatmd:wmndat	model/src/wmmdatmd.F90	0.00	gfs	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+90	wmmdatmd:wmsetm	model/src/wmmdatmd.F90	0.00	gfs	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+91	wmunitmd:wmuget	model/src/wmunitmd.F90	0.00	gfs	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+92	wmunitmd:wmuini	model/src/wmunitmd.F90	0.00	gfs	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+93	wmunitmd:wmuinq	model/src/wmunitmd.F90	0.00	gfs	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+94	wmunitmd:wmuset	model/src/wmunitmd.F90	0.00	gfs	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+95	wmupdtmd:wmupd1	model/src/wmupdtmd.F90	0.00	gfs	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+96	wmupdtmd:wmupd2	model/src/wmupdtmd.F90	0.00	gfs	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+97	wmupdtmd:wmupds	model/src/wmupdtmd.F90	0.00	gfs	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+98	wmupdtmd:wmupdt	model/src/wmupdtmd.F90	0.00	gfs	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+99	wmupdtmd:wmupdv	model/src/wmupdtmd.F90	0.00	gfs	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+100	wmwavemd:wmprnt	model/src/wmwavemd.F90	0.00	gfs	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+101	wmwavemd:wmwave	model/src/wmwavemd.F90	0.00	gfs	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+102	yowelementpool:belongto	model/src/yowelementpool.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+103	yowexchangemodule:creatempitypes	model/src/yowexchangemodule.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+104	yowexchangemodule:finalizeexchangemodule	model/src/yowexchangemodule.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+105	yowexchangemodule:initnbrdomains	model/src/yowexchangemodule.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+106	yowexchangemodule:pdlib_exchange1dreal	model/src/yowexchangemodule.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+107	yowexchangemodule:pdlib_exchange2dreal_zero	model/src/yowexchangemodule.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+108	yowexchangemodule:setdimsize	model/src/yowexchangemodule.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+109	yowfunction:computelistnp_listnpa_listiplg	model/src/yowfunction.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+110	yowfunction:computelistnp_listnpa_listiplg_kernel	model/src/yowfunction.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+111	yownodepool:connnodes	model/src/yownodepool.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+112	yownodepool:insertconnnode	model/src/yownodepool.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+113	yownodepool:nodes	model/src/yownodepool.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+114	yowpdlibmain:assignmesh	model/src/yowpdlibmain.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+115	yowpdlibmain:computeia_ja_posi_nnz	model/src/yowpdlibmain.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+116	yowpdlibmain:computetria_ien_si_ccon	model/src/yowpdlibmain.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+117	yowpdlibmain:exchangeghostids	model/src/yowpdlibmain.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+118	yowpdlibmain:findconndomains	model/src/yowpdlibmain.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+119	yowpdlibmain:findconnnodes	model/src/yowpdlibmain.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+120	yowpdlibmain:findghostnodes	model/src/yowpdlibmain.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+121	yowpdlibmain:initfromgriddim	model/src/yowpdlibmain.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+122	yowpdlibmain:initmpi	model/src/yowpdlibmain.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+123	yowpdlibmain:postpartition	model/src/yowpdlibmain.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+124	yowpdlibmain:postpartition2	model/src/yowpdlibmain.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+125	yowpdlibmain:prepartition	model/src/yowpdlibmain.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+126	yowpdlibmain:real_mpi_barrier_pdlib	model/src/yowpdlibmain.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+127	yowpdlibmain:runparmetis	model/src/yowpdlibmain.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+128	yowrankmodule:exchangeiplg	model/src/yowrankmodule.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
+129	yowrankmodule:initrankmodule	model/src/yowrankmodule.F90	0.00	pdlib	todo	—	no	no	—	no	—	—	none: ADR-0010	—
 —	w3snl1md:w3snl1	model/src/w3snl1md.F90:115-473	48.35	full	regtested	—	yes: kokkos/src/ww_kokkos/snl1_dia.cpp, kokkos/src/fortran_iface/snl1_shim.cpp	yes: WW3@c9a6a0c6 (h0ffmann/WW3 ww3-gpu/kokkos-st4, which carries the hoff/kokkos-snl1 hunks) calls it under WW_KOKKOS_SNL1=1	passed	yes	byte-identical on all 100 (test.comp); byte-identical on all 25 (test.comp)	nccmp-tol 71 PASS, 29 n/a, 0 FAIL; nccmp-tol 25 PASS	none: ADR-0010	kokkos/port_report/W3SNL1_KOKKOS.md
 —	pdlib_w3profsmd:pdlib_jacobi_gauss_seidel_block	model/src/w3profsmd_pdlib.F90:5463-6406	37.54	pdlib	translated	—	yes: kokkos/src/ww_kokkos/pdlib_jgs_block.hpp	no: header-only; no shim and no W3WAVE hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/PDLIB_JACOBI_GAUSS_SEIDEL_BLOCK_KOKKOS.md
 —	w3src4md:w3sds4	model/src/w3src4md.F90:2043-2659	23.23	full	wired	—	yes: kokkos/src/ww_kokkos/st4_sds4.hpp,kokkos/src/ww_kokkos/st4_libmvec.hpp,kokkos/src/fortran_iface/st4_shim.cpp	yes: WW3@c9a6a0c6 (h0ffmann/WW3 ww3-gpu/kokkos-st4) calls it under WW_KOKKOS_SDS4/SIN4/SPR4=1	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3SDS4_KOKKOS.md
 —	pdlib_w3profsmd:calcarray_jacobi_vec	model/src/w3profsmd_pdlib.F90:3531-3787	20.37	pdlib	translated	—	yes: kokkos/src/ww_kokkos/pdlib_jacobi_vec.hpp	no: header-only; no shim yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/CALCARRAY_JACOBI_VEC_KOKKOS.md
 —	w3src4md:w3sin4	model/src/w3src4md.F90:423-1003	12.66	full	wired	—	yes: kokkos/src/ww_kokkos/st4_sin4.hpp,kokkos/src/fortran_iface/st4_shim.cpp	yes: WW3@c9a6a0c6 (h0ffmann/WW3 ww3-gpu/kokkos-st4) calls it under WW_KOKKOS_SDS4/SIN4/SPR4=1	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3SIN4_KOKKOS.md
+—	w3uqckmd:w3qck1	model/src/w3uqckmd.F90:117-480	12.32	gfs	wired	—	yes: kokkos/src/ww_kokkos/prop_qck1.hpp	yes: inside the Kokkos W3KTP3 (the direction pass), under WW_KOKKOS_KTP3 at w3wavemd.F90:1864-1865 and 2224-2225 at fcdfabef	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3QCK1_KOKKOS.md
+—	w3pro3md:w3xyp3	model/src/w3pro3md.F90:641-1477	9.19	gfs	wired	—	yes: kokkos/src/ww_kokkos/prop_xyp3.hpp,kokkos/src/ww_kokkos/prop_params.hpp,kokkos/src/fortran_iface/prop3_shim.cpp,kokkos/src/fortran_iface/prop3_c.hpp	yes: WW_KOKKOS_XYP3 (opt-in, not under WW_KOKKOS_ALL), every spectral component of a step in one call in place of the W3GATH, W3XYP3, W3SCAT loop at w3wavemd.F90:2022-2023 (W3KOKKOS_XYP3 in w3kokkos_prop3md.F90, ww_xyp3_batch in kokkos/src/fortran_iface/prop3_shim.cpp) at fcdfabef; on the resident VA (ww_xyp3_batch_va) at 90631fad	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3XYP3_KOKKOS.md
+—	w3pro3md:w3ktp3	model/src/w3pro3md.F90:1519-1961	6.46	gfs	wired	—	yes: kokkos/src/ww_kokkos/prop_ktp3.hpp,kokkos/src/fortran_iface/prop3_shim.cpp,kokkos/src/fortran_iface/prop3_c.hpp	yes: WW_KOKKOS_KTP3 (opt-in, not under WW_KOKKOS_ALL), every sea point of an intra-spectral part in one call at w3wavemd.F90:1864-1865 and 2224-2225 (W3KOKKOS_KTP3 in w3kokkos_prop3md.F90, ww_ktp3_batch in kokkos/src/fortran_iface/prop3_shim.cpp) at fcdfabef; on the resident VA (ww_ktp3_batch_va) at 90631fad; on an unstructured grid without PDLIB too since 2026-10-18 (W3KOKKOS_KTP3 skips IOBP(ISEA) /= 1 as w3wavemd.F90:1904-1915 and :2286-2298 do, fork ww3-gpu/xypug-196, PATCH.md section 30, issue #196)	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3KTP3_KOKKOS.md
 —	w3srcemd:w3srce	model/src/w3srcemd.F90:190-2412	5.60	full	wired	—	yes: kokkos/src/ww_kokkos/srce_kernel.hpp,kokkos/src/ww_kokkos/srce_params.hpp,kokkos/src/ww_kokkos/snl1_team.hpp,kokkos/src/fortran_iface/srce_shim.cpp,kokkos/src/fortran_iface/shim_state.hpp	yes: WW_KOKKOS_SRCE, every sea point of a step in one launch at w3wavemd.F90:2383-2384 (W3KOKKOS_SRCE_BATCH, ww_srce_batch_va: the spectra in the resident VA, WFIP-0005 unit 2) (the per-point call at w3wavemd.F90:2461-2462 stays, reached by no build: the batch takes every non-PDLIB build and the set-up refuses PDLIB) (set-up w3initmd.F90:825) at 513954a6	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3SRCE_KOKKOS.md
+—	w3uqckmd:w3qck3	model/src/w3uqckmd.F90:925-1336	5.47	gfs	wired	—	yes: kokkos/src/ww_kokkos/prop_qck3.hpp	yes: inside the Kokkos W3XYP3 (its two sweeps), under WW_KOKKOS_XYP3 at w3wavemd.F90:2022-2023 at fcdfabef	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3QCK3_KOKKOS.md
 —	w3src4md:w3spr4	model/src/w3src4md.F90:142-384	3.12	full	wired	—	yes: kokkos/src/ww_kokkos/st4_spr4.hpp,kokkos/src/ww_kokkos/st4_libmvec.hpp,kokkos/src/fortran_iface/st4_shim.cpp	yes: WW3@c9a6a0c6 (h0ffmann/WW3 ww3-gpu/kokkos-st4) calls it under WW_KOKKOS_SDS4/SIN4/SPR4=1	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3SPR4_KOKKOS.md
-—	w3pro3md:w3xyp3	model/src/w3pro3md.F90:641-1477	2.98	full	wired	—	yes: kokkos/src/ww_kokkos/prop_xyp3.hpp,kokkos/src/ww_kokkos/prop_params.hpp,kokkos/src/fortran_iface/prop3_shim.cpp,kokkos/src/fortran_iface/prop3_c.hpp	yes: WW_KOKKOS_XYP3 (opt-in, not under WW_KOKKOS_ALL), every spectral component of a step in one call in place of the W3GATH, W3XYP3, W3SCAT loop at w3wavemd.F90:2022-2023 (W3KOKKOS_XYP3 in w3kokkos_prop3md.F90, ww_xyp3_batch in kokkos/src/fortran_iface/prop3_shim.cpp) at fcdfabef; on the resident VA (ww_xyp3_batch_va) at 90631fad	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3XYP3_KOKKOS.md
+—	w3partmd:pt_fld	model/src/w3partmd.F90:839-1156	1.74	gfs	translated	—	yes: kokkos/src/ww_kokkos/part_fld.hpp	no: called by W3KOKKOS_CPRT on the fork branch ww3-gpu/u9-cprt under WW_KOKKOS_CPRT=1, not at the WW3/ pin until the integrator merges it	pending	no	—	—	none: ADR-0010	kokkos/port_report/PT_FLD_KOKKOS.md
+—	w3iogomd:w3outg	model/src/w3iogomd.F90:1201-2380	1.55	gfs	wired	—	yes: kokkos/src/ww_kokkos/iogo_w3outg.hpp,kokkos/src/fortran_iface/outg_shim.cpp,kokkos/src/fortran_iface/outg_c.hpp	yes: WW_KOKKOS_OUTG (opt-in, not under WW_KOKKOS_ALL), in place of CALL W3OUTG at w3wavemd.F90 section 4.b (W3KOKKOS_OUTG in w3kokkos_outgmd.F90, ww_outg_va in kokkos/src/fortran_iface/outg_shim.cpp) at e0cc8ee9, on the resident VA; the Fortran W3OUTG when partitions, CALC_U3STOKES, SKEWNESS or CALC_WBT fields are requested	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3OUTG_KOKKOS.md
 —	w3sbt4md:w3sbt4	model/src/w3sbt4md.F90:340-636	1.31	pdlib	translated	—	yes: kokkos/src/ww_kokkos/srce_bt4.hpp	no: header-only; no shim and no W3SRCE hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3SBT4_KOKKOS.md
-—	w3uqckmd:w3qck3	model/src/w3uqckmd.F90:925-1336	1.14	full	wired	—	yes: kokkos/src/ww_kokkos/prop_qck3.hpp	yes: inside the Kokkos W3XYP3 (its two sweeps), under WW_KOKKOS_XYP3 at w3wavemd.F90:2022-2023 at fcdfabef	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3QCK3_KOKKOS.md
-—	w3uqckmd:w3qck1	model/src/w3uqckmd.F90:117-480	0.91	full	wired	—	yes: kokkos/src/ww_kokkos/prop_qck1.hpp	yes: inside the Kokkos W3KTP3 (the direction pass), under WW_KOKKOS_KTP3 at w3wavemd.F90:1864-1865 and 2224-2225 at fcdfabef	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3QCK1_KOKKOS.md
+—	w3gdatmd:w3dims	model/src/w3gdatmd.F90:1929-2154	0.75	gfs	translated	—	yes: kokkos/src/ww_kokkos/gdat_w3dims.hpp,kokkos/src/ww_kokkos/gdat_sgrd.hpp	no: host-only header; no shim and no W3IOGR hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3DIMS_KOKKOS.md
+—	w3wavemd:w3scat	model/src/w3wavemd.F90:3345-3644	0.71	gfs	regtested	—	yes: kokkos/src/ww_kokkos/wave_gath_scat.hpp,kokkos/src/fortran_iface/wave_support_shim.cpp	yes: WW3@357f575c (h0ffmann/WW3 ww3-gpu/kokkos-wave-support) calls it under WW_KOKKOS_SCAT=1 or WW_KOKKOS_ALL=1, through kokkos/src/fortran_iface/wave_support_shim.cpp	passed	yes	not recorded	—	none: ADR-0010	kokkos/port_report/W3SCAT_KOKKOS.md
+—	w3partmd:ptmean	model/src/w3partmd.F90:1175-1538	0.63	gfs	translated	—	yes: kokkos/src/ww_kokkos/part_ptmean.hpp	no: called by W3KOKKOS_CPRT on the fork branch ww3-gpu/u9-cprt under WW_KOKKOS_CPRT=1, not at the WW3/ pin until the integrator merges it	pending	no	—	—	none: ADR-0010	kokkos/port_report/PTMEAN_KOKKOS.md
+—	w3gsrumd:gsu_create	model/src/w3gsrumd.F90:7354-7849	0.55	gfs	translated	—	yes: kokkos/src/ww_kokkos/gsru_gsu_create.hpp	no: host-side set-up routine; no shim and no W3GNTX caller hunk yet; W3NNSC is a hook	pending	no	—	—	none: ADR-0010	kokkos/port_report/GSU_CREATE_KOKKOS.md
+—	w3wavemd:w3gath	model/src/w3wavemd.F90:3024-3329	0.55	gfs	regtested	—	yes: kokkos/src/ww_kokkos/wave_gath_scat.hpp,kokkos/src/fortran_iface/wave_support_shim.cpp	yes: WW3@357f575c (h0ffmann/WW3 ww3-gpu/kokkos-wave-support) calls it under WW_KOKKOS_GATH=1 or WW_KOKKOS_ALL=1, through kokkos/src/fortran_iface/wave_support_shim.cpp	passed	yes	not recorded	—	none: ADR-0010	kokkos/port_report/W3GATH_KOKKOS.md
+—	w3parall:init_get_isea	model/src/w3parall.F90:1396-1504	0.44	gfs	translated	—	yes: kokkos/src/ww_kokkos/parall_init_get_isea.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/INIT_GET_ISEA_KOKKOS.md
 —	w3sdb1md:w3sdb1	model/src/w3sdb1md.F90:96-382	0.39	full	wired	—	yes: kokkos/src/ww_kokkos/srce_db1.hpp	yes: inside W3SRCE/WW_KOKKOS_SRCE at 357f575c	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3SDB1_KOKKOS.md
-—	w3pro3md:w3ktp3	model/src/w3pro3md.F90:1519-1961	0.30	full	wired	—	yes: kokkos/src/ww_kokkos/prop_ktp3.hpp,kokkos/src/fortran_iface/prop3_shim.cpp,kokkos/src/fortran_iface/prop3_c.hpp	yes: WW_KOKKOS_KTP3 (opt-in, not under WW_KOKKOS_ALL), every sea point of an intra-spectral part in one call at w3wavemd.F90:1864-1865 and 2224-2225 (W3KOKKOS_KTP3 in w3kokkos_prop3md.F90, ww_ktp3_batch in kokkos/src/fortran_iface/prop3_shim.cpp) at fcdfabef; on the resident VA (ww_ktp3_batch_va) at 90631fad; on an unstructured grid without PDLIB too since 2026-10-18 (W3KOKKOS_KTP3 skips IOBP(ISEA) /= 1 as w3wavemd.F90:1904-1915 and :2286-2298 do, fork ww3-gpu/xypug-196, PATCH.md section 30, issue #196)	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3KTP3_KOKKOS.md
+—	w3partmd:ptsort	model/src/w3partmd.F90:511-613	0.28	gfs	translated	—	yes: kokkos/src/ww_kokkos/part_ptsort.hpp	no: called by W3KOKKOS_CPRT on the fork branch ww3-gpu/u9-cprt under WW_KOKKOS_CPRT=1, not at the WW3/ pin until the integrator merges it	pending	no	—	—	none: ADR-0010	kokkos/port_report/PTSORT_KOKKOS.md
+—	w3wavemd:w3wave	model/src/w3wavemd.F90:229-2997	0.28	gfs	translated	—	yes: kokkos/src/ww_kokkos/wave_w3wave.hpp,kokkos/src/ww_kokkos/wave_w3wave_state.hpp,kokkos/src/ww_kokkos/wave_w3wave_hooks.hpp	no: header-only host driver; no shim, no hook table filled, no W3WAVE hunk on the fork	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3WAVE_KOKKOS.md
 —	pdlib_w3profsmd:calcarray_jacobi_spectral_1	model/src/w3profsmd_pdlib.F90:4413-4557	0.23	pdlib	translated	—	yes: kokkos/src/ww_kokkos/pdlib_jacobi_spectral.hpp	no: header-only; no shim yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/CALCARRAY_JACOBI_SPECTRAL_1_KOKKOS.md
 —	w3sbt1md:w3sbt1	model/src/w3sbt1md.F90:88-285	0.21	full	wired	—	yes: kokkos/src/ww_kokkos/srce_bt1.hpp	yes: inside W3SRCE/WW_KOKKOS_SRCE at 357f575c	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3SBT1_KOKKOS.md
 —	w3parall:prop_freq_shift_m2	model/src/w3parall.F90:754-894	0.16	pdlib	translated	—	yes: kokkos/src/ww_kokkos/prop_parall.hpp	no: header-only device function; no shim yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/PROP_FREQ_SHIFT_M2_KOKKOS.md
-—	w3wavemd:w3scat	model/src/w3wavemd.F90:3345-3644	0.16	full	regtested	—	yes: kokkos/src/ww_kokkos/wave_gath_scat.hpp,kokkos/src/fortran_iface/wave_support_shim.cpp	yes: WW3@357f575c (h0ffmann/WW3 ww3-gpu/kokkos-wave-support) calls it under WW_KOKKOS_SCAT=1 or WW_KOKKOS_ALL=1, through kokkos/src/fortran_iface/wave_support_shim.cpp	passed	yes	not recorded	—	none: ADR-0010	kokkos/port_report/W3SCAT_KOKKOS.md
+—	w3partmd:w3part	model/src/w3partmd.F90:138-497	0.16	gfs	translated	—	yes: kokkos/src/ww_kokkos/part_w3part.hpp	no: called by W3KOKKOS_CPRT on the fork branch ww3-gpu/u9-cprt under WW_KOKKOS_CPRT=1, not at the WW3/ pin until the integrator merges it	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3PART_KOKKOS.md
 —	w3parall:prop_refraction_pr3	model/src/w3parall.F90:447-589	0.15	pdlib	translated	—	yes: kokkos/src/ww_kokkos/prop_parall.hpp	no: header-only device function; no shim yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/PROP_REFRACTION_PR3_KOKKOS.md
-—	w3wavemd:w3wave	model/src/w3wavemd.F90:229-2997	0.15	pdlib	translated	—	yes: kokkos/src/ww_kokkos/wave_w3wave.hpp,kokkos/src/ww_kokkos/wave_w3wave_state.hpp,kokkos/src/ww_kokkos/wave_w3wave_hooks.hpp	no: header-only host driver; no shim, no hook table filled, no W3WAVE hunk on the fork	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3WAVE_KOKKOS.md
 —	w3sln1md:w3sln1	model/src/w3sln1md.F90:56-211	0.13	full	wired	—	yes: kokkos/src/ww_kokkos/srce_ln1.hpp	yes: inside W3SRCE/WW_KOKKOS_SRCE at 357f575c	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3SLN1_KOKKOS.md
-—	w3wavemd:w3gath	model/src/w3wavemd.F90:3024-3329	0.11	full	regtested	—	yes: kokkos/src/ww_kokkos/wave_gath_scat.hpp,kokkos/src/fortran_iface/wave_support_shim.cpp	yes: WW3@357f575c (h0ffmann/WW3 ww3-gpu/kokkos-wave-support) calls it under WW_KOKKOS_GATH=1 or WW_KOKKOS_ALL=1, through kokkos/src/fortran_iface/wave_support_shim.cpp	passed	yes	not recorded	—	none: ADR-0010	kokkos/port_report/W3GATH_KOKKOS.md
-—	w3partmd:pt_fld	model/src/w3partmd.F90:839-1156	0.05	pdlib	translated	—	yes: kokkos/src/ww_kokkos/part_fld.hpp	no: called by W3KOKKOS_CPRT on the fork branch ww3-gpu/u9-cprt under WW_KOKKOS_CPRT=1, not at the WW3/ pin until the integrator merges it	pending	no	—	—	none: ADR-0010	kokkos/port_report/PT_FLD_KOKKOS.md
-—	w3iogomd:w3outg	model/src/w3iogomd.F90:1201-2380	0.04	pdlib	wired	—	yes: kokkos/src/ww_kokkos/iogo_w3outg.hpp,kokkos/src/fortran_iface/outg_shim.cpp,kokkos/src/fortran_iface/outg_c.hpp	yes: WW_KOKKOS_OUTG (opt-in, not under WW_KOKKOS_ALL), in place of CALL W3OUTG at w3wavemd.F90 section 4.b (W3KOKKOS_OUTG in w3kokkos_outgmd.F90, ww_outg_va in kokkos/src/fortran_iface/outg_shim.cpp) at e0cc8ee9, on the resident VA; the Fortran W3OUTG when partitions, CALC_U3STOKES, SKEWNESS or CALC_WBT fields are requested	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3OUTG_KOKKOS.md
-—	w3partmd:ptmean	model/src/w3partmd.F90:1175-1538	0.02	pdlib	translated	—	yes: kokkos/src/ww_kokkos/part_ptmean.hpp	no: called by W3KOKKOS_CPRT on the fork branch ww3-gpu/u9-cprt under WW_KOKKOS_CPRT=1, not at the WW3/ pin until the integrator merges it	pending	no	—	—	none: ADR-0010	kokkos/port_report/PTMEAN_KOKKOS.md
-—	w3partmd:ptsort	model/src/w3partmd.F90:511-613	0.02	pdlib	translated	—	yes: kokkos/src/ww_kokkos/part_ptsort.hpp	no: called by W3KOKKOS_CPRT on the fork branch ww3-gpu/u9-cprt under WW_KOKKOS_CPRT=1, not at the WW3/ pin until the integrator merges it	pending	no	—	—	none: ADR-0010	kokkos/port_report/PTSORT_KOKKOS.md
+—	w3iogrmd:w3iogr	model/src/w3iogrmd.F90:116-2236	0.12	gfs	translated	—	yes: kokkos/src/ww_kokkos/iogr_w3iogr.hpp,kokkos/src/ww_kokkos/iogr_state.hpp,kokkos/src/ww_kokkos/iogr_unformatted.hpp	no: header-only; no shim and no W3IOGR hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3IOGR_KOKKOS.md
+—	w3iosfmd:w3cprt	model/src/w3iosfmd.F90:109-344	0.12	gfs	wired	—	yes: kokkos/src/ww_kokkos/iosf_w3cprt.hpp, kokkos/src/fortran_iface/cprt_shim.cpp	yes: WW3/ pin a304018c, w3wavemd.F90:2692 (W3KOKKOS_CPRT under WW_KOKKOS_CPRT=1 and in the resident preset)	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3CPRT_KOKKOS.md
+—	w3src4md:insin4	model/src/w3src4md.F90:1014-1288	0.08	gfs	wired	—	yes: kokkos/src/ww_kokkos/st4_insin4.cpp,kokkos/src/ww_kokkos/st4_arrays.hpp	yes: WW3@c9a6a0c6 (h0ffmann/WW3 ww3-gpu/kokkos-st4) calls it under WW_KOKKOS_SDS4/SIN4/SPR4=1	pending	no	—	—	none: ADR-0010	kokkos/port_report/INSIN4_KOKKOS.md
+—	w3srcemd:calc_fpi	model/src/w3srcemd.F90:2428-2545	0.08	gfs	translated	—	yes: kokkos/src/ww_kokkos/srce_calc_fpi.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/CALC_FPI_KOKKOS.md
+—	w3adatmd:w3dima	model/src/w3adatmd.F90:847-1509	0.04	gfs	translated	—	yes: kokkos/src/ww_kokkos/adat_w3dima.hpp,kokkos/src/ww_kokkos/adat_wadat.hpp	no: host-side allocation routine; no shim and no W3INIT/W3IOGO hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3DIMA_KOKKOS.md
+—	w3gdatmd:w3setg	model/src/w3gdatmd.F90:2156-2893	0.04	gfs	translated	—	yes: kokkos/src/ww_kokkos/gdat_w3setg.hpp	no: host-side selection routine; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3SETG_KOKKOS.md
+—	w3iopomd:w3iope	model/src/w3iopomd.F90:873-1293	0.04	gfs	translated	—	yes: kokkos/src/ww_kokkos/iopo_w3iope.hpp	no: header-only host driver; no shim and no W3WAVE hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3IOPE_KOKKOS.md
+—	w3iopomd:w3iopo	model/src/w3iopomd.F90:2131-2626	0.04	gfs	translated	—	yes: kokkos/src/ww_kokkos/iopo_w3iopo.hpp,kokkos/src/ww_kokkos/iopo_state.hpp	no: header-only host driver; no shim and no W3WAVE hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3IOPO_KOKKOS.md
+—	w3iorsmd:w3iors	model/src/w3iorsmd.F90:113-1600	0.04	gfs	translated	—	yes: kokkos/src/ww_kokkos/iors_w3iors.hpp,kokkos/src/ww_kokkos/iors_stream.hpp	no: header-only host driver; no shim and no W3INIT or W3WAVE hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3IORS_KOKKOS.md
+—	w3updtmd:w3dzxy	model/src/w3updtmd.F90:3211-3529	0.04	gfs	regtested	—	yes: kokkos/src/ww_kokkos/updt_dzxy.hpp,kokkos/src/fortran_iface/wave_support_shim.cpp	yes: WW3@357f575c (h0ffmann/WW3 ww3-gpu/kokkos-wave-support) calls it under WW_KOKKOS_DZXY=1 or WW_KOKKOS_ALL=1, through kokkos/src/fortran_iface/wave_support_shim.cpp	passed	yes	not recorded	—	none: ADR-0010	kokkos/port_report/W3DZXY_KOKKOS.md
 —	pdlib_w3profsmd:apply_boundary_condition_va	model/src/w3profsmd_pdlib.F90:5037-5148	0.01	pdlib	translated	—	yes: kokkos/src/ww_kokkos/pdlib_boundary_va.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/APPLY_BOUNDARY_CONDITION_VA_KOKKOS.md
-—	w3adatmd:w3dima	model/src/w3adatmd.F90:847-1509	0.01	full	translated	—	yes: kokkos/src/ww_kokkos/adat_w3dima.hpp,kokkos/src/ww_kokkos/adat_wadat.hpp	no: host-side allocation routine; no shim and no W3INIT/W3IOGO hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3DIMA_KOKKOS.md
-—	w3gdatmd:w3dims	model/src/w3gdatmd.F90:1929-2154	0.01	full	translated	—	yes: kokkos/src/ww_kokkos/gdat_w3dims.hpp,kokkos/src/ww_kokkos/gdat_sgrd.hpp	no: host-only header; no shim and no W3IOGR hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3DIMS_KOKKOS.md
-—	w3parall:init_get_isea	model/src/w3parall.F90:1396-1504	0.01	pdlib	translated	—	yes: kokkos/src/ww_kokkos/parall_init_get_isea.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/INIT_GET_ISEA_KOKKOS.md
-—	w3partmd:w3part	model/src/w3partmd.F90:138-497	0.01	pdlib	translated	—	yes: kokkos/src/ww_kokkos/part_w3part.hpp	no: called by W3KOKKOS_CPRT on the fork branch ww3-gpu/u9-cprt under WW_KOKKOS_CPRT=1, not at the WW3/ pin until the integrator merges it	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3PART_KOKKOS.md
 —	w3src4md:calc_ustar	model/src/w3src4md.F90:1849-2011	0.01	pdlib	wired	—	yes: kokkos/src/ww_kokkos/st4_calc_ustar.hpp	yes: WW3@c9a6a0c6 (h0ffmann/WW3 ww3-gpu/kokkos-st4) calls it under WW_KOKKOS_SDS4/SIN4/SPR4=1	pending	no	—	—	none: ADR-0010	kokkos/port_report/CALC_USTAR_KOKKOS.md
 —	w3updtmd:w3ulev	model/src/w3updtmd.F90:2066-2614	0.01	pdlib	translated	—	yes: kokkos/src/ww_kokkos/updt_w3ulev.hpp	no: header-only launcher; no shim and no W3WAVE hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3ULEV_KOKKOS.md
 —	w3updtmd:w3uwnd	model/src/w3updtmd.F90:488-822	0.01	full	regtested	—	yes: kokkos/src/ww_kokkos/updt_uwnd.hpp,kokkos/src/fortran_iface/wave_support_shim.cpp	yes: WW3@357f575c (h0ffmann/WW3 ww3-gpu/kokkos-wave-support) calls it under WW_KOKKOS_UWND=1 or WW_KOKKOS_ALL=1, through kokkos/src/fortran_iface/wave_support_shim.cpp	passed	yes	not recorded	—	none: ADR-0010	kokkos/port_report/W3UWND_KOKKOS.md
@@ -145,52 +193,44 @@ priority	routine	ww3_file	self_pct	profile	state	claim	translated	wired	checkpoi
 —	w3adatmd:w3dmnl	model/src/w3adatmd.F90:2426-2623	0.00	full	translated	—	yes: kokkos/src/ww_kokkos/adat_w3dmnl.hpp	no: host-side allocation routine; no shim and no INSNL1 hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3DMNL_KOKKOS.md
 —	w3adatmd:w3naux	model/src/w3adatmd.F90:705-831	0.00	full	translated	—	yes: kokkos/src/ww_kokkos/adat_w3naux.hpp,kokkos/src/ww_kokkos/adat_wadat.hpp	no: host-side set-up routine; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3NAUX_KOKKOS.md
 —	w3adatmd:w3seta	model/src/w3adatmd.F90:2638-3100	0.00	full	translated	—	yes: kokkos/src/ww_kokkos/adat_w3seta.hpp	no: host-side selection routine; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3SETA_KOKKOS.md
-—	w3adatmd:w3xdma	model/src/w3adatmd.F90:1522-2409	0.00	pdlib	translated	—	yes: kokkos/src/ww_kokkos/adat_w3xdma.hpp,kokkos/src/ww_kokkos/adat_w3xdma_wadat.hpp	no: host-side allocation routine; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3XDMA_KOKKOS.md
-—	w3adatmd:w3xeta	model/src/w3adatmd.F90:3112-3300	0.00	pdlib	translated	—	yes: kokkos/src/ww_kokkos/adat_w3xeta.hpp	no: host-side pointer selection; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3XETA_KOKKOS.md
+—	w3adatmd:w3xdma	model/src/w3adatmd.F90:1522-2409	0.00	gfs	translated	—	yes: kokkos/src/ww_kokkos/adat_w3xdma.hpp,kokkos/src/ww_kokkos/adat_w3xdma_wadat.hpp	no: host-side allocation routine; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3XDMA_KOKKOS.md
+—	w3adatmd:w3xeta	model/src/w3adatmd.F90:3112-3300	0.00	gfs	translated	—	yes: kokkos/src/ww_kokkos/adat_w3xeta.hpp	no: host-side pointer selection; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3XETA_KOKKOS.md
 —	w3dispmd:distab	model/src/w3dispmd.F90:552-683	0.00	full	regtested	—	yes: kokkos/src/ww_kokkos/disp_distab.hpp,kokkos/src/fortran_iface/wave_support_shim.cpp	yes: WW3@357f575c (h0ffmann/WW3 ww3-gpu/kokkos-wave-support) calls it under WW_KOKKOS_DISTAB=1 or WW_KOKKOS_ALL=1, through kokkos/src/fortran_iface/wave_support_shim.cpp	passed	yes	not recorded	—	none: ADR-0010	kokkos/port_report/DISTAB_KOKKOS.md
 —	w3dispmd:wavnu1	model/src/w3dispmd.F90:85-202	0.00	full	translated	—	yes: kokkos/src/ww_kokkos/prop_wavnu1.hpp	no: called by W3KOKKOS_CPRT on the fork branch ww3-gpu/u9-cprt under WW_KOKKOS_CPRT=1, not at the WW3/ pin until the integrator merges it	pending	no	—	—	none: ADR-0010	kokkos/port_report/WAVNU1_KOKKOS.md
 —	w3dispmd:wavnu2	model/src/w3dispmd.F90:204-346	0.00	full	regtested	—	yes: kokkos/src/ww_kokkos/disp_distab.hpp,kokkos/src/fortran_iface/wave_support_shim.cpp	yes: WW3@357f575c (h0ffmann/WW3 ww3-gpu/kokkos-wave-support) calls it inside DISTAB under WW_KOKKOS_DISTAB=1 or WW_KOKKOS_ALL=1, through kokkos/src/fortran_iface/wave_support_shim.cpp	passed	yes	not recorded	—	none: ADR-0010	kokkos/port_report/WAVNU2_KOKKOS.md
 —	w3dispmd:wavnu3	model/src/w3dispmd.F90:348-454	0.00	pdlib	translated	—	yes: kokkos/src/ww_kokkos/disp_wavnu3.hpp	no: header-only device function; no shim yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/WAVNU3_KOKKOS.md
-—	w3fldsmd:w3fldg	model/src/w3fldsmd.F90:935-1474	0.00	pdlib	translated	—	yes: kokkos/src/ww_kokkos/flds_w3fldg.hpp	no: host-staged field I/O routine; no shim and no ww3_shel hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3FLDG_KOKKOS.md
+—	w3fld1md:infld	model/src/w3fld1md.F90:781-875	0.00	gfs	translated	—	yes: kokkos/src/ww_kokkos/fld1_infld.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/INFLD_KOKKOS.md
+—	w3fld1md:sig2wn	model/src/w3fld1md.F90:1174-1247	0.00	gfs	translated	—	yes: kokkos/src/ww_kokkos/fld1_sig2wn.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/SIG2WN_KOKKOS.md
+—	w3fld1md:wnd2z0m	model/src/w3fld1md.F90:1251-1375	0.00	gfs	translated	—	yes: kokkos/src/ww_kokkos/fld1_wnd2z0m.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/WND2Z0M_KOKKOS.md
+—	w3fldsmd:w3fldg	model/src/w3fldsmd.F90:935-1474	0.00	gfs	translated	—	yes: kokkos/src/ww_kokkos/flds_w3fldg.hpp	no: host-staged field I/O routine; no shim and no ww3_shel hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3FLDG_KOKKOS.md
 —	w3fldsmd:w3fldh	model/src/w3fldsmd.F90:2149-2504	0.00	full	translated	—	yes: kokkos/src/ww_kokkos/flds_w3fldh.hpp	no: host-side driver; no shim and no ww3_shel hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3FLDH_KOKKOS.md
-—	w3fldsmd:w3fldo	model/src/w3fldsmd.F90:89-514	0.00	pdlib	translated	—	yes: kokkos/src/ww_kokkos/flds_w3fldo.hpp	no: host-only file open; no shim and no ww3_shel hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3FLDO_KOKKOS.md
-—	w3gdatmd:w3setg	model/src/w3gdatmd.F90:2156-2893	0.00	full	translated	—	yes: kokkos/src/ww_kokkos/gdat_w3setg.hpp	no: host-side selection routine; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3SETG_KOKKOS.md
-—	w3gsrumd:gsu_create	model/src/w3gsrumd.F90:7354-7849	0.00	full	translated	—	yes: kokkos/src/ww_kokkos/gsru_gsu_create.hpp	no: host-side set-up routine; no shim and no W3GNTX caller hunk yet; W3NNSC is a hook	pending	no	—	—	none: ADR-0010	kokkos/port_report/GSU_CREATE_KOKKOS.md
+—	w3fldsmd:w3fldo	model/src/w3fldsmd.F90:89-514	0.00	gfs	translated	—	yes: kokkos/src/ww_kokkos/flds_w3fldo.hpp	no: host-only file open; no shim and no ww3_shel hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3FLDO_KOKKOS.md
 —	w3initmd:w3init	model/src/w3initmd.F90:163-1683	0.00	full	translated	—	yes: kokkos/src/ww_kokkos/init_w3init.hpp	no: header-only host sequencer; no shim, no hook filled, no W3INIT hunk on the fork	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3INIT_KOKKOS.md
-—	w3initmd:w3mpio	model/src/w3initmd.F90:2045-5384	0.00	pdlib	translated	—	yes: kokkos/src/ww_kokkos/init_w3mpio.hpp	no: header-only no-op; W3INIT does not call W3MPIO under SHRD, no shim and no W3INIT hunk	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3MPIO_KOKKOS.md
+—	w3initmd:w3mpio	model/src/w3initmd.F90:2045-5384	0.00	gfs	translated	—	yes: kokkos/src/ww_kokkos/init_w3mpio.hpp	no: header-only no-op; W3INIT does not call W3MPIO under SHRD, no shim and no W3INIT hunk	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3MPIO_KOKKOS.md
 —	w3iobcmd:w3iobc	model/src/w3iobcmd.F90:100-852	0.00	pdlib	translated	—	yes: kokkos/src/ww_kokkos/iobc_w3iobc.hpp	no: header-only host driver with one gather kernel; no shim and no W3WAVE hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3IOBC_KOKKOS.md
 —	w3iogomd:w3fldtoij	model/src/w3iogomd.F90:764-1188	0.00	full	translated	—	yes: kokkos/src/ww_kokkos/iogo_w3fldtoij.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3FLDTOIJ_KOKKOS.md
 —	w3iogomd:w3flgrdflag	model/src/w3iogomd.F90:589-749	0.00	full	translated	—	yes: kokkos/src/ww_kokkos/iogo_w3flgrdflag.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3FLGRDFLAG_KOKKOS.md
 —	w3iogomd:w3flgrdupdt	model/src/w3iogomd.F90:179-318	0.00	full	translated	—	yes: kokkos/src/ww_kokkos/iogo_w3flgrdupdt.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3FLGRDUPDT_KOKKOS.md
-—	w3iogomd:w3iogo	model/src/w3iogomd.F90:2395-4097	0.00	pdlib	translated	—	yes: kokkos/src/ww_kokkos/iogo_w3iogo.hpp	no: header-only host I/O routine; no shim and no W3WAVE hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3IOGO_KOKKOS.md
-—	w3iogrmd:w3iogr	model/src/w3iogrmd.F90:116-2236	0.00	full	translated	—	yes: kokkos/src/ww_kokkos/iogr_w3iogr.hpp,kokkos/src/ww_kokkos/iogr_state.hpp,kokkos/src/ww_kokkos/iogr_unformatted.hpp	no: header-only; no shim and no W3IOGR hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3IOGR_KOKKOS.md
-—	w3iopomd:w3iope	model/src/w3iopomd.F90:873-1293	0.00	pdlib	translated	—	yes: kokkos/src/ww_kokkos/iopo_w3iope.hpp	no: header-only host driver; no shim and no W3WAVE hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3IOPE_KOKKOS.md
-—	w3iopomd:w3iopo	model/src/w3iopomd.F90:2131-2626	0.00	pdlib	translated	—	yes: kokkos/src/ww_kokkos/iopo_w3iopo.hpp,kokkos/src/ww_kokkos/iopo_state.hpp	no: header-only host driver; no shim and no W3WAVE hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3IOPO_KOKKOS.md
-—	w3iopomd:w3iopp	model/src/w3iopomd.F90:242-859	0.00	pdlib	translated	—	yes: kokkos/src/ww_kokkos/iopo_w3iopp.hpp,kokkos/src/ww_kokkos/iopo_state.hpp	no: header-only host driver; no shim and no W3INIT hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3IOPP_KOKKOS.md
-—	w3iorsmd:w3iors	model/src/w3iorsmd.F90:113-1600	0.00	full	translated	—	yes: kokkos/src/ww_kokkos/iors_w3iors.hpp,kokkos/src/ww_kokkos/iors_stream.hpp	no: header-only host driver; no shim and no W3INIT or W3WAVE hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3IORS_KOKKOS.md
-—	w3iosfmd:w3cprt	model/src/w3iosfmd.F90:109-344	0.00	pdlib	wired	—	yes: kokkos/src/ww_kokkos/iosf_w3cprt.hpp, kokkos/src/fortran_iface/cprt_shim.cpp	yes: WW3/ pin a304018c, w3wavemd.F90:2692 (W3KOKKOS_CPRT under WW_KOKKOS_CPRT=1 and in the resident preset)	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3CPRT_KOKKOS.md
+—	w3iogomd:w3iogo	model/src/w3iogomd.F90:2395-4097	0.00	gfs	translated	—	yes: kokkos/src/ww_kokkos/iogo_w3iogo.hpp	no: header-only host I/O routine; no shim and no W3WAVE hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3IOGO_KOKKOS.md
+—	w3iopomd:w3iopp	model/src/w3iopomd.F90:242-859	0.00	gfs	translated	—	yes: kokkos/src/ww_kokkos/iopo_w3iopp.hpp,kokkos/src/ww_kokkos/iopo_state.hpp	no: header-only host driver; no shim and no W3INIT hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3IOPP_KOKKOS.md
 —	w3parall:get_jsea_ibelong	model/src/w3parall.F90:1265-1384	0.00	pdlib	translated	—	yes: kokkos/src/ww_kokkos/parall_get_jsea_ibelong.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/GET_JSEA_IBELONG_KOKKOS.md
-—	w3parall:init_get_jsea_isproc	model/src/w3parall.F90:1152-1252	0.00	pdlib	translated	—	yes: kokkos/src/ww_kokkos/parall_init_get_jsea_isproc.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/INIT_GET_JSEA_ISPROC_KOKKOS.md
+—	w3parall:init_get_jsea_isproc	model/src/w3parall.F90:1152-1252	0.00	gfs	translated	—	yes: kokkos/src/ww_kokkos/parall_init_get_jsea_isproc.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/INIT_GET_JSEA_ISPROC_KOKKOS.md
 —	w3parall:set_up_nseal_nsealm	model/src/w3parall.F90:1030-1139	0.00	full	translated	—	yes: kokkos/src/ww_kokkos/parall_set_up_nseal_nsealm.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/SET_UP_NSEAL_NSEALM_KOKKOS.md
-—	w3partmd:ptnghb	model/src/w3partmd.F90:630-821	0.00	pdlib	translated	—	yes: kokkos/src/ww_kokkos/part_ptnghb.hpp	no: called by W3KOKKOS_CPRT on the fork branch ww3-gpu/u9-cprt under WW_KOKKOS_CPRT=1, not at the WW3/ pin until the integrator merges it	pending	no	—	—	none: ADR-0010	kokkos/port_report/PTNGHB_KOKKOS.md
+—	w3partmd:ptnghb	model/src/w3partmd.F90:630-821	0.00	gfs	translated	—	yes: kokkos/src/ww_kokkos/part_ptnghb.hpp	no: called by W3KOKKOS_CPRT on the fork branch ww3-gpu/u9-cprt under WW_KOKKOS_CPRT=1, not at the WW3/ pin until the integrator merges it	pending	no	—	—	none: ADR-0010	kokkos/port_report/PTNGHB_KOKKOS.md
 —	w3pro3md:w3map3	model/src/w3pro3md.F90:139-518	0.00	full	regtested	—	yes: kokkos/src/ww_kokkos/prop_map3.hpp,kokkos/src/fortran_iface/wave_support_shim.cpp	yes: WW3@357f575c (h0ffmann/WW3 ww3-gpu/kokkos-wave-support) calls it under WW_KOKKOS_MAP3=1 or WW_KOKKOS_ALL=1, through kokkos/src/fortran_iface/wave_support_shim.cpp	passed	yes	not recorded	—	none: ADR-0010	kokkos/port_report/W3MAP3_KOKKOS.md
 —	w3pro3md:w3mapt	model/src/w3pro3md.F90:527-625	0.00	full	regtested	—	yes: kokkos/src/ww_kokkos/prop_mapt.hpp,kokkos/src/fortran_iface/wave_support_shim.cpp	yes: WW3@357f575c (h0ffmann/WW3 ww3-gpu/kokkos-wave-support) calls it under WW_KOKKOS_MAPT=1 or WW_KOKKOS_ALL=1, through kokkos/src/fortran_iface/wave_support_shim.cpp	passed	yes	not recorded	—	none: ADR-0010	kokkos/port_report/W3MAPT_KOKKOS.md
 —	w3sbt4md:insbt4	model/src/w3sbt4md.F90:145-231	0.00	pdlib	translated	—	yes: kokkos/src/ww_kokkos/srce_bt4.hpp	no: header-only; no shim and no W3SRCE hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/INSBT4_KOKKOS.md
 —	w3sbt4md:tabu_erf	model/src/w3sbt4md.F90:242-312	0.00	pdlib	translated	—	yes: kokkos/src/ww_kokkos/srce_bt4.hpp	no: header-only; no shim and no W3SRCE hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/TABU_ERF_KOKKOS.md
 —	w3snl1md:insnl1	model/src/w3snl1md.F90:483-786	0.00	full	regtested	—	yes: kokkos/src/ww_kokkos/snl1_tables.cpp, kokkos/src/fortran_iface/snl1_shim.cpp	yes: WW3@c9a6a0c6 (h0ffmann/WW3 ww3-gpu/kokkos-st4, which carries the hoff/kokkos-snl1 hunks) calls it under WW_KOKKOS_SNL1=1	passed	yes	not recorded	—	none: ADR-0010	kokkos/port_report/INSNL1_KOKKOS.md
-—	w3src4md:insin4	model/src/w3src4md.F90:1014-1288	0.00	full	wired	—	yes: kokkos/src/ww_kokkos/st4_insin4.cpp,kokkos/src/ww_kokkos/st4_arrays.hpp	yes: WW3@c9a6a0c6 (h0ffmann/WW3 ww3-gpu/kokkos-st4) calls it under WW_KOKKOS_SDS4/SIN4/SPR4=1	pending	no	—	—	none: ADR-0010	kokkos/port_report/INSIN4_KOKKOS.md
-—	w3updtmd:w3dzxy	model/src/w3updtmd.F90:3211-3529	0.00	full	regtested	—	yes: kokkos/src/ww_kokkos/updt_dzxy.hpp,kokkos/src/fortran_iface/wave_support_shim.cpp	yes: WW3@357f575c (h0ffmann/WW3 ww3-gpu/kokkos-wave-support) calls it under WW_KOKKOS_DZXY=1 or WW_KOKKOS_ALL=1, through kokkos/src/fortran_iface/wave_support_shim.cpp	passed	yes	not recorded	—	none: ADR-0010	kokkos/port_report/W3DZXY_KOKKOS.md
 —	w3updtmd:w3utrn	model/src/w3updtmd.F90:2809-3194	0.00	full	wired	—	yes: kokkos/src/ww_kokkos/updt_utrn.hpp,kokkos/src/fortran_iface/wave_support_shim.cpp	yes: WW3@357f575c (h0ffmann/WW3 ww3-gpu/kokkos-wave-support) calls it under WW_KOKKOS_UTRN=1 or WW_KOKKOS_ALL=1, through kokkos/src/fortran_iface/wave_support_shim.cpp	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3UTRN_KOKKOS.md
+—	wminiomd:wmioeg	model/src/wminiomd.F90:3258-3262	0.00	gfs	regtested	—	yes: kokkos/src/fortran_iface/resident_shim.cpp	yes: WW3/ pin a304018c, wminiomd.F90:3341-3363 and :3457-3463 (column read before 2.a, column write after 2.b, under the resident VA)	passed	yes	not recorded	—	none: ADR-0010	kokkos/port_report/WMIOEG_KOKKOS.md
 —	pdlib_w3profsmd:pdlib_explicit_block	model/src/w3profsmd_pdlib.F90:6408-6685	—	—	translated	—	yes: kokkos/src/ww_kokkos/pdlib_explicit_block.hpp	no: header-only; no shim yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/PDLIB_EXPLICIT_BLOCK_KOKKOS.md
 —	pdlib_w3profsmd:pdlib_w3xypfsfct2	model/src/w3profsmd_pdlib.F90:1504-1877	—	—	translated	—	yes: kokkos/src/ww_kokkos/pdlib_fsfct2.hpp	no: header-only; no shim yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/PDLIB_W3XYPFSFCT2_KOKKOS.md
 —	pdlib_w3profsmd:pdlib_w3xypfsn2	model/src/w3profsmd_pdlib.F90:868-1200	—	—	translated	—	yes: kokkos/src/ww_kokkos/pdlib_fsn2.hpp, kokkos/src/ww_kokkos/pdlib_params.hpp	no: header-only; no shim and no PDLIB_W3XYPUG hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/PDLIB_W3XYPFSN2_KOKKOS.md
 —	pdlib_w3profsmd:pdlib_w3xypfspsi2	model/src/w3profsmd_pdlib.F90:1202-1502	—	—	translated	—	yes: kokkos/src/ww_kokkos/pdlib_fspsi2.hpp, kokkos/src/ww_kokkos/pdlib_params.hpp	no: header-only; no shim and no PDLIB_W3XYPUG hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/PDLIB_W3XYPFSPSI2_KOKKOS.md
 —	pdlib_w3profsmd:pdlib_w3xypug	model/src/w3profsmd_pdlib.F90:626-866	—	—	translated	—	yes: kokkos/src/ww_kokkos/pdlib_w3xypug.hpp	no: header-only; no shim and no W3WAVE hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/PDLIB_W3XYPUG_KOKKOS.md
 —	w3dispmd:wavnu_local	model/src/w3dispmd.F90:456-547	—	—	translated	—	yes: kokkos/src/ww_kokkos/disp_wavnu3.hpp	no: header-only device function; unreachable in WW3 as built	pending	no	—	—	none: ADR-0010	kokkos/port_report/WAVNU_LOCAL_KOKKOS.md
-—	w3fld1md:infld	model/src/w3fld1md.F90:781-875	—	—	translated	—	yes: kokkos/src/ww_kokkos/fld1_infld.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/INFLD_KOKKOS.md
-—	w3fld1md:sig2wn	model/src/w3fld1md.F90:1174-1247	—	—	translated	—	yes: kokkos/src/ww_kokkos/fld1_sig2wn.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/SIG2WN_KOKKOS.md
 —	w3fld1md:wnd2sat	model/src/w3fld1md.F90:1377-1473	—	—	translated	—	yes: kokkos/src/ww_kokkos/fld1_wnd2sat.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3FLD1MD_WND2SAT_KOKKOS.md
-—	w3fld1md:wnd2z0m	model/src/w3fld1md.F90:1251-1375	—	—	translated	—	yes: kokkos/src/ww_kokkos/fld1_wnd2z0m.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/WND2Z0M_KOKKOS.md
 —	w3fld2md:wnd2sat	model/src/w3fld2md.F90:592-687	—	—	translated	—	yes: kokkos/src/ww_kokkos/fld2_wnd2sat.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3FLD2MD_WND2SAT_KOKKOS.md
 —	w3flx1md:w3flx1	model/src/w3flx1md.F90:88-200	—	—	wired	—	yes: kokkos/src/ww_kokkos/srce_flx1.hpp	yes: WW_KOKKOS_FLX1, w3srcemd.F90:1308 at 357f575c	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3FLX1_KOKKOS.md
 —	w3flx2md:w3flx2	model/src/w3flx2md.F90:90-230	—	—	wired	—	yes: kokkos/src/ww_kokkos/srce_flx2.hpp	yes: WW_KOKKOS_FLX2, w3srcemd.F90:1319, :2287 at 357f575c	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3FLX2_KOKKOS.md
@@ -360,7 +400,6 @@ priority	routine	ww3_file	self_pct	profile	state	claim	translated	wired	checkpoi
 —	w3src6md:w3sds6	model/src/w3src6md.F90:566-770	—	—	wired	—	yes: kokkos/src/ww_kokkos/srce_st6_sds6.hpp	yes: WW_KOKKOS_SDS6, w3srcemd.F90:1636 at 357f575c	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3SDS6_KOKKOS.md
 —	w3src6md:w3sin6	model/src/w3src6md.F90:298-539	—	—	wired	—	yes: kokkos/src/ww_kokkos/srce_st6_sin6.hpp	yes: WW_KOKKOS_SIN6, w3srcemd.F90:1509 at 357f575c	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3SIN6_KOKKOS.md
 —	w3src6md:w3spr6	model/src/w3src6md.F90:129-264	—	—	wired	—	yes: kokkos/src/ww_kokkos/srce_st6_spr6.hpp	yes: WW_KOKKOS_SPR6, w3srcemd.F90:1290, :2275 at 357f575c	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3SPR6_KOKKOS.md
-—	w3srcemd:calc_fpi	model/src/w3srcemd.F90:2428-2545	—	—	translated	—	yes: kokkos/src/ww_kokkos/srce_calc_fpi.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/CALC_FPI_KOKKOS.md
 —	w3srcemd:sign_vsd_patankar_ww3	model/src/w3srcemd.F90:2647-2722	—	—	translated	—	yes: kokkos/src/ww_kokkos/srce_sign_vsd_patankar_ww3.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/SIGN_VSD_PATANKAR_WW3_KOKKOS.md
 —	w3srcemd:sign_vsd_semi_implicit_ww3	model/src/w3srcemd.F90:2559-2633	—	—	translated	—	yes: kokkos/src/ww_kokkos/srce_sign_vsd_semi_implicit_ww3.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/SIGN_VSD_SEMI_IMPLICIT_WW3_KOKKOS.md
 —	w3str1md:w3str1	model/src/w3str1md.F90:183-543	—	—	translated	—	yes: kokkos/src/ww_kokkos/srce_tr1.hpp	no: header-only device function; no shim and no W3SRCE hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/W3STR1_KOKKOS.md
@@ -409,5 +448,4 @@ priority	routine	ww3_file	self_pct	profile	state	claim	translated	wired	checkpoi
 —	w3wavset:trig_compute_lh_stress	model/src/w3wavset.F90:448-584	—	—	translated	—	yes: kokkos/src/ww_kokkos/wavset_trig_compute_lh_stress.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/TRIG_COMPUTE_LH_STRESS_KOKKOS.md
 —	w3wavset:trig_wave_setup_apply_fct	model/src/w3wavset.F90:1020-1107	—	—	translated	—	yes: kokkos/src/ww_kokkos/wavset_trig_wave_setup_apply_fct.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/TRIG_WAVE_SETUP_APPLY_FCT_KOKKOS.md
 —	w3wavset:trig_wave_setup_apply_precond	model/src/w3wavset.F90:892-1005	—	—	translated	—	yes: kokkos/src/ww_kokkos/wavset_trig_wave_setup_apply_precond.hpp	no: header-only; no shim and no caller hunk yet	pending	no	—	—	none: ADR-0010	kokkos/port_report/TRIG_WAVE_SETUP_APPLY_PRECOND_KOKKOS.md
-—	wminiomd:wmioeg	model/src/wminiomd.F90:3258-3262	—	—	regtested	—	yes: kokkos/src/fortran_iface/resident_shim.cpp	yes: WW3/ pin a304018c, wminiomd.F90:3341-3363 and :3457-3463 (column read before 2.a, column write after 2.b, under the resident VA)	passed	yes	not recorded	—	none: ADR-0010	kokkos/port_report/WMIOEG_KOKKOS.md
 —	wminiomd:wmiohg	model/src/wminiomd.F90:2260-2266	—	—	regtested	—	yes: kokkos/src/fortran_iface/resident_shim.cpp	yes: WW3/ pin a304018c, wminiomd.F90:2318-2327 (W3KOKKOS_VA_WRITE_COLS after the store loop, under the resident VA)	passed	yes	not recorded	—	none: ADR-0010	kokkos/port_report/WMIOHG_KOKKOS.md
