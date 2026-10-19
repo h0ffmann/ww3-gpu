@@ -2251,10 +2251,10 @@ binds it on the first sync, `w3kokkos_residentmd.F90:68-70`), so it needs no syn
   16 and 13 uses of `VA` in the last two (v, `git show`). The pin move to that branch
   ([plan](../../../docs/compound/plans/2026-10-18-004-pin-gfs-v17-plan.md)) lists and syncs them.
 
-## 30. `W3XYPUG` and `W3KTP3` on an unstructured grid, `ww3-gpu/xypug-196`
+## 30. `W3XYPUG` and `W3KTP3` on an unstructured grid, `ww3-gpu/xypug-196-rebased`
 
-Fork commits `14525d7c`, `05482109` (`find_package(ww_kokkos 0.11)`) and `84df86e0` (the `MAPSTA`
-size check) on `50a10730` (`ww3-gpu/integ-fixes`), 2026-10-18, branch `ww3-gpu/xypug-196`; issue #196.
+Fork commits `e299fa92`, `43601904` (`find_package(ww_kokkos 0.11)`) and `aa382393` (the `MAPSTA`
+size check) on `fac74069` (`ww3-gpu/strict-outg`), 2026-10-18, branch `ww3-gpu/xypug-196-rebased`; issue #196.
 `ww3_tp2.6` (the LIMON unstructured grid, `EXPFSN = T`, `SHRD PR3 UQ`, no `PDLIB`) stopped under
 the `resident` preset: `W3KOKKOS_PROP3_SETUP` gave `XYP3` and `KTP3` unsupported on `UNGTYPE`, so
 `KOKKOS_PART ( 'XYP3', .FALSE. )` stopped the model in `W3INIT` (`w3kokkosmd.F90:1233-1251`). The
@@ -2262,7 +2262,7 @@ part keeps its name: `XYP3` is `W3WAVE` section 3.6.3's spatial step, which on `
 `W3XYPUG`. The C entry point is `ww_xypug_batch_va` of [`xypug_c.hpp`](xypug_c.hpp), a new entry
 point, so the package version is `0.11.0` and the fork asks for `0.11`.
 
-The hunks, at `14525d7c`:
+The hunks, at `e299fa92`:
 
 - **The set-up** (`w3kokkos_prop3md.F90:132-180`). Inside the `PR3`-and-`UQ` branch, `OKU` is
   `GTYPE == UNGTYPE`, false under `PDLIB`, `MGP` or `MGG` as `OKG` is. `KTP3` is supported on
@@ -2270,7 +2270,7 @@ The hunks, at `14525d7c`:
   `SHRD`, no `REF1` (`W3XYPFSN2` has a `REF1` branch, `w3profsmd.F90:682-686`), and the N scheme:
   `FSN` true, `FSPSI`, `FSFCT`, `FSNIMP` false. Every other case gives `.FALSE.` as before, so a set
   flag or a preset stops and `WW_KOKKOS_ALL=1` falls back and counts.
-- **`W3KOKKOS_XYPUG ( FACX, FACY, DTG, LCALC )`** (`w3kokkos_prop3md.F90:261-350` at `84df86e0`) and its
+- **`W3KOKKOS_XYPUG ( FACX, FACY, DTG, LCALC )`** (`w3kokkos_prop3md.F90:261-350` at `aa382393`) and its
   interface block (`:103-119`). It packs `ON(ISPEC) = IAPPRO(ISPEC) == IAPROC` as `W3KOKKOS_XYP3`
   does, calls `SETDEPTH` once, widens `IOBP` (`INTEGER*2`), `IOBPD`, `IOBDP`, `IOBPA` (`INTEGER*1`)
   into `SAVE`d `C_INT` arrays (resized when `NSPEC`, `NX` or `NTH` change), computes `RD1`, `RD2`
@@ -2281,17 +2281,17 @@ The hunks, at `14525d7c`:
   arrays are not allocated then, and `W3XYPFSN2` reads them only under `FLBPI`
   (`w3profsmd.F90:694-720`). A non-zero status stops through `PROP3_CHECK` (`EXTCDE`). It
   re-checks at the call that the grid is `UNGTYPE` with `FSN`, for a later grid of a multi-grid run,
-  and that `MAPSTA` holds `NX` nodes (`NY = 1`), which the shim relies on (`84df86e0`).
+  and that `MAPSTA` holds `NX` nodes (`NY = 1`), which the shim relies on (`aa382393`).
 - **The call site** (`w3wavemd.F90:2053-2060`). Under `KOKKOS_XYP3`, `GTYPE == UNGTYPE` calls
   `W3KOKKOS_XYPUG ( FACX, FACX, DTG, UGDTUPDATE )`, the arguments `W3WAVE` gives `W3XYPUG`
   (`:2097-2103`; `FACX` is `1./(DERA*RADIUS)` with `FLAGLL`, else `1.`, set at `:1994-1999` just
   before). Other grids call `W3KOKKOS_XYP3` as before; with `WW_KOKKOS_XYP3=0` the original
   `DO ISPEC` loop runs. Without `KOKKOS`, `gfortran -E -P` of the file is the same as at
-  `50a10730` (v).
-- **`W3KOKKOS_KTP3`** (`w3kokkos_prop3md.F90:351-431` at `84df86e0`). The stop for a grid that is not regular
+  `fac74069`, for the switch words of `switch_lab_shrd` and of `ww3_tp2.6` (v, 2026-10-19).
+- **`W3KOKKOS_KTP3`** (`w3kokkos_prop3md.F90:351-431` at `aa382393`). The stop for a grid that is not regular
   or curvilinear now lets `UNGTYPE` through, and on `UNGTYPE` a point with `IOBP(ISEA) /= 1` is
   skipped before the `MAPSTA(IY,IX) == 1` test (`:399-402`). Both sections do that on a grid
-  without `PDLIB` (`w3wavemd.F90:1904-1914` for 3.6.2, `:2288-2298` for 3.6.4, at `14525d7c`);
+  without `PDLIB` (`w3wavemd.F90:1904-1914` for 3.6.2, `:2288-2298` for 3.6.4, at `e299fa92`);
   they differ only in where `DEPTH = MAX ( DMIN, DW(ISEA) )` is computed (inside the `MAPSTA` test
   in 3.6.2, `:1915`, before the `IOBP` test in 3.6.4, `:2286`), which gives the same value, since
   the loop writes neither `DW` nor `DMIN`. So one selection serves both call sites

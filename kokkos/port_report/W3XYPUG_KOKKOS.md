@@ -80,7 +80,7 @@ parity verdict under the resident preset instead of the start-up stop
 | Routines translated | `W3XYPUG` (`w3profsmd.F90:69-272`), `W3XYPFSN2` (`:470-727`, see [W3XYPFSN2](W3XYPFSN2_KOKKOS.md)), `W3GATH` and `W3SCAT` under `W3_SHRD` |
 | Not translated | `SETDEPTH` (`:1601-1678`): the Fortran wrapper calls it once per step instead of once per component. It writes only `IOBDP` (`:1672-1676`) from `DW` and `DMIN` (`:1650-1651`), and the replaced loop writes neither, so `IOBDP` has the same bits (v, read 2026-10-18). `W3CFLUG` (`:274-467`): called only for the CFL output field (`w3wavemd.F90:1776`, `FLOGRD(9,3)`), and it does not read `VA` |
 | Kokkos code | [`ug_xypug.hpp`](../src/ww_kokkos/ug_xypug.hpp), [`xypug_shim.cpp`](../src/fortran_iface/xypug_shim.cpp), [`xypug_c.hpp`](../src/fortran_iface/xypug_c.hpp) (argument table), package `ww_kokkos` 0.11.0 |
-| Fortran caller | fork branch `ww3-gpu/xypug-196`: `W3KOKKOS_XYPUG` and the set-up in `w3kokkos_prop3md.F90`, the call-site hunk in `w3wavemd.F90`; the Fortran loop stays selectable with `WW_KOKKOS_XYP3=0` |
+| Fortran caller | fork branch `ww3-gpu/xypug-196-rebased`: `W3KOKKOS_XYPUG` and the set-up in `w3kokkos_prop3md.F90`, the call-site hunk in `w3wavemd.F90`; the Fortran loop stays selectable with `WW_KOKKOS_XYP3=0` |
 | Covered | `SHRD`, `PR3` with `UQ`, scheme `FSN` alone (`FSPSI`, `FSFCT`, `FSNIMP` false), no `PDLIB`, `MGP`, `MGG`, `REF1`. Every other case keeps the start-up stop under an explicit flag |
 
 **Parallel structure.** One team per spectral component, as the batched `W3XYP3`. Inside a
@@ -113,7 +113,7 @@ wrapper's packing, the set-up's refusals, and `SETDEPTH` once per step. No defec
 cross-checked the 2026-10-16 serial translation, which agrees on every `W3XYPUG` operation. Its
 smaller findings were fixed: line cites of `W3XYPFSN2` and `W3XYPUG` in the kernel's comments, the
 `w3wavemd.F90` cites at the new pin, a glibc 2.44 note, a misleading comment, and a `MAPSTA` size
-check in the fork's wrapper (`84df86e0`).
+check in the fork's wrapper (`aa382393`).
 
 **Builds (v, 2026-10-18).** `just kokkos-test serial-debug` and `just kokkos-test openmp-release`:
 no warning, 11/11 (the tools' and lessons' tests; the port has none, ADR-0010). The `cuda-release`
@@ -128,7 +128,7 @@ None. No timing without parity (`AGENTS.md`).
 ## How it was regtested
 
 The batched kernel, 2026-10-18 (v): `WW3GPU_KOKKOS=resident WW3GPU_LAB_SWITCH=ON just ww3-gpu-matrix 4
-serial -R '^00[12]:'` at ww3-gpu `d93be6d`, WW3 `84df86e0`: `ww3_tp2.6` `ST4` and `ST4_ASCII`, `test.comp` 0 of 36
+serial -R '^00[12]:'` at ww3-gpu `d93be6d`, WW3 `84df86e0` (the fork branch was since rebased onto `fac74069` as `aa382393`; the matrix is not rerun on it yet ⚠): `ww3_tp2.6` `ST4` and `ST4_ASCII`, `test.comp` 0 of 36
 and 0 of 38 files different, `nccmp-tol` PASS, 777 600 components on Kokkos, `WW3GPU_STRICT=ON`
 ([record](../../docs/data/ww3gpu_matrix_xypug_tp2.6_2026-10-18.tsv),
 [log](../../docs/log/2026-10-18-xypug-tp2.6.md)). That test turns off `FLCTH`, `FLCK` and `FLSOU`, so `KTP3` and the

@@ -3,7 +3,7 @@
 // (W3_SHRD), for a batch of spectral components on an unstructured grid without PDLIB: one
 // Kokkos team per component. Phase 1, translated, not regtested.
 //
-// WW3 heritage (WW3/ at h0ffmann/WW3 05482109, model/src):
+// WW3 heritage (WW3/ at h0ffmann/WW3 43601904, model/src):
 //   W3XYPUG    w3profsmd.F90:69-272, A. Roland (FSN path only: :251-252)
 //   W3XYPFSN2  w3profsmd.F90:470-727, A. Roland (non-PDLIB branch; W3_REF1 and W3_MGP not ported)
 //   W3GATH     w3wavemd.F90:3293-3598 (W3_SHRD part: FIELD = 0., then FIELD(IXY) = A(ISPEC,ISEA))

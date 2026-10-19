@@ -3,7 +3,7 @@
 // explicit N-scheme W3XYPFSN2 (w3profsmd.F90:69-272, :470-727) for every spectral component of
 // a propagation step on an unstructured grid (GTYPE = UNGTYPE, W3_SHRD, no PDLIB), in one call,
 // on the resident VA of resident_c.hpp. It is W3WAVE section 3.6.3's ISPEC loop (W3GATH,
-// W3XYPUG, W3SCAT, w3wavemd.F90:2049-2143 at WW3 05482109) for that grid. xypug_shim.cpp
+// W3XYPUG, W3SCAT, w3wavemd.F90:2049-2143 at WW3 43601904) for that grid. xypug_shim.cpp
 // implements it; w3kokkos_prop3md.F90 on the fork binds it. The rules of ww_kokkos_c.hpp hold:
 // Fortran order, caller-owned arrays, float is REAL, double is REAL(8) / DOUBLE PRECISION,
 // nothing throws.
