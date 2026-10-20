@@ -3,17 +3,17 @@
 // device would compute (docs/GPU_LIBM_BITS_202610.md). Host only; it tests glibc and the
 // transcription in glibc_mathf.hpp, not a ported routine (ADR-0010 is about the port).
 //
-//   libm_bits ww <expf|logf|sincosf|powf|sinf|cosf|mvec_expf|mvec_sinf|mvec_cosf|mvec_powf|tanhf|log10f|atan2f|coshf|sinhf|exp|tanh> <fma|plain> [threads]
+//   libm_bits ww <expf|logf|sincosf|powf|sinf|cosf|mvec_expf|mvec_sinf|mvec_cosf|mvec_powf|tanhf|log10f|atan2f|coshf|sinhf|asinf|acosf|exp|tanh> <fma|plain> [threads]
 //       glibc_mathf.hpp against this process's glibc: every float input for the unary
 //       functions; for powf every positive x with fixed y, every y with fixed x, and
 //       random pairs. mvec_expf and mvec_powf are checked against libmvec's
 //       _ZGVbN4v_expf and _ZGVbN4vv_powf, the same inputs four lanes at a time. tanhf, log10f
-//       and atan2f are coremath_f.hpp's (one build: the variant argument is ignored); atan2f
+//       atan2f, coshf, sinhf, asinf and acosf are coremath_f.hpp's (one build: the variant argument is ignored); atan2f
 //       takes every y at fixed x and random pairs. exp (double) takes every float as a
 //       double, random bit patterns and random values in [-750, 710].
 //       tanh (double, coremath_d.hpp, one build) takes every float as a double, random bit
 //       patterns and random values in [-25, 25].
-//   libm_bits cr <tanhf|log10f|atan2f> [threads]
+//   libm_bits cr <tanhf|log10f|atan2f|asinf|acosf> [threads]
 //       glibc against the correctly rounded result (double, then __float128 near a
 //       midpoint): every input for the unary ones, random pairs for atan2f.
 //   libm_bits mvec <expf|powf> [threads]
@@ -149,6 +149,10 @@ void ww_unary(const std::string& fn, int threads, Tally& t) {
         compare(t, ww::libm::coshf(x), ::coshf(x), "", x);
       } else if (fn == "sinhf") {
         compare(t, ww::libm::sinhf(x), ::sinhf(x), "", x);
+      } else if (fn == "asinf") {
+        compare(t, ww::libm::asinf(x), ::asinf(x), "", x);
+      } else if (fn == "acosf") {
+        compare(t, ww::libm::acosf(x), ::acosf(x), "", x);
       } else if (fn == "logf") {
         compare(t, ww::libm::logf<Fma>(x), ::logf(x), "", x);
       } else {
@@ -338,6 +342,12 @@ void cr(const std::string& fn, int threads, Tally& t, std::atomic<uint64_t>& unr
       if (fn == "tanhf") {
         want = cr_round(std::tanh(static_cast<double>(x)), [&] { return tanhq(x); }, hard);
         got = ::tanhf(x);
+      } else if (fn == "asinf") {
+        want = cr_round(std::asin(static_cast<double>(x)), [&] { return asinq(x); }, hard);
+        got = ::asinf(x);
+      } else if (fn == "acosf") {
+        want = cr_round(std::acos(static_cast<double>(x)), [&] { return acosq(x); }, hard);
+        got = ::acosf(x);
       } else {
         want = cr_round(std::log10(static_cast<double>(x)), [&] { return log10q(x); }, hard);
         got = ::log10f(x);
@@ -459,6 +469,8 @@ void fingerprint() {
   row("log10f", hash_unary([](float x) { return asuint(::log10f(x)); }));
   row("coshf", hash_unary([](float x) { return asuint(::coshf(x)); }));
   row("sinhf", hash_unary([](float x) { return asuint(::sinhf(x)); }));
+  row("asinf", hash_unary([](float x) { return asuint(::asinf(x)); }));
+  row("acosf", hash_unary([](float x) { return asuint(::acosf(x)); }));
   row("powf", hash_pairs(1, [](float* a, float* b) {
         uint64_t h = 0;
         for (int l = 0; l < 4; ++l) h = h * 31 + asuint(::powf(a[l], b[l]));
@@ -509,14 +521,15 @@ int main(int argc, char** argv) {
     else if (fn == "tanh") ww_tanh(threads, t);
     else if (fn == "expf" || fn == "logf" || fn == "sincosf" || fn == "mvec_expf" ||
              fn == "mvec_sinf" || fn == "mvec_cosf" || fn == "sinf" || fn == "cosf" ||
-             fn == "tanhf" || fn == "log10f" || fn == "coshf" || fn == "sinhf")
+             fn == "tanhf" || fn == "log10f" || fn == "coshf" || fn == "sinhf" ||
+             fn == "asinf" || fn == "acosf")
       fma ? ww_unary<true>(fn, threads, t) : ww_unary<false>(fn, threads, t);
     else return 64;
     print("ww", fn.c_str(), var.c_str(), t);
   } else if (mode == "cr") {
     const int threads = argc > 3 ? std::atoi(argv[3]) : 4;
     std::atomic<uint64_t> unresolved{0};
-    if (fn != "tanhf" && fn != "log10f" && fn != "atan2f") return 64;
+    if (fn != "tanhf" && fn != "log10f" && fn != "atan2f" && fn != "asinf" && fn != "acosf") return 64;
     cr(fn, threads, t, unresolved);
     const std::string var = "unresolved=" + std::to_string(unresolved.load());
     print("cr", fn.c_str(), var.c_str(), t);

@@ -67,6 +67,7 @@ once on the host and their tables are copied, so they do not enter the device qu
 | `_ZGVbN4vv_powf` | `W3SDS4`, `W3SPR4` (`:316`, `:317`, `:2315`, `:2500`) | libmvec, SSE4 build, uses `rcpps` | as above | `ww::libm::mvec_powf<Fma>`, tables and `rcpps` from the build host |
 | `exp` (double) | `W3SDB1` | not correctly rounded (ARM algorithm) | differ on 1 485 995 of 8.6 × 10^9 | `ww::libm::exp<Fma>` |
 | `tanh` (double) | `W3SDB1` | correctly rounded (CORE-MATH, 2.44) | fma and sse2 builds, same bits | `ww::libm::tanh` (CORE-MATH's code) |
+| `asinf`, `acosf` | `APPENDTAIL` (`w3fld1md.F90`, called by `W3FLD2` for the `FLD2` switch; a rare branch, one call per point at most) | correctly rounded (CORE-MATH, 2.41) | one build | `ww::libm::asinf`, `acosf` (CORE-MATH's code, added 2026-10-19) |
 | `coshf`, `sinhf` | `DISTAB` (W3DISPMD's tables, once per run, not per point); `W3OUTG` | correctly rounded (CORE-MATH; glibc's `e_coshf.c`, `e_sinhf.c`) | one build | `ww::libm::coshf`, `sinhf` (CORE-MATH's code) |
 | `sinf`, `cosf` | `W3OUTG` (`iogo_w3outg.hpp`) | not correctly rounded; equal to the `sincosf` copy's two results on every input (v, `libm_bits.sh ww sinf fma`, `ww cosf fma`, 2026-10-17) | as `sincosf` | `ww::libm::sincosf<Fma>` |
 | `_ZGVbN4v_sinf`, `_ZGVbN4v_cosf` | `W3OUTG`, `SIN/COS(THMP)` under `switch_lab_shrd` | libmvec, SSE4 build | as the other libmvec rows | `ww::libm::mvec_sinf<Fma>`, `mvec_cosf<Fma>` (their callouts are `sincosf<Fma>`) |
@@ -86,7 +87,7 @@ Four headers in `kokkos/tools/libm_bits/`, each usable in host and device code:
 |---|---|---|
 | `glibc_mathf.hpp` | `expf`, `logf`, `powf`, `sincosf`, double `exp` | ARM optimized-routines at `f67e7daa` ("MIT OR Apache-2.0 WITH LLVM-exception"), the code glibc imports; fused sites from glibc's disassembly |
 | `glibc_mathf.hpp` | `mvec_expf`, `mvec_powf` | written from glibc's SSE4 libmvec algorithms and constants; `mvec_powf`'s tables and `rcpps` runs generated at build time by `gen_tables.cpp` from the host's `libmvec.so.1` and CPU, never committed (the tables are glibc's, LGPL) |
-| `coremath_f.hpp` | `tanhf`, `log10f`, `atan2f`, `coshf`, `sinhf` | CORE-MATH's code as glibc 2.44 carries it, MIT, notices kept |
+| `coremath_f.hpp` | `tanhf`, `log10f`, `atan2f`, `coshf`, `sinhf`, `asinf`, `acosf` | CORE-MATH's code as glibc 2.44 carries it (`sysdeps/ieee754/flt-32/e_asinf.c`, `e_acosf.c`, `s_asincosf_data.c` for the last two), MIT, notices kept |
 | `coremath_d.hpp` | double `tanh` | the same, with the double-double helpers it needs; its five tables equal glibc's `libm.so.6` bytes (v) |
 
 For `expf`, `logf`, `powf`, `sincosf` and `exp`, `glibc_mathf.hpp` takes the algorithm and the
@@ -142,6 +143,8 @@ glibc 2.44-25), 4 threads under `nice -n 19`. Command: `scripts/libm_bits.sh all
 | `ww coshf` | 4 294 967 296 | **0** | added for DISTAB (WFIP-0006, as built) |
 | `ww sinhf` | 4 294 967 296 | **0** | |
 | `ww atan2f` | 36 507 222 016 | **0** | every y with 8 fixed x, 2^31 random pairs |
+| `ww asinf`, `ww acosf` | 4 294 967 296 each | **0** | CORE-MATH's code equals glibc, every input; 0 NaN payload differences (2026-10-19, `scripts/libm_bits.sh ww asinf fma 3`, then `acosf`) |
+| `cr asinf`, `cr acosf` | 4 294 967 296 each | **0** | correctly rounded on every input (0 unresolved; 2 147 483 648 NaN outputs, whose payload is not judged; 2026-10-19, `scripts/libm_bits.sh cr asinf 3`, then `acosf`) |
 | `ww exp fma` | 8 589 934 592 | **0** | every float as a double, 2^31 random bit patterns, 2^31 values in [-750, 710] |
 | `ww exp plain` | 8 589 934 592 | 1 485 995 | glibc's two builds of double `exp` |
 | `ww tanh` | 8 589 934 592 | **0** | every float as a double, 2^31 random bit patterns, 2^31 values in [-25, 25] |
@@ -288,5 +291,7 @@ reference, not of the port. It is not needed now.
 - `mvec_powf` was checked against one CPU's libmvec; a second vendor's `rcpps` was not seen ⚠.
 - The NaN outputs are not judged: their payloads differ between x86 and a CUDA device in
   general (`kokkos/port_report/`, the open NaN-payload notes).
-- The set-up routines' functions (`acosf`, `asinf`, `cos`, `acos`, `log`, `pow`,
-  `_ZGVbN2v_cos`) are not transcribed: they run on the host.
+- The set-up routines' functions (`cos`, `acos`, `log`, `pow`, `_ZGVbN2v_cos`) are not
+  transcribed: they run on the host. `acosf` and `asinf` are, since 2026-10-19, because
+  `APPENDTAIL` calls them per point (their device bits are ⚠ like the others': `device_check`
+  lists them, no device run has compared them).

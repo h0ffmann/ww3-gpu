@@ -32,8 +32,7 @@
 // FLD namelists, which W3KOKKOS_SRCE_SETUP refuses (PATCH.md). ⚠ SAT stays 0 where the Fortran
 // leaves it undefined (TAIL_ID not 0 or 1); ANGLE1(1) is 0 where the Fortran leaves it undefined
 // (a NaN spectrum matches no direction).
-// ⚠ On a device asinf and acosf (APPENDTAIL) are CUDA's, not glibc's; every other call goes
-// through ww::dm.
+// Every libm call, asinf and acosf of APPENDTAIL included, goes through ww::dm.
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
@@ -181,15 +180,15 @@ KOKKOS_INLINE_FUNCTION void appendtail(Real* inspc, const Real* wn2, int nkt, in
     dm::sincosf(wnddir - angle2, s1, c1);
     const Real dwn = ((wn2[ka3 - 1] - wn2[ka2 - 1]));
     if (c0 >= static_cast<Real>(0.)) {
-      m = Kokkos::asin(s1) / dwn;
+      m = dm::asinf(s1) / dwn;
       ic = angle2;
       for (int k = ka2; k <= ka3; ++k) ang[k - 1] = ic + m * ((wn2[k - 1] - wn2[ka2 - 1]));
     } else if (s1 >= static_cast<Real>(0.)) {
-      m = Kokkos::acos(c1) / dwn;
+      m = dm::acosf(c1) / dwn;
       ic = angle2;
       for (int k = ka2; k <= ka3; ++k) ang[k - 1] = ic + m * ((wn2[k - 1] - wn2[ka2 - 1]));
     } else {
-      m = Kokkos::acos(c1) / dwn;
+      m = dm::acosf(c1) / dwn;
       ic = angle2;
       for (int k = ka2; k <= ka3; ++k) ang[k - 1] = ic - m * ((wn2[k - 1] - wn2[ka2 - 1]));
     }

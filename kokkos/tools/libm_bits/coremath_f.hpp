@@ -1,9 +1,10 @@
 // kokkos/tools/libm_bits/coremath_f.hpp
-// glibc 2.44's tanhf, log10f, atan2f, coshf and sinhf, correctly rounded, for host and device
+// glibc 2.44's tanhf, log10f, atan2f, coshf, sinhf, asinf and acosf, correctly rounded, for host and device
 // code. glibc imports them from the CORE-MATH project (sysdeps/ieee754/flt-32/s_tanhf.c,
-// e_log10f.c, e_atan2f.c, e_coshf.c, e_sinhf.c, e_sincoshf_data.c); they are copied here with their notices, under the MIT licence they carry. Since
+// e_log10f.c, e_atan2f.c, e_coshf.c, e_sinhf.c, e_sincoshf_data.c, e_asinf.c, e_acosf.c,
+// s_asincosf_data.c); they are copied here with their notices, under the MIT licence they carry. Since
 // glibc's results are correctly rounded (libm_bits cr: every input of tanhf and log10f), a copy
-// that equals glibc on every input (libm_bits ww tanhf, log10f, atan2f, coshf, sinhf) is too, and so is a
+// that equals glibc on every input (libm_bits ww tanhf, log10f, atan2f, coshf, sinhf, asinf, acosf) is too, and so is a
 // device build with the same operations. Changes from glibc's text: C++ for host and device,
 // tables as constexpr locals, glibc's error helpers replaced by glibc_mathf.hpp's, errno and the
 // SVID wrappers dropped. Compile without contraction (-ffp-contract=off, nvcc --fmad=false):
@@ -509,5 +510,152 @@ WW_LIBM_FN float sinhf(float x) {
   return sincoshf_core(x, -1.0, t, 1.52e-10);
 }
 #undef WW_LIBM_SINCOSHF_T
+
+/* Correctly-rounded arc-sine and arc-cosine functions for binary32 value.
+
+Copyright (c) 2023-2024 Alexei Sibidanov.
+
+The original versions of these files were copied from the CORE-MATH
+project (files src/binary32/asin/asinf.c, revision bc385c2, and
+src/binary32/acos/acosf.c, revision 56dd347; the coefficients C0 and C1 are
+glibc's s_asincosf_data.c).
+
+(The permission notice is the one above, word for word, in glibc's files.)
+*/
+namespace detail {
+// __asincosf_c0 and __asincosf_c1 of glibc's s_asincosf_data.c.
+#define WW_LIBM_ASINCOSF_C0                                                                      \
+  {0x1.555555555529cp-3,  0x1.333333337e0ddp-4, 0x1.6db6db3b4465ep-5,                           \
+   0x1.f1c72e13ac306p-6,  0x1.6e89cebe06bc4p-6, 0x1.1c6dcf5289094p-6,                           \
+   0x1.c6dbbcc7c6315p-7,  0x1.8f8dc2615e996p-7, 0x1.a5833b7bf15e8p-8,                          \
+   0x1.43f44ace1665cp-6, -0x1.0fb17df881c73p-6, 0x1.07520c026b2d6p-5}
+#define WW_LIBM_ASINCOSF_C1                                                                      \
+  {0x1.6a09e667f3bcbp+0,   0x1.e2b7dddff2db9p-4,  0x1.b27247ab42dbcp-6,                         \
+   0x1.02995cc4e0744p-7,   0x1.5ffb0276ec8eap-9,  0x1.033885a928decp-10,                        \
+   0x1.911f2be23f8c7p-12,  0x1.4c3c55d2437fdp-13, 0x1.af477e1d7b461p-15,                        \
+   0x1.abd6bdff67dcbp-15, -0x1.1717e86d0fa28p-16, 0x1.6ff526de46023p-16}
+
+WW_LIBM_FN double asincosf_poly12(double z, const double* c) {
+  double z2 = z * z;
+  double z4 = z2 * z2;
+  double c0 = c[0] + z * c[1];
+  double c2 = c[2] + z * c[3];
+  double c4 = c[4] + z * c[5];
+  double c6 = c[6] + z * c[7];
+  double c8 = c[8] + z * c[9];
+  double c10 = c[10] + z * c[11];
+  c0 += c2 * z2;
+  c4 += c6 * z2;
+  c8 += z2 * c10;
+  c0 += z4 * (c4 + z4 * c8);
+  return c0;
+}
+}  // namespace detail
+
+WW_LIBM_FN float asinf(float x) {
+  using namespace detail;
+  constexpr double C0[12] = WW_LIBM_ASINCOSF_C0;
+  constexpr double C1[12] = WW_LIBM_ASINCOSF_C1;
+  const double pi2 = 0x1.921fb54442d18p+0;
+  double xs = x;
+  double r;
+  uint32_t ax = asuint(x) << 1;
+  if (ax > 0x7fu << 24) {  /* as_special: nan, or |x| > 1 */
+    if (ax > (0xffu << 24)) return x + x; /* nan */
+    return invalidf(0.0f);
+  }
+  if (ax < 0x7ec29000u) {
+    if (ax < 115u << 24) return ::fmaf(x, 0x1p-25f, x);
+    constexpr double b[] = {0x1.0000000000005p+0,  0x1.55557aeca105dp-3,  0x1.3314ec3db7d12p-4,
+                            0x1.775738a5a6f92p-5,  0x1.5d5f7ce1c8538p-8,  0x1.605c6d58740fp-2,
+                            -0x1.5728b732d73c6p+1, 0x1.f152170f151ebp+3,  -0x1.f962ea3ca992ep+5,
+                            0x1.71971e17375ap+7,   -0x1.860512b4ba23p+8,  0x1.26a3b8d4bdb14p+9,
+                            -0x1.36f2ea5698b51p+9, 0x1.b3d722aebfa2ep+8,  -0x1.6cf89703b1289p+7,
+                            0x1.1518af6a65e2dp+5};
+    double z = xs;
+    double z2 = z * z;
+    double z4 = z2 * z2;
+    double z8 = z4 * z4;
+    double z16 = z8 * z8;
+    r = z * ((((b[0] + z2 * b[1]) + z4 * (b[2] + z2 * b[3])) +
+              z8 * ((b[4] + z2 * b[5]) + z4 * (b[6] + z2 * b[7]))) +
+             z16 * (((b[8] + z2 * b[9]) + z4 * (b[10] + z2 * b[11])) +
+                    z8 * ((b[12] + z2 * b[13]) + z4 * (b[14] + z2 * b[15]))));
+    float ub = static_cast<float>(r);
+    float lb = static_cast<float>(r - z * 0x1.efa8ebp-31);
+    if (ub == lb) return ub;
+  }
+  if (ax < (0x7eu << 24)) {
+    double z = xs;
+    double z2 = z * z;
+    double c0 = asincosf_poly12(z2, C0);
+    r = z + (z * z2) * c0;
+  } else {
+    if (ax == 0x7e55688au) return ::copysignf(0x1.75b8a2p-1f, x) + ::copysignf(0x1p-26f, x);
+    if (ax == 0x7e107434u) return ::copysignf(0x1.1f4b64p-1f, x) + ::copysignf(0x1p-26f, x);
+    double bx = ::fabs(xs);
+    double z = 1.0 - bx;
+    double s = ::sqrt(z);
+    r = pi2 - s * asincosf_poly12(z, C1);
+    r = ::copysign(r, xs);
+  }
+  return static_cast<float>(r);
+}
+
+WW_LIBM_FN float acosf(float x) {
+  using namespace detail;
+  constexpr double C0[12] = WW_LIBM_ASINCOSF_C0;
+  constexpr double C1[12] = WW_LIBM_ASINCOSF_C1;
+  const double pi2 = 0x1.921fb54442d18p+0;
+  constexpr double o[] = {0, 0x1.921fb54442d18p+1};
+  double xs = x;
+  double r;
+  uint32_t t = asuint(x);
+  uint32_t ax = t << 1;
+  if (ax >= 0x7fu << 24) {  /* as_special */
+    const float pih = 0x1.921fb6p+1f;
+    const float pil = -0x1p-24f;
+    if (t == (0x7fu << 23)) return 0.0f; /* x=1 */
+    if (t == (0x17fu << 23)) return pih + pil; /* x=-1 */
+    if (ax > (0xffu << 24)) return x + x; /* nan */
+    return invalidf(0.0f);
+  }
+  if (ax < 0x7ec2a1dcu) { /* |x| < 0x1.c2a1dcp-1 */
+    constexpr double b[] = {0x1.fffffffd9ccb8p-1,  0x1.5555c94838007p-3,  0x1.32ded4b7c20fap-4,
+                            0x1.8566df703309ep-5,  -0x1.980c959bec9a3p-6, 0x1.56fbb04998344p-1,
+                            -0x1.403d8e4c49f52p+2, 0x1.b06c3e9f311eap+4,  -0x1.9ea97c4e2c21fp+6,
+                            0x1.200b8261cc61bp+8,  -0x1.2274c2799a5c7p+9, 0x1.a558a59cc19d3p+9,
+                            -0x1.aca4b6a529ffp+9,  0x1.228744703f813p+9,  -0x1.d7dbb0b322228p+7,
+                            0x1.5c2018c0c0105p+5};
+    if (ax <= 0x40000000u) return static_cast<float>(pi2); /* |x| < 2^-63 */
+    double z = xs;
+    double z2 = z * z;
+    double z4 = z2 * z2;
+    double z8 = z4 * z4;
+    double z16 = z8 * z8;
+    r = z * ((((b[0] + z2 * b[1]) + z4 * (b[2] + z2 * b[3])) +
+              z8 * ((b[4] + z2 * b[5]) + z4 * (b[6] + z2 * b[7]))) +
+             z16 * (((b[8] + z2 * b[9]) + z4 * (b[10] + z2 * b[11])) +
+                    z8 * ((b[12] + z2 * b[13]) + z4 * (b[14] + z2 * b[15]))));
+    float ub = static_cast<float>(0x1.921fb54574191p+0 - r);
+    float lb = static_cast<float>(0x1.921fb543118ap+0 - r);
+    if (ub == lb) return ub;
+  }
+  /* accurate path  */
+  if (ax < (0x7eu << 24)) {
+    if (t == 0x328885a3u) return 0x1.921fb6p+0f + 0x1p-25f;
+    if (t == 0x39826222u) return 0x1.920f6ap+0f + 0x1p-25f;
+    double x2 = xs * xs;
+    r = (pi2 - xs) - (xs * x2) * asincosf_poly12(x2, C0);
+  } else {
+    double bx = ::fabs(xs);
+    double z = 1.0 - bx;
+    double s = ::copysign(::sqrt(z), xs);
+    r = o[t >> 31] + s * asincosf_poly12(z, C1);
+  }
+  return static_cast<float>(r);
+}
+#undef WW_LIBM_ASINCOSF_C0
+#undef WW_LIBM_ASINCOSF_C1
 
 }  // namespace ww::libm

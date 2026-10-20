@@ -44,8 +44,7 @@ build with the `ww3_ufs1.2` switch (gfortran 16.2.0, pinned shell), read stateme
 - ⚠ `SAT` (`TAIL_ID` other than 0 or 1) and `ANGLE1(1)` (a NaN spectrum) are undefined in the Fortran; the port uses 0.
 - ⚠ Caveat: `INFLD` runs at a thread's first call and its parameters stay for every grid; the port reads the point's grid.
   The fork stops the part when two grids of one run have different `TAIL_ID`, `TAIL_LEV`, `TAIL_TRAN1` or `TAIL_TRAN2`.
-- ⚠ On a device `asinf` and `acosf` (in `APPENDTAIL`) are CUDA's, not glibc's; the other calls go through `ww::dm`.
-  CUDA was not compiled or run.
+- Every libm call, `APPENDTAIL`'s `asinf` and `acosf` included, goes through `ww::dm`. ⚠ CUDA was not compiled or run.
 
 ## Benchmarks
 
