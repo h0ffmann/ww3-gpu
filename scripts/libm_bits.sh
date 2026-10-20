@@ -11,7 +11,7 @@
 #   scripts/libm_bits.sh --nvcc           compile device_check.cu for sm_89 and sm_90, run nothing
 #   scripts/libm_bits.sh --device [fn]    run device_check on GPU 0 (every transcribed function, or
 #                                         one: expf logf sincosf powf mvec_expf mvec_powf mvec_sinf
-#                                         mvec_cosf tanhf log10f atan2f coshf sinhf exp tanh): the
+#                                         mvec_cosf tanhf log10f atan2f coshf sinhf asinf acosf exp tanh): the
 #                                         owner only, at a terminal
 #   scripts/libm_bits.sh --self-test      build, the probe, one host check that must pass
 #
@@ -84,8 +84,8 @@ case "${1:-}" in
       run ww "$f" plain "$t" || true
     done
     # Correctly rounded: one build.
-    for f in tanhf log10f atan2f tanh; do run ww "$f" fma "$t" || rc=1; done
-    for f in tanhf log10f atan2f; do run cr "$f" "$t" || rc=1; done
+    for f in tanhf log10f atan2f coshf sinhf asinf acosf tanh; do run ww "$f" fma "$t" || rc=1; done
+    for f in tanhf log10f atan2f asinf acosf; do run cr "$f" "$t" || rc=1; done
     for f in expf powf; do run mvec "$f" "$t" || true; done
     run fingerprint
     exit "$rc"

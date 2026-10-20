@@ -26,8 +26,13 @@ endfunction()
 
 # ww3gpu_expand(<out> <options> <np> <nr> <nth>): matrix.base's shell variables in an entry's
 # options, as the matrix would expand them: $mpi -> mpirun, $np, $nr, $nth, then $(( a - b )).
+# The ufs entries' $npl, $npl1 (ranks) and $nth1 (threads) go first, as <nr> and <nth>: replaced
+# after $np and $nth they became "<np>l" and "<nth>1", 8 ranks gave `-n 8l -t 21`.
 function(ww3gpu_expand out s np nr nth)
   string(REPLACE "$mpi" "mpirun" s "${s}")
+  string(REPLACE "$npl1" "${nr}" s "${s}")
+  string(REPLACE "$npl" "${nr}" s "${s}")
+  string(REPLACE "$nth1" "${nth}" s "${s}")
   string(REPLACE "$np" "${np}" s "${s}")
   string(REPLACE "$nr" "${nr}" s "${s}")
   string(REPLACE "$nth" "${nth}" s "${s}")

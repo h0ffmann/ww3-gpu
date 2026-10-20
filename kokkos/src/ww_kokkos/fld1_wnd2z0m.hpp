@@ -5,12 +5,14 @@
 // WW3 heritage: WW3-noaa/model/src/w3fld1md.F90:1251-1375 at NOAA-EMC/WW3 03adda91;
 // authors B. G. Reichl, J. Meixner (2016 HWRF z0).
 // Evidence: kokkos/port_report/WND2Z0M_KOKKOS.md.
-// ⚠ On a device logf, expf are CUDA's, not glibc's.
+// logf and expf go through ww::dm: glibc's on the host, its device copies on a device built with
+// WW_KOKKOS_LIBM (libdevice otherwise).
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <Kokkos_Core.hpp>
 
+#include "libm_device.hpp"
 #include "real.hpp"
 
 namespace ww::fld1 {
@@ -51,7 +53,7 @@ KOKKOS_INLINE_FUNCTION void wnd2z0m(Real w10m, Real& znotm) {
     }
   }
   // :1366, TMP = 0.4*0.4/ALOG(10/ZNOTM)**2; 0.4*0.4 folds to 0x1.47ae16p-3, not 0.16.
-  const Real l = Kokkos::log(static_cast<Real>(10.0) / z);
+  const Real l = dm::logf(static_cast<Real>(10.0) / z);
   const Real tmp = 0.4F * 0.4F / (l * l);
   Real aaa = static_cast<Real>(0.75);
   if (u10 < static_cast<Real>(20)) {
@@ -60,7 +62,7 @@ KOKKOS_INLINE_FUNCTION void wnd2z0m(Real w10m, Real& znotm) {
     // :1371. (0.75-0.99) and (45-20) fold; the division by 25 stays.
     aaa = 0.99F + (u10 - static_cast<Real>(20)) * (0.75F - 0.99F) / (45.0F - 20.0F);
   }
-  znotm = static_cast<Real>(10.0) / Kokkos::exp(Kokkos::sqrt(0.4F * 0.4F / (tmp * aaa)));  // :1373
+  znotm = static_cast<Real>(10.0) / dm::expf(Kokkos::sqrt(0.4F * 0.4F / (tmp * aaa)));  // :1373
 }
 
 }  // namespace ww::fld1

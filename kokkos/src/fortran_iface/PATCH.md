@@ -2377,3 +2377,62 @@ with `calls left on the Fortran (...): SRCE=0 CPRT=0 OUTG=37`, one per output ti
 model file byte-identical to the Fortran of the same executable and every file but the NetCDF to
 `--ww3`'s (v). At `50a10730` no `OUTG` counter exists, so the line names `SRCE` and `CPRT` alone (v, by reading the set-up; that run was not repeated). The `full` case asks for `HS`
 alone and ends with `OUTG=0` and 13 `W3OUTG` Kokkos calls (v).
+
+## 32. The batched `W3SRCE` admits `SEED`, `FLD2` and no `LN1`, `ww3-gpu/gfs-srce-be5bdbea`
+
+One fork commit, `5dbf6eba`, on the pin `aa382393`, 2026-10-19 (goal be5bdbea-3817); it touches
+`model/src/w3kokkosmd.F90` and one line of `model/src/w3wavemd.F90`. The switch of WW3's GFS-Wave
+regtests (`regtests/ww3_ufs1.2/input/switch_MPI_OMPH`: `... SEED ST4 STAB0 NL1 BT1 DB1 MLIM FLD2 ...`, no `LN1`)
+sent every `W3SRCE` call to the Fortran, because the gate of `W3KOKKOS_SRCE_SETUP` required `LN1` and refused
+`SEED`, `FLD1` and `FLD2`. The kernel translates the three branches (`srce_kernel.hpp`, `srce_fld2.hpp`); the
+gate now lets them through.
+
+**What the gate (`IS_LAB_SWITCH`) admits now.** `BT1 DB1 MLIM` (and `ST4 NL1`, the caller's) with `LN1`, or with
+`LN0` or `SEED` in its place (`VSLN` is zeroed by `w3srcemd.F90:938-940` and `W3SLN1` is not called; with none of
+the three `VSLN` is never set and the Fortran reads it, so that stays refused), with `SEED` and `FLD2` each in or
+out. Still refused: `FLD1`, `FLX1` to `FLX5`, `BS1`, `BT4`, `BT8`, `BT9`, `IC1` to `IC5`, `IG1`, `IS1`, `IS2`, `NL0`,
+`NL2` to `NL5`, `NLS`, `NNT`, `PDLIB`, `REF1`, `TR1`, `UOST`, `ST0` to `ST3`, `ST6`, `STAB3`, `S`, `T`, `T0`, `T1`,
+`DEBUGSRC`, `DEBUGRUN`.
+
+**ABI (`ww_kokkos_c.hpp` and `srce_params.hpp`, read in both).**
+
+| Packet | Index (0-based) | Content |
+|---|---|---|
+| `RPAR` | `RS_FACSD` = `RS_SLNC1+6` | `FACSD` (seeding, `w3srcemd.F90:1972`) |
+| `RPAR` | `RS_FTTR` = `RS_SLNC1+7` | `FTTR` (`CALC_FPI`) |
+| `RPAR` | `RS_FLDALPHA`, `RS_TAIL_LEV`, `RS_TAIL_TRAN1`, `RS_TAIL_TRAN2` = `RS_SLNC1+8` to `+11` | `FLDALPHA`, `TAIL_LEV`, `TAIL_TRAN1`, `TAIL_TRAN2`; set only under `W3_FLD2` (W3GDATMD declares them only then) |
+| `IPAR` | `IS_LN1`, `IS_SEED`, `IS_FLD2` = 8, 9, 10 | 1 under `W3_LN1`, `W3_SEED`, `W3_FLD2` |
+| `IPAR` | `IS_TAIL_ID` = 11 | `TAIL_ID`, under `W3_FLD2` |
+| `NRSPAR`, `NISPAR` | `RS_SLNC1+12`, 12 | were `RS_SLNC1+6`, 8 |
+| `PSC` row | `SRCEB_S_FPI` = 21, `SRCEB_NPSC` = 22 | `FPIS(ISEA)`; unpacked to `FPIS(ISEA)` only under `W3_FLD2` (`CALC_FPI` writes it, and `W3IORSMD` writes `FPIS` to the restart) |
+| `ww_srce` (per point) | new dummy `FPI` before `SHAVE` | `FPIS(ISEA)`; the call in `w3wavemd.F90` passes it (that call is reached by no build, section 10) |
+| `SHAVE` word of the batch | bits 1 and up | `Fld2Status << 1` (1 bulk fail-safe, 2 stress not converged, 4 work array too short), read and cleared by the shim; the Fortran sees 0 or 1 as before |
+
+**Package version.** The packet lengths and `ww_srce`'s dummy list changed, so the package is `0.12.0` and fork
+commit `96892c95` (`find_package(ww_kokkos 0.12)`, on top of `5dbf6eba`) asks for it: the new fork refuses an
+older install at configure time. An older fork against this install still configures (`SameMajorVersion`), and
+`ww_srce_init` refuses its shorter `RPAR`/`IPAR` (`WW_KOKKOS_ERR_BAD_SHAPE`), which `SRCE_CHECK` turns into a stop at
+setup, never a run on mismatched packets (v, `srce_shim.cpp`, `w3kokkosmd.F90` `SRCE_CHECK`). `kokkos/CMakeLists.txt`
+says a changed entry point needs a major bump; this stays a minor one, for the owner to confirm ⚠.
+
+**Caveat kept by a check.** `W3FLD2`'s `FIRST` is a threadprivate `SAVE`: `INFLD` copies `TAIL_ID`, `TAIL_LEV`,
+`TAIL_TRAN1`, `TAIL_TRAN2` of the grid current at a thread's first call and every later grid uses them. The kernel
+uses each grid's own. `W3KOKKOS_SRCE_SETUP` keeps the first grid's four values and, for a later grid that differs,
+turns `KOKKOS_SRCE` off and calls `KOKKOS_FALLBACK ( 'SRCE', ... )` (a stop under `WW_KOKKOS_STRICT=1`).
+
+**A build without `KOKKOS` is unchanged.** The commit is the two files; `w3kokkosmd.F90` is compiled only under
+`WW_KOKKOS` (`model/src/CMakeLists.txt`) and the `w3wavemd.F90` line is inside the
+`#if defined(W3_KOKKOS) && defined(W3_ST4) && defined(W3_NL1)` hunk of section 10 (v, read in the diff).
+
+Checked 2026-10-19 on the CPU (Kokkos OpenMP backend, gfortran 16.2.0, never `--gpu`) (v):
+
+- The fork with the `ww3_ufs1.2` switch and `KOKKOS` compiles and links.
+- `WW3GPU_SWITCH=switch_lab_gfs` (`switch_lab_ompg` with `SEED FLD2` for `LN1`), `scripts/ww3-gpu.sh --ww3-gpu smoke`
+  and `full --cpu --kokkos SRCE` with `WW_KOKKOS_STRICT=1`: every model file byte-identical to the Fortran of the same
+  executable, the binary ones also to `--ww3`, `nccmp-tol` PASS, `SRCE=0` fallbacks. The smoke wind is 12 m/s, so `W3FLD2`
+  runs (the output `CHA` is 0.016, not `FLDALPHA` = 0.0095).
+- The unchanged `switch_lab_ompg` smoke is still byte-identical.
+- `WW3GPU_KOKKOS=all WW3GPU_MPI_RANKS=1 WW3GPU_OMP_THREADS=1 WW_KOKKOS_STRICT=1 just ww3-gpu-matrix 1 mpi -R '^323:'`,
+  the `ww3_ufs1.1` `grdset_c` entry with the GFS-Wave switch: `test.comp` finds 0 of 30 files different, `nccmp-tol`
+  PASS, 33 286 spectra in 24 batched calls through the new path, no fallback (strict mode would have stopped).
+  Before this section the same entry fell back for every step.
