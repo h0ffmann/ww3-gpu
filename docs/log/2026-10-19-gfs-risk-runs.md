@@ -39,3 +39,18 @@ invocation); a fix is to expand `$npl1`, `$npl`, `$nth1` before `$np`/`$nth`.
   exists for ufs1.2, no `ww3_gfs12_gprof.tsv`, no ufs1.1 timing.
 - `ctest -FS` takes the fixture name (`ww3-gpu`), not a test regex; `-FS '^setup:'` re-stages and
   overwrites an edited deck.
+
+## State at 23:44, appended by the lead session
+
+- The driver fix is now in the PR (`0a0cdae`): `ww3gpu_expand` replaces `$npl1`, `$npl` and `$nth1`
+  before `$np` and `$nth`; `just ww3-gpu-matrix-selftest` passes with a case for them. It waits for
+  a person's review, as the paragraph above says.
+- The corrected entry 338 (8 ranks, 2 threads, stop 03:00) is stalled. Its Fortran run's
+  `work_F_338/ww3_multi.out` was last written at 22:56:09, "MWW3 calculating for 2021/04/01
+  00:30:00", and had not moved at 23:43:45. The stray Kokkos run (`work_K_338`, `-n 8l -t 21`)
+  reached 2021/04/01 01:00 at 23:38:05. 16 `ww3_multi` ranks share 32 hardware threads; load
+  average 162.80, 144.64, 131.96 (v, `ls -l`, `tail`, `uptime`, `pgrep -c ww3_multi` at 23:43:45).
+- Both runs write the same build directory, and the stray one holds `work_K_338`, which the corrected
+  chain uses next. No result of either run is evidence until the stray chain (cmake PID 1119405, its
+  `run_cmake_test` 1182444 and its eight ranks) is stopped and the corrected Kokkos run is redone.
+  Stopping it is the owner's step: the permission system refused it to the agent.
