@@ -35,6 +35,9 @@
 # of the KOKKOS patch (kokkos_patch below) and exits 3 when it does not.
 #   add --build-only to build and stop before the run (a machine without the GPU can still compile)
 #   scripts/ww3-gpu.sh --self-test
+# WW3GPU_CASE_HOOK=<file> runs `bash <file> <case dir>` after each copy of the case inputs: a
+# diagnostic variant of the grid or its namelists, in the Fortran run and the Kokkos run alike. It is
+# never a regtest verdict.
 #
 # Exit codes: 0 pass; 1 a run or a comparison failed; 3 a submodule is missing, on the wrong
 # branch, or the fork is more than WW3-noaa/ plus the KOKKOS patch; 4 an NVIDIA GPU whose driver does not answer (--ww3-gpu --gpu); 5 a part the case needs is not
@@ -249,6 +252,8 @@ if [ "$mode" = self-test ]; then
   done
   KOKKOS_NUM_THREADS=16 "${BASH_SOURCE[0]}" --ww3-gpu smoke </dev/null >/dev/null 2>&1 && rc=0 || rc=$?
   [ "$rc" = 64 ] || { echo "ww3-gpu: KOKKOS_NUM_THREADS=16 gave exit $rc, not 64" >&2; exit 1; }
+  WW3GPU_CASE_HOOK=/nonexistent/hook.sh "${BASH_SOURCE[0]}" --ww3-gpu smoke </dev/null >/dev/null 2>&1 && rc=0 || rc=$?
+  [ "$rc" = 64 ] || { echo "ww3-gpu: a missing WW3GPU_CASE_HOOK gave exit $rc, not 64" >&2; exit 1; }
   WW3GPU_ROUTINES=SDS4,BOGUS "${BASH_SOURCE[0]}" --ww3-gpu smoke </dev/null >/dev/null 2>&1 && rc=0 || rc=$?
   [ "$rc" = 64 ] || { echo "ww3-gpu: WW3GPU_ROUTINES=SDS4,BOGUS gave exit $rc, not 64" >&2; exit 1; }
   for bad in "--ww3-gpu smoke --kokkos" "--ww3-gpu smoke --kokkos SNL1,BOGUS" "--ww3-gpu smoke --kokkos all,SNL1" \
@@ -364,6 +369,9 @@ if [ "$device" = gpu ] && [ "$mode" != ww3-gpu ]; then
 fi
 if [ "$device" = gpu ]; then backend=cuda; else backend=openmp; fi
 dev_name=""
+if [ -n "${WW3GPU_CASE_HOOK:-}" ] && [ ! -f "$WW3GPU_CASE_HOOK" ]; then
+  echo "ww3-gpu: WW3GPU_CASE_HOOK is not a file: $WW3GPU_CASE_HOOK" >&2; exit 64
+fi
 lab_switch="${WW3GPU_SWITCH:-switch_lab_ompg}"
 [[ "$lab_switch" =~ ^switch_lab_[a-z0-9]+$ ]] && [ -f "$root/switches/$lab_switch" ] \
   || { echo "ww3-gpu: WW3GPU_SWITCH is a switches/switch_lab_* file, not '$lab_switch'" >&2; exit 64; }
@@ -594,6 +602,9 @@ prepare() { # <dir>: copy the case's inputs into <dir> and make their paths loca
     # ww3_ounf has a file to compare.
     sed -i "s#^  DATE%FIELD = .*#  DATE%FIELD = '20200101 000000' '3600' '20200101 120000'#" "$d/ww3_shel.nml"
   fi
+  # A diagnostic variant of the inputs (a grid with NTH not a multiple of 4, a tail parameter): the
+  # hook edits the copy in <dir>, in the Fortran run and the Kokkos run alike. Never a regtest verdict.
+  if [ -n "${WW3GPU_CASE_HOOK:-}" ]; then bash "$WW3GPU_CASE_HOOK" "$d" || { echo "ww3-gpu: WW3GPU_CASE_HOOK failed" >&2; return 1; }; fi
 }
 run_model() { # <dir> <0|1>: grid, strt, shel, ounf; prints ww3_shel's wall time
   # Called inside $(...): every diagnostic goes to stderr, or it would vanish into the variable.

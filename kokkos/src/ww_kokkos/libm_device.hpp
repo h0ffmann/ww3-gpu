@@ -41,6 +41,8 @@ KOKKOS_INLINE_FUNCTION float log10f(float x) { return ww::libm::log10f(x); }
 KOKKOS_INLINE_FUNCTION float atan2f(float y, float x) { return ww::libm::atan2f(y, x); }
 KOKKOS_INLINE_FUNCTION float coshf(float x) { return ww::libm::coshf(x); }
 KOKKOS_INLINE_FUNCTION float sinhf(float x) { return ww::libm::sinhf(x); }
+KOKKOS_INLINE_FUNCTION float asinf(float x) { return ww::libm::asinf(x); }
+KOKKOS_INLINE_FUNCTION float acosf(float x) { return ww::libm::acosf(x); }
 KOKKOS_INLINE_FUNCTION double exp(double x) { return ww::libm::exp<kFma>(x); }
 KOKKOS_INLINE_FUNCTION double tanh(double x) { return ww::libm::tanh(x); }
 KOKKOS_INLINE_FUNCTION float mvec_expf(float x) { return ww::libm::mvec_expf<kFma>(x); }
@@ -57,6 +59,8 @@ KOKKOS_INLINE_FUNCTION float log10f(float x) { return Kokkos::log10(x); }
 KOKKOS_INLINE_FUNCTION float atan2f(float y, float x) { return Kokkos::atan2(y, x); }
 KOKKOS_INLINE_FUNCTION float coshf(float x) { return Kokkos::cosh(x); }
 KOKKOS_INLINE_FUNCTION float sinhf(float x) { return Kokkos::sinh(x); }
+KOKKOS_INLINE_FUNCTION float asinf(float x) { return Kokkos::asin(x); }
+KOKKOS_INLINE_FUNCTION float acosf(float x) { return Kokkos::acos(x); }
 KOKKOS_INLINE_FUNCTION double exp(double x) { return Kokkos::exp(x); }
 KOKKOS_INLINE_FUNCTION double tanh(double x) { return Kokkos::tanh(x); }
 KOKKOS_INLINE_FUNCTION float mvec_expf(float x) { return Kokkos::exp(x); }
@@ -115,6 +119,15 @@ KOKKOS_INLINE_FUNCTION float sinhf(float x) {
   KOKKOS_IF_ON_HOST((return Kokkos::sinh(x);))
   KOKKOS_IF_ON_DEVICE((return dev::sinhf(x);))
 }
+/// glibc 2.44's asinf and acosf are CORE-MATH's, correctly rounded; the device copies are the same code.
+KOKKOS_INLINE_FUNCTION float asinf(float x) {
+  KOKKOS_IF_ON_HOST((return Kokkos::asin(x);))
+  KOKKOS_IF_ON_DEVICE((return dev::asinf(x);))
+}
+KOKKOS_INLINE_FUNCTION float acosf(float x) {
+  KOKKOS_IF_ON_HOST((return Kokkos::acos(x);))
+  KOKKOS_IF_ON_DEVICE((return dev::acosf(x);))
+}
 KOKKOS_INLINE_FUNCTION double exp(double x) {
   KOKKOS_IF_ON_HOST((return Kokkos::exp(x);))
   KOKKOS_IF_ON_DEVICE((return dev::exp(x);))
@@ -135,6 +148,8 @@ template <class T> float sinf(T) = delete;
 template <class T> float cosf(T) = delete;
 template <class T> float coshf(T) = delete;
 template <class T> float sinhf(T) = delete;
+template <class T> float asinf(T) = delete;
+template <class T> float acosf(T) = delete;
 template <class T> double exp(T) = delete;
 template <class T> double tanh(T) = delete;
 

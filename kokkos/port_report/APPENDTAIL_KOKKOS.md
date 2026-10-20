@@ -28,8 +28,10 @@ Reference: the `-O3` GIMPLE of `w3fld1md.F90` (ww3_ufs1.2 switch, gfortran 16.2.
 - (v) `COS(ANGDIF)**2.0` is `c*c`; `COS(ANGLE2-WNDDIR)` is a lone `cosf`, `SIN` and `COS` of `WNDDIR-ANGLE2` one `sincosf`;
   `ASIN` and `ACOS` are `asinf`, `acosf`.
 - (v) `ANGLE2 = SUM(ANGLE1)/MAX(REAL(MAI),1.)` for `MAI > 1`; the `MAXAN`/`MINAN` tests are `a < b ? ...` as GIMPLE.
-- ⚠ On a device `asinf` and `acosf` are CUDA's, not glibc's. A NaN spectrum matches no direction in the `MAXANG` scan: the
-  Fortran leaves `ANGLE1(1)` undefined, the port uses 0.
+- (v) `asinf` and `acosf` go through `ww::dm`: on the host the glibc call, on a device `ww::libm::asinf`, `acosf`
+  (CORE-MATH's code as glibc 2.44 carries it, `coremath_f.hpp`), equal to glibc's on all 2^32 floats on the host
+  (`scripts/libm_bits.sh ww asinf fma 3`, then `acosf`, 2026-10-19). ⚠ No device run has compared them.
+- ⚠ A NaN spectrum matches no direction in the `MAXANG` scan: the Fortran leaves `ANGLE1(1)` undefined, the port uses 0.
 
 ## Benchmarks
 

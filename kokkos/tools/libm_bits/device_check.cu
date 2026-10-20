@@ -3,7 +3,7 @@
 // glibc_mathf.hpp and coremath_f.hpp transcribe, and compares each result on the host with what
 // WW3's Fortran gets there: the toolchain's glibc, or libmvec for the vector functions
 // (libm_bits.cpp shows the transcriptions equal those on the host). Where CUDA has a function
-// of its own (expf, logf, powf, sincosf, tanhf, log10f, atan2f, coshf, sinhf, exp, tanh) it is computed too and
+// of its own (expf, logf, powf, sincosf, tanhf, log10f, atan2f, coshf, sinhf, asinf, acosf, exp, tanh) it is computed too and
 // printed beside the transcription for comparison; the exit code is the transcriptions' only.
 //
 // It runs on the GPU, so it runs only under the owner's supervision (AGENTS.md, "Running on
@@ -41,7 +41,7 @@ namespace {
 constexpr uint64_t kChunk = 1ULL << 26;
 constexpr bool kFma = WW_LIBM_HOST_FMA != 0;
 
-enum Fn { kExpf, kLogf, kSincosf, kPowf, kMvecExpf, kMvecPowf, kMvecSinf, kMvecCosf, kTanhf, kLog10f, kAtan2f, kCoshf, kSinhf, kExp, kTanh };
+enum Fn { kExpf, kLogf, kSincosf, kPowf, kMvecExpf, kMvecPowf, kMvecSinf, kMvecCosf, kTanhf, kLog10f, kAtan2f, kCoshf, kSinhf, kAsinf, kAcosf, kExp, kTanh };
 
 __host__ __device__ inline uint64_t splitmix(uint64_t s) {
   uint64_t z = s + 0x9e3779b97f4a7c15ULL;
@@ -98,6 +98,8 @@ __global__ void kernel(Fn fn, bool cuda_own, uint64_t base, uint64_t n, double* 
     case kAtan2f: a = cuda_own ? ::atan2f(y, x) : ww::libm::atan2f(y, x); break;
     case kCoshf: a = cuda_own ? ::coshf(x) : ww::libm::coshf(x); break;
     case kSinhf: a = cuda_own ? ::sinhf(x) : ww::libm::sinhf(x); break;
+    case kAsinf: a = cuda_own ? ::asinf(x) : ww::libm::asinf(x); break;
+    case kAcosf: a = cuda_own ? ::acosf(x) : ww::libm::acosf(x); break;
     case kExp: d = cuda_own ? ::exp(static_cast<double>(x)) : ww::libm::exp<kFma>(x); break;
     case kTanh: d = cuda_own ? ::tanh(static_cast<double>(x)) : ww::libm::tanh(x); break;
   }
@@ -130,6 +132,8 @@ void reference(Fn fn, float x, float y, double& wa, double& wb) {
     case kAtan2f: a = ::atan2f(y, x); break;
     case kCoshf: a = ::coshf(x); break;
     case kSinhf: a = ::sinhf(x); break;
+    case kAsinf: a = ::asinf(x); break;
+    case kAcosf: a = ::acosf(x); break;
     case kExp: wa = std::exp(static_cast<double>(x)); return;
     case kTanh: wa = std::tanh(static_cast<double>(x)); return;
   }
@@ -187,7 +191,8 @@ int main(int argc, char** argv) {
       {kMvecSinf, "mvec_sinf", 1ULL << 32}, {kMvecCosf, "mvec_cosf", 1ULL << 32},
       {kTanhf, "tanhf", 1ULL << 32},     {kLog10f, "log10f", 1ULL << 32},
       {kAtan2f, "atan2f", 1ULL << 32},   {kCoshf, "coshf", 1ULL << 32},
-      {kSinhf, "sinhf", 1ULL << 32},     {kExp, "exp", 1ULL << 32},
+      {kSinhf, "sinhf", 1ULL << 32},     {kAsinf, "asinf", 1ULL << 32},
+      {kAcosf, "acosf", 1ULL << 32},     {kExp, "exp", 1ULL << 32},
       {kTanh, "tanh", 1ULL << 32}};
   for (const auto& f : fns) {
     if (!only.empty() && only != f.name) continue;
