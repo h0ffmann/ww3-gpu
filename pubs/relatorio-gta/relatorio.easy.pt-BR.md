@@ -20,7 +20,7 @@ lang: pt-BR
 >   trecho resumido aponta para o arquivo de origem.
 > - **Como foi escrita:** o texto foi gerado por Claude com a skill
 >   [Português Técnico Controlado][ptc] (PTC), versão 1.1.0, de Kayque Rotondo. A revisão é de
->   Matheus Hoffmann. A última seção diz como a skill foi aplicada.
+>   Matheus Hoffmann.
 
 ## Os links, num lugar só
 
@@ -43,6 +43,7 @@ lang: pt-BR
 | O DIA (*Discrete Interaction Approximation*) na GPU, versão 2 | [h0ffmann/ww3-dia-gpu-v2][v2], comparado com o original [ww3-dia-gpu][v1] |
 | O artigo com receita parecida | Koldunov et al., 2026, [arXiv:2606.11356][koldunov] |
 | Glossário de siglas | [`docs/GLOSSARY.md`][glossary] |
+| A skill de escrita deste texto | [Português Técnico Controlado][ptc] (PTC), versão 1.1.0, de Kayque Rotondo, nível `descritivo` |
 
 ## Como ler as marcas
 
@@ -414,33 +415,6 @@ relatório.
 - [`docs/PRODUCTION_READINESS_202610.md`][readiness].
 - Koldunov et al., 2026, [arXiv:2606.11356][koldunov].
 - Rotondo, K. [Português Técnico Controlado][ptc], versão 1.1.0, commit `cfdffad`, licença MIT.
-
-## Como este texto foi escrito
-
-Claude gerou este texto com a skill [Português Técnico Controlado][ptc] (PTC), versão 1.1.0, de Kayque
-Rotondo, a pedido de Matheus Hoffmann. A skill reescreve texto técnico em português para que cada
-frase tenha uma leitura só.
-
-**Parâmetros do Passo 0 da skill:** nível `descritivo` (documentação de sistema), destinatário
-humano, texto só em português. O pedido não fixou o nível. O nível `descritivo` foi inferido do
-leitor: um professor que lê o relatório, não um operador que segue um procedimento.
-
-**O que mudou em relação à segunda versão**, regra por regra:
-
-| Regra | Antes | Depois |
-|---|---|---|
-| PTC-1 (sujeito explícito) | "Medimos onde o tempo vai" | "O perfil medido mostra que os termos-fonte ocupam a maior parte do tempo" |
-| PTC-5 (adjetivo antes do nome) | "Se um único bit muda" | "Se um bit muda" |
-| PTC-1 (verbo "parar" lido como preposição) | "o script para com o código de saída 3" | "o script termina com o código de saída 3" |
-| PTC-3 (tempo verbal) | "O dono do projeto inicia essa fase" | "O dono do projeto decide quando essa fase começa" |
-| PTC-6 (termo congelado) | "rodada", "rodar" | "execução", "executar" |
-| PTC-7 (data) | "16 de outubro de 2026" | "2026-10-16" |
-| PTC-7 (milhar) | "9 520", "1 000" | "9.520", "1.000" |
-
-**Mantido de propósito.** Os nomes de rotina, de arquivo, de variável e de comando ficaram como no
-código (`W3SNL1`, `--kokkos resident`). As marcas `(v)` e `⚠` do repositório ficaram. As citações de
-títulos em inglês ficaram em inglês. As ressalvas sobre máquina compartilhada e regtest pendente
-ficaram longas, porque cortar essas ressalvas mudaria o fato.
 
 [readme-pt]: https://github.com/h0ffmann/ww3-gpu/blob/main/README.pt-BR.md
 [port-status]: https://github.com/h0ffmann/ww3-gpu/blob/main/kokkos/PORT_STATUS.md
