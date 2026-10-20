@@ -2408,6 +2408,13 @@ out. Still refused: `FLD1`, `FLX1` to `FLX5`, `BS1`, `BT4`, `BT8`, `BT9`, `IC1` 
 | `ww_srce` (per point) | new dummy `FPI` before `SHAVE` | `FPIS(ISEA)`; the call in `w3wavemd.F90` passes it (that call is reached by no build, section 10) |
 | `SHAVE` word of the batch | bits 1 and up | `Fld2Status << 1` (1 bulk fail-safe, 2 stress not converged, 4 work array too short), read and cleared by the shim; the Fortran sees 0 or 1 as before |
 
+**Package version.** The packet lengths and `ww_srce`'s dummy list changed, so the package is `0.12.0` and fork
+commit `96892c95` (`find_package(ww_kokkos 0.12)`, on top of `5dbf6eba`) asks for it: the new fork refuses an
+older install at configure time. An older fork against this install still configures (`SameMajorVersion`), and
+`ww_srce_init` refuses its shorter `RPAR`/`IPAR` (`WW_KOKKOS_ERR_BAD_SHAPE`), which `SRCE_CHECK` turns into a stop at
+setup, never a run on mismatched packets (v, `srce_shim.cpp`, `w3kokkosmd.F90` `SRCE_CHECK`). `kokkos/CMakeLists.txt`
+says a changed entry point needs a major bump; this stays a minor one, for the owner to confirm ⚠.
+
 **Caveat kept by a check.** `W3FLD2`'s `FIRST` is a threadprivate `SAVE`: `INFLD` copies `TAIL_ID`, `TAIL_LEV`,
 `TAIL_TRAN1`, `TAIL_TRAN2` of the grid current at a thread's first call and every later grid uses them. The kernel
 uses each grid's own. `W3KOKKOS_SRCE_SETUP` keeps the first grid's four values and, for a later grid that differs,
