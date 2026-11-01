@@ -6,6 +6,7 @@
 // H. L. Tolman, D. Chalikov. Evidence: kokkos/port_report/W3SPR2_KOKKOS.md.
 // The routine's only #ifdef blocks are W3_S tracing and the W3_T USE of NDST, which nothing
 // reads; DEPTH, U, NITTIN, ZWIND, CINXSI and the W3DISPMD tables it USEs are never read.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

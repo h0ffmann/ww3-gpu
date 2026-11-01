@@ -18,6 +18,7 @@
 //
 // The Fortran writes IADDR(1) unconditionally (:587), so ihmax >= 1 is the caller's to
 // guarantee; W3GRID makes it MAX(50, IHM) (w3gridmd.F90:3140). Integer only: no device math.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

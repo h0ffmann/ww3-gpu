@@ -6,6 +6,7 @@
 // kokkos/port_report/SIGN_VSD_SEMI_IMPLICIT_WW3_KOKKOS.md.
 // Its only calls (:1721, :1723) sit under IF (.not. LSLOC), and LSLOC is a PARAMETER
 // .true. (w3parall.F90:89): no build of WW3 ever runs it.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

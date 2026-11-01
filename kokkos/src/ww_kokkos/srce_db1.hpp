@@ -14,6 +14,8 @@
 // double, (2B-1)**2 as t*t, MAX(DEPTH,0.) as a float MAX_EXPR, THR = TINY(1.0)
 // compared as a double, 1.0-THR folded to 1.0f. The EB loop is scalar in ITH
 // order; its IK loop is vectorised element by element (no bits change).
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <Kokkos_Core.hpp>

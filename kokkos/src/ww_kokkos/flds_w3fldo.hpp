@@ -55,6 +55,8 @@
 // w3fldsmd.F90 (WW3's CMake Release flags, switch_lab_shrd; .text identical to the CMake one):
 // no floating-point arithmetic; the order of every test, assignment and transfer is the
 // Fortran's (port report, kokkos/port_report/W3FLDO_KOKKOS.md).
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <array>

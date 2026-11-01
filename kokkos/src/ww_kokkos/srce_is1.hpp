@@ -3,6 +3,7 @@
 // the other NTH-1 of the same frequency, one spectral point. Phase 1, translated, not
 // regtested. WW3 heritage: WW3-noaa/model/src/w3sis1md.F90:74-227 at NOAA-EMC/WW3
 // 03adda91; author S. Zieger. Evidence: kokkos/port_report/W3SIS1_KOKKOS.md.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

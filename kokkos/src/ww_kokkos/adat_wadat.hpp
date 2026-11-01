@@ -35,6 +35,8 @@
 // such flag. The tests that decide whether a conditional array exists (E3DF(1,:),
 // P2MSF(1), US3DF(1), USSPF(1), FLCUR.., GTYPE, FL_ALL) are the record; a consumer
 // asks them, not View::is_allocated().
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <vector>

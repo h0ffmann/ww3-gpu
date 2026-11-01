@@ -6,6 +6,7 @@
 // author H. L. Tolman. Evidence: kokkos/port_report/W3SDS2_KOKKOS.md.
 // The W3_T, W3_T0, W3_T1 and W3_T2 test output (POWMAX, DOUT) and W3_S tracing are dropped.
 // ⚠ On a device logf, powf, fmodf and sqrtf are CUDA's, not glibc's.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

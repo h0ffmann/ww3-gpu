@@ -47,6 +47,7 @@
 // x < c ? x : c and x > c ? x : c (a NaN or a +0/-0 tie gives c), and MIN(DTMAXGL, DTMAXEXP) is
 // DTMAXGL < DTMAXEXP ? DTMAXGL : DTMAXEXP. NINT is a call of glibc's lround (low 32 bits kept),
 // MOD(CFLXY,1.0d0) is x87 fprem (exact, as fmod), ABS of the integer is neg/cmovns.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

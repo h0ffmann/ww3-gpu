@@ -12,6 +12,7 @@
 // (:2136, :2182, :2191, :5328); neither USE'd name is referenced. The -O3 object is one `ret`
 // (__w3initmd_MOD_w3mpio, 1 byte), and its GIMPLE is `return;`. Nothing reaches it under that
 // switch either: its only caller, W3INIT (:1559-1563), is under #ifdef W3_MPI too.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

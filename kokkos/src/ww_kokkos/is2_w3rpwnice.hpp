@@ -6,6 +6,7 @@
 // (FINDROOTS_NR) at NOAA-EMC/WW3 03adda91; author C. Sevigny (module authors F. Ardhuin,
 // P. Nicot, C. Sevigny, G. Boutin). Evidence: kokkos/port_report/W3RPWNICE_KOKKOS.md and
 // kokkos/port_report/FINDROOTS_NR_KOKKOS.md.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

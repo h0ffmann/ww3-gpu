@@ -24,6 +24,7 @@
 // libm call; the vectorised AC and C loops (:234-236) are element-wise
 // products, so the lanes cannot change a bit; the store MAX is maxss with +0
 // as the source operand (:270). Evidence: kokkos/port_report/W3XYPUG_KOKKOS.md.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

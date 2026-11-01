@@ -3,6 +3,7 @@
 // D = -2*Cg*k_i, one spectral point. Phase 1, translated, not regtested.
 // WW3 heritage: WW3-noaa/model/src/w3sic1md.F90:93-369 at NOAA-EMC/WW3 03adda91;
 // authors E. Rogers, S. Zieger. Evidence: kokkos/port_report/W3SIC1_KOKKOS.md.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

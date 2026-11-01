@@ -7,6 +7,7 @@
 // that does not qualify (a scatter with coinciding targets, a last-write-wins list, an in-order
 // scan) goes through one() or one_value(). The team barrier after each call keeps the order
 // between loops: a loop sees every store of the loops before it, as in the serial body.
+// SPDX-License-Identifier: MIT
 #pragma once
 
 #include <Kokkos_Core.hpp>

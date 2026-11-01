@@ -53,6 +53,8 @@
 // mirror (no copy when the space is host-accessible). Scalars and small arrays are host-side
 // (IorsState). After an exit code the arrays are unspecified: the Fortran stops the program
 // there.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <algorithm>

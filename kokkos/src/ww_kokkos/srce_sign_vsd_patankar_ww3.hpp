@@ -3,6 +3,7 @@
 // for one spectrum (PDLIB implicit scheme). Phase 1, translated, not regtested.
 // WW3 heritage: WW3-noaa/model/src/w3srcemd.F90:2647-2722 at NOAA-EMC/WW3 03adda91;
 // authors A. Roland, M. Dutour-Sikiric. Evidence: kokkos/port_report/SIGN_VSD_PATANKAR_WW3_KOKKOS.md.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

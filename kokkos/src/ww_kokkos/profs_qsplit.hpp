@@ -3,6 +3,7 @@
 // (SPARSKIT, used by ILUT to keep the largest entries). Phase 1, translated, not regtested.
 // WW3 heritage: WW3-noaa/model/src/w3profsmd.F90:3738-3800 at NOAA-EMC/WW3 03adda91;
 // module authors A. Roland, F. Ardhuin. Evidence: kokkos/port_report/QSPLIT_KOKKOS.md.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

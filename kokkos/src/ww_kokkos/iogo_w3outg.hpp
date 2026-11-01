@@ -6,6 +6,7 @@
 // copy of the partition table into the partition fields. Phase 1, translated, not regtested.
 // WW3 heritage: WW3/model/src/w3iogomd.F90:1201-2380 at h0ffmann/WW3 8e433f99; author H. L. Tolman
 // and the authors of its history block. Evidence: kokkos/port_report/W3OUTG_KOKKOS.md.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 //
 // Ported: every statement switches/switch_lab_shrd and switch_lab_ompg compile (SHRD, with or

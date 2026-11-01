@@ -6,6 +6,7 @@
 // kokkos/port_report/W3SIC4_KOKKOS.md. The object vectorises four loops with libmvec
 // (LIBMVEC SITE below), emulated by st4_libmvec.hpp. ⚠ On a device they and
 // expf/powf/sqrtf are CUDA's, not glibc's.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

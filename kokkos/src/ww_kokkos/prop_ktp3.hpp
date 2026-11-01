@@ -18,6 +18,8 @@
 // FKC and band-width copy loops are vectorised element by element, which changes
 // no bits; the only vectorised reduction, CFLKMAX, is translated as a sequential
 // max (see 4.c).
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <Kokkos_Core.hpp>

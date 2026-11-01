@@ -6,6 +6,7 @@
 // Called from PDLIB_JACOBI_GAUSS_SEIDEL_BLOCK (:5788) after VA was divided by CG (:5692-5708);
 // the caller computes RD10, RD20 = DSEC21(..) (:5251-5253) only when FLBPI.
 // ISBPI can name one node twice: each thread owns one ISP and walks IBI in order, last wins.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

@@ -5,6 +5,7 @@
 // WW3 heritage: WW3-noaa/model/src/w3sis2md.F90:1523-1611 at NOAA-EMC/WW3 03adda91;
 // author C. Sevigny (module authors F. Ardhuin, P. Nicot, C. Sevigny, G. Boutin).
 // Evidence: kokkos/port_report/FUNCD_FDERIV_KOKKOS.md.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

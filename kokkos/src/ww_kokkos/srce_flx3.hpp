@@ -5,6 +5,7 @@
 // WW3 heritage: WW3-noaa/model/src/w3flx3md.F90:95-248 at NOAA-EMC/WW3 03adda91;
 // author H. L. Tolman. Evidence: kokkos/port_report/W3FLX3_KOKKOS.md.
 // ⚠ On a device sqrtf, powf, logf, expf and tanhf are CUDA's, not glibc's.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

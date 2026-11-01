@@ -11,6 +11,7 @@
 // Phase 1 copies in, runs, copies out on every call, and the caller serialises
 // the calls (!$OMP CRITICAL in the caller patch).
 //
+// SPDX-License-Identifier: MIT
 
 #include "fortran_iface/ww_kokkos_c.hpp"
 #include "fortran_iface/shim_state.hpp"

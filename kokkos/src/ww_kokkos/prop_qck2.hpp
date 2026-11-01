@@ -15,6 +15,8 @@
 // central loop is vectorised four points at a time with scalar gathers, which
 // changes no bits; the MIN/MAX operand orders below are the ones the maxss/minss
 // and maxps/minps instructions emit (spec_W3QCK2.md, section 3).
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <Kokkos_Core.hpp>

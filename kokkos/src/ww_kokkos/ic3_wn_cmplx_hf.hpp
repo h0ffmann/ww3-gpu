@@ -5,6 +5,7 @@
 // WW3 heritage: WW3-noaa/model/src/w3sic3md.F90:984-1102 at NOAA-EMC/WW3 03adda91;
 // authors H. Shen, E. Rogers (from Zhao and Shen's WN_CMPLXA).
 // Evidence: kokkos/port_report/WN_CMPLX_HF_KOKKOS.md.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

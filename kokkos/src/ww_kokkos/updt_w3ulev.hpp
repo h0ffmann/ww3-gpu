@@ -46,6 +46,8 @@
 //   w3gridmd.F90:3564) or nothing: the stale RD2 cannot change a bit while DWN
 //   is finite and non-zero.
 // - No FMA (contraction off), no libm call.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <Kokkos_Core.hpp>

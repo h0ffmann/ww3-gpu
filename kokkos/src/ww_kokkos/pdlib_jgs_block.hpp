@@ -11,6 +11,7 @@
 // ⚠ Undefined in the Fortran, zero here: the limiter's TAUWX, TAUWY, LLWS (USTAR, USTDIR on
 // the first JSEA); the norm's DMM under FSFREQSHIFT without LSIG (nothing writes it);
 // Sum_L2_GL (:6190 passes a REAL(8) as MPI_REAL4), so allreduce_norm is the call site only.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

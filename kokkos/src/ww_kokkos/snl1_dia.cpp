@@ -12,6 +12,7 @@
 // WW_DETERMINISTIC does not change this file: the body has no reduction, so there
 // is no summation order to pin down.
 //
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 
 #include "ww_kokkos/snl1_dia.hpp"

@@ -3,6 +3,7 @@
 // W3KTP1, W3XYP2, W3KTP2, and W3XYPUG, a host function) are header-only functions. W3XYP3 and
 // W3KTP3, with the three W3QCKn, have a caller, fortran_iface/prop3_shim.cpp; the others none yet.
 // This translation unit makes every preset compile all of them, host and CUDA.
+// SPDX-License-Identifier: MIT
 #include "prop_ktp1.hpp"
 #include "prop_ktp2.hpp"
 #include "prop_ktp3.hpp"

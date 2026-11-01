@@ -11,6 +11,7 @@
 // association hides the module's own NKD = 275, w3snl3md.F90:130, :872), and 275 otherwise;
 // W3SNL3 always clamps JKD to 275 (:332, :425). Snl3Input::st4 selects it.
 // ⚠ Host only. LOG of the four AUXFR goes through glibc's libmvec where the object does.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

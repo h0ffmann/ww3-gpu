@@ -14,6 +14,7 @@
 // or a tie gives IICEHMIN (fmax2 below). The loop :1643-1648 is not vectorised.
 //
 // Evidence: kokkos/port_report/W3UIC1_KOKKOS.md.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

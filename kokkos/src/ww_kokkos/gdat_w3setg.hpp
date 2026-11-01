@@ -61,6 +61,8 @@
 // EXTCDE (returned as the code EXTCDE would exit with, W3setgStatus; EXTCDE ends in
 // CALL EXIT, w3servmd.F90:1207); w3setg_message() returns the text the WRITE would
 // print, for the shim; NDSE and NDST, which only the WRITEs use.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <array>

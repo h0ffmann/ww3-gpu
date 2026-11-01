@@ -6,6 +6,7 @@
 // authors A. Rawat and F. Ardhuin (module), adapted from Matlab by A. Rawat (2012).
 // Evidence: kokkos/port_report/DF1F2THETA_KOKKOS.md.
 // ⚠ On a device cosf and tanhf are CUDA's, not glibc's.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

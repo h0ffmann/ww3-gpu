@@ -5,6 +5,7 @@
 // WW3 heritage: WW3-noaa/model/src/w3iogomd.F90:589-749 at NOAA-EMC/WW3 03adda91;
 // author F. Ardhuin (name matching factored out by C. Bunney).
 // Evidence: kokkos/port_report/W3FLGRDFLAG_KOKKOS.md.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

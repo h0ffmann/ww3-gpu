@@ -31,6 +31,8 @@
 //
 // On a GPU atan2, fmod, sin and cos are CUDA's, not glibc's: their bits are not
 // shown to match the Fortran's (AGENTS.md, "Bit for bit") ⚠.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <cmath>

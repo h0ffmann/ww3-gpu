@@ -39,6 +39,8 @@
 // state of the call (W3DMNL calls no W3SETG); that leaves every alias group as
 // :2584 does, since NLINIT is already .TRUE. (:2574) and after :2584 the Fortran
 // names no alias but NSPECX (:2594, a store), which is in the unconditional group.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <cstddef>

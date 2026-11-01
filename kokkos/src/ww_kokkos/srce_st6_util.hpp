@@ -5,6 +5,7 @@
 // :1342-1371, RRANGE :1387-1416, TAUWINDS :1440-1469); author S. Zieger.
 // Evidence: kokkos/port_report/W3SRC6MD_IRANGE_KOKKOS.md, RRANGE_KOKKOS.md,
 // TAUWINDS_KOKKOS.md.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

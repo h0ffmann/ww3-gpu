@@ -30,6 +30,7 @@
 // - FACT = (TPI*SIG(IK))/CG(IK,ISEA): the product with the folded REAL TPI first, then divss.
 // - E2(IK,ITH) = VA(ITH+(IK-1)*NTH,JSEA)*FACT, one mulss. No FMA (contraction off).
 //
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

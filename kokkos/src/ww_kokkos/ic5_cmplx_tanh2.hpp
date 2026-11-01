@@ -3,6 +3,7 @@
 // Phase 1, translated, not regtested.
 // WW3 heritage: WW3-noaa/model/src/w3sic5md.F90:2160-2256 at NOAA-EMC/WW3 03adda91; author Q. Liu.
 // Evidence: kokkos/port_report/CMPLX_TANH2_KOKKOS.md.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
