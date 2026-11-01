@@ -35,6 +35,11 @@
 # of the KOKKOS patch (kokkos_patch below) and exits 3 when it does not.
 #   add --build-only to build and stop before the run (a machine without the GPU can still compile)
 #   scripts/ww3-gpu.sh --self-test
+# WW3GPU_MPI_RANKS=<n> with an MPI switch (WW3GPU_SWITCH=switch_lab_mpi) runs ww3_shel under mpirun
+# in the --ww3, Fortran and Kokkos runs alike, CPU only (ADR-0020, Proposed). An MPI switch without
+# it runs one rank and says so, so a singleton never reads as an MPI result. Ranks are not bound, and
+# OMP_NUM_THREADS defaults to the cores per rank: Kokkos' OpenMP pool otherwise takes every core
+# in every rank.
 # WW3GPU_CASE_HOOK=<file> runs `bash <file> <case dir>` after each copy of the case inputs: a
 # diagnostic variant of the grid or its namelists, in the Fortran run and the Kokkos run alike. It is
 # never a regtest verdict.
@@ -242,6 +247,7 @@ if [ "$mode" = ww3-gpu ] && [ -n "${KOKKOS_NUM_THREADS:-}" ]; then
   echo "ww3-gpu: KOKKOS_NUM_THREADS acts on the Kokkos run only; unset it (OMP_NUM_THREADS sets both)" >&2; exit 64
 fi
 if [ "$mode" = self-test ]; then
+  unset WW3GPU_MPI_RANKS WW3GPU_SWITCH # the cases below set their own
   out="$("${BASH_SOURCE[0]}" --help 2>&1 || true)"
   if ! grep -q -- "--ww3" <<<"$out" || ! grep -q -- "--ww3-gpu" <<<"$out" || ! grep -q -- "--ww4" <<<"$out"; then echo "ww3-gpu: help text lost" >&2; exit 1; fi
   if "${BASH_SOURCE[0]}" --bogus >/dev/null 2>&1; then echo "ww3-gpu: accepted a bad argument" >&2; exit 1; fi
@@ -264,6 +270,21 @@ if [ "$mode" = self-test ]; then
     "${BASH_SOURCE[0]}" $bad </dev/null >/dev/null 2>&1 && rc=0 || rc=$?
     [ "$rc" = 64 ] || { echo "ww3-gpu: '$bad' gave exit $rc, not 64" >&2; exit 1; }
   done
+  # WW3GPU_MPI_RANKS: a bad or absurd count, no MPI in the switch, a device, WW4.
+  for bad in "WW3GPU_MPI_RANKS=0 WW3GPU_SWITCH=switch_lab_mpi --ww3-gpu smoke" \
+             "WW3GPU_MPI_RANKS=x WW3GPU_SWITCH=switch_lab_mpi --ww3-gpu smoke" \
+             "WW3GPU_MPI_RANKS=18446744073709551615 WW3GPU_SWITCH=switch_lab_mpi --ww3-gpu smoke" \
+             "WW3GPU_MPI_RANKS=4 --ww3-gpu smoke" \
+             "WW3GPU_MPI_RANKS=4 WW3GPU_SWITCH=switch_lab_mpi --ww3-gpu smoke --gpu" \
+             "WW3GPU_MPI_RANKS=4 WW3GPU_SWITCH=switch_lab_mpi --ww4 smoke"; do
+    # shellcheck disable=SC2086
+    env ${bad%%--*} "${BASH_SOURCE[0]}" --${bad#*--} </dev/null >/dev/null 2>&1 && rc=0 || rc=$?
+    [ "$rc" = 64 ] || { echo "ww3-gpu: '$bad' gave exit $rc, not 64" >&2; exit 1; }
+  done
+  # The launcher of run_model, read as text, as below: every run of a pair takes the same one.
+  # shellcheck disable=SC2016
+  grep -qF '"${flags[@]}" "${launch[@]}" "$bin/ww3_shel"' "${BASH_SOURCE[0]}" \
+    || { echo "ww3-gpu: run_model lost the mpirun launcher" >&2; exit 1; }
   for p in SNL1 SRCE GATH DISTAB FLX_TABLES; do
     [[ " ${all_parts[*]} " == *" $p "* ]] || { echo "ww3-gpu: parts.d lost part $p" >&2; exit 1; }
   done
@@ -379,6 +400,21 @@ if grep -qw OMPG "$root/switches/$lab_switch"; then
   base_desc="CPU, OpenMP, ${OMP_NUM_THREADS:-$(nproc)} threads"
 else
   base_desc="CPU, one thread"
+fi
+launch=()
+if [ -n "${WW3GPU_MPI_RANKS:-}" ]; then
+  [[ "$WW3GPU_MPI_RANKS" =~ ^[1-9][0-9]{0,5}$ ]] \
+    || { echo "ww3-gpu: WW3GPU_MPI_RANKS is a positive integer, not '$WW3GPU_MPI_RANKS'" >&2; exit 64; }
+  grep -qw MPI "$root/switches/$lab_switch" \
+    || { echo "ww3-gpu: WW3GPU_MPI_RANKS needs an MPI switch, and $lab_switch has none" >&2; exit 64; }
+  [ "$mode" != ww4 ] && [ "$device" = cpu ] && [ -z "$pre" ] \
+    || { echo "ww3-gpu: WW3GPU_MPI_RANKS is for --ww3 and --ww3-gpu --cpu from source" >&2; exit 64; }
+  launch=(mpirun -n "$WW3GPU_MPI_RANKS" --bind-to none)
+  threads="$(( $(nproc) / WW3GPU_MPI_RANKS ))"
+  export OMP_NUM_THREADS="${OMP_NUM_THREADS:-$(( threads > 0 ? threads : 1 ))}"
+  base_desc="$base_desc, $WW3GPU_MPI_RANKS MPI ranks"
+elif grep -qw MPI "$root/switches/$lab_switch"; then
+  echo "ww3-gpu: $lab_switch is an MPI switch and this run has one rank; WW3GPU_MPI_RANKS sets more" >&2
 fi
 if [ "$device" = gpu ]; then dev_name="$(nvidia-smi -L 2>/dev/null | head -1 || true)"; fi
 if [ -n "$pre" ] && [ "$device" = gpu ] && [ ! -d "$pre/ww3-gpu-cuda/bin" ]; then
@@ -645,7 +681,7 @@ run_model() { # <dir> <0|1>: grid, strt, shel, ounf; prints ww3_shel's wall time
     (cd "$d" && "$bin/ww3_strt" > ww3_strt.out 2>&1) || { tail -20 "$d/ww3_strt.out" >&2; return 1; }
   fi
   t0="$(date +%s.%N)"
-  (cd "$d" && env "${unset[@]}" OMP_PROC_BIND="${OMP_PROC_BIND:-false}" "${flags[@]}" "$bin/ww3_shel" > ww3_shel.out 2>&1) \
+  (cd "$d" && env "${unset[@]}" OMP_PROC_BIND="${OMP_PROC_BIND:-false}" "${flags[@]}" "${launch[@]}" "$bin/ww3_shel" > ww3_shel.out 2>&1) \
     || { grep -h "ww_kokkos:\|Kokkos::" "$d/ww3_shel.out" >&2; tail -20 "$d/ww3_shel.out" >&2; return 1; }
   t1="$(date +%s.%N)"
   grep -q "End of program" "$d/ww3_shel.out" || { echo "ww3-gpu: ww3_shel did not finish in $d" >&2; return 1; }
@@ -801,7 +837,7 @@ else
       printf 'cpu\t%s\nthreads\t%s\ngpu\t%s\ndriver\t%s\n' "$cpu_name" "$(nproc)" "$gpu_model" "$driver"
       printf 'toolchain\t%s\nkokkos\t%s\n' "$tool" "$kver"
       printf 'commit\t%s\nww3_commit\t%s\ndirty\t%s\ndate\t%s\n' "$c_gpu" "$c_ww3" "$dirty" "$(date -u +%F)"
-      printf 'command\t%s\n' "${WW3GPU_SWITCH:+WW3GPU_SWITCH=$WW3GPU_SWITCH }bash scripts/ww3-gpu.sh --ww3-gpu $case_name --$device${kokkos:+ --kokkos $kokkos} --repeat $repeat"
+      printf 'command\t%s\n' "${WW3GPU_MPI_RANKS:+WW3GPU_MPI_RANKS=$WW3GPU_MPI_RANKS }${WW3GPU_SWITCH:+WW3GPU_SWITCH=$WW3GPU_SWITCH }bash scripts/ww3-gpu.sh --ww3-gpu $case_name --$device${kokkos:+ --kokkos $kokkos} --repeat $repeat"
     } > "$perf"
     echo ">> perf summary: $perf (python3 scripts/results.py record $perf writes the bench/results/ record)"
   fi
