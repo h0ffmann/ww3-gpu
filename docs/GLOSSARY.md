@@ -328,6 +328,7 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | CRITOS / FRACOS | `W3INIT`'s PARAMETER 15. and local: the percentage of processes reserved for output `(v)` `w3initmd.F90:129`, `:505`, `:622` | Warning 8002 when more than 15 % of the processes do output; 0 under `SHRD`. | [kokkos/port_report/W3INIT_KOKKOS.md](../kokkos/port_report/W3INIT_KOKKOS.md) |
 | MAPTST | `W3INIT`'s local copy of `MAPSTA`, then its dry-point flag map `(v)` `w3initmd.F90:501`, `:795-796`, `:1285` | Merges the restart `MAPSTA` with the grid's (`:1009-1016`) and carries the dry flag into `MAPST2` (`:1368`). | [kokkos/port_report/W3INIT_KOKKOS.md](../kokkos/port_report/W3INIT_KOKKOS.md) |
 | W3MPII | "Perform initializations for MPI version of model. Data transpose only" `(v)` | MPI set-up in `w3initmd.F90`. | [docs/KOKKOS_H100_PLAN_202609.md](KOKKOS_H100_PLAN_202609.md) |
+| MPIBUF / NSPLOC / GSTORE / SSTORE | the number of component buffers of the MPI exchange (`MPIBUF = 6`, `w3adatmd.F90:379`), the components this rank owns, and the gather and scatter buffers `GSTORE(NAPROC*NSEALM,MPIBUF)`, `SSTORE` of `W3MPIP` `(v)` `w3initmd.F90:1994-1996`, `:2036-2037` at `WW3@96892c95` | Why the Fortran's exchange moves one component at a time. `SSTORE` is not cleared between components (ADR-0020). | [docs/compound/plans/2026-11-01-002-mpi-kokkos-plan.md](compound/plans/2026-11-01-002-mpi-kokkos-plan.md) |
 | W3MPIO | "Prepare MPI persistent communication needed for WAVEWATCH I/O routines" `(v)` `w3initmd.F90:2033-2034`, `:2045` at `03adda91` | Called only by `W3INIT` under `W3_MPI` (`w3initmd.F90:1561`); under `SHRD` it compiles to an empty subroutine, which is what the port reproduces. | [kokkos/port_report/W3MPIO_KOKKOS.md](../kokkos/port_report/W3MPIO_KOKKOS.md) |
 | W3IOGRMD / W3IOGR | "Reading and writing of the model definition file" `(v)` | Reads `mod_def.ww3`; also calls `INSNL1` (`w3iogrmd.F90:1802`). | [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md) |
 | W3IOGOMD / W3OUTG / W3IOGO | "Gridded output of mean wave parameters": fill output arrays / read-write `out_grd.ww3` `(v)` | Integral parameters (`Hs`, `Tp`, …) from the spectrum; ranked #8 for the port. | [docs/AGENTS_KOKKOS_202609.md](AGENTS_KOKKOS_202609.md) |
@@ -1285,6 +1286,7 @@ Every term above, alphabetically, with the section it lives in.
 - MAPSTA_SMC: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - MAPTMP / AUX1 / AUX2 / TIMETAG: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - MAPTST: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- MPIBUF / NSPLOC / GSTORE / SSTORE: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - MSC: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - MSR: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - N1MAX: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
