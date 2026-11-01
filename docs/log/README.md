@@ -81,3 +81,4 @@ Date, author, issue/PR/WFIP.
 | 2026-10-18 | [`W3XYPUG` and `W3XYPFSN2` on Kokkos give the Fortran's bytes on `ww3_tp2.6`, 2 of 2 entries; `KTP3` and the source terms not exercised there](2026-10-18-xypug-tp2.6.md) | #196, ADR-0016 |
 | 2026-10-19 | [`ww3_tp2.6` rerun on the rebased pin `aa382393`: `W3XYPUG` and `W3XYPFSN2` still give the Fortran's bytes, 2 of 2 entries](2026-10-19-xypug-tp2.6-rebased.md) | #196, ADR-0016 |
 | 2026-10-19 | [`W3XYPUG` and `W3XYPFSN2`: four bit-neutral speed-ups behind switches, 0/36 and 0/38 files different, kernel 0.82 times at 32 threads](2026-10-19-xypug-speedups.md) | #196, ADR-0016 |
+| 2026-10-29 | [What "WW3 7.14" means for ondaseventos: metocean/WW3 `7.14.mos-92e2cf6` is NOAA of 2023 plus MetOcean commits that change ST4; the image builds, the fork stays on NOAA](2026-10-29-metocean-ww3-714-mos.md) | plan 2026-10-29-001 |
