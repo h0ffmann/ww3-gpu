@@ -1,6 +1,6 @@
 {
-  "read_on": "2026-10-09",
-  "read_with": "get_project_settings (from the project's coordinator session), get_session, list_environments, list_triggers and get_trigger; see README.md",
+  "read_on": "2026-11-06",
+  "read_with": "get_project_settings (from the project's coordinator session), get_session, list_environments, get_environment, list_triggers and get_trigger; see README.md",
   "project": {
     "name": "Wave Forecaster",
     "visibility": "private",
@@ -24,7 +24,7 @@
   "environment": {
     "name": "Default",
     "kind": "anthropic_cloud",
-    "network": "trusted network access",
+    "network": "unrestricted",
     "setup": "none on the service; .claude/hooks/session-start.sh runs scripts/agent_env.sh"
   },
   "routines": [
