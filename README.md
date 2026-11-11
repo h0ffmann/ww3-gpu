@@ -1,15 +1,15 @@
 <div align="center">
 
-<img src="site/static/favicon.svg" width="120" alt="" />
+<img src="https://wave.piabrota.art/favicon.svg" width="120" alt="" />
 
 # ww3-gpu
 
-<sub>the WW3 GPU Lab · since 2026 · <a href="https://h0ffmann.github.io/ww3-gpu/">the site</a> · <a href="RELEASES.md">releases</a> · <a href="#how-to-cite">cite</a> · <a href="README.pt-BR.md">português</a></sub>
+<sub>the WW3 GPU Lab · since 2026 · <a href="https://wave.piabrota.art/">the site</a> · <a href="RELEASES.md">releases</a> · <a href="#how-to-cite">cite</a> · <a href="README.pt-BR.md">português</a></sub>
 
 [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.23221351-1682D4?style=flat-square)](https://doi.org/10.5281/zenodo.23221351)
 [![release](https://img.shields.io/github/v/tag/h0ffmann/ww3-gpu?style=flat-square&label=release&color=FF4F00)](RELEASES.md)
 [![CI](https://github.com/h0ffmann/ww3-gpu/actions/workflows/ci.yml/badge.svg)](https://github.com/h0ffmann/ww3-gpu/actions/workflows/ci.yml)
-[![site](https://img.shields.io/badge/site-live-3FB950?style=flat-square)](https://h0ffmann.github.io/ww3-gpu/)
+[![site](https://img.shields.io/badge/site-live-3FB950?style=flat-square)](https://wave.piabrota.art/)
 [![deliverable: ww3-dia-gpu-v2](https://img.shields.io/badge/deliverable-ww3--dia--gpu--v2-181717?style=flat-square&logo=github)](https://github.com/h0ffmann/ww3-dia-gpu-v2)
 [![license](https://img.shields.io/badge/license-MIT%20%2B%20LGPL--3.0%20kernels-1682D4?style=flat-square)](#licensing)
 [![leia em português](https://img.shields.io/badge/leia%20em-portugu%C3%AAs-3FB950?style=flat-square)](README.pt-BR.md)
@@ -315,32 +315,26 @@ just wfip check    # the design docs and their definitions of done
 
 <details><summary>The website: what it shows, and how to build it</summary>
 
-<https://h0ffmann.github.io/ww3-gpu/> is a Gleam + Lustre front page, prerendered, with no script.
-Every fact on it is read from this repository's files by `site/content`: the decisions, the
-designs, the notes, the DOI and the people. Next to it are the progress page (`/andamento/`), the decisions (`/adrs/`) and an easy Brazilian Portuguese report for the GTA,
-DEL/UFRJ (`/relatorio-gta/`, from [`pubs/relatorio-gta/`](pubs/relatorio-gta/relatorio.easy.pt-BR.md), PDF in
-[`pdf/relatorio-gta-pedro-cruz.pdf`](pdf/relatorio-gta-pedro-cruz.pdf)). [`DESIGN.md`](DESIGN.md) has its look: a sea at night,
-and three lights on it. The same page is built in Brazilian Portuguese at
-[`/pt-BR/`](https://h0ffmann.github.io/ww3-gpu/pt-BR/), from one source and a table of
-translations, [`site/data/translations/pt-BR.tsv`](site/data/translations/pt-BR.tsv): the build
-fails when a sentence has no row.
+<https://wave.piabrota.art/> is the front page and the lineage, in English and at `/pt-BR/` in
+Brazilian Portuguese. Its code lives in [piabrota/nix-os](https://github.com/piabrota/nix-os)
+(`ww3-site/`, since 11 November 2026, [ADR-0024](docs/ADRs.md#adr-0024)), which builds it from this
+repository's files at a pinned commit: the decisions, the designs, the notes, the port's numbers
+(`kokkos/ports.tsv`, `site/data/port_score.tsv`), the lineage and related works
+(`site/data/lineage.tsv`, `site/data/related.tsv`), the DOI and the people. A change to those
+files reaches the site when nix-os moves its pin. A change to the page itself is a pull request
+there.
+
+GitHub Pages, at <https://h0ffmann.github.io/ww3-gpu/>, still serves the progress page
+(`/andamento/`), the decisions (`/adrs/`), the zoomable drawings (`/figures/`) and an easy
+Brazilian Portuguese report for the GTA, DEL/UFRJ (`/relatorio-gta/`, from
+[`pubs/relatorio-gta/`](pubs/relatorio-gta/relatorio.easy.pt-BR.md), PDF in
+[`pdf/relatorio-gta-pedro-cruz.pdf`](pdf/relatorio-gta-pedro-cruz.pdf)); its old front page and
+lineage addresses redirect to wave.piabrota.art.
 
 ```console
-just site          # the progress, ADR and report pages, then the front page, into build/site/
+just site          # the progress, ADR and report pages and the redirects, into build/site/
 just site-serve    # serve build/site on http://localhost:8000
 ```
-
-<details><summary>Environment details</summary>
-
-| Type | Program |
-| :---- | :-----: |
-| Language | Gleam (JavaScript target), Lustre |
-| Bundling and tests | node, esbuild, gleeunit |
-| Toolchain | picasso's `labs/gleam-website`, through `flake.nix` (`nix develop .#site`) |
-| Report pages | pandoc (`scripts/build_html.sh`) |
-| Deploy | `.github/workflows/pages.yml`, GitHub Pages |
-
-</details>
 
 </details>
 
@@ -669,7 +663,7 @@ solver yet
 | `proof/` | The runnable half of the proof plan (all 2^32 inputs of `W3SNL1` section 1; SMT queries) |
 | `docs/` | Plans, decisions (`ADRs.md`), designs (`WFIPs/`), the research log, the link list, the glossary |
 | `notes/` | The second brain ([`NOTES.md`](NOTES.md)) |
-| `site/` | The Gleam front page ([`DESIGN.md`](DESIGN.md)) |
+| `site/data/` | The tables the website reads (piabrota/nix-os, `ww3-site/`) |
 | `pubs/` | The preprint, the UFRJ/DEL project proposal and the GTA report; built files land in `pdf/` |
 | `scripts/`, `switches/`, `env/` | Get, build and run WW3 and SWAN; annotated switch files; conda and an untested build-environment Dockerfile |
 | `docker/`, `.dockerignore` | The Ubuntu runtime image: WW3, WW3 with the Kokkos DIA and WW4 compiled, no sources ([the Docker image](#2--the-docker-image)) |

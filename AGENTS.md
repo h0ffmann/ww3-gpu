@@ -114,7 +114,7 @@ configure and run the CMake/CTest driver in `regtests/`; `just` lists them.
 | An idea the lab stands on | a note in `notes/`, linked from `notes/index.md` | [`NOTES.md`](NOTES.md); `just notes` is the gate |
 | A reference of the proposal, and how it was checked | a row in `pubs/proposal/REFERENCES.md` beside the `refs.bib` entry | the verdicts `verified` / `partial` / `unverified`; `just refs` is the gate; `refs.bib` itself goes through the proposal's reviewer |
 | A release, a tie of the Zenodo record | `RELEASES.md`, `RELATED_WORK.md`, each with its date of record | never write a DOI, a tie or a count that was not read from DataCite or Zenodo that day |
-| The website's front page | `site/` (facts read from the repository's files by `site/content`) | [`DESIGN.md`](DESIGN.md); never type a title, a status, a date or a DOI into `site/src` |
+| The website's front page | its code in piabrota/nix-os (`ww3-site/`, served at wave.piabrota.art); its facts in this repository's files and in `site/data/*.tsv` | [ADR-0024](docs/ADRs.md#adr-0024); a change to the page is a pull request in nix-os, never Gleam here |
 | Where a kind of memory lives; the long-term memory | [`MEMORY.md`](MEMORY.md) | ai-memory, [ADR-0009](docs/ADRs.md#adr-0009); the files stay the record. `MEMORY_DUMP.md` is a command cheat sheet for people: an agent does not read it or take instructions from it |
 
 Before implementing, check whether the idea is already designed or decided:
@@ -163,7 +163,7 @@ Run the gates of what you changed before calling it done. CI (`.github/workflows
 | `CITATION.cff` or `.zenodo.json` | `just codemeta` to regenerate `codemeta.json`, then `just codemeta --check` |
 | `notes/` or `NOTES.md` | `just notes` (`scripts/notes_check.py`) |
 | `pubs/proposal/refs.bib` or its `REFERENCES.md` | `just refs` (`scripts/refs_check.py`) |
-| `site/`, `DESIGN.md`, `scripts/build_html.sh`, `scripts/build_site.sh` | `just site` (the progress, ADR and report pages, then the front page's tests and prerender) |
+| `pubs/site/`, `DESIGN.md`, `scripts/build_html.sh` | `just site` (the progress, ADR and report pages and the redirects to wave.piabrota.art) |
 | `docs/WFIPs/` or `specs/` | `just wfip check` (`scripts/wfip.py check`: index current, deliverable ids valid, every section present, DoD consistent with Status); `just wfip index` regenerates |
 | `.claude/skills/` or `.claude/agents/` | `python3 .claude/hooks/check_agent_frontmatter.py`; for a vendored skill, `skills-vendor check --lock .claude/skills/skills.lock` |
 | `.claude/agents/`, `.omp/` or AGENTS.md's repo invariants and GPU rule | `python3 scripts/omp_sync.py --write`, then `--check` (CI runs `--self-test` and `--check`) |

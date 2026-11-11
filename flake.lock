@@ -1,42 +1,6 @@
 {
   "nodes": {
-    "gleam-website": {
-      "inputs": {
-        "nixpkgs": "nixpkgs"
-      },
-      "locked": {
-        "dir": "labs/gleam-website",
-        "lastModified": 1792584121,
-        "narHash": "sha256-cZFx6STp4o3K+mATybz/F6/JWuXDqonthtwK3pg5YMg=",
-        "owner": "h0ffmann",
-        "repo": "picasso",
-        "rev": "b919f9ecbbf1d2edbe083ab72ffc7e5b23e69423",
-        "type": "github"
-      },
-      "original": {
-        "dir": "labs/gleam-website",
-        "owner": "h0ffmann",
-        "repo": "picasso",
-        "type": "github"
-      }
-    },
     "nixpkgs": {
-      "locked": {
-        "lastModified": 1793341285,
-        "narHash": "sha256-Y1CiZ4SoBUjLQyQM/pY+rS2dXD3CHLPstF0lmOc73D4=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "1c89083e451e891152365b799595cf7790a43325",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "ref": "nixos-unstable",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
-    "nixpkgs_2": {
       "locked": {
         "lastModified": 1793341285,
         "narHash": "sha256-Y1CiZ4SoBUjLQyQM/pY+rS2dXD3CHLPstF0lmOc73D4=",
@@ -54,7 +18,7 @@
     },
     "publisher": {
       "inputs": {
-        "nixpkgs": "nixpkgs_2"
+        "nixpkgs": "nixpkgs"
       },
       "locked": {
         "dir": "labs/publisher",
@@ -74,7 +38,6 @@
     },
     "root": {
       "inputs": {
-        "gleam-website": "gleam-website",
         "nixpkgs": [
           "publisher",
           "nixpkgs"
