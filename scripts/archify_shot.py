@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""archify_shot — a PNG of one local HTML page, taken by headless Chrome over its DevTools pipe.
+"""archify_shot — a PNG (or a PDF) of one local HTML page, by headless Chrome over its DevTools pipe.
 
-    archify_shot.py <chrome> <page.html> <out.png> <width> <height>
+    archify_shot.py <chrome> <page.html> <out.png|out.pdf> <width> <height>
 
-scripts/archify.sh png calls it. Chrome's own --screenshot flag never returns in some containers
-(a cloud agent session, 2026-11-11); the pipe is what Archify's browser check uses and does.
+scripts/archify.sh png and pdf call it; a .pdf is printed with the page's own @page size.
+Chrome's own --screenshot and --print-to-pdf flags never return in some containers (a cloud agent
+session, 2026-11-11); the pipe is what Archify's browser check uses, and it does return.
 The picture is taken at twice the size, for a sharp README image, once the page's fonts are ready.
 """
 import base64
@@ -70,7 +71,11 @@ def main(chrome, page, out, width, height):
                      " setTimeout(() => r(true), 300));"
                      " document.readyState === 'complete' ? go() : addEventListener('load', go); })")
             send("Runtime.evaluate", {"expression": ready, "awaitPromise": True}, s)
-            shot = send("Page.captureScreenshot", {"format": "png"}, s)
+            if out.endswith(".pdf"):
+                shot = send("Page.printToPDF", {"preferCSSPageSize": True, "printBackground": True,
+                                                "displayHeaderFooter": False}, s)
+            else:
+                shot = send("Page.captureScreenshot", {"format": "png"}, s)
             with open(out, "wb") as f:
                 f.write(base64.b64decode(shot["data"]))
         finally:

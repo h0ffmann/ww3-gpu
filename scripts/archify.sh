@@ -105,8 +105,7 @@ w, h = map(float, re.search(r'<svg viewBox="0 0 ([\d.]+) ([\d.]+)"', src).groups
 rule = f"<style>@page {{ size: {w + 160:.0f}px {h + 260:.0f}px; margin: 40px; }}</style>"
 open(sys.argv[2], "w", encoding="utf-8").write(src.replace("</head>", rule + "</head>", 1))
 PY
-        run "$chrome" --headless --disable-gpu --no-pdf-header-footer --user-data-dir="$tmp/profile" \
-            --print-to-pdf="$dir/$s.pdf" "file://$page"
+        run python3 "$root/scripts/archify_shot.py" "$chrome" "$page" "$dir/$s.pdf" 1280 800
     done
 }
 
