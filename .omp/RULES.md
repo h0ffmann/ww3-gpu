@@ -46,6 +46,8 @@ The full rulebook is `AGENTS.md` at the repository root; where this list and it 
 - **Engineering work is sized to the change**: when the owner asks for engineering work, plan,
   work and review in proportion to it, and the hard rules here win over any step
   (AGENTS.md, "Engineering work").
+- **Diagrams are Archify, dark**: no diagram is Mermaid; every diagram is an Archify drawing in
+  DESIGN.md's dark look with its reading card (AGENTS.md, "Figures").
 - **The proposal goes through the reviewer**: any change under `pubs/proposal/` passes
   `revisor-proposta` and `just proposal-lint` before the PR, and the review is recorded
   (AGENTS.md, "The proposal").
