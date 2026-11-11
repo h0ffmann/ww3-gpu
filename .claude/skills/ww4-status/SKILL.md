@@ -1,6 +1,6 @@
 ---
 name: ww4-status
-description: "Check NOAA's WAVEWATCH IV (WW4) for changes since the last recorded snapshot and update this repo's research to match. Use when the user types /ww4-status, asks what WW4 has done lately, whether WW4 ported a source term or solver, adopted Kokkos, changed its spectral grid or released, or asks to refresh lesson 14 or the proposal's State of WW4."
+description: "Check NOAA's WAVEWATCH IV (WW4) for changes since the last recorded snapshot and update this repo's research to match. Use when the user types /ww4-status, asks what WW4 has done lately, whether WW4 ported a source term or solver, adopted Kokkos, changed its spectral grid or released, or asks to refresh the proposal's State of WW4."
 ---
 
 **Audience.** The result is read by scientists (see `CONTRIBUTING.md`, "Who this repository is
@@ -67,7 +67,7 @@ Check each, and say which ones changed:
 3. **Kokkos**: in `CMakeLists.txt` or `externals/` means adopted; mentioned only in docs is not.
 4. **Spectral grid defaults**: rerun the scratch formula in `kokkos/PORT_STATUS.md`
    ("Level-0 scratch at WW4's default grid") with the new NK/NTH/XFR and update that table.
-5. **Tags, releases, `VERSION`**: against the January 2027 / summer 2027 dates in lesson 14.
+5. **Tags, releases, `VERSION`**: against the January 2027 / summer 2027 dates in the proposal and `README.md`.
 6. **L3/L4 tests**: their arrival is when WW4 starts replacing WW3's regression matrix.
 
 ## 4. Record it
@@ -79,8 +79,7 @@ Branch per `CONTRIBUTING.md`, then:
    ON 525, what this means for ww3-gpu, a Reproduce block, Sources. Refer to WW4 items by
    commit, branch, title and date as in step 2, never `NOAA-EMC/WW4#N` or a URL; the Reproduce
    block fetches commits and branches, not `refs/pull/<n>/head`.
-2. Update `course/14-ww4-and-the-future.md` (snapshot table with the new and previous dates, the
-   "Since <date>" list, the timeline column), the date and commit count in `README.md` ("Two
+2. Update the date and commit count in `README.md` ("Two
    things worth knowing") and the snapshot date in `CONTRIBUTING.md` item 5.
 3. If a fact in the proposal changed (`pubs/proposal/pt/05-justification.md` "Estado do WW4",
    mirrored in `en/`), edit pt and en by hand, bump `urldate` of `ww4repo` in `refs.bib`, re-stamp

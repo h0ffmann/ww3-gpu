@@ -17,11 +17,6 @@ class ClaudeProjectSnapshot(unittest.TestCase):
             if p.is_file():
                 self.assertIsNone(bad.search(p.read_text(encoding="utf-8")), p)
 
-    def test_lesson_19_quotes_the_stored_prompt(self):
-        lesson = (ROOT / "course" / "19-two-agents-one-issue-tracker.md").read_text(encoding="utf-8")
-        prompt = (SNAP / "routines" / "a2a-wave-forecaster.txt").read_text(encoding="utf-8")
-        self.assertIn("```text\n" + prompt + "```", lesson)
-
 
 if __name__ == "__main__":
     unittest.main()

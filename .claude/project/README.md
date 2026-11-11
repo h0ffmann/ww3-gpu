@@ -39,18 +39,17 @@ from inside a session.
 1. Create a private project named as in `project.json` and attach its repositories.
 2. Set the default model, and paste `instructions` into the project instructions if it is not empty.
 3. Create each routine with its `cron` and the text of its `prompt` file, inside the project so it
-   wakes a session with this project's repositories (lesson 19 explains why a routine must belong
-   to the project that answers).
+   wakes a session with this project's repositories (a routine must belong to the project that
+   answers).
 4. Reconnect the connectors the work needs and re-enter any environment secret by hand; neither is
    recorded here.
 
 ## Keeping it current
 
-The service is the truth and this folder is its dated copy, as lesson 19 says of the routine. When
+The service is the truth and this folder is its dated copy. When
 a setting changes, read it back with the tool in the table and commit the new value with
 `read_on` updated, in the same PR as anything that depends on it. `tests/test_claude_project.py`
-checks that the JSON parses, that no e-mail address or account id slipped in, and that lesson 19
-quotes the routine prompt exactly as this folder stores it. No CI job can check this folder against
+checks that the JSON parses, and that no e-mail address or account id slipped in. No CI job can check this folder against
 the service, since no command outside a Claude session can read the project. The weekly routine
 does it from inside one: it re-reads everything but the `project` block, which only the
 coordinator session can read, and opens a PR when something changed.

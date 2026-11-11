@@ -330,7 +330,7 @@ regtest test="ww3_tp1.1" ww3=ww3_src:
 # The simple regtest: build with the test's own switch_<sw>, then run it.
 rt test="ww3_tp1.1" sw="PR3_UQ" ww3=ww3_src: (build (ww3 + "/regtests/" + test + "/input/switch_" + sw) ww3) (regtest test ww3)
 
-# Run the first course example (fetch-limited growth, ~1 min) against <ww3>'s build; builds ww_fetch_analyse first.
+# Run the first example (fetch-limited growth, ~1 min) against <ww3>'s build; builds ww_fetch_analyse first.
 example01 ww3=ww3_src: (kokkos-build "openmp-release")
     cd examples/01-fetch-limited-growth && WW3="{{ww3}}" nix develop "{{pratico}}#ww3" --command bash run.sh
 
@@ -354,11 +354,10 @@ gpu *args:
 swan swan=swan_src:
     bash scripts/04_get_swan.sh "{{swan}}"
 
-# Delete run artefacts (bench, gpu binaries, example outputs, exercise builds); keep configs and kokkos/build.
+# Delete run artefacts (bench, gpu binaries, example outputs); keep configs and kokkos/build.
 clean-runs:
     make -C bench clean
     rm -rf gpu/00_hello_acc gpu/01_dispersion gpu/02_do_concurrent gpu/03_precision
-    rm -rf exercises/solutions/build exercises/solutions/out
     rm -f examples/01-fetch-limited-growth/make_inputs examples/02-regional-real-forcing/make_bathy
     rm -rf examples/02-regional-real-forcing/gfs.*
     find examples -name '*.nc' ! -name gebco.nc ! -name gfs_winds.nc -delete
@@ -534,20 +533,8 @@ sub-sync: submodule-update src-sync ww4-sync
 pubs-shell:
     nix develop "{{justfile_directory()}}"
 
-# Course book PDF from course/*.md -> build/ww3-lab-course.pdf.
-book style="abnt":
-    nix develop "{{justfile_directory()}}" --command scripts/build_pdf.sh book {{style}}
-
-# Course book as a Word document -> build/ww3-lab-course.docx (pandoc's docx writer, no TeX).
-book-docx:
-    nix develop "{{justfile_directory()}}" --command scripts/build_docx.sh book
-
-# The book as a static website, one page per chapter -> build/site; CI deploys it to GitHub Pages.
-book-html:
-    scripts/build_html.sh
-
 # The Gleam front page (site/, DESIGN.md) reads its facts from the repository; CI deploys build/site.
-# The whole website -> build/site: the chapters at /book/, then the Gleam front page at /.
+# The whole website -> build/site: the progress, ADR and GTA report pages, then the front page at /.
 site:
     scripts/build_html.sh
     nix develop "{{justfile_directory()}}#site" --command scripts/build_site.sh --check
@@ -555,10 +542,6 @@ site:
 # Serve build/site on http://localhost:8000 (after `just site`).
 site-serve:
     python3 -m http.server 8000 --directory build/site
-
-# The book as a Leanpub manuscript (Markua) -> build/leanpub/manuscript; CI pushes it to the `leanpub` branch.
-leanpub *args:
-    python3 scripts/leanpub_manuscript.py {{args}}
 
 # Proposal as a Word document for review -> build/proposal_<lang>.docx (no DEL cover page).
 proposal-docx lang="pt":
@@ -620,8 +603,8 @@ translate *args:
 notebooklm *args:
     python3 scripts/notebooklm_bundle.py {{args}}
 
-# Everything: book + proposal pt + proposal en (same as `nix build .`).
-pubs: book (proposal "pt") (proposal "en")
+# Everything: proposal pt + proposal en (same as `nix build .`).
+pubs: (proposal "pt") (proposal "en")
 
 # ---------------------------------------------------------------------
 # Kokkos (kokkos/): C++ kernels; GoogleTest suites of the intro programs and tools (the port has none, ADR-0010)

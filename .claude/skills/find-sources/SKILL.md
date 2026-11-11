@@ -1,6 +1,6 @@
 ---
 name: find-sources
-description: "Find and verify a scholarly source for a claim in pubs/proposal or course/, using the Consensus MCP search, then add it to refs.bib. Use when a sentence needs a citation, a placeholder such as (CITAR ...) or (REFERÊNCIA) appears, the reviewer flags a claim without a source, or the user asks for papers on a topic."
+description: "Find and verify a scholarly source for a claim in pubs/proposal, pubs/preprint or docs/, using the Consensus MCP search, then add it to refs.bib. Use when a sentence needs a citation, a placeholder such as (CITAR ...) or (REFERÊNCIA) appears, the reviewer flags a claim without a source, or the user asks for papers on a topic."
 ---
 
 # find-sources
@@ -44,6 +44,6 @@ or cutting it. Never invent a DOI, a page number or an author list.
   `partial` or `unverified`); `just refs` is the gate.
 - Cite with `[@key]` in both `pt/` and `en/`; `just proposal-lint` checks they match. A change
   under `pubs/proposal/` goes through `revisor-proposta` before the PR.
-- In `course/` and `docs/`, mark the claim `(v)` when you opened the source and `⚠` when you did
+- In `pubs/preprint/` and `docs/`, mark the claim `(v)` when you opened the source and `⚠` when you did
   not (CONTRIBUTING.md).
 - Build (`just proposal pt`) to see it render in ABNT.

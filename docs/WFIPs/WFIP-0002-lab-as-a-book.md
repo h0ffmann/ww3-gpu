@@ -2,11 +2,11 @@
 
 | | |
 |---|---|
-| **Status** | Partially implemented (item 1 of 7, 2026-10-09) |
+| **Status** | Superseded by [ADR-0023](../ADRs.md#adr-0023), 2026-11-11: the course and the book were removed (partially implemented before, item 1 of 7, 2026-10-09) |
 | **Author** | M. Hoffmann (asked 2026-10-08 in the project thread: shift the repository, incrementally, into a compiled book on agentic coding and agentic research, in the tradition of Volpe's and Maguire's self-published books) |
 | **Created** | 2026-10-08 |
 | **Deliverable** | D6 |
-| **Related** | [ADR-0003](../ADRs.md#adr-0003) (the decision this WFIP builds); [ADR-0004](../ADRs.md#adr-0004) (the channels, with the results of task 1 and 4b); marola's [MIP-0014](https://github.com/marola-dev/marola/blob/main/docs/MIPs/MIP-0014-marola-book.md), the design this one is translated from; [`pubs/README.md`](../../pubs/README.md) and [`pubs/book/`](../../pubs/book/) (the pipeline that already exists); [`course/README.md`](../../course/README.md) (the chapters); the `release` skill |
+| **Related** | [ADR-0003](../ADRs.md#adr-0003) (the decision this WFIP builds); [ADR-0004](../ADRs.md#adr-0004) (the channels, with the results of task 1 and 4b); marola's [MIP-0014](https://github.com/marola-dev/marola/blob/main/docs/MIPs/MIP-0014-marola-book.md), the design this one is translated from; [`pubs/README.md`](../../pubs/README.md) and [`pubs/book/`](https://github.com/h0ffmann/ww3-gpu/blob/f9ce3a0/pubs/book) (the pipeline that already exists); [`course/README.md`](https://github.com/h0ffmann/ww3-gpu/blob/f9ce3a0/course/README.md) (the chapters); the `release` skill |
 | **Effort** | L: no new toolchain (the pandoc and TeX pipeline is in the root flake); the work is front matter and parts, three new chapters, a listings gate, a PDF on each release, and the metadata |
 | **Gain** | `outreach` (a citable, dated book that a researcher can read start to finish, where today there are sixteen lessons and a dozen plans); `proposal` (D6 asks for tools, results and recommendations published so the lab can repeat them: the book is that publication); `lab/dev-loop` (the rules agents follow here become chapters, so a new agent or person reads one text, not twelve) |
 | **Effort vs Gain** | do next, in slices: each slice is one PR that leaves the repository consistent, and nothing here competes with a measurement for the same machine |
@@ -41,7 +41,7 @@ task, and the repository stays consistent after each.
 ## 2. Motivation
 
 The repository has more written-down method than narrative. `course/` has sixteen lessons `(v)`
-[`course/README.md`](../../course/README.md); `docs/` has two plans, an evaluation, a proof note
+[`course/README.md`](https://github.com/h0ffmann/ww3-gpu/blob/f9ce3a0/course/README.md); `docs/` has two plans, an evaluation, a proof note
 and a glossary of some 400 terms; `AGENTS.md`, `AGENTS_KOKKOS` and the `wfip` and `release`
 skills say how agents port a kernel, write a plan and cut a release `(v)` read 2026-10-08. All of it
 is reference: it answers "what did we build" one file at a time, never "how do you run a
@@ -53,13 +53,13 @@ Fortran routine ported by an agent and shown bit-identical on three backends `(v
 [`kokkos/PORT_STATUS.md`](../../kokkos/PORT_STATUS.md); plans whose every claim carries `(v)` or
 `⚠`; a proposal whose deliverables are tracked by design docs with a definition of done. None of
 that is a lesson yet. The course's own README says lessons 09 to 13 are "the proposal's ladder"
-`(v)` [`course/README.md`](../../course/README.md): the ladder is explained, the agents that climb
+`(v)` [`course/README.md`](https://github.com/h0ffmann/ww3-gpu/blob/f9ce3a0/course/README.md): the ladder is explained, the agents that climb
 it are not.
 
 The book pipeline exists and runs on every merge: `just book` builds `pdf/ww3-lab-course.pdf`
 from `course/*.md` with pandoc and xelatex through `picasso/labs/publisher` `(v)`
 [`pubs/README.md`](../../pubs/README.md), [`scripts/build_pdf.sh`](../../scripts/build_pdf.sh).
-Its title page still says "WW Lab" `(v)` [`pubs/book/defaults.yaml`](../../pubs/book/defaults.yaml),
+Its title page still says "WW Lab" `(v)` [`pubs/book/defaults.yaml`](https://github.com/h0ffmann/ww3-gpu/blob/f9ce3a0/pubs/book/defaults.yaml),
 the name the repository had before it was renamed.
 
 ## 3. What changes for the reader
@@ -206,7 +206,7 @@ Today everything is MIT with the LGPL kernels `(v)` [`LICENSE`](../../LICENSE). 
 leave the prose under MIT and distribute the PDF free from the release and Zenodo, and a free
 Leanpub edition fed by CI: `.github/workflows/leanpub.yml` exports the lessons as a Markua
 manuscript (`scripts/leanpub_manuscript.py`, `pubs/book/parts.json`) and pushes it to the
-`leanpub` branch the Leanpub book reads; [`LEANPUB_202610.md`](../LEANPUB_202610.md) has the
+`leanpub` branch the Leanpub book reads; [`LEANPUB_202610.md`](https://github.com/h0ffmann/ww3-gpu/blob/f9ce3a0/docs/LEANPUB_202610.md) has the
 author's steps and what Leanpub charges `(v)` leanpub.com/pricing, 2026-10-08: a one-time fee per
 new book, a reader price that may be zero, and a Pro plan for the API. A move of the prose to
 CC BY-SA 4.0, or a paid edition, is a person's decision (§11); either is a one-file change plus a

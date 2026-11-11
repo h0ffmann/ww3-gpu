@@ -1,6 +1,6 @@
 ---
 name: figure
-description: "Add, change or explain a Mermaid diagram or mind map anywhere in this repo's Markdown (course lessons, the proposal's mind maps, docs). Use when asked for a diagram, flowchart, mind map, gantt or 'a picture of' something, to update one after its prose changed, or when scripts/figures.py check fails. Bar charts of a measured table go through `figures.py chart`."
+description: "Add, change or explain a Mermaid diagram or mind map anywhere in this repo's Markdown (the proposal's mind maps, docs, READMEs). Use when asked for a diagram, flowchart, mind map, gantt or 'a picture of' something, to update one after its prose changed, or when scripts/figures.py check fails. Bar charts of a measured table go through `figures.py chart`."
 ---
 
 **Audience.** The repo's first readers are scientists (PhD and independent researchers; see
@@ -21,7 +21,7 @@ renders each one with a pinned mermaid-cli and font for the PDF and Word builds
 
 1. **Read the prose the figure sits beside.** Draw only what it says; the text is the source of
    truth and a figure that disagrees with it is a bug in the figure. If a copy of the figure
-   exists in the other language (proposal mind maps ↔ lesson 13), check both say the same.
+   exists in the other language (`README.md` ↔ `README.pt-BR.md`), check both say the same.
 2. **Write the fence.** First two lines, which Mermaid ignores:
 
    ```

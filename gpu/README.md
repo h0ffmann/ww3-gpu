@@ -1,9 +1,7 @@
 # GPU sandbox
 
-Aimed at your RTX 4090. **Read
-[`../course/09-benchmark-profile-compile-run.md`](../course/09-benchmark-profile-compile-run.md) first**: it
-explains why these are toy kernels rather than a WW3 port, and what the realistic
-expectation is.
+Aimed at your RTX 4090. These are toy kernels to learn GPU Fortran, not a WW3 port; the port is
+the C++/Kokkos code in [`../kokkos/`](../kokkos/README.md).
 
 ## Setup
 

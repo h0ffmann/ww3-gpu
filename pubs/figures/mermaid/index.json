@@ -9,18 +9,8 @@
     "config": "pubs/figures/mermaid-config.json"
   },
   "figures": {
-    "a2a-label-handover": {
-      "file": "course/19-two-agents-one-issue-tracker.md",
-      "title": "How do two agents that are never awake at the same time hold one conversation in an issue?",
-      "sha256": "9523e86afd404ac00830fb25d563be3e975eb5d12b3836c3105ae24e572e3330"
-    },
-    "gpu-operation-decision": {
-      "file": "course/13-bulk-porting-with-agents.md",
-      "title": "When does a C++/Kokkos kernel enter the operational configuration?",
-      "sha256": "84b970f871dc4b6ed954c1861cd4c5bfe1c071615fbe00aa65d437535d2568d1"
-    },
     "kokkos-interop-one-binary": {
-      "file": "course/13-bulk-porting-with-agents.md",
+      "file": "kokkos/README.md",
       "title": "How do the original Fortran routine and its Kokkos kernel coexist in one WW3 binary?",
       "sha256": "6261d3f0afbabd85ec225dc5c077fa942900ead2347f1bb38dfd080f949d05ab"
     },
@@ -28,16 +18,6 @@
       "file": "kokkos/README.md",
       "title": "How does one Kokkos source reach the CPU and the GPU of the lab's workstation?",
       "sha256": "9179f59dd8b28f5afe0a293a165c69b8f1960246281410030fa6292d71dc86b0"
-    },
-    "optimisation-ladder-gates": {
-      "file": "course/13-bulk-porting-with-agents.md",
-      "title": "Which gate must each optimisation step pass before the next step starts?",
-      "sha256": "6c48e094643ef80fc5905d7c9deb36e3327d114ebace5a1c06e4104748097d82"
-    },
-    "porting-validation-ladder": {
-      "file": "course/13-bulk-porting-with-agents.md",
-      "title": "How is each translated version of a kernel checked against the one before it?",
-      "sha256": "b5b40d9f043114063d1a8c6153da5c6df82613f75c870d5fc6de34b46638c153"
     },
     "proposal-schedule": {
       "file": "pubs/proposal/schedule.en.md",
@@ -117,12 +97,12 @@
     "ww3-gpu-at-a-glance": {
       "file": "README.md",
       "title": "What does ww3-gpu build, from which sources, and on which runtime does each run mode run?",
-      "sha256": "8cc238cc103867cb13ea85510203fa0f66372ea92dba2179e36ce01c7c8265ef"
+      "sha256": "c484edf11a029210ccbeddf74b826082b2fde6e380a22edaba7a7144a8fe0318"
     },
     "ww3-gpu-at-a-glance-pt": {
       "file": "README.pt-BR.md",
       "title": "O que o ww3-gpu compila, de quais fontes, e em qual ambiente roda cada modo?",
-      "sha256": "04bec6c5a285918cdd63d9c3dcf0cf59b574108dc35df2ae51a0a5dffb5da052"
+      "sha256": "ee413415f611e35eb0a016d3ad8ec052fd77fa0e2f303c5f02ae54f771e931e0"
     },
     "ww3-gpu-device-math-dataflow": {
       "file": "docs/WW3_GPU_VS_NOAA_202610.md",

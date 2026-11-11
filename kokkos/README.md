@@ -1,8 +1,8 @@
 # `kokkos/`: the C++/Kokkos half of the lab
 
 One CMake tree, one backend per configure preset. It holds the portable kernel
-library (`ww_kokkos`), the lesson-11 intro programs, the GoogleTest suites of the
-lessons and the tools, and the C++ tools. The first ported source term, `W3SNL1`/`INSNL1` (the DIA nonlinear
+library (`ww_kokkos`), the intro programs, the GoogleTest suites of the
+intro programs and the tools, and the C++ tools. The first ported source term, `W3SNL1`/`INSNL1` (the DIA nonlinear
 interactions), lives in `src/ww_kokkos/snl1_*`.
 
 ## Toolchain
@@ -115,9 +115,9 @@ contraction and copying gfortran's `x**n` ([The W3SNL1 port](#the-w3snl1-port)).
 
 **Where the analogy breaks.** Fortran is not stuck in 1957 or 1991. Modern Fortran has coarrays
 (Fortran 2008 ⚠) and `do concurrent`, and `nvfortran` offloads `do concurrent`, OpenACC and OpenMP
-target regions to an NVIDIA GPU ([README.md](../README.md), "can WW3 use my GPU?"). Lesson 10
-builds one `do concurrent` file for the GPU, for multicore and for plain `gfortran`
-([course/10](../course/10-modern-fortran-refactoring.md#do-concurrent)). So the choice is not
+target regions to an NVIDIA GPU ([README.md](../README.md), "can WW3 use my GPU?"). Lesson 10 of
+the removed course built one `do concurrent` file for the GPU, for multicore and for plain `gfortran`
+([course/10](https://github.com/h0ffmann/ww3-gpu/blob/f9ce3a0/course/10-modern-fortran-refactoring.md#do-concurrent)). So the choice is not
 "old language, new language". The reasons this repository gives are in
 [`docs/KOKKOS_H100_PLAN_202609.md`](../docs/KOKKOS_H100_PLAN_202609.md) (no ADR records the choice
 of Kokkos itself):
@@ -130,17 +130,17 @@ of Kokkos itself):
   maintenance problem".
 - §7: Route A (Fortran + OpenACC) leaves "a fork with directives"; Route B (C++/Kokkos) a "clean
   C++ product; Serial backend runs anywhere".
-- Lesson 11 adds that memory spaces are written on every `View`, so host code cannot quietly read
-  device memory ([course/11](../course/11-kokkos-and-modern-cpp.md#execution-and-memory-spaces));
+- Lesson 11 of the removed course adds that memory spaces are written on every `View`, so host code cannot quietly read
+  device memory ([course/11](https://github.com/h0ffmann/ww3-gpu/blob/f9ce3a0/course/11-kokkos-and-modern-cpp.md#execution-and-memory-spaces));
   `nvfortran -stdpar=gpu` instead moves data through managed memory implicitly (lesson 10), which
   [AGENTS.md](../AGENTS.md) forbids as a way to avoid thinking about transfers.
 
 The plan's projections (months, stall risk, speed ceilings) are estimates, not measurements.
 
-**Where to read more.** Lesson 11, [Kokkos and modern C++ for Fortran
-people](../course/11-kokkos-and-modern-cpp.md); lesson 12, [porting
-`W3SNL1`](../course/12-porting-a-kernel-w3snl1.md); lesson 10, [modern
-Fortran](../course/10-modern-fortran-refactoring.md). Papers: Edwards, Trott and Sunderland,
+**Where to read more.** The removed course, at `f9ce3a0`: lesson 11, [Kokkos and modern C++ for Fortran
+people](https://github.com/h0ffmann/ww3-gpu/blob/f9ce3a0/course/11-kokkos-and-modern-cpp.md); lesson 12, [porting
+`W3SNL1`](https://github.com/h0ffmann/ww3-gpu/blob/f9ce3a0/course/12-porting-a-kernel-w3snl1.md); lesson 10, [modern
+Fortran](https://github.com/h0ffmann/ww3-gpu/blob/f9ce3a0/course/10-modern-fortran-refactoring.md). Papers: Edwards, Trott and Sunderland,
 "Kokkos: Enabling manycore performance portability through polymorphic memory access patterns",
 *J. Parallel Distrib. Comput.* 74(12), 3202–3216, 2014,
 [doi:10.1016/j.jpdc.2014.07.003](https://doi.org/10.1016/j.jpdc.2014.07.003) (v, Crossref,
@@ -160,7 +160,7 @@ src/ww_kokkos/        real.hpp (float32 + helpers), spectrum_fixtures.hpp (JONSW
 src/fortran_iface/    ww_kokkos_c.hpp + snl1_shim.cpp (the C ABI, built into ww_kokkos),
                       w3kokkosmd.F90 (the Fortran module), PATCH.md (the WW3 caller)
 intro/                01..06, one Kokkos concept each, each a CTest case
-tests/                kokkos_env.hpp (runtime lifetime), L1_* suites of the lessons and tools,
+tests/                kokkos_env.hpp (runtime lifetime), L1_* suites of the intro programs and tools,
                       bench_snl1.cpp, L2_replay.sh
 tests/fixtures/       the benchmark's inputs: snl1_nk25_nth24.bin (frozen) and bench_small/
 PORT_STATUS.md        the port ledger: phase, parity and ms/call per routine
@@ -280,7 +280,7 @@ config's own message.
 ## Intro programs
 
 Each is a self-checking `main`: it prints one line and exits non-zero if the
-concept it demonstrates does not hold, so CI runs the lesson material too.
+concept it demonstrates does not hold, so CI runs them too.
 
 | program | concept |
 |---|---|
@@ -300,11 +300,11 @@ it with CTest.
 
 The port has no tests of its own. The owner's rule (2026-10-14): "kokkos code should
 NOT have its own tests, hard rule. All tests should come [from] WW3 regtests." The
-suites left in CTest test the lessons and the tools, not the port:
+suites left in CTest test the intro programs and the tools, not the port:
 
 | suite | what it pins down |
 |---|---|
-| `L1_test_intro`, `intro_01`..`intro_06` | the lesson material's invariants |
+| `L1_test_intro`, `intro_01`..`intro_06` | the intro programs' invariants |
 | `L1_test_nccmp_tol` | the per-field NetCDF comparator |
 | `L1_test_bench_case` | the benchmark-case generator |
 | `L1_test_fetch_analyse` | the fetch-growth analyser |
@@ -396,6 +396,37 @@ handles each one explicitly:
 | one spectral grid per process | `ww_snl1_init` replaces the tables rather than adding a grid, so a `ww3_multi` run reads past the end of a later grid's spectra |
 | one caller at a time | `W3SRCE` runs inside an `!$OMP PARALLEL` region under `W3_OMPG`/`W3_OMP0`; two threads in `ww_snl1` race over the device buffers |
 | `sig` starts at bin 1 | the C dummy is assumed-size and `W3GDATMD` allocates `SIG(0:MK+1)`, so passing the bare name builds every quadruplet one frequency bin low |
+
+```mermaid
+%% figure: kokkos-interop-one-binary
+%% title: How do the original Fortran routine and its Kokkos kernel coexist in one WW3 binary?
+flowchart TB
+    subgraph BIN[One WW3 binary]
+        direction LR
+        F[Original Fortran routine]
+        SW{Runtime switch}
+        C[bind C interface<br/>ISO_C_BINDING]
+        K[Kokkos kernel<br/>Views in the layout of<br/>the WW3 spectral arrays]
+        SW -- original path --> F
+        SW -- new path --> C -- calls --> K
+    end
+    K -- runs on --> CPU[Serial or OpenMP backend<br/>no data copy]
+    K -- runs on --> GPU[CUDA backend on the H100<br/>CPU-GPU traffic measured per step]
+    M[WW3 regression matrix<br/>and per-field comparator] -. test both paths<br/>without recompiling .-> BIN
+```
+
+<details open>
+<summary>How to read this figure</summary>
+
+**Takeaway.** The GPU code is added next to the original Fortran, not in place of it; a switch read at run time picks which one runs, so both are tested with the same executable.
+
+**How to read.** The large box is one compiled WW3 executable. The diamond is the run-time switch; its two arrows are the two paths a call can take, the original Fortran or the new one through the C interface into the Kokkos kernel. Below the box, the same kernel runs on a CPU or a GPU backend. The dashed arrow is testing: the regression matrix and the comparator exercise both paths of the same executable.
+
+**Not shown.** How state moves between Fortran and the device beyond phase 1's copy in and out per call; that is `docs/AGENTS_KOKKOS_202609.md` §3.4.
+
+**Evidence.** `W3KOKKOSMD` and the `ww_kokkos_init` contract, [`src/fortran_iface/PATCH.md`](src/fortran_iface/PATCH.md) (v); `pubs/proposal/pt/07-methodology.md`, paragraph *Interoperabilidade e testes dos kernels* (v).
+
+</details>
 
 ## Run-time flags: 0 % to 100 % Kokkos
 

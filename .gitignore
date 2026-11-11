@@ -48,7 +48,6 @@ RESULTS.md
 # builds
 build/
 kokkos/build/
-exercises/solutions/build/
 swan/
 *.ninja
 .ninja_deps

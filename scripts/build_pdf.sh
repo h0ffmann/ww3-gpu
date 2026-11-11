@@ -1,16 +1,14 @@
 #!/usr/bin/env bash
 # build_pdf — the one pandoc + xelatex invocation for every PDF in this repo.
-#   scripts/build_pdf.sh book [abnt|ieee]              -> build/ww3-lab-course.pdf
 #   scripts/build_pdf.sh proposal [pt|en] [abnt|ieee]  -> build/proposal_<lang>.pdf
 #   scripts/build_pdf.sh doc <page.md>                 -> build/<page>.pdf, one English page
 # OUT_DIR overrides build/. Runs inside `nix develop .` (pandoc, xelatex on PATH).
 set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-usage() { sed -n '2,6p' "$0" >&2; exit 2; }
+usage() { sed -n '2,5p' "$0" >&2; exit 2; }
 
 target="${1:-}"; shift || true
 case "$target" in
-  book) lang=en; style="${1:-abnt}" ;;
   proposal) lang="${1:-pt}"; style="${2:-abnt}" ;;
   doc) page="${1:-}"; [ -f "$page" ] || usage; lang=en; style=abnt ;;
   *) usage ;;
@@ -34,21 +32,6 @@ if [ "$target" = doc ]; then
     --pdf-engine=xelatex \
     -o "$out_dir/$name.pdf"
   echo "build_pdf: $out_dir/$name.pdf"
-elif [ "$target" = book ]; then
-  prep="$out_dir/book"
-  # Start from an empty prep dir: a lesson renamed or removed in course/ would
-  # otherwise leave its old copy behind and pandoc would see both (duplicate labels).
-  rm -rf "$prep"
-  python3 "$root/scripts/book_prep.py" "$root/course" "$prep"
-  inputs=("$prep"/[0-9][0-9]-*.md)
-  pandoc "${inputs[@]}" \
-    --defaults "$root/pubs/book/defaults.yaml" \
-    --template "$root/pubs/book/template.tex" \
-    --resource-path "$root/course" \
-    --csl "$csl" \
-    --fail-if-warnings \
-    -o "$out_dir/ww3-lab-course.pdf"
-  echo "build_pdf: $out_dir/ww3-lab-course.pdf"
 else
   src="$root/pubs/proposal/$lang"
   inputs=("$src"/[0-9][0-9]-*.md)

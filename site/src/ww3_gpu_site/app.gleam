@@ -36,8 +36,8 @@ pub fn t(l: String, source: String) -> String {
   }
 }
 
-/// The way from the page to the root of the site: the book, the PDF and the style sit next to the
-/// English page, one level up from /pt-BR/.
+/// The way from the page to the root of the site: the style and the pages built by
+/// scripts/build_html.sh sit next to the English page, one level up from /pt-BR/.
 pub fn up(l: String) -> String {
   case l {
     "pt-BR" -> "../"
@@ -48,8 +48,7 @@ pub fn up(l: String) -> String {
 pub fn view(l: String) -> Element(msg) {
   html.main([], [
     cover(l),
-    book(l),
-    chapters(l),
+    about(l),
     records(
       "decisions",
       t(l, "the decisions"),
@@ -269,26 +268,16 @@ fn cover(l: String) -> Element(msg) {
     ]),
     html.h1([], [html.text("ww3-gpu")]),
     html.p([attribute.class("epithet")], [
-      html.text(string.lowercase(content.book_title)),
+      html.text(string.lowercase(content.site_title)),
     ]),
     html.p([attribute.class("lede")], [
       html.text(t(
         l,
-        "a book in progress on agentic coding and agentic research, compiled from its own repository, around one problem: moving the expensive kernels of WAVEWATCH III to GPUs without changing the answer.",
+        "making WAVEWATCH III run faster with Kokkos and CUDA, without changing the Fortran's arithmetic: every ported routine gives the Fortran's bits.",
       )),
     ]),
     html.p([attribute.class("actions")], [
-      html.a([attribute.class("button"), attribute.href(up(l) <> "book/")], [
-        html.text(t(l, "read the chapters")),
-      ]),
-      html.a(
-        [
-          attribute.class("button quiet"),
-          attribute.href(up(l) <> "ww3-lab-course.pdf"),
-        ],
-        [html.text(t(l, "the book (PDF)"))],
-      ),
-      html.a([attribute.class("button quiet"), attribute.href(repo)], [
+      html.a([attribute.class("button"), attribute.href(repo)], [
         html.text(t(l, "the repository")),
       ]),
       html.a([attribute.class("button quiet"), attribute.href(chaceon().url)], [
@@ -296,8 +285,7 @@ fn cover(l: String) -> Element(msg) {
       ]),
     ]),
     html.nav([attribute.class("jump")], [
-      a("#book", t(l, "the book")),
-      a("#chapters", t(l, "chapters")),
+      a("#about", t(l, "about")),
       a("#decisions", t(l, "decisions")),
       a("#designs", t(l, "designs")),
       a("#chaceon", t(l, "rust port")),
@@ -326,16 +314,14 @@ fn other_language(l: String) -> Element(msg) {
   )
 }
 
-fn book(l: String) -> Element(msg) {
-  section("book", t(l, "the book"), [
-    html.p([attribute.class("title")], [html.text(content.book_title)]),
-    lede(content.book_subtitle),
+fn about(l: String) -> Element(msg) {
+  section("about", t(l, "the repository"), [
+    html.p([attribute.class("title")], [html.text(content.site_title)]),
+    lede(content.site_subtitle),
     html.p([], [
-      html.text(t(l, "the repository is the book's source and its evidence:")),
-      html.text(" " <> int.to_string(list.length(content.chapters)) <> " "),
       html.text(t(
         l,
-        "chapters, built into a PDF on every merge, and the code they describe next to them. every claim carries",
+        "the code, the plans, the decisions and the measurements sit side by side. every claim carries",
       )),
       html.text(" "),
       html.span([light("proof")], [html.text("(v)")]),
@@ -346,28 +332,10 @@ fn book(l: String) -> Element(msg) {
       ),
     ]),
     html.p([attribute.class("links")], [
-      a(up(l) <> "book/", t(l, "the chapters on the web")),
-      html.text(" · "),
-      a(up(l) <> "ww3-lab-course.pdf", t(l, "the PDF")),
-      html.text(" · "),
       a(up(l) <> "andamento/", t(l, "progress (pt-BR)")),
       html.text(" · "),
       a(up(l) <> "adrs/", t(l, "decision records (pt-BR)")),
     ]),
-  ])
-}
-
-fn chapters(l: String) -> Element(msg) {
-  section("chapters", t(l, "the chapters"), [
-    html.ol(
-      [attribute.class("chapters")],
-      list.map(content.chapters, fn(c) {
-        html.li([], [
-          html.span([attribute.class("num")], [html.text(c.number)]),
-          html.a([attribute.href(blob <> c.file)], [html.text(c.title)]),
-        ])
-      }),
-    ),
   ])
 }
 
@@ -418,7 +386,7 @@ fn brain(l: String) -> Element(msg) {
   section("brain", t(l, "the second brain"), [
     lede(t(
       l,
-      "one idea in one note, with a permanent id, links between notes, and a status that stays unverified until a source is cited. the notes are what the chapters are written from.",
+      "one idea in one note, with a permanent id, links between notes, and a status that stays unverified until a source is cited. the preprint and the proposal are written from them.",
     )),
     ..notes
   ])

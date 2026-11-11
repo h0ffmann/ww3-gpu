@@ -48,7 +48,7 @@ For each moved pin, with `old..new` from `git diff --cached --submodule=short`:
   `cmake/`), since those move what WW3's regtests compare the Kokkos port against.
 - `WW4`: run `just ww4-status` (the `/ww4-status` skill) and quote what it reports; if the new pin
   is past `docs/ww4-status.json`'s `develop.sha`, say so and suggest `/ww4-status` to refresh
-  lesson 14.
+  the snapshot.
 
 ## 3. Pull request
 
