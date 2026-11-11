@@ -51,3 +51,8 @@ every fact on this page was read from the repository at	cada fato desta página 
 WAVEWATCH III is a registered trademark of NOAA's National Weather Service; this project is independent and not endorsed by NOAA.	WAVEWATCH III é marca registrada do National Weather Service da NOAA; este projeto é independente e não tem o endosso da NOAA.	draft
 without changing the answer	sem mudar a resposta	draft	README.pt-BR.md
 a book in progress on agentic coding and agentic research, around a bit-for-bit GPU port of WAVEWATCH III.	um livro em construção sobre programação com agentes e pesquisa com agentes, em torno de um port do WAVEWATCH III para a GPU que reproduz o Fortran bit a bit.	draft	"bit-for-bit GPU port" não cabe em um adjetivo; "bit a bit", como em README.pt-BR.md
+the port in rust: chaceon	o port em rust: chaceon	draft	"port" fica em inglês, como em README.pt-BR.md
+rust port	port em rust	draft
+the same rule, in rust	a mesma regra, em rust	draft
+ww3-gpu keeps WW3 and lets its Fortran call C++ written with Kokkos, one flag per routine. its sister project replaces WW3 with Rust, with no Fortran in its process. both ports must give the Fortran's bits, and a tolerance is a diagnostic, never the verdict.	o ww3-gpu mantém o WW3 e deixa o seu Fortran chamar C++ escrito com Kokkos, uma flag por rotina. o projeto irmão substitui o WW3 por Rust, sem Fortran no seu processo. os dois ports precisam dar os mesmos bits do Fortran, e uma tolerância é um diagnóstico, nunca o veredito.	draft	"flag" fica em inglês, como no código
+go to the rust repository	ir para o repositório em rust	draft

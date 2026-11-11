@@ -1,5 +1,7 @@
 # The people and the works the site names that no other file of this repository holds. One row is one
-# link: kind (author|work), name, the link, what it is, and the source of the row.
+# link: kind (author|work|port|chaceon), name, the link, what it is, and the source of the row.
+# port is the sister port in Rust, chaceon; a chaceon row is one fact about it, linked to the file
+# of chaceon that states it, at the commit named in its source.
 # Guimarães P.V. is not here: he comes from .zenodo.json, with his ORCID.
 # kind	name	link	what	source
 author	Fabio Akita	https://github.com/akitaonrails	legendary br dev; the author of ai-memory, the long-term memory this repository adopts (ADR-0009)	the owner's words, 2026-10-14
@@ -7,3 +9,8 @@ work	marola	https://doi.org/10.5281/zenodo.23224155	sea conditions and bathing-w
 work	picasso	https://doi.org/10.5281/zenodo.23311208	the nix labs this repository's toolchain, papers and site come from	.zenodo.json, related works
 work	closed source: the god that failed	https://doi.org/10.5281/zenodo.23333656	the book whose citation and paper discipline this repository adopts	.zenodo.json, related works
 work	nashkell	https://doi.org/10.5281/zenodo.23356739	an open book in progress in the voice of nash, with a gleam site of the same shape	the owner, 2026-10-14
+port	chaceon	https://github.com/h0ffmann/chaceon	WAVEWATCH III in pure Rust, for the CPU, for SPIR-V (rust-gpu) and for PTX (Rust-CUDA), with the discipline of ww3-gpu and without Kokkos; MPL-2.0	chaceon README.md and LICENSE at ba4e452, read 2026-11-11
+chaceon	a run with no Fortran	https://github.com/h0ffmann/chaceon/blob/ba4e452ef2400b6dcf15718441b4108c3cf7480b/README.md	Rust's ww3_grid, ww3_strt, ww3_prep and ww3_shel, run in sequence from the namelists, write 96 files byte-identical to metocean/WW3 7.14 (92e2cf66), compiled separately (just rust-only)	chaceon README.md at ba4e452, "State, 2026-11-04", read 2026-11-11
+chaceon	SPIR-V on a CPU Vulkan driver	https://github.com/h0ffmann/chaceon/blob/ba4e452ef2400b6dcf15718441b4108c3cf7480b/README.md	with W3SRCE, W3XYP3 and W3KTP3 compiled to SPIR-V and VA resident on the device, the same files are still byte-identical	chaceon README.md at ba4e452, "State, 2026-11-04", read 2026-11-11
+chaceon	what it does not claim	https://github.com/h0ffmann/chaceon/blob/ba4e452ef2400b6dcf15718441b4108c3cf7480b/README.md	nothing has run on a real GPU, the PTX has never executed, and there are no timings: a verification result, not a speed one	chaceon README.md at ba4e452, "State, 2026-11-04", read 2026-11-11
+chaceon	parity with ww3-gpu	https://github.com/h0ffmann/chaceon/blob/ba4e452ef2400b6dcf15718441b4108c3cf7480b/docs/WW3_GPU_PARITY_202611.md	feature parity with ww3-gpu, switch by switch	chaceon README.md at ba4e452, its table of documents, read 2026-11-11

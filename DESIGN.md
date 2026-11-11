@@ -66,7 +66,10 @@ Every fact on the page comes from a file of this repository, through `site/conte
 from `course/`, the decisions from `docs/ADRs/`, the designs from `docs/WFIPs/`, the notes from
 `notes/`, the port's benchmarks from `kokkos/port_report/`, the DOI and the people from `CITATION.cff` and `.zenodo.json`, the latest release from
 `RELEASES.md`. A fact that no other file holds (a related author, a sister work) is a row of
-`site/data/related.tsv`, with its source. Never type a title, a status, a date, a count or a DOI
+`site/data/related.tsv`, with its source. The sister port in Rust, chaceon, is a `port` row there,
+and each fact the page states about it is a `chaceon` row linked to the file of chaceon that says
+it, at a named commit; its section and its button in the cover are `--wave` and quiet, like the
+repository's. Never type a title, a status, a date, a count or a DOI
 into `site/src`.
 
 ## Two languages
