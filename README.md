@@ -7,6 +7,7 @@
 <sub>the WW3 GPU Lab · since 2026 · <a href="https://wave.piabrota.art/">the site</a> · <a href="RELEASES.md">releases</a> · <a href="#how-to-cite">cite</a> · <a href="README.pt-BR.md">português</a></sub>
 
 [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.23221351-1682D4?style=flat-square)](https://doi.org/10.5281/zenodo.23221351)
+[![aiXiv](https://img.shields.io/badge/aiXiv-2611.01104-B31B1B?style=flat-square)](https://aixiv.online/abs/2611.01104)
 [![release](https://img.shields.io/github/v/tag/h0ffmann/ww3-gpu?style=flat-square&label=release&color=FF4F00)](RELEASES.md)
 [![CI](https://github.com/h0ffmann/ww3-gpu/actions/workflows/ci.yml/badge.svg)](https://github.com/h0ffmann/ww3-gpu/actions/workflows/ci.yml)
 [![site](https://img.shields.io/badge/site-live-3FB950?style=flat-square)](https://wave.piabrota.art/)
