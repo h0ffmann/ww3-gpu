@@ -18,6 +18,28 @@ pub fn address_of(l: String) -> String {
 }
 
 pub fn document(l: String, body: Element(msg)) -> Element(msg) {
+  let title = "ww3-gpu: " <> app.t(l, "without changing the answer")
+  let description =
+    app.t(
+      l,
+      "a book in progress on agentic coding and agentic research, around a bit-for-bit GPU port of WAVEWATCH III.",
+    )
+  document_at(l, "", title, description, body)
+}
+
+/// The document of a page at `path` under the page of language `l` ("" for the front page,
+/// "lineage/" for the lineage), with its own title and description.
+pub fn document_at(
+  l: String,
+  path: String,
+  title: String,
+  description: String,
+  body: Element(msg),
+) -> Element(msg) {
+  let root = case path {
+    "" -> app.up(l)
+    _ -> "../" <> app.up(l)
+  }
   let meta = fn(name, value) {
     html.meta([attribute.name(name), attribute.content(value)])
   }
@@ -31,15 +53,9 @@ pub fn document(l: String, body: Element(msg)) -> Element(msg) {
     html.link([
       attribute.rel("alternate"),
       attribute.attribute("hreflang", lang),
-      attribute.href(address_of(lang)),
+      attribute.href(address_of(lang) <> path),
     ])
   }
-  let title = "ww3-gpu: " <> app.t(l, "without changing the answer")
-  let description =
-    app.t(
-      l,
-      "a book in progress on agentic coding and agentic research, around a bit-for-bit GPU port of WAVEWATCH III.",
-    )
   html.html([attribute.lang(l)], [
     html.head([], [
       html.meta([attribute.charset("utf-8")]),
@@ -47,16 +63,19 @@ pub fn document(l: String, body: Element(msg)) -> Element(msg) {
       html.title([], title),
       meta("description", description),
       meta("author", "Matheus Hoffmann"),
-      html.link([attribute.rel("canonical"), attribute.href(address_of(l))]),
+      html.link([
+        attribute.rel("canonical"),
+        attribute.href(address_of(l) <> path),
+      ]),
       alternate("en"),
       alternate("pt-BR"),
       property("og:title", title),
       property("og:description", description),
       property("og:type", "website"),
-      property("og:url", address_of(l)),
+      property("og:url", address_of(l) <> path),
       html.link([
         attribute.rel("icon"),
-        attribute.href(app.up(l) <> "favicon.svg"),
+        attribute.href(root <> "favicon.svg"),
         attribute.type_("image/svg+xml"),
       ]),
       html.link([
@@ -71,7 +90,7 @@ pub fn document(l: String, body: Element(msg)) -> Element(msg) {
       stylesheet(
         "https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap",
       ),
-      stylesheet(app.up(l) <> "style.css"),
+      stylesheet(root <> "style.css"),
     ]),
     html.body([], [body]),
   ])

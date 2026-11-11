@@ -304,6 +304,7 @@ fn cover(l: String) -> Element(msg) {
       a("#brain", t(l, "second brain")),
       a("#cite", t(l, "cite")),
       a("#related", t(l, "related")),
+      a("lineage/", t(l, "lineage")),
       other_language(l),
     ]),
   ])

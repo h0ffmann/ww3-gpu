@@ -119,8 +119,10 @@ pub fn empty_list_test() {
       [
         #("the book", "o livro"),
       ],
+      [],
     )
   assert text |> contains("pub const notes: List(Note) = []")
+  assert text |> contains("pub const events: List(Event) = []")
   assert text |> contains("#(\"the book\", \"o livro\")")
 }
 
@@ -266,4 +268,31 @@ pub fn port_record_qualified_test() {
     == "W3SRC3MD_TABU_STRESS_KOKKOS"
   assert c.port_record(twin_ports, "W3SRC3MD_TABU_STRESS_KOKKOS") == "no: st3"
   assert c.port_record(twin_ports, "TABU_STRESS_KOKKOS") == "no: st4"
+}
+
+// The lineage: a date only as precise as its source, two statuses, two kinds, oldest first.
+pub fn is_date_test() {
+  assert c.is_date("2027")
+  assert c.is_date("2027-02")
+  assert c.is_date("2025-11-17")
+  assert !c.is_date("Feb 2027")
+  assert !c.is_date("2027-2")
+  assert !c.is_date("")
+}
+
+pub fn lineage_test() {
+  let table =
+    "# a comment\ndate\tstatus\tkind\tline\tname\tlink\twhat\tsource\n"
+    <> "2027-02\tplanned\tport\tthis work\tb\thttps://b\tlater\tthe owner\n"
+    <> "1991-06\tdone\tmodel\twave\ta\thttps://a\tfirst\tCrossref\n"
+  assert c.lineage_errors(table) == []
+  assert list.map(c.lineage(table), fn(e) { e.name }) == ["a", "b"]
+}
+
+pub fn a_bad_lineage_row_is_refused_test() {
+  let errors =
+    c.lineage_errors(
+      "Feb 2027\tsoon\tidea\tx\tn\thttps://n\tw\ts\n2027\tdone\tport\n",
+    )
+  assert list.length(errors) == 4
 }

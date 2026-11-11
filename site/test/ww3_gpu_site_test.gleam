@@ -4,6 +4,7 @@ import gleeunit
 import ww3_gpu_site/app
 import ww3_gpu_site/content
 import ww3_gpu_site/prerender
+import ww3_gpu_site/prerender_lineage
 
 pub fn main() -> Nil {
   gleeunit.main()
@@ -164,4 +165,34 @@ pub fn the_rust_port_test() {
   list.each(facts, fn(l) {
     assert string.contains(page, l.url)
   })
+}
+
+// The lineage: every row of site/data/lineage.tsv is on the page, oldest first, with its link;
+// a planned row says so; the front page links to it and the two languages link each other.
+pub fn the_lineage_test() {
+  let page = prerender_lineage.render("en")
+  assert string.contains(page, "id=\"lineage\"")
+  assert content.events != []
+  list.each(content.events, fn(e) {
+    assert string.contains(page, e.date)
+    assert string.contains(page, string.replace(e.url, "&", "&amp;"))
+  })
+  let dates = list.map(content.events, fn(e) { e.date })
+  assert dates == list.sort(dates, string.compare)
+  assert list.any(content.events, fn(e) { e.status == "planned" })
+  assert string.contains(page, "event port planned")
+  assert string.contains(page, ">planned<")
+  assert string.contains(page, "href=\"../style.css\"")
+  assert string.contains(page, "https://h0ffmann.github.io/ww3-gpu/lineage/")
+  assert string.contains(page, "href=\"../pt-BR/lineage/\" hreflang=\"pt-BR\"")
+  assert string.contains(html(), "href=\"lineage/\"")
+  let pt = prerender_lineage.render("pt-BR")
+  assert string.contains(pt, "<html lang=\"pt-BR\">")
+  assert string.contains(pt, "linhagem")
+  assert string.contains(pt, "href=\"../../style.css\"")
+  assert string.contains(pt, "href=\"../../lineage/\" hreflang=\"en\"")
+  assert string.contains(
+    pt,
+    "https://h0ffmann.github.io/ww3-gpu/pt-BR/lineage/",
+  )
 }
