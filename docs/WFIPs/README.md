@@ -43,6 +43,7 @@ The six specific objectives of the proposal and the schedule rows that deliver t
 | [WFIP-0003](WFIP-0003-kokkos-regtest-matrix.md) | The Kokkos DIA through WW3's own regtest harness, on the h0ffmann/WW3 fork | Implemented (2026-10-15) | 2026-10-14 | D4, D5 | M | do next | 7/7 |
 | [WFIP-0005](WFIP-0005-device-resident-step.md) | The device-resident time step: `VA` lives on the GPU, only forcing in and output out | Draft | 2026-10-17 | D5 | L | do when the batched `W3SRCE` shim lands | 0/8 |
 | [WFIP-0006](WFIP-0006-device-libm-bits.md) | The device computes glibc's libm bits: routing the port's per-point math through `ww::libm` | Partially implemented (units 1–4 of 5, #178, on `main` with #179; 2026-10-17) | 2026-10-17 | D5 | M | do when WFIP-0005's units have merged | 0/8 |
+| [WFIP-0007](WFIP-0007-openrig-port-factory.md) | The port runs 24/7 on an OpenRig of omp seats, with claims so no routine is worked twice | Draft | 2026-11-11 | D5 | L | do next | 0/7 |
 <!-- wfip-index:end -->
 
 ## Coverage
@@ -57,7 +58,7 @@ late; it means its work has not been designed here yet.
 | D2 | none yet | 0/0 |
 | D3 | none yet | 0/0 |
 | D4 | [WFIP-0003](WFIP-0003-kokkos-regtest-matrix.md) | 1/1 |
-| D5 | [WFIP-0003](WFIP-0003-kokkos-regtest-matrix.md), [WFIP-0005](WFIP-0005-device-resident-step.md), [WFIP-0006](WFIP-0006-device-libm-bits.md) | 1/3 |
+| D5 | [WFIP-0003](WFIP-0003-kokkos-regtest-matrix.md), [WFIP-0005](WFIP-0005-device-resident-step.md), [WFIP-0006](WFIP-0006-device-libm-bits.md), [WFIP-0007](WFIP-0007-openrig-port-factory.md) | 1/4 |
 | D6 | [WFIP-0001](WFIP-0001-weathernext3-wind-rtx4090.md), [WFIP-0002](WFIP-0002-lab-as-a-book.md) | 0/2 |
 <!-- wfip-coverage:end -->
 
