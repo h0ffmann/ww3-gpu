@@ -24,27 +24,7 @@ Pins: Kokkos 5.2.2, GoogleTest 1.18.0, CMake 4.4.3, gfortran 16.2 (`just toolcha
 that can be built for one processor thread, for every core of the processor, or for the
 graphics card, and each build must give the same numbers.
 
-```mermaid
-%% figure: kokkos-one-source-backends
-%% title: How does one Kokkos source reach the CPU and the GPU of the lab's workstation?
-flowchart LR
-    subgraph ww3["1 · WW3 as written"]
-        F["Fortran source<br/>(.F90 files)"]
-        C["CPU<br/>OpenMP threads, MPI ranks"]
-    end
-    subgraph port["2 · the Kokkos port of W3SNL1"]
-        K["one C++/Kokkos source"]
-        S["Serial<br/>one CPU thread"]
-        O["OpenMP<br/>i9-14900, 32 threads"]
-        G["CUDA<br/>RTX 4090<br/>16 384 CUDA cores"]
-    end
-    F -- "gfortran +<br/>switches OMPG, MPI" --> C
-    F -- "DIA routine<br/>translated line by line" --> K
-    K -- "build choice" --> S
-    K -- "build choice" --> O
-    K -- "build choice" --> G
-    O -. "compared pair to pair<br/>in WW3's regtests" .-> C
-```
+[![How does one Kokkos source reach the CPU and the GPU of the lab's workstation? (Archify drawing)](../docs/archify/kokkos-one-source-backends.png)](https://h0ffmann.github.io/ww3-gpu/figures/kokkos-one-source-backends/)
 
 <details open>
 <summary>How to read this figure</summary>

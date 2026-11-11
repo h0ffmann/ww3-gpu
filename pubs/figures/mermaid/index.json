@@ -24,11 +24,6 @@
       "title": "How do the original Fortran routine and its Kokkos kernel coexist in one WW3 binary?",
       "sha256": "6261d3f0afbabd85ec225dc5c077fa942900ead2347f1bb38dfd080f949d05ab"
     },
-    "kokkos-one-source-backends": {
-      "file": "kokkos/README.md",
-      "title": "How does one Kokkos source reach the CPU and the GPU of the lab's workstation?",
-      "sha256": "9179f59dd8b28f5afe0a293a165c69b8f1960246281410030fa6292d71dc86b0"
-    },
     "optimisation-ladder-gates": {
       "file": "course/13-bulk-porting-with-agents.md",
       "title": "Which gate must each optimisation step pass before the next step starts?",
@@ -79,40 +74,10 @@
       "title": "Do que trata a proposta, em um único mapa?",
       "sha256": "4ef3ee99bb373454affcafdc56b81b9aa5944e2bcccaa3956a41906cba82b9a6"
     },
-    "sds4-profile-ts1": {
-      "file": "docs/W3SDS4_TRITON_202610.md",
-      "title": "Where does the source-term time go, and how much of it is W3SDS4?",
-      "sha256": "4f7e6b64b35c4b0da4f7a41341b402fd6d2486d0eca20f2ba3e2bb48481eaccd"
-    },
-    "sds4-sdscum-branches": {
-      "file": "docs/W3SDS4_TRITON_202610.md",
-      "title": "Which branch of the cumulative-breaking term does W3SDS4 run, and what does each cost?",
-      "sha256": "c6507ef5d52e90d2441e1197b5613be77f9ff0cb7f1ccfcbe053df6896e73678"
-    },
     "testes-ww3-ww4": {
       "file": "pubs/proposal/mapas-mentais.pt.md",
       "title": "Que testes o WW3 e o WW4 ofereciam em setembro e outubro de 2026, e o que o projeto acrescenta?",
       "sha256": "3da37b6eaacadf8557d484cf388c2471f9ba788d009c04a1d459e142f9879342"
-    },
-    "triton-benchmark-arms": {
-      "file": "docs/W3SDS4_TRITON_202610.md",
-      "title": "Which implementations of W3SDS4 are timed, and when does a timing count?",
-      "sha256": "07156b88b10db8cf84a838acdf6fc97e0cd04d912892aefd92d3c90b17c5f25d"
-    },
-    "triton-g-doze-semanas": {
-      "file": "docs/W3SDS4_TRITON_PLANO_202610.pt.md",
-      "title": "Em que ordem o braço Triton G acontece em três meses, e onde ficam os portões?",
-      "sha256": "495db7973da6df3b008cf5c0d66027cf518e23618b8af7f8a46bf551bb3e55b1"
-    },
-    "triton-port-plan": {
-      "file": "docs/W3SDS4_TRITON_202610.md",
-      "title": "In what order is W3SDS4 ported to Triton, and what gate does each step pass?",
-      "sha256": "648fe9170d2d3487807e8219200b7e9332f332b2167e39cff9eaf976e789f80b"
-    },
-    "weathernext-wind-chain": {
-      "file": "docs/W3SDS4_TRITON_202610.md",
-      "title": "How does WeatherNext 3 enter the benchmark, and what are the waves compared with?",
-      "sha256": "007b04d16adf55c27f5807a191022eef7972183c23f460e2b27516c500597961"
     }
   }
 }

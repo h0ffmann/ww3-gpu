@@ -1,0 +1,325 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Which branch of W3SDS4's cumulative term runs",
+    "output": "docs/archify/sds4-sdscum-branches.html",
+    "quality_profile": "showcase",
+    "locale": "en",
+    "repository": {
+      "url": "https://github.com/h0ffmann/ww3-gpu.git",
+      "link_mode": "local-only",
+      "revision": "28178fe10a8ec37ab38c809326ba8964c11f992c"
+    }
+  },
+  "components": [
+    {
+      "id": "s",
+      "type": "external",
+      "label": "ST4 parameter SDSCUM",
+      "sublabel": "default -0.40344: SSDSC(3)",
+      "pos": [
+        290,
+        40
+      ],
+      "size": [
+        300,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/W3SDS4_TRITON_202610.md",
+          "line": 43,
+          "end_line": 54
+        },
+        {
+          "path": "docs/W3SDS4_TRITON_202610.md",
+          "line": 65,
+          "end_line": 65,
+          "label": "w3gridmd.F90:2157, :2268"
+        }
+      ]
+    },
+    {
+      "id": "q",
+      "type": "security",
+      "label": "sign of SSDSC(3)",
+      "sublabel": "chooses the branch",
+      "pos": [
+        340,
+        180
+      ],
+      "size": [
+        200,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/W3SDS4_TRITON_202610.md",
+          "line": 43,
+          "end_line": 54
+        }
+      ]
+    },
+    {
+      "id": "n",
+      "type": "backend",
+      "label": "1 · anisotropic",
+      "sublabel": "2554-2563: O(NK² NTH²) a point",
+      "pos": [
+        30,
+        320
+      ],
+      "size": [
+        260,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/W3SDS4_TRITON_202610.md",
+          "line": 43,
+          "end_line": 54
+        },
+        {
+          "path": "docs/W3SDS4_TRITON_202610.md",
+          "line": 65,
+          "end_line": 65
+        }
+      ]
+    },
+    {
+      "id": "p",
+      "type": "backend",
+      "label": "2 · isotropic",
+      "sublabel": "2539-2547: O(NK² NTH) a point",
+      "pos": [
+        310,
+        320
+      ],
+      "size": [
+        260,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/W3SDS4_TRITON_202610.md",
+          "line": 43,
+          "end_line": 54
+        },
+        {
+          "path": "docs/W3SDS4_TRITON_202610.md",
+          "line": 65,
+          "end_line": 65
+        }
+      ]
+    },
+    {
+      "id": "z",
+      "type": "backend",
+      "label": "3 · no cumulative term",
+      "sublabel": "SDSCUM = 0",
+      "pos": [
+        590,
+        320
+      ],
+      "size": [
+        260,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/W3SDS4_TRITON_202610.md",
+          "line": 43,
+          "end_line": 54
+        }
+      ]
+    },
+    {
+      "id": "mn",
+      "type": "frontend",
+      "label": "ww3_ts1: W3SDS4 2.01 s",
+      "sublabel": "67 % of the source terms ⚠",
+      "pos": [
+        30,
+        460
+      ],
+      "size": [
+        260,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/W3SDS4_TRITON_202610.md",
+          "line": 43,
+          "end_line": 54
+        },
+        {
+          "path": "docs/data/ww3_ts1_gprof_202610.md",
+          "line": 1,
+          "end_line": 20
+        }
+      ]
+    },
+    {
+      "id": "mp",
+      "type": "frontend",
+      "label": "not measured yet",
+      "sublabel": "",
+      "pos": [
+        310,
+        460
+      ],
+      "size": [
+        260,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/W3SDS4_TRITON_202610.md",
+          "line": 43,
+          "end_line": 54
+        }
+      ]
+    },
+    {
+      "id": "mz",
+      "type": "frontend",
+      "label": "ww3_ts1: W3SDS4 0.51 s",
+      "sublabel": "38 % of the source terms ⚠",
+      "pos": [
+        590,
+        460
+      ],
+      "size": [
+        260,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/W3SDS4_TRITON_202610.md",
+          "line": 43,
+          "end_line": 54
+        },
+        {
+          "path": "docs/data/ww3_ts1_gprof_202610.md",
+          "line": 1,
+          "end_line": 20
+        }
+      ]
+    },
+    {
+      "id": "d",
+      "type": "security",
+      "label": "T2 · LabECO decides",
+      "sublabel": "the port reproduces that branch",
+      "pos": [
+        290,
+        600
+      ],
+      "size": [
+        300,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/W3SDS4_TRITON_202610.md",
+          "line": 43,
+          "end_line": 54
+        }
+      ]
+    }
+  ],
+  "boundaries": [],
+  "connections": [
+    {
+      "id": "s-q",
+      "from": "s",
+      "to": "q",
+      "label": ""
+    },
+    {
+      "id": "q-n",
+      "from": "q",
+      "to": "n",
+      "label": "negative (default)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "q-p",
+      "from": "q",
+      "to": "p",
+      "label": "positive"
+    },
+    {
+      "id": "q-z",
+      "from": "q",
+      "to": "z",
+      "label": "zero"
+    },
+    {
+      "id": "n-mn",
+      "from": "n",
+      "to": "mn",
+      "label": ""
+    },
+    {
+      "id": "p-mp",
+      "from": "p",
+      "to": "mp",
+      "label": ""
+    },
+    {
+      "id": "z-mz",
+      "from": "z",
+      "to": "mz",
+      "label": ""
+    },
+    {
+      "id": "mn-d",
+      "from": "mn",
+      "to": "d",
+      "label": "",
+      "variant": "dashed"
+    },
+    {
+      "id": "mp-d",
+      "from": "mp",
+      "to": "d",
+      "label": "",
+      "variant": "dashed"
+    },
+    {
+      "id": "mz-d",
+      "from": "mz",
+      "to": "d",
+      "label": "",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "The parameter",
+      "items": [
+        "SDSCUM defaults to -0.40344 and is copied to SSDSC(3)"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "The branches",
+      "items": [
+        "negative: anisotropic, O(NK² NTH²) per point",
+        "positive: isotropic, O(NK² NTH)",
+        "zero: no cumulative term"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Gate",
+      "items": [
+        "Timings are transcribed from a gprof table ⚠",
+        "LabECO picks the operational branch (T2)"
+      ]
+    }
+  ]
+}

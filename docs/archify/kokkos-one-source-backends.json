@@ -1,0 +1,226 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "One Kokkos source, three backends",
+    "output": "docs/archify/kokkos-one-source-backends.html",
+    "quality_profile": "showcase",
+    "locale": "en",
+    "repository": {
+      "url": "https://github.com/h0ffmann/ww3-gpu.git",
+      "link_mode": "local-only",
+      "revision": "28178fe10a8ec37ab38c809326ba8964c11f992c"
+    }
+  },
+  "components": [
+    {
+      "id": "f",
+      "type": "external",
+      "label": "Fortran source",
+      "sublabel": ".F90 files",
+      "pos": [
+        40,
+        180
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "kokkos/README.md",
+          "line": 28,
+          "end_line": 47
+        }
+      ]
+    },
+    {
+      "id": "c",
+      "type": "frontend",
+      "label": "CPU",
+      "sublabel": "OpenMP threads, MPI ranks",
+      "pos": [
+        380,
+        40
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "kokkos/README.md",
+          "line": 28,
+          "end_line": 47
+        }
+      ]
+    },
+    {
+      "id": "k",
+      "type": "backend",
+      "label": "one C++/Kokkos source",
+      "sublabel": "W3SNL1, the DIA term",
+      "pos": [
+        380,
+        450
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "kokkos/README.md",
+          "line": 28,
+          "end_line": 47
+        }
+      ]
+    },
+    {
+      "id": "s",
+      "type": "backend",
+      "label": "Serial",
+      "sublabel": "one CPU thread",
+      "pos": [
+        720,
+        330
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "kokkos/README.md",
+          "line": 28,
+          "end_line": 47
+        }
+      ]
+    },
+    {
+      "id": "o",
+      "type": "backend",
+      "label": "OpenMP",
+      "sublabel": "i9-14900, 32 threads",
+      "pos": [
+        720,
+        450
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "kokkos/README.md",
+          "line": 28,
+          "end_line": 47
+        }
+      ]
+    },
+    {
+      "id": "g",
+      "type": "backend",
+      "label": "CUDA",
+      "sublabel": "RTX 4090, 16 384 CUDA cores",
+      "pos": [
+        720,
+        570
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "kokkos/README.md",
+          "line": 28,
+          "end_line": 47
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "1 · WW3 as written",
+      "wraps": [
+        "f",
+        "c"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "2 · the Kokkos port of W3SNL1",
+      "wraps": [
+        "k",
+        "s",
+        "o",
+        "g"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "a",
+      "from": "f",
+      "to": "c",
+      "label": "gfortran, OMPG, MPI"
+    },
+    {
+      "id": "b",
+      "from": "f",
+      "to": "k",
+      "label": "translated line by line",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c1",
+      "from": "k",
+      "to": "s",
+      "label": "build choice"
+    },
+    {
+      "id": "c2",
+      "from": "k",
+      "to": "o",
+      "label": "build choice"
+    },
+    {
+      "id": "c3",
+      "from": "k",
+      "to": "g",
+      "label": "build choice"
+    },
+    {
+      "id": "d",
+      "from": "o",
+      "to": "c",
+      "label": "compared pair to pair",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "WW3 as written",
+      "items": [
+        "gfortran builds the Fortran for the CPU"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "The port",
+      "items": [
+        "one C++/Kokkos source; the build picks Serial, OpenMP or CUDA"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Check",
+      "items": [
+        "the OpenMP build is compared pair to pair with WW3 in WW3's regtests"
+      ]
+    }
+  ]
+}
