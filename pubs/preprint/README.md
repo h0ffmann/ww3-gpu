@@ -19,7 +19,9 @@ aiXiv, 2026-11-11. Authors: Matheus Hoffmann, Pedro Veras Guimarães (LabECO, UF
 `labs/paper` shell; `just preprint --self-test` checks that the inputs exist.
 
 Every number in it was read from a file at ww3-gpu `58167d7` (`kokkos/PORT_STATUS.md`) or
-chaceon `0c098fe` (`README.md`, `docs/WW3_GPU_PARITY_202611.md`) (v, read 2026-11-11). It cites
+chaceon `0c098fe` (`README.md`, `docs/WW3_GPU_PARITY_202611.md`) (v, read 2026-11-11). Section 0 sets it beside Koldunov et al. (2026), the FESOM2 port by a
+language model (arXiv:2606.11356), as summarised in
+[`notes/202610170112`](../../notes/202610170112-fesom2-went-through-c-ww3-goes-straight-to-kokkos.md). It cites
 the NOAA progress record and ADR-0001 at `58167d7`,
 [h0ffmann/ww3-dia-gpu-v2](https://github.com/h0ffmann/ww3-dia-gpu-v2) at `32aa2ef`, and the Lean 4
 `ocean-waves` package in [h0ffmann/proof](https://github.com/h0ffmann/proof/tree/b863c15/ocean-waves)
