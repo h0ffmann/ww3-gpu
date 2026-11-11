@@ -55,6 +55,10 @@ looser.
   ([Engineering work](#engineering-work)).
 - **Diagrams are Archify, dark**: no diagram is Mermaid; every diagram is an Archify drawing in
   DESIGN.md's dark look with its reading card ([Figures](#figures-hard-rule)).
+- **A paper's figure is drawn for its page and for the eye**: at the width a paper prints it, a
+  figure is between 5:4 and 2:1, its box text is at least 7 pt and no text is under 6 pt, and its
+  layout is balanced; `docs/archify/paper.tsv` lists those figures and `just archify fit`
+  measures them ([Figures](#figures-hard-rule)).
 - **The proposal goes through the reviewer**: any change under `pubs/proposal/` passes
   `revisor-proposta` and `just proposal-lint` before the PR, and the review is recorded
   ([The proposal](#the-proposal-hard-rule)).
@@ -99,7 +103,7 @@ configure and run the CMake/CTest driver in `regtests/`; `just` lists them.
 | A non-trivial change, designed before it is built | a WFIP in `docs/WFIPs/`, numbered, tied to a proposal deliverable (D1–D6) with its definition of done in §7; a Spec Kit spec in `specs/<NNN-slug>/` when behaviour is worth specifying | [`docs/WFIPs/TEMPLATE.md`](docs/WFIPs/TEMPLATE.md), the `wfip` skill; `scripts/wfip.py check` is the gate and regenerates the index |
 | A decision that several plans or WFIPs follow (a tool, a method, a scope) | a section of `docs/ADRs.md`, numbered, Proposed until the owner accepts it | [`docs/ADRs.md`](docs/ADRs.md); an accepted ADR is superseded, not edited |
 | An example | `examples/` | examples use `.nml`, never `.inp` |
-| The preprint, the thesis | `pubs/preprint/`, `pubs/thesis/` when it starts | a Markdown source, built like the proposal ([ADR-0023](docs/ADRs.md#adr-0023)) |
+| The preprint, the thesis | `pubs/preprint/`, `pubs/thesis/` when it starts | a Markdown source, built like the proposal ([ADR-0023](docs/ADRs.md#adr-0023)); a figure in it is a drawing of `docs/archify/paper.tsv` ([Figures](#figures-hard-rule)) |
 | The proposal | `pubs/proposal/pt/` (reference) and `en/` (mirror) | [The proposal](#the-proposal-hard-rule) |
 | A diagram | an Archify source `docs/archify/<slug>.json` with its dark PNG, shown in the page it illustrates and linked to its page on the website; never a Mermaid fence | [Figures](#figures-hard-rule), [`DESIGN.md`](DESIGN.md) "Pictures", the `archify` skill; the HTML is built by `pages.yml`, never committed |
 | A dated plan of a medium or large change | `docs/plans/` | [Engineering work](#engineering-work) |
@@ -151,7 +155,7 @@ Run the gates of what you changed before calling it done. CI (`.github/workflows
 | `kokkos/ports.tsv`, `kokkos/port_claims.tsv` or `docs/data/ww3_*_gprof.tsv` | `python3 scripts/port_score.py --write`, then `--check` (CI runs `--self-test` and `--check`) |
 | Fortran in `gpu/`, `examples/` | they must compile with gfortran with directives ignored |
 | a Mermaid fence or its page | `python3 scripts/figures.py check`, then `just figures` to re-render and `python3 -m unittest tests/test_figures.py` |
-| `docs/archify/*.json` or the `vendor/archify` pin | `just archify check`, then `just archify refresh` to redraw the stale PDFs (`/drawings-refresh` does both kinds); not run in CI or on a merge |
+| `docs/archify/*.json` or the `vendor/archify` pin | `just archify check`, then `just archify refresh` to redraw the stale PDFs (`/drawings-refresh` does both kinds); not run in CI or on a merge. For a drawing of `docs/archify/paper.tsv`, also `just archify fit` and `just preprint`, then look at the figure's page at 100 % |
 | `pubs/proposal/` | `just proposal-lint`, the `revisor-proposta` review, `just proposal-review-record <parecer>`, `just proposal-review-check` |
 | `scripts/*.py` | `python3 -m unittest discover tests` |
 | `bench/results/` or a table it quotes | `just results check` (`just results table` regenerates) |
@@ -413,6 +417,16 @@ draws the picture and `just archify check` says whether it is stale. Every node 
 a file read, a WW3 fact cites `model/src/<file>.F90:<line>` at the pin, and a speed figure says
 "regtest pending" until WW3's regtests have run on its commit. Where a figure and its prose
 disagree, the figure is the bug.
+
+A figure attached to a paper considers proportion and human seeing (the owner, 11 November 2026):
+it is drawn for the page that prints it, never a screen drawing scaled down. It has a row in
+[`docs/archify/paper.tsv`](docs/archify/paper.tsv) with the width it is printed at, and at that
+width its frame is between 5:4 and 2:1, the text of a box is at least 7 pt and no text is under
+6 pt; `just archify png` refuses to draw one that does not fit, and `just archify fit` measures
+every row. Balance (one reading direction, the reference in the centre or at the start, the same
+margin on every side, no empty half) is judged by a person on the built page at 100 %. A paper in
+Portuguese prints the Portuguese drawing. [`DESIGN.md`](DESIGN.md), "Pictures in a paper", is the
+full rule.
 
 A new diagram is never a Mermaid fence. The fences still in the repository (the proposal's, the
 course's and the docs not yet redrawn) are being replaced ⚠; until the last one goes,

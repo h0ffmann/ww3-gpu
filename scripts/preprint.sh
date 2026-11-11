@@ -12,12 +12,22 @@ if [ "${1:-}" = "--self-test" ]; then
     [ -f "$here/$f" ] || { echo "preprint: missing $f" >&2; exit 1; }
   done
   ls "$here"/prose/*.md > /dev/null
+  for f in ww3-gpu-runtimes.pdf ww3-gpu-runtimes-pt.pdf; do
+    [ -f "$here/../../docs/archify/$f" ] || { echo "preprint: missing docs/archify/$f" >&2; exit 1; }
+  done
   echo "preprint: self-test ok" >&2
   exit 0
 fi
 for t in pandoc pandoc-crossref xelatex; do
   command -v "$t" > /dev/null || { echo "preprint: $t not found; enter picasso's labs/paper shell" >&2; exit 1; }
 done
+
+# The figures are the dark Archify drawings, printed by `scripts/archify.sh pdf`; the copies in
+# figures/ go with the .tex to aiXiv, and are made again here so they never trail their source.
+archify="$(cd "$here/../../docs/archify" && pwd)"
+mkdir -p "$here/figures"
+cp "$archify/ww3-gpu-runtimes.pdf" "$here/figures/runtimes.pdf"
+cp "$archify/ww3-gpu-runtimes-pt.pdf" "$here/figures/runtimes.pt-BR.pdf"
 
 build="$(mktemp -d)"
 trap 'rm -rf "$build"' EXIT

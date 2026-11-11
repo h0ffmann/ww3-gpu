@@ -3,9 +3,10 @@
 
     archify_dress.py <page.html> <out.html> <slug> [--bar <bar.html>]
 
-scripts/archify.sh png and site call it. It sets docs/archify/ww3-gpu.css and the site's fonts over
-the page, cuts the viewBox to the slug's height in docs/archify/dark.tsv, and, with --bar, puts the
-site's slim bar on top (Pages). It is the manner of piabrota/nix-os's `just figure`.
+scripts/archify.sh png, pdf and site call it. It sets docs/archify/ww3-gpu.css and the site's fonts
+over the page, cuts the viewBox to the slug's frame in docs/archify/dark.tsv (a height, or a height
+with the x, y and width of the frame), and, with --bar, puts the site's slim bar on top (Pages). It
+is the manner of piabrota/nix-os's `just figure`.
 """
 import html
 import pathlib
@@ -36,18 +37,33 @@ BAR_JS = ("<script>(()=>{const b=document.querySelector('.wg-bar');const f=()=>d
           "addEventListener('resize',f)})()</script>")
 
 
-def heights():
+def frames():
+    """slug -> (height,) or (height, x, y, width), as dark.tsv gives them."""
     rows = (line.rstrip("\n").split("\t") for line in open(ARCHIFY / "dark.tsv", encoding="utf-8")
             if line.strip() and not line.startswith("#"))
-    return {r[0]: r[1] for r in rows if len(r) > 1}
+    found = {r[0]: tuple(r[1:5]) for r in rows if len(r) in (2, 5)}
+    for slug, frame in found.items():
+        if not all(re.fullmatch(r"[\d.]+", v) for v in frame):  # it is written into the page
+            raise SystemExit(f"archify_dress: dark.tsv: the frame of {slug} is not numbers")
+    return found
+
+
+def view_box(frame, width, height):
+    """The viewBox of a drawing Archify drew `width` by `height`, cut to its dark.tsv frame."""
+    if not frame:
+        return f"0 0 {width} {height}"
+    if len(frame) == 1:
+        return f"0 0 {width} {frame[0]}"
+    h, x, y, w = frame
+    return f"{x} {y} {w} {h}"
 
 
 def dress(src, slug, bar=None):
     m = re.search(r'<svg viewBox="0 0 ([\d.]+) ([\d.]+)"', src)
     if not m:
         raise SystemExit("archify_dress: no <svg viewBox> in the page")
-    h = heights().get(slug, m.group(2))
-    src = src.replace(m.group(0), f'<svg viewBox="0 0 {m.group(1)} {h}"', 1)
+    box = view_box(frames().get(slug), m.group(1), m.group(2))
+    src = src.replace(m.group(0), f'<svg viewBox="{box}"', 1)
     css = (ARCHIFY / "ww3-gpu.css").read_text(encoding="utf-8")
     head = f'<link rel="stylesheet" href="{html.escape(FONTS)}"><style>{css}</style>'
     if bar is not None:

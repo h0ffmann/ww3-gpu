@@ -97,7 +97,7 @@ Mermaid figure and is gone: diagrams here are Archify drawings, and Archify draw
 
 **Takeaway.** WeatherNext 3 does not forecast waves: it supplies the wind that drives WW3, so the same wave model can be run with a different wind, and each of its 64 ensemble members becomes one WW3 run. The machine-learning wave forecast in the comparison is ECMWF's AIFS Single Wave.
 
-**How to read.** Left to right. The group on the left holds the two wind sources; either one goes through the same preprocessor into the same WW3. The AIFS row is a separate wave forecast that needs no WW3. Dashed arrows are verification: both sets of wave fields are scored against the same observations over the same period.
+**How to read.** Top to bottom. The group at the top holds the two wind sources; either one goes through the same preprocessor into the same WW3. The AIFS column on the right is a separate wave forecast that needs no WW3. Dashed arrows are verification: both sets of wave fields are scored against the same observations over the same period.
 
 **Not shown.** Data access (BigQuery, Earth Engine or GCS after a request form), licences and cost ⚠, and WeatherNext 3's own run time, which has not been published ⚠.
 

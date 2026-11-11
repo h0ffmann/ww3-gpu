@@ -11,6 +11,7 @@ aiXiv, 2026-11-11. Authors: Matheus Hoffmann, Pedro Veras Guimarães (LabECO, UF
 |---|---|
 | [`metadata.md`](metadata.md), [`prose/`](prose/) | The source, Pandoc Markdown, in ASD-STE100 style |
 | [`refs.bib`](refs.bib) | The references |
+| [`figures/`](figures/) | Figure 1 of each edition, the dark Archify drawing `docs/archify/ww3-gpu-runtimes{,-pt}.pdf`, drawn for the 174 mm column ([`DESIGN.md`](../../DESIGN.md), "Pictures in a paper"); `scripts/preprint.sh` copies it at every build |
 | [`format/`](format/) | The LaTeX template and pandoc-crossref settings of h0ffmann/closed-source (MIT) at `6b3aae5` |
 | [`wave-models-on-gpus.tex`](wave-models-on-gpus.tex) | The LaTeX that pandoc writes, the source sent to aiXiv |
 | [`wave-models-on-gpus.pdf`](wave-models-on-gpus.pdf) | The PDF, XeLaTeX run twice |

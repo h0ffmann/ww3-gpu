@@ -48,6 +48,10 @@ The full rulebook is `AGENTS.md` at the repository root; where this list and it 
   (AGENTS.md, "Engineering work").
 - **Diagrams are Archify, dark**: no diagram is Mermaid; every diagram is an Archify drawing in
   DESIGN.md's dark look with its reading card (AGENTS.md, "Figures").
+- **A paper's figure is drawn for its page and for the eye**: at the width a paper prints it, a
+  figure is between 5:4 and 2:1, its box text is at least 7 pt and no text is under 6 pt, and its
+  layout is balanced; `docs/archify/paper.tsv` lists those figures and `just archify fit`
+  measures them (AGENTS.md, "Figures").
 - **The proposal goes through the reviewer**: any change under `pubs/proposal/` passes
   `revisor-proposta` and `just proposal-lint` before the PR, and the review is recorded
   (AGENTS.md, "The proposal").

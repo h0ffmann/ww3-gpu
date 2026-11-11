@@ -106,9 +106,36 @@ O dev container rodou `just kokkos-test serial-debug` e `just smoke-ww3-gpu` pel
 
 </details>
 
-[![Quatro runtimes do WAVEWATCH. O script do ww3-gpu roda três: --ww3 compila o WW3 puro da NOAA, do WW3-noaa/; --ww3-gpu compila o fork com a switch KOKKOS, liga o kokkos/ e precisa dar os mesmos bits do --ww3; --ww4 compila o WAVEWATCH IV do seu fork e para com código 5 quando falta portar uma parte. O quarto, --chaceon (uma flag planejada), roda o chaceon, o WW3 reescrito em Rust sem Fortran, compilado para CPU, SPIR-V e PTX, e precisa dar os mesmos bits do WW3 7.14 da MetOcean](docs/archify/ww3-gpu-four-runtimes.png)](https://h0ffmann.github.io/ww3-gpu/figures/ww3-gpu-four-runtimes/)
+[![Seis runtimes do ww3-gpu, um comando só. --ww3 roda o Fortran do WW3 (WW3 7.14 da MetOcean) e é a referência. Os outros cinco precisam dar os bits dele: --ww3-gpu com --cpu (Fortran e Kokkos, OpenMP) ou --gpu (CUDA), --chaceon com --cpu (Rust, sem Fortran) ou --gpu (SPIR-V ou PTX), e --ww4 (WAVEWATCH IV, quando for lançado)](docs/archify/ww3-gpu-runtimes-pt.png)](https://h0ffmann.github.io/ww3-gpu/figures/ww3-gpu-runtimes-pt/)
 
-O desenho é [`docs/archify/ww3-gpu-four-runtimes.json`](docs/archify/ww3-gpu-four-runtimes.json), em inglês; abra-o como uma [página com zoom](https://h0ffmann.github.io/ww3-gpu/figures/ww3-gpu-four-runtimes/) no site. Uma caixa azul é uma fonte que o script lê, uma caixa âmbar é o que ele compila ou roda, e uma seta verde tracejada diz qual execução precisa dar os mesmos bits de qual. O quarto runtime, `--chaceon`, é o [h0ffmann/chaceon](https://github.com/h0ffmann/chaceon); o `scripts/ww3-gpu.sh` ainda não tem a flag ⚠. Hoje o ww3-gpu fixa o WW3 da NOAA em `03adda91` e o chaceon fixa o WW3 7.14; o plano é fixar todos os runtimes no WW3 7.14 ⚠.
+<details open>
+<summary>Como ler esta figura</summary>
+
+**Em uma frase.** Um comando só, `scripts/ww3-gpu.sh`, deve rodar o WAVEWATCH de seis jeitos, e
+cinco deles respondem ao sexto: o `--ww3`, o Fortran do WW3, é a referência cujos bits todos os
+outros runtimes precisam dar.
+
+**Como ler.** Das bordas para o centro. Uma caixa âmbar é um runtime; uma seta verde tracejada
+aponta para a execução cujos bits o runtime precisa dar, e as cinco apontam para o `--ww3`. A
+coluna da esquerda roda em CPU e a da direita em GPU; a primeira linha é o porte Kokkos dentro do
+WW3 (`--ww3-gpu`), a segunda é o [h0ffmann/chaceon](https://github.com/h0ffmann/chaceon), o WW3
+reescrito em Rust (`--chaceon`, ou `--cceon`). O `--ww4` é o WAVEWATCH IV.
+
+**Fora da figura.** As fontes de que cada runtime é compilado (a figura acima), as rotinas que a
+flag do Kokkos escolhe (a tabela abaixo) e a regra de supervisão de uma rodada `--gpu`
+(`AGENTS.md`, "Running on the GPU"). Nenhum runtime rodou o modelo inteiro em uma GPU real.
+
+**Evidência.** (v) lido em 11/11/2026: `scripts/ww3-gpu.sh` (cabeçalho) para `--ww3`,
+`--ww3-gpu` com `--cpu` ou `--gpu`, e `--ww4`; [`VERSIONS.md`](VERSIONS.md) para o WW3 7.14 da
+MetOcean (`92e2cf66`); [`pubs/preprint/`](pubs/preprint/README.md) para o chaceon. Duas partes
+são o desenho do autor em 11 de novembro de 2026 e ainda não estão no script ⚠: ele não tem a
+flag `--chaceon`, e o `--ww3` compila o WW3 da NOAA em `03adda91`, não o WW3 7.14 da MetOcean,
+com o qual o chaceon compara hoje. O desenho é
+[`docs/archify/ww3-gpu-runtimes-pt.json`](docs/archify/ww3-gpu-runtimes-pt.json), também a
+Figura 1 do preprint, desenhado para uma coluna de 174 mm ([`DESIGN.md`](DESIGN.md), "Pictures
+in a paper").
+
+</details>
 
 ### a chave do Kokkos, parte por parte
 
