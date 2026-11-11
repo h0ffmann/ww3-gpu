@@ -45,6 +45,8 @@
 // same loops are !$OMP PARALLEL DO under OMPG, :1697, :1798, :2241). The
 // spatial propagation keeps the Fortran's serial ISPEC loop, one W3XYP3
 // (a serial body, prop_xyp3.hpp) per bin between W3GATH and W3SCAT.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <cmath>

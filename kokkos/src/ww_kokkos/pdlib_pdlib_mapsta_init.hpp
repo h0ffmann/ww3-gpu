@@ -8,6 +8,7 @@
 // WW3 heritage: WW3/model/src/w3profsmd_pdlib.F90:401-512 at h0ffmann/WW3 8e433f99, text
 // identical at NOAA-EMC/WW3 03adda91; A. Roland (BGS IT&E GmbH), M. Dutour-Sikiric (IRB).
 // Evidence: kokkos/port_report/PDLIB_MAPSTA_INIT_KOKKOS.md.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 //
 // Ported: every statement WW3/regtests/ww3_tp2.17/input/switch_PDLIB compiles (no S, no

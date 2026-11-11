@@ -5,6 +5,7 @@
 // :822-943 (TABU_STRESS) at NOAA-EMC/WW3 03adda91; authors F. Ardhuin, H. L. Tolman,
 // adapted from WAM (P.A.E.M. Janssen, KNMI 1990; J. Bidlot, ECMWF 2004).
 // Evidence: kokkos/port_report/W3SRC3MD_TABU_STRESS_KOKKOS.md.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

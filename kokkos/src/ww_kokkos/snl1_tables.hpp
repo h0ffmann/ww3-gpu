@@ -12,6 +12,7 @@
 // its scratch arrays a lower bound of 1-NTH; snl1_dia.cpp answers it by offsetting
 // scratch by +nth, so a stored index j is read at scratch slot j + nth.
 //
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

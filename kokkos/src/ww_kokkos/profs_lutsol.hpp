@@ -3,6 +3,7 @@
 // (SPARSKIT), one sequential triangular sweep. Phase 1, translated, not regtested.
 // WW3 heritage: WW3-noaa/model/src/w3profsmd.F90:3701-3736 at NOAA-EMC/WW3 03adda91;
 // module authors A. Roland, F. Ardhuin. Evidence: kokkos/port_report/LUTSOL_KOKKOS.md.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

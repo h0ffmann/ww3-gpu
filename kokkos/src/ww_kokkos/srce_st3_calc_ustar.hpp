@@ -7,6 +7,7 @@
 // kokkos/port_report/W3SRC3MD_CALC_USTAR_KOKKOS.md.
 // Not the ST4 routine of st4_calc_ustar.hpp: ST3's has no Newton branch and no CAPCHNK.
 // ⚠ On a device expf and sqrtf are CUDA's, not glibc's.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

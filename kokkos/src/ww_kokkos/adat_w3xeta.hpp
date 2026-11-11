@@ -45,6 +45,8 @@
 // W3xetaStatus; EXTCDE ends in CALL EXIT, w3servmd.F90:1207); NDSE and NDST,
 // which only those use. The X* storage is W3XDMA's (adat_w3xdma*.hpp): this
 // header records which model's X arrays the aliases name, not the Views.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <array>

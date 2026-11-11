@@ -5,6 +5,7 @@
 // WW3 heritage: WW3-noaa/model/src/w3snlsmd.F90:597-651 at NOAA-EMC/WW3 03adda91, a routine
 // contained in W3SNLS and called once from it (:276); author H. L. Tolman.
 // Evidence: kokkos/port_report/W3SNLSMD_EXPAND_KOKKOS.md.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

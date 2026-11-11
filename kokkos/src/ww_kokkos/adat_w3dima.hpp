@@ -42,6 +42,8 @@
 // false (:976), so of the conditional groups only NLINIT (:3038) can move there,
 // W3DIMA does not change NLINIT, and :1467 tests it again. Between :994 and :1467
 // the Fortran reads no alias of a conditional group, only NSEALM and FL_ALL.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <array>

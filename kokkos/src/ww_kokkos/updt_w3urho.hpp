@@ -24,6 +24,8 @@
 //   only when RD and RAI are both NaN (the payload x86 keeps) ⚠.
 // - MAX(1.E-7,DT0N) is maxss 1.E-7,DT0N: a NaN DT0N gives 1.E-7 (w3uwnd_rd).
 // - Neither loop of :2626-2791 is vectorised; no FMA, no libm call.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <Kokkos_Core.hpp>

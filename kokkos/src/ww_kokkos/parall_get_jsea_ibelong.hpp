@@ -5,6 +5,7 @@
 // WW3 heritage: WW3-noaa/model/src/w3parall.F90:1265-1384 at NOAA-EMC/WW3 03adda91;
 // authors Aron Roland (BGS IT&E GmbH), Mathieu Dutour-Sikiric (IRB).
 // Evidence: kokkos/port_report/GET_JSEA_IBELONG_KOKKOS.md.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

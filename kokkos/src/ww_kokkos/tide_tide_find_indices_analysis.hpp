@@ -5,6 +5,7 @@
 // WW3 heritage: WW3-noaa/model/src/w3tidemd.F90:343-488 at NOAA-EMC/WW3 03adda91;
 // authors M. Foreman (tidal package), adapted to WW3 by F. Ardhuin.
 // Evidence: kokkos/port_report/TIDE_FIND_INDICES_ANALYSIS_KOKKOS.md.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

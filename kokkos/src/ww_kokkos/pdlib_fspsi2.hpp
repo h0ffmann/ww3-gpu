@@ -4,6 +4,7 @@
 // WW3 heritage: WW3-noaa/model/src/w3profsmd_pdlib.F90:1202-1502 at NOAA-EMC/WW3 03adda91;
 // A. Roland, M. Dutour-Sikiric. Evidence: kokkos/port_report/PDLIB_W3XYPFSPSI2_KOKKOS.md.
 // kRef1 is the W3_REF1 build (input_deep/switch_PDLIB, switch_NWS_rwps): it adds :1438-1440.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

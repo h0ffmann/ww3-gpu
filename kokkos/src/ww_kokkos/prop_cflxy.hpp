@@ -7,6 +7,7 @@
 // grid that is not unstructured (w3wavemd.F90:1689-1724). W3_S/W3_T are output
 // only; W3_MGP is the Mgp template flag. Evidence:
 // kokkos/port_report/W3CFLXY_KOKKOS.md.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

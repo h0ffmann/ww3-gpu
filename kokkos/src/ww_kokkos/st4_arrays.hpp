@@ -17,6 +17,8 @@
 // FWTABLE and the DEL* scalars are module variables: one copy per process, which
 // the last INSIN4/W3IOGR to run overwrites for every grid. The shim keeps one
 // copy too, and the last registration wins, as in the Fortran.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <Kokkos_Core.hpp>

@@ -6,6 +6,7 @@
 // kokkos/port_report/PROP_FREQ_SHIFT_KOKKOS.md. CFLK(NK2,NTH) is not stored: its rows
 // IK <= NK go straight into CAS (:730-735 read nothing else). ⚠ In the vectorised :703 and
 // :725 the operands of + and * commute between body and tail: only two NaN payloads differ.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

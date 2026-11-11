@@ -22,6 +22,8 @@
 // are written only by the loop kernels, in the Fortran's statement order on one execution
 // space instance; everything else (the times, NH, THO, HA, HD, HS, the scalars X, Y, DIR,
 // DTTST) is host-side, as in ww3_shel. The function fences exec before it returns.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <array>

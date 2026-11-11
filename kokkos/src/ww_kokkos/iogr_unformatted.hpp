@@ -15,6 +15,8 @@
 // negative when another subrecord follows and whose trailing marker is negative when one
 // preceded (v, libgfortran io/transfer.c next_record_w_unf and us_write, io/open.c:620-633, gcc
 // 16.2.0 source, read 2026-10-16); ⚠ not checked against a file, no lab mod_def reaches that size.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <algorithm>

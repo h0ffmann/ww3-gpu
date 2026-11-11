@@ -6,6 +6,7 @@
 // authors A. Roland, F. Ardhuin (the routine is BLAS-1's, S. Hammarling, NAG Ltd., 1982,
 // DLASSQ inlined 1993).
 // Evidence: kokkos/port_report/DNRM2_KOKKOS.md.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

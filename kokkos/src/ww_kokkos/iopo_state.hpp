@@ -15,6 +15,8 @@
 // v[(i-1) + n1*((j-1) + n2*(k-1))]. W3DMO2 allocates with NPT, the number of points requested,
 // and W3IOPP then counts the accepted points in NOPTS <= NPT, so the arrays are longer than
 // NOPTS whenever a point is skipped.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <cmath>

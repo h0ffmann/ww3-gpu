@@ -13,6 +13,8 @@
 // As for ST4 and W3SRCE, the Fortran side packs the scalars into REAL(C_FLOAT)
 // RPAR and INTEGER(C_INT) IPAR at the 0-based indices below; W3KOKKOSMD on the
 // fork mirrors them, and the init call refuses a packet whose length differs.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <Kokkos_Core.hpp>

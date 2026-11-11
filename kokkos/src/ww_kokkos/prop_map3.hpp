@@ -34,6 +34,8 @@
 // catches it. Below MAPSTA(1,1) (IX = 2, IY = 1) or past MAPSTA(NY,NX) (IX =
 // NX-1, IY = NY) the Fortran reads memory outside the array; the port would too,
 // and the bounds-checked Debug build aborts there.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <Kokkos_Core.hpp>

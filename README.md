@@ -369,7 +369,7 @@ or issues, linked so you can follow them.
 | Benchmarks | What do an i9 and an RTX 4090 actually give WW3? | [`bench/`](bench/README.md), [`gpu/`](gpu/README.md), [lesson 09](course/09-benchmark-profile-compile-run.md) | Tooling merged |
 | Port priority | Which routine should be ported next? | [ADR-0002](docs/ADRs/ADR-0002-port-order-wall-time.md), [`PORT_STATUS.md`](kokkos/PORT_STATUS.md) | Port by measured wall time. A first profile puts `W3SDS4` at 67 % of source-term time ([#45](https://github.com/h0ffmann/ww3-gpu/issues/45)) |
 | Porting with agents | How can coding agents port forty routines without a human redoing the checks? | [`AGENTS_KOKKOS`](docs/AGENTS_KOKKOS_202609.md), [lesson 13](course/13-bulk-porting-with-agents.md), [#42](https://github.com/h0ffmann/ww3-gpu/issues/42) | Rules merged; task queue and parity ladder in #42 |
-| Agent tooling | Which agent frameworks and research tools fit that workflow? | [#25](https://github.com/h0ffmann/ww3-gpu/pull/25), [#41](https://github.com/h0ffmann/ww3-gpu/pull/41), [#38](https://github.com/h0ffmann/ww3-gpu/issues/38), [ADR-0009](docs/ADRs/ADR-0009-ww3-gpu-adopts-ai-memory-from-fabio-akita.md) | Evaluations in review; ai-memory chosen |
+| Agent tooling | Which agent frameworks and research tools fit that workflow? | [`EVAL-NOOA_202609.md`](docs/EVAL-NOOA_202609.md), [`LLM_TOOLING_202610.md`](docs/LLM_TOOLING_202610.md), [#38](https://github.com/h0ffmann/ww3-gpu/issues/38), [ADR-0009](docs/ADRs/ADR-0009-ww3-gpu-adopts-ai-memory-from-fabio-akita.md) | Evaluations in review; ai-memory chosen |
 | Bit-for-bit proof | What can be proved, and not only tested, about the Fortran → C++ translation? | [`BITWISE_PROOF`](docs/BITWISE_PROOF_202610.md), [`docs/proof/`](docs/proof/README.md), [ADR-0001](docs/ADRs/ADR-0001-proof-language.md) | No proof language; exhaustive sweeps, GIMPLE diffs and SMT queries. `W3SNL1` section 1 swept over all 2^32 inputs |
 | Triton and ML weather forcing | Does a Triton kernel of the `W3SDS4` cumulative term beat the Kokkos one? Does WeatherNext 3 wind improve the wave forecast? | [#45](https://github.com/h0ffmann/ww3-gpu/issues/45), [`W3SDS4_TRITON_PLANO`](docs/W3SDS4_TRITON_PLANO_202610.pt.md) (pt-BR) | Planned |
 | Single-H100 port | What would a full port to one H100 take? | [`KOKKOS_H100_PLAN`](docs/KOKKOS_H100_PLAN_202609.md), [WFIP-0005](docs/WFIPs/WFIP-0005-device-resident-step.md), [WFIP-0006](docs/WFIPs/WFIP-0006-device-libm-bits.md) | Plan. The device-resident step (`--kokkos resident`) runs on the CPU byte-identical to the Fortran, with the spectrum crossing once each way on `bench_small` ([#179](https://github.com/h0ffmann/ww3-gpu/pull/179)); the device's libm calls go to copies of glibc's ([#178](https://github.com/h0ffmann/ww3-gpu/pull/178)). Nothing has run on a GPU |
@@ -873,11 +873,11 @@ you ran. A new patch release is cut every Friday when `main` has changed, or by 
 | What | Whose | Terms |
 |---|---|---|
 | This repository | Matheus Hoffmann | MIT ([`LICENSE`](LICENSE)) |
-| The kernels translated from WW3: `kokkos/src/ww_kokkos/snl1_*`, `kokkos/src/fortran_iface/w3kokkosmd.F90`, the patch in `kokkos/src/fortran_iface/PATCH.md` | derived works of WW3 | `LGPL-3.0-or-later`, stated in each file's `SPDX-License-Identifier` line |
+| The C++ translated from WW3 Fortran: the files of [`kokkos/src/ww_kokkos/`](kokkos/src/ww_kokkos/) whose header cites a "WW3 heritage" | derived works of WW3; copyright National Weather Service (NWS), NOAA | `LGPL-3.0-or-later`, in each file's `SPDX-License-Identifier` line, with the NWS copyright in `SPDX-FileCopyrightText` |
 | Vendored skills (`humanizar`, `humanizer`, `ponytail*`, `sharingan`) | their authors | their own licences, pinned in [`.claude/skills/skills.lock`](.claude/skills/skills.lock) |
 | ai-memory, used and not vendored | Fabio Akita | MIT |
 
-No WW3 source is vendored here. `scripts/01_get_ww3.sh` clones it, and upstream regression-test
+The texts are in [`LICENSES/`](LICENSES/) and the split by directory is in [`NOTICE`](NOTICE). This is compliance housekeeping, not legal advice. No WW3 source is vendored here. `scripts/01_get_ww3.sh` clones it, and upstream regression-test
 inputs are fetched, not redistributed. Third-party tools listed in
 `docs/AWESOME-WW3_202609.md` keep their own licences.
 

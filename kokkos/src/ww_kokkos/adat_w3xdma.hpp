@@ -45,6 +45,8 @@
 // Not ported, by construction of a C++ library call: the WRITE(NDSE) messages and
 // EXTCDE (returned as the code EXTCDE would exit with, W3xdmaStatus); W3SETG(IMOD) at
 // :1591 and W3SETG(JGRID) at :2385 (the caller passes IMOD's grid in W3xdmaGrid).
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <array>

@@ -13,6 +13,7 @@
 // The libmvec variant is chosen by glibc at run time from the CPU, for the
 // Fortran and for this code alike; the copies are of the SSE4 variant ⚠ (the
 // one this lab's hosts get: docs/GPU_LIBM_BITS_202610.md).
+// SPDX-License-Identifier: MIT
 #pragma once
 
 #include <Kokkos_Core.hpp>

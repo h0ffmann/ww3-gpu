@@ -69,6 +69,8 @@
 // the Fortran's order, staging DW and WLV through host mirrors; the VA zeroing, the fills and
 // the wavenumber loop :1394-1439 are kernels. Every hook receives the whole InitState and
 // runs between fences, so it may read and write any of it. Never Unified Memory.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <algorithm>

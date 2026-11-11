@@ -5,6 +5,7 @@
 // WW3 heritage: WW3-noaa/model/src/w3sis2md.F90:1317-1405 at NOAA-EMC/WW3 03adda91;
 // authors C. Sevigny, F. Ardhuin. Evidence: kokkos/port_report/W3FSD_DAVE_KOKKOS.md.
 // ⚠ On a device logf and powf are CUDA's, not glibc's.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

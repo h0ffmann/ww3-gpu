@@ -10,6 +10,7 @@
 // It runs once at set-up on the host and deep-copies the result to the device,
 // which is why it may use std:: math and std::vector freely.
 //
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 
 #include "ww_kokkos/snl1_tables.hpp"

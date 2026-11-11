@@ -9,6 +9,7 @@
 // in the h0ffmann/WW3 fork at the WW3/ pin 8e433f99: `git diff 03adda91 HEAD --
 // model/src/w3iogomd.F90` is empty), author H. L. Tolman and the authors of its history block.
 // Evidence: kokkos/port_report/W3IOGO_KOKKOS.md.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 //
 // Ported: every statement switches/switch_lab_shrd compiles (gfortran -E with the defines of

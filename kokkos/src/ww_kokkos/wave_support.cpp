@@ -8,6 +8,7 @@
 // a shim calls them. Nothing calls ww_support_instantiate. The headers of the source-term packages
 // and of the easy batch (docs/EASY_BATCH_KOKKOS_PLAN_202610.md) are included so every preset
 // compiles them together.
+// SPDX-License-Identifier: MIT
 #include "adat_w3dima.hpp"
 #include "adat_w3dmnl.hpp"
 #include "adat_w3naux.hpp"

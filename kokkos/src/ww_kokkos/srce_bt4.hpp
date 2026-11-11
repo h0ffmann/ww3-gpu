@@ -8,6 +8,7 @@
 // The caller builds the table with insbt4() once per process (the FIRST flag, :465-468)
 // and reads SBTCX, DELAB and FWTABLE of the current grid at call time (w3iogrmd.F90:1265).
 // ⚠ On a device sinhf, log10f, powf, expf and sqrtf are CUDA's, not glibc's.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

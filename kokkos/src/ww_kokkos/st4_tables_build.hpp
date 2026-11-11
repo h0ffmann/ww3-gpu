@@ -14,6 +14,8 @@
 // Fortran's shapes and conditions) and the W3SRC4MD module scalars (DELU,
 // DELTAUW, DELUST, DELALP, DELTAIL) into `p`. `a` holds the registered grid
 // arrays (SIG, DSIP, TH, ECOS, ...) on the host, which INSIN4 reads.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include "real.hpp"

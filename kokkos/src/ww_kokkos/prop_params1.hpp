@@ -10,6 +10,8 @@
 // GSQRT, ATRNX, ATRNY; CG, CX, CY and the boundary input. W3MAP1 is not
 // translated here: FACVX and FACVY are copied from the Fortran after each FLMAP
 // (w3wavemd.F90:1457), never rebuilt.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include "real.hpp"

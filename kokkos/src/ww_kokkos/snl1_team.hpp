@@ -19,6 +19,7 @@
 // thread from inputs no thread modifies, so the result is bit-identical across
 // backends, team sizes and thread counts.
 //
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

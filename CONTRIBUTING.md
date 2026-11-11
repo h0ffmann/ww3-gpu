@@ -226,6 +226,7 @@ edit a vendored skill through its patch); this is what each one is for.
 | `release` | cut a citable release: tag, GitHub release, Zenodo DOI, `CITATION.cff`, `.zenodo.json` |
 | `ww4-status` | diff NOAA-EMC/WW4 against `docs/ww4-status.json` and refresh lesson 14 and the proposal |
 | `noaa-notices` | list NOAA notices (NWS PNS/SCN, NCEP model changes, NOAA-EMC/WW3 production branches) new since `docs/noaa-notices.json` and route each to the file it breaks or dates |
+| `find-sources` | find a paper through the Consensus MCP server (`.mcp.json`), verify it at the DOI, then add it to `refs.bib` and `REFERENCES.md`; a query is sent to a third party ([`docs/LLM_TOOLING_202610.md`](docs/LLM_TOOLING_202610.md)) |
 | `ww3-port` | the WW3-specific traps of a Fortran-to-Kokkos translation (gfortran `-O3` powers, array bases, per-grid tables, OpenMP nesting) and of claiming a routine regtested; follows `/port-next` |
 | `wfip` | write, revise or report on a WFIP; `scripts/wfip.py` is its harness and `just specify` wires GitHub's Spec Kit (its `/speckit-*` skills are generated per clone and not tracked) |
 | `humanizar`, `humanizer` | remove AI tells from pt-BR and English prose without changing facts; third-party |
@@ -277,6 +278,9 @@ because Antigravity stops running them on 2026-10-19 in favour of skills `(v)` 2
 ([workflows](https://antigravity.google/docs/ide/workflows/)). Gemini CLI stopped serving Google AI
 Pro and Ultra accounts on 2026-06-18; on those plans `agy` is its replacement `(v)` 2026-10-09
 ([Google Developers Blog](https://developers.googleblog.com/en/an-important-update-transitioning-gemini-cli-to-antigravity-cli/)).
+
+`.agents/rules/proposta.md` carries the proposal's rules on `pubs/proposal/**`, and
+`.agents/mcp_config.json` the Consensus server ([`docs/LLM_TOOLING_202610.md`](docs/LLM_TOOLING_202610.md)).
 
 What Antigravity does not get:
 

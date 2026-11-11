@@ -6,6 +6,7 @@
 // authors Aron Roland (BGS IT&E GmbH), Mathieu Dutour-Sikiric (IRB).
 // Evidence: kokkos/port_report/PROP_REFRACTION_PR1_KOKKOS.md.
 // No caller in WW3: both CALLs are commented out (w3profsmd_pdlib.F90:4540, :4697).
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

@@ -11,6 +11,8 @@
 // MAX_EXPR, (USTAR/UNZ)**2 as t*t. -O3 computes the powers of :316 and :317
 // with libmvec's _ZGVbN4vv_powf on groups of four, emulated by mvec_powf on the
 // host; ⚠ on a device those two sites fall back to scalar powf.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <Kokkos_Core.hpp>

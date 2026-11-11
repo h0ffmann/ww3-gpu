@@ -15,6 +15,7 @@
 // grid. Each array is registered whole, with its LBOUND, and the shim keeps
 // elements 1..n (SIG is SIG(0:MK+1), w3gdatmd.F90:2066; ECOS and ESIN hold
 // MSPEC+MTH).
+// SPDX-License-Identifier: MIT
 
 #include "fortran_iface/ww_kokkos_c.hpp"
 

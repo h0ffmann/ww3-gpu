@@ -32,6 +32,8 @@
 // EXTIOF that follows, so no caller sees them); when an OS write error (a full disk) surfaces,
 // since libgfortran buffers and this file writes each statement with pwrite; the
 // GFORTRAN_CONVERT_UNIT variable, which overrides CONVERT.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <cerrno>

@@ -374,7 +374,7 @@ request ou issue aberta, com link para acompanhar.
 | Benchmarks | Quanto um i9 e uma RTX 4090 entregam de fato para o WW3? | [`bench/`](bench/README.md), [`gpu/`](gpu/README.md), [lição 09](course/09-benchmark-profile-compile-run.md) | Ferramentas integradas |
 | Prioridade do port | Qual rotina portar em seguida? | [ADR-0002](docs/ADRs/ADR-0002-port-order-wall-time.md), [`PORT_STATUS.md`](kokkos/PORT_STATUS.md) | Portar pela ordem do tempo de parede medido. Um primeiro perfil coloca o `W3SDS4` em 67 % do tempo dos termos-fonte ([#45](https://github.com/h0ffmann/ww3-gpu/issues/45)) |
 | Port com agentes | Como agentes de código podem portar quarenta rotinas sem que uma pessoa refaça as verificações? | [`AGENTS_KOKKOS`](docs/AGENTS_KOKKOS_202609.md), [lição 13](course/13-bulk-porting-with-agents.md), [#42](https://github.com/h0ffmann/ww3-gpu/issues/42) | Regras integradas; fila de tarefas e escada de paridade na #42 |
-| Ferramentas para agentes | Quais frameworks de agentes e ferramentas de pesquisa servem a esse fluxo? | [#25](https://github.com/h0ffmann/ww3-gpu/pull/25), [#41](https://github.com/h0ffmann/ww3-gpu/pull/41), [#38](https://github.com/h0ffmann/ww3-gpu/issues/38), [ADR-0009](docs/ADRs/ADR-0009-ww3-gpu-adopts-ai-memory-from-fabio-akita.md) | Avaliações em revisão; ai-memory escolhido |
+| Ferramentas para agentes | Quais frameworks de agentes e ferramentas de pesquisa servem a esse fluxo? | [`EVAL-NOOA_202609.md`](docs/EVAL-NOOA_202609.md), [`LLM_TOOLING_202610.md`](docs/LLM_TOOLING_202610.md), [#38](https://github.com/h0ffmann/ww3-gpu/issues/38), [ADR-0009](docs/ADRs/ADR-0009-ww3-gpu-adopts-ai-memory-from-fabio-akita.md) | Avaliações em revisão; ai-memory escolhido |
 | Prova bit a bit | O que dá para provar, e não só testar, sobre a tradução de Fortran para C++? | [`BITWISE_PROOF`](docs/BITWISE_PROOF_202610.md), [`docs/proof/`](docs/proof/README.md), [ADR-0001](docs/ADRs/ADR-0001-proof-language.md) | Nenhuma linguagem de prova; varreduras exaustivas, diff de GIMPLE e consultas SMT. Seção 1 do `W3SNL1` varrida nas 2^32 entradas |
 | Triton e vento de ML | Um kernel Triton do termo cumulativo do `W3SDS4` supera o do Kokkos? O vento do WeatherNext 3 melhora a previsão de ondas? | [#45](https://github.com/h0ffmann/ww3-gpu/issues/45), [`W3SDS4_TRITON_PLANO`](docs/W3SDS4_TRITON_PLANO_202610.pt.md) | Planejado |
 | Port para uma H100 | O que exigiria um port completo para uma única H100? | [`KOKKOS_H100_PLAN`](docs/KOKKOS_H100_PLAN_202609.md), [WFIP-0005](docs/WFIPs/WFIP-0005-device-resident-step.md), [WFIP-0006](docs/WFIPs/WFIP-0006-device-libm-bits.md) | Plano. O passo de tempo residente no dispositivo (`--kokkos resident`) roda na CPU idêntico byte a byte ao Fortran, com o espectro cruzando uma vez em cada sentido no `bench_small` ([#179](https://github.com/h0ffmann/ww3-gpu/pull/179)); as chamadas de libm do dispositivo vão para cópias das da glibc ([#178](https://github.com/h0ffmann/ww3-gpu/pull/178)). Nada rodou numa GPU |
@@ -810,9 +810,11 @@ cada versão ([`swh-save.yml`](.github/workflows/swh-save.yml)).
 | O quê | De quem | Termos |
 |---|---|---|
 | Este repositório | Matheus Hoffmann | MIT ([`LICENSE`](LICENSE)) |
-| Os kernels traduzidos do WW3 (lista na seção [licensing](README.md#licensing)) | obras derivadas do WW3 | `LGPL-3.0-or-later`, informada na linha `SPDX-License-Identifier` de cada arquivo |
+| O C++ traduzido do Fortran do WW3: os arquivos de [`kokkos/src/ww_kokkos/`](kokkos/src/ww_kokkos/) cujo cabeçalho cita um "WW3 heritage" | obras derivadas do WW3; copyright do National Weather Service (NWS), NOAA | `LGPL-3.0-or-later`, na linha `SPDX-License-Identifier` de cada arquivo, com o copyright do NWS em `SPDX-FileCopyrightText` |
 | Skills de terceiros (`humanizar`, `humanizer`, `ponytail*`, `sharingan`) | seus autores | as licenças deles, fixadas em [`.claude/skills/skills.lock`](.claude/skills/skills.lock) |
 | ai-memory, usado e não copiado | Fabio Akita | MIT |
+
+Os textos das licenças estão em [`LICENSES/`](LICENSES/) e a divisão por diretório está em [`NOTICE`](NOTICE). Isto é organização de conformidade, não parecer jurídico.
 
 ## marcas
 

@@ -4,6 +4,7 @@
 // at NOAA-EMC/WW3 03adda91; author F. Ardhuin. Not ported: W3_IG1 (the ICALC = 2
 // pass), W3_S. ⚠ The PDLIB arm (si = PDLIB_SI, iobpd = IOBPD_LOC) was not compared.
 // Evidence: kokkos/port_report/W3SREF_KOKKOS.md.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

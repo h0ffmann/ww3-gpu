@@ -39,6 +39,8 @@
 // space (IobcViews); the gather is a kernel on it, and ABPOS goes through a host mirror to the
 // file. Every other array W3IOBC touches (the point tables, ABPI0, ABPIN) is host state in
 // IobcState, as the routines that read them (W3UBPT, W3IOGR) are not ported on the device yet.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <array>

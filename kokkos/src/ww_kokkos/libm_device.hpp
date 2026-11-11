@@ -13,6 +13,7 @@
 //
 // The overloads for another argument type are deleted: a double argument where the Fortran
 // calls the float function, or the reverse, is a compile error and not a silent promotion.
+// SPDX-License-Identifier: MIT
 #pragma once
 
 #include <Kokkos_Core.hpp>

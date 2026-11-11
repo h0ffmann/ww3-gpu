@@ -7,6 +7,7 @@
 // are INSNL3's (snl3_tables.hpp) for the current grid; the W3GDATMD scalars of Snl3Params and
 // WAVNU1's DISTAB table are the grid's at call time. W3_S is not ported.
 // ⚠ On a device logf, sqrtf, powf and the libmvec lanes of the SCALE loop are CUDA's, not glibc's.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

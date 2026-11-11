@@ -20,6 +20,8 @@
 // arrays, so the stream order is the vector order. The extents are the ones the allocating
 // routine gives (W3DIMX, W3DIMUG, W3DIMS, W3DMO5, INSIN4); the iogr_shape_* helpers below
 // reproduce those extents and nothing else of those routines.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <array>

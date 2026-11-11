@@ -4,6 +4,7 @@
 // regtested.
 // WW3 heritage: WW3-noaa/model/src/w3sic3md.F90:2047-2160 at NOAA-EMC/WW3 03adda91;
 // authors E. Rogers, S. Zieger, X. Zhao, S. Cheng. Evidence: kokkos/port_report/IC3PRECALC_CHENG_KOKKOS.md.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

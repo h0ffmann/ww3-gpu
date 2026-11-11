@@ -7,6 +7,7 @@
 // WW3 heritage: WW3/model/src/w3gdatmd.F90:753-778 (TYPE GRID components, all POINTER) and
 // W3DIMUG's ALLOCATE (:3235-3260) at h0ffmann/WW3 8e433f99.
 // Evidence: kokkos/port_report/DEALLOCATE_PDLIB_GLOBAL_KOKKOS.md.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 //
 // LayoutLeft with the Fortran's extents from W3DIMUG (MX = NX nodes, MTRI = NTRI elements,

@@ -37,6 +37,8 @@
 // Not ported, by construction of a C++ library call: the WRITE(NDSE) messages and
 // EXTCDE (returned as the code EXTCDE would exit with, W3setaStatus); NDSE and
 // NDST, which only those use.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <cstddef>

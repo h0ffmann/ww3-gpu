@@ -24,6 +24,8 @@
 //   DCKI, QBI (NKHS,NKD)                                 A(i,j) -> a(i-1,j-1)
 //   SATINDICES, SATWEIGHTS (2*SDSNTH+1,MTH)              A(i,j) -> a(i-1,j-1)
 //   CUMULW (MSPEC,MSPEC)                                 A(i,j) -> a(i-1,j-1)
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <Kokkos_Core.hpp>

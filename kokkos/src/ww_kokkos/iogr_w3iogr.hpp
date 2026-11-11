@@ -24,6 +24,8 @@
 // No other floating-point operation is done by W3IOGR itself; the tables of the frequency and
 // direction grid (SIG, DSIP, TH, ESIN, ...) are not computed here but transferred as written
 // by ww3_grid.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <cerrno>
