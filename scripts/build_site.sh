@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # build_site — the site's front page (Gleam + Lustre, site/) into build/site, next to the book.
 #   scripts/build_site.sh            -> build/site/{index.html,pt-BR/index.html,style.css,favicon.svg}
+#                                       and the lineage, build/site/{,pt-BR/}lineage/index.html
 #   scripts/build_site.sh --check    -> the same, and fail unless each page holds every section
 # The pt-BR page is the same source, each sentence looked up in site/data/translations/pt-BR.tsv;
 # site/content stops the build when a sentence has no row or a row no sentence.
@@ -25,6 +26,9 @@ gleam test
 mkdir -p "$out/pt-BR"
 gleam run -m ww3_gpu_site/prerender --no-print-progress > "$out/index.html"
 gleam run -m ww3_gpu_site/prerender_pt_br --no-print-progress > "$out/pt-BR/index.html"
+mkdir -p "$out/lineage" "$out/pt-BR/lineage"
+gleam run -m ww3_gpu_site/prerender_lineage --no-print-progress > "$out/lineage/index.html"
+gleam run -m ww3_gpu_site/prerender_lineage_pt_br --no-print-progress > "$out/pt-BR/lineage/index.html"
 cp -R static/. "$out/"
 touch "$out/.nojekyll"
 
@@ -34,5 +38,8 @@ if [ "$check" -eq 1 ]; then
       grep -q "id=\"$id\"" "$out/$page" || { echo "build_site: no #$id in $page" >&2; exit 1; }
     done
   done
+  for page in lineage/index.html pt-BR/lineage/index.html; do
+    grep -q 'id="lineage"' "$out/$page" || { echo "build_site: no #lineage in $page" >&2; exit 1; }
+  done
 fi
-echo "build_site: $out/index.html $out/pt-BR/index.html"
+echo "build_site: $out/index.html $out/pt-BR/index.html $out/lineage/index.html $out/pt-BR/lineage/index.html"

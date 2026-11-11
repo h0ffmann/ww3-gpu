@@ -120,6 +120,23 @@ ol.steps li.step { display: grid; grid-template-columns: 2.2em 1fr auto; gap: 4p
 .fill.slower { background: var(--muted); }
 .speed.g1, .speed.g2, .speed.g3, .speed.g4 { color: var(--proof); }
 .speed.slower { color: var(--muted); }
+/* the lineage: one line of time; a dot in the wave light is a model, in the code light a port;
+   a hollow dot is planned (DESIGN.md, "The lineage") */
+ol.timeline { list-style: none; margin: 1.2em 0 0; padding: 0 0 0 28px; border-left: 2px solid var(--rule); }
+ol.timeline li.event { position: relative; padding: 0 0 26px; }
+ol.timeline li.event::before {
+  content: ""; position: absolute; left: -36px; top: 0.25em;
+  width: 14px; height: 14px; border-radius: 999px; border: 2px solid var(--wave); background: var(--wave);
+}
+ol.timeline li.event.port::before { border-color: var(--code); background: var(--code); }
+ol.timeline li.event.planned::before { background: var(--night); }
+.event p { margin: 0.15em 0 0; }
+.event .what { font-size: 1.15rem; }
+.event .what a { font-weight: 600; text-decoration: none; }
+.event.port .what a { color: var(--code); }
+.event .what a:hover { color: var(--ink); }
+.event .line { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); margin-right: 4px; }
+.event .source { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); }
 @media (max-width: 640px) {
   ul.records li { grid-template-columns: 1fr auto; }
   ul.records li .date { grid-column: 1 / -1; }

@@ -56,3 +56,13 @@ rust port	port em rust	draft
 the same rule, in rust	a mesma regra, em rust	draft
 ww3-gpu keeps WW3 and lets its Fortran call C++ written with Kokkos, one flag per routine. its sister project replaces WW3 with Rust, with no Fortran in its process. both ports must give the Fortran's bits, and a tolerance is a diagnostic, never the verdict.	o ww3-gpu mantém o WW3 e deixa o seu Fortran chamar C++ escrito com Kokkos, uma flag por rotina. o projeto irmão substitui o WW3 por Rust, sem Fortran no seu processo. os dois ports precisam dar os mesmos bits do Fortran, e uma tolerância é um diagnóstico, nunca o veredito.	draft	"flag" fica em inglês, como no código
 go to the rust repository	ir para o repositório em rust	draft
+lineage	linhagem	draft
+the works this one descends from or runs beside, on one line of time: the wave models, the ocean model, the weather models, the ports of models to other machines, and the releases of this work and its sister port in rust.	os trabalhos de que este descende e os que correm ao lado dele, numa só linha do tempo: os modelos de ondas, o modelo oceânico, os modelos de tempo, os ports de modelos para outras máquinas e os lançamentos deste trabalho e do seu port irmão em rust.	draft	"modelos de tempo" no sentido meteorológico; "port" fica em inglês, como em README.pt-BR.md
+the front page	a página inicial	draft
+the timeline	a linha do tempo	draft
+a dot in the blue light is a model;	um ponto na luz azul é um modelo;	draft
+one in the amber light is a port, a model moved to other hardware or another language.	um na luz âmbar é um port, um modelo levado para outro hardware ou outra linguagem.	draft
+a hollow dot is planned, not done. each date is only as precise as its source.	um ponto vazado está planejado, ainda não feito. cada data é só tão precisa quanto a sua fonte.	draft
+to track a new work, add a row to site/data/lineage.tsv, with its date and its source.	para acompanhar um novo trabalho, acrescente uma linha a site/data/lineage.tsv, com a data e a fonte.	draft
+planned	planejado	draft
+the works ww3-gpu descends from or runs beside, and its releases, on one line of time.	os trabalhos de que o ww3-gpu descende e os que correm ao lado dele, e os seus lançamentos, numa só linha do tempo.	draft
