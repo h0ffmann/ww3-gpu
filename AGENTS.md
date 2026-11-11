@@ -38,21 +38,21 @@ looser.
   with Kokkos and CUDA without changing the Fortran's arithmetic; a speed figure carries the
   machine, the command and the median of three runs, and says "regtest pending ⚠" until WW3's
   regtests passed on its commit; the tables built from `bench/results/` still need that pass
-  ([ADR-0016](docs/ADRs/ADR-0016-speed-first-regtests-postponed-one-person-loop.md)).
+  ([ADR-0016](docs/ADRs.md#adr-0016)).
 - **The port has no tests of its own**: Kokkos code is validated only by WW3's regtests, run inside
   WW3 from the h0ffmann/WW3 fork and compared with the same WW3 without it; no L1, GoogleTest or
   fixture of a ported routine is written here
-  ([ADR-0010](docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md)).
+  ([ADR-0010](docs/ADRs.md#adr-0010)).
 - **Regtests postponed to a validation phase**: WW3's regtests run when the owner calls the
   validation phase, which checks that the translation from Fortran to C++ was accurate; until
   then bit parity is argued statically (the `-O3` GIMPLE or disassembly of both compilers,
   `libm_bits` for device math), a row's `regtested` stays "no: postponed (ADR-0016)", and every
   flag defaults to the Fortran
-  ([ADR-0016](docs/ADRs/ADR-0016-speed-first-regtests-postponed-one-person-loop.md), superseding
+  ([ADR-0016](docs/ADRs.md#adr-0016), superseding
   ADR-0011).
-- **Engineering work follows the compound loop**: when the owner asks for engineering work, plan,
-  work, review and compound with Compound Engineering's skills, sized to the change, and redirect
-  the steps that clash with these rules ([Engineering work](#engineering-work-the-compound-loop)).
+- **Engineering work is sized to the change**: when the owner asks for engineering work, plan,
+  work and review in proportion to it, and the hard rules here win over any step
+  ([Engineering work](#engineering-work)).
 - **The proposal goes through the reviewer**: any change under `pubs/proposal/` passes
   `revisor-proposta` and `just proposal-lint` before the PR, and the review is recorded
   ([The proposal](#the-proposal-hard-rule)).
@@ -64,14 +64,14 @@ looser.
 ## What this repository is
 
 Its main goal is to make WAVEWATCH III® (WW3) run faster with Kokkos and CUDA, without changing the
-Fortran's arithmetic ([ADR-0016](docs/ADRs/ADR-0016-speed-first-regtests-postponed-one-person-loop.md),
+Fortran's arithmetic ([ADR-0016](docs/ADRs.md#adr-0016),
 the owner, 17 October 2026). It is a one-person project, and its engineering framework is chosen
 for that goal and that size: the next routine is the most expensive one in the measured profile,
 a change is judged by the wall time it removes, and the process is as light as the change allows.
 
 It is also a book in progress on agentic coding and agentic research, compiled from this repository, written
 around the same problem: moving the expensive kernels of WW3 to GPUs without changing
-the answer ([ADR-0003](docs/ADRs/ADR-0003-repository-is-a-book.md),
+the answer ([ADR-0003](docs/ADRs.md#adr-0003),
 [WFIP-0002](docs/WFIPs/WFIP-0002-lab-as-a-book.md)). The repository is the book's source and its
 evidence: the 17 lessons of `course/` are its chapters, built into a PDF on every merge; a
 Nix-pinned Fortran/MPI/NetCDF toolchain; a C++/Kokkos port of the DIA source term (`W3SNL1`) that
@@ -84,7 +84,7 @@ is made in the other (content must match, length need not; see `CONTRIBUTING.md`
 Lab code is C++, Fortran and shell. Python appears only in the publishing and repo tooling
 (`scripts/*.py`, `tests/`), never in lab code or kernels, with one exception: a Triton GPU kernel
 that is better fitted than the Kokkos one, integrated with the Fortran/C++ code and regtested by
-WW3's regtests ([ADR-0015](docs/ADRs/ADR-0015-triton-kernels-allowed-under-three-conditions.md)). `just` is the task runner and every
+WW3's regtests ([ADR-0015](docs/ADRs.md#adr-0015)). `just` is the task runner and every
 recipe is a thin wrapper over a script in `scripts/`, except the `ww3-gpu-matrix*` recipes, which
 configure and run the CMake/CTest driver in `regtests/`; `just` lists them.
 
@@ -98,12 +98,12 @@ configure and run the CMake/CTest driver in `regtests/`; `just` lists them.
 | Something tried, including a negative result | a dated entry in `docs/log/` | [`docs/log/README.md`](docs/log/README.md): append, never rewrite |
 | A plan, an evaluation, a survey | `docs/` as `NAME_YYYYMM.md`, dated in the name | this file; the `(v)`/`⚠` convention; `docs/GLOSSARY.md` for every new abbreviation |
 | A non-trivial change, designed before it is built | a WFIP in `docs/WFIPs/`, numbered, tied to a proposal deliverable (D1–D6) with its definition of done in §7; a Spec Kit spec in `specs/<NNN-slug>/` when behaviour is worth specifying | [`docs/WFIPs/TEMPLATE.md`](docs/WFIPs/TEMPLATE.md), the `wfip` skill; `scripts/wfip.py check` is the gate and regenerates the index |
-| A decision that several plans or WFIPs follow (a tool, a method, a scope) | an ADR in `docs/ADRs/`, numbered, Proposed until the owner accepts it | [`docs/ADRs/README.md`](docs/ADRs/README.md); an accepted ADR is superseded, not edited |
+| A decision that several plans or WFIPs follow (a tool, a method, a scope) | a section of `docs/ADRs.md`, numbered, Proposed until the owner accepts it | [`docs/ADRs.md`](docs/ADRs.md); an accepted ADR is superseded, not edited |
 | A chapter (a lesson), an example, an exercise | `course/`, `examples/`, `exercises/` | lessons are numbered and cross-linked and are the book's chapters (`pubs/book/`, WFIP-0002); examples use `.nml`, never `.inp` |
 | The proposal | `pubs/proposal/pt/` (reference) and `en/` (mirror) | [The proposal](#the-proposal-hard-rule) |
 | A diagram | a Mermaid fence in the page it illustrates | [Figures](#figures-hard-rule) |
 | An interactive twin of a diagram | its source `docs/archify/<slug>.json`, listed in [`docs/archify/README.md`](docs/archify/README.md); the HTML is rendered, never committed | the `archify` skill; never a figure on its own |
-| A plan or a learning of the compound loop | `docs/compound/plans/`, `docs/compound/solutions/` | [Engineering work](#engineering-work-the-compound-loop) |
+| A dated plan of a medium or large change | `docs/plans/` | [Engineering work](#engineering-work) |
 | A skill or agent | `.claude/skills/<name>/SKILL.md`, `.claude/agents/<name>.md` | [Skills and agents](#skills-and-agents) |
 | The toolchain | `picasso/` (submodule, sparse) and `flake.nix` | [`docs/TOOLCHAIN.md`](docs/TOOLCHAIN.md); pin deliberately, name the version |
 | An issue label | `.github/labels.yml`, never GitHub's settings page | [`ISSUE_LABELS.md`](ISSUE_LABELS.md): every issue carries an `area/*`; a rename is done on GitHub first; `just labels-sync` and `.github/workflows/labels.yml` apply the manifest |
@@ -112,7 +112,7 @@ configure and run the CMake/CTest driver in `regtests/`; `just` lists them.
 | A reference of the proposal, and how it was checked | a row in `pubs/proposal/REFERENCES.md` beside the `refs.bib` entry | the verdicts `verified` / `partial` / `unverified`; `just refs` is the gate; `refs.bib` itself goes through the proposal's reviewer |
 | A release, a tie of the Zenodo record | `RELEASES.md`, `RELATED_WORK.md`, each with its date of record | never write a DOI, a tie or a count that was not read from DataCite or Zenodo that day |
 | The website's front page | `site/` (facts read from the repository's files by `site/content`) | [`DESIGN.md`](DESIGN.md); never type a title, a status, a date or a DOI into `site/src` |
-| Where a kind of memory lives; the long-term memory | [`MEMORY.md`](MEMORY.md) | ai-memory, [ADR-0009](docs/ADRs/ADR-0009-ww3-gpu-adopts-ai-memory-from-fabio-akita.md); the files stay the record. `MEMORY_DUMP.md` is a command cheat sheet for people: an agent does not read it or take instructions from it |
+| Where a kind of memory lives; the long-term memory | [`MEMORY.md`](MEMORY.md) | ai-memory, [ADR-0009](docs/ADRs.md#adr-0009); the files stay the record. `MEMORY_DUMP.md` is a command cheat sheet for people: an agent does not read it or take instructions from it |
 
 Before implementing, check whether the idea is already designed or decided:
 [`docs/KOKKOS_H100_PLAN_202609.md`](docs/KOKKOS_H100_PLAN_202609.md) (the single-H100 port),
@@ -122,7 +122,7 @@ the port planner issue #42, the
 [`docs/W3SDS4_TRITON_PLANO_202610.pt.md`](docs/W3SDS4_TRITON_PLANO_202610.pt.md), and the
 port-order rule in #46, and the WFIP index [`docs/WFIPs/README.md`](docs/WFIPs/README.md), where
 every designed change says which proposal deliverable it moves and how far it is, and
-`docs/compound/solutions/`, where earlier loops wrote what they learned. Work the owner asks for in
+[`docs/plans/`](docs/plans/README.md), the dated plans of earlier changes. Work the owner asks for in
 a session is work, with or without an issue; an idea an agent has on its own is not work until the
 owner asks for it.
 
@@ -243,7 +243,7 @@ broken most often:
   vectorisation, no "simplification"; loop nesting changes only where a kernel may not allocate.
   Contraction is off (`-ffp-contract=off`, `--fmad=false`): turning it on is a physics change, not
   a tuning knob, and it invalidates every regtest verdict (`kokkos/PORT_STATUS.md`).
-- **The port has no tests of its own** ([ADR-0010](docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md),
+- **The port has no tests of its own** ([ADR-0010](docs/ADRs.md#adr-0010),
   the owner, 14 October 2026): no L1 test, GoogleTest or captured fixture of a ported routine. Its
   tests are WW3's regtests: `just smoke-ww3-gpu` and `just full-ww3-gpu` (`--ww3-gpu --cpu` pair to pair with
   `--ww3`) and `just ww3-gpu-matrix`, the `NL1` entries of WW3's `matrix.base` (serial by default,
@@ -255,7 +255,7 @@ broken most often:
   is its own PR, with L2 evidence.
 - **Never widen a tolerance.** Report and stop.
 - **Order follows wall time.** The next routine is the one the committed profile says is most
-  expensive, not the one that is easiest to validate or already has a fixture ([ADR-0002](docs/ADRs/ADR-0002-port-order-wall-time.md),
+  expensive, not the one that is easiest to validate or already has a fixture ([ADR-0002](docs/ADRs.md#adr-0002),
   applied in #45; `W3SDS4` before `W3SIN4`, both after `W3SNL1`).
 - **Every ported routine has a port report**, `kokkos/port_report/<ROUTINE>_KOKKOS.md`: what was
   ported, its benchmarks in the table the website reads, and how it was regtested (the owner, 14
@@ -355,7 +355,7 @@ host on every input checked; no device run has compared them yet (`scripts/libm_
 libdevice. Until such a run, the rule is the CPU backend's: a GPU run is judged by `nccmp-tol`'s
 tolerances against the Fortran of the same executable and against `--ww3`, with every field's
 differences recorded and no tolerance ever widened, and its timing enters a table only after
-that pass ([ADR-0014](docs/ADRs/ADR-0014-gpu-runs-judged-by-tolerance.md), the owner, 17 October
+that pass ([ADR-0014](docs/ADRs.md#adr-0014), the owner, 17 October
 2026). How far a device is from glibc's bits, function by function, and how the host CPU's FMA
 enters the Fortran's: [`docs/GPU_LIBM_BITS_202610.md`](docs/GPU_LIBM_BITS_202610.md).
 
@@ -404,15 +404,14 @@ render is stale, so `just figures` renders and the renders, `index.json` and the
 `figures.py chart` so the table and the chart cannot drift. Where a figure and its prose disagree,
 the figure is the bug.
 
-## Engineering work: the compound loop
+## Engineering work
 
-The owner, 17 October 2026: agents follow Compound Engineering's pattern when the owner guides them
-through engineering work, with the agility a one-person project needs
-([ADR-0016](docs/ADRs/ADR-0016-speed-first-regtests-postponed-one-person-loop.md)). The plugin
-(`compound-engineering@compound-engineering-plugin`, EveryInc, MIT) is enabled in
-`.claude/settings.json`, pinned to `compound-engineering-v3.30.3`; another agent follows the same
-steps by name. Every step serves the goal: a plan names the routine or the cost it attacks and the
-profile row that ranks it (ADR-0002), and its result is measured as wall time.
+The owner, 17 October 2026: engineering work the owner guides is sized to the change, with the
+agility a one-person project needs ([ADR-0016](docs/ADRs.md#adr-0016)). Compound Engineering's
+plugin, which carried that loop, was dropped on 11 November 2026
+([ADR-0021](docs/ADRs.md#adr-0021)); the steps below are plain work, named by what they do. Every
+step serves the goal: a plan names the routine or the cost it attacks and the profile row that
+ranks it (ADR-0002), and its result is measured as wall time.
 
 **Size the loop to the change.** Say which size you chose; the owner can always ask for more or
 less.
@@ -420,42 +419,30 @@ less.
 | Size | Example | Steps |
 |---|---|---|
 | Small | a fix in one file, a doc, a flag, a script option | work, the gates of [Setup and commands](#setup-and-commands), `just pr` |
-| Medium | a routine to translate, a tool, a shim, a recipe | `/ce-plan`, `/ce-work`, `/ce-code-review`, `/ce-compound` when the lesson is not obvious from the diff |
-| Large | a unit such as all of ST4, a new backend, the memory contract, a run-time preset | `/ce-brainstorm` first, then the medium loop; a WFIP only when it moves a proposal deliverable |
+| Medium | a routine to translate, a tool, a shim, a recipe | a plan, the work, a report-only review, a learning when the lesson is not obvious from the diff |
+| Large | a unit such as all of ST4, a new backend, the memory contract, a run-time preset | the requirements first, then the medium loop; a WFIP only when it moves a proposal deliverable |
 
-**Where each step writes and what it must not do.** Where a step's default clashes with a hard rule
-of this file, the rule wins:
+**What each step must not do.** Where a step clashes with a hard rule of this file, the rule wins:
 
-- **Artifacts** go under `docs/compound/` (`docs_root` in `.compound-engineering/config.yaml`):
-  plans in `docs/compound/plans/`, learnings in `docs/compound/solutions/`. They follow the
-  `(v)`/`⚠` rule like any page, and a plan or learning never stands in for evidence: a number in it
-  carries its command.
-- **`/ce-plan` and `/ce-brainstorm`** read `docs/compound/solutions/`, `docs/log/`, the port
-  ledger (`kokkos/PORT_TABLE.tsv`) and the ADRs before planning. A plan for a ported routine lists
-  the Fortran at the pin, the static parity argument it will make, and the regtest it leaves for the
-  validation phase.
-- **`/ce-work`** commits with this repository's conventions (`Tested:` trailer, never `Cost:`),
-  on a `goal/<id>-<slug>` branch from `origin/main`, and ships with `just pr`, never
-  `ce-commit-push-pr`. The port has no tests of its own (ADR-0010): for Kokkos code, "verify" is
-  the gates and the static parity argument, never a new unit test or fixture of a ported routine.
-  No WW3 regtest runs until the validation phase, and no `--gpu` run without the owner.
-- **`/ce-simplify-code`** never touches code translated from Fortran (kernels, shims, the
-  Fortran-shaped loops): that is "Translate, don't improve". It may tidy scripts, tools and docs.
-- **`/ce-code-review`** is report-only; its cross-model pass is off
-  (`cross_model_review_mode: off`) because it would send the diff to another provider; the owner
-  can ask for it in a run. That key does not cover the Bake-off that `/ce-plan` and
-  `/ce-brainstorm` may start, nor `ce-pov`'s cross-family judge: neither runs with another model
-  family or an external CLI unless the owner asks for it in that session. `security-reviewer` still runs before a PR that touches `.claude/`,
+- **A plan** goes to `docs/plans/` and reads `docs/log/`, the port ledger
+  (`kokkos/PORT_TABLE.tsv`) and the ADRs first. A plan for a ported routine lists the Fortran at
+  the pin, the static parity argument it will make, and the regtest it leaves for the validation
+  phase. It follows the `(v)`/`⚠` rule like any page and never stands in for evidence: a number in
+  it carries its command.
+- **The work** commits with this repository's conventions (`Tested:` trailer, never `Cost:`), on a
+  `goal/<id>-<slug>` branch from `origin/main`, and ships with `just pr`. The port has no tests of
+  its own (ADR-0010): for Kokkos code, "verify" is the gates and the static parity argument, never
+  a new unit test or fixture of a ported routine. No WW3 regtest runs until the validation phase,
+  and no `--gpu` run without the owner.
+- **A cleanup** never touches code translated from Fortran (kernels, shims, the Fortran-shaped
+  loops): that is "Translate, don't improve". It may tidy scripts, tools and docs.
+- **A review** is report-only and never sends the diff to another model provider unless the owner
+  asks for it in that session. `security-reviewer` still runs before a PR that touches `.claude/`,
   `.github/workflows/` or `scripts/`.
-- **`/ce-compound`** writes one learning to `docs/compound/solutions/` only when the lesson is
-  non-obvious, durable and material, its own test. A dated record of something tried still goes
-  to `docs/log/`; a WW3 porting trap also goes into the `ww3-port` skill. New vocabulary goes to
-  `docs/GLOSSARY.md`, never a `CONCEPTS.md`, and it edits this file or `CLAUDE.md` only when the
-  owner agrees in that session.
-- **`/lfg`** (the whole pipeline unattended) runs only when the owner asks for it, stops at local
-  commits, and leaves the PR to `just pr`. `ce-babysit-pr` is off by default (`auto_babysit:
-  false`). The skills for browsers, Xcode, product metrics and publishing (`ce-test-browser`,
-  `ce-test-xcode`, `ce-product-pulse`, `ce-promote`, `ce-proof`) have no use here.
+- **A learning** is written only when the lesson is non-obvious, durable and material: a dated
+  record of something tried goes to `docs/log/`, a WW3 porting trap goes into the `ww3-port`
+  skill, new vocabulary goes to `docs/GLOSSARY.md`. It edits this file or `CLAUDE.md` only when
+  the owner agrees in that session.
 
 **Documentation lookups** go through Context7 (`context7@context7-marketplace`, Upstash, MIT,
 enabled in `.claude/settings.json`, pinned to the `@upstash/context7-mcp@4.1.2` tag): current
@@ -526,7 +513,7 @@ How the channel was built and tested, its failure modes and the commands that ch
 - **Commit message:** a subject, a body paragraph saying what and why, and a `Tested:` trailer in
   the final block, naming the commands run and their result. No commit, PR or document records a
   cost: there is no `Cost:` trailer, no Cost row and no "Cost so far"
-  ([ADR-0009](docs/ADRs/ADR-0009-ww3-gpu-adopts-ai-memory-from-fabio-akita.md)). Agent commits also carry `Co-Authored-By` and the session
+  ([ADR-0009](docs/ADRs.md#adr-0009)). Agent commits also carry `Co-Authored-By` and the session
   link the harness adds; those lines stay in the trailer block, never in code, comments, PR titles
   or docs.
 - **PR workflow:** `just pr` pushes the branch and writes the PR body from the commits

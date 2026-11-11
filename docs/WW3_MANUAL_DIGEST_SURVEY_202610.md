@@ -52,7 +52,7 @@ What this means for an agent:
 | A | Read the PDF into context, whole or by page range | nothing to build | 466 pages of the wrong version; equations survive only as images or broken text ⚠ (not measured); every session pays for it again | no |
 | B | Convert the PDF to text once (`pdftotext`) and grep it | one command | the wrong version; equations and tables lose their structure ⚠ (not measured); no link to the pin | no |
 | C | **Index the LaTeX at the pin** with the standard library: section tree, `\label`, `\opthead` switch, equation blocks, the parameter tables' namelist names, each with `file:line` | deterministic, moves with `WW3/`, no model call, no dependency; equations stay as LaTeX, which an agent reads well; fits `scripts/route.py` (stdlib, from `git ls-files`, output capped at 40 lines) | the index is only as good as the manual's own labels; parameter tables differ per file and need a small parser per table shape ⚠ | **yes** |
-| D | Embeddings and a vector store over the manual | finds paraphrases | needs a model provider or a local model and a dependency, not reproducible from a command; ADR-0007 already refused a semantic pass over WW3's manual ("sends the text to a model provider … a second, unreviewed reading", [ADR-0007](ADRs/ADR-0007-graphify-ww3-locator.md)) | no |
+| D | Embeddings and a vector store over the manual | finds paraphrases | needs a model provider or a local model and a dependency, not reproducible from a command; ADR-0007 already refused a semantic pass over WW3's manual ("sends the text to a model provider … a second, unreviewed reading", [ADR-0007](ADRs.md#adr-0007)) | no |
 | E | graphify over the manual | already used on the code | same refusal (ADR-0007); its edges are inferred, not read | no |
 | F | **Hand-written physics cards**, one per ported routine, in its port report: the equation (LaTeX copied from the pinned `.tex` with its `file:line`), each symbol → namelist name → Fortran variable → `file:line`, the paper by DOI | reviewed by a person; carries `(v)`/`⚠` like any page; what a scientist reads | written by hand, so it covers only the routines ported | **yes, as the layer above C** |
 | G | Context7 | already enabled | a remote service for library documentation; the WW3 manual is not known to be in it ⚠ (not queried), and an answer is third-party data, never a pin | no |
@@ -92,7 +92,7 @@ lookups; it is worth having for people, not for agents.
 | `routing` and `ww3-port` skill text | small | `python3 .claude/hooks/check_agent_frontmatter.py` |
 
 If the upstream moves to `metocean/WW3`
-([plan 2026-10-29-001](compound/plans/2026-10-29-001-metocean-upstream-plan.md)), steps 1 and 2
+([plan 2026-10-29-001](plans/2026-10-29-001-metocean-upstream-plan.md)), steps 1 and 2
 are unchanged; the cards are re-read at the new pin, since `eqs/ST4.tex` and `eqs/NL1.tex` differ.
 
 ## 5. Not covered

@@ -10,7 +10,7 @@
 # regtested: was the Kokkos code run inside WW3 and compared with the Fortran (the L2 replay,
 #   `--ww3-gpu --cpu` pair to pair with `--ww3`)? "yes: <how>" or "no: <why>". The owner, 2026-10-14.
 #   scripts/port_score.py --check refuses a row without it. The port has no tests of its own:
-#   WW3's regtests are its only tests (docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md).
+#   WW3's regtests are its only tests (docs/ADRs.md#adr-0010).
 # kokkos: the port's C++ files, comma-separated; kokkos/PORT_RANKING.md lists them per port.
 # wired: does WW3 at the WW3/ pin call the Kokkos code, behind its run-time flag? "yes: <where>" or
 #   "no: <why>". A row is "translated" when it exists, "ported" when wired is yes, "regtested" when

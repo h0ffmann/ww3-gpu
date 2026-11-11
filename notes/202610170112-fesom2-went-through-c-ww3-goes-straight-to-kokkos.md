@@ -127,7 +127,7 @@ agent then reviews the C++ object against the Fortran object (same file) `(v)`. 
 checkpoints bit parity is argued from the `-O3` GIMPLE of both compilers (ADR-0011, Decision, item
 4) `(v)`. The only tests are WW3's regtests, run inside WW3 with the Fortran routine and with the
 Kokkos routine, compared by WW3's `test.comp`; `nccmp-tol` measures, it does not pass
-([ADR-0010](../docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md); `AGENTS.md`, "Bit
+([ADR-0010](../docs/ADRs.md#adr-0010); `AGENTS.md`, "Bit
 for bit") `(v)`. Each wired part has its own run-time flag, off by default, and `WW_KOKKOS_ALL`
 turns on every wired part (`docs/GLOSSARY.md:647`) `(v)`. The regtests on the H100 wait for
 access to LabECO's H100 at UFSC, which issue #143 asks for

@@ -206,7 +206,7 @@ of three; one run on a many-core EPYC node if the owner has one.
   PR #192, builds with `WW_KOKKOS_LIBM=OFF` (`docker/Dockerfile.cuda`), so its kernels call CUDA's
   libm, not the device copies of glibc's functions: not used for this run. Which value each kind of
   build should use is the owner's decision in
-  [`KOKKOS_LIBM_ON_VS_OFF.md`](../../KOKKOS_LIBM_ON_VS_OFF.md) (PR #194); A3 records the value the
+  [`KOKKOS_LIBM_ON_VS_OFF.md`](../KOKKOS_LIBM_ON_VS_OFF.md) (PR #194); A3 records the value the
   run's build has (`WW_KOKKOS_LIBM` in `CMakeCache.txt`).
 
 ### Phase A: preparation by agents (next session, no device run)

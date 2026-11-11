@@ -39,7 +39,6 @@
   "enabledPlugins": {
     "ai-memory@ai-memory": true,
     "ponytail@ponytail": true,
-    "compound-engineering@compound-engineering-plugin": true,
     "context7@context7-marketplace": true
   },
   "extraKnownMarketplaces": {
@@ -55,13 +54,6 @@
         "source": "github",
         "repo": "DietrichGebert/ponytail",
         "ref": "v5.2.0"
-      }
-    },
-    "compound-engineering-plugin": {
-      "source": {
-        "source": "github",
-        "repo": "EveryInc/compound-engineering-plugin",
-        "ref": "compound-engineering-v3.30.3"
       }
     },
     "context7-marketplace": {

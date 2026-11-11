@@ -217,6 +217,16 @@ pub fn status_word(cell: String) -> String {
   }
 }
 
+/// The sections of a document that holds one record per `## <prefix>NNNN: …` heading, as docs/ADRs.md
+/// holds every ADR (ADR-0022), each rewritten to open with `# <prefix>NNNN: …` so `heading` and
+/// `field` read it as they read a file of its own. The text before the first such heading is dropped.
+pub fn sections(text: String, prefix: String) -> List(String) {
+  case string.split("\n" <> text, "\n## " <> prefix) {
+    [_, ..rest] -> list.map(rest, fn(s) { "# " <> prefix <> s })
+    [] -> []
+  }
+}
+
 /// "ADR-0007" and the rest from "ADR-0007: the decision".
 pub fn split_id(title: String) -> #(String, String) {
   case string.split_once(title, ": ") {
@@ -577,6 +587,20 @@ fn records(dir: String, prefix: String, date_field: String) -> List(Record) {
   })
 }
 
+fn sectioned_records(file: String, prefix: String) -> List(Record) {
+  sections(read(root <> file), prefix)
+  |> list.map(fn(text) {
+    let #(id, title) = split_id(heading(text))
+    Record(
+      id,
+      title,
+      status_word(field(text, "Status")),
+      field(text, "Date"),
+      file <> "#" <> string.lowercase(id),
+    )
+  })
+}
+
 fn is_number(s: String) -> Bool {
   case int.parse(s) {
     Ok(_) -> True
@@ -668,7 +692,7 @@ pub fn main() -> Nil {
       latest_release(read(root <> "RELEASES.md")),
       revision(),
       chapters,
-      records("docs/ADRs/", "ADR-", "Date"),
+      sectioned_records("docs/ADRs.md", "ADR-"),
       records("docs/WFIPs/", "WFIP-", "Created"),
       notes,
       people,

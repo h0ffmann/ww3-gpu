@@ -87,8 +87,8 @@ change a bit.
 |---|---|---|
 | S0 | One-thread profile of today's batch, libm separated from the rest | the shares below are measured; the go/no-go of S0 is applied |
 | L1 | The lane layer: teams of `W` points (`WW_KOKKOS_SRCE_LANES`, 1 to 8, 1 reproduces today, default 8 since L2), each section run for the team's points in turn with today's scalar routines | **Done** 2026-10-18: `full` and `smoke` byte-identical with 1 and 8 (`kokkos/port_report/W3SRCE_KOKKOS.md`, "Points per team"). The point-minor scratch moves to L2, the first unit that reads it |
-| L2 | `W3SIN4` on lanes (its stress loop, `st4_sin4.hpp:198-249`) | **Done** 2026-10-18: byte-identical on `smoke` and `full`; one-thread `W3SRCE` kernel 105.17 s to 99.77 s, 5.1 % ([log](../../log/2026-10-18-srce-lanes-sin4.md)) |
-| L3 | `W3SDS4` on lanes, the libmvec sites left as lane loops | **Built** 2026-10-18: byte-identical on `smoke` and `full` with 1 and 8 points per team; timing and regtests in the [log](../../log/2026-10-18-srce-lanes-sds4.md) |
+| L2 | `W3SIN4` on lanes (its stress loop, `st4_sin4.hpp:198-249`) | **Done** 2026-10-18: byte-identical on `smoke` and `full`; one-thread `W3SRCE` kernel 105.17 s to 99.77 s, 5.1 % ([log](../log/2026-10-18-srce-lanes-sin4.md)) |
+| L3 | `W3SDS4` on lanes, the libmvec sites left as lane loops | **Built** 2026-10-18: byte-identical on `smoke` and `full` with 1 and 8 points per team; timing and regtests in the [log](../log/2026-10-18-srce-lanes-sds4.md) |
 | L4 | The integration and the initialisation (`srce_kernel.hpp:177-400`) | the same |
 | L5 | `W3SPR4`, `W3SLN1`, `W3SDB1`, `W3SBT1` | the same |
 | L6 | The DIA reads its input from the point-minor layout, or the layer transposes around it, whichever the timing favours | the same |
@@ -131,7 +131,7 @@ compiler kept out of line):
   kernel timing replaces the projection.
 
 The commands, `profile.sh` and `reduce.py`, are written out in
-[`docs/log/2026-10-18-srce-lanes-s0-profile.md`](../../log/2026-10-18-srce-lanes-s0-profile.md),
+[`docs/log/2026-10-18-srce-lanes-s0-profile.md`](../log/2026-10-18-srce-lanes-s0-profile.md),
 "How to repeat"; they run no build and change no file of the repository.
 
 ## Risks

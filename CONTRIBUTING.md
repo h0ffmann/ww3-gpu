@@ -9,7 +9,7 @@ The first readers of this repository are scientists: PhD researchers, postdocs a
 researchers working on ocean wave modelling, numerical methods or HPC. Every document, skill, agent
 and piece of metadata here is written for them, unless a section below names a different reader.
 The repository is read as a book in progress on agentic coding and agentic research
-([ADR-0003](docs/ADRs/ADR-0003-repository-is-a-book.md)), which adds a second reader without
+([ADR-0003](docs/ADRs.md#adr-0003)), which adds a second reader without
 lowering the bar: a researcher or engineer from another field who wants to run coding agents on
 scientific code without losing the answer. A chapter is wrong if a wave modeller reading over the
 shoulder finds a mistake in it.
@@ -80,7 +80,7 @@ Routines are ported in descending order of the **measured wall-clock time** they
 operational case, most expensive first. Nothing else sets the order: not how easy a routine
 is to validate, not whether it already has a fixture, not how well it maps to a GPU. The decision
 and the alternatives weighed are
-[ADR-0002](docs/ADRs/ADR-0002-port-order-wall-time.md).
+[ADR-0002](docs/ADRs.md#adr-0002).
 
 - The measurement is the phase-0 profile (`docs/AGENTS_KOKKOS_202609.md` §2.4, task P0.1 in
   issue #42): inclusive and exclusive wall time per routine on 1, 4 and 16 ranks, committed to
@@ -176,12 +176,12 @@ A mistake in a figure is as welcome as one in the text: the gallery links an iss
 
 ## Designing a change before building it
 
-Engineering work the owner asks for follows Compound Engineering's loop, sized to the change: a
-small change goes straight to the work and the gates; a medium one is planned (`/ce-plan`), worked
-(`/ce-work`), reviewed (`/ce-code-review`) and, when it taught something the diff does not show,
-compounded (`/ce-compound`); a large one starts with `/ce-brainstorm`. Plans and learnings live in
-[`docs/compound/`](docs/compound/README.md). AGENTS.md, "Engineering work: the compound loop", says
-which steps are redirected here and why (ADR-0016).
+Engineering work the owner asks for is sized to the change: a small change goes straight to the
+work and the gates; a medium one is planned, worked and reviewed, and when it taught something the
+diff does not show, the lesson is written down; a large one starts with its requirements. Plans
+live in [`docs/plans/`](docs/plans/README.md). AGENTS.md, "Engineering work", says what each step
+must not do (ADR-0016; Compound Engineering's plugin, which carried the loop, was dropped by
+ADR-0021).
 
 A large change that moves a proposal deliverable (a new forcing or example, a port unit, a measurement campaign, a tool the lab
 will rely on) starts as a Wave Forecaster Improvement Proposal in `docs/WFIPs/`: a numbered design
@@ -250,13 +250,9 @@ its codebase map, which lists Python and JS only, never C++, CUDA or Fortran (v)
 (`hooks/ponytail-map.js:17` at 5.2.0). README.md, "ponytail, off by default", is the user's guide.
 The vendored skills above stay the ones that carry this repository's audience paragraph.
 
-Two more plugins are enabled in `.claude/settings.json`, each pinned to a tag of its own
-marketplace (ADR-0016):
+One more plugin is enabled in `.claude/settings.json`, pinned to a tag of its own marketplace
+(ADR-0016):
 
-- **Compound Engineering** (`compound-engineering@compound-engineering-plugin`, EveryInc, MIT,
-  `compound-engineering-v3.30.3`): the `/ce-*` skills of the engineering loop above. Its repository
-  defaults are `.compound-engineering/config.yaml` (artifacts under `docs/compound/`, cross-model
-  review off, no PR watch); `config.local.yaml` is per checkout and ignored by git.
 - **Context7** (`context7@context7-marketplace`, Upstash, MIT, `@upstash/context7-mcp@4.1.2`): a
   remote MCP server (`mcp.context7.com`) that returns current, versioned documentation of a library
   (Kokkos, CUDA, CMake). A query leaves the machine: no secret, token or unpublished text in it, and

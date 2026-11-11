@@ -135,7 +135,7 @@ arithmetic should give the same bits; 1e-6 relative is the room you leave for a 
 reassociates a sum. If you need more room than that, you changed the algorithm, and that is a
 separate change with its own evidence. The C++/Kokkos port no longer does this: its only test
 is WW3's regtests, run with the Fortran routine and with the Kokkos routine (lesson 12,
-[ADR-0010](../docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md)). A Fortran rewrite
+[ADR-0010](../docs/ADRs.md#adr-0010)). A Fortran rewrite
 in this lesson can still be checked on captured inputs, as `ex11` does, and then by the matrix.
 
 ## The contrast: directives

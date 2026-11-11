@@ -2,7 +2,7 @@
 
 **Status:** evaluation, 2026-09-16, kept as a dated record. Nothing was adopted.
 **Read this first, 2026-11-01:** the pilot of §5 and §6 cannot run as written. It replays the
-`W3SNL1` port against fixtures and judges by L1 parity, and [ADR-0010](ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md)
+`W3SNL1` port against fixtures and judges by L1 parity, and [ADR-0010](ADRs.md#adr-0010)
 has since removed the port's own tests and fixtures: WW3's regtests are its only tests. Prices and
 versions below are as of their dates. A pilot now would need a new acceptance test.
 **Question asked:** could [NVIDIA-NeMo/labs-OO-Agents](https://github.com/NVIDIA-NeMo/labs-OO-Agents) help the

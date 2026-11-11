@@ -111,4 +111,4 @@ program, end to end) under `tests/`, run by CTest.
 - **L2 is not GoogleTest.** The replay inside WW3 is a shell script, `scripts/ww3-gpu.sh`, with `nccmp-tol` as
   the judge, and the WW3 regtest matrix (`regtests/`, a CTest driver since 2026-10-15, WFIP-0003) runs WW3's own harness.
   Wrapping them in an `L2_test_snl1_replay.cpp` would be a test of the port's own, which
-  [ADR-0010](../../docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md) rules out.
+  [ADR-0010](../../docs/ADRs.md#adr-0010) rules out.

@@ -35,7 +35,7 @@ pandoc "${inputs[@]}" \
 cp "$root/pubs/site/style.css" "$site/style.css"
 # The project progress page (a hand-made snapshot, not built from course/) at /andamento/.
 cp -r "$root/pubs/site/andamento" "$root_site/andamento"
-# The ADR list at /adrs/, filled from docs/ADRs/ on every build so it cannot go stale.
+# The ADR list at /adrs/, filled from docs/ADRs.md on every build so it cannot go stale.
 mkdir -p "$root_site/adrs"
 python3 "$root/scripts/adrs.py" --site "$root/pubs/site/adrs/index.html" "$root_site/adrs/index.html"
 # The easy pt-BR report for the GTA (DEL/UFRJ) at /relatorio-gta/; its PDF is committed in pdf/.

@@ -1,6 +1,6 @@
 # The ST4 checkpoint, first half: byte-identical on ww3_ts1 and bench_small, the matrix running
 
-2026-10-15, the owner with an agent. Issue #45, [ADR-0011](../ADRs/ADR-0011-port-in-units-regtest-at-checkpoints.md),
+2026-10-15, the owner with an agent. Issue #45, [ADR-0011](../ADRs.md#adr-0011),
 [`ST4_KOKKOS_PLAN_202610.md`](../ST4_KOKKOS_PLAN_202610.md) §10.3 and §12.
 
 ## Question

@@ -1,7 +1,7 @@
 # Matching glibc's libm on a GPU, and the host's FMA: which functions, which bits, which CPU
 
 2026-10-17. Issue [#42](https://github.com/h0ffmann/ww3-gpu/issues/42). Since
-[ADR-0014](ADRs/ADR-0014-gpu-runs-judged-by-tolerance.md) (accepted 2026-10-17) a GPU run is
+[ADR-0014](ADRs.md#adr-0014) (accepted 2026-10-17) a GPU run is
 judged by `nccmp-tol`'s tolerances, because the port's device code cannot give glibc's bits at
 known sites: libdevice's `expf`, `logf`, `powf`, `sincosf` and `tanhf`, and ST4's five libmvec
 loops. The ADR is to be revisited when "a device math library with glibc's bits, or a

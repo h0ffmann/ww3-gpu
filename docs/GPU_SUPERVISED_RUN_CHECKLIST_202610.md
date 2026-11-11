@@ -8,9 +8,9 @@ the answer.
 
 A GPU run is judged by `nccmp-tol` with `kokkos/tools/nccmp-tol/tolerances.txt`, against the
 Fortran of the same executable and against `--ww3`, and a tolerance is never widened to make it
-pass ([ADR-0014](ADRs/ADR-0014-gpu-runs-judged-by-tolerance.md)). Why the bits can differ, site
+pass ([ADR-0014](ADRs.md#adr-0014)). Why the bits can differ, site
 by site, is [`GPU_LIBM_BITS_202610.md`](GPU_LIBM_BITS_202610.md). This page is unit U5 of
-[`compound/plans/2026-10-18-002-production-single-node-plan.md`](compound/plans/2026-10-18-002-production-single-node-plan.md)
+[`plans/2026-10-18-002-production-single-node-plan.md`](plans/2026-10-18-002-production-single-node-plan.md)
 and the GPU half of gap 4 of [`PRODUCTION_READINESS_202610.md`](PRODUCTION_READINESS_202610.md).
 
 Nothing on this page has run on a GPU. The build of step 0 was compiled on 2026-10-18 without a

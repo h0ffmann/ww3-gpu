@@ -1,7 +1,7 @@
 # The ST4 regtest matrix of 2026-10-15, stopped at entry 91: 81 entries compared, 0 files different
 
 2026-10-17, an agent for the owner. Issue [#42](https://github.com/h0ffmann/ww3-gpu/issues/42),
-[ADR-0011](../ADRs/ADR-0011-port-in-units-regtest-at-checkpoints.md),
+[ADR-0011](../ADRs.md#adr-0011),
 [WFIP-0003](../WFIPs/WFIP-0003-kokkos-regtest-matrix.md). It completes
 [`2026-10-15-st4-checkpoint.md`](2026-10-15-st4-checkpoint.md), which ends with this matrix
 "running when this entry was written".

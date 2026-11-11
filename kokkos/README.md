@@ -107,7 +107,7 @@ instructions for whichever kitchen is there.
 
 **Why it matters here.** The `W3SNL1` port is one source that gave the Fortran's numbers bit for
 bit on Serial, OpenMP and CUDA (L1 tests, 2026-09-15, removed on 2026-10-14 by
-[ADR-0010](../docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md)), and the OpenMP build
+[ADR-0010](../docs/ADRs.md#adr-0010)), and the OpenMP build
 is byte-identical to the Fortran DIA inside WW3 on the CPU (L2; `just smoke-ww3-gpu`,
 `just full-ww3-gpu`, and `test.comp` on all 100 entries of `just ww3-gpu-matrix`) (v,
 [`PORT_STATUS.md`](PORT_STATUS.md), 2026-10-15). Same source did not mean same numbers for free: it took turning off

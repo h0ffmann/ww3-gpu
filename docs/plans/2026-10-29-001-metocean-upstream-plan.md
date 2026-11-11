@@ -16,7 +16,7 @@ execution: code
   that same commit, and every `file:line`, pin and parity claim of this repository names it.
 - **Why:** LabECO's operational system builds MetOcean's WW3 (the owner, 2026-10-29); speed gained
   on NOAA's ST4 is not speed for that system, because the arithmetic differs
-  ([log 2026-10-29](../../log/2026-10-29-metocean-ww3-714-mos.md)).
+  ([log 2026-10-29](../log/2026-10-29-metocean-ww3-714-mos.md)).
 - **Authority:** AGENTS.md ("WW3 source is read-only", "Translate, don't improve", "Bit for bit",
   "Third-party issues"); ADR-0016 (regtests in the validation phase); ADR-0002 (port order by wall
   time, which a new profile at the new pin may reorder).

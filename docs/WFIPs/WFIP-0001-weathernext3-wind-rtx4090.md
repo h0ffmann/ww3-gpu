@@ -14,7 +14,7 @@
 | **Blocked by** | none |
 | **Risk** | the access form is refused or the Zarr v3 store cannot be read without Python, which the lab rule forbids in `examples/`; then the conversion runs outside the repo and only the NetCDF enters, as a documented step |
 
-> **Postponed on 2026-10-15.** [ADR-0011](../ADRs/ADR-0011-port-in-units-regtest-at-checkpoints.md) puts the port of ST4 first; WeatherNext 3 wind is not port work. Returns to Draft after the ST4 checkpoint.
+> **Postponed on 2026-10-15.** [ADR-0011](../ADRs.md#adr-0011) puts the port of ST4 first; WeatherNext 3 wind is not port work. Returns to Draft after the ST4 checkpoint.
 
 ### Readiness
 

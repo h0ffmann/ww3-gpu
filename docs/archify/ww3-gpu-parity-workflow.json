@@ -242,9 +242,9 @@
           "end_line": 285
         },
         {
-          "path": "docs/ADRs/ADR-0014-gpu-runs-judged-by-tolerance.md",
-          "line": 36,
-          "end_line": 38
+          "path": "docs/ADRs.md",
+          "line": 1675,
+          "end_line": 1677
         }
       ]
     },
@@ -323,9 +323,9 @@
       "width": 132,
       "sources": [
         {
-          "path": "docs/ADRs/ADR-0014-gpu-runs-judged-by-tolerance.md",
-          "line": 27,
-          "end_line": 41
+          "path": "docs/ADRs.md",
+          "line": 1666,
+          "end_line": 1680
         }
       ]
     }

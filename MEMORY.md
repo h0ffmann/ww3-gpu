@@ -12,7 +12,7 @@ Never only in a chat.
 | What | File |
 |---|---|
 | The rules, the hard rules and the gates | [`AGENTS.md`](AGENTS.md), [`CONTRIBUTING.md`](CONTRIBUTING.md) |
-| Decisions | [`docs/ADRs/`](docs/ADRs/README.md) |
+| Decisions | [`docs/ADRs.md`](docs/ADRs.md) |
 | Designs, each with its definition of done | [`docs/WFIPs/`](docs/WFIPs/README.md) |
 | What was tried, including what failed (the journal) | [`docs/log/`](docs/log/README.md) |
 | Notes, one idea each | [`notes/`](notes/index.md), under [`NOTES.md`](NOTES.md) |
@@ -21,12 +21,12 @@ Never only in a chat.
 | The ties of the Zenodo record, with a date of record | [`RELATED_WORK.md`](RELATED_WORK.md) |
 | The measured numbers | [`bench/results/`](bench/README.md), [`kokkos/PORT_STATUS.md`](kokkos/PORT_STATUS.md) |
 | The ai-memory pages the owner publishes | [`memory/`](memory/README.md), written by `just memory export` |
-| The Claude project's settings | [`.claude/project/`](.claude/project/) ([ADR-0005](docs/ADRs/ADR-0005-claude-project-settings-in-repo.md)) |
+| The Claude project's settings | [`.claude/project/`](.claude/project/) ([ADR-0005](docs/ADRs.md#adr-0005)) |
 
 ## The long-term memory: ai-memory
 
 **Chosen on 2026-10-14; in use on the owner's workstation since 2026-10-14, version 3.0.0**
-([ADR-0009](docs/ADRs/ADR-0009-ww3-gpu-adopts-ai-memory-from-fabio-akita.md);
+([ADR-0009](docs/ADRs.md#adr-0009);
 [the install](docs/log/2026-10-14-ai-memory-install.md)). Not in cloud sessions: they have no
 binary, so the plugin captures nothing there and says so once.
 [ai-memory](https://github.com/akitaonrails/ai-memory) is Fabio Akita's long-term memory for coding

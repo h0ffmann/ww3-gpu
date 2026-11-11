@@ -14,8 +14,8 @@ execution: code
 - **Objective:** the C++ that decides which copy of the spectrum is current, what crosses between
   host and device, and whether a run reports Kokkos when the Fortran ran gets tests that fail in a
   fraction of a second, before any regtest, for the defects WW3's regtests see late or never.
-- **Authority:** AGENTS.md over this plan; [ADR-0010](../../ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md)
-  unchanged for ported routines; [ADR-0019](../../ADRs/ADR-0019-googletest-for-runtime-infrastructure.md)
+- **Authority:** AGENTS.md over this plan; [ADR-0010](../ADRs.md#adr-0010)
+  unchanged for ported routines; [ADR-0019](../ADRs.md#adr-0019)
   (Proposed with this plan) draws the boundary. Nothing here starts before the owner accepts
   ADR-0019.
 - **Stop conditions:** a test that needs a Fortran reference, a captured fixture or a peek at WW3's

@@ -2,7 +2,7 @@
 
 A snapshot of the settings of the Claude project "Wave Forecaster" that live on the Claude service
 and not in git, so the project can be rebuilt by hand and a change to it shows up in a diff.
-[ADR-0005](../../docs/ADRs/ADR-0005-claude-project-settings-in-repo.md) records why and what is
+[ADR-0005](../../docs/ADRs.md#adr-0005) records why and what is
 left out.
 
 | File | What it holds | Read with |

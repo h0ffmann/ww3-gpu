@@ -14,7 +14,7 @@ execution: code
 - **Objective:** a `DIST MPI` build of WW3 runs the parts of `--kokkos resident` with `VA` kept on
   the Kokkos side across the exchange, gives the bits of the Fortran of the same executable, and
   then reaches `ww3_multi`, `PDLIB` and more than one GPU.
-- **Authority:** [ADR-0020](../../ADRs/ADR-0020-mpi-in-scope-exchange-on-the-resident-spectrum.md)
+- **Authority:** [ADR-0020](../ADRs.md#adr-0020)
   (Proposed, supersedes ADR-0017 once accepted); AGENTS.md ("Bit for bit", "Translate, don't
   improve", "Resident spectrum"); ADR-0002 (order), ADR-0016 (regtests later), ADR-0014 (GPU runs).
 - **Stop conditions:** a unit that would need a whole-`VA` host copy per step; an order of a

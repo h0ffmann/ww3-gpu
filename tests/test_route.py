@@ -91,14 +91,14 @@ class Docs(unittest.TestCase):
 class Why(unittest.TestCase):
     def test_ranks_the_matching_paragraph(self):
         d = fixture({
-            "docs/ADRs/ADR-0001-x.md": "# ADR\n\nWe never widen a tolerance to pass.\n\n"
+            "docs/ADRs.md": "# ADR\n\nWe never widen a tolerance to pass.\n\n"
                                        "Unrelated paragraph about figures.\n",
             "docs/log/2026-01-01-y.md": "A tolerance was discussed once among many other words "
                                         "here and there.\n",
             "README.md": "never widen a tolerance\n",
         })
         out = route.why("widen tolerance", d)
-        self.assertTrue(out[0].startswith("docs/ADRs/ADR-0001-x.md:3"))
+        self.assertTrue(out[0].startswith("docs/ADRs.md:3"))
         self.assertFalse(any(x.startswith("README.md") for x in out))
 
 

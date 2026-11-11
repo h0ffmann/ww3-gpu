@@ -7,7 +7,7 @@
 ## Goal
 
 Run the port's only test yourself. The port has no tests of its own
-([ADR-0010](../docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md); earlier versions had
+([ADR-0010](../docs/ADRs.md#adr-0010); earlier versions had
 L1 tests on captured inputs, removed on 2026-10-14): the L2 replay says the *model* reproduces
 itself when the kernel is swapped at run time, and that is the whole evidence. You produce the table the
 replay appends to `kokkos/PORT_STATUS.md` and a reading of it.

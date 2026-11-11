@@ -10,7 +10,7 @@ execution: code
 # Batch 4, the single-node compute still in Fortran - Plan
 
 **Parked,** 2026-11-01: the owner moved the session to MPI
-([plan](2026-11-01-002-mpi-kokkos-plan.md), [ADR-0020](../../ADRs/ADR-0020-mpi-in-scope-exchange-on-the-resident-spectrum.md)).
+([plan](2026-11-01-002-mpi-kokkos-plan.md), [ADR-0020](../ADRs.md#adr-0020)).
 Nothing below was translated. The ADR-0017 limits in this page hold until ADR-0020 is accepted.
 
 ## Goal Capsule
@@ -24,7 +24,7 @@ Nothing below was translated. The ADR-0017 limits in this page hold until ADR-00
 - **Not done here:** no shim, no fork branch, no `WW3/` pin move, no test, no regtest, no timing.
   Nothing here changes what a WW3 run computes or how long it takes.
 - **Execution profile:** large by line count, translation only. Translator and fresh reviewer per
-  unit, as in [Batch 3](../../BATCH3_SHIMS_KOKKOS_PLAN_202610.md).
+  unit, as in [Batch 3](../BATCH3_SHIMS_KOKKOS_PLAN_202610.md).
 
 ## What is missing, 2026-11-01
 
@@ -125,7 +125,7 @@ Lines at `WW3@96892c95`. Each unit is one translator and one fresh reviewer.
 
 ## Method
 
-As in [`docs/log/2026-10-16-easy-batch-kokkos-translation.md`](../../log/2026-10-16-easy-batch-kokkos-translation.md):
+As in [`docs/log/2026-10-16-easy-batch-kokkos-translation.md`](../log/2026-10-16-easy-batch-kokkos-translation.md):
 a WW3 CMake Release build per reference switch, target `ww3_lib`, in the pinned shell; the
 translator reads the object and the GIMPLE; a fresh reviewer compares the C++ object with the
 Fortran's, operation by operation, and fixes only what it is sure of. One pass.

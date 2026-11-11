@@ -209,7 +209,7 @@ backends only) sets the most points per team; the exit counters print it. It def
 L1; since L2 the default is 8 (the owner, 2026-10-18), and a launch with fewer points than
 8 x threads takes one point per team, so every thread still gets a team. This unit vectorises nothing yet:
 it is the layer the later units of
-[plan 005](../../docs/compound/plans/2026-10-18-005-srce-points-in-lanes-plan.md) vectorise across.
+[plan 005](../../docs/plans/2026-10-18-005-srce-points-in-lanes-plan.md) vectorise across.
 
 | Check, 2026-10-18, `WW3@50a10730`, `switch_lab_ompg` | `WW_KOKKOS_SRCE_LANES` | Result |
 |---|---|---|

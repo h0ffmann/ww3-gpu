@@ -3,8 +3,8 @@
 Status: **claimed**, 2026-10-16, branch `goal/42-port-batch-3-shims`. Issue [#42](https://github.com/h0ffmann/ww3-gpu/issues/42),
 the port planner. Translation and wiring only, bit for bit, nothing run: no regtest, no regtest
 written, no Kokkos test written (the owner, 2026-10-16). The port has no tests of its own
-([ADR-0010](ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md)); its checkpoints are
-[ADR-0011](ADRs/ADR-0011-port-in-units-regtest-at-checkpoints.md)'s.
+([ADR-0010](ADRs.md#adr-0010)); its checkpoints are
+[ADR-0011](ADRs.md#adr-0011)'s.
 
 ## Why these
 

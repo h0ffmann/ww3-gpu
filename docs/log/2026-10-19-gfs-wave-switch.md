@@ -1,7 +1,7 @@
 # GFS-Wave's switch against the batched W3SRCE gate; one ufs case run and profiled on one rank
 
 2026-10-19, Claude (agent), goal be5bdbea-3817, plan
-[`2026-10-19-007-gfs-wave-target-plan.md`](../compound/plans/2026-10-19-007-gfs-wave-target-plan.md)
+[`2026-10-19-007-gfs-wave-target-plan.md`](../plans/2026-10-19-007-gfs-wave-target-plan.md)
 (U1, U2, U3). Regtest pending ⚠ (ADR-0016): the runs below are diagnostics of this machine, not a
 validation verdict, and no `regtested` cell of `kokkos/ports.tsv` moved.
 

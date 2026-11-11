@@ -5,7 +5,7 @@ built, how a result is judged against NOAA's, where a time step leaves the Fortr
 routine passes through on its way to Kokkos, and how the GPU can return the CPU's bits. Read
 2026-10-17 at this repository's `b38b5fc8`, the fork `WW3/` at `769c44f0` and pure NOAA WW3
 (`WW3-noaa/`) at `03adda91`. No speed figure appears: none has passed WW3's regtests yet, and those
-are postponed to a validation phase ([ADR-0016](ADRs/ADR-0016-speed-first-regtests-postponed-one-person-loop.md)).
+are postponed to a validation phase ([ADR-0016](ADRs.md#adr-0016)).
 
 Each figure is a Mermaid fence with its reading card; its interactive twin is rendered from a
 source in [`docs/archify/`](archify/README.md) by `scripts/archify.sh render`, and printed to a PDF
@@ -101,7 +101,7 @@ flowchart LR
 - `scripts/ww3-gpu.sh:567-572` (two runs, one executable), `:604` (byte-identical message only), `:605-617` (`nccmp-tol` against the Fortran and against `--ww3`, the script stops on failure under `set -e`), `:623-646` (alternated `--repeat`, medians), `:649-676` (`perf.tsv`), `:317-328` (owner's typed yes) (v, read 2026-10-17).
 - `.github/workflows/health.yml:46-47` (CI h1 runs `--ww3-gpu smoke --cpu`) (v, read 2026-10-17).
 - `scripts/results.py:42-48` (refuses a timing without `regtest: passed`), `:108-113` (fewer than three runs refused), `:131-133` (the ADR-0014 wording for CUDA) (v, read 2026-10-17).
-- `docs/ADRs/ADR-0014-gpu-runs-judged-by-tolerance.md:27-41` (CPU unchanged, CUDA judged by tolerance, never widened, timing after a pass) (v, read 2026-10-17).
+- `docs/ADRs.md:1666-1680` (CPU unchanged, CUDA judged by tolerance, never widened, timing after a pass) (v, read 2026-10-17).
 - `bench/results/snl1-i9-14900-rtx4090-2026-09-15.json` (the only record, `l1`, no end-to-end `regtest`) (v, read 2026-10-17).
 - That `just ww3-gpu-matrix-cuda` applies the ADR-0014 verdict ⚠: `WW3GPU_STRICT` defaults to ON for every backend and the cuda recipe does not turn it off, so a CUDA matrix run would still fail on a byte difference; no CUDA run of the matrix or of `--gpu` has been recorded.
 
@@ -224,8 +224,8 @@ stateDiagram-v2
 - `kokkos/ports.tsv:4-17` (the meaning of status, regtested and wired). Counting its 310 rows gives status L2 for 2 rows and gpu for none, wired yes for 60, regtested yes for 10 (v, read 2026-10-17).
 - `kokkos/port_claims.tsv:1-7`: a header with no rows. `kokkos/PORT_TABLE.tsv` states: 250 translated, 50 wired, 10 regtested, 0 claimed (v, read 2026-10-17).
 - `scripts/port_score.py:19-22` and `:118-131` (the three levels and `at_level`) (v, read 2026-10-17).
-- `docs/ADRs/ADR-0013-operational-parts-default-to-kokkos.md:68-92` (conditions for a default) and `kokkos/src/fortran_iface/part_flags.cpp:33-46` (`kOptInOnly`, and no default list: an unset flag with an unset `WW_KOKKOS_ALL` is off) (v, read 2026-10-17).
-- `docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md` (WW3's regtests are the port's only tests) ⚠ (not reread for this figure); [ADR-0016](ADRs/ADR-0016-speed-first-regtests-postponed-one-person-loop.md) moves them from ADR-0011's checkpoints to a validation phase the owner calls (v, 2026-10-17).
+- `docs/ADRs.md:1585-1609` (conditions for a default) and `kokkos/src/fortran_iface/part_flags.cpp:33-46` (`kOptInOnly`, and no default list: an unset flag with an unset `WW_KOKKOS_ALL` is off) (v, read 2026-10-17).
+- `docs/ADRs.md#adr-0010` (WW3's regtests are the port's only tests) ⚠ (not reread for this figure); [ADR-0016](ADRs.md#adr-0016) moves them from ADR-0011's checkpoints to a validation phase the owner calls (v, 2026-10-17).
 
 </details>
 
@@ -261,7 +261,7 @@ flowchart LR
 - `kokkos/src/ww_kokkos/CMakeLists.txt:288-303` (`-ffp-contract=off` on the host, `--fmad=false` on the device) and `:305-337` (`WW_KOKKOS_LIBM`, the `gen_tables` step) (v, read 2026-10-17).
 - `kokkos/tools/libm_bits/glibc_mathf.hpp:1-25` (source of the algorithms and tables), `kokkos/tools/libm_bits/gen_tables.cpp:1-15` (what it generates), `kokkos/tools/libm_bits/device_check.cu:1-12` (the supervised device comparison) (v, read 2026-10-17).
 - `docs/GPU_LIBM_BITS_202610.md:114-160` (host results, `scripts/libm_bits.sh all 4`, i9-14900, glibc 2.44: 0 differing on all 2^32 inputs for `expf`, `logf`, `sincosf` and the other unary copies) and `:161-187` (SASS counts) (v, read 2026-10-17, as reported by the document; the checks were not rerun).
-- `docs/ADRs/ADR-0014-gpu-runs-judged-by-tolerance.md:51` ("a few ULP per step" for libdevice and the libmvec sites) ⚠: that number is the ADR's expectation, not a measurement.
+- `docs/ADRs.md:1690` ("a few ULP per step" for libdevice and the libmvec sites) ⚠: that number is the ADR's expectation, not a measurement.
 - ⚠ Device bits: `scripts/libm_bits.sh --device` has not run (it needs the owner at the terminal).
 
 </details>

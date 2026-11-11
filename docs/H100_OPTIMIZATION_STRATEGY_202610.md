@@ -7,7 +7,7 @@ better anyway given how NOAA runs WW3 operationally, with honest concerns. Issue
 [`CPU_GPU_SPLIT_202610.md`](CPU_GPU_SPLIT_202610.md) (what Kokkos allows, the PCIe arithmetic of a
 split by physics, the bit-for-bit constraint on a split) and does not repeat it; the plan it
 serves is [`KOKKOS_H100_PLAN_202609.md`](KOKKOS_H100_PLAN_202609.md), and the regtest cadence is
-[ADR-0012](ADRs/ADR-0012-translate-and-wire-now-regtest-matrix-on-the-h100.md) (Proposed).
+[ADR-0012](ADRs.md#adr-0012) (Proposed).
 
 Nothing here is a measurement on an H100. No `--ww3-gpu --gpu` run of the port inside WW3 exists
 (`kokkos/PORT_STATUS.md`, "On a GPU: none yet"). Every speed statement below is either a recorded

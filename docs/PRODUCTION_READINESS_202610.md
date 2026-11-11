@@ -166,7 +166,7 @@ exchanges and the propagation, not `W3SRCE` (v). `mww3_test_07` fails in the For
 ## 3. MPI
 
 *Scope, 2026-10-18:* out of scope by decision. The port is single node, and an MPI build keeps
-the Fortran path ([ADR-0017](ADRs/ADR-0017-kokkos-port-is-single-node-mpi-stays-fortran.md),
+the Fortran path ([ADR-0017](ADRs.md#adr-0017),
 Accepted). The findings below stay as the starting point for the ADR that would supersede it.
 
 **One Kokkos runtime per process, not per communicator.** `WW_KOKKOS_INIT` takes an MPI handle
@@ -444,7 +444,7 @@ off they compile to the original.
 - **(a) Minor.** Operations can run the fork.
 - **(b) Blocker.** Upstream needs to know where the C++ comes from, who maintains it, and how its
   version is pinned.
-- **State (U6, 2026-10-18).** [ADR-0018](ADRs/ADR-0018-where-ww-kokkos-lives-for-upstream.md),
+- **State (U6, 2026-10-18).** [ADR-0018](ADRs.md#adr-0018),
   Proposed, sets out the three options (an external package WW3 finds, a submodule of WW3,
   sources inside `model/src`) with the size and licence of each; only the first was built.
 - **Next step.** The owner's choice among them, after a legal reading of the licence of the

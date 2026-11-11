@@ -54,7 +54,7 @@ agent's own guesses stacked on top ("menos com menos dá menos"), and a whole mo
    - **Claude Code itself**: `claude --continue`/`--resume`, compaction, auto-memory, `/rename`,
      hooks, permissions, plugins, `enabledPlugins`.
    - **This repository's own homes** (`AGENTS.md`, "Where a change belongs"): a WFIP in
-     `docs/WFIPs/` (a design with its definition of done), an ADR in `docs/ADRs/` (a decision),
+     `docs/WFIPs/` (a design with its definition of done), an ADR in `docs/ADRs.md` (a decision),
      `AGENTS.md` and `CONTRIBUTING.md` (practices), `docs/WFIPs/WFIP-NNNN.tasks.md` (tasks),
      `docs/log/` (what was tried), `bench/results/` (numbers), `docs/*_YYYYMM.md` (plans), the
      justfile and `scripts/`.

@@ -1,7 +1,7 @@
 # 2026-10-18: the boundary and track outputs read only their columns of the resident `VA`
 
 Goal `abbb0456-6043`, unit U8 of the production single-node plan
-([`docs/compound/plans/2026-10-18-002-production-single-node-plan.md`](../compound/plans/2026-10-18-002-production-single-node-plan.md)).
+([`docs/plans/2026-10-18-002-production-single-node-plan.md`](../plans/2026-10-18-002-production-single-node-plan.md)).
 Fork branch `ww3-gpu/u8-out-readers` of h0ffmann/WW3: `31a09522`, `791e8c34` on `80644ba9`.
 The change is [`PATCH.md` section 23](../../kokkos/src/fortran_iface/PATCH.md#23-the-boundary-and-track-outputs-read-only-their-columns-ww3-gpuu8-out-readers).
 

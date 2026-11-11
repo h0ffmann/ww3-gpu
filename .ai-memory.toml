@@ -10,5 +10,5 @@ project = "h0ffmann-ww3-gpu"
 [capture]
 ignore_paths = [
   "~/.claude.json", "~/.claude/.credentials.json", "~/.config/ai-memory/**", "~/.local/share/ai-memory/**",
-  ".env", "**/.env", "docs/ADRs/**", "docs/WFIPs/**",
+  ".env", "**/.env", "docs/ADRs.md", "docs/WFIPs/**",
 ]
