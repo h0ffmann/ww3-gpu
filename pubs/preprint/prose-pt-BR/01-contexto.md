@@ -17,9 +17,11 @@ byte, e só ao modelo em C. Os autores escrevem que a concordância bit a bit en
 "across compilers and arithmetic orderings is neither attainable nor necessary". Na GPU, os
 autores aceitam diferenças até um teto registrado para cada campo.
 
-O sucessor do WW3 também está em desenvolvimento. A NCEP Office Note 525 [@on525] escolheu uma
-reescrita de baixo para cima, com um núcleo em C++ primeiro e um núcleo em Rust depois ⚠. O mesmo
-relatório rebaixa o Fortran a uma linguagem só de solvers ⚠. O repositório do WAVEWATCH IV [@ww4]
+O sucessor do WW3 também está em desenvolvimento. A NCEP Office Note 525 [@on525] decidiu
+construir o sucessor como um modelo novo, num repositório novo (seção 3.3 do relatório). A seção
+3.4.4 do relatório seleciona uma "abordagem dupla": o C++ é a linguagem inicial de
+desenvolvimento, e o Rust é testado em paralelo ou depois do desenvolvimento em C++, conforme os
+recursos. A mesma seção aceita o Fortran "somente como linguagem de solver" (tradução nossa). O repositório do WAVEWATCH IV [@ww4]
 está em pré-alfa: em 2026-11-11, o branch `develop` tinha 40 commits, de 2025-11-17 a 2026-10-16
 (`875f49a`). Os 97 arquivos-fonte do WAVEWATCH IV são C++ (66 `.cpp`, 31 `.h`), e nenhum kernel
 de física do WW3 está no repositório ainda.

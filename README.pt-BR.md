@@ -254,15 +254,15 @@ just port-score        # quanto do WW3 roda em Kokkos, e as rotinas em ordem de 
 
 ## onde o projeto está
 
-Os números abaixo vêm do [`kokkos/PORT_STATUS.md`](kokkos/PORT_STATUS.md) em 17/10/2026
+Os números abaixo vêm do [`kokkos/PORT_STATUS.md`](kokkos/PORT_STATUS.md) em 11/11/2026
 (`just port-score`). As frações do tempo de execução vêm de um perfil gprof do `bench_small` com
 uma thread (`just profile-case full`).
 
 | Nível | Rotinas | Fração do tempo de execução no perfil |
 |---|---|---|
-| traduzida: existe uma versão em Kokkos | 310 de 1 023 | 99,3 % |
-| portada: o WW3 a chama quando a flag está ligada | 60 | 99,3 % |
-| com regtest: os regtests do WW3 concordam com o Fortran | 10 | 48,6 % |
+| traduzida: existe uma versão em Kokkos | 316 de 1 023 | 99,3 % |
+| portada: o WW3 a chama quando a flag está ligada | 72 | 99,3 % |
+| com regtest: os regtests do WW3 concordam com o Fortran | 14 | 48,6 % |
 
 - `(v)` O DIA (`W3SNL1`) é idêntico byte a byte ao Fortran nas 100 entradas seriais `NL1` dos
   regtests do WW3, na CPU.

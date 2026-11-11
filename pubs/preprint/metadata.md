@@ -21,8 +21,9 @@ abstract: |
   Fortran path of the same executable. *chaceon* replaces WW3 with Rust, compiled for the CPU,
   for SPIR-V (rust-gpu) and for PTX (Rust-CUDA). No Fortran runs in its process, and its
   reference is a WW3 that is compiled separately. ww3-gpu ports the discrete interaction
-  approximation (DIA) of the four-wave transfer. On the CPU, it is byte-identical on all 100
-  serial and 25 OpenMP entries of the WW3 regression matrix that select it. The DIA takes 48.4 % of single-thread self
+  approximation (DIA) of the four-wave transfer. 310 entries of the WW3 regression matrix select the DIA, and 125 of them were run on the
+  CPU: all 100 serial entries and 25 of the 50 OpenMP entries. The port is byte-identical on
+  each of the 125. No MPI entry was run. The DIA takes 48.4 % of single-thread self
   time on a case of 9 520 points. chaceon runs `ww3_grid`, `ww3_strt`, `ww3_prep` and `ww3_shel`
   without Fortran, and 96 output files are byte-identical to the reference. Neither port has run
   the whole model on a real GPU, and this note claims no speed-up. We compare how each project

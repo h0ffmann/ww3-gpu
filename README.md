@@ -252,15 +252,15 @@ just port-score        # how much of WW3 runs on Kokkos, and the routines ranked
 
 ## where it stands
 
-The numbers below are from [`kokkos/PORT_STATUS.md`](kokkos/PORT_STATUS.md) on 2026-10-17
+The numbers below are from [`kokkos/PORT_STATUS.md`](kokkos/PORT_STATUS.md) on 2026-11-11
 (`just port-score`). The shares of run time are from a gprof profile of `bench_small` on one
 thread (`just profile-case full`).
 
 | Level | Routines | Share of the profiled run time |
 |---|---|---|
-| translated: a Kokkos version exists | 310 of 1 023 | 99.3 % |
-| ported: WW3 calls it when its flag is set | 60 | 99.3 % |
-| regtested: WW3's regtests agree with the Fortran | 10 | 48.6 % |
+| translated: a Kokkos version exists | 316 of 1 023 | 99.3 % |
+| ported: WW3 calls it when its flag is set | 72 | 99.3 % |
+| regtested: WW3's regtests agree with the Fortran | 14 | 48.6 % |
 
 - `(v)` The DIA (`W3SNL1`) is byte-identical to the Fortran on all 100 serial `NL1` entries of
   WW3's regtests, on the CPU.

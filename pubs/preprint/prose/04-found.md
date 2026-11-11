@@ -16,8 +16,9 @@ reference. The boundaries give 214 identical comparisons over 34 cases, and the 
 post-processors give 74. `ww3_shel --threads N` and an MPI build give the same bytes. The files
 stay identical when `W3SRCE`, `W3XYP3` and `W3KTP3` are compiled to SPIR-V and run on a CPU
 Vulkan driver. Enumeration cannot reach the $2^{64}$ pairs of `f32` operands. There, a Lean proof
-states the division fact that the port uses. The proof says nothing about whether Rust equals
-Fortran, because Fortran has no usable formal semantics.
+checks the division fact that the port uses. @sec:division states that fact and proves it. The
+proof says nothing about whether Rust equals Fortran, because Fortran has no usable formal
+semantics.
 
 **Why ww3-gpu has no proof yet, and what comes next.** In this first phase, ww3-gpu adopted no
 proof assistant [@adr0001]. There are four reasons:
@@ -33,11 +34,15 @@ proof assistant [@adr0001]. There are four reasons:
 4. Agents must write each proof, and a person must review it. This is a second artefact for each
    routine.
 
-Without a proof, the DIA port has the strongest evidence short of one. It is byte-identical
-on all 125 entries of the WW3 regression matrix that select it (100 serial, 25 OpenMP). Section 1
-of the kernel was also swept over all $2^{32}$ `float32` inputs, with 0 differences [@adr0001].
-Thus the DIA port is validated by the tests of the model that it replaces, on every entry that
-calls it. This validation is not a formal proof, and the note does not call it one.
+Without a proof, the evidence of the DIA port is a set of runs. At the fork commit `80644ba9`,
+310 entries of the WW3 regression matrix select the DIA (@tbl:regtests). 125 of them were run, at
+the fork commit `6d1bcdfe`: all 100 serial entries [@matrixserial] and 25 of the 50 OpenMP
+entries [@matrixomp]. The other 25 OpenMP entries run `ww3_multi` with three grids, which the
+port refuses. No MPI or hybrid entry was run. On each of the 125 entries, the output is
+byte-identical to the Fortran DIA of the same executable. Section 1 of the kernel was also swept
+over all $2^{32}$ `float32` inputs, with 0 differences [@adr0001]. Thus the tests of the model
+that the port replaces validate it on 125 of 310 entries, not on every entry that calls it. This
+validation is not a formal proof, and the note does not call it one.
 
 A first formal layer is already next to the ports. The Lean 4 package `ocean-waves`
 [@oceanwaves] states the discretised action balance equation and proves these properties, with

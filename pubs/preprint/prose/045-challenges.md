@@ -1,6 +1,6 @@
 # Challenges: the regression tests are large {#sec:challenges}
 
-WW3's regression tests are the only judge of the Kokkos port, and they are large. Table
+WW3's regression tests are the only judge of the Kokkos port, and they are large.
 @tbl:regtests gives their size at the fork commit `80644ba9`, counted on 2026-10-18.
 
 | Set of `matrix.base` entries                                       | Entries           | Share  |

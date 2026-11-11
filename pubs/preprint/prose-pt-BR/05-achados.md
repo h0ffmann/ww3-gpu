@@ -20,9 +20,9 @@ dão os mesmos bytes.
 
 Os arquivos continuam idênticos quando o `W3SRCE`, o `W3XYP3` e o `W3KTP3` são compilados para
 SPIR-V e rodam num driver Vulkan de CPU. A enumeração não alcança os $2^{64}$ pares de operandos
-`f32`. Nesse caso, uma prova em Lean enuncia o fato sobre a divisão que o porte usa. A prova não
-diz nada sobre a igualdade entre Rust e Fortran, porque o Fortran não tem semântica formal
-utilizável.
+`f32`. Nesse caso, uma prova em Lean verifica o fato sobre a divisão que o porte usa. A
+@sec:division enuncia e prova esse fato. A prova não diz nada sobre a igualdade entre Rust e
+Fortran, porque o Fortran não tem semântica formal utilizável.
 
 **Por que o ww3-gpu ainda não tem prova, e o que vem depois.** Nesta primeira fase, o ww3-gpu não
 adotou assistente de prova [@adr0001]. Há quatro motivos:
@@ -38,12 +38,16 @@ adotou assistente de prova [@adr0001]. Há quatro motivos:
 4. Agentes precisam escrever cada prova, e uma pessoa precisa revisar cada prova. A prova é um
    segundo artefato para cada rotina.
 
-Sem prova, o porte da DIA tem a evidência mais forte abaixo de uma prova. O porte é idêntico
-byte a byte nas 125 entradas da matriz de regressão do WW3 que selecionam a DIA (100 seriais, 25
-OpenMP). A seção 1 do kernel também passou por uma varredura das $2^{32}$ entradas `float32`, com
-0 diferenças [@adr0001]. Por isso, os testes do próprio modelo validam o porte da DIA em toda
-entrada que chama o porte. Essa validação não é uma prova formal, e este texto não chama a
-validação de prova.
+Sem prova, a evidência do porte da DIA é um conjunto de execuções. No commit `80644ba9` do fork,
+310 entradas da matriz de regressão do WW3 selecionam a DIA (@tbl:regtests). 125 dessas entradas
+rodaram, no commit `6d1bcdfe` do fork: as 100 entradas seriais [@matrixserial] e 25 das 50
+entradas OpenMP [@matrixomp]. As outras 25 entradas OpenMP rodam o `ww3_multi` com três grades, e
+o porte recusa esse caso. Nenhuma entrada MPI ou híbrida rodou. Em cada uma das 125 entradas, a
+saída é idêntica byte a byte à DIA em Fortran do mesmo executável. A seção 1 do kernel também
+passou por uma varredura das $2^{32}$ entradas `float32`, com 0 diferenças [@adr0001]. Por isso,
+os testes do próprio modelo validam o porte da DIA em 125 de 310 entradas, e não em toda entrada
+que chama o porte. Essa validação não é uma prova formal, e este texto não chama a validação de
+prova.
 
 Uma primeira camada formal já existe ao lado dos portes. O pacote Lean 4 `ocean-waves`
 [@oceanwaves] enuncia a equação de balanço de ação discretizada e prova estas propriedades, sem
