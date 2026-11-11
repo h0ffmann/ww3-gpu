@@ -26,6 +26,25 @@ why [`pdf.lock`](pdf.lock) records each source's sha256 and the Archify commit r
 PDF's hash. Nothing redraws on a merge: run `/drawings-refresh` (Claude Code) or
 `just archify refresh` after changing a source, and commit the PDFs with the lock.
 
+## The dark look
+
+Every picture here is dark ([`DESIGN.md`](../../DESIGN.md), "Pictures"). A drawing listed in
+[`dark.tsv`](dark.tsv) is dressed in [`ww3-gpu.css`](ww3-gpu.css), the site's ground and lights,
+in the manner of piabrota/nix-os's figures: only the drawing stays, with Archify's legend and
+source badges hidden and the viewBox cut to the height `dark.tsv` gives.
+
+```bash
+just archify png           # each drawing of dark.tsv -> <slug>.png (committed), then png.lock
+just archify site <dir>    # each drawing of dark.tsv -> <dir>/<slug>/index.html, and <dir>/index.html
+```
+
+`png` takes the picture with headless Chrome over its DevTools pipe
+([`scripts/archify_shot.py`](../../scripts/archify_shot.py)), at twice the drawing's size; the
+README shows it. `site` is what `pages.yml` runs to publish the pages at
+<https://h0ffmann.github.io/ww3-gpu/figures/>, so no HTML is committed. `check` and `refresh`
+cover the PNGs too: [`png.lock`](png.lock) records the sha256 of each drawing's JSON, the look,
+`dark.tsv` and the dresser, and the Archify commit.
+
 `render` runs Archify's `finalize --quality showcase`, which validates the source, renders the
 page and checks it in a real browser. At `2ab3cae` it reproduces, byte for byte, the five pages
 first drawn for [`WW3_GPU_VS_NOAA_202610.md`](../WW3_GPU_VS_NOAA_202610.md) (v, `cmp`, 2026-10-17).
@@ -37,4 +56,4 @@ first drawn for [`WW3_GPU_VS_NOAA_202610.md`](../WW3_GPU_VS_NOAA_202610.md) (v, 
 | [ww3-gpu-step-sequence.json](ww3-gpu-step-sequence.json) | [PDF](ww3-gpu-step-sequence.pdf) | sequence | Where does a time step leave the Fortran in ww3-gpu, and what does NOAA's WW3 do at the same place? | [one time step](../WW3_GPU_VS_NOAA_202610.md#one-time-step) |
 | [ww3-gpu-port-lifecycle.json](ww3-gpu-port-lifecycle.json) | [PDF](ww3-gpu-port-lifecycle.pdf) | lifecycle | Which states does a WW3 routine pass through on its way to Kokkos? | [a routine's states](../WW3_GPU_VS_NOAA_202610.md#a-routines-states) |
 | [ww3-gpu-device-math-dataflow.json](ww3-gpu-device-math-dataflow.json) | [PDF](ww3-gpu-device-math-dataflow.pdf) | dataflow | Why can a GPU result carry the bits of NOAA's CPU run? | [device math](../WW3_GPU_VS_NOAA_202610.md#device-math) |
-| [ww3-gpu-four-runtimes.json](ww3-gpu-four-runtimes.json) | [PDF](ww3-gpu-four-runtimes.pdf) | architecture | Which four runtimes run WAVEWATCH here, and what must each give the same bits as? | [README](../../README.md), the preprint's Figure 1 ([`pubs/preprint/`](../../pubs/preprint/README.md)) |
+| [ww3-gpu-four-runtimes.json](ww3-gpu-four-runtimes.json) | [PDF](ww3-gpu-four-runtimes.pdf), [PNG](ww3-gpu-four-runtimes.png), [page](https://h0ffmann.github.io/ww3-gpu/figures/ww3-gpu-four-runtimes/) | architecture | Which four runtimes run WAVEWATCH here, and what must each give the same bits as? | [README](../../README.md), the preprint's Figure 1 ([`pubs/preprint/`](../../pubs/preprint/README.md)) |

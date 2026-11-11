@@ -90,6 +90,27 @@ no JavaScript.
 
 No logo is stored as a file, and none is drawn. The favicon is an original drawing of two waves.
 
+## Pictures
+
+All pictures made here are dark: the ground above (`--night`, `--surface`, `--rule`,
+`--ink`, `--muted`) and the three lights, with the same meanings. A picture is never drawn on a
+white or light grey ground, and no picture has a light theme to switch to. The manner is that of
+piabrota/nix-os's figures (its `docs/archify/piabrota.css` and `just figure`): only the drawing,
+no toolbar and no grid, on the night ground with the faint `--wave` glow.
+
+- **An Archify drawing** (`docs/archify/<slug>.json`) is dressed by
+  [`docs/archify/ww3-gpu.css`](docs/archify/ww3-gpu.css): a box for a source the repository reads
+  is `--wave`, a box for what it builds or runs is `--code`, a "same bits as" arrow is `--proof`,
+  every other arrow `--muted`. Labels are Bricolage Grotesque, the small text JetBrains Mono.
+  Archify's legend and its source badges are hidden: the reading card under the picture carries
+  that, in words.
+- **Where it lives.** A drawing listed in `docs/archify/dark.tsv` is a PNG for the README
+  (`just archify png`, committed with `png.lock`) and an HTML page on the website, at
+  `/figures/<slug>/`, built by `pages.yml` with `just archify site`. The README's picture links to
+  the page. No HTML is committed.
+- The PDFs of `docs/archify/` and the preprint's Figure 1 are older than this rule and still light;
+  they are to be redrawn ⚠.
+
 ## Motion
 
 None. The page is prerendered and loads no JavaScript.

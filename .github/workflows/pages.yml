@@ -13,10 +13,10 @@ name: Pages
 
 on:
   pull_request:
-    paths: ['course/**', 'pubs/figures/mermaid/**', 'pubs/filters/mermaid.lua', 'pubs/site/**', 'pdf/ww3-lab-course.pdf', 'pubs/relatorio-gta/**', 'scripts/build_relatorio.sh', 'scripts/book_prep.py', 'scripts/build_html.sh', 'scripts/build_site.sh', 'docs/ADRs.md', 'docs/WFIPs/**', 'notes/**', 'site/**', 'DESIGN.md', '.zenodo.json', 'CITATION.cff', 'RELEASES.md', 'flake.nix', 'flake.lock', 'scripts/adrs.py', '.github/workflows/pages.yml']
+    paths: ['course/**', 'pubs/figures/mermaid/**', 'pubs/filters/mermaid.lua', 'pubs/site/**', 'pdf/ww3-lab-course.pdf', 'pubs/relatorio-gta/**', 'scripts/build_relatorio.sh', 'scripts/book_prep.py', 'scripts/build_html.sh', 'scripts/build_site.sh', 'docs/ADRs.md', 'docs/WFIPs/**', 'notes/**', 'site/**', 'DESIGN.md', '.zenodo.json', 'CITATION.cff', 'RELEASES.md', 'flake.nix', 'flake.lock', 'scripts/adrs.py', 'docs/archify/**', 'scripts/archify.sh', 'scripts/archify_dress.py', 'vendor/archify', '.github/workflows/pages.yml']
   push:
     branches: [main]
-    paths: ['course/**', 'pubs/figures/mermaid/**', 'pubs/filters/mermaid.lua', 'pubs/site/**', 'pdf/ww3-lab-course.pdf', 'pubs/relatorio-gta/**', 'scripts/build_relatorio.sh', 'scripts/book_prep.py', 'scripts/build_html.sh', 'scripts/build_site.sh', 'docs/ADRs.md', 'docs/WFIPs/**', 'notes/**', 'site/**', 'DESIGN.md', '.zenodo.json', 'CITATION.cff', 'RELEASES.md', 'flake.nix', 'flake.lock', 'scripts/adrs.py', '.github/workflows/pages.yml']
+    paths: ['course/**', 'pubs/figures/mermaid/**', 'pubs/filters/mermaid.lua', 'pubs/site/**', 'pdf/ww3-lab-course.pdf', 'pubs/relatorio-gta/**', 'scripts/build_relatorio.sh', 'scripts/book_prep.py', 'scripts/build_html.sh', 'scripts/build_site.sh', 'docs/ADRs.md', 'docs/WFIPs/**', 'notes/**', 'site/**', 'DESIGN.md', '.zenodo.json', 'CITATION.cff', 'RELEASES.md', 'flake.nix', 'flake.lock', 'scripts/adrs.py', 'docs/archify/**', 'scripts/archify.sh', 'scripts/archify_dress.py', 'vendor/archify', '.github/workflows/pages.yml']
   release:
     types: [published]
   # pubs.yml commits the rebuilt PDF with [skip ci], which starts no push run; redeploy after it.
@@ -45,6 +45,9 @@ jobs:
       # The front page: Gleam, node and esbuild from picasso's gleam-website lab, pinned in flake.lock.
       - uses: cachix/install-nix-action@v31
       - run: nix develop --no-update-lock-file .#site --command scripts/build_site.sh --check
+      # The drawings of docs/archify/dark.tsv as pages at /figures/<slug>/ (DESIGN.md, "Pictures").
+      # node and Chrome are the runner's; Archify is the pinned submodule.
+      - run: bash scripts/archify.sh init && bash scripts/archify.sh site build/site/figures
       - uses: actions/upload-pages-artifact@v5
         with: { path: build/site }
 

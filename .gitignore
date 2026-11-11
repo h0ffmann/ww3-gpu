@@ -18,6 +18,7 @@ param.scratch
 *.nc
 *.png
 !pubs/figures/mermaid/*.png
+!docs/archify/*.png
 
 # generated grid inputs
 depth.inp
