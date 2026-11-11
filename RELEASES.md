@@ -40,7 +40,10 @@ ECMWF Open Data (`just ifs-get`, #220, #228). The WW3 submodules are now that on
 the h0ffmann/WW3 fork; NOAA's WW3 is written from the fork's history by `scripts/ww3_base.sh`
 (#233). The course and the book left the repository (#222, ADR-0023), and every diagram is a
 dark Archify drawing, with no Mermaid (#219, #223, #224, #226, #230, #234). The preprint
-"Wave models on GPUs" compares the Kokkos and Rust ports, in English and in pt-BR (#213). MPI
+"Wave models on GPUs" compares the Kokkos and Rust ports, in English
+([PDF](pubs/preprint/wave-models-on-gpus.pdf)) and in pt-BR
+([PDF](pubs/preprint/wave-models-on-gpus.pt-BR.pdf)) (#213); it replaces the book's PDF as the
+text this release carries. MPI
 enters the port's plans (ADR-0020), the C++ translated from WW3 carries SPDX headers with
 `NOTICE` and `LICENSES/`, and the ondaseventos image builds MetOcean's WW3 (#211).
 The WW3 7.14 manual is summarised for agents in `docs/ww3-manual/` (#218); the ADRs are one
