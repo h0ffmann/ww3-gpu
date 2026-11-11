@@ -10,12 +10,14 @@
 #   scripts/archify.sh refresh          # render and print only those, then rewrite pdf.lock
 #   scripts/archify.sh png [slug..]     # dark.tsv's drawings -> <slug>.png (committed), the dark look
 #   scripts/archify.sh site <dir>       # dark.tsv's drawings -> <dir>/<slug>/index.html, for Pages
+#   scripts/archify.sh fit [slug..]     # paper.tsv's drawings: proportion and printed type size
 #   scripts/archify.sh --dry-run <cmd>  # print the commands instead of running them
 #
 # The dark look (DESIGN.md, "Pictures"; the manner of piabrota/nix-os's `just figure`) is
 # docs/archify/ww3-gpu.css set over Archify's page by scripts/archify_dress.py: only the drawing
 # stays, on the site's ground in its lights. docs/archify/dark.tsv lists the drawings redone in it,
-# and png.lock records what drew each PNG.
+# and png.lock records what drew each PNG. docs/archify/paper.tsv lists the drawings a paper prints,
+# with the printed width: png refuses one whose proportion or type does not fit it (archify_fit.py).
 #
 # docs/archify/pdf.lock keeps, per drawing, the sha256 of its JSON and the Archify commit that drew
 # its PDF, so `check` needs neither node nor Chrome (as pubs/figures/mermaid/index.json does for
@@ -56,6 +58,17 @@ want_png() {
         awk -F'\t' -v s="$1" '$1 == s' "$dir/dark.tsv"; } | sha256sum | cut -d' ' -f1)" "$(pin)"
 }
 is_dark() { dark | grep -qxF "$1"; }
+# paper.tsv: "<slug>\t<printed width, mm>\t<paper>" for each drawing a paper prints.
+papers() { awk -F'\t' '!/^#/ && NF >= 2 {print $1}' "$dir/paper.tsv"; }
+paper_mm() { awk -F'\t' -v s="$1" '!/^#/ && $1 == s {print $2}' "$dir/paper.tsv"; }
+# fits <slug> <dressed page>: a paper's drawing must fit its printed width; any other passes.
+fits() {
+    local mm
+    mm="$(paper_mm "$1")"
+    [ -n "$mm" ] || return 0
+    printf 'archify: %s on paper: ' "$1"
+    python3 "$root/scripts/archify_fit.py" "$2" "$mm"
+}
 stale_png() {
     local s names
     mapfile -t names < <(dark)
@@ -108,7 +121,7 @@ pdf() {
         [ "$dry" -eq 1 ] || python3 - "$html" "$page" "$(is_dark "$s" && echo dark)" <<'PY'
 import re, sys
 src = open(sys.argv[1], encoding="utf-8").read()
-w, h = map(float, re.search(r'<svg viewBox="0 0 ([\d.]+) ([\d.]+)"', src).groups())
+w, h = map(float, re.search(r'<svg viewBox="[\d.]+ [\d.]+ ([\d.]+) ([\d.]+)"', src).groups())
 if sys.argv[3] == "dark":
     rule = f"<style>@page {{ size: {w:.0f}px {h:.0f}px; margin: 0; }}</style>"
 else:
@@ -129,8 +142,9 @@ png() {
     for s in "$@"; do
         if [ "$dry" -eq 1 ]; then echo "+ archify_dress.py + archify_shot.py -> $s.png"; continue; fi
         python3 "$root/scripts/archify_dress.py" "$dir/$s.html" "$tmp/$s.frame.html" "$s"
+        fits "$s" "$tmp/$s.frame.html"
         read -r w h < <(grep -o '<svg viewBox="[^"]*"' "$tmp/$s.frame.html" | head -1 \
-            | sed -E 's/.*0 0 ([0-9.]+) ([0-9.]+)"/\1 \2/')
+            | sed -E 's/.*"[0-9.]+ [0-9.]+ ([0-9.]+) ([0-9.]+)"/\1 \2/')
         python3 "$root/scripts/archify_shot.py" "$chrome" "$tmp/$s.frame.html" "$dir/$s.png" "${w%.*}" "${h%.*}"
         echo "archify: docs/archify/$s.png"
     done
@@ -182,6 +196,20 @@ EOF
     echo "archify: $out/index.html"
 }
 
+# fit [slug..]: measure the drawings of paper.tsv against their printed width, without drawing them.
+fit() {
+    local s bad=0
+    render "$@"
+    tmpdir
+    for s in "$@"; do
+        [ -n "$(paper_mm "$s")" ] || { echo "archify: $s is not in docs/archify/paper.tsv" >&2; exit 2; }
+        if [ "$dry" -eq 1 ]; then echo "+ archify_dress.py + archify_fit.py $s"; continue; fi
+        python3 "$root/scripts/archify_dress.py" "$dir/$s.html" "$tmp/$s.frame.html" "$s"
+        fits "$s" "$tmp/$s.frame.html" || bad=1
+    done
+    return "$bad"
+}
+
 write_lock() {
     local s names
     mapfile -t names < <(slugs)
@@ -221,6 +249,7 @@ case "$cmd" in
         [ ${#oldpng[@]} -eq 0 ] || png "${oldpng[@]}"
         ;;
     png)    if [ $# -gt 0 ]; then png "$@"; else mapfile -t sel < <(dark); png "${sel[@]}"; fi ;;
+    fit)    if [ $# -gt 0 ]; then fit "$@"; else mapfile -t sel < <(papers); fit "${sel[@]}"; fi ;;
     site)   [ $# -eq 1 ] || { echo "archify: site <dir>" >&2; exit 2; }; site "$1" ;;
-    *) sed -n '2,13p' "$0"; exit 2 ;;
+    *) sed -n '2,14p' "$0"; exit 2 ;;
 esac

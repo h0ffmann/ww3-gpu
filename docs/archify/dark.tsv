@@ -1,7 +1,7 @@
 # The drawings redone in the dark look (DESIGN.md, "Pictures"): slug, then the height of the picture in
-# viewBox units, which cuts Archify's legend and the empty space under the drawing. scripts/archify.sh
-# png and site work on these rows.
-ww3-gpu-four-runtimes	470
+# viewBox units, which cuts Archify's legend and the empty space under the drawing. A row with five
+# fields frames the drawing on every side: slug, height, x, y, width (a drawing a paper prints has
+# the same margin all round). scripts/archify.sh png, pdf and site work on these rows.
 ww3-gpu-vs-noaa-architecture	714
 ww3-gpu-parity-workflow	538
 ww3-gpu-step-sequence	932
@@ -12,7 +12,9 @@ ww3-gpu-at-a-glance-pt	654
 sds4-sdscum-branches	674
 triton-port-plan	498
 triton-benchmark-arms	544
-weathernext-wind-chain	404
+weathernext-wind-chain	570
 kokkos-one-source-backends	664
 triton-g-doze-semanas	554
 kokkos-interop-one-binary	540
+ww3-gpu-runtimes	354	8	22	622
+ww3-gpu-runtimes-pt	354	8	22	622

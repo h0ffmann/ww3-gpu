@@ -32,11 +32,13 @@ hash. Nothing redraws on a merge: run `/drawings-refresh` (Claude Code) or
 Every picture here is dark ([`DESIGN.md`](../../DESIGN.md), "Pictures"). A drawing listed in
 [`dark.tsv`](dark.tsv) is dressed in [`ww3-gpu.css`](ww3-gpu.css), the site's ground and lights,
 in the manner of piabrota/nix-os's figures: only the drawing stays, with Archify's legend and
-source badges hidden and the viewBox cut to the height `dark.tsv` gives.
+source badges hidden and the viewBox cut to the height `dark.tsv` gives. A row of `dark.tsv` with
+five fields (slug, height, x, y, width) frames the drawing on every side, so its margins are equal.
 
 ```bash
 just archify png           # each drawing of dark.tsv -> <slug>.png (committed), then png.lock
 just archify site <dir>    # each drawing of dark.tsv -> <dir>/<slug>/index.html, and <dir>/index.html
+just archify fit           # each drawing of paper.tsv against the width its paper prints it at
 ```
 
 `png` takes the picture with headless Chrome over its DevTools pipe
@@ -45,6 +47,22 @@ README shows it. `site` is what `pages.yml` runs to publish the pages at
 <https://h0ffmann.github.io/ww3-gpu/figures/>, so no HTML is committed. `check` and `refresh`
 cover the PNGs too: [`png.lock`](png.lock) records the sha256 of each drawing's JSON, the look,
 `dark.tsv` and the dresser, and the Archify commit.
+
+## A drawing a paper prints
+
+A figure attached to a paper is drawn for its page and for the eye ([`DESIGN.md`](../../DESIGN.md),
+"Pictures in a paper"). [`paper.tsv`](paper.tsv) lists those drawings with the width they are
+printed at:
+
+```bash
+just archify fit      # each drawing of paper.tsv: its printed size, proportion and type size
+```
+
+`fit` and `png` run [`scripts/archify_fit.py`](../../scripts/archify_fit.py) on the dressed page.
+It fails when the frame is outside 5:4 to 2:1, when the text of a box prints under 7 pt, or when
+any text prints under 6 pt, and `png` then draws nothing. On 2026-11-11 it prints, for both
+rows, `174 x 99 mm, 1.76:1, box text 7.1 pt, smallest text 6.3 pt` (v). `scripts/preprint.sh`
+copies the two PDFs into `pubs/preprint/figures/` at every build.
 
 `render` runs Archify's `finalize --quality showcase`, which validates the source, renders the
 page and checks it in a real browser. At `2ab3cae` it reproduces, byte for byte, the five pages
@@ -61,7 +79,7 @@ Every drawing below also has its dark `<slug>.png` here and its page at
 | [ww3-gpu-port-lifecycle.json](ww3-gpu-port-lifecycle.json) | [PDF](ww3-gpu-port-lifecycle.pdf) | lifecycle | Which states does a WW3 routine pass through on its way to Kokkos? | [a routine's states](../WW3_GPU_VS_NOAA_202610.md#a-routines-states) |
 | [ww3-gpu-device-math-dataflow.json](ww3-gpu-device-math-dataflow.json) | [PDF](ww3-gpu-device-math-dataflow.pdf) | dataflow | Why can a GPU result carry the bits of NOAA's CPU run? | [device math](../WW3_GPU_VS_NOAA_202610.md#device-math) |
 | [ww3-gpu-at-a-glance.json](ww3-gpu-at-a-glance.json) | [PDF](ww3-gpu-at-a-glance.pdf), [PNG](ww3-gpu-at-a-glance.png), [page](https://h0ffmann.github.io/ww3-gpu/figures/ww3-gpu-at-a-glance/) | architecture | What does ww3-gpu build, from which sources, and on which runtime does each run mode run? | [README](../../README.md); pt-BR: [ww3-gpu-at-a-glance-pt.json](ww3-gpu-at-a-glance-pt.json), [README.pt-BR](../../README.pt-BR.md) |
-| [ww3-gpu-four-runtimes.json](ww3-gpu-four-runtimes.json) | [PDF](ww3-gpu-four-runtimes.pdf), [PNG](ww3-gpu-four-runtimes.png), [page](https://h0ffmann.github.io/ww3-gpu/figures/ww3-gpu-four-runtimes/) | architecture | Which four runtimes run WAVEWATCH here, and what must each give the same bits as? | [README](../../README.md), the preprint's Figure 1 ([`pubs/preprint/`](../../pubs/preprint/README.md)) |
+| [ww3-gpu-runtimes.json](ww3-gpu-runtimes.json) | [PDF](ww3-gpu-runtimes.pdf), [PNG](ww3-gpu-runtimes.png), [page](https://h0ffmann.github.io/ww3-gpu/figures/ww3-gpu-runtimes/) | architecture | Which six runtimes does one ww3-gpu command run, and whose bits must each give? | [README](../../README.md), the preprint's Figure 1 ([`pubs/preprint/`](../../pubs/preprint/README.md)); pt-BR: [ww3-gpu-runtimes-pt.json](ww3-gpu-runtimes-pt.json), [README.pt-BR](../../README.pt-BR.md), the pt-BR preprint |
 | [sds4-sdscum-branches.json](sds4-sdscum-branches.json) | [PDF](sds4-sdscum-branches.pdf), [PNG](sds4-sdscum-branches.png), [page](https://h0ffmann.github.io/ww3-gpu/figures/sds4-sdscum-branches/) | architecture | Which branch of the cumulative-breaking term does W3SDS4 run, and what does each cost? | [SDSCUM](../W3SDS4_TRITON_202610.md#why-sdscum-decides-the-cost) |
 | [triton-port-plan.json](triton-port-plan.json) | [PDF](triton-port-plan.pdf), [PNG](triton-port-plan.png), [page](https://h0ffmann.github.io/ww3-gpu/figures/triton-port-plan/) | architecture | In what order is W3SDS4 ported to Triton, and what gate does each step pass? | [W3SDS4_TRITON_202610.md](../W3SDS4_TRITON_202610.md) |
 | [triton-benchmark-arms.json](triton-benchmark-arms.json) | [PDF](triton-benchmark-arms.pdf), [PNG](triton-benchmark-arms.png), [page](https://h0ffmann.github.io/ww3-gpu/figures/triton-benchmark-arms/) | architecture | Which implementations of W3SDS4 are timed, and when does a timing count? | [W3SDS4_TRITON_202610.md](../W3SDS4_TRITON_202610.md) |

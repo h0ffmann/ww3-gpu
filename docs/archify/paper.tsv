@@ -1,0 +1,5 @@
+# The drawings a paper prints (DESIGN.md, "Pictures in a paper"): slug, the width it is printed at
+# in mm, the paper. scripts/archify.sh png refuses to draw one that does not fit that width
+# (scripts/archify_fit.py), and scripts/archify.sh fit measures every row.
+ww3-gpu-runtimes	174	pubs/preprint (English)
+ww3-gpu-runtimes-pt	174	pubs/preprint (pt-BR)

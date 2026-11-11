@@ -102,6 +102,13 @@ in `docs/archify/dark.tsv`; `just archify png` draws `docs/archify/<slug>.png`, 
 shows, linked to the drawing's zoomable page at `/figures/<slug>/` on the website, and a *How to
 read this figure* card (takeaway, how to read, what is not shown, evidence) follows it for readers
 new to the topic. [`docs/archify/README.md`](docs/archify/README.md) has the commands.
+
+A figure attached to a paper is drawn for its page and for the eye (the owner, 11 November 2026):
+it has a row in `docs/archify/paper.tsv` with the width it is printed at, and at that width its
+frame is between 5:4 and 2:1, the text of a box is at least 7 pt and no text is under 6 pt.
+`just archify fit` measures it and `just archify png` refuses to draw one that does not fit;
+whether the layout is balanced is for a person to judge on the built page. DESIGN.md, "Pictures
+in a paper", has the rule and its sources.
 The Mermaid fences not yet redrawn (the proposal's, the course's, some docs) are still rendered by
 `just figures` into `pubs/figures/mermaid/` and checked in CI by `python3 scripts/figures.py
 check` until they are gone ⚠; no new fence is added.

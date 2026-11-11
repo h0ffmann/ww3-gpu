@@ -375,25 +375,30 @@ published alone as ww3-dia-gpu-v2 (\citeproc{ref-diagpuv2}{Hoffmann
 2026d}). That repository compares the port with an earlier CUDA kernel
 of the same routine.
 
-Figure~\ref{fig:runtimes} shows the four runtimes. ww3-gpu has three,
-all behind one script, \texttt{scripts/ww3-gpu.sh}. \texttt{-\/-ww3}
-builds pure NOAA WW3 from \texttt{WW3-noaa/} and is the reference.
+Figure~\ref{fig:runtimes} shows the six runtimes of one command,
+\texttt{scripts/ww3-gpu.sh}. \texttt{-\/-ww3} runs the Fortran of WW3
+and is the reference: each other runtime must give its bits.
 \texttt{-\/-ww3-gpu} builds the fork with the KOKKOS switch and links
-the Kokkos port. In that executable, one flag for each routine selects
-the Fortran or the Kokkos code. \texttt{-\/-ww4} builds WAVEWATCH IV
-from its fork, and it stops with exit code 5 when the case needs a part
-that is not ported. chaceon is the fourth runtime, \texttt{-\/-chaceon},
-a flag that the script does not have yet ⚠. It runs WW3 rewritten in
-Rust, with no Fortran in the process. Its reference is MetOcean WW3
-7.14, compiled separately. Today ww3-gpu pins NOAA WW3 \texttt{03adda91}
-and chaceon pins WW3 7.14.
+the Kokkos port. With \texttt{-\/-cpu} it runs on OpenMP, and with
+\texttt{-\/-gpu} it runs on CUDA. In that executable, one flag for each
+routine selects the Fortran or the Kokkos code. \texttt{-\/-chaceon}, or
+\texttt{-\/-cceon}, runs WW3 rewritten in Rust, with no Fortran in the
+process, on the CPU or on a GPU. \texttt{-\/-ww4} is for WAVEWATCH IV
+when it is released. Today it builds the development code from a fork,
+and it stops with exit code 5 when the case needs a part that is not
+ported. Two parts of this design are not in the script yet ⚠. The script
+has no \texttt{-\/-chaceon} flag. And \texttt{-\/-ww3} builds NOAA WW3
+\texttt{03adda91}, while chaceon compares with MetOcean WW3 7.14,
+compiled separately. The design gives the six runtimes one reference,
+MetOcean WW3 7.14.
 
 \begin{figure}
 \centering
-\includegraphics[width=1\linewidth,height=\textheight,keepaspectratio,alt={The four runtimes. A solid arrow shows what builds or links what; a dashed arrow points to the run that must give the same bits. Drawn with Archify from docs/archify/ww3-gpu-four-runtimes.json (Hoffmann 2026c).}]{figures/four-runtimes.pdf}
-\caption{The four runtimes. A solid arrow shows what builds or links
-what; a dashed arrow points to the run that must give the same bits.
-Drawn with Archify from \texttt{docs/archify/ww3-gpu-four-runtimes.json}
+\includegraphics[width=1\linewidth,height=\textheight,keepaspectratio,alt={The six runtimes of ww3-gpu. A dashed arrow points to the run that must give the same bits: all five point to -\/-ww3, the reference. Drawn with Archify from docs/archify/ww3-gpu-runtimes.json (Hoffmann 2026c).}]{figures/runtimes.pdf}
+\caption{The six runtimes of ww3-gpu. A dashed arrow points to the run
+that must give the same bits: all five point to \texttt{-\/-ww3}, the
+reference. Drawn with Archify from
+\texttt{docs/archify/ww3-gpu-runtimes.json}
 (\citeproc{ref-ww3gpu}{Hoffmann 2026c}).}\label{fig:runtimes}
 \end{figure}
 

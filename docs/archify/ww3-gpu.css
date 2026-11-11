@@ -22,7 +22,7 @@ body *{visibility:hidden!important}
 .diagram-container svg [data-legend],.diagram-container svg [data-legend] *,
 .diagram-container svg .semantic-sigil,.diagram-container svg .semantic-sigil *{visibility:hidden!important}
 .diagram-container svg [fill="url(#grid)"],.diagram-container svg .c-grid{display:none}
-.diagram-container svg{position:fixed!important;left:0;top:0;width:100vw!important;height:100vh!important;background:none!important}
+.diagram-container svg{position:fixed!important;left:0;top:0;width:100vw!important;min-width:0!important;height:100vh!important;background:none!important}
 .diagram-container svg rect.c-region,.diagram-container svg rect.c-lane{fill:none!important;stroke:#1C2B38!important;stroke-dasharray:none!important}
 .diagram-container svg .a-dashed{stroke:#3DFF96!important}
 .diagram-container svg .m-dashed,.diagram-container svg .t-edge-dashed{fill:#3DFF96!important}

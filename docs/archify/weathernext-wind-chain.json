@@ -20,10 +20,10 @@
       "sublabel": "today's forcing",
       "pos": [
         40,
-        50
+        60
       ],
       "size": [
-        240,
+        220,
         64
       ],
       "sources": [
@@ -40,11 +40,11 @@
       "label": "WeatherNext 3",
       "sublabel": "64 members, 0.1°, wind only",
       "pos": [
-        40,
-        190
+        300,
+        60
       ],
       "size": [
-        240,
+        220,
         64
       ],
       "sources": [
@@ -61,11 +61,11 @@
       "label": "ww3_prnc",
       "sublabel": "forcing preprocessor",
       "pos": [
-        340,
-        120
+        40,
+        214
       ],
       "size": [
-        240,
+        480,
         64
       ],
       "sources": [
@@ -82,11 +82,11 @@
       "label": "WW3 run",
       "sublabel": "Fortran, or Triton / Kokkos",
       "pos": [
-        620,
-        120
+        40,
+        344
       ],
       "size": [
-        240,
+        480,
         64
       ],
       "sources": [
@@ -103,11 +103,11 @@
       "label": "Hs, period, direction",
       "sublabel": "from WW3",
       "pos": [
-        900,
-        120
+        40,
+        474
       ],
       "size": [
-        240,
+        480,
         64
       ],
       "sources": [
@@ -124,11 +124,11 @@
       "label": "ECMWF AIFS Single Wave",
       "sublabel": "ML wave forecast, 0.25°",
       "pos": [
-        620,
-        330
+        670,
+        214
       ],
       "size": [
-        240,
+        220,
         64
       ],
       "sources": [
@@ -145,11 +145,11 @@
       "label": "Hs, period, direction",
       "sublabel": "from ML",
       "pos": [
-        900,
-        330
+        670,
+        344
       ],
       "size": [
-        240,
+        220,
         64
       ],
       "sources": [
@@ -166,11 +166,11 @@
       "label": "buoys and altimeters",
       "sublabel": "same period, same set",
       "pos": [
-        1180,
-        225
+        670,
+        474
       ],
       "size": [
-        240,
+        220,
         64
       ],
       "sources": [
@@ -197,14 +197,18 @@
       "id": "a",
       "from": "gfs",
       "to": "prnc",
-      "label": ""
+      "label": "",
+      "fromSide": "bottom",
+      "toSide": "top"
     },
     {
       "id": "b",
       "from": "wn",
       "to": "prnc",
       "label": "each member",
-      "variant": "emphasis"
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
     },
     {
       "id": "c",
