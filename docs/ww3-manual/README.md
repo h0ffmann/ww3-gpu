@@ -26,6 +26,11 @@ Read the one the task needs. Each is under 14 kB.
   heading or the sentence. Every statement is `(v)` in that sense unless it carries `⚠`.
 - Nothing here was checked against `model/src`, with one exception: a sentence that says "at the
   pin" was read at NOAA-EMC/WW3 `03adda91`, and gives its file and line.
+- That pin is the base of the fork `WW3/` and the source of `--ww3-noaa`. Since 2026-11-11 the
+  reference `--ww3` builds MetOcean's WW3 (`WW3-metocean/`, metocean/WW3 `92e2cf66`): a 2023
+  state of version 7.14 plus ten MetOcean commits that change ST4. No line cited on these pages
+  was read again at `92e2cf66` ⚠; a statement about what `--ww3` computes cites
+  `WW3-metocean/model/src` ([`../RUN_COMMAND_202611.md`](../RUN_COMMAND_202611.md)).
 - A parameter default, a constant or an equation taken from here into a port report, a commit or
   a table is `⚠` until its line in `model/src` was read. The manual's namelist name and the
   Fortran variable differ by a doubled first letter (`SINTHP`, `SSINTHP`; manual, tables 2.5 to

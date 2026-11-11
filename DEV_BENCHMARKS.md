@@ -6,6 +6,9 @@ developer wall times for a smoke test, not port timings: nothing here enters `ko
 or `bench/results/`, which need a passed WW3 regtest replay on the same commit and the protocol of
 `kokkos/tests/bench_snl1.cpp` (AGENTS.md, "No timing without parity").
 
+In the checkpoints below, written before 11 November 2026, `--ww3` is pure NOAA WW3 from
+`WW3-noaa/`, the mode now named `--ww3-noaa`; `--ww3` has built MetOcean's WW3 since that day.
+
 The case is `smoke`: regtest `ww3_ts1`, one point, ST4 + NL1, NK=36 NTH=24, 10 model days
 (`scripts/ww3-gpu.sh` header `(v)`). `--ww3` passes when `ww3_shel` reaches "End of program";
 `--ww3-gpu` runs the same KOKKOS executable with `WW_KOKKOS_SNL1=0` and `=1` and compares the two with

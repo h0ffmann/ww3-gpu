@@ -291,7 +291,7 @@ suites left in CTest test the intro programs and the tools, not the port:
 
 The DIA and its shim are validated by WW3's regtests: `scripts/ww3-gpu.sh --ww3-gpu --cpu`
 runs a WW3 case with the Kokkos DIA and compares it with the Fortran DIA of the same
-executable and pair to pair with `--ww3` (WW3 built without the KOKKOS switch), and
+executable and pair to pair with `--ww3-noaa` (WW3 built without the KOKKOS switch), and
 the regtest matrix of WFIP-0003 (`just ww3-gpu-matrix`, a CMake/CTest driver in `regtests/`, one
 CTest test per `matrix.base` entry) extends that to WW3's own regtests: the 100 serial `NL1` entries
 and the 25 shared-memory OpenMP ones, byte-identical (v, `docs/data/hoff_matrix_2026-10-15.tsv`,

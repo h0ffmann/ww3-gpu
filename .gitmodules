@@ -19,3 +19,12 @@
 	path = vendor/archify
 	url = https://github.com/tt-a1i/archify.git
 	shallow = true
+[submodule "WW3-metocean"]
+	path = WW3-metocean
+	url = https://github.com/metocean/WW3
+	branch = mos-custom
+	shallow = true
+[submodule "chaceon"]
+	path = chaceon
+	url = https://github.com/h0ffmann/chaceon.git
+	shallow = true

@@ -57,24 +57,35 @@
 
 ## how it works
 
-`scripts/ww3-gpu.sh` runs WAVEWATCH in three modes. The model source code comes from three
-submodules. This repository contains only the Kokkos code and its tools.
+`scripts/ww3-gpu.sh` is one command for six runtimes of WAVEWATCH, and `just run` is that script:
+`--ww3`, `--ww3-gpu --cpu`, `--ww3-gpu --gpu`, `--chaceon --cpu`, `--chaceon --gpu` and `--ww4`
+([`docs/RUN_COMMAND_202611.md`](docs/RUN_COMMAND_202611.md)). The model source code comes from
+five submodules. This repository contains only the Kokkos code and its tools.
 
 | Directory | What it is | Used by |
 |---|---|---|
-| `WW3-noaa/` | WW3 from NOAA: [NOAA-EMC/WW3](https://github.com/NOAA-EMC/WW3) at `03adda91`, with no change | `--ww3`, the reference |
+| `WW3-metocean/` | WW3 from MetOcean: [metocean/WW3](https://github.com/metocean/WW3) at `92e2cf66` (tag `7.14.mos-92e2cf6`), with no change | `--ww3`, the reference |
+| `WW3-noaa/` | WW3 from NOAA: [NOAA-EMC/WW3](https://github.com/NOAA-EMC/WW3) at `03adda91`, with no change | `--ww3-noaa`, the base of the fork and the pair of `--ww3-gpu` |
 | `WW3/` | the fork [h0ffmann/WW3](https://github.com/h0ffmann/WW3) at `50a10730` (branch `ww3-gpu/kokkos-pnt`): `WW3-noaa/` plus the KOKKOS patch. The patch changes 9 files and adds 7 modules under `model/src/`, with 5 687 added lines and no removed line | `--ww3-gpu` and the regtest matrix |
 | `WW4/` | [h0ffmann/WW4](https://github.com/h0ffmann/WW4), `develop` | `--ww4` |
+| `chaceon/` | [h0ffmann/chaceon](https://github.com/h0ffmann/chaceon) at `89a11e4`: WW3 in Rust, with MetOcean's WW3 at `92e2cf66` as its reference | `--chaceon` (`--cceon` is the same flag) |
 
 `(v)` The numbers of the patch are from `git -C WW3 diff --stat 03adda91 50a10730 -- model`
 (16 files, 5 687 insertions, 0 deletions), on 2026-10-18.
 
 The fork has one purpose. WW3 must call the Kokkos code from inside WW3, for example from
 `W3SRCE` (`model/src/w3srcemd.F90`), and this repository does not edit WW3. Thus the fork adds the
-calls behind the `KOKKOS` switch, and each Fortran routine stays available. Before each `--ww3`
+calls behind the `KOKKOS` switch, and each Fortran routine stays available. Before each `--ww3-noaa`
 run, `scripts/ww3-gpu.sh` compares the two source trees. If the fork is different from
-`WW3-noaa/` outside the KOKKOS patch, the script stops with exit code 3. Thus `--ww3` is always
+`WW3-noaa/` outside the KOKKOS patch, the script stops with exit code 3. Thus `--ww3-noaa` is always
 WW3 from NOAA, and `--ww3-gpu --cpu` compares the Kokkos port with it.
+
+`⚠` Since 11 November 2026 the reference `--ww3` is MetOcean's WW3, the source that LabECO's
+forecast builds. The fork is not on that source yet: MetOcean's ten commits change the arithmetic
+of ST4, and a rebase of the fork is a re-translation of the Kokkos kernels
+([plan](docs/plans/2026-10-29-001-metocean-upstream-plan.md)). Until then `--ww3-gpu` has
+`--ww3-noaa` as its pair, and a difference between `--ww3` and `--ww3-gpu` is MetOcean's change,
+not the port.
 
 The figure shows the full system: the sources of the model, the code of this repository, the run
 modes and the three runtimes.
@@ -125,11 +136,13 @@ rewritten in Rust (`--chaceon`, or `--cceon`). `--ww4` is WAVEWATCH IV.
 flag selects (the table below), and the supervision rule of a `--gpu` run (`AGENTS.md`, "Running
 on the GPU"). No runtime has run the whole model on a real GPU.
 
-**Evidence.** (v) read 2026-11-11: `scripts/ww3-gpu.sh` (header) for `--ww3`, `--ww3-gpu` with
-`--cpu` or `--gpu`, and `--ww4`; [`VERSIONS.md`](VERSIONS.md) for MetOcean WW3 7.14
-(`92e2cf66`); [`pubs/preprint/`](pubs/preprint/README.md) for chaceon. Two parts are the owner's
-design of 11 November 2026 and not in the script yet ⚠: it has no `--chaceon` flag, and `--ww3`
-builds NOAA WW3 `03adda91`, not MetOcean WW3 7.14, which chaceon compares with today. The
+**Evidence.** (v) read 2026-11-11: `scripts/ww3-gpu.sh` (header) for the six flags;
+[`VERSIONS.md`](VERSIONS.md) for MetOcean WW3 7.14 (`92e2cf66`), which `--ww3` builds;
+[`docs/RUN_COMMAND_202611.md`](docs/RUN_COMMAND_202611.md) for what ran. Two arrows are the
+owner's design of 11 November 2026 and not what the script does yet ⚠: `--ww3-gpu` is compared
+with `--ww3-noaa` (NOAA WW3 `03adda91`, the base of the fork) until the fork is moved onto
+MetOcean's WW3, and `--chaceon --gpu` stops with exit 5 because chaceon has no run on a real GPU.
+The note inside the drawing that `--ww3` builds NOAA WW3 is the state before that day ⚠. The
 drawing is [`docs/archify/ww3-gpu-runtimes.json`](docs/archify/ww3-gpu-runtimes.json), also the
 preprint's Figure 1, drawn for a 174 mm column ([`DESIGN.md`](DESIGN.md), "Pictures in a paper").
 
@@ -183,7 +196,7 @@ Kokkos side one time at the start. It comes back only when WW3 writes output
 To run `resident`:
 
 ```bash
-scripts/ww3-gpu.sh --ww3-gpu full --cpu --kokkos resident            # OpenMP; compares with the Fortran and with --ww3
+scripts/ww3-gpu.sh --ww3-gpu full --cpu --kokkos resident            # OpenMP; compares with the Fortran and with --ww3-noaa
 scripts/ww3-gpu.sh --ww3-gpu full --cpu --kokkos resident --timers   # shows the time of each part
 scripts/ww3-gpu.sh --ww3-gpu full --gpu --kokkos resident            # CUDA: a person must type "yes" at the terminal
 ```
@@ -198,12 +211,32 @@ To see how many times `VA` crossed, and in which direction, set `WW_KOKKOS_VA_CO
 | `full` | `kokkos/tests/fixtures/bench_small`: a 120 × 80 grid, 9 520 sea points, 24 × 24, 12 hours |
 | `coast` | `kokkos/tests/fixtures/coast`: 80 × 50 cells of 5 km, 3 791 sea points and 50 boundary points, 24 × 24, 12 hours. It has hourly currents, water levels, ice and boundary spectra (`scripts/coast_case.sh`). These inputs use code paths that the other two cases do not use |
 
+A case of your own is a directory with `ww3_grid.nml`, `ww3_shel.nml` and the files they name, on
+a regular grid or on a triangular one (`GRID%TYPE = 'UNST'`, a Gmsh mesh). `--wind ifs` gives it
+the newest ECMWF IFS wind for its box and its length, from the cache of `just wind` when the cycle
+is already there, and moves the dates of the namelists to that cycle. `--temp cmems` stages the
+sea surface temperature of the Copernicus Marine forecast the same way (`just temp`; it needs a
+Copernicus Marine account):
+
+```bash
+just run --ww3 --case <dir> --wind ifs               # MetOcean's WW3 on fresh wind
+just run --ww3-gpu --case <dir> --wind ifs --cpu     # the same case with the Kokkos port
+just run --chaceon --case <dir> --wind "$(just wind --print-path -b -52,-44,-32,-24)"
+just run --ww3 --case <dir> --wind ifs --temp cmems  # and the temperature beside the run
+```
+
+`(v)` `--ww3` ran a regular grid and a triangular grid on IFS wind on 2026-11-11; `⚠` the
+Copernicus download was not run (no account in that session), and WW3 does not read the
+temperature with the lab switches ([`docs/RUN_COMMAND_202611.md`](docs/RUN_COMMAND_202611.md)).
+
 Each run mode has a `just` recipe:
 
 ```bash
+just run --help        # the one command: every runtime, every option
 just smoke             # smoke-ww3, then smoke-ww3-gpu: regtest ww3_ts1, seconds
-just smoke-ww3         # --ww3: WW3 as written
-just smoke-ww3-gpu        # --ww3-gpu --cpu: WW3 with the Kokkos DIA (W3SNL1), compared with the Fortran and --ww3
+just smoke-ww3         # --ww3: MetOcean's WW3 as written
+just smoke-chaceon     # --chaceon --cpu: WW3 in Rust, compared with --ww3 built with chaceon's switch
+just smoke-ww3-gpu        # --ww3-gpu --cpu: WW3 with the Kokkos DIA (W3SNL1), compared with the Fortran and --ww3-noaa
 just full-ww3          # the expensive case: bench_small, 9 520 sea points, minutes
 just full-ww3-gpu         # the same with the Kokkos DIA
 just smoke-ww4         # --ww4: WAVEWATCH IV; exit 5 while a part the case needs is not ported
@@ -464,7 +497,7 @@ No GitHub Actions workflow builds a Docker image on its own: every one starts by
 
 The Kokkos code on the GPU has its own image, `docker/Dockerfile.cuda`: NVIDIA's CUDA 13.4 on
 Ubuntu 26.04, Kokkos 5.2.2 built with CUDA for compute capability 8.9 (the RTX 4090; `KOKKOS_ARCH`
-picks another), with `--ww3-gpu --gpu` and, as its reference on the CPU, `--ww3`. Its kernels call CUDA's libdevice, not the device copies of glibc's libm (`WW_KOKKOS_LIBM=OFF`: Ubuntu ships libmvec stripped, and the copies need a symbol of it), so a GPU run in the image is judged by tolerance ([ADR-0014](docs/ADRs.md#adr-0014)). The host needs the NVIDIA driver and the
+picks another), with `--ww3-gpu --gpu` and, as its reference on the CPU, `--ww3-noaa`. Its kernels call CUDA's libdevice, not the device copies of glibc's libm (`WW_KOKKOS_LIBM=OFF`: Ubuntu ships libmvec stripped, and the copies need a symbol of it), so a GPU run in the image is judged by tolerance ([ADR-0014](docs/ADRs.md#adr-0014)). The host needs the NVIDIA driver and the
 [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)
 for `docker run --gpus all`. As on the host, every `--gpu` run asks the supervising person for
 `yes` at the terminal ([Running on the GPU](AGENTS.md#running-on-the-gpu-hard-rule)).
@@ -491,7 +524,7 @@ toolchain of [`docs/TOOLCHAIN.md`](docs/TOOLCHAIN.md), which uses another gfortr
 
 **Published images.** `.github/workflows/docker-dist.yml` runs only when a person starts it from
 Actions (Run workflow); no push, pull request or schedule triggers it. It builds the chosen
-runtime images and checks, without running a case, that each holds NOAA's WW3 (`--ww3`, compiled
+runtime images and checks, without running a case, that each holds NOAA's WW3 (`--ww3-noaa`, compiled
 from `WW3-noaa/` at its pin) and ww3-gpu (`--ww3-gpu`) and no source file (`just dcheck` runs the
 same check). With `push` ticked it also pushes `ghcr.io/h0ffmann/ww3-gpu:<tag>` (CPU) and
 `ghcr.io/h0ffmann/ww3-gpu-cuda:<tag>`, and `latest` too when the run is on main. The labels
@@ -502,7 +535,7 @@ case and compare the outputs with only Docker:
 ```console
 img=ghcr.io/h0ffmann/ww3-gpu:<tag>
 docker inspect "$img" --format '{{json .Config.Labels}}'    # which WW3 commits
-docker run --rm --user "$(id -u):$(id -g)" -v "$PWD/runs:/work/runs" "$img" --ww3 smoke
+docker run --rm --user "$(id -u):$(id -g)" -v "$PWD/runs:/work/runs" "$img" --ww3-noaa smoke
 docker run --rm --user "$(id -u):$(id -g)" -v "$PWD/runs:/work/runs" "$img" --ww3-gpu smoke
 ```
 
@@ -601,9 +634,12 @@ their data on the device and match the Fortran within the tolerances WW3's regte
 
 | id | combination | what it runs | in CI |
 |---|---|---|---|
-| h1 | `--ww3-gpu --cpu` | WW3 with the Kokkos DIA on OpenMP, against the Fortran DIA and pair to pair against `--ww3` (`ww3_ts1`) | **yes**: [`health.yml`](.github/workflows/health.yml), on every pull request and on `main` |
+| h1 | `--ww3-gpu --cpu` | WW3 with the Kokkos DIA on OpenMP, against the Fortran DIA and pair to pair against `--ww3-noaa` (`ww3_ts1`) | **yes**: [`health.yml`](.github/workflows/health.yml), on every pull request and on `main` |
 | h2 | `--ww3-gpu --gpu` | the same on CUDA | no: it needs a GPU and the owner supervising (AGENTS.md hard rule) |
-| w3 | `--ww3 --cpu` | WW3 as written | inside h1, as its pair |
+| w3 | `--ww3-noaa --cpu` | NOAA's WW3 as written | inside h1, as its pair |
+| m3 | `--ww3 --cpu` | MetOcean's WW3 as written, the reference | no |
+| c1 | `--chaceon --cpu` | WW3 in Rust, against `--ww3` | no |
+| c2 | `--chaceon --gpu` | the same on a GPU | no: it exits 5, chaceon has no run on a real GPU yet |
 | w4 | `--ww4 --cpu` | WAVEWATCH IV | no: it exits 5 until WW4 has the parts |
 
 Only h1 is in CI, by the owner's word of 14 October 2026. Each ported routine has a report in
@@ -612,7 +648,7 @@ was regtested. The port has no tests of its own; WW3's regtests are its tests
 ([ADR-0010](docs/ADRs.md#adr-0010)). The website draws its benchmarks.
 
 `--ww3-gpu` runs on the CPU (Kokkos OpenMP) by default, and is then compared pair to pair with
-`--ww3`. `just smoke-ww3-gpu gpu` runs CUDA, only with a human supervising: it asks at the terminal
+`--ww3-noaa`. `just smoke-ww3-gpu gpu` runs CUDA, only with a human supervising: it asks at the terminal
 (AGENTS.md hard rule). An NVIDIA GPU whose driver does not answer stops it with exit 4 and the
 cause. On
 14 October 2026 both cases passed on OpenMP; the GPU run was not made yet. `--ww4` stops with

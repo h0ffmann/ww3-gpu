@@ -57,7 +57,7 @@ shell), never on the GPU: `scripts/ww3-gpu.sh --ww3-gpu smoke --cpu` with
 `--kokkos all` (`WW_KOKKOS_ALL=1`) and with the W3WAVE support parts alone (PATCH.md, section 8,
 "The checkpoint"). Calls (`WW_KOKKOS_WAVE_COUNT=1`): 121 calls per DISTAB call; 0 of the 246 table values it produces differ from the Fortran's. `out_grd.ww3` (and in the smoke
 `out_pnt.ww3`, `restart.ww3`) and the `ww3_ounf` NetCDF file were byte-identical (`cmp`) to the
-Fortran of the same executable, and the binary files to `--ww3`, pure NOAA WW3 (v). ⚠ Not run:
+Fortran of the same executable, and the binary files to `--ww3-noaa`, pure NOAA WW3 (v). ⚠ Not run:
 the WW3 regtest matrix (`just ww3-gpu-matrix`), the OpenMP (`OMPG`) entries, the GPU; `out_grd.ww3`
 holds only the fields each case requests.
 

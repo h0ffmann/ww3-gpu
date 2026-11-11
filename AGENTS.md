@@ -15,8 +15,8 @@ looser.
   independent researchers in wave modelling, numerical methods and HPC; every claim carries `(v)`
   with what was checked or `⚠` when it was not, and every number comes with the command that
   reproduces it ([Audience and evidence](#audience-and-evidence-hard-rule)).
-- **WW3 is read-only**: never vendor WW3 source or edit the Fortran physics; the `WW3/` and `WW3-noaa/` submodules
-  and `$WW3` are references, and the only Fortran this repo adds is a shim behind a switch
+- **WW3 is read-only**: never vendor WW3 source or edit the Fortran physics; the `WW3/`, `WW3-noaa/`
+  and `WW3-metocean/` submodules and `$WW3` are references, and the only Fortran this repo adds is a shim behind a switch
   ([WW3 source](#ww3-source-is-read-only-hard-rule)).
 - **No citation of a third party's issues**: an issue, pull request or discussion of a repository
   this project does not own (NOAA-EMC/WW3, NOAA-EMC/WW4, Kokkos, any other) is never cited,
@@ -138,7 +138,8 @@ just get                     # upstream NOAA-EMC/WW3 develop into ~/src/WW3 (or 
 just rt                      # build with ww3_tp1.1's switch and run that regtest
 just build                   # the lab switch (switches/switch_lab_shrd, ST4)
 just kokkos-test serial-debug
-just smoke                   # WW3 as written (--ww3), then WW3 with the Kokkos DIA (--ww3-gpu)
+just smoke                   # MetOcean's WW3 as written (--ww3), then WW3 with the Kokkos port (--ww3-gpu)
+just run --ww3 --case <dir> --wind ifs   # one command, six runtimes, a case of your own on fresh wind
 just smoke-ww4               # WAVEWATCH IV from the WW4/ fork; exit 5 while a part is not ported
 ```
 
@@ -150,7 +151,7 @@ Run the gates of what you changed before calling it done. CI (`.github/workflows
 | any `*.sh` or `justfile` recipe | `bash -n <script>` and `shellcheck <script>`; a hook also has `--self-test` (`.claude/hooks/proposal-review.sh --self-test`) |
 | `kokkos/` | `just kokkos-test serial-debug` (sanitizers, bounds checks) and `just kokkos-test openmp-release`, which build the port and run the tests of the intro programs and the tools (the port has none, ADR-0010); for a ported routine, the static parity argument of ADR-0016 (the `-O3` GIMPLE or disassembly of both compilers); `just smoke-ww3-gpu` in the validation phase |
 | a kernel WW3 calls, or the `WW3/` pin | in the validation phase the owner calls (ADR-0016; regtests are postponed until then): `just smoke` (CPU); `just full-ww3-gpu` and `just ww3-gpu-matrix` (the WW3 regtest matrix, WFIP-0003, serial entries by default, `omp` for the OpenMP ones) before a status in `kokkos/ports.tsv` moves to L2. Never `--gpu` without the owner (hard rule) |
-| `scripts/ww3-gpu.sh` or `scripts/ww4_parts.py` | `bash scripts/ww3-gpu.sh --self-test`, `python3 scripts/ww4_parts.py --self-test`, shellcheck; `just smoke-ww3-gpu` (CPU, pair to pair with `--ww3`) |
+| `scripts/ww3-gpu.sh` or `scripts/ww4_parts.py` | `bash scripts/ww3-gpu.sh --self-test`, `python3 scripts/ww4_parts.py --self-test`, shellcheck; `just smoke-ww3-gpu` (CPU, pair to pair with `--ww3-noaa`) |
 | `regtests/` | `just ww3-gpu-matrix-selftest` (the selection, the argument lists and the verdict on fixtures) and `just ww3-gpu-matrix-list` (the entry count at the pin) |
 | `kokkos/ports.tsv`, `kokkos/port_claims.tsv` or `docs/data/ww3_*_gprof.tsv` | `python3 scripts/port_score.py --write`, then `--check` (CI runs `--self-test` and `--check`) |
 | Fortran in `gpu/`, `examples/` | they must compile with gfortran with directives ignored |
@@ -203,8 +204,14 @@ statement. In practice:
 ## WW3 source is read-only (hard rule)
 
 `WW3/` is the `h0ffmann/WW3` fork of NOAA-EMC/WW3 as a submodule, pinned (`just src-st` shows the
-pin), and `WW3-noaa/` is pure NOAA-EMC/WW3 at the commit the fork branched from: `--ww3` builds it,
-and `scripts/ww3-gpu.sh` stops when the fork differs from it outside the KOKKOS patch; `just get` clones upstream into `~/src/WW3`. Neither is edited from here, and no WW3 source is
+pin), and `WW3-noaa/` is pure NOAA-EMC/WW3 at the commit the fork branched from: `--ww3-noaa` builds it,
+and `scripts/ww3-gpu.sh` stops when the fork differs from it outside the KOKKOS patch; `just get` clones upstream into `~/src/WW3`.
+`WW3-metocean/` is MetOcean's WW3 (metocean/WW3, tag `7.14.mos-92e2cf6`), the reference `--ww3`
+builds since 11 November 2026 (the owner; [`docs/RUN_COMMAND_202611.md`](docs/RUN_COMMAND_202611.md)):
+the fork is not rebased onto it yet ⚠, so `--ww3-gpu` is still compared with `--ww3-noaa`, its own
+base, and a difference between `--ww3` and `--ww3-gpu` is MetOcean's ten commits, not the port
+(`docs/plans/2026-10-29-001-metocean-upstream-plan.md`). `chaceon/` is the `h0ffmann/chaceon`
+submodule, WW3 in Rust, which `--chaceon` builds and compares with `--ww3`. None is edited from here, and no WW3 source is
 copied into this repository (`CONTRIBUTING.md`, "Don't vendor WW3 source. Scripts fetch it."). The
 exceptions are a `bind(C)` shim module and the caller patch described in
 `kokkos/src/fortran_iface/PATCH.md`, which live on a fork branch, behind a switch, and leave the
@@ -258,7 +265,7 @@ broken most often:
 - **The port has no tests of its own** ([ADR-0010](docs/ADRs.md#adr-0010),
   the owner, 14 October 2026): no L1 test, GoogleTest or captured fixture of a ported routine. Its
   tests are WW3's regtests: `just smoke-ww3-gpu` and `just full-ww3-gpu` (`--ww3-gpu --cpu` pair to pair with
-  `--ww3`) and `just ww3-gpu-matrix`, the `NL1` entries of WW3's `matrix.base` (serial by default,
+  `--ww3-noaa`) and `just ww3-gpu-matrix`, the `NL1` entries of WW3's `matrix.base` (serial by default,
   the shared-memory OpenMP ones with `omp`) compared by `test.comp` and `nccmp-tol` (WFIP-0003).
   `just ww3-gpu-matrix` is a CMake/CTest driver in `regtests/`, one CTest test per entry; CTest there
   runs WW3's own regtests, the Fortran routine against the Kokkos routine, and is not a test of
@@ -288,7 +295,7 @@ broken most often:
   agents never port the same routine) or timed by a committed profile, the next port first, with its
   checkpoint, `test.comp` and `nccmp-tol` record. `--check` fails
   when any of them is stale.
-- **CI keeps h1 alive**: `--ww3-gpu --cpu` on `ww3_ts1`, pair to pair with `--ww3`
+- **CI keeps h1 alive**: `--ww3-gpu --cpu` on `ww3_ts1`, pair to pair with `--ww3-noaa`
   ([`health.yml`](.github/workflows/health.yml)). It is the only combination in CI for now.
 - **Done means all of §1.5:** the kernel with its heritage header, the shim with its argument
   table, the L2 regtest replay and the regtest matrix passed within `tolerances.txt`, a timing line
@@ -365,7 +372,7 @@ the kernels `WW_KOKKOS_ALL` runs, ST4's five libmvec loops included, to device c
 host on every input checked; no device run has compared them yet (`scripts/libm_bits.sh
 --device`, the owner's), and W3OUTG's too (the `resident` preset), and the other switches' kernels still call
 libdevice. Until such a run, the rule is the CPU backend's: a GPU run is judged by `nccmp-tol`'s
-tolerances against the Fortran of the same executable and against `--ww3`, with every field's
+tolerances against the Fortran of the same executable and against `--ww3-noaa`, with every field's
 differences recorded and no tolerance ever widened, and its timing enters a table only after
 that pass ([ADR-0014](docs/ADRs.md#adr-0014), the owner, 17 October
 2026). How far a device is from glibc's bits, function by function, and how the host CPU's FMA
@@ -386,11 +393,13 @@ be regtested pair to pair to existing ww3 src."
   `WW3GPU_GPU_CONFIRMED` (which the CUDA matrix's `setup:kokkos` and entries require), no piped
   answer. `--build-only` compiles for the GPU without running it and is allowed.
 - **The agents' regtest is `--ww3-gpu --cpu`** (the default; Kokkos on OpenMP). Its Kokkos run is
-  compared pair to pair with `--ww3`, WW3 from the existing source built without the KOKKOS
+  compared pair to pair with `--ww3-noaa`, WW3 from the existing source built without the KOKKOS
   switch, by `nccmp-tol`, after the comparison with the Fortran DIA of the same executable. Run
   `just smoke-ww3-gpu` and `just full-ww3-gpu` in the validation phase of ADR-0016, and always before a
   status in `kokkos/ports.tsv` moves to L2.
-- `--ww3 --gpu` and `--ww4 --gpu` are refused (exit 64): neither has a GPU path here.
+- `--ww3 --gpu`, `--ww3-noaa --gpu` and `--ww4 --gpu` are refused (exit 64): none has a GPU path
+  here. `--chaceon --gpu` stops with exit 5 before it builds or asks anything: chaceon has no run
+  on a real GPU yet, and when it has one the same supervision applies.
 
 ## The proposal (hard rule)
 

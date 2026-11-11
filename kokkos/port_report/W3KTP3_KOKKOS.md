@@ -33,7 +33,7 @@ CPU measurements of the wired `W3XYP3` and `W3KTP3`, each after its replay passe
 time. The machine was shared with other sessions (load average 40 to 50 on 32 threads, `uptime`),
 so the spread is wide and the medians are not a clean benchmark ⚠.
 
-| `--kokkos` | `--ww3` three runs (s), median | `--ww3-gpu` three runs (s), median | `--ww3` / `--ww3-gpu` |
+| `--kokkos` | `--ww3-noaa` three runs (s), median | `--ww3-gpu` three runs (s), median | `--ww3-noaa` / `--ww3-gpu` |
 |---|---|---|---|
 | `SRCE` (before this change) | 39.94, 37.74, 40.46; 39.94 | 66.50, 62.74, 66.36; 66.36 | 0.60x |
 | `XYP3,KTP3,SRCE` | 41.49, 36.81, 41.40; 41.40 | 46.46, 54.43, 48.88; 48.88 | 0.85x |
@@ -59,7 +59,7 @@ Update 2026-10-17, the wiring (v): `bash scripts/ww3-gpu.sh --ww3-gpu full --cpu
 XYP3,KTP3,SRCE`, with `switch_lab_ompg`, with `WW3GPU_SWITCH=switch_lab_shrd`, and with
 `WW_KOKKOS_PROP3_BATCH_MIB=64` (six and three launches per call instead of one): `out_grd.ww3` and
 the NetCDF field byte-identical (`cmp`) to the Fortran of the same executable, `out_grd.ww3`
-byte-identical to `--ww3` (the NetCDF differs from it only in the `WAVEWATCH_III_switches`
+byte-identical to `--ww3-noaa` (the NetCDF differs from it only in the `WAVEWATCH_III_switches`
 attribute), `nccmp-tol` PASS. The counters: `W3XYP3` 13 824 spectra in 24 calls, `W3KTP3` 441 792
 point calls in 48 calls. The smoke case (one point) makes no call of either. Not exercised by
 `bench_small`: currents (`FLCUR`), the wavenumber shift (`FLCK`, so `W3QCK2`), index closure
@@ -80,7 +80,7 @@ sessions), never on the GPU (v): `bash scripts/ww3-gpu.sh --ww3-gpu full --cpu -
 XYP3,KTP3,SRCE` on `switch_lab_ompg` and `WW3GPU_SWITCH=switch_lab_shrd`, each with and without
 `WW_KOKKOS_VA_RESIDENT=1`, and on `switch_lab_ompg` `--kokkos SRCE`, `KTP3,SRCE` and `XYP3,SRCE`
 under `WW_KOKKOS_VA_RESIDENT=1` (the mixed paths): `out_grd.ww3` and the NetCDF field `cmp`-equal
-to the Fortran of the same executable, `out_grd.ww3` `cmp`-equal to `--ww3`, `nccmp-tol` PASS
+to the Fortran of the same executable, `out_grd.ww3` `cmp`-equal to `--ww3-noaa`, `nccmp-tol` PASS
 both. The traffic of `VA` in the full case with `XYP3,KTP3,SRCE` (`WW_KOKKOS_VA_COUNT=1`) went
 from H2D 25 / D2H 25 (one copy each way per step) to H2D 1 / D2H 13, the D2H only at the host reads
 of the output block and of the return of `W3WAVE`. The `bench_small` branches listed above as not
@@ -99,7 +99,7 @@ through `ww3_prnc`, and boundary spectra on the west edge through `ww3_bounc`. `
 "Prescribed curents", "Prescribed water levels" and "Prescribed ice fields", `ww3_grid.out`
 "Current-induced k-shift : YES" and 50 input boundary points. The Kokkos kernel reads `FLCK` and
 `FLCUR` from the Fortran (`ipar`, `prop3_shim.cpp:638`) and calls `w3qck2` under `FLCK`
-(`prop_ktp3.hpp:324-344`). The same `--ww3` case with `RUN%FLCK = F` changes `hs` by up to 0.073 m,
+(`prop_ktp3.hpp:324-344`). The same `--ww3-noaa` case with `RUN%FLCK = F` changes `hs` by up to 0.073 m,
 so the wavenumber shift reaches the output that is compared (v).
 
 Checked on the CPU (OpenMP backend, Kokkos 5.2.2, gfortran/g++ 16.2.0, Intel Core i9-14900, 32
@@ -108,7 +108,7 @@ threads, shared with other sessions), never on the GPU (v): `bash scripts/ww3-gp
 `switch_lab_ompg` and `WW3GPU_SWITCH=switch_lab_shrd`, with and without `WW_KOKKOS_VA_RESIDENT=1`,
 and `KTP3,SRCE` and `XYP3,SRCE` with `WW_KOKKOS_VA_RESIDENT=1` on `switch_lab_ompg`: 14 runs. In
 every one, `out_grd.ww3`, `out_pnt.ww3` and the NetCDF field are `cmp`-equal to the Fortran of the
-same executable, `out_grd.ww3` and `out_pnt.ww3` are `cmp`-equal to `--ww3`, whose NetCDF differs
+same executable, `out_grd.ww3` and `out_pnt.ww3` are `cmp`-equal to `--ww3-noaa`, whose NetCDF differs
 only in the `WAVEWATCH_III_switches` attribute (`diff` of the two `ncdump`, read on the first run), and `nccmp-tol` PASS both. With `resident`, on both
 switches: `W3XYP3` 41 472 spectra in 72 calls, `W3KTP3` 517 660 point calls in 144 calls, all on the
 resident `VA`; `W3SRCE` 258 830 spectra; `VA` H2D 13, D2H 36 (host writes 26; that they are the 13 hourly `W3ULEV` and 13 `W3UICE`

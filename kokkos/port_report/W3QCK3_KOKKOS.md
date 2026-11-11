@@ -40,7 +40,7 @@ Update 2026-10-17, the wiring (v): `bash scripts/ww3-gpu.sh --ww3-gpu full --cpu
 XYP3,KTP3,SRCE`, with `switch_lab_ompg`, with `WW3GPU_SWITCH=switch_lab_shrd`, and with
 `WW_KOKKOS_PROP3_BATCH_MIB=64` (six and three launches per call instead of one): `out_grd.ww3` and
 the NetCDF field byte-identical (`cmp`) to the Fortran of the same executable, `out_grd.ww3`
-byte-identical to `--ww3` (the NetCDF differs from it only in the `WAVEWATCH_III_switches`
+byte-identical to `--ww3-noaa` (the NetCDF differs from it only in the `WAVEWATCH_III_switches`
 attribute), `nccmp-tol` PASS. The counters: `W3XYP3` 13 824 spectra in 24 calls, `W3KTP3` 441 792
 point calls in 48 calls. The smoke case (one point) makes no call of either. Not exercised by
 `bench_small` ⚠: currents (`FLCUR`), the wavenumber shift (`FLCK`, so `W3QCK2`), index closure

@@ -1,8 +1,8 @@
-# docker-dist — the distribution images, binaries only: NOAA's WW3 at the WW3-noaa/ pin (--ww3)
+# docker-dist — the distribution images, binaries only: NOAA's WW3 at the WW3-noaa/ pin (--ww3-noaa)
 # and ww3-gpu (--ww3-gpu, the fork with the Kokkos port) compiled side by side, so a user can run a
 # case with both and compare the outputs pair to pair (scripts/ww3-gpu.sh is the entry point).
 #   cpu   docker/Dockerfile       ghcr.io/<owner>/ww3-gpu        Kokkos on OpenMP, plus WW4
-#   cuda  docker/Dockerfile.cuda  ghcr.io/<owner>/ww3-gpu-cuda   Kokkos on CUDA, --ww3 on the CPU
+#   cuda  docker/Dockerfile.cuda  ghcr.io/<owner>/ww3-gpu-cuda   Kokkos on CUDA, --ww3-noaa on the CPU
 # The final stage of each keeps the compiled programs, their runtime libraries and the case
 # inputs; `scripts/docker.sh check` fails when a source file or either WW3 is missing. The labels
 # io.github.h0ffmann.ww3-gpu.ww3-noaa and .ww3 name the two WW3 commits the binaries came from.

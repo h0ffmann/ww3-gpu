@@ -117,3 +117,4 @@ docs/archify/*.browser-check.json
 
 # IFS forcing fetched by `just ifs-get`
 data/ifs/
+data/cmems/

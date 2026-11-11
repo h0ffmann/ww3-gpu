@@ -36,4 +36,4 @@ profile of `bench_small` does not list it among the routines that take time
 None. `L1_test_snl1_tables.cpp` was a GoogleTest, run by CTest on every preset, until it was
 removed on 2026-10-14 under the owner's rule: "kokkos code should NOT have its own tests, hard
 rule. All tests should come [from] WW3 regtests." The tables are judged through the DIA's WW3
-regtest replay (`scripts/ww3-gpu.sh --ww3-gpu --cpu`, pair to pair with `--ww3`).
+regtest replay (`scripts/ww3-gpu.sh --ww3-gpu --cpu`, pair to pair with `--ww3-noaa`).

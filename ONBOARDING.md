@@ -143,16 +143,20 @@ IDENTIFY -> TRANSLATE -> REVIEW -> REGTEST -> IMPROVE -> CPU/GPU SPLIT
 
 ## Three ways of working
 
-`scripts/ww3-gpu.sh` runs WAVEWATCH three ways, each from its own submodule (README, "three ways"):
+`scripts/ww3-gpu.sh` (`just run`) runs WAVEWATCH from five submodules, six runtimes and one pair
+mode (README, "how it works"; [`docs/RUN_COMMAND_202611.md`](docs/RUN_COMMAND_202611.md)):
 
 | Way | Source | What it is for |
 |---|---|---|
-| `--ww3` | `WW3-noaa/`, pure NOAA-EMC/WW3 at `03adda91` | the reference: WW3 as written |
-| `--ww3-gpu` | `WW3/`, the `h0ffmann/WW3` fork with the KOKKOS patch, linked to `kokkos/` | the port: `--cpu` (default, Kokkos on OpenMP) is compared pair to pair with `--ww3`; `--gpu` only with the owner supervising |
+| `--ww3` | `WW3-metocean/`, MetOcean's WW3 at `92e2cf66` (tag `7.14.mos-92e2cf6`) | the reference: the WW3 that LabECO's forecast builds, as written |
+| `--ww3-noaa` | `WW3-noaa/`, pure NOAA-EMC/WW3 at `03adda91` | the base of the fork, and so the pair of `--ww3-gpu` until the fork is rebased onto MetOcean's WW3 ⚠ |
+| `--ww3-gpu` | `WW3/`, the `h0ffmann/WW3` fork with the KOKKOS patch, linked to `kokkos/` | the port: `--cpu` (default, Kokkos on OpenMP) is compared pair to pair with `--ww3-noaa`; `--gpu` only with the owner supervising |
+| `--chaceon` | `chaceon/`, the `h0ffmann/chaceon` repository | WW3 in Rust, `--cpu` compared with `--ww3`; `--gpu` stops with exit 5 until chaceon has run on a real GPU |
 | `--ww4` | `WW4/`, the `h0ffmann/WW4` fork | WAVEWATCH IV; stops with exit 5 while a part the case needs is not ported |
 
 `just smoke` runs `--ww3` then `--ww3-gpu` on `ww3_ts1` in seconds; `just full-ww3-gpu` runs
-`bench_small` in minutes.
+`bench_small` in minutes; `just run --ww3 --case <dir> --wind ifs` runs a case of your own on the
+newest IFS wind.
 
 ## Regtest strategy
 

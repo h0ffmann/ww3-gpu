@@ -57,14 +57,18 @@
 
 ## como funciona
 
-O `scripts/ww3-gpu.sh` roda o WAVEWATCH em três modos. O código dos modelos vem de três
-submódulos. Este repositório guarda só o código em Kokkos e as suas ferramentas.
+O `scripts/ww3-gpu.sh` é um comando só para seis runtimes do WAVEWATCH, e o `just run` é esse
+script: `--ww3`, `--ww3-gpu --cpu`, `--ww3-gpu --gpu`, `--chaceon --cpu`, `--chaceon --gpu` e
+`--ww4` ([`docs/RUN_COMMAND_202611.md`](docs/RUN_COMMAND_202611.md)). O código dos modelos vem de
+cinco submódulos. Este repositório guarda só o código em Kokkos e as suas ferramentas.
 
 | Diretório | O que é | Usado por |
 |---|---|---|
-| `WW3-noaa/` | o WW3 da NOAA: [NOAA-EMC/WW3](https://github.com/NOAA-EMC/WW3) em `03adda91`, sem mudança | `--ww3`, a referência |
+| `WW3-metocean/` | o WW3 da MetOcean: [metocean/WW3](https://github.com/metocean/WW3) em `92e2cf66` (tag `7.14.mos-92e2cf6`), sem mudança | `--ww3`, a referência |
+| `WW3-noaa/` | o WW3 da NOAA: [NOAA-EMC/WW3](https://github.com/NOAA-EMC/WW3) em `03adda91`, sem mudança | `--ww3-noaa`, a base do fork e o par do `--ww3-gpu` |
 | `WW3/` | o fork [h0ffmann/WW3](https://github.com/h0ffmann/WW3) em `50a10730` (branch `ww3-gpu/kokkos-pnt`): o `WW3-noaa/` mais o patch KOKKOS. O patch muda 9 arquivos e acrescenta 7 módulos em `model/src/`, com 5 687 linhas acrescentadas e nenhuma removida | `--ww3-gpu` e a matriz de regtests |
 | `WW4/` | [h0ffmann/WW4](https://github.com/h0ffmann/WW4), `develop` | `--ww4` |
+| `chaceon/` | [h0ffmann/chaceon](https://github.com/h0ffmann/chaceon) em `89a11e4`: o WW3 em Rust, com o WW3 da MetOcean em `92e2cf66` como referência | `--chaceon` (`--cceon` é a mesma opção) |
 
 `(v)` Os números do patch vêm de `git -C WW3 diff --stat 03adda91 50a10730 -- model`
 (16 arquivos, 5 687 inserções, 0 remoções), em 18/10/2026.
@@ -72,9 +76,15 @@ submódulos. Este repositório guarda só o código em Kokkos e as suas ferramen
 O fork tem um objetivo só. O WW3 precisa chamar o código em Kokkos de dentro do WW3, por exemplo do
 `W3SRCE` (`model/src/w3srcemd.F90`), e este repositório não edita o WW3. Por isso o fork
 acrescenta as chamadas atrás da chave `KOKKOS`, e cada rotina em Fortran continua disponível. Antes
-de cada rodada `--ww3`, o `scripts/ww3-gpu.sh` compara as duas árvores de código. Se o fork difere
-do `WW3-noaa/` fora do patch KOKKOS, o script para com código de saída 3. Assim o `--ww3` é sempre
+de cada rodada `--ww3-noaa`, o `scripts/ww3-gpu.sh` compara as duas árvores de código. Se o fork difere
+do `WW3-noaa/` fora do patch KOKKOS, o script para com código de saída 3. Assim o `--ww3-noaa` é sempre
 o WW3 da NOAA, e o `--ww3-gpu --cpu` compara o port em Kokkos com ele.
+
+`⚠` Desde 11/11/2026 a referência `--ww3` é o WW3 da MetOcean, o código que a previsão do LabECO
+compila. O fork ainda não está sobre esse código: os dez commits da MetOcean mudam a aritmética do
+ST4, e rebasear o fork é traduzir de novo os kernels em Kokkos
+([plano](docs/plans/2026-10-29-001-metocean-upstream-plan.md)). Até lá o par do `--ww3-gpu` é o
+`--ww3-noaa`, e uma diferença entre o `--ww3` e o `--ww3-gpu` é a mudança da MetOcean, não o port.
 
 A figura mostra o sistema inteiro: as fontes do modelo, o código deste repositório, os modos de
 rodar e os três ambientes.
@@ -125,12 +135,14 @@ reescrito em Rust (`--chaceon`, ou `--cceon`). O `--ww4` é o WAVEWATCH IV.
 flag do Kokkos escolhe (a tabela abaixo) e a regra de supervisão de uma rodada `--gpu`
 (`AGENTS.md`, "Running on the GPU"). Nenhum runtime rodou o modelo inteiro em uma GPU real.
 
-**Evidência.** (v) lido em 11/11/2026: `scripts/ww3-gpu.sh` (cabeçalho) para `--ww3`,
-`--ww3-gpu` com `--cpu` ou `--gpu`, e `--ww4`; [`VERSIONS.md`](VERSIONS.md) para o WW3 7.14 da
-MetOcean (`92e2cf66`); [`pubs/preprint/`](pubs/preprint/README.md) para o chaceon. Duas partes
-são o desenho do autor em 11 de novembro de 2026 e ainda não estão no script ⚠: ele não tem a
-flag `--chaceon`, e o `--ww3` compila o WW3 da NOAA em `03adda91`, não o WW3 7.14 da MetOcean,
-com o qual o chaceon compara hoje. O desenho é
+**Evidência.** (v) lido em 11/11/2026: `scripts/ww3-gpu.sh` (cabeçalho) para as seis opções;
+[`VERSIONS.md`](VERSIONS.md) para o WW3 7.14 da MetOcean (`92e2cf66`), que o `--ww3` compila;
+[`docs/RUN_COMMAND_202611.md`](docs/RUN_COMMAND_202611.md) para o que rodou. Duas setas são o
+desenho do autor em 11 de novembro de 2026 e ainda não o que o script faz ⚠: o `--ww3-gpu` é
+comparado com o `--ww3-noaa` (o WW3 da NOAA em `03adda91`, a base do fork) até o fork passar
+para o WW3 da MetOcean, e o `--chaceon --gpu` para com código 5 porque o chaceon não rodou em
+uma GPU real. A nota dentro do desenho, de que o `--ww3` compila o WW3 da NOAA, é o estado
+anterior a esse dia ⚠. O desenho é
 [`docs/archify/ww3-gpu-runtimes-pt.json`](docs/archify/ww3-gpu-runtimes-pt.json), também a
 Figura 1 do preprint, desenhado para uma coluna de 174 mm ([`DESIGN.md`](DESIGN.md), "Pictures
 in a paper").
@@ -186,7 +198,7 @@ para o lado do Kokkos uma vez, no começo, e só volta quando o WW3 escreve saí
 Para rodar o `resident`:
 
 ```bash
-scripts/ww3-gpu.sh --ww3-gpu full --cpu --kokkos resident            # OpenMP; compara com o Fortran e com o --ww3
+scripts/ww3-gpu.sh --ww3-gpu full --cpu --kokkos resident            # OpenMP; compara com o Fortran e com o --ww3-noaa
 scripts/ww3-gpu.sh --ww3-gpu full --cpu --kokkos resident --timers   # mostra o tempo de cada parte
 scripts/ww3-gpu.sh --ww3-gpu full --gpu --kokkos resident            # CUDA: uma pessoa precisa digitar "yes" no terminal
 ```
@@ -201,11 +213,31 @@ Para ver quantas vezes o `VA` atravessou, e em que direção, use `WW_KOKKOS_VA_
 | `full` | `kokkos/tests/fixtures/bench_small`: grade de 120 × 80, 9 520 pontos de mar, 24 × 24, 12 horas |
 | `coast` | `kokkos/tests/fixtures/coast`: 80 × 50 células de 5 km, 3 791 pontos de mar e 50 de contorno, 24 × 24, 12 horas. Tem correntes, nível do mar, gelo e espectros de contorno a cada hora (`scripts/coast_case.sh`). Essas entradas passam por trechos de código que os outros dois casos não usam |
 
+Um caso seu é um diretório com `ww3_grid.nml`, `ww3_shel.nml` e os arquivos que eles citam, em
+grade regular ou em grade triangular (`GRID%TYPE = 'UNST'`, uma malha Gmsh). O `--wind ifs` dá a
+ele o vento mais novo do IFS do ECMWF para a sua caixa e a sua duração, do cache do `just wind`
+quando o ciclo já está lá, e move as datas dos namelists para esse ciclo. O `--temp cmems` deixa
+ao lado da rodada a temperatura da superfície do mar da previsão do Copernicus Marine, do mesmo
+jeito (`just temp`; precisa de uma conta no Copernicus Marine):
+
+```bash
+just run --ww3 --case <dir> --wind ifs               # o WW3 da MetOcean com vento novo
+just run --ww3-gpu --case <dir> --wind ifs --cpu     # o mesmo caso com o port em Kokkos
+just run --chaceon --case <dir> --wind "$(just wind --print-path -b -52,-44,-32,-24)"
+just run --ww3 --case <dir> --wind ifs --temp cmems  # e a temperatura ao lado da rodada
+```
+
+`(v)` O `--ww3` rodou uma grade regular e uma triangular com vento do IFS em 11/11/2026; `⚠` o
+download do Copernicus não foi executado (a sessão não tinha conta), e o WW3 não lê a temperatura
+com os switches do laboratório ([`docs/RUN_COMMAND_202611.md`](docs/RUN_COMMAND_202611.md)).
+
 Cada modo de rodar tem uma receita `just`:
 
 ```bash
+just run --help        # o comando único: todos os runtimes, todas as opções
 just smoke             # smoke-ww3, depois smoke-ww3-gpu: regtest ww3_ts1, segundos
-just smoke-ww3         # --ww3: o WW3 como está
+just smoke-ww3         # --ww3: o WW3 da MetOcean como está
+just smoke-chaceon     # --chaceon --cpu: o WW3 em Rust, comparado com o --ww3 compilado com o switch do chaceon
 just smoke-ww3-gpu        # --ww3-gpu: o WW3 com o DIA em Kokkos (W3SNL1), comparado com o Fortran
 just full-ww3          # o caso caro: bench_small, 9 520 pontos de mar, minutos
 just full-ww3-gpu         # o mesmo com o DIA em Kokkos
@@ -461,7 +493,7 @@ Nenhum workflow do GitHub Actions constrói uma imagem Docker sozinho: todos com
 
 O código Kokkos na GPU tem sua própria imagem, `docker/Dockerfile.cuda`: o CUDA 13.4 da NVIDIA
 sobre Ubuntu 26.04, o Kokkos 5.2.2 compilado com CUDA para a capacidade de computação 8.9 (a RTX
-4090; `KOKKOS_ARCH` escolhe outra), com o `--ww3-gpu --gpu` e, como referência na CPU, o `--ww3`. Os kernels chamam a libdevice do CUDA, não as cópias da libm da glibc no dispositivo (`WW_KOKKOS_LIBM=OFF`: o Ubuntu distribui a libmvec sem a tabela de símbolos, e as cópias precisam de um símbolo dela), então uma rodada na GPU dentro da imagem é julgada por tolerância ([ADR-0014](docs/ADRs.md#adr-0014)). O host precisa do driver da
+4090; `KOKKOS_ARCH` escolhe outra), com o `--ww3-gpu --gpu` e, como referência na CPU, o `--ww3-noaa`. Os kernels chamam a libdevice do CUDA, não as cópias da libm da glibc no dispositivo (`WW_KOKKOS_LIBM=OFF`: o Ubuntu distribui a libmvec sem a tabela de símbolos, e as cópias precisam de um símbolo dela), então uma rodada na GPU dentro da imagem é julgada por tolerância ([ADR-0014](docs/ADRs.md#adr-0014)). O host precisa do driver da
 NVIDIA e do [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)
 para `docker run --gpus all`. Como no host, toda rodada `--gpu` pede um `yes` no terminal a quem
 supervisiona ([Running on the GPU](AGENTS.md#running-on-the-gpu-hard-rule)).
@@ -490,7 +522,7 @@ outro gfortran.
 **Imagens publicadas.** O `.github/workflows/docker-dist.yml` só roda quando uma pessoa o dispara
 pelo Actions (Run workflow); nenhum push, pull request ou agendamento o aciona. Ele constrói as
 imagens de execução escolhidas e confere, sem rodar caso nenhum, que cada uma traz o WW3 da NOAA
-(`--ww3`, compilado do `WW3-noaa/` no seu pin) e o ww3-gpu (`--ww3-gpu`) e nenhum arquivo-fonte (o
+(`--ww3-noaa`, compilado do `WW3-noaa/` no seu pin) e o ww3-gpu (`--ww3-gpu`) e nenhum arquivo-fonte (o
 `just dcheck` faz a mesma conferência). Com `push` marcado, ele também publica
 `ghcr.io/h0ffmann/ww3-gpu:<tag>` (CPU) e `ghcr.io/h0ffmann/ww3-gpu-cuda:<tag>`, e também `latest`
 quando a rodada é na main. Os rótulos
@@ -501,7 +533,7 @@ mesmo caso e compara as saídas só com o Docker:
 ```console
 img=ghcr.io/h0ffmann/ww3-gpu:<tag>
 docker inspect "$img" --format '{{json .Config.Labels}}'    # quais commits do WW3
-docker run --rm --user "$(id -u):$(id -g)" -v "$PWD/runs:/work/runs" "$img" --ww3 smoke
+docker run --rm --user "$(id -u):$(id -g)" -v "$PWD/runs:/work/runs" "$img" --ww3-noaa smoke
 docker run --rm --user "$(id -u):$(id -g)" -v "$PWD/runs:/work/runs" "$img" --ww3-gpu smoke
 ```
 
@@ -580,7 +612,7 @@ segue outro caminho: kernels em Kokkos que mantêm os dados na GPU e concordam c
 das tolerâncias pelas quais os regtests do WW3 são julgados,
 portados na ordem do tempo de parede medido.
 
-O `--ww3-gpu` roda na CPU (Kokkos OpenMP) por padrão, e é comparado par a par com o `--ww3`. O
+O `--ww3-gpu` roda na CPU (Kokkos OpenMP) por padrão, e é comparado par a par com o `--ww3-noaa`. O
 `just smoke-ww3-gpu gpu` roda em CUDA, só com uma pessoa supervisionando: ele pergunta no terminal
 (regra rígida do AGENTS.md). Uma GPU NVIDIA cujo driver não responde para a execução com código 4
 e a causa. Em 14 de outubro de

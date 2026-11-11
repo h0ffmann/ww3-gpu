@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# docker — the Ubuntu runtime image of docker/Dockerfile: WW3 (--ww3), WW3 with the Kokkos DIA
+# docker — the Ubuntu runtime image of docker/Dockerfile: NOAA's WW3 (--ww3-noaa), WW3 with the Kokkos DIA
 # (--ww3-gpu) and WW4 (--ww4), compiled in the image's build stage, no Nix. scripts/ww3-gpu.sh is its
 # entry point, with WW3GPU_PREBUILT set, so a run in the image is the same run as on the host.
 #
@@ -73,7 +73,7 @@ if [ "${1:-}" = --self-test ]; then
     grep -q -- "$want" <<<"$out" || { echo "docker: push lost '$want': $out" >&2; exit 1; }
   done
   out="$(bash "${BASH_SOURCE[0]}" --dry-run check ww3-gpu:t1)"
-  for want in "--entrypoint sh ww3-gpu:t1" BUILD_INFO "binaries only" "--ww3 smoke --build-only" "--ww3-gpu smoke --build-only"; do
+  for want in "--entrypoint sh ww3-gpu:t1" BUILD_INFO "binaries only" "--ww3-noaa smoke --build-only" "--ww3-gpu smoke --build-only"; do
     grep -q -- "$want" <<<"$out" || { echo "docker: check lost '$want': $out" >&2; exit 1; }
   done
   bash "${BASH_SOURCE[0]}" --dry-run push ww3-gpu:t1 >/dev/null 2>&1 && { echo "docker: push without a ref" >&2; exit 1; }
@@ -87,7 +87,7 @@ cmd="${1:-}"; [ -n "$cmd" ] || usage; shift
 case "$cmd" in
   build)
     tag="${1:-local}"
-    # --ww3 is built from pure NOAA WW3 (WW3-noaa/), --ww3-gpu from the fork (WW3/).
+    # --ww3-noaa is built from pure NOAA WW3 (WW3-noaa/), --ww3-gpu from the fork (WW3/).
     [ -n "$dry" ] || [ -f "$root/WW3-noaa/model/src/CMakeLists.txt" ] \
       || git -C "$root" submodule update --init --depth 1 WW3-noaa
     # WW4's sources and its yaml-cpp/googletest are compiled in the build stage.
@@ -95,7 +95,7 @@ case "$cmd" in
       git -C "$root" submodule update --init --depth 1 WW4
       git -C "$root/WW4" submodule update --init --depth 1 externals/yaml-cpp externals/googletest
     }
-    mapfile -t lab < <(labels ww3-gpu "WW3 (NOAA, --ww3) and ww3-gpu (Kokkos OpenMP, --ww3-gpu) compiled side by side, and WW4; binaries only")
+    mapfile -t lab < <(labels ww3-gpu "WW3 (NOAA, --ww3-noaa) and ww3-gpu (Kokkos OpenMP, --ww3-gpu) compiled side by side, and WW4; binaries only")
     do_or_say docker build -f "$root/docker/Dockerfile" -t "ww3-gpu:$tag" "${lab[@]}" \
       --build-arg "WW3_GPU_REV=$(rev "$root")" --build-arg "WW3_REV=$(rev "$root/WW3")" \
       --build-arg "WW3_NOAA_REV=$(rev "$root/WW3-noaa")" \
@@ -108,11 +108,11 @@ case "$cmd" in
     do_or_say docker run --rm --user "$(id -u):$(id -g)" -e "WW3GPU_ROUTINES=${WW3GPU_ROUTINES:-}" \
       -v "$root/build/docker-runs:/work/runs" "$image" "$@" ;;
   build-cuda)
-    # The GPU image (docker/Dockerfile.cuda): --ww3-gpu on Kokkos' CUDA backend, and --ww3 from
+    # The GPU image (docker/Dockerfile.cuda): --ww3-gpu on Kokkos' CUDA backend, and --ww3-noaa from
     # pure NOAA WW3 (WW3-noaa/) on the CPU as its reference.
     [ -n "$dry" ] || [ -f "$root/WW3-noaa/model/src/CMakeLists.txt" ] \
       || git -C "$root" submodule update --init --depth 1 WW3-noaa
-    mapfile -t lab < <(labels ww3-gpu-cuda "ww3-gpu on Kokkos CUDA (--ww3-gpu --gpu) and WW3 (NOAA, --ww3) on the CPU; binaries only")
+    mapfile -t lab < <(labels ww3-gpu-cuda "ww3-gpu on Kokkos CUDA (--ww3-gpu --gpu) and WW3 (NOAA, --ww3-noaa) on the CPU; binaries only")
     do_or_say docker build -f "$root/docker/Dockerfile.cuda" -t "ww3-gpu-cuda:${1:-local}" "${lab[@]}" \
       --build-arg "WW3_GPU_REV=$(rev "$root")" --build-arg "WW3_REV=$(rev "$root/WW3")" \
       --build-arg "WW3_NOAA_REV=$(rev "$root/WW3-noaa")" "$root" ;;
@@ -149,7 +149,8 @@ case "$cmd" in
     done
     do_or_say git -C "$root/WW4" submodule update --init --depth 1 externals/yaml-cpp externals/googletest ;;
   check)
-    # Runs no case: --ww3 (NOAA) and --ww3-gpu must both be compiled in, and nothing in the
+    # Runs no case: --ww3-noaa (NOAA's WW3, the fork's base) and --ww3-gpu must both be compiled
+    # in (MetOcean's WW3, --ww3, is not in the images yet), and nothing in the
     # image's tree may be a Fortran or C/C++ source, so the image is a binary distribution.
     img="${1:-}"; [ -n "$img" ] || { echo "docker: check <image>" >&2; exit 64; }
     # shellcheck disable=SC2016  # expanded by the container's sh
@@ -165,7 +166,7 @@ case "$cmd" in
     # stops before any run (and --gpu --build-only needs neither a GPU nor a person).
     gpu=()
     if [ -z "$dry" ] && docker run --rm --entrypoint test "$img" -d /opt/ww3-gpu/prebuilt/ww3-gpu-cuda; then gpu=(--gpu); fi
-    do_or_say docker run --rm "$img" --ww3 smoke --build-only
+    do_or_say docker run --rm "$img" --ww3-noaa smoke --build-only
     do_or_say docker run --rm "$img" --ww3-gpu smoke "${gpu[@]}" --build-only ;;
   push)
     # Never called by CI on its own: .github/workflows/docker-*.yml run it only from a manual

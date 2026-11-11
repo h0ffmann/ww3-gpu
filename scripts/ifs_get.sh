@@ -11,19 +11,27 @@
 #     -b W,E,S,N             subset box in degrees, -180..180 (default: the whole globe)
 #     -o DIR                 output directory (default data/ifs/<YYYYMMDDHH>)
 #     -n                     dry run: print the URLs and byte ranges, download nothing
+#     --print-path           print only the path of the netCDF file on stdout, the rest on stderr:
+#                            `scripts/ww3-gpu.sh --wind "$(just wind --print-path -b W,E,S,N)"`
 #     --self-test            check argument parsing and the index parser offline
 #
 # What it does: for every step (3 h to 144 h, then 6 h) it reads the step's .index (one JSON line
 # per GRIB message), downloads only the messages asked for with an HTTP range request, concatenates
-# them (GRIB2 messages concatenate), converts them with ecCodes' grib_to_netcdf, and subsets with
-# `ncks` when -b is given. No key: Open Data is anonymous, licensed CC BY 4.0. IFS_BASE_URL
-# points it at a mirror with the same layout. Files already downloaded are kept.
+# them (GRIB2 messages concatenate), converts them with ecCodes' grib_to_netcdf, subsets with
+# `ncks` when -b is given, and turns the latitudes south to north with `ncpdq`: ww3_prnc refuses
+# a file whose latitudes descend on a regular grid (model/src/ww3_prnc.F90:942 at metocean/WW3
+# 92e2cf66), and IFS is written north to south. No key: Open Data is anonymous, licensed CC BY 4.0. IFS_BASE_URL
+# points it at a mirror with the same layout. Files already downloaded are kept: a GRIB step is
+# never fetched twice, the netCDF file is rebuilt only when the parameters changed (<file>.args),
+# and a box has its own file (ifs_<YYYYMMDDHH>_f<HHH>_box_<W>_<E>_<S>_<N>.nc), so two cases of one
+# cycle never overwrite each other's wind. When `-d latest` finds no published cycle (no network), it takes the newest cycle
+# already converted in data/ifs and says so.
 #
 # SPDX-License-Identifier: MIT
 set -euo pipefail
 
 base="${IFS_BASE_URL:-https://data.ecmwf.int/forecasts}"
-date_arg=latest cyc=00 last=120 params="10u 10v" box="" out="" dry=0
+date_arg=latest cyc=00 last=120 params="10u 10v" box="" out="" dry=0 print_path=0
 
 die() { echo "ifs_get: $*" >&2; exit 2; }
 
@@ -72,11 +80,15 @@ while [ $# -gt 0 ]; do
         -b) box="${2:?-b needs W,E,S,N}"; shift 2 ;;
         -o) out="${2:?-o needs a directory}"; shift 2 ;;
         -n|--dry-run) dry=1; shift ;;
+        --print-path) print_path=1; shift ;;
         --self-test) self_test; exit ;;
-        -h|--help) sed -n '2,21p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        -h|--help) sed -n '2,29p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
         *) die "unknown option '$1' (see --help)" ;;
     esac
 done
+
+# --print-path: stdout carries the path alone, so `$(...)` takes it.
+if [ "$print_path" = 1 ]; then exec 3>&1 1>&2; fi
 
 [[ "$cyc" =~ ^(00|06|12|18)$ ]] || die "cycle must be 00, 06, 12 or 18, got '$cyc'"
 [[ "$last" =~ ^[0-9]+$ ]] || die "-H must be a whole number of hours, got '$last'"
@@ -84,13 +96,18 @@ max=360; [[ "$cyc" =~ ^(06|18)$ ]] && max=144
 [ "$last" -le "$max" ] || die "the ${cyc}z cycle stops at ${max} h, asked for ${last} h"
 [ -z "$box" ] || [[ "$box" =~ ^-?[0-9.]+,-?[0-9.]+,-?[0-9.]+,-?[0-9.]+$ ]] || die "-b must be W,E,S,N, got '$box'"
 need=(curl)
-[ "$dry" = 1 ] || need+=(grib_to_netcdf ncdump)
+[ "$dry" = 1 ] || need+=(grib_to_netcdf ncdump ncpdq)
 [ -z "$box" ] || [ "$dry" = 1 ] || need+=(ncks)
 for tool in "${need[@]}"; do
     command -v "$tool" >/dev/null || die "$tool not found; run inside 'just ww3' or install ecCodes, NCO and netcdf-bin"
 done
 
 last_step="$(steps "$last" | tail -1)"
+tag=""
+if [ -n "$box" ]; then
+    IFS=, read -r bw be bs bn <<<"$box"
+    tag="$(printf '_box_%g_%g_%g_%g' "$bw" "$be" "$bs" "$bn")"
+fi
 url_of() { echo "${base}/$1/${cyc}z/ifs/0p25/oper/$1${cyc}0000-$2h-oper-fc.$3"; }
 published() { curl -fsI --retry 2 -o /dev/null "$(url_of "$1" "$last_step" index)"; }
 
@@ -99,15 +116,34 @@ if [ "$date_arg" = latest ]; then
         d="$(date -u -d "-${back} day" +%Y%m%d)"
         if published "$d"; then date_arg="$d"; break; fi
     done
+    if [ "$date_arg" = latest ] && [ -z "$out" ] && [ "$dry" = 0 ]; then
+        # No network, or nothing published: the newest cycle already converted, if it reaches <last>.
+        cached="$(find data/ifs -maxdepth 2 -name "ifs_????????${cyc}_f$(printf '%03d' "$last_step")${tag}.nc" 2>/dev/null | sort | tail -1)"
+        if [ -n "$cached" ]; then
+            date_arg="$(basename "$cached" | cut -c5-12)"
+            echo ">> no ${cyc}z cycle found at ${base}; using the cached cycle ${date_arg} ${cyc}z, which may not be the newest" >&2
+        fi
+    fi
     [ "$date_arg" != latest ] || die "no ${cyc}z cycle with step ${last_step} h in the last three days at ${base}"
 fi
 [[ "$date_arg" =~ ^[0-9]{8}$ ]] || die "date must be YYYYMMDD or latest, got '$date_arg'"
 
 out="${out:-data/ifs/${date_arg}${cyc}}"
-nc="$out/ifs_${date_arg}${cyc}_f$(printf '%03d' "$last_step").nc"
+nc="$out/ifs_${date_arg}${cyc}_f$(printf '%03d' "$last_step")${tag}.nc"
+args="${params}|${box}|south-to-north"
+if [ "$dry" = 0 ] && [ -s "$nc" ] && [ "$(cat "$nc.args" 2>/dev/null)" = "$args" ]; then
+    echo ">> kept ${nc} (same parameters)"
+    if [ "$print_path" = 1 ]; then echo "$nc" >&3; fi
+    exit 0
+fi
 echo ">> IFS ${date_arg} ${cyc}z, steps 0..${last_step} h, params: ${params}, box: ${box:-global}"
 echo ">> from ${base} (ECMWF Open Data, CC BY 4.0)"
 mkdir -p "$out/grib"
+# A cached step holds the messages of the request that fetched it: other parameters, fetch again.
+if [ "$dry" = 0 ] && [ "$(cat "$out/grib/params" 2>/dev/null || echo "10u 10v")" != "$params" ]; then
+    rm -f "$out"/grib/f???.grib2
+fi
+[ "$dry" = 1 ] || printf '%s\n' "$params" >"$out/grib/params"
 
 n=0
 for h in $(steps "$last"); do
@@ -135,7 +171,10 @@ done
 echo ">> ${n} steps in ${out}/grib"
 
 merged="$out/merged.grib2"
-cat "$out"/grib/f???.grib2 >"$merged"
+rm -f "$nc.args"
+# Only the steps of this request: a longer one may have left more in grib/.
+: >"$merged"
+for h in $(steps "$last"); do cat "$out/grib/f$(printf '%03d' "$h").grib2" >>"$merged"; done
 grib_to_netcdf -o "$nc" "$merged" >/dev/null
 rm -f "$merged"
 if [ -n "$box" ]; then
@@ -147,5 +186,8 @@ if [ -n "$box" ]; then
     ncks -O -d "longitude,${w},${e}" -d "latitude,${s},${n}" "$nc" "$nc.box"
     mv "$nc.box" "$nc"
 fi
+ncpdq -O -a -latitude "$nc" "$nc.flip"
+mv "$nc.flip" "$nc"
+printf '%s\n' "$args" >"$nc.args"
 echo ">> wrote ${nc}"
-ncdump -h "$nc" | sed -n '1,30p'
+if [ "$print_path" = 1 ]; then echo "$nc" >&3; else ncdump -h "$nc" | sed -n '1,30p'; fi
