@@ -121,11 +121,12 @@ coast-ww3-gpu parts="resident" device="cpu":
 # WW3GPU_LAB_SWITCH=ON builds every entry with switch_lab_shrd's source-term words (the timed
 # run's physics, which no matrix.base switch has), in a build directory ending in -lab.
 # Record: build/ww3-gpu-matrix-<selection>[-<routines>|-kokkos-<preset>][-lab]/summary.tsv.
-ww3-gpu-matrix jobs="8" selection="serial" *ctest_args:
+ww3-gpu-matrix jobs="8" selection="serial" *ctest_args="":
     #!/usr/bin/env bash
     set -euo pipefail
     jobs=8 sel=serial rest=() i=0
     for a in "$@"; do
+      [ -n "$a" ] || continue  # the empty default of *ctest_args, which an older just needs
       i=$((i + 1))
       case "$a" in
         jobs=*) jobs="${a#jobs=}" ;;
@@ -152,10 +153,11 @@ ww3-gpu-matrix jobs="8" selection="serial" *ctest_args:
 # and nccmp-tol, in build/ww3-gpu-matrix-cuda-<selection>. It runs on the GPU, so it asks the
 # supervising human for "yes" first (scripts/gpu_supervised.sh, AGENTS.md). WW3GPU_ROUTINES as
 # ww3-gpu-matrix (SNL1 by default); jobs share the one GPU.
-ww3-gpu-matrix-cuda jobs="2" selection="serial" *ctest_args:
+ww3-gpu-matrix-cuda jobs="2" selection="serial" *ctest_args="":
     #!/usr/bin/env bash
     set -euo pipefail
-    jobs="$1" sel="$2"
+    jobs="$1" sel="$2" rest=()
+    for a in "${@:3}"; do [ -z "$a" ] || rest+=("$a"); done  # drop *ctest_args' empty default
     [[ "$jobs" =~ ^[1-9][0-9]*$ ]] || { echo "ww3-gpu-matrix-cuda: jobs is a positive integer, not '$jobs'" >&2; exit 64; }
     [[ "$sel" =~ ^(serial|omp|mpi|all)$ ]] || { echo "ww3-gpu-matrix-cuda: serial, omp, mpi or all, not '$sel'" >&2; exit 64; }
     bash scripts/gpu_supervised.sh "just ww3-gpu-matrix-cuda $jobs $sel"
@@ -168,7 +170,7 @@ ww3-gpu-matrix-cuda jobs="2" selection="serial" *ctest_args:
       -DWW3GPU_OMP_THREADS="$t" -DWW3GPU_MPI_RANKS="${WW3GPU_MPI_RANKS:-4}" -DWW3GPU_DATA="$data" \
       -DWW3GPU_ROUTINES="$routines" -DWW3GPU_OMP_NESTED="${WW3GPU_OMP_NESTED:-OFF}" >/dev/null
     WW3GPU_COMMAND="${WW3GPU_ROUTINES:+WW3GPU_ROUTINES=$WW3GPU_ROUTINES }just ww3-gpu-matrix-cuda $jobs $sel" \
-      WW3GPU_GPU_CONFIRMED=1 "${cuda[@]}" ctest --test-dir "$b" -j "$jobs" --output-on-failure "${@:3}"
+      WW3GPU_GPU_CONFIRMED=1 "${cuda[@]}" ctest --test-dir "$b" -j "$jobs" --output-on-failure "${rest[@]}"
 
 # The entries of a selection, as CTest test names (NNN:<test>:<switch>), without running them.
 ww3-gpu-matrix-list selection="serial":
