@@ -18,13 +18,13 @@ byte, e só ao modelo em C. Os autores escrevem que a concordância bit a bit en
 autores aceitam diferenças até um teto registrado para cada campo.
 
 O sucessor do WW3 também está em desenvolvimento. A NCEP Office Note 525 [@on525] escolheu uma
-reescrita de baixo para cima, com um núcleo em C++ primeiro e um núcleo em Rust depois. O mesmo
-relatório rebaixa o Fortran a uma linguagem só de solvers. O repositório do WAVEWATCH IV [@ww4]
+reescrita de baixo para cima, com um núcleo em C++ primeiro e um núcleo em Rust depois ⚠. O mesmo
+relatório rebaixa o Fortran a uma linguagem só de solvers ⚠. O repositório do WAVEWATCH IV [@ww4]
 está em pré-alfa: em 2026-11-11, o branch `develop` tinha 40 commits, de 2025-11-17 a 2026-10-16
 (`875f49a`). Os 97 arquivos-fonte do WAVEWATCH IV são C++ (66 `.cpp`, 31 `.h`), e nenhum kernel
 de física do WW3 está no repositório ainda.
 
-Por isso, os kernels centrais do modelo de ondas continuam em Fortran por alguns anos. Esse é o
+Por isso, os kernels centrais do modelo de ondas continuam em Fortran por alguns anos ⚠. Esse é o
 primeiro motivo para o primeiro autor continuar a manter o ww3-gpu e o chaceon. Os dois projetos
 fazem os kernels Fortran do WW3 rodarem em GPU agora, sem mudança nos bits.
 

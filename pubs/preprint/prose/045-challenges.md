@@ -16,7 +16,7 @@ from `just ww3-gpu-matrix-list`. The count of all entries is the number of lines
 `matrix.base` writes, and a machine section can disable some of them. {#tbl:regtests}
 
 One run of the 310 `NL1` entries takes days. The selected set takes one to three hours on one
-workstation (Intel i9-14900, 32 hardware threads); this time is an estimate, not a measurement.
+workstation (Intel i9-14900, 32 hardware threads); this time is an estimate, not a measurement ⚠.
 Thus a full matrix run cannot follow each commit. ww3-gpu runs the selected set as a guardrail,
 and it postpones the full matrix to a validation phase. Until then, a static argument supports bit
 parity: the `-O3` GIMPLE or the disassembly of both compilers.

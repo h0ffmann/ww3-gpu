@@ -18,7 +18,7 @@ o `matrix.base` escreve, e uma seção de máquina consegue desligar algumas des
 
 Uma execução das 310 entradas `NL1` leva dias. O conjunto selecionado leva de uma a três horas
 numa estação de trabalho (Intel i9-14900, 32 threads de hardware); esse tempo é uma estimativa, e
-não uma medida. Por isso, uma execução da matriz completa não consegue acompanhar cada commit. O
+não uma medida ⚠. Por isso, uma execução da matriz completa não consegue acompanhar cada commit. O
 ww3-gpu roda o conjunto selecionado como proteção e adia a matriz completa para uma fase de
 validação. Até essa fase, um argumento estático sustenta a paridade de bits: o GIMPLE em `-O3` ou
 a desmontagem dos dois compiladores.

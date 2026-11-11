@@ -18,12 +18,12 @@ arithmetic orderings is neither attainable nor necessary". On the GPU, they acce
 field.
 
 The successor of WW3 is also in progress. NCEP Office Note 525 [@on525] chose a bottom-up
-rewrite, with a C++ core first and a Rust core later. The same report demotes Fortran to a
-solver-only language. The WAVEWATCH IV repository [@ww4] is pre-alpha: on 2026-11-11 its
+rewrite, with a C++ core first and a Rust core later ⚠. The same report demotes Fortran to a
+solver-only language ⚠. The WAVEWATCH IV repository [@ww4] is pre-alpha: on 2026-11-11 its
 `develop` branch had 40 commits, from 2025-11-17 to 2026-10-16 (`875f49a`). Its 97 source files
 are C++ (66 `.cpp`, 31 `.h`), and no physics kernel of WW3 is in it yet.
 
-Thus the core kernels of the wave model stay in Fortran for some years. This is the first reason
+Thus the core kernels of the wave model stay in Fortran for some years ⚠. This is the first reason
 why the first author will continue to maintain ww3-gpu and chaceon. They make the Fortran
 kernels of WW3 run on GPUs now, without a change to their bits.
 

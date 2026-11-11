@@ -78,6 +78,9 @@
 \setcounter{secnumdepth}{3}
 
 \AtBeginEnvironment{longtable}{\small}
+\newfontfamily\markfont{DejaVuSans.ttf}
+\catcode`\⚠=\active
+\protected\def⚠{{\markfont\char"26A0\relax}}
 \makeatletter
 \@ifpackageloaded{subcaption}{}{\usepackage{subcaption}}
 \@ifpackageloaded{caption}{}{\usepackage{caption}}
@@ -211,18 +214,18 @@ they accept differences up to a recorded ceiling for each field.
 
 The successor of WW3 is also in progress. NCEP Office Note 525
 (\citeproc{ref-on525}{Tolman 2025}) chose a bottom-up rewrite, with a
-C++ core first and a Rust core later. The same report demotes Fortran to
-a solver-only language. The WAVEWATCH IV repository
+C++ core first and a Rust core later ⚠. The same report demotes Fortran
+to a solver-only language ⚠. The WAVEWATCH IV repository
 (\citeproc{ref-ww4}{NOAA Environmental Modeling Center 2026}) is
 pre-alpha: on 2026-11-11 its \texttt{develop} branch had 40 commits,
 from 2025-11-17 to 2026-10-16 (\texttt{875f49a}). Its 97 source files
 are C++ (66 \texttt{.cpp}, 31 \texttt{.h}), and no physics kernel of WW3
 is in it yet.
 
-Thus the core kernels of the wave model stay in Fortran for some years.
-This is the first reason why the first author will continue to maintain
-ww3-gpu and chaceon. They make the Fortran kernels of WW3 run on GPUs
-now, without a change to their bits.
+Thus the core kernels of the wave model stay in Fortran for some years
+⚠. This is the first reason why the first author will continue to
+maintain ww3-gpu and chaceon. They make the Fortran kernels of WW3 run
+on GPUs now, without a change to their bits.
 
 This note starts from that result and asks a narrower question. Can an
 agent port a spectral wave model, and give the bits of the Fortran
@@ -539,7 +542,7 @@ Selected regtests of ww3-gpu & 5, and the \texttt{ww3\_ts1} pair & 0.7
 
 One run of the 310 \texttt{NL1} entries takes days. The selected set
 takes one to three hours on one workstation (Intel i9-14900, 32 hardware
-threads); this time is an estimate, not a measurement. Thus a full
+threads); this time is an estimate, not a measurement ⚠. Thus a full
 matrix run cannot follow each commit. ww3-gpu runs the selected set as a
 guardrail, and it postpones the full matrix to a validation phase. Until
 then, a static argument supports bit parity: the \texttt{-O3} GIMPLE or
@@ -580,7 +583,7 @@ Guimarães (LabECO, UFSC) is the co-advisor of the first author.
 
 Most of the commits came from Claude Opus. Claude Sonnet also ported a
 large amount of code without gross errors, in the experience of the
-first author. One example is the split of \texttt{W3SDS4} into parts
+first author ⚠. One example is the split of \texttt{W3SDS4} into parts
 that run one sea point per vector lane (ww3-gpu commit \texttt{9cef132},
 841 lines added). Its output files were byte-identical to the Fortran of
 the same executable on the \texttt{smoke} and \texttt{full} cases.
@@ -588,8 +591,10 @@ the same executable on the \texttt{smoke} and \texttt{full} cases.
 Each repository publishes the rules, skills and hooks of its agents in
 its \texttt{AGENTS.md} file and its \texttt{.claude/} directory. Every
 number in this note comes from a file of a repository at the commit that
-the note names. Nothing was run for this note. The physics of WW3 is
-used without change; WAVEWATCH III is a registered trademark of NOAA.
+the note names. Nothing was run for this note. Each claim was checked on
+2026-11-11 against the source and the commit that it names; a ⚠ marks a
+claim that was not checked against a primary source. The physics of WW3
+is used without change; WAVEWATCH III is a registered trademark of NOAA.
 
 \textbf{Disclaimer.} Today, both repositories are set up for Claude
 Code. The authors will continue to work so that any coding agent can use

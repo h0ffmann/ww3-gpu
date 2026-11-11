@@ -43,7 +43,12 @@ geometry:
   - left=18mm
   - right=18mm
 link-citations: true
-header-includes:
-  - \AtBeginEnvironment{longtable}{\small}
+header-includes: |
+  ```{=latex}
+  \AtBeginEnvironment{longtable}{\small}
+  \newfontfamily\markfont{DejaVuSans.ttf}
+  \catcode`\⚠=\active
+  \protected\def⚠{{\markfont\char"26A0\relax}}
+  ```
 colorlinks: true
 ---
