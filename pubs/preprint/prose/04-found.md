@@ -33,6 +33,12 @@ proof assistant [@adr0001]. There are four reasons:
 4. Agents must write each proof, and a person must review it. This is a second artefact for each
    routine.
 
+Without a proof, the DIA port has the strongest evidence short of one. It is byte-identical
+on all 125 entries of the WW3 regression matrix that select it (100 serial, 25 OpenMP). Section 1
+of the kernel was also swept over all $2^{32}$ `float32` inputs, with 0 differences [@adr0001].
+Thus the DIA port is validated by the tests of the model that it replaces, on every entry that
+calls it. This validation is not a formal proof, and the note does not call it one.
+
 A first formal layer is already next to the ports. The Lean 4 package `ocean-waves`
 [@oceanwaves] states the discretised action balance equation and proves these properties, with
 no `sorry` and no `axiom`:
