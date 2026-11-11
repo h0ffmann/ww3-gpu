@@ -27,3 +27,22 @@ jobs:
       - env:
           GH_TOKEN: ${{ github.token }}
         run: gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --verify-tag --generate-notes --notes-file "$RUNNER_TEMP/notes.md" --title "$GITHUB_REF_NAME"
+
+  # The preprint's arXiv source bundle, attached to the release for the author to upload at
+  # arxiv.org/submit (arXiv has no submission API for authors; arxiv.yml says why). A separate
+  # job, so a TeX failure never holds back the release or Zenodo's DOI.
+  arxiv-bundle:
+    needs: release
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with: { fetch-depth: 0, persist-credentials: false }
+      - run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends texlive-xetex texlive-latex-extra \
+            texlive-fonts-recommended lmodern fonts-dejavu-core poppler-utils
+      - run: bash scripts/preprint_arxiv.sh --out "$RUNNER_TEMP/arxiv"
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" "$RUNNER_TEMP"/arxiv/wave-models-on-gpus-arxiv.tar.gz

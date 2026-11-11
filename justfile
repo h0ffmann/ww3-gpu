@@ -443,6 +443,10 @@ memory *args:
 preprint *args:
     bash scripts/preprint.sh "$@"
 
+# The preprint's arXiv source bundle (build/arxiv/*.tar.gz), compiled with xelatex from a clean directory; the upload stays manual.
+preprint-arxiv *args:
+    bash scripts/preprint_arxiv.sh "$@"
+
 # Regenerate codemeta.json from CITATION.cff and .zenodo.json; `just codemeta --check` is the CI gate.
 codemeta *args:
     python3 scripts/codemeta.py "$@"
