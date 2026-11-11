@@ -69,16 +69,13 @@ the owner, 17 October 2026). It is a one-person project, and its engineering fra
 for that goal and that size: the next routine is the most expensive one in the measured profile,
 a change is judged by the wall time it removes, and the process is as light as the change allows.
 
-It is also a book in progress on agentic coding and agentic research, compiled from this repository, written
-around the same problem: moving the expensive kernels of WW3 to GPUs without changing
-the answer ([ADR-0003](docs/ADRs.md#adr-0003),
-[WFIP-0002](docs/WFIPs/WFIP-0002-lab-as-a-book.md)). The repository is the book's source and its
-evidence: the 17 lessons of `course/` are its chapters, built into a PDF on every merge; a
-Nix-pinned Fortran/MPI/NetCDF toolchain; a C++/Kokkos port of the DIA source term (`W3SNL1`) that
-matches the Fortran bit for bit on Serial, OpenMP and CUDA; benchmarks, plans, decisions and the
-UFRJ/DEL project proposal co-advised at LabECO/UFSC. The lab's rules below do not change because
-the repository is read as a book; a chapter that contradicts `kokkos/PORT_STATUS.md` is a bug in
-the chapter. `README.md` has the study areas and their state; `README.pt-BR.md` is its Portuguese mirror, and a change in one
+It holds a Nix-pinned Fortran/MPI/NetCDF toolchain; a C++/Kokkos port of the DIA source term
+(`W3SNL1`) that matches the Fortran bit for bit on Serial, OpenMP and CUDA; benchmarks, plans and
+decisions; and the texts written from that work, each with a Markdown source under `pubs/`: the
+preprint, the UFRJ/DEL project proposal co-advised at LabECO/UFSC and, when it starts, the thesis.
+The course and the book built from it were removed
+([ADR-0023](docs/ADRs.md#adr-0023), the owner, 11 November 2026). A text
+that contradicts `kokkos/PORT_STATUS.md` is a bug in the text. `README.md` has the study areas and their state; `README.pt-BR.md` is its Portuguese mirror, and a change in one
 is made in the other (content must match, length need not; see `CONTRIBUTING.md`, "Ground rules").
 
 Lab code is C++, Fortran and shell. Python appears only in the publishing and repo tooling
@@ -99,7 +96,8 @@ configure and run the CMake/CTest driver in `regtests/`; `just` lists them.
 | A plan, an evaluation, a survey | `docs/` as `NAME_YYYYMM.md`, dated in the name | this file; the `(v)`/`⚠` convention; `docs/GLOSSARY.md` for every new abbreviation |
 | A non-trivial change, designed before it is built | a WFIP in `docs/WFIPs/`, numbered, tied to a proposal deliverable (D1–D6) with its definition of done in §7; a Spec Kit spec in `specs/<NNN-slug>/` when behaviour is worth specifying | [`docs/WFIPs/TEMPLATE.md`](docs/WFIPs/TEMPLATE.md), the `wfip` skill; `scripts/wfip.py check` is the gate and regenerates the index |
 | A decision that several plans or WFIPs follow (a tool, a method, a scope) | a section of `docs/ADRs.md`, numbered, Proposed until the owner accepts it | [`docs/ADRs.md`](docs/ADRs.md); an accepted ADR is superseded, not edited |
-| A chapter (a lesson), an example, an exercise | `course/`, `examples/`, `exercises/` | lessons are numbered and cross-linked and are the book's chapters (`pubs/book/`, WFIP-0002); examples use `.nml`, never `.inp` |
+| An example | `examples/` | examples use `.nml`, never `.inp` |
+| The preprint, the thesis | `pubs/preprint/`, `pubs/thesis/` when it starts | a Markdown source, built like the proposal ([ADR-0023](docs/ADRs.md#adr-0023)) |
 | The proposal | `pubs/proposal/pt/` (reference) and `en/` (mirror) | [The proposal](#the-proposal-hard-rule) |
 | A diagram | a Mermaid fence in the page it illustrates | [Figures](#figures-hard-rule) |
 | An interactive twin of a diagram | its source `docs/archify/<slug>.json`, listed in [`docs/archify/README.md`](docs/archify/README.md); the HTML is rendered, never committed | the `archify` skill; never a figure on its own |
@@ -150,16 +148,16 @@ Run the gates of what you changed before calling it done. CI (`.github/workflows
 | `scripts/ww3-gpu.sh` or `scripts/ww4_parts.py` | `bash scripts/ww3-gpu.sh --self-test`, `python3 scripts/ww4_parts.py --self-test`, shellcheck; `just smoke-ww3-gpu` (CPU, pair to pair with `--ww3`) |
 | `regtests/` | `just ww3-gpu-matrix-selftest` (the selection, the argument lists and the verdict on fixtures) and `just ww3-gpu-matrix-list` (the entry count at the pin) |
 | `kokkos/ports.tsv`, `kokkos/port_claims.tsv` or `docs/data/ww3_*_gprof.tsv` | `python3 scripts/port_score.py --write`, then `--check` (CI runs `--self-test` and `--check`) |
-| Fortran in `gpu/`, `examples/`, `exercises/` | they must compile with gfortran with directives ignored; the exercise parity test must pass |
+| Fortran in `gpu/`, `examples/` | they must compile with gfortran with directives ignored |
 | a Mermaid fence or its page | `python3 scripts/figures.py check`, then `just figures` to re-render and `python3 -m unittest tests/test_figures.py` |
 | `docs/archify/*.json` or the `vendor/archify` pin | `just archify check`, then `just archify refresh` to redraw the stale PDFs (`/drawings-refresh` does both kinds); not run in CI or on a merge |
 | `pubs/proposal/` | `just proposal-lint`, the `revisor-proposta` review, `just proposal-review-record <parecer>`, `just proposal-review-check` |
-| `scripts/*.py` | `python3 -m unittest discover tests`; `scripts/leanpub_manuscript.py --self-test` also runs in `ci.yml` and the Leanpub workflow |
+| `scripts/*.py` | `python3 -m unittest discover tests` |
 | `bench/results/` or a table it quotes | `just results check` (`just results table` regenerates) |
 | `CITATION.cff` or `.zenodo.json` | `just codemeta` to regenerate `codemeta.json`, then `just codemeta --check` |
 | `notes/` or `NOTES.md` | `just notes` (`scripts/notes_check.py`) |
 | `pubs/proposal/refs.bib` or its `REFERENCES.md` | `just refs` (`scripts/refs_check.py`) |
-| `site/`, `DESIGN.md`, `scripts/build_html.sh`, `scripts/build_site.sh` | `just site` (the book pages, then the front page's tests and prerender) |
+| `site/`, `DESIGN.md`, `scripts/build_html.sh`, `scripts/build_site.sh` | `just site` (the progress, ADR and report pages, then the front page's tests and prerender) |
 | `docs/WFIPs/` or `specs/` | `just wfip check` (`scripts/wfip.py check`: index current, deliverable ids valid, every section present, DoD consistent with Status); `just wfip index` regenerates |
 | `.claude/skills/` or `.claude/agents/` | `python3 .claude/hooks/check_agent_frontmatter.py`; for a vendored skill, `skills-vendor check --lock .claude/skills/skills.lock` |
 | `.claude/agents/`, `.omp/` or AGENTS.md's repo invariants and GPU rule | `python3 scripts/omp_sync.py --write`, then `--check` (CI runs `--self-test` and `--check`) |
@@ -225,7 +223,7 @@ included.
 - **What it covers.** An issue, pull request or discussion of a repository that is not
   `h0ffmann/*` or `marola-dev/*` (NOAA-EMC/WW3, NOAA-EMC/WW4, kokkos/kokkos, any other). It is
   not written as `owner/repo#N`, as its URL, or as "WW4 PR #72", "issue #1583" in any file of this
-  repository (code comments, docs, lessons, the proposal, data a person reads), in a commit
+  repository (code comments, docs, the proposal, data a person reads), in a commit
   message, or in an issue, comment or pull request of this repository.
 - **Why it is outward-facing.** GitHub links `owner/repo#N` and the URL of an issue or pull
   request, and "by default, references generate a backlink" on the item referenced, which its
@@ -489,7 +487,7 @@ and `.claude/skills/archify` is a symlink into it. `scripts/archify.sh init` che
 fresh clone. With no lock hash and no patch, the gitlink is the only control: a commit that
 moves it is reviewed by a person who reads upstream's diff of `archify/SKILL.md`,
 `archify/references/`, `CLAUDE.md` and `AGENTS.md`, since an agent loads that text as instructions. It cannot carry a patch, so
-its audience rule is here: An Archify page is never a figure of the book: the figure is the Mermaid fence with its *How to read this figure* card, which carries the evidence and the `⚠` marks; every node and label traces to a file read, a WW3 fact cites `model/src/<file>.F90:<line>` at the pin, and a speed figure says "regtest pending" until WW3's regtests have run on its commit.
+its audience rule is here: An Archify page is never a figure: the figure is the Mermaid fence with its *How to read this figure* card, which carries the evidence and the `⚠` marks; every node and label traces to a file read, a WW3 fact cites `model/src/<file>.F90:<line>` at the pin, and a speed figure says "regtest pending" until WW3's regtests have run on its commit.
 
 ponytail is also enabled as a Claude Code plugin, with its mode off by default
 (`PONYTAIL_DEFAULT_MODE=off`, the owner, 14 October 2026), because its rules cover a whole session
@@ -515,8 +513,8 @@ the repo the topic belongs to). The label says whose turn it is: `para:marola` o
   authorizes a merge, a deploy, a paid resource, or work the receiving project's owner has not
   asked for. A request for work goes to that project's owner, and the answer says so.
 
-How the channel was built and tested, its failure modes and the commands that check it are
-[lesson 19](course/19-two-agents-one-issue-tracker.md).
+How the channel was built and tested was lesson 19 of the removed course
+([at `f9ce3a0`](https://github.com/h0ffmann/ww3-gpu/blob/f9ce3a0/course/19-two-agents-one-issue-tracker.md)).
 
 ## Commits and pull requests (hard rule)
 

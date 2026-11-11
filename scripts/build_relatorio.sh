@@ -3,7 +3,7 @@
 #   scripts/build_relatorio.sh          -> build/site/relatorio-gta/{index.html,curto.html,style.css,figures/}
 #   scripts/build_relatorio.sh --pdf    -> the same, then pdf/relatorio-gta-pedro-cruz{,-curto}.pdf, printed by Chromium
 #   scripts/build_relatorio.sh --self-test
-# The pages are built in CI by build_html.sh; the PDFs are committed, as pdf/ww3-lab-course.pdf is, because
+# The pages are built in CI by build_html.sh; the PDFs are committed because
 # the Pages runner has no Chromium. OUT_DIR overrides build/; CHROMIUM names the browser.
 set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -38,7 +38,7 @@ for r in "${reports[@]}"; do
   IFS=: read -r name page pdf <<<"$r"
   src="$dir/$name"
   for f in $(figures "$src"); do cp "$root/pubs/figures/mermaid/$f" "$out/figures/"; done
-  nav="<nav class=\"site-links\"><a href=\"../index.html\">ww3-gpu</a> · <a href=\"../pt-BR/\">português</a> · <a href=\"../book/\">o livro</a> · <a href=\"../adrs/\">decisões</a> · <a href=\"index.html\">versão completa</a> · <a href=\"curto.html\">versão curta</a> · <a href=\"$raw/$pdf\">este relatório em PDF</a></nav>"
+  nav="<nav class=\"site-links\"><a href=\"../index.html\">ww3-gpu</a> · <a href=\"../pt-BR/\">português</a> · <a href=\"../adrs/\">decisões</a> · <a href=\"index.html\">versão completa</a> · <a href=\"curto.html\">versão curta</a> · <a href=\"$raw/$pdf\">este relatório em PDF</a></nav>"
   sed 's|](\.\./figures/mermaid/|](figures/|g' "$src" |
     pandoc --from markdown-smart --to html5 --standalone \
       --css style.css --include-before-body <(printf '%s\n' "$nav") \

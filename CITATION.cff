@@ -3,14 +3,13 @@ message: "If you use this software, please cite it using the metadata below."
 type: software
 title: "WW3 GPU Lab: agentic coding and agentic research on a bit-for-bit GPU port of WAVEWATCH III"
 abstract: >-
-  A book in progress on agentic coding and agentic research, compiled from the repository
-  that is its evidence, written around one problem: moving the expensive kernels of the
-  WAVEWATCH III spectral wind-wave model to GPUs without changing the answer. Seventeen
-  lessons take the reader from the wave spectrum to running the Fortran model on real
-  cases, benchmarking it, and porting its kernels (starting with the W3SNL1 nonlinear
-  interaction source term) to C++/Kokkos with coding agents under a bit-for-bit parity
-  harness against the Fortran reference; the plans, decisions and measurements carry
-  their evidence and the command that reproduces each number.
+  Software and texts on one problem: moving the expensive kernels of the WAVEWATCH III
+  spectral wind-wave model to GPUs without changing the answer. The expensive routines
+  (starting with the W3SNL1 nonlinear interaction source term) are ported to C++/Kokkos
+  with coding agents under a bit-for-bit parity rule against the Fortran reference, on a
+  Nix-pinned toolchain; the plans, decisions and measurements carry their evidence and the
+  command that reproduces each number. The texts written from this work, a preprint and an
+  undergraduate project proposal, have their Markdown sources in the repository.
 authors:
   - given-names: "Matheus"
     family-names: "Hoffmann"
@@ -58,7 +57,5 @@ keywords:
   - numerical parity
   - scientific software engineering
   - legacy code modernization
-  - technical book
-  - open textbook
   - research software
   - reproducibility

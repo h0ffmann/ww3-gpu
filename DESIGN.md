@@ -75,8 +75,8 @@ The fonts load from Google Fonts, as on the sister sites. No font file is stored
 
 ## Facts
 
-Every fact on the page comes from a file of this repository, through `site/content`: the chapters
-from `course/`, the decisions from `docs/ADRs.md`, the designs from `docs/WFIPs/`, the notes from
+Every fact on the page comes from a file of this repository, through `site/content`: the
+decisions from `docs/ADRs.md`, the designs from `docs/WFIPs/`, the notes from
 `notes/`, the port's benchmarks from `kokkos/port_report/`, the DOI and the people from `CITATION.cff` and `.zenodo.json`, the latest release from
 `RELEASES.md`. A fact that no other file holds (a related author, a sister work) is a row of
 `site/data/related.tsv`, with its source, and a dated event of the lineage is a row of

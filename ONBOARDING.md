@@ -37,7 +37,7 @@ Top MCP Servers:
 
 ## What ww3-gpu is
 
-A book in progress, and its evidence, on one problem: moving the expensive kernels of
+Software and texts on one problem: moving the expensive kernels of
 WAVEWATCH III (WW3) to GPUs **without changing the answer**. The ported code is C++/Kokkos (one
 source for Serial, OpenMP and CUDA). WW3 itself is never edited here; the only Fortran added is a
 `bind(C)` shim behind the `KOKKOS` switch on the `h0ffmann/WW3` fork.
@@ -48,7 +48,7 @@ source for Serial, OpenMP and CUDA). WW3 itself is never edited here; the only F
  W3SRCE --KOKKOS switch--> shim  ----->  kokkos/src (C++/Kokkos kernel) <--- gfortran, OpenMPI, NetCDF,
    |  WW_KOKKOS_SNL1=0: Fortran DIA      regtests/ (CTest matrix driver)     Kokkos, PT-Scotch, METIS,
    |  WW_KOKKOS_SNL1=1: Kokkos DIA       scripts/ww3-gpu.sh (smoke/full)        WW3 regtest data (SHA-256)
-   v                                     docs/, course/ (the book)           one locked nixpkgs
+   v                                     docs/, pubs/ (the texts)            one locked nixpkgs
  same executable, two runs  -->  test.comp (bytes) + nccmp-tol (fields)  -->  verdict per entry
 ```
 
@@ -58,7 +58,7 @@ source for Serial, OpenMP and CUDA). WW3 itself is never edited here; the only F
 git clone --recurse-submodules git@github.com:h0ffmann/ww3-gpu.git && cd ww3-gpu
 just submodule-init                 # picasso/, sparse: labs/pratico
 just toolchain                      # print every pinned version (nixpkgs rev, gfortran, Kokkos, ...)
-just kokkos-test serial-debug       # build the port with sanitizers; tests of lessons and tools
+just kokkos-test serial-debug       # build the port with sanitizers; tests of the intro programs and tools
 just smoke-ww3-gpu                     # WW3 with the Kokkos DIA vs WW3 as written, CPU, ~minutes
 just ww3-gpu-matrix-list all           # the 311 NL1 entries of WW3's regtest matrix
 just ww3-gpu-matrix 8 all              # all of them, 8 at a time, Fortran vs Kokkos (hours)

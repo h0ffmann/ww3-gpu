@@ -38,7 +38,7 @@ weekly release; a refused request is a warning, since Software Heritage also cra
 ## Before tagging
 
 - A DOI cannot be deleted. Confirm the version number with the user before pushing a tag.
-- Versioning is SemVer: bump PATCH for fixes and docs, MINOR for new lessons, kernels or tools,
+- Versioning is SemVer: bump PATCH for fixes and docs, MINOR for new texts, kernels or tools,
   MAJOR only when the user says so.
 - Metadata changes (authors, ORCID, title, keywords) must land on `main` before the tag:
   Zenodo reads `.zenodo.json` from the tagged commit, and only the next release picks up an edit.

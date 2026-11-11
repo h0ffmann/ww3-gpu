@@ -50,20 +50,6 @@ pub fn split_id_test() {
   assert c.split_id("no id") == #("", "no id")
 }
 
-pub fn chapter_test() {
-  let ch =
-    c.chapter(
-      "course/00-orientation.md",
-      "# 00. Orientation: what WW3 computes\n",
-    )
-  assert ch
-    == c.Chapter(
-      "00",
-      "Orientation: what WW3 computes",
-      "course/00-orientation.md",
-    )
-}
-
 pub fn yaml_test() {
   let note = "---\nid: \"202610141200\"\ntitle: A note\ntype: permanent\n---\n"
   assert c.yaml(note, "id") == "202610141200"
@@ -116,7 +102,6 @@ pub fn empty_list_test() {
       "r",
       "",
       "x",
-      [],
       [],
       [],
       [],

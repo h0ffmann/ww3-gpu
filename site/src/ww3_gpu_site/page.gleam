@@ -20,10 +20,7 @@ pub fn address_of(l: String) -> String {
 pub fn document(l: String, body: Element(msg)) -> Element(msg) {
   let title = "ww3-gpu: " <> app.t(l, "without changing the answer")
   let description =
-    app.t(
-      l,
-      "a book in progress on agentic coding and agentic research, around a bit-for-bit GPU port of WAVEWATCH III.",
-    )
+    app.t(l, "a bit-for-bit GPU port of WAVEWATCH III with Kokkos and CUDA.")
   document_at(l, "", title, description, body)
 }
 

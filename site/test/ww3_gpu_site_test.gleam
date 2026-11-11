@@ -17,8 +17,8 @@ fn html() -> String {
 // One source, two pages: the Portuguese one is the same page, every sentence looked up by its
 // English in site/data/translations/pt-BR.tsv (h0ffmann/h0ffmann#86).
 pub fn a_sentence_is_translated_by_its_source_test() {
-  assert app.t("pt-BR", "the book") == "o livro"
-  assert app.t("en", "the book") == "the book"
+  assert app.t("pt-BR", "the repository") == "o repositório"
+  assert app.t("en", "the repository") == "the repository"
   assert app.t("pt-BR", "a sentence with no row") == "a sentence with no row"
 }
 
@@ -27,16 +27,13 @@ pub fn the_page_in_portuguese_test() {
   assert string.contains(pt, "<html lang=\"pt-BR\">")
   assert string.contains(pt, "o segundo cérebro")
   // The files of the site are one level up from /pt-BR/; the anchors stay on the page.
-  assert string.contains(pt, "href=\"../book/\"")
+  assert string.contains(pt, "href=\"../andamento/\"")
   assert string.contains(pt, "href=\"../style.css\"")
-  assert string.contains(pt, "href=\"#book\"")
+  assert string.contains(pt, "href=\"#about\"")
   assert string.contains(pt, "https://h0ffmann.github.io/ww3-gpu/pt-BR/")
   // Every section and every fact is there, as on the English page.
-  list.each(["book", "chapters", "decisions", "port", "cite"], fn(id) {
+  list.each(["about", "decisions", "port", "cite"], fn(id) {
     assert string.contains(pt, "id=\"" <> id <> "\"")
-  })
-  list.each(content.chapters, fn(c) {
-    assert string.contains(pt, c.file)
   })
 }
 
@@ -54,8 +51,7 @@ pub fn every_section_test() {
   let page = html()
   list.each(
     [
-      "book",
-      "chapters",
+      "about",
       "decisions",
       "designs",
       "port",
@@ -68,14 +64,6 @@ pub fn every_section_test() {
       assert string.contains(page, "id=\"" <> id <> "\"")
     },
   )
-}
-
-pub fn every_chapter_test() {
-  let page = html()
-  assert content.chapters != []
-  list.each(content.chapters, fn(c) {
-    assert string.contains(page, c.file)
-  })
 }
 
 pub fn every_record_test() {
@@ -96,12 +84,6 @@ pub fn related_authors_test() {
   assert string.contains(page, "https://orcid.org/0000-0002-1686-4722")
   assert string.contains(page, "https://github.com/akitaonrails")
   assert string.contains(page, "legendary br dev")
-}
-
-pub fn the_book_links_test() {
-  let page = html()
-  assert string.contains(page, "href=\"book/\"")
-  assert string.contains(page, "href=\"ww3-lab-course.pdf\"")
 }
 
 pub fn no_script_test() {

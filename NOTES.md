@@ -8,7 +8,7 @@ log stays where it is.
 
 | Record | Holds | Rule |
 |---|---|---|
-| `notes/` | the ideas the book and the lab stand on, one per note | linked, sourced, checked by `just notes` |
+| `notes/` | the ideas the lab and its texts stand on, one per note | linked, sourced, checked by `just notes` |
 | [`docs/log/`](docs/log/README.md) | what was tried and what happened, negative results included | append, never rewrite |
 
 The log is this repository's journal. A challenge met, a spike, a tolerance that did not hold:

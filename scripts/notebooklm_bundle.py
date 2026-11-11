@@ -20,7 +20,6 @@ WORD_CAP = 500_000
 BUNDLES = {
     "01-proposta-pt.md": ["pubs/proposal/pt/[0-9][0-9]-*.md"],
     "02-proposal-en.md": ["pubs/proposal/en/[0-9][0-9]-*.md"],
-    "03-course.md": ["course/[0-9][0-9]-*.md"],
     "04-glossary.md": ["docs/GLOSSARY.md"],
     "05-plans-and-notes.md": ["docs/*_2026??.md", "README.md", "CONTRIBUTING.md"],
 }

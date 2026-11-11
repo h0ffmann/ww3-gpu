@@ -86,7 +86,7 @@
 
 - name: "area/book"
   color: "e99695"
-  description: "The book: course/ chapters, examples, exercises, the PDF and Leanpub builds"
+  description: "The texts: the preprint, the proposal builds, examples"
 
 - name: "area/noaa"
   color: "ededed"

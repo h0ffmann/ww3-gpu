@@ -244,7 +244,7 @@ NOAA's build scripts, not read here ⚠.
   single domain with CPU *and* GPU efficiency as its focus (v, NCEP Office Note 525,
   [doi:10.25923/h7j3-1h25](https://doi.org/10.25923/h7j3-1h25), and Office Note 528,
   [doi:10.25923/0wyp-9f39](https://doi.org/10.25923/0wyp-9f39), as read for
-  [lesson 14](../course/14-ww4-and-the-future.md)). Its code has no Kokkos, no GPU path and no
+  [lesson 14](https://github.com/h0ffmann/ww3-gpu/blob/f9ce3a0/course/14-ww4-and-the-future.md)). Its code has no Kokkos, no GPU path and no
   physics yet, and the CPU-GPU architecture question was closed without a recorded decision
   (lesson 14, snapshot of 2026-10-07 in `docs/ww4-status.json`: `kokkos_files` empty; the
   repository page, read 2026-10-16, mentions no GPU, Kokkos or OpenACC). WW4's default spectral

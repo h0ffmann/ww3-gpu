@@ -68,7 +68,7 @@ Reading it
 * Efficiency falling below ~60% is where adding ranks stops being worth it.
   WW3's "shuffle" decomposition load-balances the source-term timestepping
   very well but communicates more than a conventional domain decomposition.
-  (Replacing it is one of the stated drivers for WW4 -- see course/10.)
+  (Replacing it is one of the stated drivers for WW4.)
 
 * ON AN INTEL i9 THIS NUMBER IS MISLEADING BY DEFAULT. P-cores and E-cores
   have very different throughput, and an MPI job runs at the pace of its

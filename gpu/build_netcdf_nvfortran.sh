@@ -86,5 +86,5 @@ Read the errors carefully -- they are usually genuine standards pedantry
 rather than compiler bugs.
 
 And remember: this gets you a CPU build. It is a prerequisite for GPU work,
-not GPU work itself. See ../course/09-benchmark-profile-compile-run.md.
+not GPU work itself.
 NOTE
