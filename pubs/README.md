@@ -85,7 +85,7 @@ are repository secrets; without them the step is skipped and the committed `pt/`
 
 ## The preprint
 
-[`preprint/`](preprint/README.md) holds a two-page preprint, not peer reviewed, that compares this
+[`preprint/`](preprint/README.md) holds a short preprint, not peer reviewed, that compares this
 repository's C++/Kokkos port with the Rust port in
 [h0ffmann/chaceon](https://github.com/h0ffmann/chaceon) under the same bit-for-bit rule. Its
 source is Pandoc Markdown, built to LaTeX and PDF by `just preprint` with h0ffmann/closed-source's

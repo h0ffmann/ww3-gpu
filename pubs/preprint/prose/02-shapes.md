@@ -14,6 +14,19 @@
 : The two ports. Sources: chaceon `docs/WW3_GPU_PARITY_202611.md` (2026-11-09) and `README.md`
 at `0c098fe` [@chaceon]; ww3-gpu `kokkos/PORT_STATUS.md` at `58167d7` [@ww3gpu]. {#tbl:shapes}
 
+| Metric                      | ww3-gpu                         | chaceon                         |
+|:----------------------------|:--------------------------------|:--------------------------------|
+| Repository created          | 2026-09-12 01:31 UTC            | 2026-10-23 03:58 UTC            |
+| First commit on `main`      | 2026-09-11 13:47 UTC, `b43a6d3` | 2026-10-23 03:58 UTC, `3bad31a` |
+| Last commit on `main`       | 2026-11-11 03:16 UTC, `efc0211` | 2026-11-09 08:53 UTC, `0c098fe` |
+| Last push, any branch       | 2026-11-11 03:31 UTC            | 2026-11-09 08:53 UTC            |
+| Commits on `main`           | 800                             | 110                             |
+
+: The two repositories. Source: the GitHub REST API (`repos/h0ffmann/<repo>` for `created_at`
+and `pushed_at`, `commits?sha=main` for the commits), read on 2026-11-11 at 03:35 UTC. The first
+commit of ww3-gpu is older than the repository because it was made before the first push.
+{#tbl:repos}
+
 The Kokkos route keeps every WW3 program and replaces one routine at a time. Thus one regtest
 can isolate the effect of one routine. The Rust route must rebuild the programs, the file formats
 and the time loop before it can compare a whole run. After that, no Fortran remains that can
