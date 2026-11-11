@@ -17,15 +17,19 @@ permissions:
 
 jobs:
   bundle:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
         with: { fetch-depth: 0, persist-credentials: false }
+      # ubuntu-24.04 runners failed to resolve azure.archive.ubuntu.com three times in a row on
+      # 2026-11-11 and apt then hung until the job timed out; ubuntu-latest is what ci.yml's apt
+      # step uses. The step timeout stops a stalled apt early.
       - name: TeX Live 2023 (Ubuntu 24.04), the version the bundle's 00README asks arXiv for
+        timeout-minutes: 10
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq --no-install-recommends texlive-xetex texlive-latex-extra \
+          sudo apt-get update -o Acquire::Retries=3
+          sudo apt-get install -y -o Acquire::Retries=3 --no-install-recommends texlive-xetex texlive-latex-extra \
             texlive-fonts-recommended lmodern fonts-dejavu-core poppler-utils
       - run: bash scripts/preprint_arxiv.sh --self-test
       - run: bash scripts/preprint_arxiv.sh --out build/arxiv

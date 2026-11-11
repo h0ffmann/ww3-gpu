@@ -33,14 +33,15 @@ jobs:
   # job, so a TeX failure never holds back the release or Zenodo's DOI.
   arxiv-bundle:
     needs: release
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
         with: { fetch-depth: 0, persist-credentials: false }
-      - run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq --no-install-recommends texlive-xetex texlive-latex-extra \
+      - timeout-minutes: 10
+        run: |
+          sudo apt-get update -o Acquire::Retries=3
+          sudo apt-get install -y -o Acquire::Retries=3 --no-install-recommends texlive-xetex texlive-latex-extra \
             texlive-fonts-recommended lmodern fonts-dejavu-core poppler-utils
       - run: bash scripts/preprint_arxiv.sh --out "$RUNNER_TEMP/arxiv"
       - env:
