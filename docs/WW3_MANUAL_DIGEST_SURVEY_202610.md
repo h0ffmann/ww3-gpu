@@ -1,6 +1,8 @@
 # How an agent reads WW3's manual: a survey
 
-2026-10-29, for the owner (goal `ef7f3ca1`). Status: survey; nothing below is built. The question:
+2026-10-29, for the owner (goal `ef7f3ca1`). Status: survey; nothing below is built. Since
+2026-11-11 a hand-written summary of the manual by topic is in [ww3-manual/](ww3-manual/README.md);
+the index of the LaTeX source proposed here (option C) is still not built. The question:
 the WW3 manual is about 466 pages; how can an agent look up the physics of a routine it ports
 (the equation, its parameters, their defaults, the paper) in one bounded step, cite it, and not
 mistake the manual for the code?

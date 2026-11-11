@@ -107,7 +107,7 @@ configure and run the CMake/CTest driver in `regtests/`; `just` lists them.
 | A skill or agent | `.claude/skills/<name>/SKILL.md`, `.claude/agents/<name>.md` | [Skills and agents](#skills-and-agents) |
 | The toolchain | `picasso/` (submodule, sparse) and `flake.nix` | [`docs/TOOLCHAIN.md`](docs/TOOLCHAIN.md); pin deliberately, name the version |
 | An issue label | `.github/labels.yml`, never GitHub's settings page | [`ISSUE_LABELS.md`](ISSUE_LABELS.md): every issue carries an `area/*`; a rename is done on GitHub first; `just labels-sync` and `.github/workflows/labels.yml` apply the manifest |
-| A WW3 fact | nowhere here: cite `model/src/<file>.F90:<line>` at the pinned commit | [WW3 source](#ww3-source-is-read-only-hard-rule) |
+| A WW3 fact | nowhere here: cite `model/src/<file>.F90:<line>` at the pinned commit; [`docs/ww3-manual/`](docs/ww3-manual/README.md) says where to look | [WW3 source](#ww3-source-is-read-only-hard-rule) |
 | An idea the lab stands on | a note in `notes/`, linked from `notes/index.md` | [`NOTES.md`](NOTES.md); `just notes` is the gate |
 | A reference of the proposal, and how it was checked | a row in `pubs/proposal/REFERENCES.md` beside the `refs.bib` entry | the verdicts `verified` / `partial` / `unverified`; `just refs` is the gate; `refs.bib` itself goes through the proposal's reviewer |
 | A release, a tie of the Zenodo record | `RELEASES.md`, `RELATED_WORK.md`, each with its date of record | never write a DOI, a tie or a count that was not read from DataCite or Zenodo that day |
@@ -207,6 +207,14 @@ exceptions are a `bind(C)` shim module and the caller patch described in
 original routine selectable. Every statement about WW3 cites `model/src/<file>.F90:<line>` at the
 pinned commit (`WW3@6d1bcdfe` at the time of writing), never a comment, a paper or memory.
 Namelists are written against the templates in `$WW3/model/nml/` and are `⚠` until executed.
+
+How WW3 works, as its manual says, is summarised by topic in
+[`docs/ww3-manual/`](docs/ww3-manual/README.md): the action balance equation, every source term
+and its switch, the fractional steps and the source term integration, the grids and the storage
+of the spectrum, the programs and modules. Read the page the task needs before opening
+`WW3/model/src`. It summarises the manual of version 7.14, the version the pins declare; it is a
+map, never the citation: the manual says what a routine is meant to compute, and a statement
+about what WW3 computes still cites `model/src`.
 
 ## Third-party issues and pull requests (hard rule)
 

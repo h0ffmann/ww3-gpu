@@ -111,7 +111,8 @@ The manual chapter behind most switch rows is `WW3/manual/impl/switch.tex`.
 | CFL | ⚠ Courant–Friedrichs–Lewy condition (the manual only defines the macro `\cfl` = "CFL") | The explicit-scheme stability limit DTXY ≲ Δx/cg_max that ties the timestep to the grid spacing and lowest frequency. | [course/02-anatomy-of-a-run.md](../course/02-anatomy-of-a-run.md), [course/15-swan.md](../course/15-swan.md) |
 | GSE | Garden Sprinkler Effect `(v)` `WW3/manual/num/GSE.tex` | The break-up of a distant swell field into discrete beams because each direction bin travels as its own ray; `PR3` corrects it. | [course/02-anatomy-of-a-run.md](../course/02-anatomy-of-a-run.md), [course/07-physics-choices.md](../course/07-physics-choices.md) |
 | UQ | ULTIMATE QUICKEST `(v)` `WW3/manual/defs.tex`, `WW3/model/src/w3uqckmd.F90` | The third-order explicit propagation scheme (`W3QCK1/2/3`), WW3's standard. | [course/07-physics-choices.md](../course/07-physics-choices.md) |
-| UNO | ⚠ not expanded in WW3 ("UNO2 scheme", `WW3/model/src/w3uno2md.F90` header `(v)`) | The second-order alternative to `UQ`. | [WW3 switches](#ww3-switches) |
+| UNO | Upstream Non-Oscillatory, second order (Li 2008) `(v)` the manual, 3.4.2 ([docs/ww3-manual/numerics.md](ww3-manual/numerics.md)); "UNO2 scheme" in the `WW3/model/src/w3uno2md.F90` header `(v)` | The second-order alternative to `UQ`. | [WW3 switches](#ww3-switches) |
+| BJA | Bidlot, Janssen and Abdalla: the 2005 reshaping of the WAM cycle 4 dissipation `(v)` the manual, 2.3.10 | The default parameter set of `ST3`; the `ST4` input starts from the same wind input. | [docs/ww3-manual/source-terms.md](ww3-manual/source-terms.md) |
 | SHOWEX | ⚠ Shoaling Waves Experiment (Ardhuin et al. 2003, `\showex` = "SHOWEX" in `WW3/manual/defs.tex`) | The movable-bed bottom-friction formulation of `BT4`. | [course/07-physics-choices.md](../course/07-physics-choices.md) |
 | LTA | Lumped Triad Approximation / Interaction (Eldeberky 1996) `(v)` `WW3/model/src/w3str1md.F90` | The `TR1` triad source term. | [WW3 switches](#ww3-switches) |
 | BYDRZ | ⚠ Babanin–Young–Donelan–Rogers–Zieger (`ST6` is "BYDRZ source term package" in `WW3/manual/impl/switch.tex` `(v)`, not expanded there) | The observation-based `ST6` input/dissipation package (`w3src6md.F90`). | [course/07-physics-choices.md](../course/07-physics-choices.md) |
@@ -494,6 +495,7 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | WMWAVE / WMIOHG / WMIOEG | "Run multi-grid version of WAVEWATCH III" / "Gather internal high-to-low data for a given model" / "Gather internal same-rank data for a given model" `(v)` `model/src/wmwavemd.F90:85`, `wminiomd.F90:1714`, `:2814` | `ww3_multi`'s driver and two of its exchanges between grids; the exchanges write a grid's `VA` on the host between its `W3WAVE` calls; with the resident `VA` they store the columns they wrote into the device copy (`kokkos/src/fortran_iface/PATCH.md`, section 26). | [docs/PRODUCTION_READINESS_202610.md](PRODUCTION_READINESS_202610.md) |
 | WMIOBS / WMIOHS / WMIOES / W3MPIP | "Stage internal boundary data in the data structure BPSTGE" / "Stage internal high-to-low data in the data structure HGSTGE" / "Stage internal same-rank data in the data structure EQSTGE" / "Prepare MPI persistent communication needed for WAVEWATCH I/O routines" `(v)` `WW3-noaa/model/src/wminiomd.F90:121`, `:1402`, `:2516`, `w3initmd.F90:5412` at `03adda91` | The sending side of `ww3_multi`'s exchanges, which read a grid's `VA` on the host between its `W3WAVE` calls, and the set-up of the MPI requests that send point-output spectra from `VA`; with the resident `VA` each reads its columns back first (`kokkos/src/fortran_iface/PATCH.md`, section 26). | [docs/log/2026-10-18-ww3-multi-resident-va.md](log/2026-10-18-ww3-multi-resident-va.md) |
 | W3FLDG / W3FLDO | "Update input fields in the WAVEWATCH III generic shell from a WAVEWATCH III shell data file or write from preprocessor" / "Open and prepare WAVEWATCH III field files as used by the generic shell and the field preprocessor" `(v)` `w3fldsmd.F90:964-965`, `:116-117` | `W3FLDG` reads or writes one time record and the field records of `wind.ww3`, `level.ww3`, `current.ww3` and the others, gfortran unformatted big-endian; `W3FLDO` opens the unit and writes or checks its 40-byte header record (file id, field id, grid dimensions, filler, tide flag). | [kokkos/port_report/W3FLDG_KOKKOS.md](../kokkos/port_report/W3FLDG_KOKKOS.md), [kokkos/port_report/W3FLDO_KOKKOS.md](../kokkos/port_report/W3FLDO_KOKKOS.md) |
+| `MAPSF` / `MAPFS` | the maps between the sea point counter and the grid: `mapsf(isea,1..3)` = `ix`, `iy`, `ixy`; `mapfs(iy,ix)` = `isea`, 0 on land `(v)` the manual, 6.5.1 | Only sea points store a spectrum, so every loop over the grid goes through one of them. | [docs/ww3-manual/grids.md](ww3-manual/grids.md) |
 
 ## HPC and software
 
@@ -807,6 +809,7 @@ Every term above, alphabetically, with the section it lives in.
 - `02-regional-real-forcing`: [This repository's own names](#this-repositorys-own-names)
 - 7.14: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - `ACCESS='STREAM'`: [HPC and software](#hpc-and-software)
+- BJA: [Wave physics and the spectrum](#wave-physics-and-the-spectrum)
 - coast case / `scripts/coast_case.sh`: [This repository's own names](#this-repositorys-own-names)
 - CUDA-aware MPI: [HPC and software](#hpc-and-software)
 - DIA halo layout: [HPC and software](#hpc-and-software)
@@ -848,6 +851,7 @@ Every term above, alphabetically, with the section it lives in.
 - AMUXMS: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - Antigravity / Consensus / NotebookLM: [HPC and software](#hpc-and-software)
 - `archify`: [HPC and software](#hpc-and-software)
+- `MAPSF` / `MAPFS`: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - W3FLD2 / APPENDTAIL / CALC_FPI / HSTOT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
 - ASan: [HPC and software](#hpc-and-software)
 - ASan / UBSan: [HPC and software](#hpc-and-software)
