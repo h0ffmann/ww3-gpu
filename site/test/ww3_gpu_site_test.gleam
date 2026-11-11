@@ -58,6 +58,7 @@ pub fn every_section_test() {
       "decisions",
       "designs",
       "port",
+      "chaceon",
       "brain",
       "cite",
       "related",
@@ -148,5 +149,19 @@ pub fn the_global_numbers_and_each_record_are_on_the_page_test() {
   list.each(content.reports, fn(r) {
     assert r.regtested != ""
     assert string.contains(page, string.replace(r.regtested, "'", "&#39;"))
+  })
+}
+
+// The sister port in Rust: its repository is linked from the cover and from its section, and
+// each fact about it links to the file of chaceon that states it (site/data/related.tsv).
+pub fn the_rust_port_test() {
+  let page = html()
+  assert string.contains(page, "href=\"https://github.com/h0ffmann/chaceon\"")
+  assert string.contains(page, "the port in rust: chaceon")
+  assert string.contains(page, "nothing has run on a real GPU")
+  let facts = list.filter(content.links, fn(l) { l.kind == "chaceon" })
+  assert facts != []
+  list.each(facts, fn(l) {
+    assert string.contains(page, l.url)
   })
 }

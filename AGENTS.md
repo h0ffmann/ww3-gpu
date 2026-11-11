@@ -107,7 +107,7 @@ configure and run the CMake/CTest driver in `regtests/`; `just` lists them.
 | A skill or agent | `.claude/skills/<name>/SKILL.md`, `.claude/agents/<name>.md` | [Skills and agents](#skills-and-agents) |
 | The toolchain | `picasso/` (submodule, sparse) and `flake.nix` | [`docs/TOOLCHAIN.md`](docs/TOOLCHAIN.md); pin deliberately, name the version |
 | An issue label | `.github/labels.yml`, never GitHub's settings page | [`ISSUE_LABELS.md`](ISSUE_LABELS.md): every issue carries an `area/*`; a rename is done on GitHub first; `just labels-sync` and `.github/workflows/labels.yml` apply the manifest |
-| A WW3 fact | nowhere here: cite `model/src/<file>.F90:<line>` at the pinned commit | [WW3 source](#ww3-source-is-read-only-hard-rule) |
+| A WW3 fact | nowhere here: cite `model/src/<file>.F90:<line>` at the pinned commit; [`docs/ww3-manual/`](docs/ww3-manual/README.md) says where to look | [WW3 source](#ww3-source-is-read-only-hard-rule) |
 | An idea the lab stands on | a note in `notes/`, linked from `notes/index.md` | [`NOTES.md`](NOTES.md); `just notes` is the gate |
 | A reference of the proposal, and how it was checked | a row in `pubs/proposal/REFERENCES.md` beside the `refs.bib` entry | the verdicts `verified` / `partial` / `unverified`; `just refs` is the gate; `refs.bib` itself goes through the proposal's reviewer |
 | A release, a tie of the Zenodo record | `RELEASES.md`, `RELATED_WORK.md`, each with its date of record | never write a DOI, a tie or a count that was not read from DataCite or Zenodo that day |
@@ -162,6 +162,7 @@ Run the gates of what you changed before calling it done. CI (`.github/workflows
 | `site/`, `DESIGN.md`, `scripts/build_html.sh`, `scripts/build_site.sh` | `just site` (the book pages, then the front page's tests and prerender) |
 | `docs/WFIPs/` or `specs/` | `just wfip check` (`scripts/wfip.py check`: index current, deliverable ids valid, every section present, DoD consistent with Status); `just wfip index` regenerates |
 | `.claude/skills/` or `.claude/agents/` | `python3 .claude/hooks/check_agent_frontmatter.py`; for a vendored skill, `skills-vendor check --lock .claude/skills/skills.lock` |
+| `.claude/agents/`, `.omp/` or AGENTS.md's repo invariants and GPU rule | `python3 scripts/omp_sync.py --write`, then `--check` (CI runs `--self-test` and `--check`) |
 | `.github/labels.yml` | `just labels-sync --dry-run` (the manifest parses, and the plan is what you meant) |
 | any Markdown | links are checked by lychee in CI; a relative link must resolve from the file; `just vale` (`scripts/vale.sh`) must pass on English Markdown |
 
@@ -207,6 +208,14 @@ exceptions are a `bind(C)` shim module and the caller patch described in
 original routine selectable. Every statement about WW3 cites `model/src/<file>.F90:<line>` at the
 pinned commit (`WW3@6d1bcdfe` at the time of writing), never a comment, a paper or memory.
 Namelists are written against the templates in `$WW3/model/nml/` and are `⚠` until executed.
+
+How WW3 works, as its manual says, is summarised by topic in
+[`docs/ww3-manual/`](docs/ww3-manual/README.md): the action balance equation, every source term
+and its switch, the fractional steps and the source term integration, the grids and the storage
+of the spectrum, the programs and modules. Read the page the task needs before opening
+`WW3/model/src`. It summarises the manual of version 7.14, the version the pins declare; it is a
+map, never the citation: the manual says what a routine is meant to compute, and a statement
+about what WW3 computes still cites `model/src`.
 
 ## Third-party issues and pull requests (hard rule)
 
@@ -456,8 +465,9 @@ only the server's URL, not what the server returns.
 ## Skills and agents
 
 Skills live in `.claude/skills/<name>/SKILL.md`, agents in `.claude/agents/`; `.agents/skills` is
-a symlink to the same directory so Antigravity and Kimi Code load the same files (`CONTRIBUTING.md`,
-"Working with Antigravity" and "Working with Kimi Code", say what they do not get). Each restates the
+a symlink to the same directory so Antigravity loads the same files, and Oh My Pi reads
+`.claude/skills` itself (`CONTRIBUTING.md`, "Working with Antigravity" and "Working with Oh My
+Pi", say what they do not get). Each restates the
 audience rule for its own job; a new one does too, and its YAML front matter must parse
 (`check_agent_frontmatter.py`: an unquoted description containing `: ` silently disables it).
 

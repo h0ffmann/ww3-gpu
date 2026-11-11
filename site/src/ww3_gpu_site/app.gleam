@@ -69,6 +69,7 @@ pub fn view(l: String) -> Element(msg) {
       content.wfips,
     ),
     port(l),
+    rust_port(l),
     brain(l),
     cite(l),
     related(l),
@@ -290,12 +291,16 @@ fn cover(l: String) -> Element(msg) {
       html.a([attribute.class("button quiet"), attribute.href(repo)], [
         html.text(t(l, "the repository")),
       ]),
+      html.a([attribute.class("button quiet"), attribute.href(chaceon().url)], [
+        html.text(t(l, "the port in rust: chaceon")),
+      ]),
     ]),
     html.nav([attribute.class("jump")], [
       a("#book", t(l, "the book")),
       a("#chapters", t(l, "chapters")),
       a("#decisions", t(l, "decisions")),
       a("#designs", t(l, "designs")),
+      a("#chaceon", t(l, "rust port")),
       a("#brain", t(l, "second brain")),
       a("#cite", t(l, "cite")),
       a("#related", t(l, "related")),
@@ -520,6 +525,36 @@ fn related(l: String) -> Element(msg) {
     ),
     html.h3([], [html.text(t(l, "sister works, by the same author"))]),
     html.ul([attribute.class("people")], list.map(kind("work"), link_item)),
+  ])
+}
+
+// ---- the sister port in Rust ------------------------------------------------------------------
+// chaceon and its facts are rows of site/data/related.tsv (kind port and chaceon), each linked to
+// the file of chaceon that states it; nothing about it is typed here (DESIGN.md, "Facts").
+
+fn chaceon() -> Link {
+  case list.find(content.links, fn(l: Link) { l.kind == "port" }) {
+    Ok(link) -> link
+    Error(_) -> content.Link("port", "chaceon", "", "", "")
+  }
+}
+
+fn rust_port(l: String) -> Element(msg) {
+  let port = chaceon()
+  let facts = list.filter(content.links, fn(l: Link) { l.kind == "chaceon" })
+  section("chaceon", t(l, "the same rule, in rust"), [
+    lede(t(
+      l,
+      "ww3-gpu keeps WW3 and lets its Fortran call C++ written with Kokkos, one flag per routine. its sister project replaces WW3 with Rust, with no Fortran in its process. both ports must give the Fortran's bits, and a tolerance is a diagnostic, never the verdict.",
+    )),
+    html.p([attribute.class("title")], [html.text(port.name)]),
+    html.p([], [html.text(port.what)]),
+    html.ul([attribute.class("people")], list.map(facts, link_item)),
+    html.p([attribute.class("actions")], [
+      html.a([attribute.class("button quiet"), attribute.href(port.url)], [
+        html.text(t(l, "go to the rust repository")),
+      ]),
+    ]),
   ])
 }
 

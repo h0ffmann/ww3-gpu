@@ -6,14 +6,15 @@
 #   just vale FILE...    # only those files; other --flags go to vale (--output=line)
 #   just vale --self-test
 #
-# Out of scope: the submodules, .claude/ (vendored skills quote the tells as examples),
+# Out of scope: the submodules, .claude/ (vendored skills quote the tells as examples) and its
+# copies in .omp/agents/,
 # pubs/ (the proposal has its own reviewer and house style) and Portuguese files
 # (*.pt.md, *.pt-BR.md), which the English rules would misread.
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
 scope() {
-  git ls-files '*.md' | grep -v -E '^(WW3|WW4|picasso|bend-lang|\.claude|\.specify|pubs|\.vale)/' \
+  git ls-files '*.md' | grep -v -E '^(WW3|WW4|picasso|bend-lang|\.claude|\.omp/agents|\.specify|pubs|\.vale)/' \
     | grep -v -E '\.pt(-BR)?\.md$'
 }
 

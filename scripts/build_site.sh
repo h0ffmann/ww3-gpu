@@ -30,7 +30,7 @@ touch "$out/.nojekyll"
 
 if [ "$check" -eq 1 ]; then
   for page in index.html pt-BR/index.html; do
-    for id in book chapters decisions designs brain cite related; do
+    for id in book chapters decisions designs chaceon brain cite related; do
       grep -q "id=\"$id\"" "$out/$page" || { echo "build_site: no #$id in $page" >&2; exit 1; }
     done
   done
