@@ -1,0 +1,41 @@
+# The porter seat of ww3-gpu-port: claims one item with `ww3port next`, does it, gets a review,
+# submits, and claims the next. Two members of the rig use this agent.
+name: wg-porter
+version: "1.0"
+description: Claims and ports one row of the ww3-gpu Kokkos port at a time, in a loop
+
+defaults:
+  runtime: omp
+  model: anthropic/claude-sonnet-5-5
+
+imports:
+  - ref: local:../shared
+  - ref: local:../wg-shared
+
+profiles:
+  default:
+    summary: Loops over ww3port's queue; each item ends accepted by the reviewer or blocked
+    uses:
+      # omp does no skill discovery on disk, and a resource path cannot leave the spec folder, so
+      # ww3-gpu's skills are read from the clone by the norms, as wf-shared does for chaceon's.
+      skills: []
+      guidance: [shared:norms, wg-shared:norms]
+      subagents: []
+      plugins: []
+      runtime_resources: []
+
+startup:
+  files:
+    - path: guidance/role.md
+      delivery_hint: send_text
+      required: true
+      orientation: role
+    - path: startup/context.md
+      delivery_hint: send_text
+      required: true
+  actions:
+    # Start the loop on a fresh start and after a restore: resume the claim or take the next.
+    - type: send_text
+      value: "Find your seat name with `rig whoami`, run `ww3port next --as <seat>`, and work the item it prints, as your role says."
+      idempotent: true
+      applies_on: [fresh_start, restore]

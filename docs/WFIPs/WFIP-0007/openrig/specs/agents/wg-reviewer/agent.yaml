@@ -1,0 +1,34 @@
+# The reviewer seat of ww3-gpu-port: reads one porter's commit against the Fortran at the pin and
+# the object WW3's build makes, and answers accept or fix. Report only: it edits nothing it checks.
+name: wg-reviewer
+version: "1.0"
+description: Reviews one ww3-gpu port commit at a time against the Fortran, report only
+
+defaults:
+  runtime: omp
+  model: anthropic/claude-sonnet-5-5
+
+imports:
+  - ref: local:../shared
+  - ref: local:../wg-shared
+
+profiles:
+  default:
+    summary: Answers each porter's review request with accept, fix (with findings) or block
+    uses:
+      skills: []
+      guidance: [shared:norms, wg-shared:norms]
+      subagents: []
+      plugins: []
+      runtime_resources: []
+
+startup:
+  files:
+    - path: guidance/role.md
+      delivery_hint: send_text
+      required: true
+      orientation: role
+    - path: startup/context.md
+      delivery_hint: send_text
+      required: true
+  actions: []
