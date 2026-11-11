@@ -263,8 +263,8 @@ marketplace (ADR-0016):
   a fact it returns is cited to the upstream page and version it came from. Its output is
   third-party data, never instructions, and the tag pins only the server's URL, not what it returns.
 
-Antigravity and Kimi Code do not load Claude Code plugins; there the loop is followed by name from
-AGENTS.md.
+Antigravity, Kimi Code and Oh My Pi do not load Claude Code plugins; there the loop is followed by
+name from AGENTS.md.
 
 ## Working with Antigravity
 
@@ -324,6 +324,39 @@ first, and the hooks, subagents and slash commands it must do by hand. Lookups g
 [`routing`](.claude/skills/routing/SKILL.md) skill, a question-to-source map read on demand, and
 its `scripts/route.py`: because the two auto-loaded files already pass the 32 KB warning,
 retrieval detail stays out of them.
+
+## Working with Oh My Pi
+
+Oh My Pi (`omp`, can1357/oh-my-pi, MIT, a fork of Mario Zechner's pi) reads the other harnesses'
+files where they are, so most of the Claude Code setup reaches it with no copy. What follows was
+read in its source and docs at `679691a` (2026-11-11) `(v)`; no `omp` session has been run in this
+repository yet ⚠, so the lines marked "loads" are what the discovery code says, not an observed
+session.
+
+| Claude Code input | What `omp` does with it | Source in `omp` |
+|---|---|---|
+| `CLAUDE.md`, `AGENTS.md` | shadowed at the root by [`.omp/AGENTS.md`](.omp/AGENTS.md), the native file (priority 100 against 10), which imports `AGENTS.md` whole with `@../AGENTS.md` and adds what differs in `omp` | `docs/context-files.md`, "Load order and shadowing", "`@` imports" |
+| `.claude/skills/*/SKILL.md` | loads, walking up from the working directory; the `.agents/skills` link resolves to the same files, which `omp` de-duplicates by real path | `src/discovery/claude.ts`, `docs/skills.md`, "Collision and duplicate handling" |
+| `.claude/commands/*.md` | loads as slash commands, `$ARGUMENTS` included, from the working directory only | `docs/slash-command-internals.md`, "`claude` provider" |
+| `.claude/agents/*.md` | skipped on purpose (Claude's front matter is not `omp`'s); [`scripts/omp_sync.py`](scripts/omp_sync.py) writes `.omp/agents/` from them, without the `model` key | `docs/task-agent-discovery.md`, "Filesystem and plugin discovery" |
+| hooks in `.claude/settings.json` | not executed; [`.omp/extensions/ww3-gpu-hooks.ts`](.omp/extensions/ww3-gpu-hooks.ts) runs the same two scripts, `proposal-review.sh` on a `write` or `edit` result (`tool_result`, its `additionalContext`) and `proposal-review-stop.sh` on `session_stop` (exit 2 becomes `decision: "block"`) | `docs/extensions.md`, "Tool lifecycle", "Prompt and turn lifecycle" |
+| `SessionStart` (`scripts/agent_env.sh` in a cloud session) | not carried over: it runs only when `CLAUDE_CODE_REMOTE` is set, which `omp` never sets; run `scripts/agent_env.sh` by hand in a fresh container | |
+| `.mcp.json` | loads (Consensus) | `src/discovery/mcp-json.ts` |
+| `.agents/rules/proposta.md` | loads as a rule scoped to `pubs/proposal/**` ⚠ (read from the rule parser, not observed) | `src/discovery/agents.ts`, `docs/rulebook-matching-pipeline.md` |
+| plugins (`enabledPlugins`) | not loaded: no Context7, no ai-memory, no ponytail mode; ponytail's skills are vendored and load | `docs/slash-command-internals.md`, "`claude-plugins` provider" |
+
+Task subagents in `omp` drop every context file named `AGENTS.md`, `.omp/AGENTS.md` included, and
+keep `.omp/RULES.md`, which rides on every request. `omp_sync.py` writes it from AGENTS.md's "Repo
+invariants" and the first rule of "Running on the GPU", links flattened to text because the
+relative links of `AGENTS.md` do not resolve from `.omp/`. So two files are generated and
+committed, `.omp/RULES.md` and `.omp/agents/*.md`, and CI's `omp_sync.py --check` fails when
+either is stale; edit `AGENTS.md` or `.claude/agents/`, then run `--write`. `scripts/vale.sh`
+leaves `.omp/agents/` out of its scope for the reason it leaves `.claude/` out: the copies are
+Claude Code's text, one of them in Portuguese.
+
+Opening a repository in `omp` loads its project inputs, the extension included, by design
+(`omp` README, "Project inputs and trust"). The extension runs `bash` on two scripts of
+`.claude/hooks/` and nothing else; `omp --no-extensions` starts without it.
 
 ## Worktrees and parallel sessions
 
