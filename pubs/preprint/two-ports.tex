@@ -1,0 +1,471 @@
+% SPDX-License-Identifier: MIT
+% Paper Fabric article template for pandoc. Compiles with XeLaTeX (the local and CI build) and
+% with pdfLaTeX, which is the engine arXiv runs on submitted sources (just arxiv). Modelled on the layout of Sandy Maguire's
+% book templates (isovector/thinking-with-types, format/tex/template.tex): one hand-written
+% template, metadata from the paper's metadata.md, and the Git revision stamped on every page.
+% The CSL and table blocks follow pandoc's default LaTeX template (pandoc -D latex).
+\documentclass[10pt,a4paper,]{article}
+
+\usepackage{iftex}
+\ifPDFTeX
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{textcomp}
+\usepackage{amssymb}
+\else
+\usepackage{fontspec}
+\usepackage{unicode-math}
+\defaultfontfeatures{Ligatures=TeX}
+\fi
+\usepackage[top=18mm,bottom=20mm,left=20mm,right=20mm]{geometry}
+\usepackage{microtype}
+\usepackage{xcolor}
+\definecolor{fabric}{HTML}{C2410C}
+\usepackage{graphicx}
+\usepackage{calc}
+\usepackage{fancyhdr}
+\usepackage{titling}
+\usepackage{enumitem}
+\setlist{itemsep=2pt,topsep=4pt}
+\usepackage[english]{babel}
+\usepackage{csquotes}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt plus 2pt minus 1pt}
+\setlength{\emergencystretch}{3em}
+\providecommand{\tightlist}{\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+
+
+\usepackage{longtable,booktabs,array}
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+\usepackage{footnotehyper}
+\makesavenoteenv{longtable}
+
+% citeproc citations and the reference list, as in pandoc 3.7's common.latex (pandoc >= 3.1.8
+% writes \citeproc and \bibitem). The \small in the list is ours.
+\NewDocumentCommand\citeproctext{}{}
+\NewDocumentCommand\citeproc{mm}{%
+  \begingroup\def\citeproctext{#2}\cite{#1}\endgroup}
+\makeatletter
+ \let\@cite@ofmt\@firstofone
+ \def\@biblabel#1{}
+ \def\@cite#1#2{{#1\if@tempswa , #2\fi}}
+\makeatother
+\newlength{\cslhangindent}
+\setlength{\cslhangindent}{1.5em}
+\newlength{\csllabelwidth}
+\setlength{\csllabelwidth}{3em}
+\newenvironment{CSLReferences}[2] % #1 hanging-indent, #2 entry-spacing
+ {\small\begin{list}{}{%
+  \setlength{\itemindent}{0pt}
+  \setlength{\leftmargin}{0pt}
+  \setlength{\parsep}{0pt}
+  \ifodd #1
+   \setlength{\leftmargin}{\cslhangindent}
+   \setlength{\itemindent}{-1\cslhangindent}
+  \fi
+  \setlength{\itemsep}{#2\baselineskip}}}
+ {\end{list}}
+\newcommand{\CSLBlock}[1]{\hfill\break\parbox[t]{\linewidth}{\strut\ignorespaces#1\strut}}
+\newcommand{\CSLLeftMargin}[1]{\parbox[t]{\csllabelwidth}{\strut#1\strut}}
+\newcommand{\CSLRightInline}[1]{\parbox[t]{\linewidth - \csllabelwidth}{\strut#1\strut}}
+\newcommand{\CSLIndent}[1]{\hspace{\cslhangindent}#1}
+
+\setcounter{secnumdepth}{3}
+
+\AtBeginEnvironment{longtable}{\small}
+\makeatletter
+\@ifpackageloaded{subcaption}{}{\usepackage{subcaption}}
+\@ifpackageloaded{caption}{}{\usepackage{caption}}
+\captionsetup[subfigure]{margin=0.5em}
+\AtBeginDocument{%
+\renewcommand*\figurename{Figure}
+\renewcommand*\tablename{Table}
+}
+\AtBeginDocument{%
+\renewcommand*\listfigurename{List of Figures}
+\renewcommand*\listtablename{List of Tables}
+}
+\newcounter{pandoccrossref@subfigures@footnote@counter}
+\newenvironment{pandoccrossrefsubfigures}{%
+\setcounter{pandoccrossref@subfigures@footnote@counter}{0}
+\begin{figure}\centering%
+\gdef\global@pandoccrossref@subfigures@footnotes{}%
+\DeclareRobustCommand{\footnote}[1]{\footnotemark%
+\stepcounter{pandoccrossref@subfigures@footnote@counter}%
+\ifx\global@pandoccrossref@subfigures@footnotes\empty%
+\gdef\global@pandoccrossref@subfigures@footnotes{{##1}}%
+\else%
+\g@addto@macro\global@pandoccrossref@subfigures@footnotes{, {##1}}%
+\fi}}%
+{\end{figure}%
+\addtocounter{footnote}{-\value{pandoccrossref@subfigures@footnote@counter}}
+\@for\f:=\global@pandoccrossref@subfigures@footnotes\do{\stepcounter{footnote}\footnotetext{\f}}%
+\gdef\global@pandoccrossref@subfigures@footnotes{}}
+\@ifpackageloaded{float}{}{\usepackage{float}}
+\floatstyle{ruled}
+\@ifundefined{c@chapter}{\newfloat{codelisting}{h}{lop}}{\newfloat{codelisting}{h}{lop}[chapter]}
+\floatname{codelisting}{Listing}
+\newcommand*\listoflistings{\listof{codelisting}{List of Listings}}
+\makeatother
+
+\usepackage{xurl}
+\usepackage{hyperref}
+\hypersetup{
+  pdftitle={One rule, two languages},
+  pdfauthor={Matheus Hoffmann; Pedro Veras Guimarães; Pedro Cruz},
+  pdfkeywords={WAVEWATCH III, bit-for-bit
+reproducibility, Kokkos, Rust, GPU porting, coding agents},
+  colorlinks=true, linkcolor=fabric, citecolor=fabric, urlcolor=fabric,
+  pdfcreator={Paper Fabric (pandoc + XeLaTeX)}}
+\urlstyle{same}
+
+% The build writes the short Git hash and commit count here (justfile, build/.current-revision).
+\newcommand{\revision}{\IfFileExists{.current-revision}{\input{.current-revision}}{unversioned}}
+
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+\fancyfoot[L]{\footnotesize\color{gray}One rule, two
+languages \textperiodcentered{} v0 (preprint, not peer reviewed)}
+\fancyfoot[R]{\footnotesize\color{gray}rev.~\revision{} \textperiodcentered{} \thepage}
+
+\begin{document}
+
+\begin{center}
+{\LARGE\bfseries One rule, two languages\par}
+\vspace{4pt}
+{\large C++/Kokkos and Rust ports of WAVEWATCH III that must give the
+Fortran's bits\par}
+\vspace{12pt}
+{\large Matheus
+Hoffmann}\,\href{https://orcid.org/0009-0009-1056-7661}{\footnotesize\color{fabric}ORCID}\\
+{\small\itshape Escola Politécnica, Universidade Federal do Rio de
+Janeiro, Brazil}\par\vspace{4pt}
+{\large Pedro Veras
+Guimarães}\,\href{https://orcid.org/0000-0002-1686-4722}{\footnotesize\color{fabric}ORCID}\\
+{\small\itshape LabECO, Departamento de Engenharia Mecânica,
+Universidade Federal de Santa Catarina, Brazil}\par\vspace{4pt}
+{\large Pedro
+Cruz}\,\href{https://orcid.org/0000-0002-2019-133X}{\footnotesize\color{fabric}ORCID}\\
+{\small\itshape Grupo de Teleinformática e Automação (GTA), DEL, Escola
+Politécnica, Universidade Federal do Rio de Janeiro,
+Brazil}\par\vspace{4pt}
+\vspace{6pt}
+{\small 11 November 2026 \textperiodcentered{} v0 (preprint, not peer
+reviewed) \textperiodcentered{} rev.~\revision\par}
+\end{center}
+
+\begin{quote}
+\small\textbf{Abstract.} We report two ports of the WAVEWATCH III (WW3)
+spectral wave model. Coding agents wrote both ports, and both ports have
+one acceptance rule: the port must give the same bits as the Fortran. A
+tolerance is a diagnostic, never the verdict. \emph{ww3-gpu} keeps WW3,
+and the Fortran calls C++ written with Kokkos, behind one run-time flag
+for each routine. Its reference is the Fortran path of the same
+executable. \emph{chaceon} replaces WW3 with Rust, compiled for the CPU,
+for SPIR-V (rust-gpu) and for PTX (Rust-CUDA). No Fortran runs in its
+process, and its reference is a WW3 that is compiled separately. ww3-gpu
+ports the discrete interaction approximation (DIA) of the four-wave
+transfer. On the CPU, it is byte-identical on all 100 serial and 25
+OpenMP entries of the WW3 regression matrix that select it. The DIA
+takes 48.4 \% of single-thread self time on a case of 9 520 points.
+chaceon runs \texttt{ww3\_grid}, \texttt{ww3\_strt}, \texttt{ww3\_prep}
+and \texttt{ww3\_shel} without Fortran, and 96 output files are
+byte-identical to the reference. Neither port has run the whole model on
+a real GPU, and this note claims no speed-up. We compare how each
+project defines and checks its evidence.
+
+\textbf{Keywords:} WAVEWATCH III; bit-for-bit
+reproducibility; Kokkos; Rust; GPU porting; coding agents.
+\end{quote}
+
+\section{Why bit for bit}\label{sec:why}
+
+WW3 integrates the action balance equation
+
+\[\frac{\partial N}{\partial t} + \nabla\cdot(\dot{\mathbf{c}}\,N) = \frac{S}{\sigma},\]
+
+where the source term \(S\) is the sum of wind input, dissipation,
+nonlinear transfer and bottom terms. A port that changes the order of a
+floating-point sum changes \(N\). A forecast system that was validated
+against observations must then be validated again. Thus both projects
+keep the arithmetic of the Fortran. They do not reorder a reduction,
+they do not use a fused multiply-add (\texttt{-ffp-contract=off} on both
+sides), and they do not widen a tolerance. A difference is a defect of
+the port until two runs of the Fortran itself give different bytes in
+the same file.
+
+\section{Two shapes for one rule}\label{sec:shapes}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.2200}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.4000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3800}}@{}}
+\caption{\label{tbl:shapes}The two ports. Sources: chaceon
+\texttt{docs/WW3\_GPU\_PARITY\_202611.md} (2026-11-09) and
+\texttt{README.md} at \texttt{0c098fe} (\citeproc{ref-chaceon}{Hoffmann
+2026a}); ww3-gpu \texttt{kokkos/PORT\_STATUS.md} at \texttt{58167d7}
+(\citeproc{ref-ww3gpu}{Hoffmann 2026c}).}\tabularnewline
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+ww3-gpu (C++/Kokkos)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+chaceon (Rust)
+\end{minipage} \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+ww3-gpu (C++/Kokkos)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+chaceon (Rust)
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Shape & Inside WW3: the Fortran calls C++ through a \texttt{bind(C)}
+shim, one flag for each routine & Replaces WW3: no Fortran in a chaceon
+process \\
+Reference & NOAA-EMC/WW3 \texttt{03adda91}, through a fork that adds 5
+687 lines and removes none & MetOcean WW3 7.14, \texttt{92e2cf66} \\
+CPU parity against & the Fortran path of the same executable & a
+reference that is compiled separately \\
+Device targets & Kokkos 5.2.2, CUDA backend (\texttt{sm\_89}); OpenMP on
+the CPU & rust-gpu (SPIR-V, Vulkan) and Rust-CUDA (PTX) \\
+Spectrum resident on the device & yes, on the OpenMP backend & yes, in
+SPIR-V on CPU Vulkan (lavapipe) \\
+Size of the port & 62 257 lines of C++, 355 files (2026-10-14) & 29 229
+lines of Rust port, 5 936 lines of tools \\
+Formal methods & SMT queries, exhaustive sweeps & one Lean 4 proof about
+\texttt{f32} division \\
+Licence & MIT, LGPL-3.0 kernels & MPL-2.0 \\
+\end{longtable}
+
+The Kokkos route keeps every WW3 program and replaces one routine at a
+time. Thus one regtest can isolate the effect of one routine. The Rust
+route must rebuild the programs, the file formats and the time loop
+before it can compare a whole run. After that, no Fortran remains that
+can share state with the port.
+
+The CPU results of the whole ww3-gpu runtime, with the resident
+spectrum, and their limits are in its NOAA progress record
+(\citeproc{ref-noaarecord}{Hoffmann 2026e}). The DIA port is also
+published alone as ww3-dia-gpu-v2 (\citeproc{ref-diagpuv2}{Hoffmann
+2026d}). That repository compares the port with an earlier CUDA kernel
+of the same routine.
+
+\section{Evidence ladders}\label{sec:ladders}
+
+Each project gives names to its steps. A step in one ledger is not the
+same evidence as a step in the other ledger.
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.2400}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3800}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3800}}@{}}
+\caption{\label{tbl:ladders}Evidence steps. ww3-gpu counts come from
+\texttt{scripts/port\_score.py\ -\/-write} (profile
+\texttt{bench\_small}, 120 × 80 points, 12 h, one thread, gprof,
+2026-10-14); chaceon counts come from
+\texttt{just\ port-summary}.}\tabularnewline
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Step
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+ww3-gpu
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+chaceon
+\end{minipage} \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Step
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+ww3-gpu
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+chaceon
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Code exists & \emph{translated}: 316 routines, 26.2 \% of Fortran lines
+& \emph{translated}: Rust exists, not fully reached \\
+A run calls it & \emph{ported}: 72 routines, 99.3 \% of profiled run
+time & \emph{routine}: every captured call is bit-identical on the host
+and in SPIR-V \\
+Whole runs identical, CPU & \emph{regtested}: 14 routines, 48.6 \% of
+run time & \emph{host}: whole runs are \texttt{cmp}-identical; 10 080
+lines \\
+Identical through a GPU API & none & \emph{spirv}: the same files from
+SPIR-V on CPU Vulkan; 5 189 lines \\
+Identical on a real GPU & \emph{gpu}: none & \emph{cuda}: none \\
+\end{longtable}
+
+\section{What each project found}\label{sec:found}
+
+\textbf{ww3-gpu: the reference is the optimised code.} Byte identity for
+the DIA needed one fact that the source text does not give. gfortran
+expands \texttt{x**11} as one chain of multiplications at \texttt{-O0}
+and as a different chain at \texttt{-O3}. The two chains disagree on 643
+427 of 1 000 000 single-precision inputs. Before this was found, the
+research log explained the remaining differences as round-off that WW3
+amplifies. That explanation was wrong. Thus the reference of the port is
+the code that the WW3 build produces, read as GIMPLE or disassembly, not
+the Fortran text. The port has no unit tests of its own. Only the WW3
+regression tests, compared by \texttt{test.comp}, judge it.
+
+\textbf{chaceon: a run with no Fortran in it.} The Rust programs
+\texttt{ww3\_grid}, \texttt{ww3\_strt}, \texttt{ww3\_prep} and
+\texttt{ww3\_shel} run in sequence from the namelists. They write
+\texttt{mod\_def.ww3}, the forcing, the gridded and point outputs, the
+track file and both restarts. All 96 files are byte-identical to the
+reference. The boundaries give 214 identical comparisons over 34 cases,
+and the track post-processors give 74.
+\texttt{ww3\_shel\ -\/-threads\ N} and an MPI build give the same bytes.
+The files stay identical when \texttt{W3SRCE}, \texttt{W3XYP3} and
+\texttt{W3KTP3} are compiled to SPIR-V and run on a CPU Vulkan driver.
+Enumeration cannot reach the \(2^{64}\) pairs of \texttt{f32} operands.
+There, a Lean proof states the division fact that the port uses. The
+proof says nothing about whether Rust equals Fortran, because Fortran
+has no usable formal semantics.
+
+\textbf{Why ww3-gpu has no proof yet, and what comes next.} In this
+first phase, ww3-gpu adopted no proof assistant
+(\citeproc{ref-adr0001}{Hoffmann 2026f}). There are four reasons:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  No proof assistant reads Fortran or C++. A proof is about a model that
+  a person writes. It says nothing about the gfortran and nvcc binaries
+  unless somebody shows that the model agrees with them, and that
+  agreement is the open question.
+\item
+  Bit equality is a property of two binaries, built with given flags. It
+  is not a property of two source texts.
+\item
+  For straight-line IEEE-754 code, equality on every input is decidable.
+  SMT queries in the \texttt{QF\_FP} theory and sweeps over all
+  \(2^{32}\) \texttt{float32} inputs answer it in seconds to minutes. An
+  interactive proof takes months for each routine.
+\item
+  Agents must write each proof, and a person must review it. This is a
+  second artefact for each routine.
+\end{enumerate}
+
+A first formal layer is already next to the ports. The Lean 4 package
+\texttt{ocean-waves} (\citeproc{ref-oceanwaves}{Hoffmann 2026b}) states
+the discretised action balance equation and proves these properties,
+with no \texttt{sorry} and no \texttt{axiom}:
+
+\begin{itemize}
+\tightlist
+\item
+  \(\sigma^2(k)\) increases strictly with \(k\);
+\item
+  \(c/2 \le c_g \le c\);
+\item
+  the depth CFL condition keeps every Courant number in \([0, 1]\);
+\item
+  upwind propagation and a DIA-shaped quadruplet exchange conserve
+  action;
+\item
+  the semi-implicit source step keeps the action positive for every time
+  step.
+\end{itemize}
+
+The package uses exact \texttt{Rat} arithmetic on a reduced model: one
+space dimension, a fixed depth and a Padé model of \(\tanh\). Thus it
+also says nothing about bits. Agda is the next step. Agda has no 32-bit
+float type, so it cannot prove a fact about bits. Its role is a total,
+executable reference semantics of each source term. Each table index
+will have a \texttt{Fin} type, so every read is in bounds for every
+grid, not only for one grid. The sweeps, the solver queries and the WW3
+regression tests continue to decide the bits.
+
+\section{What is not claimed}\label{sec:limits}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Neither project has run the whole model on a real GPU. The PTX of
+  chaceon has never run. ww3-gpu has run one DIA benchmark kernel on an
+  RTX 4090 (\citeproc{ref-diagpuv2}{Hoffmann 2026d}).
+\item
+  This note claims no speed-up. The rules of ww3-gpu mark its recorded
+  timings (\citeproc{ref-noaarecord}{Hoffmann 2026e}) ``regtest
+  pending'', and chaceon has no timings.
+\item
+  On a GPU, bit identity also needs the \texttt{expf} and \texttt{logf}
+  of the device to return the bits of glibc. ww3-gpu sends its kernels
+  to device copies of the glibc 2.44 functions. These copies equal the
+  host functions on every input that was checked. No device run has
+  compared them yet. Until one does, a fixed tolerance judges a GPU run.
+\item
+  The two references are different lines of WW3 (NOAA-EMC and MetOcean).
+  Thus the comparison of the two ports is by routine name, not by source
+  text. Both ledgers contain 85 routines.
+\end{enumerate}
+
+\section{Use of AI}\label{sec:ai}
+
+Claude coding agents (Anthropic) produced the C++/Kokkos and Rust code,
+the shims, the comparison scripts, the investigations and drafts of this
+text. They worked under the direction of the first author, in the two
+repositories. Each repository publishes the rules, skills and hooks of
+its agents in its \texttt{AGENTS.md} file and its \texttt{.claude/}
+directory. Every number in this note comes from a file of a repository
+at the commit that the note names. Nothing was run for this note. The
+physics of WW3 is used without change; WAVEWATCH III is a registered
+trademark of NOAA.
+
+\section*{References}\label{references}
+\addcontentsline{toc}{section}{References}
+
+\protect\phantomsection\label{refs}
+\begin{CSLReferences}{1}{0}
+\bibitem[\citeproctext]{ref-chaceon}
+Hoffmann, Matheus. 2026a. {``{chaceon}: A {Rust} Port of {WAVEWATCH
+III}.''} \url{https://github.com/h0ffmann/chaceon}.
+
+\bibitem[\citeproctext]{ref-oceanwaves}
+---------. 2026b. {``Ocean Waves: The Physics of a Spectral Wave Model
+in {Lean} 4.''}
+\url{https://github.com/h0ffmann/proof/tree/b863c15/ocean-waves}.
+
+\bibitem[\citeproctext]{ref-ww3gpu}
+---------. 2026c. {``{WW3 GPU Lab}: Agentic Coding and Agentic Research
+on a Bit-for-Bit {GPU} Port of {WAVEWATCH III}.''}
+\url{https://doi.org/10.5281/zenodo.23221351}.
+
+\bibitem[\citeproctext]{ref-diagpuv2}
+---------. 2026d. {``{ww3-dia-gpu-v2}: The Whole {W3SNL1}, Inside
+{WAVEWATCH III}, Bit for Bit.''}
+\url{https://github.com/h0ffmann/ww3-dia-gpu-v2/tree/32aa2ef}.
+
+\bibitem[\citeproctext]{ref-noaarecord}
+---------. 2026e. {``A Bit-Identical {Kokkos} Runtime for {WAVEWATCH
+III}: {CPU} Results and Five Speed-Ups.''} ww3-gpu,
+\texttt{docs/NOAA\_PROGRESS\_RECORD\_202610.md}, commit 58167d7.
+\url{https://github.com/h0ffmann/ww3-gpu/blob/58167d7/docs/NOAA_PROGRESS_RECORD_202610.md}.
+
+\bibitem[\citeproctext]{ref-adr0001}
+---------. 2026f. {``{ADR-0001}: No Proof Language for the {GPU} Port;
+{SMT} Queries and Exhaustive Sweeps Instead.''} ww3-gpu,
+\texttt{docs/ADRs/ADR-0001-proof-language.md}, commit 58167d7.
+\url{https://github.com/h0ffmann/ww3-gpu/blob/58167d7/docs/ADRs/ADR-0001-proof-language.md}.
+
+\end{CSLReferences}
+
+\end{document}

@@ -414,6 +414,10 @@ notes *args:
 memory *args:
     python3 scripts/memory.py "$@"
 
+# The aiXiv preprint: pubs/preprint/*.md -> two-ports.tex and two-ports.pdf (pandoc + XeLaTeX).
+preprint *args:
+    bash scripts/preprint.sh "$@"
+
 # Regenerate codemeta.json from CITATION.cff and .zenodo.json; `just codemeta --check` is the CI gate.
 codemeta *args:
     python3 scripts/codemeta.py "$@"
