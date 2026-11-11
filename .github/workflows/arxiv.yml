@@ -1,0 +1,35 @@
+# arxiv — build the preprint's arXiv source bundle and compile it with xelatex from a clean
+# directory, as arXiv will (scripts/preprint_arxiv.sh). arXiv takes uploads from authors only
+# through its web form (SWORD is for approved proxies), so the workflow never contacts arXiv:
+# it leaves the tarball as an artifact, and release.yml attaches it to each GitHub release.
+name: arXiv bundle
+
+on:
+  pull_request:
+    paths: ['pubs/preprint/**', 'scripts/preprint_arxiv.sh', '.github/workflows/arxiv.yml']
+  push:
+    branches: [main]
+    paths: ['pubs/preprint/**', 'scripts/preprint_arxiv.sh', '.github/workflows/arxiv.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bundle:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with: { fetch-depth: 0, persist-credentials: false }
+      - name: TeX Live 2023 (Ubuntu 24.04), the version the bundle's 00README asks arXiv for
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends texlive-xetex texlive-latex-extra \
+            texlive-fonts-recommended lmodern fonts-dejavu-core poppler-utils
+      - run: bash scripts/preprint_arxiv.sh --self-test
+      - run: bash scripts/preprint_arxiv.sh --out build/arxiv
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: arxiv-bundle
+          path: build/arxiv/
