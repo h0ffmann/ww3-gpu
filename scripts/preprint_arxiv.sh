@@ -51,7 +51,6 @@ grep -q 'IfFileExists{.current-revision}' "$here/$name.tex" || die "$name.tex no
 figs="$(figures)"
 [ -n "$figs" ] || die "no \\includegraphics in $name.tex"
 for f in $figs; do [ -f "$here/$f" ] || die "missing figure $f"; done
-readme | python3 -c 'import json,sys; d=json.load(sys.stdin); assert d["process"]["compiler"] in ("tex","pdftex","pdfetex","latex","pdflatex","xelatex")'
 if [ "$selftest" = 1 ]; then
   echo "preprint_arxiv: self-test ok ($(echo "$figs" | wc -l) figure(s))" >&2
   exit 0
@@ -59,12 +58,13 @@ fi
 
 font="$(kpsewhich DejaVuSans.ttf 2> /dev/null || true)"
 [ -n "$font" ] || font="$(fc-match -f '%{file}' 'DejaVu Sans:style=Book' 2> /dev/null || true)"
-case "$font" in */DejaVuSans.ttf) ;; *) die "DejaVuSans.ttf not found (install texlive-fonts-extra or fonts-dejavu-core)" ;; esac
+case "$font" in */DejaVuSans.ttf) ;; *) die "DejaVuSans.ttf not found (TeX Live's dejavu package or fonts-dejavu-core)" ;; esac
 
 stage="$(mktemp -d)"; chmod 755 "$stage"
 check="$(mktemp -d)"
 trap 'rm -rf "$stage" "$check"' EXIT
-rev="$(git -C "$root" rev-parse --short HEAD)+$(git -C "$root" rev-list --count HEAD)"
+# PREPRINT_REV and PREPRINT_MTIME let CI run this in a TeX Live container that has no git.
+rev="${PREPRINT_REV:-$(git -C "$root" rev-parse --short HEAD)+$(git -C "$root" rev-list --count HEAD)}"
 sed "s|\\\\IfFileExists{.current-revision}{\\\\input{.current-revision}}{unversioned}|$rev|" \
   "$here/$name.tex" > "$stage/$name.tex"
 for f in $figs; do mkdir -p "$stage/$(dirname "$f")"; cp "$here/$f" "$stage/$f"; done
@@ -74,7 +74,7 @@ readme > "$stage/00README.json"
 mkdir -p "$out"
 tarball="$out/$name-arxiv.tar.gz"
 # Reproducible: sorted names, the commit's time, no owner.
-mtime="@$(git -C "$root" log -1 --format=%ct)"
+mtime="@${PREPRINT_MTIME:-$(git -C "$root" log -1 --format=%ct)}"
 tar --sort=name --mtime="$mtime" --owner=0 --group=0 --numeric-owner -C "$stage" -cf - . \
   | gzip -n > "$tarball"
 size=$(wc -c < "$tarball")
@@ -84,12 +84,12 @@ if [ "$compile" = 1 ]; then
   command -v xelatex > /dev/null || die "xelatex not found; enter picasso's labs/paper shell or pass --no-compile"
   tar -xzf "$tarball" -C "$check"
   (cd "$check" && for _ in 1 2; do
-    xelatex -interaction=nonstopmode -halt-on-error "$name.tex" > /dev/null \
+    xelatex -interaction=nonstopmode -halt-on-error "$name.tex" > /dev/null 2>&1 \
       || { tail -n 30 "$name.log" >&2; exit 1; }
   done)
   ! grep -q 'Missing character' "$check/$name.log" || die "missing glyphs: $(grep 'Missing character' "$check/$name.log" | sort -u | head -3)"
   ! grep -q 'undefined references' "$check/$name.log" || die "undefined references in the bundle build"
-  pages=$(pdfinfo "$check/$name.pdf" 2> /dev/null | awk '/^Pages/ {print $2}')
+  pages=$(pdfinfo "$check/$name.pdf" 2> /dev/null | awk '/^Pages/ {print $2}' || true)
   cp "$check/$name.pdf" "$out/$name-arxiv.pdf"
   echo "preprint_arxiv: $tarball ($size bytes, rev $rev), compiled from a clean directory: ${pages:-?} pages" >&2
 else

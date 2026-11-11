@@ -28,10 +28,11 @@ edition's source for arXiv: the committed `.tex` with the Git revision written i
 `00README.json` that asks for `xelatex` on TeX Live 2023. It then unpacks the tarball into an
 empty directory, runs XeLaTeX twice there, and fails on an error, a missing glyph or an
 undefined reference (`scripts/preprint_arxiv.sh`). CI does the same on every change to
-`pubs/preprint/` ([`arxiv.yml`](../../.github/workflows/arxiv.yml)), and each `v*` release gets
+`pubs/preprint/` ([`arxiv.yml`](../../.github/workflows/arxiv.yml)), inside the `texlive/texlive:TL2023-historic`
+image pinned by digest, and each `v*` release gets
 the tarball as an asset ([`release.yml`](../../.github/workflows/release.yml)). Built here, the
 bundle's PDF has the same 7 pages and the same text as `wave-models-on-gpus.pdf` except the
-revision stamp (v, `pdftotext` of both, Ubuntu 24.04 TeX Live 2023, 2026-11-11).
+revision stamp (v, `pdftotext` of both, in that image and in Ubuntu 24.04's TeX Live 2023, 2026-11-11).
 
 The upload stays manual. arXiv's deposit API is for proxy submitters it has approved, and asks
 them to write to its administrators first; authors submit through the web form (v,

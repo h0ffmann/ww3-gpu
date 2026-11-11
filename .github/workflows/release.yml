@@ -38,12 +38,18 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with: { fetch-depth: 0, persist-credentials: false }
-      - timeout-minutes: 10
+      # TeX Live 2023 from its own image (texlive/texlive:TL2023-historic, pinned by digest), the
+      # version the bundle's 00README asks arXiv for. Not apt: on 2026-11-11 every runner failed to
+      # resolve azure.archive.ubuntu.com, and apt-get install hung until the job timed out.
+      - name: Build the bundle and compile it in TeX Live 2023
+        timeout-minutes: 15
+        env:
+          IMAGE: texlive/texlive@sha256:43f34cbfd1fdec61e3fa1413c3f29a434715431627734461aacb6896482a4b63
         run: |
-          sudo apt-get update -o Acquire::Retries=3
-          sudo apt-get install -y -o Acquire::Retries=3 --no-install-recommends texlive-xetex texlive-latex-extra \
-            texlive-fonts-recommended lmodern fonts-dejavu-core poppler-utils
-      - run: bash scripts/preprint_arxiv.sh --out "$RUNNER_TEMP/arxiv"
+          docker run --rm -u "$(id -u):$(id -g)" -e HOME=/tmp \
+            -e PREPRINT_REV="$(git rev-parse --short HEAD)+$(git rev-list --count HEAD)" \
+            -e PREPRINT_MTIME="$(git log -1 --format=%ct)" \
+            -v "$PWD:/w" -w /w "$IMAGE" bash scripts/preprint_arxiv.sh --out build/arxiv
       - env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" "$RUNNER_TEMP"/arxiv/wave-models-on-gpus-arxiv.tar.gz
+        run: gh release upload "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" build/arxiv/wave-models-on-gpus-arxiv.tar.gz
