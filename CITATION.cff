@@ -9,18 +9,27 @@ abstract: >-
   with coding agents under a bit-for-bit parity rule against the Fortran reference, on a
   Nix-pinned toolchain; the plans, decisions and measurements carry their evidence and the
   command that reproduces each number. The texts written from this work, a preprint and an
-  undergraduate project proposal, have their Markdown sources in the repository.
+  undergraduate project proposal, have their Markdown sources in the repository. Its twin,
+  chaceon, is WAVEWATCH III written in Rust, built and compared with the same Fortran
+  reference by the same run command.
 authors:
   - given-names: "Matheus"
     family-names: "Hoffmann"
     orcid: "https://orcid.org/0009-0009-1056-7661"
     affiliation: "Escola Politécnica, Universidade Federal do Rio de Janeiro"
 repository-code: "https://github.com/h0ffmann/ww3-gpu"
+url: "https://wave.piabrota.art/"
 doi: 10.5281/zenodo.23221351
 identifiers:
   - type: doi
     value: 10.5281/zenodo.23221351
     description: Concept DOI, resolves to the latest release
+  - type: doi
+    value: 10.5281/zenodo.23600920
+    description: Version v0.1.5
+  - type: doi
+    value: 10.5281/zenodo.23422195
+    description: Version v0.1.4
   - type: doi
     value: 10.5281/zenodo.23233540
     description: Version v0.1.1
