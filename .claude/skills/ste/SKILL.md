@@ -63,7 +63,9 @@ Procedures:
 2. Apply the checklist. Open `words.md` only if a word choice is not clear or you need an example.
 3. Return only the rewritten text, or a diff if the user asks for one. No preamble, no summary of the changes, no list of the rules applied, unless the user asks.
 4. If a fact in the original is ambiguous, keep the original wording for that sentence and mark it with a short question to the user. Do not guess.
-5. Run the gates for the files you changed (`just vale` for English Markdown outside `.claude/`).
+5. Run the gates for the files you changed (`just vale` for English Markdown outside `.claude/`), and
+   `just vale --ste <file>` to list what the STE checks still flag. It never fails: a passive in a
+   description, or a long sentence that a split would make wrong, can stay.
 
 Be token-efficient in your own output: the shortest correct text, no restatement of the input,
 no explanation of STE unless asked.

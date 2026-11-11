@@ -1,0 +1,8 @@
+# ASD-STE100: an "-ing" form only in a technical name. "after building" is the common
+# miss; write "after you build". Words that only end in -ing (string, thing) are excluded.
+extends: existence
+message: "STE: '%s' uses an -ing form as a verb; write 'after you build', not 'after building'."
+level: warning
+ignorecase: true
+tokens:
+  - '\b(?:after|before|by|when|while|without|on|upon)\s+(?!(?:string|thing|nothing|something|everything|anything|spring|ring|king|ceiling|morning|evening|padding|ping)\b)\w{2,}ing\b'

@@ -1,0 +1,8 @@
+# ASD-STE100: a paragraph has six sentences or fewer. A full stop followed by a space
+# counts as a sentence end, so "e.g. " over-counts; the rule is a warning.
+extends: occurrence
+message: "STE: more than six sentences in this paragraph."
+level: warning
+scope: paragraph
+max: 6
+token: '[.!?](?=\s|$)'

@@ -1,0 +1,25 @@
+# ASD-STE100: simple words with one meaning each. The list is the "Common replacements"
+# table of .claude/skills/ste/words.md (general knowledge, ⚠ not checked against the
+# Issue 9 dictionary, which ASD licenses and this repo does not copy); change both together.
+extends: substitution
+message: "STE: use '%s' instead of '%s'."
+level: warning
+ignorecase: true
+swap:
+  utilize|utilise|make use of: use
+  perform|performs|performed|carry out|carries out|carried out: do|run
+  ensure|ensures: make sure
+  obtain|obtains|acquire|acquires: get
+  commence|commences|initiate|initiates: start
+  terminate|terminates: stop
+  prior to: before
+  subsequent to: after
+  in order to: to
+  approximately: about
+  a large number of: many
+  numerous: many
+  sufficient: enough
+  additional: more
+  facilitate|facilitates: help
+  demonstrate|demonstrates: show
+  indicate|indicates: show

@@ -168,6 +168,10 @@ A mistake in a figure is as welcome as one in the text.
   `vale-ai-tells` rules that are never right here, such as closing pleasantries and sycophancy);
   it must pass. `just vale --report` lists every other `vale-ai-tells` rule as a suggestion for a
   person to weigh, never to apply blindly: a flagged "dynamic" is often a scheduling policy.
+  `just vale --ste [FILE...]` reports the ASD-STE100 checks of `.vale/styles/STE/` (sentence and
+  paragraph length, passive voice, -ing forms, non-simple tenses, phrasal verbs, the replacements
+  of the `ste` skill's `words.md`) as warnings and suggestions; it never fails, and it is meant for
+  the procedures and reports the `ste` skill covers, not for every page.
   Out of scope: the submodules, `.claude/`, `pubs/` (its own reviewer) and Portuguese files.
 - Code comments are of three kinds, and only these: a *why* (a rejected alternative, an external
   constraint), a *trap* (what breaks if the line changes), or a *pointer* (an issue, a plan, a

@@ -3,6 +3,7 @@
 #
 #   just vale            # the gate CI runs: .vale.ini, error-level rules only, fails on a hit
 #   just vale --report   # every ai-tells rule as suggestions (.vale-report.ini), never fails
+#   just vale --ste      # the ASD-STE100 checks (.vale-ste.ini, .vale/styles/STE), never fails
 #   just vale FILE...    # only those files; other --flags go to vale (--output=line)
 #   just vale --self-test
 #
@@ -23,6 +24,18 @@ if [[ "${1:-}" == --self-test ]]; then
   grep -q '^README.md$' <<<"$files"
   grep -q '^docs/GLOSSARY.md$' <<<"$files"
   if grep -E '^(pubs|\.claude)/|\.pt(-BR)?\.md$' <<<"$files"; then exit 1; fi
+  if command -v vale >/dev/null; then
+    # Each STE rule fires on its own sample and stays silent on the gate's config.
+    t="$(mktemp -d)"; trap 'rm -rf "$t"' EXIT
+    printf '%s\n' 'Prior to the run, utilize the shim to set up the build after building it.' '' \
+      'The files were written by the shim. It should be noted that the run would have stopped.' '' \
+      'One two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen twenty more words here now done again.' '' \
+      'A. B. C. D. E. F. G.' >"$t/s.md"
+    got="$(vale --config=.vale-ste.ini --no-exit --output=line "$t/s.md" | cut -d: -f4 | sort -u | tr '\n' ' ')"
+    want='STE.IngForm STE.ParagraphLength STE.PassiveVoice STE.PhrasalVerbs STE.SentenceLength STE.Tenses STE.Words STE.Wordy '
+    [[ "$got" == "$want" ]] || { echo "vale.sh self-test: STE rules fired '$got', want '$want'" >&2; exit 1; }
+    vale --config=.vale.ini "$t/s.md" >/dev/null || { echo "vale.sh self-test: an STE rule fails the gate" >&2; exit 1; }
+  fi
   echo "vale.sh self-test: ok ($(wc -l <<<"$files") files in scope)"
   exit 0
 fi
@@ -31,6 +44,7 @@ config=.vale.ini; opts=(); files=()
 for arg in "$@"; do
   case "$arg" in
     --report) config=.vale-report.ini; opts+=(--no-exit) ;;
+    --ste) config=.vale-ste.ini; opts+=(--no-exit) ;;
     -*) opts+=("$arg") ;;
     *) files+=("$arg") ;;
   esac

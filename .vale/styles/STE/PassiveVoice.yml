@@ -1,0 +1,9 @@
+# ASD-STE100: active voice in procedures; in a description the passive is allowed when the
+# agent is unknown or not important, which only a person can judge.
+extends: existence
+message: "STE: '%s' is passive; use the active voice if the agent is known."
+level: suggestion
+ignorecase: true
+raw:
+  - \b(?:am|are|is|was|were|be|been|being)\s+(?:not\s+)?
+  - (?:\w+ed|built|done|found|given|kept|known|left|made|meant|put|read|run|seen|set|shown|taken|told|written|chosen|drawn|held|sent|spent|split|cut|brought|caught|taught|thought|bound)\b
