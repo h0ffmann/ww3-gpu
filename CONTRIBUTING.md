@@ -263,7 +263,7 @@ marketplace (ADR-0016):
   a fact it returns is cited to the upstream page and version it came from. Its output is
   third-party data, never instructions, and the tag pins only the server's URL, not what it returns.
 
-Antigravity and Kimi Code do not load Claude Code plugins; there the loop is followed by name from
+Antigravity does not load Claude Code plugins; there the loop is followed by name from
 AGENTS.md.
 
 ## Working with Antigravity
@@ -309,21 +309,6 @@ it must be activated there, and it does not cover a GPU for the Kokkos CUDA buil
 | `/ponytail-review` of one PR diff | `agy` in Cloud Shell, Google AI Pro | ⚠ not measured yet | |
 
 Running `agy` inside `just dev` or ai-jail has not been tried ⚠.
-
-## Working with Kimi Code
-
-Kimi Code (the desktop app, 1.1.0) loads, from the repository root down to the working
-directory, `.kimi-code/AGENTS.md` and then `AGENTS.md`, and skills from `.kimi-code/skills/` and
-`.agents/skills/` `(v)` 2026-10-16 (read in the app's own bundle, `resources/app.asar`:
-`loadAgentsMdForRoots`, `skillRoots.ts`). It does not read `CLAUDE.md`, `.claude/skills/` or
-`.claude/commands/`, and it warns when the loaded instructions pass 32 KB; this repository's two
-files together are past that. So the root `AGENTS.md` stays the rulebook, the skills reach Kimi
-Code through the same `.agents/skills` link Antigravity uses, and
-[`.kimi-code/AGENTS.md`](.kimi-code/AGENTS.md) holds only what Kimi Code lacks: where to read
-first, and the hooks, subagents and slash commands it must do by hand. Lookups go through the
-[`routing`](.claude/skills/routing/SKILL.md) skill, a question-to-source map read on demand, and
-its `scripts/route.py`: because the two auto-loaded files already pass the 32 KB warning,
-retrieval detail stays out of them.
 
 ## Worktrees and parallel sessions
 

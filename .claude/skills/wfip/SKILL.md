@@ -35,7 +35,7 @@ refactor with no behaviour change, or a one-file tweak: do those directly.
    once per clone (it generates `.specify/` and the `/speckit-*` skills, which are gitignored;
    `.specify/memory/constitution.md` is tracked and restates `AGENTS.md`), then
    `/speckit-specify` writes `specs/<NNN-slug>/spec.md`; name it in the *Spec-kit* row. A spec
-   written by hand in that shape is fine (`specs/001-weathernext3-wind/spec.md`).
+   written by hand in that shape is fine.
 5. `just wfip index` regenerates `README.md`; `just wfip check` is the CI gate.
 6. Commit with `Tested:` (never `Cost:`); open the PR as a draft with `just pr` from a branch named
    after the work; the PR gets the `wfip` label from `.github/labeler.yml`.

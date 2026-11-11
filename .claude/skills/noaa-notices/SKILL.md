@@ -49,7 +49,7 @@ names.
 
 | The notice changes | Check | Where it lands |
 |---|---|---|
-| GFS paths, file names, `filter_gfs_0p25.pl`, the 10 m wind fields, retention, NOMADS TLS | `examples/02-regional-real-forcing/get_gfs.sh` against NOMADS parallel data, before the date | a fix PR to `get_gfs.sh` and `course/04-forcing.md`; the spec in `specs/001-weathernext3-wind/` if its wind file changes |
+| GFS paths, file names, `filter_gfs_0p25.pl`, the 10 m wind fields, retention, NOMADS TLS | `examples/02-regional-real-forcing/get_gfs.sh` against NOMADS parallel data, before the date | a fix PR to `get_gfs.sh` and `course/04-forcing.md` |
 | GFS-Wave or GEFS-Wave (grid, physics, coupling, products) | what lesson 04 and the proposal say about operational wave guidance | `course/04-forcing.md`, `course/14-ww4-and-the-future.md`; the proposal only for a fact that changed, through `revisor-proposta` |
 | A WW3 production branch or tag | which commit of `develop` it starts from, against the `WW3/` pin (`just src-st`) | a dated `docs/log/` entry; a pin bump is its own PR |
 | NWPS, GLWU, HAFS, RTOFS | whether the repository cites it | a `docs/log/` entry, or nothing |

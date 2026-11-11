@@ -13,7 +13,7 @@ The ww3-gpu adaptation of marola's MIP-0084 (one `route` tool any session can ca
 installed) and MIP-0085 (an index per kind of question: doc↔code, decisions). One repository, so
 `scripts/route.py` builds its indexes from `git ls-files` on each call, in well under a second;
 there is no bundle, no graph to build and no hook. Python 3 standard library only, so it works in a
-cloud session, a jail and Kimi Code or Antigravity alike (this directory is also `.agents/skills`).
+cloud session, a jail and Antigravity alike (this directory is also `.agents/skills`).
 
 ## One question, one call
 
