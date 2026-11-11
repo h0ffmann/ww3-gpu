@@ -162,6 +162,7 @@ Run the gates of what you changed before calling it done. CI (`.github/workflows
 | `site/`, `DESIGN.md`, `scripts/build_html.sh`, `scripts/build_site.sh` | `just site` (the book pages, then the front page's tests and prerender) |
 | `docs/WFIPs/` or `specs/` | `just wfip check` (`scripts/wfip.py check`: index current, deliverable ids valid, every section present, DoD consistent with Status); `just wfip index` regenerates |
 | `.claude/skills/` or `.claude/agents/` | `python3 .claude/hooks/check_agent_frontmatter.py`; for a vendored skill, `skills-vendor check --lock .claude/skills/skills.lock` |
+| `.claude/agents/`, `.omp/` or AGENTS.md's repo invariants and GPU rule | `python3 scripts/omp_sync.py --write`, then `--check` (CI runs `--self-test` and `--check`) |
 | `.github/labels.yml` | `just labels-sync --dry-run` (the manifest parses, and the plan is what you meant) |
 | any Markdown | links are checked by lychee in CI; a relative link must resolve from the file; `just vale` (`scripts/vale.sh`) must pass on English Markdown |
 
@@ -469,8 +470,9 @@ only the server's URL, not what the server returns.
 ## Skills and agents
 
 Skills live in `.claude/skills/<name>/SKILL.md`, agents in `.claude/agents/`; `.agents/skills` is
-a symlink to the same directory so Antigravity loads the same files (`CONTRIBUTING.md`,
-"Working with Antigravity", says what it does not get). Each restates the
+a symlink to the same directory so Antigravity loads the same files, and Oh My Pi reads
+`.claude/skills` itself (`CONTRIBUTING.md`, "Working with Antigravity" and "Working with Oh My
+Pi", say what they do not get). Each restates the
 audience rule for its own job; a new one does too, and its YAML front matter must parse
 (`check_agent_frontmatter.py`: an unquoted description containing `: ` silently disables it).
 

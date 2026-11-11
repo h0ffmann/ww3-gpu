@@ -426,6 +426,10 @@ codemeta *args:
 agent-env *args:
     bash scripts/agent_env.sh "$@"
 
+# Oh My Pi's generated files (.omp/RULES.md, .omp/agents/) from AGENTS.md and .claude/agents; `just omp --check` is the CI gate.
+omp *args='--write':
+    python3 scripts/omp_sync.py "$@"
+
 # GitHub's Spec Kit (github.com/github/spec-kit). `just specify init` sets a clone up for the /speckit-* skills; anything else is passed to `specify`.
 specify *args:
     #!/usr/bin/env bash

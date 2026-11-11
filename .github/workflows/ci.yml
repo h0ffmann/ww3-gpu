@@ -21,13 +21,15 @@ jobs:
           done
 
       # The Claude hooks only fire in Claude Code; this runs their checks for any harness.
-      - name: Agent and skill definitions parse, the Claude hooks and the branch-name check pass their self-tests
+      - name: Agent and skill definitions parse, the Claude hooks and the branch-name check pass their self-tests, the Oh My Pi copies are current
         run: |
           python3 .claude/hooks/check_agent_frontmatter.py
           bash .claude/hooks/proposal-review.sh --self-test
           bash .claude/hooks/proposal-review-stop.sh --self-test
           bash scripts/branch_name.sh --self-test
           test -f .agents/skills/eli5/SKILL.md
+          python3 scripts/omp_sync.py --self-test
+          python3 scripts/omp_sync.py --check
 
       # regtest-selected.yml runs on the owner's machine: only by hand, only by the owner.
       - name: Self-hosted workflows are dispatch-only and owner-only; the runner scripts pass their self-tests
