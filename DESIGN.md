@@ -37,6 +37,19 @@ each value in the `--code` light. Under each
 report's name, its record from `kokkos/ports.tsv`: regtested, a `--proof` chip for "yes" and a
 `--warn` chip for "no" (the googletest column went with the port's own tests, ADR-0010).
 
+## The lineage
+
+A second page, `/lineage/` (and `/pt-BR/lineage/`), linked from the front page's navigation: the
+works this one descends from or runs beside, on one vertical line of time, oldest first. Each event
+is a row of `site/data/lineage.tsv`: its date, only as precise as its source (`2025`, `2025-11` or
+`2025-11-17`), done or planned, a kind, its family, a link, one line of what it is, and where the
+date was read. A dot in the `--wave` light is a model (wave, ocean or weather), because a model is
+the sea; one in the `--code` light is a port, a model moved to other hardware or another language,
+because a port is the machine. A planned event has a hollow dot and a `--code` chip that says
+"planned", since it is not yet decided. No new light: a kind other than model or port starts here.
+`site/content` stops the build on a row with a bad date, status or kind. To track a new work, add a
+row.
+
 ## The ground
 
 Dark only, with no light theme: `--night #05090E` behind everything, `--deep #0A121B`,
@@ -66,7 +79,8 @@ Every fact on the page comes from a file of this repository, through `site/conte
 from `course/`, the decisions from `docs/ADRs.md`, the designs from `docs/WFIPs/`, the notes from
 `notes/`, the port's benchmarks from `kokkos/port_report/`, the DOI and the people from `CITATION.cff` and `.zenodo.json`, the latest release from
 `RELEASES.md`. A fact that no other file holds (a related author, a sister work) is a row of
-`site/data/related.tsv`, with its source. The sister port in Rust, chaceon, is a `port` row there,
+`site/data/related.tsv`, with its source, and a dated event of the lineage is a row of
+`site/data/lineage.tsv`. The sister port in Rust, chaceon, is a `port` row there,
 and each fact the page states about it is a `chaceon` row linked to the file of chaceon that says
 it, at a named commit; its section and its button in the cover are `--wave` and quiet, like the
 repository's. Never type a title, a status, a date, a count or a DOI

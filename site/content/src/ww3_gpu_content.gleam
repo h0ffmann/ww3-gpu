@@ -38,6 +38,21 @@ pub type Link {
   Link(kind: String, name: String, url: String, what: String, source: String)
 }
 
+/// One dated event of site/data/lineage.tsv, the lineage page: a work this one descends from or
+/// runs beside, or a release of this one, done or planned.
+pub type Event {
+  Event(
+    date: String,
+    status: String,
+    kind: String,
+    line: String,
+    name: String,
+    url: String,
+    what: String,
+    source: String,
+  )
+}
+
 /// A port report of kokkos/port_report/: its name, its status line, its file, and the record of
 /// kokkos/ports.tsv: was the Kokkos code regtested inside WW3. The port has no tests of its own;
 /// WW3's regtests are its tests (ADR-0010).
@@ -388,6 +403,70 @@ pub fn link(line: String) -> Result(Link, Nil) {
   }
 }
 
+// ---- the lineage -------------------------------------------------------------------------------
+
+/// "2026", "2026-02" or "2026-02-17": a date as precise as its source, never more.
+pub fn is_date(s: String) -> Bool {
+  let digits = fn(part, n) { string.length(part) == n && is_number(part) }
+  case string.split(s, "-") {
+    [y] -> digits(y, 4)
+    [y, m] -> digits(y, 4) && digits(m, 2)
+    [y, m, d] -> digits(y, 4) && digits(m, 2) && digits(d, 2)
+    _ -> False
+  }
+}
+
+/// What is wrong with site/data/lineage.tsv: a row without its eight cells, a date that is not
+/// YYYY[-MM[-DD]], a status other than done or planned, a kind other than model or port, or an
+/// empty name, link or source. The page is not built while this is not empty.
+pub fn lineage_errors(table: String) -> List(String) {
+  tsv_rows(table, "date")
+  |> list.flat_map(fn(cells) {
+    case cells {
+      [date, status, kind, _, name, url, _, source] -> {
+        let where = "the row " <> lit(name)
+        list.flatten([
+          case is_date(date) {
+            True -> []
+            False -> [where <> ": date is " <> lit(date)]
+          },
+          case status {
+            "done" | "planned" -> []
+            _ -> [where <> ": status is " <> lit(status)]
+          },
+          case kind {
+            "model" | "port" -> []
+            _ -> [where <> ": kind is " <> lit(kind)]
+          },
+          case name == "" || url == "" || source == "" {
+            True -> [where <> " needs a name, a link and a source"]
+            False -> []
+          },
+        ])
+      }
+      _ -> [
+        "a row has "
+        <> int.to_string(list.length(cells))
+        <> " cells, and it needs date, status, kind, line, name, link, what and source: "
+        <> string.join(cells, " | "),
+      ]
+    }
+  })
+}
+
+/// The events of a table that passed `lineage_errors`, oldest first.
+pub fn lineage(table: String) -> List(Event) {
+  tsv_rows(table, "date")
+  |> list.filter_map(fn(cells) {
+    case cells {
+      [date, status, kind, line, name, url, what, source] ->
+        Ok(Event(date, status, kind, line, name, url, what, source))
+      _ -> Error(Nil)
+    }
+  })
+  |> list.sort(fn(a, b) { string.compare(a.date, b.date) })
+}
+
 fn drop_suffix(s: String, suffix: String) -> String {
   case string.ends_with(s, suffix) {
     True -> string.drop_end(s, string.length(suffix))
@@ -447,6 +526,10 @@ pub type Link {
   Link(kind: String, name: String, url: String, what: String, source: String)
 }
 
+pub type Event {
+  Event(date: String, status: String, kind: String, line: String, name: String, url: String, what: String, source: String)
+}
+
 pub type Report {
   Report(name: String, status: String, file: String, regtested: String)
 }
@@ -476,6 +559,7 @@ pub fn render(
   bench_rows: List(Bench),
   stats: List(Stat),
   pt_br: List(#(String, String)),
+  events: List(Event),
 ) -> String {
   let record = fn(r: Record) {
     call("Record", [r.id, r.title, r.status, r.date, r.file])
@@ -524,6 +608,22 @@ pub fn render(
         "Link",
         list.map(links, fn(l) {
           call("Link", [l.kind, l.name, l.url, l.what, l.source])
+        }),
+      ),
+      items(
+        "events",
+        "Event",
+        list.map(events, fn(e) {
+          call("Event", [
+            e.date,
+            e.status,
+            e.kind,
+            e.line,
+            e.name,
+            e.url,
+            e.what,
+            e.source,
+          ])
         }),
       ),
       items(
@@ -624,6 +724,14 @@ pub fn main() -> Nil {
       exit(1)
     }
   }
+  let lineage_table = read("../data/lineage.tsv")
+  case lineage_errors(lineage_table) {
+    [] -> Nil
+    errors -> {
+      list.each(errors, fn(e) { io.println_error("lineage.tsv: " <> e) })
+      exit(1)
+    }
+  }
   let chapters =
     list_dir(root <> "course")
     |> list.filter(fn(name) {
@@ -701,6 +809,7 @@ pub fn main() -> Nil {
       bench_rows,
       stats,
       translations(table),
+      lineage(lineage_table),
     )
   write("../src/ww3_gpu_site/content.gleam", text)
 }
