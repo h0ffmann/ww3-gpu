@@ -1,15 +1,15 @@
 <div align="center">
 
-<img src="site/static/favicon.svg" width="120" alt="" />
+<img src="https://wave.piabrota.art/favicon.svg" width="120" alt="" />
 
 # ww3-gpu
 
-<sub>o WW3 GPU Lab · desde 2026 · <a href="https://h0ffmann.github.io/ww3-gpu/">o site</a> · <a href="RELEASES.md">versões</a> · <a href="#como-citar">citar</a> · <a href="README.md">english</a></sub>
+<sub>o WW3 GPU Lab · desde 2026 · <a href="https://wave.piabrota.art/">o site</a> · <a href="RELEASES.md">versões</a> · <a href="#como-citar">citar</a> · <a href="README.md">english</a></sub>
 
 [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.23221351-1682D4?style=flat-square)](https://doi.org/10.5281/zenodo.23221351)
 [![versão](https://img.shields.io/github/v/tag/h0ffmann/ww3-gpu?style=flat-square&label=vers%C3%A3o&color=FF4F00)](RELEASES.md)
 [![CI](https://github.com/h0ffmann/ww3-gpu/actions/workflows/ci.yml/badge.svg)](https://github.com/h0ffmann/ww3-gpu/actions/workflows/ci.yml)
-[![site](https://img.shields.io/badge/site-no%20ar-3FB950?style=flat-square)](https://h0ffmann.github.io/ww3-gpu/)
+[![site](https://img.shields.io/badge/site-no%20ar-3FB950?style=flat-square)](https://wave.piabrota.art/)
 [![entregável: ww3-dia-gpu-v2](https://img.shields.io/badge/entreg%C3%A1vel-ww3--dia--gpu--v2-181717?style=flat-square&logo=github)](https://github.com/h0ffmann/ww3-dia-gpu-v2)
 [![licença](https://img.shields.io/badge/licen%C3%A7a-MIT%20%2B%20kernels%20LGPL--3.0-1682D4?style=flat-square)](#licença)
 [![read in english](https://img.shields.io/badge/read%20in-english-3FB950?style=flat-square)](README.md)
@@ -317,33 +317,26 @@ just wfip check    # os documentos de desenho e seus critérios de pronto
 
 <details><summary>O site: o que ele mostra, e como compilar</summary>
 
-<https://h0ffmann.github.io/ww3-gpu/> é uma página inicial em Gleam + Lustre, pré-renderizada, sem
-script. Cada fato que ela mostra vem dos arquivos deste repositório, lidos pelo `site/content`: as
-decisões, os desenhos, as notas, o DOI e as pessoas. Ao lado dela ficam a página de andamento (`/andamento/`),
-das decisões (`/adrs/`) e de um relatório em português fácil para o GTA, do DEL/UFRJ
-(`/relatorio-gta/`, feito de [`pubs/relatorio-gta/`](pubs/relatorio-gta/relatorio.easy.pt-BR.md), com PDF em
-[`pdf/relatorio-gta-pedro-cruz.pdf`](pdf/relatorio-gta-pedro-cruz.pdf)). O visual está em [`DESIGN.md`](DESIGN.md): um mar à noite, com três
-luzes. A mesma página sai em português em [`/pt-BR/`](https://h0ffmann.github.io/ww3-gpu/pt-BR/),
-de uma fonte só e de uma tabela de traduções,
-[`site/data/translations/pt-BR.tsv`](site/data/translations/pt-BR.tsv): o build falha quando uma
-frase fica sem tradução.
+<https://wave.piabrota.art/> é a página inicial e a linhagem, em inglês e, em `/pt-BR/`, em
+português. O código dele fica no [piabrota/nix-os](https://github.com/piabrota/nix-os)
+(`ww3-site/`, desde 11 de novembro de 2026, [ADR-0024](docs/ADRs.md#adr-0024)), que o compila a
+partir dos arquivos deste repositório num commit fixado: as decisões, os desenhos, as notas, os
+números do port (`kokkos/ports.tsv`, `site/data/port_score.tsv`), a linhagem e os trabalhos
+relacionados (`site/data/lineage.tsv`, `site/data/related.tsv`), o DOI e as pessoas. Uma mudança
+nesses arquivos chega ao site quando o nix-os move o commit fixado. Uma mudança na página em si é um
+pull request lá.
+
+O GitHub Pages, em <https://h0ffmann.github.io/ww3-gpu/>, ainda serve a página de andamento
+(`/andamento/`), as decisões (`/adrs/`), os desenhos com zoom (`/figures/`) e um relatório em
+português fácil para o GTA, do DEL/UFRJ (`/relatorio-gta/`, feito de
+[`pubs/relatorio-gta/`](pubs/relatorio-gta/relatorio.easy.pt-BR.md), com PDF em
+[`pdf/relatorio-gta-pedro-cruz.pdf`](pdf/relatorio-gta-pedro-cruz.pdf)); os endereços antigos da
+página inicial e da linhagem redirecionam para wave.piabrota.art.
 
 ```console
-just site          # as páginas de andamento, ADRs e relatório, depois a página inicial, em build/site/
+just site          # as páginas de andamento, ADRs e relatório e os redirecionamentos, em build/site/
 just site-serve    # serve build/site em http://localhost:8000
 ```
-
-<details><summary>Detalhes do ambiente</summary>
-
-| Tipo | Programa |
-| :---- | :-----: |
-| Linguagem | Gleam (alvo JavaScript), Lustre |
-| Empacotamento e testes | node, esbuild, gleeunit |
-| Toolchain | o `labs/gleam-website` do picasso, pelo `flake.nix` (`nix develop .#site`) |
-| Páginas do relatório | pandoc (`scripts/build_html.sh`) |
-| Publicação | `.github/workflows/pages.yml`, GitHub Pages |
-
-</details>
 
 </details>
 
@@ -628,8 +621,8 @@ solver de propagação
 
 A tabela completa está na seção [structure](README.md#structure) do README em inglês. Em resumo:
 `examples/` (os casos executáveis), `kokkos/` (os kernels), `bench/` e `gpu/` (as medições), `proof/` (a
-prova), `docs/` (planos, decisões, desenhos, o diário), `notes/` (o segundo cérebro), `site/` (a
-página inicial em Gleam), `pubs/` (o preprint, a proposta e o relatório para o GTA) e `docker/` (a imagem Ubuntu com os programas
+prova), `docs/` (planos, decisões, desenhos, o diário), `notes/` (o segundo cérebro), `site/data/` (as
+tabelas que o site lê), `pubs/` (o preprint, a proposta e o relatório para o GTA) e `docker/` (a imagem Ubuntu com os programas
 compilados, [a imagem Docker](#2--a-imagem-docker)).
 
 </details>

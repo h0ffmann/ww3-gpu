@@ -44,6 +44,7 @@ reader fills the `/adrs/` page of the website on every build.
 | [ADR-0021](#adr-0021) | Compound Engineering is dropped: its plugin, its configuration and its folder go; engineering work stays sized to the change, and the plans move to `docs/plans/` (supersedes ADR-0016's Compound Engineering clause) | Accepted | 2026-11-11 |
 | [ADR-0022](#adr-0022) | Every ADR is a section of this one document, `docs/ADRs.md`; the files of `docs/ADRs/` are merged into it and every link to them points here | Accepted | 2026-11-11 |
 | [ADR-0023](#adr-0023) | The course (`course/`, `exercises/`) and the book built from it leave the repository; its texts are the preprint, the proposal and the thesis, each with a Markdown source; history keeps its links at `f9ce3a0` (supersedes ADR-0003 and ADR-0004) | Accepted | 2026-11-11 |
+| [ADR-0024](#adr-0024) | The website's front page and its lineage move to piabrota/nix-os (`ww3-site/`, served at wave.piabrota.art on KVM 4); the Gleam code leaves this repository, its facts stay here, and GitHub Pages redirects the old addresses (supersedes ADR-0009's fourth decision) | Accepted | 2026-11-11 |
 
 <a id="adr-0001"></a>
 
@@ -2347,3 +2348,51 @@ removes the book.
 ### Revisit when
 
 A thesis text starts: it gets its own directory under `pubs/`, built like the proposal.
+
+<a id="adr-0024"></a>
+
+## ADR-0024: The website moves to piabrota/nix-os; its facts stay here
+
+| | |
+|---|---|
+| **Status** | Accepted |
+| **Date** | 2026-11-11 |
+| **Deciders** | Hoffmann |
+| **Written by** | Hoffmann, with an agent |
+| **Scope** | The website's front page and its lineage page: their Gleam code, their build, where they are served. Not the files they read, the progress page, the ADR page, the GTA report or the drawings' pages, which GitHub Pages still serves |
+| **Related** | Supersedes the fourth decision of [ADR-0009](#adr-0009) (a Gleam website built here); piabrota/nix-os#215 (the move) |
+
+### Context
+
+The owner, 2026-11-11, verbatim: "move site code to piabrota/nix-os, site maintenance will be taken
+from there", then "it will be deployed on kvm 4", then "move to in fact wave.piabrota.art". Once
+nix-os served the site, the owner, the same day, verbatim: "gleam still not removed".
+
+piabrota/nix-os#215 copied `site/` at `2ebd854` into nix-os as `ww3-site/`, and the pages it built
+there were byte-identical to the ones GitHub Pages served from this repository that day `(v)`
+`nix build` of `ww3-site` and `diff` against `https://h0ffmann.github.io/ww3-gpu/`, 2026-11-11.
+nix-os builds the page from this repository's files at a pinned commit, and a workflow there opens
+a pull request when `main` here moves.
+
+### Decision
+
+1. The Gleam code of the front page and the lineage (`site/src`, `site/test`, `site/static`,
+   `site/content`, the pt-BR translations, `scripts/build_site.sh`) and its toolchain here (the
+   `gleam-website` flake input and the `site` dev shell) leave this repository. The page is
+   changed by a pull request to piabrota/nix-os.
+2. The facts stay here and nix-os reads them: `docs/ADRs.md`, `docs/WFIPs/`, `notes/`,
+   `kokkos/ports.tsv`, `kokkos/port_report/`, `docs/archify/`, `.zenodo.json`, `CITATION.cff`,
+   `RELEASES.md`, `pubs/site/meta.yaml`, and `site/data/{lineage,port_score,related}.tsv`, which
+   `scripts/port_score.py` keeps writing.
+3. The site is at https://wave.piabrota.art/. GitHub Pages keeps `/andamento/`, `/adrs/`,
+   `/relatorio-gta/` and `/figures/`, and its `/`, `/pt-BR/`, `/lineage/` and `/pt-BR/lineage/`
+   redirect to the same paths on wave.piabrota.art.
+
+### Consequences
+
+- A change to a file listed in decision 2 reaches the site only when nix-os moves its pin, a
+  pull request that the owner merges there.
+- `DESIGN.md` keeps the palette, the type and the rules of the pictures; the rules of the page's
+  layout and two languages go with its code.
+- The drawings' pages, the ADR page, the progress page and the GTA report could move the same way
+  later ⚠; until then `pages.yml` builds them here.

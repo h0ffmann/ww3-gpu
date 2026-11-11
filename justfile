@@ -552,11 +552,10 @@ sub-sync: submodule-update src-sync ww4-sync
 pubs-shell:
     nix develop "{{justfile_directory()}}"
 
-# The Gleam front page (site/, DESIGN.md) reads its facts from the repository; CI deploys build/site.
-# The whole website -> build/site: the progress, ADR and GTA report pages, then the front page at /.
+# What GitHub Pages serves -> build/site: the progress, ADR and GTA report pages, and the redirects to
+# wave.piabrota.art, where piabrota/nix-os builds the front page from this repository (ADR-0024).
 site:
     scripts/build_html.sh
-    nix develop "{{justfile_directory()}}#site" --command scripts/build_site.sh --check
 
 # Serve build/site on http://localhost:8000 (after `just site`).
 site-serve:

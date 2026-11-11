@@ -7,12 +7,9 @@
     # repositories can reuse them.
     publisher.url = "github:h0ffmann/picasso?dir=labs/publisher";
     nixpkgs.follows = "publisher/nixpkgs"; # only for symlinkJoin; same pin as the toolchain
-    # The site's toolchain (Gleam on JavaScript, Lustre, node, esbuild, just), as the sister sites
-    # h0ffmann/h0ffmann and h0ffmann/closed-source take it: `nix develop .#site`, `just site`.
-    gleam-website.url = "github:h0ffmann/picasso?dir=labs/gleam-website";
   };
 
-  outputs = { self, publisher, nixpkgs, gleam-website }:
+  outputs = { self, publisher, nixpkgs }:
     let
       systems = builtins.attrNames publisher.devShells;
       forAll = f: nixpkgs.lib.genAttrs systems f;
@@ -25,10 +22,7 @@
       };
     in
     {
-      devShells = forAll (system: { default = publisher.devShells.${system}.default; }
-        // nixpkgs.lib.optionalAttrs (gleam-website.devShells ? ${system}) {
-          site = gleam-website.devShells.${system}.default;
-        });
+      devShells = forAll (system: { default = publisher.devShells.${system}.default; });
 
       packages = forAll (system:
         let

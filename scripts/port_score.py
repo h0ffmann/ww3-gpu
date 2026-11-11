@@ -24,7 +24,7 @@ and for each level two shares: of the profile's self time (what a run moves off 
 every Fortran line in WW3's model/src. Beside them: the routines (over every SUBROUTINE and
 FUNCTION in model/src) and the files (over every .F90 file) of each level
 and, beside them, the size of the port itself: the C++ files and lines under kokkos/src.
---write also writes site/data/port_score.tsv, which the website reads (site/content), and
+--write also writes site/data/port_score.tsv, which the website reads (piabrota/nix-os, ww3-site/content), and
 kokkos/PORT_RANKING.md: the routines still in Fortran by self time, up to RANK_TOP, and for each
 ported routine its Kokkos files and its regtest record (the port has no tests of its own, ADR-0010),
 and kokkos/PORT_TABLE.tsv: one row per routine that is translated, claimed (kokkos/port_claims.tsv)
@@ -188,7 +188,7 @@ def site_rows(s):
 
 def site_tsv(s):
     head = ("# The global numbers of the Kokkos port, written by scripts/port_score.py --write; do not edit.\n"
-            f"# WW3@{s['ww3_rev']}. The website reads this file (site/content).\n"
+            f"# WW3@{s['ww3_rev']}. The website reads this file (piabrota/nix-os, ww3-site/content).\n"
             "# name\tshare\tcount\twhat\n")
     return head + "".join("\t".join(r) + "\n" for r in site_rows(s))
 

@@ -1,4 +1,4 @@
-# pubs/site/meta.yaml — the title and subtitle the site's front page shows (site/content reads them).
+# pubs/site/meta.yaml — the title and subtitle the site's front page shows (piabrota/nix-os's ww3-site/content reads them).
 title: "Without Changing the Answer"
 subtitle: "WAVEWATCH III on GPUs with Kokkos and CUDA, bit for bit with the Fortran: github.com/h0ffmann/ww3-gpu"
 author: "Matheus Hoffmann"

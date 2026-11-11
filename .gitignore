@@ -101,12 +101,6 @@ result-*
 # graphify output from an in-tree run; the graph lives in ~/.cache/ww3-gpu-graph/ (ADR-0007)
 graphify-out/
 
-# the site (site/, `just site`): Gleam's build output, and the content module site/content writes
-site/build/
-site/content/build/
-site/src/ww3_gpu_site/content.gleam
-# ...except the screenshots a pull request shows
-!site/preview/*.png
 
 # Archify: pages are rendered from docs/archify/*.json (scripts/archify.sh render), and its receipts are run evidence
 .archify/

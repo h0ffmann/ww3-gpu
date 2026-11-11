@@ -1,5 +1,5 @@
 # The global numbers of the Kokkos port, written by scripts/port_score.py --write; do not edit.
-# WW3@03adda91. The website reads this file (site/content).
+# WW3@03adda91. The website reads this file (piabrota/nix-os, ww3-site/content).
 # name	share	count	what
 of the run time, translated	99.3 %	316 of 1 023 routines	a Kokkos translation exists in kokkos/src; the profile's self time, full (bench_small, 120 x 80, 9 520 sea points, 12 h)
 of the run time, ported	99.3 %	72 of 1 023 routines	WW3 at the WW3/ pin calls the Kokkos code, behind its run-time flag; the profile's self time, full (bench_small, 120 x 80, 9 520 sea points, 12 h)

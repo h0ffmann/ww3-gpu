@@ -9,7 +9,7 @@ A report says, for one routine:
 
 1. **What was ported:** the WW3 file and lines at the pinned commit, and the Kokkos files.
 2. **The benchmarks:** every measured number, in the table between `<!-- bench:start -->` and
-   `<!-- bench:end -->`. The website reads that table (`site/content`) and draws each step as a
+   `<!-- bench:end -->`. The website reads that table (piabrota/nix-os, `ww3-site/content`) and draws each step as a
    bar: the speed-up over the step's own baseline, in shades of the `--proof` light, deeper as the
    speed-up grows; a step slower than its baseline is drawn grey and says so.
 3. **How it was regtested:** WW3's own regtests (inside WW3: `--ww3-gpu --cpu` against the Fortran
