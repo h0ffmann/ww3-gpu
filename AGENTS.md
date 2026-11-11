@@ -53,6 +53,8 @@ looser.
 - **Engineering work is sized to the change**: when the owner asks for engineering work, plan,
   work and review in proportion to it, and the hard rules here win over any step
   ([Engineering work](#engineering-work)).
+- **Diagrams are Archify, dark**: no diagram is Mermaid; every diagram is an Archify drawing in
+  DESIGN.md's dark look with its reading card ([Figures](#figures-hard-rule)).
 - **The proposal goes through the reviewer**: any change under `pubs/proposal/` passes
   `revisor-proposta` and `just proposal-lint` before the PR, and the review is recorded
   ([The proposal](#the-proposal-hard-rule)).
@@ -99,8 +101,7 @@ configure and run the CMake/CTest driver in `regtests/`; `just` lists them.
 | An example | `examples/` | examples use `.nml`, never `.inp` |
 | The preprint, the thesis | `pubs/preprint/`, `pubs/thesis/` when it starts | a Markdown source, built like the proposal ([ADR-0023](docs/ADRs.md#adr-0023)) |
 | The proposal | `pubs/proposal/pt/` (reference) and `en/` (mirror) | [The proposal](#the-proposal-hard-rule) |
-| A diagram | a Mermaid fence in the page it illustrates | [Figures](#figures-hard-rule) |
-| An interactive twin of a diagram | its source `docs/archify/<slug>.json`, listed in [`docs/archify/README.md`](docs/archify/README.md); the HTML is rendered, never committed | the `archify` skill; never a figure on its own |
+| A diagram | an Archify source `docs/archify/<slug>.json` with its dark PNG, shown in the page it illustrates and linked to its page on the website; never a Mermaid fence | [Figures](#figures-hard-rule), [`DESIGN.md`](DESIGN.md) "Pictures", the `archify` skill; the HTML is built by `pages.yml`, never committed |
 | A dated plan of a medium or large change | `docs/plans/` | [Engineering work](#engineering-work) |
 | A skill or agent | `.claude/skills/<name>/SKILL.md`, `.claude/agents/<name>.md` | [Skills and agents](#skills-and-agents) |
 | The toolchain | `picasso/` (submodule, sparse) and `flake.nix` | [`docs/TOOLCHAIN.md`](docs/TOOLCHAIN.md); pin deliberately, name the version |
@@ -402,14 +403,20 @@ Portuguese. Placeholders such as `(REFERÊNCIA)` are defects, not notes.
 
 ## Figures (hard rule)
 
-A diagram is a ```` ```mermaid ```` fence in the page it illustrates, starting with
-`%% figure: <id>` and `%% title: <question>`, followed by a *How to read this figure* card
-(*Como ler esta figura* in a `.pt.` file): takeaway, how to read, not shown, evidence. The `figure`
-skill has the visual grammar; `scripts/figures.py check` fails CI when a fence has no card or its
-render is stale, so `just figures` renders and the renders, `index.json` and the gallery
-`pubs/figures/README.md` are committed with the page. A bar chart of a measured table goes through
-`figures.py chart` so the table and the chart cannot drift. Where a figure and its prose disagree,
-the figure is the bug.
+The owner, 11 November 2026: no diagram is Mermaid. Every diagram is an Archify drawing in the
+dark look of [`DESIGN.md`](DESIGN.md), "Pictures": its source is `docs/archify/<slug>.json`, it
+has a row in `docs/archify/dark.tsv` and in [`docs/archify/README.md`](docs/archify/README.md), and
+the page it illustrates shows `docs/archify/<slug>.png` linked to its zoomable page on the website
+(`/figures/<slug>/`, built by `pages.yml`), followed by a *How to read this figure* card (*Como ler
+esta figura* in a `.pt.` file): takeaway, how to read, not shown, evidence. `just archify png`
+draws the picture and `just archify check` says whether it is stale. Every node and label traces to
+a file read, a WW3 fact cites `model/src/<file>.F90:<line>` at the pin, and a speed figure says
+"regtest pending" until WW3's regtests have run on its commit. Where a figure and its prose
+disagree, the figure is the bug.
+
+A new diagram is never a Mermaid fence. The fences still in the repository (the proposal's, the
+course's and the docs not yet redrawn) are being replaced ⚠; until the last one goes,
+`scripts/figures.py check` keeps gating them in CI and `just figures` keeps their renders current.
 
 ## Engineering work
 
@@ -487,7 +494,7 @@ and `.claude/skills/archify` is a symlink into it. `scripts/archify.sh init` che
 fresh clone. With no lock hash and no patch, the gitlink is the only control: a commit that
 moves it is reviewed by a person who reads upstream's diff of `archify/SKILL.md`,
 `archify/references/`, `CLAUDE.md` and `AGENTS.md`, since an agent loads that text as instructions. It cannot carry a patch, so
-its audience rule is here: An Archify page is never a figure: the figure is the Mermaid fence with its *How to read this figure* card, which carries the evidence and the `⚠` marks; every node and label traces to a file read, a WW3 fact cites `model/src/<file>.F90:<line>` at the pin, and a speed figure says "regtest pending" until WW3's regtests have run on its commit.
+its audience rule is here: An Archify drawing is a figure only with its *How to read this figure* card under its picture, which carries the evidence and the `⚠` marks; every node and label traces to a file read, a WW3 fact cites `model/src/<file>.F90:<line>` at the pin, and a speed figure says "regtest pending" until WW3's regtests have run on its commit.
 
 ponytail is also enabled as a Claude Code plugin, with its mode off by default
 (`PONYTAIL_DEFAULT_MODE=off`, the owner, 14 October 2026), because its rules cover a whole session

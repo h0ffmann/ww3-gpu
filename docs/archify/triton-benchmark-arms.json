@@ -1,0 +1,307 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Which W3SDS4 implementations are timed",
+    "output": "docs/archify/triton-benchmark-arms.html",
+    "quality_profile": "showcase",
+    "locale": "en",
+    "repository": {
+      "url": "https://github.com/h0ffmann/ww3-gpu.git",
+      "link_mode": "local-only",
+      "revision": "28178fe10a8ec37ab38c809326ba8964c11f992c"
+    }
+  },
+  "components": [
+    {
+      "id": "fx",
+      "type": "frontend",
+      "label": "W3SDS4 fixture",
+      "sublabel": "1 000 points, NK/NTH 36/24, 32/36",
+      "pos": [
+        40,
+        250
+      ],
+      "size": [
+        260,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/W3SDS4_TRITON_202610.md",
+          "line": 107,
+          "end_line": 120
+        }
+      ]
+    },
+    {
+      "id": "f",
+      "type": "external",
+      "label": "Fortran W3SDS4",
+      "sublabel": "gfortran -O3, 1 thread",
+      "pos": [
+        340,
+        30
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/W3SDS4_TRITON_202610.md",
+          "line": 107,
+          "end_line": 120
+        }
+      ]
+    },
+    {
+      "id": "k",
+      "type": "backend",
+      "label": "Kokkos W3SDS4",
+      "sublabel": "1, 32 threads, RTX 4090 (P1.6)",
+      "pos": [
+        340,
+        140
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/W3SDS4_TRITON_202610.md",
+          "line": 107,
+          "end_line": 120
+        }
+      ]
+    },
+    {
+      "id": "tc",
+      "type": "backend",
+      "label": "Triton C",
+      "sublabel": "triton-cpu, 1 and 32 threads",
+      "pos": [
+        340,
+        250
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/W3SDS4_TRITON_202610.md",
+          "line": 107,
+          "end_line": 120
+        }
+      ]
+    },
+    {
+      "id": "tg0",
+      "type": "backend",
+      "label": "Triton G, fusion off",
+      "sublabel": "RTX 4090",
+      "pos": [
+        340,
+        360
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/W3SDS4_TRITON_202610.md",
+          "line": 107,
+          "end_line": 120
+        }
+      ]
+    },
+    {
+      "id": "tg1",
+      "type": "backend",
+      "label": "Triton G, fusion on",
+      "sublabel": "RTX 4090, the speed ceiling",
+      "pos": [
+        340,
+        470
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/W3SDS4_TRITON_202610.md",
+          "line": 107,
+          "end_line": 120
+        }
+      ]
+    },
+    {
+      "id": "l1",
+      "type": "security",
+      "label": "agrees with the Fortran?",
+      "sublabel": "within the L1 tolerance",
+      "pos": [
+        660,
+        250
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/W3SDS4_TRITON_202610.md",
+          "line": 107,
+          "end_line": 120
+        }
+      ]
+    },
+    {
+      "id": "tab",
+      "type": "security",
+      "label": "row in the timing table",
+      "sublabel": "kernel-only and end-to-end ms",
+      "pos": [
+        960,
+        160
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/W3SDS4_TRITON_202610.md",
+          "line": 107,
+          "end_line": 120
+        }
+      ]
+    },
+    {
+      "id": "out",
+      "type": "frontend",
+      "label": "left out of the table",
+      "sublabel": "",
+      "pos": [
+        960,
+        340
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/W3SDS4_TRITON_202610.md",
+          "line": 107,
+          "end_line": 120
+        }
+      ]
+    }
+  ],
+  "boundaries": [],
+  "connections": [
+    {
+      "id": "fx-f",
+      "from": "fx",
+      "to": "f",
+      "label": ""
+    },
+    {
+      "id": "fx-k",
+      "from": "fx",
+      "to": "k",
+      "label": ""
+    },
+    {
+      "id": "fx-tc",
+      "from": "fx",
+      "to": "tc",
+      "label": ""
+    },
+    {
+      "id": "fx-tg0",
+      "from": "fx",
+      "to": "tg0",
+      "label": ""
+    },
+    {
+      "id": "fx-tg1",
+      "from": "fx",
+      "to": "tg1",
+      "label": ""
+    },
+    {
+      "id": "f-l1",
+      "from": "f",
+      "to": "l1",
+      "label": "reference output",
+      "variant": "dashed"
+    },
+    {
+      "id": "k-l1",
+      "from": "k",
+      "to": "l1",
+      "label": ""
+    },
+    {
+      "id": "tc-l1",
+      "from": "tc",
+      "to": "l1",
+      "label": ""
+    },
+    {
+      "id": "tg0-l1",
+      "from": "tg0",
+      "to": "l1",
+      "label": ""
+    },
+    {
+      "id": "tg1-l1",
+      "from": "tg1",
+      "to": "l1",
+      "label": ""
+    },
+    {
+      "id": "l1-tab",
+      "from": "l1",
+      "to": "tab",
+      "label": "yes",
+      "variant": "emphasis"
+    },
+    {
+      "id": "l1-out",
+      "from": "l1",
+      "to": "out",
+      "label": "no"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Reference",
+      "items": [
+        "Fortran W3SDS4 gives the output every arm is compared with"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Arms",
+      "items": [
+        "Kokkos, Triton C and two Triton G variants"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "When a timing counts",
+      "items": [
+        "only after the L1 agreement",
+        "kernel-only and end-to-end: 3 warm-up calls, 20 timed, median of 3 runs"
+      ]
+    }
+  ]
+}

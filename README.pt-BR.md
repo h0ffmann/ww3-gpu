@@ -74,41 +74,7 @@ o WW3 da NOAA, e o `--ww3-gpu --cpu` compara o port em Kokkos com ele.
 A figura mostra o sistema inteiro: as fontes do modelo, o código deste repositório, os modos de
 rodar e os três ambientes.
 
-```mermaid
-%% figure: ww3-gpu-at-a-glance-pt
-%% title: O que o ww3-gpu compila, de quais fontes, e em qual ambiente roda cada modo?
-flowchart TD
-    subgraph RT["Ambientes"]
-        C["3 · dev container<br/>estágio dev do Dockerfile + Nix"]
-        P["1 · picasso/, Nix<br/>gfortran 16.2 · Open MPI · CUDA 12.9<br/>o toolchain de referência"]
-        D["2 · imagem Docker<br/>Ubuntu, gfortran 15.2 · só CPU"]
-    end
-    H["scripts/ww3-gpu.sh, justfile, regtests/<br/>Bash · Python · CMake, CTest"]
-    subgraph RUN["Modos de rodar"]
-        M1["--ww3<br/>a referência"]
-        M2["--ww3-gpu<br/>DIA em Fortran e em Kokkos,<br/>um executável"]
-        M4["just ww3-gpu-matrix<br/>regtests do WW3"]
-        M3["--ww4"]
-    end
-    subgraph SRC["Código dos modelos: submódulos, nunca editados aqui"]
-        N["WW3-noaa/<br/>WW3 puro da NOAA · Fortran"]
-        F["WW3/<br/>fork h0ffmann · Fortran<br/>+ chave KOKKOS, chamada do shim"]
-        W4["WW4/<br/>fork h0ffmann · C++"]
-    end
-    subgraph OWN["Código do próprio ww3-gpu"]
-        B["pubs/, site/<br/>Markdown para PDF · site em Gleam"]
-        K["kokkos/<br/>o port · C++20, Kokkos"]
-    end
-    C -- "entra no" --> P
-    P -- "todos os modos;<br/>GPU só com o dono" --> H
-    D -- "só CPU:<br/>as receitas just d…" --> H
-    H --> M1 & M2 & M4 & M3
-    M2 -. "comparado com" .-> M1
-    M1 -- "compilado de" --> N
-    M2 -- "compilado de" --> F & K
-    M4 -- "compilado de" --> F & K
-    M3 -- "compilado de" --> W4
-```
+[![O que o ww3-gpu compila, de quais fontes, e em qual ambiente roda cada modo? (desenho Archify)](docs/archify/ww3-gpu-at-a-glance-pt.png)](https://h0ffmann.github.io/ww3-gpu/figures/ww3-gpu-at-a-glance-pt/)
 
 <details open>
 <summary>Como ler esta figura</summary>

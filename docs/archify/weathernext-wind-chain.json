@@ -1,0 +1,260 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "WeatherNext 3 in the benchmark",
+    "output": "docs/archify/weathernext-wind-chain.html",
+    "quality_profile": "showcase",
+    "locale": "en",
+    "repository": {
+      "url": "https://github.com/h0ffmann/ww3-gpu.git",
+      "link_mode": "local-only",
+      "revision": "28178fe10a8ec37ab38c809326ba8964c11f992c"
+    }
+  },
+  "components": [
+    {
+      "id": "gfs",
+      "type": "external",
+      "label": "GFS / ERA5",
+      "sublabel": "today's forcing",
+      "pos": [
+        40,
+        50
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/W3SDS4_TRITON_202610.md",
+          "line": 138,
+          "end_line": 152
+        }
+      ]
+    },
+    {
+      "id": "wn",
+      "type": "external",
+      "label": "WeatherNext 3",
+      "sublabel": "64 members, 0.1°, wind only",
+      "pos": [
+        40,
+        190
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/W3SDS4_TRITON_202610.md",
+          "line": 138,
+          "end_line": 152
+        }
+      ]
+    },
+    {
+      "id": "prnc",
+      "type": "backend",
+      "label": "ww3_prnc",
+      "sublabel": "forcing preprocessor",
+      "pos": [
+        340,
+        120
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/W3SDS4_TRITON_202610.md",
+          "line": 138,
+          "end_line": 152
+        }
+      ]
+    },
+    {
+      "id": "ww3",
+      "type": "backend",
+      "label": "WW3 run",
+      "sublabel": "Fortran, or Triton / Kokkos",
+      "pos": [
+        620,
+        120
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/W3SDS4_TRITON_202610.md",
+          "line": 138,
+          "end_line": 152
+        }
+      ]
+    },
+    {
+      "id": "hs",
+      "type": "frontend",
+      "label": "Hs, period, direction",
+      "sublabel": "from WW3",
+      "pos": [
+        900,
+        120
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/W3SDS4_TRITON_202610.md",
+          "line": 138,
+          "end_line": 152
+        }
+      ]
+    },
+    {
+      "id": "aifs",
+      "type": "external",
+      "label": "ECMWF AIFS Single Wave",
+      "sublabel": "ML wave forecast, 0.25°",
+      "pos": [
+        620,
+        330
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/W3SDS4_TRITON_202610.md",
+          "line": 138,
+          "end_line": 152
+        }
+      ]
+    },
+    {
+      "id": "hsml",
+      "type": "frontend",
+      "label": "Hs, period, direction",
+      "sublabel": "from ML",
+      "pos": [
+        900,
+        330
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/W3SDS4_TRITON_202610.md",
+          "line": 138,
+          "end_line": 152
+        }
+      ]
+    },
+    {
+      "id": "obs",
+      "type": "security",
+      "label": "buoys and altimeters",
+      "sublabel": "same period, same set",
+      "pos": [
+        1180,
+        225
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/W3SDS4_TRITON_202610.md",
+          "line": 138,
+          "end_line": 152
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "10 m wind, the forcing",
+      "wraps": [
+        "gfs",
+        "wn"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "a",
+      "from": "gfs",
+      "to": "prnc",
+      "label": ""
+    },
+    {
+      "id": "b",
+      "from": "wn",
+      "to": "prnc",
+      "label": "each member",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c",
+      "from": "prnc",
+      "to": "ww3",
+      "label": "",
+      "variant": "emphasis"
+    },
+    {
+      "id": "d",
+      "from": "ww3",
+      "to": "hs",
+      "label": ""
+    },
+    {
+      "id": "e",
+      "from": "aifs",
+      "to": "hsml",
+      "label": ""
+    },
+    {
+      "id": "f",
+      "from": "hs",
+      "to": "obs",
+      "label": "verified against",
+      "variant": "dashed"
+    },
+    {
+      "id": "g",
+      "from": "hsml",
+      "to": "obs",
+      "label": "verified against",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Inputs",
+      "items": [
+        "GFS or ERA5 wind today; WeatherNext 3 wind per member",
+        "AIFS Single Wave: an ML wave forecast"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Verification",
+      "items": [
+        "both wave forecasts against the same buoys and altimeters"
+      ]
+    }
+  ]
+}

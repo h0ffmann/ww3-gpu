@@ -14,8 +14,12 @@ raw="https://github.com/h0ffmann/ww3-gpu/raw/main/pdf"
 reports=("relatorio.easy.pt-BR.md:index.html:relatorio-gta-pedro-cruz.pdf"
          "relatorio.curto.pt-BR.md:curto.html:relatorio-gta-pedro-cruz-curto.pdf")
 
-# Every figure a source names, as ../figures/mermaid/<id>.png (relative to the source).
-figures() { grep -oE '\]\(\.\./figures/mermaid/[a-z0-9-]+\.png\)' "$1" | sed -E 's|.*/([a-z0-9-]+\.png)\)|\1|' | sort -u || true; }
+# Every figure a source names, as a path from the repository root: a Mermaid render
+# (../figures/mermaid/<id>.png) or an Archify drawing (../../docs/archify/<slug>.png).
+figures() {
+  grep -oE '\]\((\.\./figures/mermaid|\.\./\.\./docs/archify)/[a-z0-9-]+\.png\)' "$1" |
+    sed -E 's|^\]\(\.\./\.\./|](|; s|^\]\(\.\./|](pubs/|; s|^\]\((.*)\)$|\1|' | sort -u || true
+}
 
 if [ "${1:-}" = --self-test ]; then
   n="$(figures "$dir/relatorio.easy.pt-BR.md" | wc -l)"
@@ -24,7 +28,7 @@ if [ "${1:-}" = --self-test ]; then
     src="$dir/${r%%:*}"
     [ -f "$src" ] || { echo "build_relatorio: missing $src" >&2; exit 1; }
     for f in $(figures "$src"); do
-      [ -f "$root/pubs/figures/mermaid/$f" ] || { echo "build_relatorio: missing render $f" >&2; exit 1; }
+      [ -f "$root/$f" ] || { echo "build_relatorio: missing figure $f" >&2; exit 1; }
     done
   done
   echo "build_relatorio: self-test ok (${#reports[@]} reports, $n figures in the full one)"
@@ -37,9 +41,9 @@ cp "$dir/style.css" "$out/style.css"
 for r in "${reports[@]}"; do
   IFS=: read -r name page pdf <<<"$r"
   src="$dir/$name"
-  for f in $(figures "$src"); do cp "$root/pubs/figures/mermaid/$f" "$out/figures/"; done
+  for f in $(figures "$src"); do cp "$root/$f" "$out/figures/"; done
   nav="<nav class=\"site-links\"><a href=\"../index.html\">ww3-gpu</a> · <a href=\"../pt-BR/\">português</a> · <a href=\"../adrs/\">decisões</a> · <a href=\"index.html\">versão completa</a> · <a href=\"curto.html\">versão curta</a> · <a href=\"$raw/$pdf\">este relatório em PDF</a></nav>"
-  sed 's|](\.\./figures/mermaid/|](figures/|g' "$src" |
+  sed -E 's#]\((\.\./figures/mermaid|\.\./\.\./docs/archify)/#](figures/#g' "$src" |
     pandoc --from markdown-smart --to html5 --standalone \
       --css style.css --include-before-body <(printf '%s\n' "$nav") \
       --resource-path "$out" --fail-if-warnings -o "$out/$page"

@@ -1,0 +1,378 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "W3SDS4 to Triton, step by step",
+    "output": "docs/archify/triton-port-plan.html",
+    "quality_profile": "showcase",
+    "locale": "en",
+    "repository": {
+      "url": "https://github.com/h0ffmann/ww3-gpu.git",
+      "link_mode": "local-only",
+      "revision": "28178fe10a8ec37ab38c809326ba8964c11f992c"
+    }
+  },
+  "components": [
+    {
+      "id": "t0",
+      "type": "backend",
+      "label": "T0 · toolchain",
+      "sublabel": "Triton and a pinned triton-cpu",
+      "pos": [
+        40,
+        40
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/W3SDS4_TRITON_202610.md",
+          "line": 72,
+          "end_line": 89
+        }
+      ]
+    },
+    {
+      "id": "t1",
+      "type": "backend",
+      "label": "T1 · committed profile",
+      "sublabel": "gprof_table.sh on ww3_ts1",
+      "pos": [
+        320,
+        40
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/W3SDS4_TRITON_202610.md",
+          "line": 72,
+          "end_line": 89
+        }
+      ]
+    },
+    {
+      "id": "t2",
+      "type": "security",
+      "label": "T2 · LabECO",
+      "sublabel": "which SDSCUM branch?",
+      "pos": [
+        600,
+        40
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/W3SDS4_TRITON_202610.md",
+          "line": 72,
+          "end_line": 89
+        }
+      ]
+    },
+    {
+      "id": "t3",
+      "type": "backend",
+      "label": "T3 · W3SDS4 fixture",
+      "sublabel": "real sea points + NumPy reference",
+      "pos": [
+        880,
+        40
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/W3SDS4_TRITON_202610.md",
+          "line": 72,
+          "end_line": 89
+        }
+      ]
+    },
+    {
+      "id": "g3",
+      "type": "security",
+      "label": "NumPy passes L1?",
+      "sublabel": "",
+      "pos": [
+        880,
+        220
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/W3SDS4_TRITON_202610.md",
+          "line": 72,
+          "end_line": 89
+        }
+      ]
+    },
+    {
+      "id": "t4",
+      "type": "backend",
+      "label": "T4 · Triton G",
+      "sublabel": "literal translation, no improvements",
+      "pos": [
+        600,
+        220
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/W3SDS4_TRITON_202610.md",
+          "line": 72,
+          "end_line": 89
+        }
+      ]
+    },
+    {
+      "id": "g4",
+      "type": "security",
+      "label": "L1, justified tolerance?",
+      "sublabel": "",
+      "pos": [
+        320,
+        220
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/W3SDS4_TRITON_202610.md",
+          "line": 72,
+          "end_line": 89
+        }
+      ]
+    },
+    {
+      "id": "t5",
+      "type": "backend",
+      "label": "T5 · Triton C",
+      "sublabel": "same source on triton-cpu",
+      "pos": [
+        40,
+        220
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/W3SDS4_TRITON_202610.md",
+          "line": 72,
+          "end_line": 89
+        }
+      ]
+    },
+    {
+      "id": "g5",
+      "type": "security",
+      "label": "builds and passes L1?",
+      "sublabel": "",
+      "pos": [
+        40,
+        400
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/W3SDS4_TRITON_202610.md",
+          "line": 72,
+          "end_line": 89
+        }
+      ]
+    },
+    {
+      "id": "t6",
+      "type": "backend",
+      "label": "T6 · benchmark",
+      "sublabel": "kernel vs kernel, projected gain",
+      "pos": [
+        320,
+        400
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/W3SDS4_TRITON_202610.md",
+          "line": 72,
+          "end_line": 89
+        }
+      ]
+    },
+    {
+      "id": "t8",
+      "type": "frontend",
+      "label": "T8 · report",
+      "sublabel": "worth continuing? no counts too",
+      "pos": [
+        600,
+        400
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/W3SDS4_TRITON_202610.md",
+          "line": 72,
+          "end_line": 89
+        }
+      ]
+    },
+    {
+      "id": "t7",
+      "type": "frontend",
+      "label": "T7 · next routine",
+      "sublabel": "by wall time: W3SNL1, W3SIN4",
+      "pos": [
+        880,
+        400
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/W3SDS4_TRITON_202610.md",
+          "line": 72,
+          "end_line": 89
+        }
+      ]
+    }
+  ],
+  "boundaries": [],
+  "connections": [
+    {
+      "id": "a",
+      "from": "t0",
+      "to": "t1",
+      "label": ""
+    },
+    {
+      "id": "b",
+      "from": "t1",
+      "to": "t2",
+      "label": ""
+    },
+    {
+      "id": "c",
+      "from": "t2",
+      "to": "t3",
+      "label": ""
+    },
+    {
+      "id": "d",
+      "from": "t3",
+      "to": "g3",
+      "label": ""
+    },
+    {
+      "id": "e",
+      "from": "g3",
+      "to": "t4",
+      "label": "yes",
+      "variant": "emphasis"
+    },
+    {
+      "id": "e2",
+      "from": "g3",
+      "to": "t3",
+      "label": "no"
+    },
+    {
+      "id": "f",
+      "from": "t4",
+      "to": "g4",
+      "label": ""
+    },
+    {
+      "id": "g",
+      "from": "g4",
+      "to": "t5",
+      "label": "yes",
+      "variant": "emphasis"
+    },
+    {
+      "id": "g2",
+      "from": "g4",
+      "to": "t4",
+      "label": "no"
+    },
+    {
+      "id": "h",
+      "from": "t5",
+      "to": "g5",
+      "label": ""
+    },
+    {
+      "id": "i",
+      "from": "g5",
+      "to": "t6",
+      "label": "yes",
+      "variant": "emphasis"
+    },
+    {
+      "id": "j",
+      "from": "g5",
+      "to": "t8",
+      "label": "no: a result"
+    },
+    {
+      "id": "k",
+      "from": "t6",
+      "to": "t8",
+      "label": ""
+    },
+    {
+      "id": "l",
+      "from": "t8",
+      "to": "t7",
+      "label": ""
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Steps",
+      "items": [
+        "T0 to T8, read left to right, then down",
+        "Each failed gate sends the step back to itself",
+        "T8 counts a negative answer as a result"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Gates",
+      "items": [
+        "L1: agreement with the Fortran within a justified tolerance",
+        "T2: LabECO chooses the SDSCUM branch"
+      ]
+    }
+  ]
+}

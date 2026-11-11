@@ -2,3 +2,17 @@
 # viewBox units, which cuts Archify's legend and the empty space under the drawing. scripts/archify.sh
 # png and site work on these rows.
 ww3-gpu-four-runtimes	470
+ww3-gpu-vs-noaa-architecture	714
+ww3-gpu-parity-workflow	538
+ww3-gpu-step-sequence	932
+ww3-gpu-port-lifecycle	506
+ww3-gpu-device-math-dataflow	482
+ww3-gpu-at-a-glance	654
+ww3-gpu-at-a-glance-pt	654
+sds4-sdscum-branches	674
+triton-port-plan	498
+triton-benchmark-arms	544
+weathernext-wind-chain	404
+kokkos-one-source-backends	664
+triton-g-doze-semanas	554
+kokkos-interop-one-binary	540

@@ -24,27 +24,7 @@ Pins: Kokkos 5.2.2, GoogleTest 1.18.0, CMake 4.4.3, gfortran 16.2 (`just toolcha
 that can be built for one processor thread, for every core of the processor, or for the
 graphics card, and each build must give the same numbers.
 
-```mermaid
-%% figure: kokkos-one-source-backends
-%% title: How does one Kokkos source reach the CPU and the GPU of the lab's workstation?
-flowchart LR
-    subgraph ww3["1 · WW3 as written"]
-        F["Fortran source<br/>(.F90 files)"]
-        C["CPU<br/>OpenMP threads, MPI ranks"]
-    end
-    subgraph port["2 · the Kokkos port of W3SNL1"]
-        K["one C++/Kokkos source"]
-        S["Serial<br/>one CPU thread"]
-        O["OpenMP<br/>i9-14900, 32 threads"]
-        G["CUDA<br/>RTX 4090<br/>16 384 CUDA cores"]
-    end
-    F -- "gfortran +<br/>switches OMPG, MPI" --> C
-    F -- "DIA routine<br/>translated line by line" --> K
-    K -- "build choice" --> S
-    K -- "build choice" --> O
-    K -- "build choice" --> G
-    O -. "compared pair to pair<br/>in WW3's regtests" .-> C
-```
+[![How does one Kokkos source reach the CPU and the GPU of the lab's workstation? (Archify drawing)](../docs/archify/kokkos-one-source-backends.png)](https://h0ffmann.github.io/ww3-gpu/figures/kokkos-one-source-backends/)
 
 <details open>
 <summary>How to read this figure</summary>
@@ -397,34 +377,18 @@ handles each one explicitly:
 | one caller at a time | `W3SRCE` runs inside an `!$OMP PARALLEL` region under `W3_OMPG`/`W3_OMP0`; two threads in `ww_snl1` race over the device buffers |
 | `sig` starts at bin 1 | the C dummy is assumed-size and `W3GDATMD` allocates `SIG(0:MK+1)`, so passing the bare name builds every quadruplet one frequency bin low |
 
-```mermaid
-%% figure: kokkos-interop-one-binary
-%% title: How do the original Fortran routine and its Kokkos kernel coexist in one WW3 binary?
-flowchart TB
-    subgraph BIN[One WW3 binary]
-        direction LR
-        F[Original Fortran routine]
-        SW{Runtime switch}
-        C[bind C interface<br/>ISO_C_BINDING]
-        K[Kokkos kernel<br/>Views in the layout of<br/>the WW3 spectral arrays]
-        SW -- original path --> F
-        SW -- new path --> C -- calls --> K
-    end
-    K -- runs on --> CPU[Serial or OpenMP backend<br/>no data copy]
-    K -- runs on --> GPU[CUDA backend on the H100<br/>CPU-GPU traffic measured per step]
-    M[WW3 regression matrix<br/>and per-field comparator] -. test both paths<br/>without recompiling .-> BIN
-```
+[![How do the original Fortran routine and its Kokkos kernel coexist in one WW3 binary? (Archify drawing)](../docs/archify/kokkos-interop-one-binary.png)](https://h0ffmann.github.io/ww3-gpu/figures/kokkos-interop-one-binary/)
 
 <details open>
 <summary>How to read this figure</summary>
 
 **Takeaway.** The GPU code is added next to the original Fortran, not in place of it; a switch read at run time picks which one runs, so both are tested with the same executable.
 
-**How to read.** The large box is one compiled WW3 executable. The diamond is the run-time switch; its two arrows are the two paths a call can take, the original Fortran or the new one through the C interface into the Kokkos kernel. Below the box, the same kernel runs on a CPU or a GPU backend. The dashed arrow is testing: the regression matrix and the comparator exercise both paths of the same executable.
+**How to read.** The large frame is one compiled WW3 executable. `WW_KOKKOS_SNL1`, read from the environment at run time, picks one of two paths: `0` runs the original Fortran (blue), `1` goes through the `bind(C)` interface into the Kokkos kernel (amber), which works on WW3's own arrays with no copy and no reshape. Below the frame, the same kernel runs on a CPU or a GPU backend; on the GPU, phase 1 copies the data in and out on each call. The green dashed arrow is testing: WW3's regtest matrix, judged by `test.comp` and `nccmp-tol`, runs both paths of the same executable.
 
 **Not shown.** How state moves between Fortran and the device beyond phase 1's copy in and out per call; that is `docs/AGENTS_KOKKOS_202609.md` §3.4.
 
-**Evidence.** `W3KOKKOSMD` and the `ww_kokkos_init` contract, [`src/fortran_iface/PATCH.md`](src/fortran_iface/PATCH.md) (v); `pubs/proposal/pt/07-methodology.md`, paragraph *Interoperabilidade e testes dos kernels* (v).
+**Evidence.** `W3KOKKOSMD`, the switch and the no-copy argument passing, [`src/fortran_iface/PATCH.md`](src/fortran_iface/PATCH.md) "How the first patch was made" and section 1 (v); the drawing's source is [`docs/archify/kokkos-interop-one-binary.json`](../docs/archify/kokkos-interop-one-binary.json); `pubs/proposal/pt/07-methodology.md`, paragraph *Interoperabilidade e testes dos kernels* (v).
 
 </details>
 
