@@ -1,0 +1,473 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "How the ww3-gpu-port rig is fed",
+    "output": "docs/archify/openrig-port-feed.html",
+    "quality_profile": "showcase",
+    "locale": "en",
+    "repository": {
+      "url": "https://github.com/h0ffmann/ww3-gpu.git",
+      "link_mode": "local-only",
+      "revision": "c0eeec554db67cb964722b8b32d648c1d4d35ad9"
+    }
+  },
+  "components": [
+    {
+      "id": "ledger",
+      "type": "database",
+      "label": "PORT_TABLE.tsv",
+      "sublabel": "rows ranked by wall time",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        220,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/WFIPs/WFIP-0007-openrig-port-factory.md",
+          "line": 170,
+          "end_line": 197
+        }
+      ]
+    },
+    {
+      "id": "mpiplan",
+      "type": "database",
+      "label": "MPI plan, M2 to M8",
+      "sublabel": "ADR-0020, M2 timed first",
+      "pos": [
+        350,
+        60
+      ],
+      "size": [
+        220,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/WFIPs/WFIP-0007-openrig-port-factory.md",
+          "line": 170,
+          "end_line": 197
+        }
+      ]
+    },
+    {
+      "id": "elsewhere",
+      "type": "external",
+      "label": "claimed elsewhere",
+      "sublabel": "port_claims.tsv, open goal/* PRs",
+      "pos": [
+        660,
+        60
+      ],
+      "size": [
+        220,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/WFIPs/WFIP-0007-openrig-port-factory.md",
+          "line": 170,
+          "end_line": 197
+        }
+      ]
+    },
+    {
+      "id": "queue",
+      "type": "backend",
+      "label": "ww3port next",
+      "sublabel": "translate, wire, mpi; one claim per key",
+      "pos": [
+        40,
+        220
+      ],
+      "size": [
+        530,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/WFIPs/WFIP-0007-openrig-port-factory.md",
+          "line": 198,
+          "end_line": 216
+        }
+      ]
+    },
+    {
+      "id": "claims",
+      "type": "database",
+      "label": "claims/, blocked/",
+      "sublabel": "set -C files on the box",
+      "pos": [
+        660,
+        220
+      ],
+      "size": [
+        220,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/WFIPs/WFIP-0007-openrig-port-factory.md",
+          "line": 198,
+          "end_line": 216
+        }
+      ]
+    },
+    {
+      "id": "porta",
+      "type": "backend",
+      "label": "port-porter-a",
+      "sublabel": "omp seat",
+      "pos": [
+        40,
+        380
+      ],
+      "size": [
+        220,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/WFIPs/WFIP-0007/openrig/specs/rigs/ww3-gpu-port/rig.yaml",
+          "line": 37,
+          "end_line": 46
+        }
+      ]
+    },
+    {
+      "id": "reviewer",
+      "type": "security",
+      "label": "port-reviewer",
+      "sublabel": "omp seat, report only",
+      "pos": [
+        350,
+        380
+      ],
+      "size": [
+        220,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/WFIPs/WFIP-0007/openrig/specs/rigs/ww3-gpu-port/rig.yaml",
+          "line": 54,
+          "end_line": 60
+        }
+      ]
+    },
+    {
+      "id": "portb",
+      "type": "backend",
+      "label": "port-porter-b",
+      "sublabel": "omp seat",
+      "pos": [
+        660,
+        380
+      ],
+      "size": [
+        220,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/WFIPs/WFIP-0007/openrig/specs/rigs/ww3-gpu-port/rig.yaml",
+          "line": 47,
+          "end_line": 53
+        }
+      ]
+    },
+    {
+      "id": "keeper",
+      "type": "cloud",
+      "label": "keeper",
+      "sublabel": "restores the rig, nudges idle porters",
+      "pos": [
+        970,
+        380
+      ],
+      "size": [
+        220,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/WFIPs/WFIP-0007-openrig-port-factory.md",
+          "line": 378,
+          "end_line": 395
+        }
+      ]
+    },
+    {
+      "id": "submit",
+      "type": "backend",
+      "label": "ww3port submit",
+      "sublabel": "rebase on rolling tip, gates, bundle",
+      "pos": [
+        40,
+        540
+      ],
+      "size": [
+        530,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/WFIPs/WFIP-0007/openrig/specs/agents/wg-porter/guidance/role.md",
+          "line": 26,
+          "end_line": 31
+        }
+      ]
+    },
+    {
+      "id": "hermes",
+      "type": "external",
+      "label": "Hermes",
+      "sublabel": "fetches bundles, pushes hourly",
+      "pos": [
+        660,
+        540
+      ],
+      "size": [
+        220,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/WFIPs/WFIP-0007-openrig-port-factory.md",
+          "line": 245,
+          "end_line": 257
+        }
+      ]
+    },
+    {
+      "id": "rolling",
+      "type": "frontend",
+      "label": "rolling PRs",
+      "sublabel": "ww3-gpu and the WW3 fork",
+      "pos": [
+        40,
+        700
+      ],
+      "size": [
+        220,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/WFIPs/WFIP-0007-openrig-port-factory.md",
+          "line": 245,
+          "end_line": 257
+        }
+      ]
+    },
+    {
+      "id": "owner",
+      "type": "external",
+      "label": "the owner",
+      "sublabel": "merges, selects a batch",
+      "pos": [
+        350,
+        700
+      ],
+      "size": [
+        220,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/WFIPs/WFIP-0007-openrig-port-factory.md",
+          "line": 245,
+          "end_line": 257
+        }
+      ]
+    },
+    {
+      "id": "regtest",
+      "type": "security",
+      "label": "WW3 regtests",
+      "sublabel": "selected batch, workstation, --cpu",
+      "pos": [
+        660,
+        700
+      ],
+      "size": [
+        220,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/WFIPs/WFIP-0007-openrig-port-factory.md",
+          "line": 234,
+          "end_line": 244
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "work enters",
+      "wraps": [
+        "ledger",
+        "mpiplan",
+        "elsewhere"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "rig ww3-gpu-port, three omp seats on piabrota2",
+      "wraps": [
+        "porta",
+        "reviewer",
+        "portb"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "after selection, outside the rig",
+      "wraps": [
+        "owner",
+        "regtest"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "a",
+      "from": "ledger",
+      "to": "queue",
+      "label": "",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "b",
+      "from": "mpiplan",
+      "to": "queue",
+      "label": "",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "c",
+      "from": "elsewhere",
+      "to": "queue",
+      "label": "skipped",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "d",
+      "from": "queue",
+      "to": "claims",
+      "label": "claim",
+      "variant": "default"
+    },
+    {
+      "id": "f",
+      "from": "queue",
+      "to": "porta",
+      "label": "next",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "g",
+      "from": "queue",
+      "to": "portb",
+      "label": "next",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "h",
+      "from": "porta",
+      "to": "reviewer",
+      "label": "review"
+    },
+    {
+      "id": "i",
+      "from": "portb",
+      "to": "reviewer",
+      "label": "review"
+    },
+    {
+      "id": "k",
+      "from": "keeper",
+      "to": "portb",
+      "label": "nudge",
+      "variant": "dashed"
+    },
+    {
+      "id": "l",
+      "from": "porta",
+      "to": "submit",
+      "label": "accept",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "m",
+      "from": "portb",
+      "to": "submit",
+      "label": "accept",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "n",
+      "from": "submit",
+      "to": "hermes",
+      "label": "bundle in outbox"
+    },
+    {
+      "id": "o",
+      "from": "hermes",
+      "to": "rolling",
+      "label": "push",
+      "variant": "default",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "p",
+      "from": "rolling",
+      "to": "owner",
+      "label": ""
+    },
+    {
+      "id": "q",
+      "from": "owner",
+      "to": "regtest",
+      "label": "selection",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "In the loop",
+      "items": [
+        "claim, port, static parity, review, submit",
+        "one build at a time; no regtest, no GPU"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "After selection",
+      "items": [
+        "the owner picks a batch; WW3's regtests run on it only"
+      ]
+    }
+  ]
+}
