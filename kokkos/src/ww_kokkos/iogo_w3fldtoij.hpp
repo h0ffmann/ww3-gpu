@@ -4,6 +4,7 @@
 // Host only. Phase 1, translated, not wired into WW3, not regtested.
 // WW3 heritage: WW3-noaa/model/src/w3iogomd.F90:764-1188 at NOAA-EMC/WW3 03adda91 (identical in
 // the WW3/ fork); author C. Bunney. Evidence: kokkos/port_report/W3FLDTOIJ_KOKKOS.md.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 //
 // Ported as switches/switch_lab_shrd compiles it: the 97 CASE values of the -O3 object's

@@ -27,7 +27,7 @@ request doesn't need a label: `.github/labeler.yml` sets `wfip` from the paths i
 | `area/docker` | a container image, `.devcontainer/`, `just dbuild`/`drun`, the Trivy scan |
 | `area/ufsc` | LabECO/UFSC: the H100 machine, access to it, the co-advising |
 | `area/proposal` | the UFRJ/DEL project proposal in `pubs/proposal/` |
-| `area/book` | the book: the `course/` chapters, `examples/`, `exercises/`, the PDF and Leanpub builds |
+| `area/book` | the texts: the preprint, the proposal's builds, `examples/` (the course and the book were removed, ADR-0023) |
 | `area/noaa` | a NOAA announcement or an upstream WW3/WW4 change that dates or breaks a file here (the `noaa-notices` and `ww4-status` skills) |
 | `area/dev-tooling` | agents, skills, hooks, CI and the scripts behind `just`, rather than the lab code |
 
@@ -53,7 +53,7 @@ as everything that reads it.
 | Label | Read by |
 |---|---|
 | `wfip` | `.github/labeler.yml` sets it on a PR that touches `docs/WFIPs/` or `specs/`; `.github/release.yml` gives it a heading in the release notes |
-| `A2A`, `para:marola`, `para:wave-forecaster` | the messages between Claude projects ([AGENTS.md](AGENTS.md#messages-between-claude-projects), [lesson 19](course/19-two-agents-one-issue-tracker.md)); the routines list issues by `para:*`; their descriptions stay in Portuguese, as the protocol was written |
+| `A2A`, `para:marola`, `para:wave-forecaster` | the messages between Claude projects ([AGENTS.md](AGENTS.md#messages-between-claude-projects)); the routines list issues by `para:*`; their descriptions stay in Portuguese, as the protocol was written |
 | `skills-update` | `.github/workflows/skills.yml`: marola-devkit's skills-update workflow opens its PR with it |
 | `kimi` | Kimi Code sessions and improvements (#142) |
 

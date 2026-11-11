@@ -1,0 +1,15 @@
+# ASD-STE100: no phrasal verbs; each has a one-word verb (.claude/skills/ste/words.md).
+extends: substitution
+message: "STE: use '%s' instead of the phrasal verb '%s'."
+level: warning
+ignorecase: true
+swap:
+  set up|sets up|setting up: configure|install
+  turn on|turns on|switch on|switches on: set|enable
+  turn off|turns off|switch off|switches off: disable
+  find out|finds out: find|measure
+  go through|goes through: read|examine
+  look at|looks at: examine
+  point out|points out: show
+  carry on|carries on: continue
+  figure out|figures out: find

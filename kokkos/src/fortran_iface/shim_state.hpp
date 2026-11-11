@@ -3,6 +3,7 @@
 // (srce_shim.cpp) calls the DIA and ST4 device code with the tables that
 // ww_snl1_init() and ww_st4_commit() built for the same grid. Internal to the
 // library, not part of the C ABI.
+// SPDX-License-Identifier: MIT
 #pragma once
 
 #include "ww_kokkos/snl1_config.hpp"

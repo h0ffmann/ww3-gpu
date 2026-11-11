@@ -69,7 +69,7 @@ the CPU (OpenMP backend, gfortran/g++ 16.2.0, i9-14900 shared, never `--gpu`):
 
 - `scripts/ww3-gpu.sh --ww3-gpu full --cpu --kokkos SRCE,XYP3,KTP3,OUTG,IOPE,UPDV,CPRT` on two
   throwaway variants of `bench_small` with partitioning on, `WW_KOKKOS_VA_POISON=1`: every model
-  file and `partition.ww3` byte-identical to the Fortran of the same executable and to `--ww3`
+  file and `partition.ww3` byte-identical to the Fortran of the same executable and to `--ww3-noaa`
   (v); see the log for the five runs.
 - `VA` device-to-host copies in those 12-hour runs (13 output times): 13 before, 1 after, the read
   at `W3WAVE`'s return (v).

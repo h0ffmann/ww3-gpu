@@ -13,6 +13,8 @@
 // indices below (RPAR(R_X+1) in Fortran). This header is the single source of the
 // indices; W3KOKKOSMD on the fork branch mirrors them one for one, and
 // ww_st4_init() refuses a packet whose length differs.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <Kokkos_Core.hpp>

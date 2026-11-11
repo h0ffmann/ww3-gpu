@@ -79,8 +79,10 @@ scratch when a pin bump changes it (`scripts/ww3-gpu.sh`, `regtests/cmake/run_en
 Nix prints `warning: Git tree '…/picasso' has uncommitted changes` because of the sparse
 checkout. There are no real edits, and `git -C picasso status` is clean.
 
-The `WW3-noaa/` submodule is pure NOAA-EMC/WW3 at the commit the fork branched from; `--ww3` builds
-it. It moves only together with the fork's base, never to the tip of `develop` on its own.
+The `WW3-metocean-7.14/` submodule is MetOcean's WW3 7.14, which `--ww3` builds. Pure NOAA-EMC/WW3
+at the commit the fork branched from is not a submodule: `scripts/ww3_base.sh` writes it to
+`WW3-noaa/` from the fork's history, `--ww3-noaa` builds it, and the commit
+(`kokkos/src/fortran_iface/WW3_BASE`) moves only together with the fork's base.
 The `WW3/` submodule is the fork, kept in step with upstream by `just src-sync`
 (`just src-st` shows pinned vs. fork vs. upstream). Pass `WW3` as the last argument of
 `build`, `regtest` or `rt` to build the fork instead of `~/src/WW3`.

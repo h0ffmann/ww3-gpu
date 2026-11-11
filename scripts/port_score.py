@@ -24,7 +24,7 @@ and for each level two shares: of the profile's self time (what a run moves off 
 every Fortran line in WW3's model/src. Beside them: the routines (over every SUBROUTINE and
 FUNCTION in model/src) and the files (over every .F90 file) of each level
 and, beside them, the size of the port itself: the C++ files and lines under kokkos/src.
---write also writes site/data/port_score.tsv, which the website reads (site/content), and
+--write also writes site/data/port_score.tsv, which the website reads (piabrota/nix-os, ww3-site/content), and
 kokkos/PORT_RANKING.md: the routines still in Fortran by self time, up to RANK_TOP, and for each
 ported routine its Kokkos files and its regtest record (the port has no tests of its own, ADR-0010),
 and kokkos/PORT_TABLE.tsv: one row per routine that is translated, claimed (kokkos/port_claims.tsv)
@@ -188,7 +188,7 @@ def site_rows(s):
 
 def site_tsv(s):
     head = ("# The global numbers of the Kokkos port, written by scripts/port_score.py --write; do not edit.\n"
-            f"# WW3@{s['ww3_rev']}. The website reads this file (site/content).\n"
+            f"# WW3@{s['ww3_rev']}. The website reads this file (piabrota/nix-os, ww3-site/content).\n"
             "# name\tshare\tcount\twhat\n")
     return head + "".join("\t".join(r) + "\n" for r in site_rows(s))
 
@@ -252,7 +252,7 @@ def ranking(meta_p, prof, meta_w, ports):
         "The WW3 routines still in Fortran, the most expensive first, and how much of each ported",
         "routine's Kokkos code was regtested. Written by `scripts/port_score.py --write` from",
         "`docs/data/ww3_full_gprof.tsv` and `kokkos/ports.tsv`; do not",
-        "edit. Port order is wall time ([ADR-0002](../docs/ADRs/ADR-0002-port-order-wall-time.md)):",
+        "edit. Port order is wall time ([ADR-0002](../docs/ADRs.md#adr-0002)):",
         "the next port is row 1, and `/port-next` starts it.",
         "",
         "## Still in Fortran, by self time",
@@ -283,7 +283,7 @@ def ranking(meta_p, prof, meta_w, ports):
         "",
         "## Regtested, per port",
         "",
-        "The port has no tests of its own ([ADR-0010](../docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md)):",
+        "The port has no tests of its own ([ADR-0010](../docs/ADRs.md#adr-0010)):",
         "a ported routine is tested only by WW3's regtests, run inside WW3 with the routine on Kokkos and",
         "compared pair to pair with the same WW3 without it (`scripts/ww3-gpu.sh --ww3-gpu --cpu`, `just ww3-gpu-matrix`).",
         "The record is the `regtested` column of `kokkos/ports.tsv`.",

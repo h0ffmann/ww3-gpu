@@ -5,6 +5,7 @@
 // WW3 heritage: WW3-noaa/model/src/w3snl1md.F90:1349-1500 at NOAA-EMC/WW3 03adda91, adapted
 // from TOMAWAC (E. Gagnaire-Renou, G. Mattarolo). Evidence: kokkos/port_report/F1F1F1_KOKKOS.md.
 // Host only: std::pow is glibc's pow, which the object calls for IQ_OM1 = 5.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

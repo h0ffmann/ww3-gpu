@@ -34,6 +34,8 @@
 // are read for it with weight 0 (CX(0) and CY(0) are zeroed first, :1038-1039). An index the
 // Fortran would read outside its array (no bounds checks in WW3's Release flags) ends here with
 // kIopeExitBounds instead, before any write.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <cmath>

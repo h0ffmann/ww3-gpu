@@ -14,6 +14,7 @@
 // the last build (both -1 at load), so one table serves every grid of a ww3_multi run with the
 // same NK, NTH. PtnghbTable keeps that state; a shim calls update() where W3PART calls PTNGHB
 // (:359). Integer only, host only: no device math.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

@@ -14,7 +14,7 @@
 | **Blocked by** | none |
 | **Risk** | the access form is refused or the Zarr v3 store cannot be read without Python, which the lab rule forbids in `examples/`; then the conversion runs outside the repo and only the NetCDF enters, as a documented step |
 
-> **Postponed on 2026-10-15.** [ADR-0011](../ADRs/ADR-0011-port-in-units-regtest-at-checkpoints.md) puts the port of ST4 first; WeatherNext 3 wind is not port work. Returns to Draft after the ST4 checkpoint.
+> **Postponed on 2026-10-15.** [ADR-0011](../ADRs.md#adr-0011) puts the port of ST4 first; WeatherNext 3 wind is not port work. Returns to Draft after the ST4 checkpoint.
 
 ### Readiness
 
@@ -24,7 +24,7 @@
 | **Written by** | M. Hoffmann, with an agent |
 | **Tasks** | [`WFIP-0001.tasks.md`](WFIP-0001.tasks.md) |
 | **Tests** | none: no Python or C++ changes; the checks are the commands in §7 |
-| **Spec-kit** | [`specs/001-weathernext3-wind/spec.md`](../../specs/001-weathernext3-wind/spec.md) |
+| **Spec-kit** | None |
 | **Issues** | [h0ffmann/ww3-gpu#63](https://github.com/h0ffmann/ww3-gpu/issues/63), the tracking issue; one per task once Accepted |
 
 ## 1. Summary

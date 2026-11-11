@@ -1,11 +1,11 @@
 # ST4 on Kokkos: an 8-hour port plan (phase 1, translation only)
 
-Status: **Tasks 0-10 done**, 2026-10-15, under [ADR-0011](ADRs/ADR-0011-port-in-units-regtest-at-checkpoints.md) ([log](log/2026-10-15-st4-kokkos-translation.md)); the checkpoint of §12 has not run. It answers the owner's
+Status: **Tasks 0-10 done**, 2026-10-15, under [ADR-0011](ADRs.md#adr-0011) ([log](log/2026-10-15-st4-kokkos-translation.md)); the checkpoint of §12 has not run. It answers the owner's
 request of 2026-10-15: port all of ST4 to Kokkos in one disciplined session, with subagents, and
 without the regtests. Issue [#45](https://github.com/h0ffmann/ww3-gpu/issues/45) is the issue it
-answers; [ADR-0002](ADRs/ADR-0002-port-order-wall-time.md) sets its order,
-[ADR-0010](ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md) sets what "tested" means, and
-[ADR-0011](ADRs/ADR-0011-port-in-units-regtest-at-checkpoints.md) makes ST4 one unit with its
+answers; [ADR-0002](ADRs.md#adr-0002) sets its order,
+[ADR-0010](ADRs.md#adr-0010) sets what "tested" means, and
+[ADR-0011](ADRs.md#adr-0011) makes ST4 one unit with its
 regtests at a checkpoint after this plan.
 
 > **For agentic workers:** execute this plan task by task. Run Tasks 1, 3, 4, 5, 6 and 8 in

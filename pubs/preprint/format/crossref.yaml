@@ -1,0 +1,6 @@
+# pandoc-crossref settings shared by every paper.
+secPrefix: [Section, Sections]
+tblPrefix: [Table, Tables]
+figPrefix: [Figure, Figures]
+linkReferences: true
+nameInLink: true

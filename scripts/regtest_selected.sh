@@ -11,7 +11,7 @@
 #           The 5 matrix.base entries of ww3_tp2.15 and ww3_ts2 that the resident preset can run
 #           (regtests/README.md, "Selected regtests").
 #   smoke   scripts/ww3-gpu.sh --ww3-gpu smoke --cpu --kokkos resident
-#           ww3_ts1 pair to pair with the Fortran of the same executable and with --ww3.
+#           ww3_ts1 pair to pair with the Fortran of the same executable and with --ww3-noaa.
 #
 # Sized for the owner's i9-14900 (32 hardware threads, 184 GiB seen): 5 jobs of 6 threads, every
 # selected matrix entry at once (regtests/README.md, "Threads and parallel entries").

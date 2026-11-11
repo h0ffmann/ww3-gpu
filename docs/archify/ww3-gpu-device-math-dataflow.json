@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/h0ffmann/ww3-gpu",
-      "revision": "b38b5fc81924284d62eaf453db30f8c2986f80e2"
+      "revision": "28178fe10a8ec37ab38c809326ba8964c11f992c"
     },
     "viewBox": [
       1080,
@@ -145,9 +145,9 @@
           "label": "Kokkos fallback"
         },
         {
-          "path": "docs/ADRs/ADR-0014-gpu-runs-judged-by-tolerance.md",
-          "line": 51,
-          "end_line": 52,
+          "path": "docs/ADRs.md",
+          "line": 1690,
+          "end_line": 1691,
           "label": "a few ULP"
         }
       ]

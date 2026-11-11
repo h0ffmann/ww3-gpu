@@ -49,7 +49,7 @@ Profile: full (bench_small, 120 x 80, 9 520 sea points, 12 h), Release -pg, swit
 | ported | **99.3 %** | 19059 of 263375 (7.24 %) | 72 of 1023 (7.04 %) | 28 of 147 | WW3 at the WW3/ pin calls the Kokkos code, behind its run-time flag |
 | regtested | **48.6 %** | 3151 of 263375 (1.20 %) | 14 of 1023 (1.37 %) | 7 of 147 | WW3's regtests ran with it on Kokkos and agreed with the Fortran |
 
-The port itself: 62257 lines in 355 files, the C++ under kokkos/src (every .cpp and .hpp line).
+The port itself: 62651 lines in 355 files, the C++ under kokkos/src (every .cpp and .hpp line).
 
 On a GPU: none yet. The CUDA build links; the RTX 4090 run, `just smoke-ww3-gpu gpu`, is the owner's, supervised.
 <!-- port-score:end -->
@@ -202,7 +202,7 @@ itself stays as the benchmark's frozen input
 **L2** is the validation now: a WW3 regtest replay. `scripts/ww3-gpu.sh --ww3-gpu --cpu`
 runs WW3 from one executable with `WW_KOKKOS_SNL1` flipped, compares the NetCDF
 output field by field with `kokkos/tools/nccmp-tol`, then compares the Kokkos run
-pair to pair with `--ww3` (WW3 built without the KOKKOS switch). The caller patch
+pair to pair with `--ww3-noaa` (WW3 built without the KOKKOS switch). The caller patch
 lives on the h0ffmann/WW3 branch `ww3-gpu/kokkos-st4` (`src/fortran_iface/PATCH.md`);
 nothing in this repository modifies `WW3/`. The WW3 regtest matrix of WFIP-0003
 (`just ww3-gpu-matrix`, CTest in `regtests/` since 2026-10-15) extends the replay to WW3's own

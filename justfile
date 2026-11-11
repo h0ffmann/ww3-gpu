@@ -61,18 +61,30 @@ toolchain-smoke:
     just -f {{pratico}}/justfile smoke
 
 # ---------------------------------------------------------------------
-# WW3 two ways (scripts/ww3-gpu.sh): --ww3, pure NOAA WW3 from WW3-noaa/; --ww3-gpu, WW3 built
-# with the KOKKOS switch from the h0ffmann/WW3 branch ww3-gpu/kokkos-pnt and linked to kokkos/.
-# --ww3-gpu runs on the CPU (Kokkos OpenMP) unless asked: `just smoke-ww3-gpu gpu` runs CUDA, and only
-# with a human supervising (AGENTS.md hard rule; it asks at the terminal).
+# One command, six runtimes (scripts/ww3-gpu.sh, docs/RUN_COMMAND_202611.md): --ww3, MetOcean's
+# WW3 7.14 from WW3-metocean-7.14/, the reference; --ww3-gpu --cpu or --gpu, WW3 built with the KOKKOS
+# switch from the h0ffmann/WW3 fork and linked to kokkos/; --chaceon --cpu or --gpu (--cceon),
+# the Rust port; --ww4, WAVEWATCH IV when it is released. --ww3-gpu runs on the CPU (Kokkos
+# OpenMP) unless asked: `just smoke-ww3-gpu gpu` runs CUDA, and only with a human supervising
+# (AGENTS.md hard rule; it asks at the terminal). The Kokkos run is compared pair to pair with
+# --ww3-noaa, pure NOAA WW3 at the commit the fork branched from (scripts/ww3_base.sh writes it
+# to WW3-noaa/ from the fork's history; it is not a submodule).
 # ---------------------------------------------------------------------
 
-# Both smoke tests: WW3 as written, then WW3 with the Kokkos port (ww3_ts1, seconds on a CPU).
+# Run a case in one of the six runtimes, e.g. `just run --ww3 smoke`, `just run --ww3-gpu full --cpu`, `just run --chaceon smoke`, `just run --ww3 --case <dir> --wind ifs --temp cmems`; `just run --help` lists the options.
+run *args:
+    @bash scripts/ww3-gpu.sh "$@"
+
+# Both smoke tests: MetOcean's WW3 as written, then WW3 with the Kokkos port (ww3_ts1, seconds on a CPU).
 smoke: smoke-ww3 smoke-ww3-gpu
 
-# WW3 as written: regtest ww3_ts1 (one point, ST4 + NL1, 10 model days) must finish.
+# MetOcean's WW3 as written: regtest ww3_ts1 (one point, ST4 + NL1, 10 model days) must finish.
 smoke-ww3:
     bash scripts/ww3-gpu.sh --ww3 smoke
+
+# chaceon, the Rust port, on ww3_ts1, compared byte for byte with MetOcean's WW3 built with chaceon's switch.
+smoke-chaceon:
+    bash scripts/ww3-gpu.sh --chaceon smoke
 
 # WW3 with the Kokkos DIA: ww3_ts1 with the Fortran and the Kokkos W3SNL1, compared by nccmp-tol.
 smoke-ww3-gpu device="cpu":
@@ -86,9 +98,9 @@ full-ww3:
 full-ww3-gpu device="cpu":
     bash scripts/ww3-gpu.sh --ww3-gpu full --{{device}}
 
-# The forced case, as written: coast (80 x 50, currents, water levels, ice, boundary input, FLCK).
+# The forced case, as written by NOAA at the fork's base: coast (80 x 50, currents, water levels, ice, boundary input, FLCK). MetOcean's ww3_bounc stops on its boundary spectra, so not --ww3.
 coast-ww3:
-    bash scripts/ww3-gpu.sh --ww3 coast
+    bash scripts/ww3-gpu.sh --ww3-noaa coast
 
 # The forced case with the Kokkos parts <parts> (resident: SRCE, XYP3, KTP3), against the Fortran.
 coast-ww3-gpu parts="resident" device="cpu":
@@ -109,11 +121,12 @@ coast-ww3-gpu parts="resident" device="cpu":
 # WW3GPU_LAB_SWITCH=ON builds every entry with switch_lab_shrd's source-term words (the timed
 # run's physics, which no matrix.base switch has), in a build directory ending in -lab.
 # Record: build/ww3-gpu-matrix-<selection>[-<routines>|-kokkos-<preset>][-lab]/summary.tsv.
-ww3-gpu-matrix jobs="8" selection="serial" *ctest_args:
+ww3-gpu-matrix jobs="8" selection="serial" *ctest_args="":
     #!/usr/bin/env bash
     set -euo pipefail
     jobs=8 sel=serial rest=() i=0
     for a in "$@"; do
+      [ -n "$a" ] || continue  # the empty default of *ctest_args, which an older just needs
       i=$((i + 1))
       case "$a" in
         jobs=*) jobs="${a#jobs=}" ;;
@@ -140,10 +153,11 @@ ww3-gpu-matrix jobs="8" selection="serial" *ctest_args:
 # and nccmp-tol, in build/ww3-gpu-matrix-cuda-<selection>. It runs on the GPU, so it asks the
 # supervising human for "yes" first (scripts/gpu_supervised.sh, AGENTS.md). WW3GPU_ROUTINES as
 # ww3-gpu-matrix (SNL1 by default); jobs share the one GPU.
-ww3-gpu-matrix-cuda jobs="2" selection="serial" *ctest_args:
+ww3-gpu-matrix-cuda jobs="2" selection="serial" *ctest_args="":
     #!/usr/bin/env bash
     set -euo pipefail
-    jobs="$1" sel="$2"
+    jobs="$1" sel="$2" rest=()
+    for a in "${@:3}"; do [ -z "$a" ] || rest+=("$a"); done  # drop *ctest_args' empty default
     [[ "$jobs" =~ ^[1-9][0-9]*$ ]] || { echo "ww3-gpu-matrix-cuda: jobs is a positive integer, not '$jobs'" >&2; exit 64; }
     [[ "$sel" =~ ^(serial|omp|mpi|all)$ ]] || { echo "ww3-gpu-matrix-cuda: serial, omp, mpi or all, not '$sel'" >&2; exit 64; }
     bash scripts/gpu_supervised.sh "just ww3-gpu-matrix-cuda $jobs $sel"
@@ -156,7 +170,7 @@ ww3-gpu-matrix-cuda jobs="2" selection="serial" *ctest_args:
       -DWW3GPU_OMP_THREADS="$t" -DWW3GPU_MPI_RANKS="${WW3GPU_MPI_RANKS:-4}" -DWW3GPU_DATA="$data" \
       -DWW3GPU_ROUTINES="$routines" -DWW3GPU_OMP_NESTED="${WW3GPU_OMP_NESTED:-OFF}" >/dev/null
     WW3GPU_COMMAND="${WW3GPU_ROUTINES:+WW3GPU_ROUTINES=$WW3GPU_ROUTINES }just ww3-gpu-matrix-cuda $jobs $sel" \
-      WW3GPU_GPU_CONFIRMED=1 "${cuda[@]}" ctest --test-dir "$b" -j "$jobs" --output-on-failure "${@:3}"
+      WW3GPU_GPU_CONFIRMED=1 "${cuda[@]}" ctest --test-dir "$b" -j "$jobs" --output-on-failure "${rest[@]}"
 
 # The entries of a selection, as CTest test names (NNN:<test>:<switch>), without running them.
 ww3-gpu-matrix-list selection="serial":
@@ -239,21 +253,21 @@ dsmoke-ww3-gpu-cuda:
 dfull-ww3-gpu-cuda:
     bash scripts/docker.sh run-cuda --ww3-gpu full --gpu
 
-# `just smoke` in the image: WW3 as written, then WW3 with the Kokkos DIA.
+# In the image: NOAA's WW3 as written, then WW3 with the Kokkos DIA.
 dsmoke: dsmoke-ww3 dsmoke-ww3-gpu
 
-# `just smoke-ww3` in the image.
+# NOAA's WW3 in the image (--ww3-noaa, the fork's base): the images do not hold MetOcean's WW3, `just smoke-ww3`, yet.
 dsmoke-ww3:
-    bash scripts/docker.sh run --ww3 smoke
+    bash scripts/docker.sh run --ww3-noaa smoke
 
 # `just smoke-ww3-gpu [gpu]` in an image: the CPU image, or with `gpu` the GPU image
 # (just dbuild-cuda), which asks the supervising human for "yes" (AGENTS.md).
 dsmoke-ww3-gpu device="cpu":
     {{ if device == "gpu" { "bash scripts/docker.sh run-cuda --ww3-gpu smoke --gpu" } else if device == "cpu" { "bash scripts/docker.sh run --ww3-gpu smoke" } else { error("dsmoke-ww3-gpu: cpu or gpu") } }}
 
-# `just full-ww3` in the image.
+# The expensive case with NOAA's WW3 in the image (--ww3-noaa), as dsmoke-ww3.
 dfull-ww3:
-    bash scripts/docker.sh run --ww3 full
+    bash scripts/docker.sh run --ww3-noaa full
 
 # `just full-ww3-gpu [gpu]` in an image, as dsmoke-ww3-gpu.
 dfull-ww3-gpu device="cpu":
@@ -330,7 +344,7 @@ regtest test="ww3_tp1.1" ww3=ww3_src:
 # The simple regtest: build with the test's own switch_<sw>, then run it.
 rt test="ww3_tp1.1" sw="PR3_UQ" ww3=ww3_src: (build (ww3 + "/regtests/" + test + "/input/switch_" + sw) ww3) (regtest test ww3)
 
-# Run the first course example (fetch-limited growth, ~1 min) against <ww3>'s build; builds ww_fetch_analyse first.
+# Run the first example (fetch-limited growth, ~1 min) against <ww3>'s build; builds ww_fetch_analyse first.
 example01 ww3=ww3_src: (kokkos-build "openmp-release")
     cd examples/01-fetch-limited-growth && WW3="{{ww3}}" nix develop "{{pratico}}#ww3" --command bash run.sh
 
@@ -342,6 +356,18 @@ bench ww3=ww3_src: (kokkos-build "openmp-release")
 bench-case *args: (kokkos-build "openmp-release")
     "{{kokkos_dir}}/build/openmp-release/tools/bench_case/ww_bench_case" "$@"
 
+# Fetch one ECMWF IFS cycle from Open Data (no key) as ww3_prnc wind forcing, e.g. `just ifs-get -c 00 -H 120 -b -52,-44,-32,-24`; `--help` lists the options. `just wind` is the same recipe: `just run --ww3 --case <dir> --wind "$(just wind --print-path -b W,E,S,N)"`.
+ifs-get *args:
+    @if command -v grib_to_netcdf >/dev/null && command -v ncks >/dev/null; then bash scripts/ifs_get.sh "$@"; else {{ww3_shell}} bash scripts/ifs_get.sh "$@"; fi
+
+alias wind := ifs-get
+
+# Fetch sea surface temperature from the Copernicus Marine global forecast (an account is needed), e.g. `just cmems-get -s 2026111100 -H 120 -b -52,-44,-32,-24`; `--help` lists the options. `just temp` is the same recipe, for `just run ... --temp "$(just temp --print-path -b W,E,S,N)"`.
+cmems-get *args:
+    @bash scripts/cmems_get.sh "$@"
+
+alias temp := cmems-get
+
 # Build the GPU sandbox (needs nvfortran; `just gpu CC_ARCH=cc90` for an H100).
 gpu *args:
     make -C gpu "$@"
@@ -350,11 +376,10 @@ gpu *args:
 swan swan=swan_src:
     bash scripts/04_get_swan.sh "{{swan}}"
 
-# Delete run artefacts (bench, gpu binaries, example outputs, exercise builds); keep configs and kokkos/build.
+# Delete run artefacts (bench, gpu binaries, example outputs); keep configs and kokkos/build.
 clean-runs:
     make -C bench clean
     rm -rf gpu/00_hello_acc gpu/01_dispersion gpu/02_do_concurrent gpu/03_precision
-    rm -rf exercises/solutions/build exercises/solutions/out
     rm -f examples/01-fetch-limited-growth/make_inputs examples/02-regional-real-forcing/make_bathy
     rm -rf examples/02-regional-real-forcing/gfs.*
     find examples -name '*.nc' ! -name gebco.nc ! -name gfs_winds.nc -delete
@@ -402,7 +427,7 @@ results *args:
 refs *args:
     python3 scripts/refs_check.py "$@"
 
-# Archify, a pinned submodule: `just archify init` checks it out, `render` draws docs/archify/*.html, `pdf` prints them, `check`/`refresh` find and redraw the stale ones.
+# Archify, a pinned submodule: `just archify init` checks it out, `render` draws docs/archify/*.html, `pdf` prints them, `png` and `site` draw the dark ones (DESIGN.md, "Pictures"), `check`/`refresh` find and redraw the stale ones.
 archify *args:
     bash scripts/archify.sh "$@"
 
@@ -414,6 +439,10 @@ notes *args:
 memory *args:
     python3 scripts/memory.py "$@"
 
+# The aiXiv preprint: pubs/preprint/*.md -> wave-models-on-gpus.tex and wave-models-on-gpus.pdf (pandoc + XeLaTeX).
+preprint *args:
+    bash scripts/preprint.sh "$@"
+
 # Regenerate codemeta.json from CITATION.cff and .zenodo.json; `just codemeta --check` is the CI gate.
 codemeta *args:
     python3 scripts/codemeta.py "$@"
@@ -421,6 +450,10 @@ codemeta *args:
 # Install the gate tools (just, shellcheck, gfortran, PyYAML) and picasso in a fresh container; `--dry-run` prints.
 agent-env *args:
     bash scripts/agent_env.sh "$@"
+
+# Oh My Pi's generated files (.omp/RULES.md, .omp/agents/) from AGENTS.md and .claude/agents; `just omp --check` is the CI gate.
+omp *args='--write':
+    python3 scripts/omp_sync.py "$@"
 
 # GitHub's Spec Kit (github.com/github/spec-kit). `just specify init` sets a clone up for the /speckit-* skills; anything else is passed to `specify`.
 specify *args:
@@ -500,6 +533,11 @@ src-sync branch="develop":
 src-pr n:
     bash {{src_script}} . --pr {{n}}
 
+# The NOAA commit the fork branched from: `rev` prints it, `export` writes its tree to WW3-noaa/
+# (git ignores it; --ww3-noaa builds it). It is not a submodule.
+ww3-base *args:
+    bash scripts/ww3_base.sh {{args}}
+
 # WW3 pinned commit vs. fork and upstream tips.
 src-st:
     @git submodule status -- WW3
@@ -522,31 +560,14 @@ sub-sync: submodule-update src-sync ww4-sync
 pubs-shell:
     nix develop "{{justfile_directory()}}"
 
-# Course book PDF from course/*.md -> build/ww3-lab-course.pdf.
-book style="abnt":
-    nix develop "{{justfile_directory()}}" --command scripts/build_pdf.sh book {{style}}
-
-# Course book as a Word document -> build/ww3-lab-course.docx (pandoc's docx writer, no TeX).
-book-docx:
-    nix develop "{{justfile_directory()}}" --command scripts/build_docx.sh book
-
-# The book as a static website, one page per chapter -> build/site; CI deploys it to GitHub Pages.
-book-html:
-    scripts/build_html.sh
-
-# The Gleam front page (site/, DESIGN.md) reads its facts from the repository; CI deploys build/site.
-# The whole website -> build/site: the chapters at /book/, then the Gleam front page at /.
+# What GitHub Pages serves -> build/site: the progress, ADR and GTA report pages, and the redirects to
+# wave.piabrota.art, where piabrota/nix-os builds the front page from this repository (ADR-0024).
 site:
     scripts/build_html.sh
-    nix develop "{{justfile_directory()}}#site" --command scripts/build_site.sh --check
 
 # Serve build/site on http://localhost:8000 (after `just site`).
 site-serve:
     python3 -m http.server 8000 --directory build/site
-
-# The book as a Leanpub manuscript (Markua) -> build/leanpub/manuscript; CI pushes it to the `leanpub` branch.
-leanpub *args:
-    python3 scripts/leanpub_manuscript.py {{args}}
 
 # Proposal as a Word document for review -> build/proposal_<lang>.docx (no DEL cover page).
 proposal-docx lang="pt":
@@ -571,7 +592,7 @@ figures *args:
 figures-check:
     python3 scripts/figures.py check
 
-# AI-writing tells in the English Markdown: the gate CI runs; --report lists every judgement rule (issue #36).
+# AI-writing tells in the English Markdown: the gate CI runs; --report lists every judgement rule (issue #36); --ste the ASD-STE100 checks; --ptc Português Técnico Controlado.
 vale *args:
     scripts/vale.sh {{args}}
 
@@ -604,8 +625,12 @@ noaa-notices *args:
 translate *args:
     nix develop "{{justfile_directory()}}" --command python3 scripts/translate_md.py "$@"
 
-# Everything: book + proposal pt + proposal en (same as `nix build .`).
-pubs: book (proposal "pt") (proposal "en")
+# The repo's prose as NotebookLM sources -> build/notebooklm/ (upload by hand; docs/LLM_TOOLING_202610.md).
+notebooklm *args:
+    python3 scripts/notebooklm_bundle.py {{args}}
+
+# Everything: proposal pt + proposal en (same as `nix build .`).
+pubs: (proposal "pt") (proposal "en")
 
 # ---------------------------------------------------------------------
 # Kokkos (kokkos/): C++ kernels; GoogleTest suites of the intro programs and tools (the port has none, ADR-0010)

@@ -13,6 +13,8 @@
 // and W3MAPT's and are not read. Under PR2 the maps are W3MAP2's
 // (w3pro2md.F90:135-492, called at w3wavemd.F90:1460), copied from the Fortran
 // after each FLMAP, never rebuilt (ADR-0011).
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include "prop_params.hpp"

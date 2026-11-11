@@ -1,0 +1,11 @@
+# Português Técnico Controlado (PTC), the skill of Kayque Rotondo (MIT,
+# https://github.com/kayquer/portugues-tecnico-controlado at 8938f58, SKILL.md v1.2.0).
+# PTC-3: "deve" is obligation only; probability gets a number or "talvez".
+extends: existence
+message: "PTC-3: '%s' não diz se é obrigação ou probabilidade; use 'deve', um número ou 'talvez'."
+level: warning
+ignorecase: true
+nonword: true
+tokens:
+  - '(?<!\p{L})(?:deveria|deveriam|poderia|poderiam|deverá|deverão)(?!\p{L})'
+  - '(?<!\p{L})(?:há de|é necessário que|deve ser que)(?!\p{L})'

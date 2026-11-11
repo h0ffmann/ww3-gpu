@@ -56,5 +56,5 @@ None. No timing without parity (`AGENTS.md`). The GFS-Wave profile puts `w3fld2`
 WW3's regtest matrix has not run on it (ADR-0016). CPU replay of 2026-10-19 (Kokkos OpenMP backend, never the GPU):
 `scripts/ww3-gpu.sh --ww3-gpu smoke --cpu --kokkos SRCE` and `... full ...` with `WW_KOKKOS_STRICT=1` and
 `WW3GPU_SWITCH=switch_lab_gfs` (`switch_lab_ompg` with `SEED FLD2` in place of `LN1`): every model file byte-identical
-to the Fortran of the same executable, the binary ones also to `--ww3`, `nccmp-tol` PASS, no fallback. The smoke wind
+to the Fortran of the same executable, the binary ones also to `--ww3-noaa`, `nccmp-tol` PASS, no fallback. The smoke wind
 is 12 m/s, so `W3FLD2` runs (the output `CHA` is not `FLDALPHA`).

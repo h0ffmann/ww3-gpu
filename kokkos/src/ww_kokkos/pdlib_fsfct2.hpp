@@ -22,6 +22,7 @@
 // S = 1..min(NE,npa), a departure for the owner to confirm.
 // Node sums (:1688, :1740, :1744-1745, :1769-1770, :1797-1799) are gathered per node over
 // PDLIB_IE_CELL in increasing IE: the Fortran's order. :1691-1698 and :1837-1850 run serially.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

@@ -1,6 +1,6 @@
 # W3WAVE's per-step support routines on Kokkos (phase 1, translation only)
 
-Status: **every routine translated and reviewed, with the PR3 maps added**, 2026-10-16, under [ADR-0011](ADRs/ADR-0011-port-in-units-regtest-at-checkpoints.md); **wired** the same day (h0ffmann/WW3 `357f575c`, see the end).
+Status: **every routine translated and reviewed, with the PR3 maps added**, 2026-10-16, under [ADR-0011](ADRs.md#adr-0011); **wired** the same day (h0ffmann/WW3 `357f575c`, see the end).
 Issue [#42](https://github.com/h0ffmann/ww3-gpu/issues/42), the port planner.
 
 The owner, 2026-10-16: "Start porting routines with discipline to Kokkos. Without any regtests.
@@ -15,7 +15,7 @@ subagents at low to medium effort depending on the routine. Consequences:
   or at set-up (`DISTAB` with `WAVNU2`), easiest first.
 - **No test runs.** No ctest, no regtest. The C++ is compiled to show it builds; bit parity is
   argued statically from the `-O3` GIMPLE and assembly of both compilers (ADR-0011) until the
-  unit's checkpoint. The port has no tests of its own ([ADR-0010](ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md)).
+  unit's checkpoint. The port has no tests of its own ([ADR-0010](ADRs.md#adr-0010)).
 - **Backends.** Each routine is a header-only `KOKKOS_INLINE_FUNCTION` that compiles for OpenMP
   and CUDA. A libm call (`atan2f`, `tanhf`, ...) takes glibc's bits on the host only; on CUDA the
   math library's algorithms differ ⚠ (`AGENTS.md`, "Bit for bit").

@@ -18,6 +18,7 @@ param.scratch
 *.nc
 *.png
 !pubs/figures/mermaid/*.png
+!docs/archify/*.png
 
 # generated grid inputs
 depth.inp
@@ -47,7 +48,6 @@ RESULTS.md
 # builds
 build/
 kokkos/build/
-exercises/solutions/build/
 swan/
 *.ninja
 .ninja_deps
@@ -90,33 +90,30 @@ result-*
 !docs/media/*.png
 !human/*.png
 
-# Spec Kit (github/spec-kit): `just specify init` regenerates these; only the constitution and
-# specs/ are ours and tracked
-.specify/*
-!.specify/memory/
-.specify/memory/*
-!.specify/memory/constitution.md
+# Spec Kit (github/spec-kit): `just specify init` regenerates these; only specs/ is ours and tracked
+.specify/
 .claude/skills/speckit-*/
 
 # Vale packages, fetched by `vale sync` (scripts/vale.sh)
 .vale/styles/*
 !.vale/styles/ww3gpu/
+!.vale/styles/STE/
+!.vale/styles/PTC/
 
 # graphify output from an in-tree run; the graph lives in ~/.cache/ww3-gpu-graph/ (ADR-0007)
 graphify-out/
 
-# the site (site/, `just site`): Gleam's build output, and the content module site/content writes
-site/build/
-site/content/build/
-site/src/ww3_gpu_site/content.gleam
-# ...except the screenshots a pull request shows
-!site/preview/*.png
 
-# Compound Engineering per-checkout overrides
-.compound-engineering/*.local.yaml
 # Archify: pages are rendered from docs/archify/*.json (scripts/archify.sh render), and its receipts are run evidence
 .archify/
 docs/archify/*.html
 docs/archify/*.finalize*.json
 docs/archify/*.delivery*.json
 docs/archify/*.browser-check.json
+
+# IFS forcing fetched by `just ifs-get`
+data/ifs/
+data/cmems/
+
+# NOAA's WW3 at the fork's base commit, written by scripts/ww3_base.sh (a submodule until 2026-11-11)
+/WW3-noaa/

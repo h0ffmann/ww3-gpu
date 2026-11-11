@@ -3,7 +3,7 @@ id: "202610141900"
 title: "Bit-for-bit is the gate"
 type: permanent
 status: verified
-source: "kokkos/PORT_STATUS.md, docs/ADRs/ADR-0001-proof-language.md and docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md, 2026-10-14"
+source: "kokkos/PORT_STATUS.md, docs/ADRs.md#adr-0001 and docs/ADRs.md#adr-0010, 2026-10-14"
 tags: [porting, evidence]
 created: 2026-10-14
 ---

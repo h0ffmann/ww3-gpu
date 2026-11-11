@@ -27,6 +27,8 @@
 // block, COSI, TAUSCX/Y, FHIGI, FIRST, TAUNUX/Y (-O3 drops them as well, or
 // nothing reads them). HSTOT is read by the FLD2 branch only; it is summed in every call of the
 // kernel, which changes no other value.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <Kokkos_Core.hpp>

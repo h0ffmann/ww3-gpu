@@ -24,7 +24,7 @@ that means.
 | Does the default build change WW3? | No: the patch removes no line, every line it adds to a WW3 source file is inside a `W3_KOKKOS` preprocessor block, and with `KOKKOS` built and no flag set the Fortran runs | section 2 |
 | Bit-identical to the Fortran on the CPU? | Yes, on every regtest entry run with the preset (sections 4 and 8 list what was not run) | section 4 |
 | Faster on the CPU? | 1.65 times less wall time than NOAA WW3 on `full`, 32 threads, median of ten alternated runs on the merged code; regtest pending ⚠ (22 entries passed, not the whole matrix) | section 3 |
-| GFS-Wave (`DIST MPI`, Intel compiler)? | No. The runtime is single node by design; MPI keeps the Fortran ([ADR-0017](ADRs/ADR-0017-kokkos-port-is-single-node-mpi-stays-fortran.md)) | section 8 |
+| GFS-Wave (`DIST MPI`, Intel compiler)? | No. The runtime is single node by design; MPI keeps the Fortran ([ADR-0017](ADRs.md#adr-0017)) | section 8 |
 | GPU? | The CUDA build compiles; no device run yet | section 8 |
 | Ready for operations or for upstream? | Not yet. Thirteen gaps, ranked, with their next step | [`PRODUCTION_READINESS_202610.md`](PRODUCTION_READINESS_202610.md) |
 
@@ -392,7 +392,7 @@ Four changes to the batched kernel of issue #196, each with its own switch
   It was not compiled here: no ESMF library is installed.
 - **Checked (v).** Most of the C++ is LGPL-3.0-or-later, like the WW3 source it translates (249
   of 347 files under `kokkos/src`). Where the library would live upstream is open
-  ([ADR-0018](ADRs/ADR-0018-where-ww-kokkos-lives-for-upstream.md), Proposed).
+  ([ADR-0018](ADRs.md#adr-0018), Proposed).
 
 ## 9. Before a speed is final
 

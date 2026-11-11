@@ -37,7 +37,7 @@ Top MCP Servers:
 
 ## What ww3-gpu is
 
-A book in progress, and its evidence, on one problem: moving the expensive kernels of
+Software and texts on one problem: moving the expensive kernels of
 WAVEWATCH III (WW3) to GPUs **without changing the answer**. The ported code is C++/Kokkos (one
 source for Serial, OpenMP and CUDA). WW3 itself is never edited here; the only Fortran added is a
 `bind(C)` shim behind the `KOKKOS` switch on the `h0ffmann/WW3` fork.
@@ -48,7 +48,7 @@ source for Serial, OpenMP and CUDA). WW3 itself is never edited here; the only F
  W3SRCE --KOKKOS switch--> shim  ----->  kokkos/src (C++/Kokkos kernel) <--- gfortran, OpenMPI, NetCDF,
    |  WW_KOKKOS_SNL1=0: Fortran DIA      regtests/ (CTest matrix driver)     Kokkos, PT-Scotch, METIS,
    |  WW_KOKKOS_SNL1=1: Kokkos DIA       scripts/ww3-gpu.sh (smoke/full)        WW3 regtest data (SHA-256)
-   v                                     docs/, course/ (the book)           one locked nixpkgs
+   v                                     docs/, pubs/ (the texts)            one locked nixpkgs
  same executable, two runs  -->  test.comp (bytes) + nccmp-tol (fields)  -->  verdict per entry
 ```
 
@@ -58,7 +58,7 @@ source for Serial, OpenMP and CUDA). WW3 itself is never edited here; the only F
 git clone --recurse-submodules git@github.com:h0ffmann/ww3-gpu.git && cd ww3-gpu
 just submodule-init                 # picasso/, sparse: labs/pratico
 just toolchain                      # print every pinned version (nixpkgs rev, gfortran, Kokkos, ...)
-just kokkos-test serial-debug       # build the port with sanitizers; tests of lessons and tools
+just kokkos-test serial-debug       # build the port with sanitizers; tests of the intro programs and tools
 just smoke-ww3-gpu                     # WW3 with the Kokkos DIA vs WW3 as written, CPU, ~minutes
 just ww3-gpu-matrix-list all           # the 311 NL1 entries of WW3's regtest matrix
 just ww3-gpu-matrix 8 all              # all of them, 8 at a time, Fortran vs Kokkos (hours)
@@ -143,16 +143,20 @@ IDENTIFY -> TRANSLATE -> REVIEW -> REGTEST -> IMPROVE -> CPU/GPU SPLIT
 
 ## Three ways of working
 
-`scripts/ww3-gpu.sh` runs WAVEWATCH three ways, each from its own submodule (README, "three ways"):
+`scripts/ww3-gpu.sh` (`just run`) runs WAVEWATCH from four submodules, six runtimes and one pair
+mode (README, "how it works"; [`docs/RUN_COMMAND_202611.md`](docs/RUN_COMMAND_202611.md)):
 
 | Way | Source | What it is for |
 |---|---|---|
-| `--ww3` | `WW3-noaa/`, pure NOAA-EMC/WW3 at `03adda91` | the reference: WW3 as written |
-| `--ww3-gpu` | `WW3/`, the `h0ffmann/WW3` fork with the KOKKOS patch, linked to `kokkos/` | the port: `--cpu` (default, Kokkos on OpenMP) is compared pair to pair with `--ww3`; `--gpu` only with the owner supervising |
+| `--ww3` | `WW3-metocean-7.14/`, MetOcean's WW3 at `92e2cf66` (tag `7.14.mos-92e2cf6`) | the reference: the WW3 that LabECO's forecast builds, as written |
+| `--ww3-noaa` | pure NOAA-EMC/WW3 at `03adda91`, written to `WW3-noaa/` from the fork's history (`scripts/ww3_base.sh`; not a submodule) | the base of the fork, and so the pair of `--ww3-gpu` until the fork is rebased onto MetOcean's WW3 ⚠ |
+| `--ww3-gpu` | `WW3/`, the `h0ffmann/WW3` fork with the KOKKOS patch, linked to `kokkos/` | the port: `--cpu` (default, Kokkos on OpenMP) is compared pair to pair with `--ww3-noaa`; `--gpu` only with the owner supervising |
+| `--chaceon` | `chaceon/`, the `h0ffmann/chaceon` repository | WW3 in Rust, `--cpu` compared with `--ww3`; `--gpu` stops with exit 5 until chaceon has run on a real GPU |
 | `--ww4` | `WW4/`, the `h0ffmann/WW4` fork | WAVEWATCH IV; stops with exit 5 while a part the case needs is not ported |
 
 `just smoke` runs `--ww3` then `--ww3-gpu` on `ww3_ts1` in seconds; `just full-ww3-gpu` runs
-`bench_small` in minutes.
+`bench_small` in minutes; `just run --ww3 --case <dir> --wind ifs` runs a case of your own on the
+newest IFS wind.
 
 ## Regtest strategy
 
@@ -258,9 +262,9 @@ just route section docs/AGENTS_KOKKOS_202609.md 1.5   # one section of a long pl
 
 | Then, to understand the method | Words | Time |
 |---|---|---|
-| `docs/ADRs/ADR-0002-port-order-wall-time.md` (what to port next) | 872 | 4 min |
-| `docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md` (why no unit tests) | 894 | 4 min |
-| `docs/ADRs/ADR-0011-port-in-units-regtest-at-checkpoints.md` (units and checkpoints) | 2 330 | 12 min |
+| `docs/ADRs.md#adr-0002` (what to port next) | 872 | 4 min |
+| `docs/ADRs.md#adr-0010` (why no unit tests) | 894 | 4 min |
+| `docs/ADRs.md#adr-0011` (units and checkpoints) | 2 330 | 12 min |
 | `.claude/skills/ww3-port/SKILL.md` (the translation traps) | 953 | 5 min |
 | `docs/log/2026-10-14-snl1-bitwise-af11.md` (one ULP traced to gfortran's `x**11`) | 695 | 3 min |
 | `kokkos/port_report/W3SNL1_KOKKOS.md` (what a finished port report looks like) | 1 496 | 7 min |

@@ -111,7 +111,7 @@ which `cmp` finds byte-identical to the original:
 | File | Size (bytes) | NK, NTH, NOPTS | Times |
 |---|---|---|---|
 | `~/src/WW3/regtests/ww3_tp1.1/work_lab/out_pnt.ww3` | 62 902 | 3, 4, 21 | 25 |
-| `build/runs/ww3-smoke/out_pnt.ww3` of the main worktree (`just smoke`, `--ww3`) | 7 652 218 | 36, 24, 1 | 2 161 |
+| `build/runs/ww3-smoke/out_pnt.ww3` of the main worktree (`just smoke`, `--ww3-noaa`) | 7 652 218 | 36, 24, 1 | 2 161 |
 | `../ww3-gpu-noaa/build/runs/ww3-gpu-smoke-openmp/kokkos/out_pnt.ww3` | 7 652 218 | 36, 24, 1 | 2 161 |
 
 With `OFILES(2) = 1` the C++ wrote 25 files from the first, each byte-identical to the header,

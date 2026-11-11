@@ -15,9 +15,13 @@ Docker").
 
 | Component | Version | Pinned in | Read with |
 |---|---|---|---|
-| WW3-noaa (pure WW3, built by `--ww3`) | NOAA-EMC/WW3 `03adda91` (2026-10-05), unchanged; moves only with the fork's base | the `WW3-noaa/` submodule; `.gitmodules` | `git submodule status WW3-noaa`; `scripts/ww3-gpu.sh --ww3` checks it against the fork |
+| WW3-metocean-7.14 (the reference, built by `--ww3`) | metocean/WW3 tag `7.14.mos-92e2cf6`, commit `92e2cf66` (2026-09-01), branch `mos-custom`: NOAA-EMC/WW3 `3eb8161` (2023-06-08) plus MetOcean's ten commits. metocean/WW3 has no 7.13 tag or branch (its tags are `7.14`, `7.14.mos-92e2cf6` and `7.14.mos-cfcd089`), read on 2026-11-11 (v); the owner asked for "7.13 MetOcean" that day, named this ref on 2026-10-29 and, asked which he meant, answered "7.14" on 2026-11-11 | the `WW3-metocean-7.14/` submodule; `.gitmodules` | `git submodule status WW3-metocean-7.14`; `git ls-remote --tags https://github.com/metocean/WW3` |
+| chaceon (WW3 in Rust, built by `--chaceon`) | h0ffmann/chaceon `89a11e4` (2026-11-11), branch `main`; its own `WW3/` submodule is the WW3-metocean-7.14 commit above (v, 2026-11-11) | the `chaceon/` submodule; `.gitmodules` | `git submodule status chaceon`; `git -C chaceon ls-tree HEAD WW3` |
+| NOAA's WW3 (pure WW3, built by `--ww3-noaa`; not a submodule since 2026-11-11) | NOAA-EMC/WW3 `03adda91` (2026-10-05), unchanged; moves only with the fork's base | `kokkos/src/fortran_iface/WW3_BASE`; the commit is in the fork's history, and `scripts/ww3_base.sh export` writes its tree to `WW3-noaa/`, which git ignores | `just ww3-base rev`; `scripts/ww3-gpu.sh --ww3-noaa` checks it against the fork |
 | WW3 (the fork, built by `--ww3-gpu`) | `c9a6a0c6` (2026-10-15), branch `ww3-gpu/kokkos-st4` of the h0ffmann/WW3 fork, on upstream NOAA-EMC/WW3 `03adda91` | the `WW3/` submodule; `.gitmodules` | `git submodule status WW3`; `git -C WW3 merge-base HEAD origin/develop` |
+| WW3 model version | 7.14: the `VERSION` file and `manual/defs.tex:1` of NOAA-EMC/WW3 `03adda91`, and `model/src/w3initmd.F90:129` (`WWVER = '7.14'`) of metocean/WW3 `92e2cf66`, which is a 2023 state of that version (v, 2026-11-11). Upstream has no 7.14 tag (its tags are `6.07` and `6.07.1`), so the version is pinned by the two commits above; read on 2026-11-11 (v) | `kokkos/src/fortran_iface/WW3_BASE` and the `WW3-metocean-7.14/` submodule | `just ww3-base export && cat WW3-noaa/VERSION WW3/VERSION`; the manual of this version is summarised in [docs/ww3-manual/](docs/ww3-manual/README.md) |
 | WW3 regtest data | 7.14.2 (`ww3_from_ftp.v7.14.2.tar.gz`, SHA-256 pinned) | `WW3/model/bin/ww3_from_ftp.sh:23`; `ww3RegtestData` in `picasso/labs/pratico/flake.nix:147` | `grep ww3ver= WW3/model/bin/ww3_from_ftp.sh` |
+| WW3 for ondaseventos (the `docker/Dockerfile.ondaseventos` image only) | metocean/WW3 tag `7.14.mos-92e2cf6`, commit `92e2cf66` (2026-09-01): NOAA-EMC/WW3 `3eb8161` (2023-06-08) plus MetOcean's ten `mos-custom` commits, which change ST4's arithmetic; not the WW3-noaa physics. Read 2026-10-29 (v); the ref is the owner's choice of 2026-10-29; that ondaseventos builds it was not read in its repository ⚠ | `WW3_REPO`, `WW3_REF` in `docker/Dockerfile.ondaseventos` | `docker run --rm --entrypoint cat ww3-ondaseventos /usr/local/share/ww3/BUILD_INFO`; `gh api repos/metocean/WW3/git/refs/tags/7.14.mos-92e2cf6` |
 | WW4 | `74ea792` (2026-10-01), branch `develop` of the h0ffmann/WW4 fork | the `WW4/` submodule | `git submodule status WW4` |
 | picasso | `be76132` (`v0.1.1-20-gbe76132`), branch `main` | the `picasso/` submodule | `git submodule status picasso` |
 | nixpkgs | `6510408d147d` (nixos-unstable, 2026-10-10) | `picasso/labs/pratico/flake.lock` | `nix flake metadata ./picasso/labs/pratico` |
@@ -83,7 +87,6 @@ table first said 3.14.3, and a dev container built later the same day had 3.14.4
 | Contraction | `-ffp-contract=off` on the host, `--fmad=false` on the device | `kokkos/src/ww_kokkos/CMakeLists.txt` |
 | WW3 | `cmake_minimum_required(VERSION 3.19)`; Release `-O3` for GNU | `WW3/CMakeLists.txt:4`; `WW3/model/src/CMakeLists.txt:87-89` |
 | Regtest matrix | `cmake_minimum_required(VERSION 3.21)` | `regtests/CMakeLists.txt:38` |
-| Exercises | `cmake_minimum_required(VERSION 3.25)`; C++20 | `exercises/solutions/CMakeLists.txt:13-16` |
 
 ## The workstation (not pinned)
 

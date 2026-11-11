@@ -18,7 +18,7 @@ the owner fast-forwarded `ww3-gpu/kokkos-pnt` of h0ffmann/WW3 to (`80644ba9..50a
 | Install-only `ww_kokkos` (Kokkos its one dependency, version and backends pinned in the config); ADR-0018 Proposed | `kokkos/README.md`, "Install-only build" |
 | CUDA `--build-only` of the preset (51 nvcc warnings, none in a wired part); the owner's GPU checklist | `docs/log/2026-10-18-cuda-build-only.md`, `docs/GPU_SUPERVISED_RUN_CHECKLIST_202610.md` |
 | WW3's regtests on the rebased tree, lab switch, strict, POISON on: resident serial 5 PASS and `ww3_tp2.6` x2 FAIL by design (unstructured grid, kept FAIL by the owner); OMPG 10/10; `mww3_test_01` to `_05` 0 files different; `ww3_tnc1` 0/30 | `docs/log/2026-10-18-u3-regtests-v2.md`, `docs/data/ww3gpu_matrix_*_pin-50a10730_2026-10-18.tsv` |
-| Plans 002 (this goal), 003 (the first supervised GPU run and the five plans after it), 004 (pin to `production/GFS.v17`, own PR) | `docs/compound/plans/` |
+| Plans 002 (this goal), 003 (the first supervised GPU run and the five plans after it), 004 (pin to `production/GFS.v17`, own PR) | `docs/plans/` |
 
 ## Open work, by branch
 

@@ -16,6 +16,7 @@
 // IHMAX is OUTPTS(IMOD)%OUT6%IHMAX (w3odatmd.F90:1836), MAX(50, IHM) (w3gridmd.F90:3140).
 // The only float work is MAXVAL(ZP) and ABS(ZP-ZP) with comparisons, no libm call, so
 // device math is not at stake.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

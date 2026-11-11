@@ -3,7 +3,7 @@ id: "202610141907"
 title: "The long-term memory is ai-memory"
 type: permanent
 status: partial
-source: "github.com/akitaonrails/ai-memory README.md at 705aba7 (v3.0.0), MIT, Fabio Akita; docs/ADRs/ADR-0009-ww3-gpu-adopts-ai-memory-from-fabio-akita.md"
+source: "github.com/akitaonrails/ai-memory README.md at 705aba7 (v3.0.0), MIT, Fabio Akita; docs/ADRs.md#adr-0009"
 tags: [memory, agents]
 created: 2026-10-14
 ---

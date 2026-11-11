@@ -1,25 +1,13 @@
 # Publications: markdown to PDF and Word
 
-Two documents are built from the markdown in this repository: the book, *Without Changing the
-Answer* (working title), whose chapters are the lessons in `course/`, and the UFRJ/DEL project
-proposal, in English and Portuguese. CI builds them on every merge to `main` and commits the
-results to [`pdf/`](../pdf/). The directory keeps that name for the sake of existing links, though
-it also holds `.docx` files.
+The texts of this repository have Markdown sources here
+([ADR-0023](../docs/ADRs.md#adr-0023)): the UFRJ/DEL project proposal, in
+English and Portuguese, which CI builds on every merge to `main` and commits to [`pdf/`](../pdf/);
+the preprint in [`preprint/`](preprint/README.md); and, when it starts, the thesis. The directory
+`pdf/` keeps that name for the sake of existing links, though it also holds `.docx` files. The
+course and the book built from it were removed on 2026-11-11.
 
-The book is the repository's public form ([ADR-0003](../docs/ADRs/ADR-0003-repository-is-a-book.md)):
-a book in progress on agentic coding and agentic research, written around moving WW3's kernels to
-GPUs without changing the answer. [WFIP-0002](../docs/WFIPs/WFIP-0002-lab-as-a-book.md) is the plan
-that turns the lessons into parts, adds the chapters on how this lab is run with agents, checks
-every quoted listing against the code on each build, and attaches the PDF to every release. Until
-its tasks land, `pdf/ww3-lab-course.pdf` is the seventeen lessons under the new title, one chapter
-each. A free Leanpub edition is fed from the same lessons: `just leanpub` exports them as a Markua
-manuscript and `.github/workflows/leanpub.yml` pushes it to the `leanpub` branch the Leanpub book
-reads; [`docs/LEANPUB_202610.md`](../docs/LEANPUB_202610.md) has the author's steps. The same lessons
-are a website at <https://h0ffmann.github.io/ww3-gpu/>: `just book-html` builds it with pandoc's
-`chunkedhtml` writer (one page per chapter, MathML for math, the committed figure renders) and
-`.github/workflows/pages.yml` deploys it on every merge that touches a lesson.
-
-A third, short document is a report in easy Brazilian Portuguese for Prof. Pedro Cruz (GTA,
+A short document is a report in easy Brazilian Portuguese for Prof. Pedro Cruz (GTA,
 DEL/UFRJ), in a full version, [`relatorio.easy.pt-BR.md`](relatorio-gta/relatorio.easy.pt-BR.md), and a
 short one of about 15 minutes' reading, [`relatorio.curto.pt-BR.md`](relatorio-gta/relatorio.curto.pt-BR.md).
 `scripts/build_relatorio.sh` turns them into the pages `/relatorio-gta/` and `/relatorio-gta/curto.html`,
@@ -28,20 +16,16 @@ with Chromium, since it needs no TeX.
 
 The toolchain (pandoc, TeX Live, Python) comes from
 [`picasso/labs/publisher`](https://github.com/h0ffmann/picasso/tree/main/labs/publisher). The
-root `flake.nix` uses its `mkPdf` and `mkDocx` helpers, so `nix build .` produces the three PDFs and
-the Word files in a sandbox.
+root `flake.nix` uses its `mkPdf` and `mkDocx` helpers, so `nix build .` produces the two proposal PDFs and
+their Word files in a sandbox.
 
 ```bash
-just book                 # course/*.md -> build/ww3-lab-course.pdf (one chapter per lesson)
-just book-docx            # the same course as build/ww3-lab-course.docx (Word, no TeX in the path)
-just book-html            # the book as a website -> build/site/index.html (CI deploys it to GitHub Pages)
-just leanpub              # the book as a Leanpub manuscript -> build/leanpub/manuscript (CI pushes it to the leanpub branch)
 just proposal-docx pt     # the proposal for review in Word -> build/proposal_pt.docx (pt|en)
 just proposal en          # pubs/proposal/en/*.md -> build/proposal_en.pdf (DEL proposal layout)
 just proposal pt ieee     # Portuguese copy; second arg picks the citation style: abnt (default) | ieee
 just translate            # pubs/proposal/en -> pt via any OpenAI-compatible endpoint (changed files only)
 just proposal-review      # parecer do revisor-proposta sobre pubs/proposal (ABNT, DEL, registro científico)
-just pubs                 # all three PDFs
+just pubs                 # both proposal PDFs
 ```
 
 ## Word files
@@ -83,9 +67,16 @@ The translation backend reads `TRANSLATE_BASE_URL`, `TRANSLATE_API_KEY` and `TRA
 Locally, `http://127.0.0.1:11434/v1`, `ollama` and an Ollama model work. In CI the same three names
 are repository secrets; without them the step is skipped and the committed `pt/` is used.
 
+## The preprint
+
+[`preprint/`](preprint/README.md) holds a short preprint, not peer reviewed, that compares this
+repository's C++/Kokkos port with the Rust port in
+[h0ffmann/chaceon](https://github.com/h0ffmann/chaceon) under the same bit-for-bit rule. Its
+source is Pandoc Markdown, built to LaTeX and PDF by `just preprint` with h0ffmann/closed-source's
+template.
+
 ## Explaining the vocabulary
 
 `/eli5 <topic>` explains any of this (the action balance equation, a switch file, a Kokkos backend,
-bit-for-bit parity) to someone who has never seen it, grounded in `docs/GLOSSARY.md` and the
-lessons, in the language you ask in ([`.claude/skills/eli5`](../.claude/skills/eli5/SKILL.md);
+bit-for-bit parity) to someone who has never seen it, grounded in `docs/GLOSSARY.md`, in the language you ask in ([`.claude/skills/eli5`](../.claude/skills/eli5/SKILL.md);
 adapted from the community skill by Thariq Shihipar, MIT).

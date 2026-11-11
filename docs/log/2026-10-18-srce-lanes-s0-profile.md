@@ -1,7 +1,7 @@
 # One thread of the resident `W3SRCE` batch: 91 % in the port's own code, 9 % in libm
 
 2026-10-18, for M. Hoffmann (goal `c3e7eecf-3917`), unit S0 of
-[the points-in-lanes plan](../compound/plans/2026-10-18-005-srce-points-in-lanes-plan.md), PR #197.
+[the points-in-lanes plan](../plans/2026-10-18-005-srce-points-in-lanes-plan.md), PR #197.
 
 ## Question
 

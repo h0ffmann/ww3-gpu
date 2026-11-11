@@ -18,14 +18,14 @@ this file as plain text must open `AGENTS.md` itself. `CONTRIBUTING.md` is the l
   on the files you changed; `just proposal-review` does the same from a terminal in plan mode. It
   reports; you fix; it does not rewrite.
 - **Skills are invoked by name** (`/eli5 <topic>`, `/drawings-refresh`, `/ww4-status`, `/noaa-notices`, `figure`, `archify`, `release`, `ww3-port`, `humanizar`,
-  `humanizer`, `ste`, `ponytail*`, `/sharingan <url>`, `routing`); each one's `SKILL.md` restates the audience rule for its job, and the
-  vendored ones are edited through their `.patch`, never in the copy. The engineering loop is the
-  Compound Engineering plugin's `/ce-*` skills, sized as AGENTS.md, "Engineering work", says; Context7
-  (plugin) answers library-documentation questions.
+  `humanizer`, `ste`, `ponytail*`, `/sharingan <url>`, `routing`, `adr-verbatim`); each one's `SKILL.md` restates the audience rule for its job, and the
+  vendored ones are edited through their `.patch`, never in the copy. The engineering loop is sized
+  as AGENTS.md, "Engineering work", says; `adr-verbatim` records a decision the owner states as a
+  section of `docs/ADRs.md`; Context7 (plugin) answers library-documentation questions.
 - **Attribution**: the harness appends `Co-Authored-By` and a `Claude-Session` link to commits and a
   "Generated with" line to PR bodies. They stay in the trailer block and the PR footer; never put a
   model name or session link in code, comments, PR titles or documents.
 - **On compaction, preserve**: which files were modified, which gates were run and their result,
   and the `(v)`/`⚠` status of any number you wrote. Everything else can go.
 - **Start in this repository's root** so `.claude/settings.json`, the hooks and the skills load;
-  `WW3/`, `WW3-noaa/`, `WW4/` and `picasso/` are submodules you read, not repositories you work in.
+  `WW3/`, `WW3-metocean-7.14/`, `chaceon/`, `WW4/` and `picasso/` are submodules you read, not repositories you work in.

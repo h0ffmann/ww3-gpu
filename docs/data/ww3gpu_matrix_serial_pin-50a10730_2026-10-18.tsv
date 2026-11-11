@@ -1,4 +1,4 @@
-# Unit U3 of docs/compound/plans/2026-10-18-002-production-single-node-plan.md; record: docs/log/2026-10-18-u3-regtests-v2.md.
+# Unit U3 of docs/plans/2026-10-18-002-production-single-node-plan.md; record: docs/log/2026-10-18-u3-regtests-v2.md.
 # Block 1: the owner's run, in the worktree ~/code/ww3-gpu-pr191 at daaef07d, as written by record:summary. Block 2: the same command by the U3 agent in its worktree, with OMP_NUM_THREADS=4.
 # Rows 1 and 2 (ww3_tp2.6 ST4, ST4_ASCII) are FAIL in both blocks: the Kokkos run stops in W3INIT with "WW_KOKKOS_XYP3=1, BUT ITS KOKKOS TRANSLATION DOES NOT COVER THIS SWITCH FILE"
 # (logs/1.K.log:160 of the owner's build): LIMON is an unstructured grid, which W3KOKKOS_PROP3_SETUP refuses (WW3/model/src/w3kokkos_prop3md.F90:122,134 at 50a10730), as docs/log/2026-10-18-resident-regtest-lab-switch.md:51 records.

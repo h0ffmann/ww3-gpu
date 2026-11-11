@@ -1,0 +1,33 @@
+MIT License
+
+Copyright (c) 2026 Matheus Hoffmann
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+This licence covers the teaching material, scripts, namelists, and example code
+in this repository only.
+
+WAVEWATCH III® (a trademark of NOAA's National Weather Service) is developed and
+distributed by NOAA/NCEP/EMC under its own terms; see https://github.com/NOAA-EMC/WW3.
+No WW3 source code is vendored here; `WW3/` is a git submodule pointer to a fork. Upstream regression-test inputs are fetched at runtime, not redistributed.
+
+Third-party tools referenced in docs/AWESOME-WW3_202609.md carry their own licences
+(pyww3 is GPL-3.0, wavespectra is MIT, and so on).

@@ -6,6 +6,8 @@
 // Authors: F. Ardhuin (origination 23-Jun-2006), adapted from WAM (P.A.E.M.
 // Janssen, KNMI 1990) and its STRESS subroutine (J. Bidlot, ECMWF 2004).
 // Phase 1, translated, not regtested.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #include <algorithm>
 #include <cmath>
 

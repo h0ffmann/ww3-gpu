@@ -6,7 +6,7 @@
 | **Author** | M. Hoffmann (asked 2026-10-14 in the project thread: "how to use Kokkos code + ww3 regtest tooling, in a automated way, using the WW3 fork") |
 | **Created** | 2026-10-14 |
 | **Deliverable** | D4, D5 |
-| **Related** | [`kokkos/port_report/W3SNL1_KOKKOS.md`](../../kokkos/port_report/W3SNL1_KOKKOS.md) ("How it was regtested"); [`scripts/ww3-gpu.sh`](../../scripts/ww3-gpu.sh) (the L2 replay it generalises); [`kokkos/tests/L2_replay.sh`](../../kokkos/tests/L2_replay.sh) (the `work_a`/`work_b` pairing); [`docs/AGENTS_KOKKOS_202609.md`](../AGENTS_KOKKOS_202609.md) §1.5 item 4 and §3.3; [ADR-0002](../ADRs/ADR-0002-port-order-wall-time.md); [ADR-0010](../ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md) (since 2026-10-14 this matrix and `ww3-gpu.sh` are the port's only tests) |
+| **Related** | [`kokkos/port_report/W3SNL1_KOKKOS.md`](../../kokkos/port_report/W3SNL1_KOKKOS.md) ("How it was regtested"); [`scripts/ww3-gpu.sh`](../../scripts/ww3-gpu.sh) (the L2 replay it generalises); [`kokkos/tests/L2_replay.sh`](../../kokkos/tests/L2_replay.sh) (the `work_a`/`work_b` pairing); [`docs/AGENTS_KOKKOS_202609.md`](../AGENTS_KOKKOS_202609.md) §1.5 item 4 and §3.3; [ADR-0002](../ADRs.md#adr-0002); [ADR-0010](../ADRs.md#adr-0010) (since 2026-10-14 this matrix and `ww3-gpu.sh` are the port's only tests) |
 | **Effort** | M: one shell script and one recipe; no kernel, no Fortran, no WW3 edit; most of the work is the first full run and reading its failures |
 | **Gain** | `proposal` (D4: WW3's own comparison, `test.comp`, beside the lab's comparator; D5: the Kokkos DIA validated against the Fortran on 100 WW3 configurations instead of 1); `lab/dev-loop` (every later port reuses the matrix) |
 | **Effort vs Gain** | do next: L2 rests on one regtest today, and the next port (`W3SDS4`, row 1 of `kokkos/PORT_RANKING.md`, #118) would inherit the same thin check |
@@ -15,7 +15,7 @@
 | **Risk** | `run_cmake_test` rebuilds WW3 for every entry, so 100 entries take hours, and a failure at that scale is hard to read; the selection is the lever (§11) |
 
 > **Implemented on 2026-10-15**, when the last box of §7 was ticked: the 100 serial `NL1` entries byte-identical to the Fortran DIA after the `AF11` fix ([`docs/log/2026-10-14-snl1-bitwise-af11.md`](../log/2026-10-14-snl1-bitwise-af11.md), `docs/data/hoff_matrix_2026-10-15.tsv`) and the 25 OpenMP entries ([`docs/log/2026-10-15-hoff-matrix-omp.md`](../log/2026-10-15-hoff-matrix-omp.md)). The owner marked it so on 2026-10-16; it had been Postponed the same day it was finished.
-> [ADR-0011](../ADRs/ADR-0011-port-in-units-regtest-at-checkpoints.md) runs the matrix only at checkpoints; its next change, the ST4 selection of [`ST4_KOKKOS_PLAN_202610.md`](../ST4_KOKKOS_PLAN_202610.md) §10.3, is made for the ST4 checkpoint.
+> [ADR-0011](../ADRs.md#adr-0011) runs the matrix only at checkpoints; its next change, the ST4 selection of [`ST4_KOKKOS_PLAN_202610.md`](../ST4_KOKKOS_PLAN_202610.md) §10.3, is made for the ST4 checkpoint.
 
 ### Readiness
 
@@ -171,7 +171,7 @@ so this is not a test of the port's own and ADR-0010 holds. The tables of 2026-1
 were written by the shell script; no table from the CTest driver is committed yet ⚠.
 
 *Update, 2026-10-18:* for the CPU validation of the resident preset
-([`docs/compound/plans/2026-10-18-001-cpu-resident-validation-plan.md`](../compound/plans/2026-10-18-001-cpu-resident-validation-plan.md)),
+([`docs/plans/2026-10-18-001-cpu-resident-validation-plan.md`](../plans/2026-10-18-001-cpu-resident-validation-plan.md)),
 two configure options. `WW3GPU_KOKKOS` gives the Kokkos run the flags of `scripts/ww3-gpu.sh
 --kokkos` (`resident`, `all` or a list of the parts of `kokkos/src/fortran_iface/parts.d`), so the
 regtest and the timed run share them, and the entry then also needs W3INIT's parts line to show each

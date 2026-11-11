@@ -6,6 +6,7 @@
 // authors H. L. Tolman, S. Zieger. Evidence: kokkos/port_report/W3SWL6_KOKKOS.md.
 // W3SRCE calls it under SWL6S6 (w3srcemd.F90:1332).
 // ⚠ On a device sqrtf is CUDA's, not glibc's.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

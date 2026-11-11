@@ -28,7 +28,7 @@ The reference is the `-O3` GIMPLE inventory of `w3src4md.F90` (WW3 CMake Release
 
 ## Host parallel loop
 
-The (K,L) elements are independent at `:1749-1794`: `UST=UST0` per L (`:1752`) carries over I only within one (K,L), J is summed in order per element, and each writes only `TAUHFT(K,L)` and `TAUHFT2(K,L,0:ILEVTAIL)`. So they run in a host `parallel_for` with the Fortran's arithmetic per element unchanged: no reduction crosses elements, and the order of the elements does not enter any value. Host only: on a device `expf`/`logf`/`powf` are not glibc's (`AGENTS.md`, "Bit for bit"). (v) 2026-10-17: `ST4 tables rebuilt in C++: 0 values differ from the Fortran's` on smoke, full and coast with `--kokkos all` (which rebuilt the tables until commit d6b321af made `ST4_TABLES` opt-in) and `--kokkos SRCE,ST4_TABLES`, `switch_lab_ompg` and `switch_lab_shrd`, every output byte-identical to the Fortran of the same executable and to `--ww3`.
+The (K,L) elements are independent at `:1749-1794`: `UST=UST0` per L (`:1752`) carries over I only within one (K,L), J is summed in order per element, and each writes only `TAUHFT(K,L)` and `TAUHFT2(K,L,0:ILEVTAIL)`. So they run in a host `parallel_for` with the Fortran's arithmetic per element unchanged: no reduction crosses elements, and the order of the elements does not enter any value. Host only: on a device `expf`/`logf`/`powf` are not glibc's (`AGENTS.md`, "Bit for bit"). (v) 2026-10-17: `ST4 tables rebuilt in C++: 0 values differ from the Fortran's` on smoke, full and coast with `--kokkos all` (which rebuilt the tables until commit d6b321af made `ST4_TABLES` opt-in) and `--kokkos SRCE,ST4_TABLES`, `switch_lab_ompg` and `switch_lab_shrd`, every output byte-identical to the Fortran of the same executable and to `--ww3-noaa`.
 
 ## Static parity
 
@@ -53,7 +53,7 @@ same commit (`AGENTS.md`, "No timing without parity").
 
 ## How it was regtested
 
-Not yet. ST4 is one unit under [ADR-0011](../../docs/ADRs/ADR-0011-port-in-units-regtest-at-checkpoints.md):
+Not yet. ST4 is one unit under [ADR-0011](../../docs/ADRs.md#adr-0011):
 its checkpoint runs `just smoke-ww3-gpu`, `just full-ww3-gpu` and `just ww3-gpu-matrix` with
 `WW3GPU_PHYSICS=ST4`, one flag at a time, after the CMake changes of
 [`ST4_KOKKOS_PLAN_202610.md`](../../docs/ST4_KOKKOS_PLAN_202610.md) §10.3 and the `WW3/` pin bump

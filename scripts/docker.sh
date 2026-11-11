@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# docker — the Ubuntu runtime image of docker/Dockerfile: WW3 (--ww3), WW3 with the Kokkos DIA
+# docker — the Ubuntu runtime image of docker/Dockerfile: NOAA's WW3 (--ww3-noaa), WW3 with the Kokkos DIA
 # (--ww3-gpu) and WW4 (--ww4), compiled in the image's build stage, no Nix. scripts/ww3-gpu.sh is its
 # entry point, with WW3GPU_PREBUILT set, so a run in the image is the same run as on the host.
 #
@@ -11,7 +11,8 @@
 #   scripts/docker.sh run-cuda [args]      run ww3-gpu.sh in the GPU image with --gpus all
 #   scripts/docker.sh build-dev [tag]      build ww3-gpu-dev:<tag>, the dev stage of docker/Dockerfile
 #   scripts/docker.sh run-dev [cmd]        a shell (or cmd) in the dev image, this checkout mounted
-#   scripts/docker.sh submodules           fetch WW3, WW3-noaa and WW4 at their pins over https
+#   scripts/docker.sh submodules           fetch WW3 and WW4 at their pins over https, and write
+#                                          WW3-noaa/, the fork's base (scripts/ww3_base.sh)
 #   scripts/docker.sh check <image>        a runtime image holds both WW3s compiled and no source file,
 #                                          and its entry point starts (--build-only, no run)
 #   scripts/docker.sh push <image> <ref>...   tag a local image as each ref and push it (by hand only)
@@ -32,6 +33,8 @@ do_or_say() { if [ -n "$dry" ]; then say "$@"; else "$@"; fi; }
 rev() { git -C "$1" rev-parse --short HEAD 2>/dev/null || echo "?"; }
 # A submodule's pin as the superproject records it, checked out or not.
 pin() { git -C "$root" rev-parse --short "HEAD:$1" 2>/dev/null || echo "?"; }
+# NOAA's WW3 is the fork's base commit, not a submodule (scripts/ww3_base.sh).
+noaa_rev() { bash "$root/scripts/ww3_base.sh" rev 2>/dev/null | cut -c1-7 || echo "?"; }
 # OCI labels: the source label links a GHCR package to this repository; the pins say which WW3
 # (NOAA's and the fork) the binaries were compiled from without the sources being in the image.
 # $1 the image's title, $2 its description (else the base image's "ubuntu" shows on GHCR).
@@ -41,7 +44,7 @@ labels() {
     "org.opencontainers.image.source=https://github.com/h0ffmann/ww3-gpu" \
     "org.opencontainers.image.revision=$(git -C "$root" rev-parse HEAD 2>/dev/null || echo "?")" \
     "org.opencontainers.image.licenses=MIT" \
-    "io.github.h0ffmann.ww3-gpu.ww3-noaa=$(pin WW3-noaa)" \
+    "io.github.h0ffmann.ww3-gpu.ww3-noaa=$(noaa_rev)" \
     "io.github.h0ffmann.ww3-gpu.ww3=$(pin WW3)"
 }
 
@@ -73,7 +76,7 @@ if [ "${1:-}" = --self-test ]; then
     grep -q -- "$want" <<<"$out" || { echo "docker: push lost '$want': $out" >&2; exit 1; }
   done
   out="$(bash "${BASH_SOURCE[0]}" --dry-run check ww3-gpu:t1)"
-  for want in "--entrypoint sh ww3-gpu:t1" BUILD_INFO "binaries only" "--ww3 smoke --build-only" "--ww3-gpu smoke --build-only"; do
+  for want in "--entrypoint sh ww3-gpu:t1" BUILD_INFO "binaries only" "--ww3-noaa smoke --build-only" "--ww3-gpu smoke --build-only"; do
     grep -q -- "$want" <<<"$out" || { echo "docker: check lost '$want': $out" >&2; exit 1; }
   done
   bash "${BASH_SOURCE[0]}" --dry-run push ww3-gpu:t1 >/dev/null 2>&1 && { echo "docker: push without a ref" >&2; exit 1; }
@@ -87,18 +90,17 @@ cmd="${1:-}"; [ -n "$cmd" ] || usage; shift
 case "$cmd" in
   build)
     tag="${1:-local}"
-    # --ww3 is built from pure NOAA WW3 (WW3-noaa/), --ww3-gpu from the fork (WW3/).
-    [ -n "$dry" ] || [ -f "$root/WW3-noaa/model/src/CMakeLists.txt" ] \
-      || git -C "$root" submodule update --init --depth 1 WW3-noaa
+    # --ww3-noaa is built from pure NOAA WW3 (WW3-noaa/, the fork's base commit), --ww3-gpu from the fork (WW3/).
+    [ -n "$dry" ] || bash "$root/scripts/ww3_base.sh" export >/dev/null
     # WW4's sources and its yaml-cpp/googletest are compiled in the build stage.
     [ -n "$dry" ] || [ -f "$root/WW4/externals/yaml-cpp/CMakeLists.txt" ] || {
       git -C "$root" submodule update --init --depth 1 WW4
       git -C "$root/WW4" submodule update --init --depth 1 externals/yaml-cpp externals/googletest
     }
-    mapfile -t lab < <(labels ww3-gpu "WW3 (NOAA, --ww3) and ww3-gpu (Kokkos OpenMP, --ww3-gpu) compiled side by side, and WW4; binaries only")
+    mapfile -t lab < <(labels ww3-gpu "WW3 (NOAA, --ww3-noaa) and ww3-gpu (Kokkos OpenMP, --ww3-gpu) compiled side by side, and WW4; binaries only")
     do_or_say docker build -f "$root/docker/Dockerfile" -t "ww3-gpu:$tag" "${lab[@]}" \
       --build-arg "WW3_GPU_REV=$(rev "$root")" --build-arg "WW3_REV=$(rev "$root/WW3")" \
-      --build-arg "WW3_NOAA_REV=$(rev "$root/WW3-noaa")" \
+      --build-arg "WW3_NOAA_REV=$(noaa_rev)" \
       --build-arg "WW4_REV=$(rev "$root/WW4")" "$root" ;;
   run)
     # As the caller's uid, so the runs on the host belong to whoever started them.
@@ -108,14 +110,13 @@ case "$cmd" in
     do_or_say docker run --rm --user "$(id -u):$(id -g)" -e "WW3GPU_ROUTINES=${WW3GPU_ROUTINES:-}" \
       -v "$root/build/docker-runs:/work/runs" "$image" "$@" ;;
   build-cuda)
-    # The GPU image (docker/Dockerfile.cuda): --ww3-gpu on Kokkos' CUDA backend, and --ww3 from
-    # pure NOAA WW3 (WW3-noaa/) on the CPU as its reference.
-    [ -n "$dry" ] || [ -f "$root/WW3-noaa/model/src/CMakeLists.txt" ] \
-      || git -C "$root" submodule update --init --depth 1 WW3-noaa
-    mapfile -t lab < <(labels ww3-gpu-cuda "ww3-gpu on Kokkos CUDA (--ww3-gpu --gpu) and WW3 (NOAA, --ww3) on the CPU; binaries only")
+    # The GPU image (docker/Dockerfile.cuda): --ww3-gpu on Kokkos' CUDA backend, and --ww3-noaa from
+    # pure NOAA WW3 (WW3-noaa/, the fork's base commit) on the CPU as its reference.
+    [ -n "$dry" ] || bash "$root/scripts/ww3_base.sh" export >/dev/null
+    mapfile -t lab < <(labels ww3-gpu-cuda "ww3-gpu on Kokkos CUDA (--ww3-gpu --gpu) and WW3 (NOAA, --ww3-noaa) on the CPU; binaries only")
     do_or_say docker build -f "$root/docker/Dockerfile.cuda" -t "ww3-gpu-cuda:${1:-local}" "${lab[@]}" \
       --build-arg "WW3_GPU_REV=$(rev "$root")" --build-arg "WW3_REV=$(rev "$root/WW3")" \
-      --build-arg "WW3_NOAA_REV=$(rev "$root/WW3-noaa")" "$root" ;;
+      --build-arg "WW3_NOAA_REV=$(noaa_rev)" "$root" ;;
   run-cuda)
     # --gpus all needs the NVIDIA Container Toolkit on the host. -it when there is a terminal: the
     # script asks the supervising human for "yes" before any --gpu run (AGENTS.md hard rule).
@@ -140,16 +141,18 @@ case "$cmd" in
     # .gitmodules uses ssh URLs, hence https; a pin on a topic branch may not be fetched by
     # `submodule update`, so the fallback fetches the SHA itself.
     export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=url.https://github.com/.insteadOf GIT_CONFIG_VALUE_0=git@github.com:
-    for sm in WW3 WW3-noaa WW4; do
+    for sm in WW3 WW4; do
       if [ -n "$dry" ]; then say git submodule update --init --depth 1 "$sm"; continue; fi
       git -C "$root" submodule update --init --depth 1 "$sm" || {
         sha=$(git -C "$root" ls-tree HEAD "$sm" | awk '{print $3}')
         git -C "$root/$sm" fetch --depth 1 origin "$sha" && git -C "$root/$sm" checkout -q "$sha"
       }
     done
+    do_or_say bash "$root/scripts/ww3_base.sh" export
     do_or_say git -C "$root/WW4" submodule update --init --depth 1 externals/yaml-cpp externals/googletest ;;
   check)
-    # Runs no case: --ww3 (NOAA) and --ww3-gpu must both be compiled in, and nothing in the
+    # Runs no case: --ww3-noaa (NOAA's WW3, the fork's base) and --ww3-gpu must both be compiled
+    # in (MetOcean's WW3, --ww3, is not in the images yet), and nothing in the
     # image's tree may be a Fortran or C/C++ source, so the image is a binary distribution.
     img="${1:-}"; [ -n "$img" ] || { echo "docker: check <image>" >&2; exit 64; }
     # shellcheck disable=SC2016  # expanded by the container's sh
@@ -165,7 +168,7 @@ case "$cmd" in
     # stops before any run (and --gpu --build-only needs neither a GPU nor a person).
     gpu=()
     if [ -z "$dry" ] && docker run --rm --entrypoint test "$img" -d /opt/ww3-gpu/prebuilt/ww3-gpu-cuda; then gpu=(--gpu); fi
-    do_or_say docker run --rm "$img" --ww3 smoke --build-only
+    do_or_say docker run --rm "$img" --ww3-noaa smoke --build-only
     do_or_say docker run --rm "$img" --ww3-gpu smoke "${gpu[@]}" --build-only ;;
   push)
     # Never called by CI on its own: .github/workflows/docker-*.yml run it only from a manual

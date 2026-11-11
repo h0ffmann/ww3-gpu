@@ -1,6 +1,6 @@
 # 2026-10-19: the batched W3SRCE for SEED, FLD2 and no LN1 (goal be5bdbea-3817)
 
-Unit U4 of [the GFS-Wave plan](../compound/plans/2026-10-19-007-gfs-wave-target-plan.md).
+Unit U4 of [the GFS-Wave plan](../plans/2026-10-19-007-gfs-wave-target-plan.md).
 
 ## What was tried
 

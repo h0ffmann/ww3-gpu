@@ -3,6 +3,7 @@
 // electromagnetic and tracker bias coefficients built from them. Phase 1, translated, not regtested.
 // WW3 heritage: WW3-noaa/model/src/w3iogomd.F90:4883-5054 at NOAA-EMC/WW3 03adda91; author P. Janssen.
 // Evidence: kokkos/port_report/SKEWNESS_KOKKOS.md.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 //
 // The Fortran ALLOCATEs FAC0..FAC3 and fills them with CALL SECONDHH(NKHF,...) on every call

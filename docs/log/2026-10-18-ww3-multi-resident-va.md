@@ -1,7 +1,7 @@
 # `ww3_multi` and the resident `VA`: the defect reproduced, column syncs at the exchanges, no read at `W3WAVE`'s return
 
 2026-10-18, an agent for M. Hoffmann (goal `abbb0456-6043`); unit U1 + U7 of
-[the production single-node plan](../compound/plans/2026-10-18-002-production-single-node-plan.md),
+[the production single-node plan](../plans/2026-10-18-002-production-single-node-plan.md),
 gaps 2 and 13 of [`PRODUCTION_READINESS_202610.md`](../PRODUCTION_READINESS_202610.md),
 [WFIP-0005](../WFIPs/WFIP-0005-device-resident-step.md). The fork change is
 [`PATCH.md` section 26](../../kokkos/src/fortran_iface/PATCH.md#26-ww3_multi-and-the-resident-va-column-syncs-no-read-at-w3waves-return-ww3-gpuu1-multi-va).

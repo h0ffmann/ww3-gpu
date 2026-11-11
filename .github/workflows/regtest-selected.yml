@@ -60,9 +60,11 @@ jobs:
 
       # As health.yml: https, not the ssh URLs of .gitmodules, and the pinned SHA when a topic
       # branch does not carry it.
-      - name: Fetch the pratico toolchain, the WW3 fork and pure NOAA WW3 at their pinned commits
+      # Pure NOAA WW3 is not a submodule: scripts/ww3-gpu.sh writes it from the fork's base commit
+      # (scripts/ww3_base.sh), which it fetches by its SHA.
+      - name: Fetch the pratico toolchain and the WW3 fork at their pinned commits
         run: |
-          for sm in picasso WW3 WW3-noaa; do
+          for sm in picasso WW3; do
             depth=""; [ "$sm" != picasso ] && depth="--depth 1"
             # shellcheck disable=SC2086
             git -c url.https://github.com/.insteadOf=git@github.com: \

@@ -1,7 +1,7 @@
 # W3CPRT on the resident VA: partitioning without copying the spectrum back
 
 2026-10-18, agent G of the production single-node goal (unit U9 of
-[`docs/compound/plans/`](../compound/plans/), branch `goal/abbb0456-6043-u9-cprt`; fork branch
+[`docs/plans/`](../plans/), branch `goal/abbb0456-6043-u9-cprt`; fork branch
 `ww3-gpu/u9-cprt` of h0ffmann/WW3, on `80644ba9`).
 
 ## Question

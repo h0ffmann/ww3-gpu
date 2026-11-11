@@ -6,6 +6,7 @@
 // kokkos/port_report/PROP_REFRACTION_PR3_KOKKOS.md, PROP_FREQ_SHIFT_M2_KOKKOS.md.
 // Each call writes only its outputs and its work buffer: one point per thread needs one
 // buffer per thread. ⚠ nvcc may turn a MIN/MAX against 0 into max.f32 (-0/NaN unchecked).
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

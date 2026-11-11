@@ -9,6 +9,8 @@
 // H. L. Tolman. Phase 1, translated, not regtested. Section numbers are the
 // Fortran's. Arithmetic order follows the -O3 GIMPLE of WW3's build (gfortran
 // 16.2.0, -fdump-tree-optimized of w3src4md.F90 and w3dispmd.F90).
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>

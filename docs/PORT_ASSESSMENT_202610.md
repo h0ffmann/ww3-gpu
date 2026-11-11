@@ -6,7 +6,7 @@ expensive test each. `(v)` marks a claim checked by a command run for this docum
 owner's workstation (RTX 4090) while its NVIDIA driver was not loaded (§7), with
 the pratico toolchain (gfortran 15.3.0, Kokkos 5.2.0 OpenMP); `⚠` marks one that was not.
 
-> **Later the same day, [ADR-0010](ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md).** The L1 fixture, `snl1_ref.F90`, `gen_snl1_ww3lib` and the other test drivers this assessment discusses were removed: the Kokkos port has no tests of its own, and WW3's regtests on the CPU (`just smoke-ww3-gpu`, `just full-ww3-gpu`, `just ww3-gpu-matrix`) are its only tests. The frozen fixture stays as the benchmark's input. Where §4 proposes a fixture from a WW3 build to settle why L2 is not byte-identical, that is now a question for the regtests. The assessment is otherwise kept as written.
+> **Later the same day, [ADR-0010](ADRs.md#adr-0010).** The L1 fixture, `snl1_ref.F90`, `gen_snl1_ww3lib` and the other test drivers this assessment discusses were removed: the Kokkos port has no tests of its own, and WW3's regtests on the CPU (`just smoke-ww3-gpu`, `just full-ww3-gpu`, `just ww3-gpu-matrix`) are its only tests. The frozen fixture stays as the benchmark's input. Where §4 proposes a fixture from a WW3 build to settle why L2 is not byte-identical, that is now a question for the regtests. The assessment is otherwise kept as written.
 
 ## 1. Summary
 
@@ -90,7 +90,7 @@ The ranking in `kokkos/PORT_STATUS.md` ("Port score", `just port-score`) is gpro
 expensive (48 % of self time), then `W3SDS4` (23 %), `W3SIN4` (13 %), `W3SRCE` (6 %) and `W3SPR4`
 (3 %); propagation is about 5 % `(v)`. That differs from the `ww3_ts1` table in `docs/data/`
 (transcribed, `⚠`), where `W3SDS4` led: the share depends on the case, and the operational case is
-not in this repository. By [ADR-0002](ADRs/ADR-0002-port-order-wall-time.md)'s rule, the next
+not in this repository. By [ADR-0002](ADRs.md#adr-0002)'s rule, the next
 routine on this case is `W3SDS4`, which #45 already plans.
 
 The port score counts what passes the WW3 replay: about half of `bench_small`'s self time, 2 of

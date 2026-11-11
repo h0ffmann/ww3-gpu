@@ -1,8 +1,7 @@
 {
   "title": "WW3 GPU Lab: agentic coding and agentic research on a bit-for-bit GPU port of WAVEWATCH III",
-  "upload_type": "publication",
-  "publication_type": "book",
-  "description": "<p>A book in progress on agentic coding and agentic research, compiled from the repository that is its evidence, written around one problem: moving the expensive kernels of the WAVEWATCH III (WW3) third-generation spectral wind-wave model to GPUs without changing the answer.</p><ul><li>Seventeen lessons, built into a PDF on every merge, from the wave spectrum to running the Fortran model on real cases with a pinned Nix toolchain and annotated switch files.</li><li>Benchmarks on CPU (OpenMP, MPI) and GPU (OpenACC, CUDA Fortran), each number with the command that reproduces it.</li><li>A C++/Kokkos port of W3SNL1, the Discrete Interaction Approximation (DIA) of nonlinear four-wave interactions, written with coding agents and shown bit-identical to the Fortran on the Serial, OpenMP and CUDA backends by a field-by-field parity harness.</li><li>The method itself: the rules coding agents follow here, design docs with a definition of done (WFIPs), decision records (ADRs), a research log, and plans whose every claim carries its evidence.</li></ul><p>Includes runnable examples, exercises with solutions, and an undergraduate project proposal (Escola Politécnica, UFRJ, co-advised at LabECO, UFSC).</p>",
+  "upload_type": "software",
+  "description": "<p>Software and texts on one problem: moving the expensive kernels of the WAVEWATCH III (WW3) third-generation spectral wind-wave model to GPUs without changing the answer.</p><ul><li>A Nix-pinned toolchain to build and run the Fortran model on real cases with annotated switch files.</li><li>Benchmarks on CPU (OpenMP, MPI) and GPU (OpenACC, CUDA Fortran), each number with the command that reproduces it.</li><li>A C++/Kokkos port of W3SNL1, the Discrete Interaction Approximation (DIA) of nonlinear four-wave interactions, written with coding agents and shown bit-identical to the Fortran on the Serial, OpenMP and CUDA backends by a field-by-field parity harness.</li><li>The method itself: the rules coding agents follow here, design docs with a definition of done (WFIPs), decision records (ADRs), a research log, and plans whose every claim carries its evidence.</li><li>chaceon (https://github.com/h0ffmann/chaceon), WAVEWATCH III written in Rust, the twin of the Kokkos port: a submodule that the same run command builds and compares with the Fortran reference, MetOcean's WAVEWATCH III 7.14.</li></ul><p>The website is https://wave.piabrota.art/. Includes runnable examples, the preprint “Wave models on GPUs”, which compares the Kokkos and Rust ports (pubs/preprint/wave-models-on-gpus.pdf, with a Brazilian Portuguese edition in pubs/preprint/wave-models-on-gpus.pt-BR.pdf), and an undergraduate project proposal (Escola Politécnica, UFRJ, co-advised at LabECO, UFSC).</p>",
   "creators": [
     {
       "name": "Hoffmann, Matheus",
@@ -54,8 +53,6 @@
     "numerical parity",
     "scientific software engineering",
     "legacy code modernization",
-    "technical book",
-    "open textbook",
     "research software",
     "reproducibility"
   ],
@@ -67,10 +64,27 @@
       "resource_type": "software"
     },
     {
-      "identifier": "https://h0ffmann.github.io/ww3-gpu/ww3-lab-course.pdf",
-      "relation": "isVariantFormOf",
+      "identifier": "https://github.com/h0ffmann/ww3-gpu/blob/v0.2.1/pubs/preprint/wave-models-on-gpus.pdf",
+      "relation": "hasPart",
       "scheme": "url",
-      "resource_type": "publication-book"
+      "resource_type": "publication-preprint"
+    },
+    {
+      "identifier": "https://aixiv.online/abs/2611.01104",
+      "relation": "isDocumentedBy",
+      "scheme": "url",
+      "resource_type": "publication-preprint"
+    },
+    {
+      "identifier": "https://github.com/h0ffmann/chaceon",
+      "relation": "isSupplementedBy",
+      "scheme": "url",
+      "resource_type": "software"
+    },
+    {
+      "identifier": "https://wave.piabrota.art/",
+      "relation": "isDocumentedBy",
+      "scheme": "url"
     },
     {
       "identifier": "10.5281/zenodo.23224155",
@@ -120,5 +134,5 @@
       "resource_type": "publication-preprint"
     }
   ],
-  "notes": "MIT, except the kernels translated from WAVEWATCH III, which are derived works of it and are LGPL-3.0-or-later (kokkos/src/ww_kokkos/snl1_*, kokkos/src/fortran_iface/w3kokkosmd.F90 and PATCH.md). Each file states its licence in an SPDX-License-Identifier line. WAVEWATCH III is a registered trademark of NOAA's National Weather Service; this project is independent and not endorsed by NOAA."
+  "notes": "The license field above is MIT, the repository's own work, because Zenodo's license field takes one identifier. The C++ translated from WAVEWATCH III Fortran (kokkos/src/ww_kokkos/, 317 files) is a derived work and is LGPL-3.0-or-later, with the copyright of the National Weather Service (NWS). Each file states its licence in an SPDX-License-Identifier line; NOTICE and LICENSES/ in the repository list the parts. This is compliance housekeeping, not legal advice. WAVEWATCH III is a registered trademark of NOAA's National Weather Service; this project is independent and not endorsed by NOAA."
 }

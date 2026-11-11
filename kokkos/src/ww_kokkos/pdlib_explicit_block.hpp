@@ -16,6 +16,7 @@
 // :6679) and, with FLBPI, DTMAXGL (:6651) are never set; DTMAXOUT (:6594) on a rank with no
 // IOBP_LOC = 1 node; with REF1, UOLD (:6643). The C++ keeps CGSIG (ExplWork) and DTMAXGL,
 // DTMAXOUT (ExplCarry) from the last call that set them, and reads UOLD zero-filled.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

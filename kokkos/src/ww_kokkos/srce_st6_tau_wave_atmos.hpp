@@ -5,6 +5,7 @@
 // WW3 heritage: WW3-noaa/model/src/w3src6md.F90:1157-1325 at NOAA-EMC/WW3 03adda91;
 // authors S. Zieger, Q. Liu. Evidence: kokkos/port_report/TAU_WAVE_ATMOS_KOKKOS.md.
 // ⚠ On a device logf is CUDA's, not glibc's.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

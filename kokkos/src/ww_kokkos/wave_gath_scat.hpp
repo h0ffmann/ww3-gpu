@@ -23,6 +23,8 @@
 // each sea point (IX,IY) one new ISEA in a single pass over the grid
 // (w3gridmd.F90:5020-5028). Grids built elsewhere (SMC, w3gridmd.F90:5181-5184, uses
 // W3GATHSMC, w3wavemd.F90:1951; unstructured) are not checked here ⚠.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <Kokkos_Core.hpp>

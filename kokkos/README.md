@@ -1,8 +1,8 @@
 # `kokkos/`: the C++/Kokkos half of the lab
 
 One CMake tree, one backend per configure preset. It holds the portable kernel
-library (`ww_kokkos`), the lesson-11 intro programs, the GoogleTest suites of the
-lessons and the tools, and the C++ tools. The first ported source term, `W3SNL1`/`INSNL1` (the DIA nonlinear
+library (`ww_kokkos`), the intro programs, the GoogleTest suites of the
+intro programs and the tools, and the C++ tools. The first ported source term, `W3SNL1`/`INSNL1` (the DIA nonlinear
 interactions), lives in `src/ww_kokkos/snl1_*`.
 
 ## Toolchain
@@ -24,27 +24,7 @@ Pins: Kokkos 5.2.2, GoogleTest 1.18.0, CMake 4.4.3, gfortran 16.2 (`just toolcha
 that can be built for one processor thread, for every core of the processor, or for the
 graphics card, and each build must give the same numbers.
 
-```mermaid
-%% figure: kokkos-one-source-backends
-%% title: How does one Kokkos source reach the CPU and the GPU of the lab's workstation?
-flowchart LR
-    subgraph ww3["1 · WW3 as written"]
-        F["Fortran source<br/>(.F90 files)"]
-        C["CPU<br/>OpenMP threads, MPI ranks"]
-    end
-    subgraph port["2 · the Kokkos port of W3SNL1"]
-        K["one C++/Kokkos source"]
-        S["Serial<br/>one CPU thread"]
-        O["OpenMP<br/>i9-14900, 32 threads"]
-        G["CUDA<br/>RTX 4090<br/>16 384 CUDA cores"]
-    end
-    F -- "gfortran +<br/>switches OMPG, MPI" --> C
-    F -- "DIA routine<br/>translated line by line" --> K
-    K -- "build choice" --> S
-    K -- "build choice" --> O
-    K -- "build choice" --> G
-    O -. "compared pair to pair<br/>in WW3's regtests" .-> C
-```
+[![How does one Kokkos source reach the CPU and the GPU of the lab's workstation? (Archify drawing)](../docs/archify/kokkos-one-source-backends.png)](https://h0ffmann.github.io/ww3-gpu/figures/kokkos-one-source-backends/)
 
 <details open>
 <summary>How to read this figure</summary>
@@ -107,7 +87,7 @@ instructions for whichever kitchen is there.
 
 **Why it matters here.** The `W3SNL1` port is one source that gave the Fortran's numbers bit for
 bit on Serial, OpenMP and CUDA (L1 tests, 2026-09-15, removed on 2026-10-14 by
-[ADR-0010](../docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md)), and the OpenMP build
+[ADR-0010](../docs/ADRs.md#adr-0010)), and the OpenMP build
 is byte-identical to the Fortran DIA inside WW3 on the CPU (L2; `just smoke-ww3-gpu`,
 `just full-ww3-gpu`, and `test.comp` on all 100 entries of `just ww3-gpu-matrix`) (v,
 [`PORT_STATUS.md`](PORT_STATUS.md), 2026-10-15). Same source did not mean same numbers for free: it took turning off
@@ -115,9 +95,9 @@ contraction and copying gfortran's `x**n` ([The W3SNL1 port](#the-w3snl1-port)).
 
 **Where the analogy breaks.** Fortran is not stuck in 1957 or 1991. Modern Fortran has coarrays
 (Fortran 2008 ⚠) and `do concurrent`, and `nvfortran` offloads `do concurrent`, OpenACC and OpenMP
-target regions to an NVIDIA GPU ([README.md](../README.md), "can WW3 use my GPU?"). Lesson 10
-builds one `do concurrent` file for the GPU, for multicore and for plain `gfortran`
-([course/10](../course/10-modern-fortran-refactoring.md#do-concurrent)). So the choice is not
+target regions to an NVIDIA GPU ([README.md](../README.md), "can WW3 use my GPU?"). Lesson 10 of
+the removed course built one `do concurrent` file for the GPU, for multicore and for plain `gfortran`
+([course/10](https://github.com/h0ffmann/ww3-gpu/blob/f9ce3a0/course/10-modern-fortran-refactoring.md#do-concurrent)). So the choice is not
 "old language, new language". The reasons this repository gives are in
 [`docs/KOKKOS_H100_PLAN_202609.md`](../docs/KOKKOS_H100_PLAN_202609.md) (no ADR records the choice
 of Kokkos itself):
@@ -130,17 +110,17 @@ of Kokkos itself):
   maintenance problem".
 - §7: Route A (Fortran + OpenACC) leaves "a fork with directives"; Route B (C++/Kokkos) a "clean
   C++ product; Serial backend runs anywhere".
-- Lesson 11 adds that memory spaces are written on every `View`, so host code cannot quietly read
-  device memory ([course/11](../course/11-kokkos-and-modern-cpp.md#execution-and-memory-spaces));
+- Lesson 11 of the removed course adds that memory spaces are written on every `View`, so host code cannot quietly read
+  device memory ([course/11](https://github.com/h0ffmann/ww3-gpu/blob/f9ce3a0/course/11-kokkos-and-modern-cpp.md#execution-and-memory-spaces));
   `nvfortran -stdpar=gpu` instead moves data through managed memory implicitly (lesson 10), which
   [AGENTS.md](../AGENTS.md) forbids as a way to avoid thinking about transfers.
 
 The plan's projections (months, stall risk, speed ceilings) are estimates, not measurements.
 
-**Where to read more.** Lesson 11, [Kokkos and modern C++ for Fortran
-people](../course/11-kokkos-and-modern-cpp.md); lesson 12, [porting
-`W3SNL1`](../course/12-porting-a-kernel-w3snl1.md); lesson 10, [modern
-Fortran](../course/10-modern-fortran-refactoring.md). Papers: Edwards, Trott and Sunderland,
+**Where to read more.** The removed course, at `f9ce3a0`: lesson 11, [Kokkos and modern C++ for Fortran
+people](https://github.com/h0ffmann/ww3-gpu/blob/f9ce3a0/course/11-kokkos-and-modern-cpp.md); lesson 12, [porting
+`W3SNL1`](https://github.com/h0ffmann/ww3-gpu/blob/f9ce3a0/course/12-porting-a-kernel-w3snl1.md); lesson 10, [modern
+Fortran](https://github.com/h0ffmann/ww3-gpu/blob/f9ce3a0/course/10-modern-fortran-refactoring.md). Papers: Edwards, Trott and Sunderland,
 "Kokkos: Enabling manycore performance portability through polymorphic memory access patterns",
 *J. Parallel Distrib. Comput.* 74(12), 3202–3216, 2014,
 [doi:10.1016/j.jpdc.2014.07.003](https://doi.org/10.1016/j.jpdc.2014.07.003) (v, Crossref,
@@ -160,7 +140,7 @@ src/ww_kokkos/        real.hpp (float32 + helpers), spectrum_fixtures.hpp (JONSW
 src/fortran_iface/    ww_kokkos_c.hpp + snl1_shim.cpp (the C ABI, built into ww_kokkos),
                       w3kokkosmd.F90 (the Fortran module), PATCH.md (the WW3 caller)
 intro/                01..06, one Kokkos concept each, each a CTest case
-tests/                kokkos_env.hpp (runtime lifetime), L1_* suites of the lessons and tools,
+tests/                kokkos_env.hpp (runtime lifetime), L1_* suites of the intro programs and tools,
                       bench_snl1.cpp, L2_replay.sh
 tests/fixtures/       the benchmark's inputs: snl1_nk25_nth24.bin (frozen) and bench_small/
 PORT_STATUS.md        the port ledger: phase, parity and ms/call per routine
@@ -280,7 +260,7 @@ config's own message.
 ## Intro programs
 
 Each is a self-checking `main`: it prints one line and exits non-zero if the
-concept it demonstrates does not hold, so CI runs the lesson material too.
+concept it demonstrates does not hold, so CI runs them too.
 
 | program | concept |
 |---|---|
@@ -300,18 +280,18 @@ it with CTest.
 
 The port has no tests of its own. The owner's rule (2026-10-14): "kokkos code should
 NOT have its own tests, hard rule. All tests should come [from] WW3 regtests." The
-suites left in CTest test the lessons and the tools, not the port:
+suites left in CTest test the intro programs and the tools, not the port:
 
 | suite | what it pins down |
 |---|---|
-| `L1_test_intro`, `intro_01`..`intro_06` | the lesson material's invariants |
+| `L1_test_intro`, `intro_01`..`intro_06` | the intro programs' invariants |
 | `L1_test_nccmp_tol` | the per-field NetCDF comparator |
 | `L1_test_bench_case` | the benchmark-case generator |
 | `L1_test_fetch_analyse` | the fetch-growth analyser |
 
 The DIA and its shim are validated by WW3's regtests: `scripts/ww3-gpu.sh --ww3-gpu --cpu`
 runs a WW3 case with the Kokkos DIA and compares it with the Fortran DIA of the same
-executable and pair to pair with `--ww3` (WW3 built without the KOKKOS switch), and
+executable and pair to pair with `--ww3-noaa` (WW3 built without the KOKKOS switch), and
 the regtest matrix of WFIP-0003 (`just ww3-gpu-matrix`, a CMake/CTest driver in `regtests/`, one
 CTest test per `matrix.base` entry) extends that to WW3's own regtests: the 100 serial `NL1` entries
 and the 25 shared-memory OpenMP ones, byte-identical (v, `docs/data/hoff_matrix_2026-10-15.tsv`,
@@ -396,6 +376,21 @@ handles each one explicitly:
 | one spectral grid per process | `ww_snl1_init` replaces the tables rather than adding a grid, so a `ww3_multi` run reads past the end of a later grid's spectra |
 | one caller at a time | `W3SRCE` runs inside an `!$OMP PARALLEL` region under `W3_OMPG`/`W3_OMP0`; two threads in `ww_snl1` race over the device buffers |
 | `sig` starts at bin 1 | the C dummy is assumed-size and `W3GDATMD` allocates `SIG(0:MK+1)`, so passing the bare name builds every quadruplet one frequency bin low |
+
+[![How do the original Fortran routine and its Kokkos kernel coexist in one WW3 binary? (Archify drawing)](../docs/archify/kokkos-interop-one-binary.png)](https://h0ffmann.github.io/ww3-gpu/figures/kokkos-interop-one-binary/)
+
+<details open>
+<summary>How to read this figure</summary>
+
+**Takeaway.** The GPU code is added next to the original Fortran, not in place of it; a switch read at run time picks which one runs, so both are tested with the same executable.
+
+**How to read.** The large frame is one compiled WW3 executable. `WW_KOKKOS_SNL1`, read from the environment at run time, picks one of two paths: `0` runs the original Fortran (blue), `1` goes through the `bind(C)` interface into the Kokkos kernel (amber), which works on WW3's own arrays with no copy and no reshape. Below the frame, the same kernel runs on a CPU or a GPU backend; on the GPU, phase 1 copies the data in and out on each call. The green dashed arrow is testing: WW3's regtest matrix, judged by `test.comp` and `nccmp-tol`, runs both paths of the same executable.
+
+**Not shown.** How state moves between Fortran and the device beyond phase 1's copy in and out per call; that is `docs/AGENTS_KOKKOS_202609.md` §3.4.
+
+**Evidence.** `W3KOKKOSMD`, the switch and the no-copy argument passing, [`src/fortran_iface/PATCH.md`](src/fortran_iface/PATCH.md) "How the first patch was made" and section 1 (v); the drawing's source is [`docs/archify/kokkos-interop-one-binary.json`](../docs/archify/kokkos-interop-one-binary.json); `pubs/proposal/pt/07-methodology.md`, paragraph *Interoperabilidade e testes dos kernels* (v).
+
+</details>
 
 ## Run-time flags: 0 % to 100 % Kokkos
 

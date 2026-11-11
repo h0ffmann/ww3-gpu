@@ -3,7 +3,7 @@
 # fork WW3/ with the KOKKOS switch linked to the port built with the cuda-release preset. No Nix:
 # NVIDIA's CUDA image on Ubuntu 26.04, Kokkos built from its tarball with CUDA, and a final image
 # that keeps the compiled programs, their runtime libraries and the case inputs, not the sources.
-# --ww4 stays in the CPU image (docker/Dockerfile); this one runs --ww3-gpu --gpu, and --ww3 on the
+# --ww4 stays in the CPU image (docker/Dockerfile); this one runs --ww3-gpu --gpu, and --ww3-noaa on the
 # CPU as the reference it is compared with, pair to pair and by wall time.
 #
 #   just dbuild-cuda                   # docker build -f docker/Dockerfile.cuda -t ww3-gpu-cuda:local .
@@ -61,7 +61,7 @@ RUN cmake -S kokkos --preset cuda-release -B /build/kokkos -DCMAKE_PREFIX_PATH=/
  && install -D -m 755 /build/kokkos/tools/nccmp-tol/nccmp-tol "$P/bin/nccmp-tol" \
  && install -D -m 644 kokkos/tools/nccmp-tol/tolerances.txt "$P/share/tolerances.txt"
 
-# Pure NOAA WW3 from WW3-noaa/ with the lab switch (--ww3, the reference), and the fork with the
+# Pure NOAA WW3 from WW3-noaa/ with the lab switch (--ww3-noaa, the reference), and the fork with the
 # same switch plus KOKKOS (--ww3-gpu --gpu), as scripts/ww3-gpu.sh builds them; WW3's own Release
 # flags.
 RUN cat switches/switch_lab_ompg > /tmp/switch_ww3 \

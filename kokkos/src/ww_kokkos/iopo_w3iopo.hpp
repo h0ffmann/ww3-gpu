@@ -47,6 +47,8 @@
 // W3SETW, W3DMO2 (iopo_shape_w3dmo2 of iopo_state.hpp reproduces its arrays). EXTOPN, EXTIOF and
 // EXTCDE are reported in IopoioStatus, not called. A path that reaches an empty hook ends with
 // kExitMissingHook.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <array>

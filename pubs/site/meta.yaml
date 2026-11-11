@@ -1,5 +1,5 @@
-# pubs/site/meta.yaml — title block of the web edition; the PDF's is pubs/book/defaults.yaml.
+# pubs/site/meta.yaml — the title and subtitle the site's front page shows (piabrota/nix-os's ww3-site/content reads them).
 title: "Without Changing the Answer"
-subtitle: "Agentic coding and agentic research on a GPU port of WAVEWATCH III. A book in progress, compiled from github.com/h0ffmann/ww3-gpu"
+subtitle: "WAVEWATCH III on GPUs with Kokkos and CUDA, bit for bit with the Fortran: github.com/h0ffmann/ww3-gpu"
 author: "Matheus Hoffmann"
 lang: en-US

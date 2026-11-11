@@ -1,0 +1,432 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "ww3-gpu em resumo",
+    "output": "docs/archify/ww3-gpu-at-a-glance-pt.html",
+    "quality_profile": "showcase",
+    "locale": "pt-BR",
+    "repository": {
+      "url": "https://github.com/h0ffmann/ww3-gpu.git",
+      "link_mode": "local-only",
+      "revision": "28178fe10a8ec37ab38c809326ba8964c11f992c"
+    }
+  },
+  "components": [
+    {
+      "id": "c",
+      "type": "frontend",
+      "label": "3 · contêiner de dev",
+      "sublabel": "estágio dev do Dockerfile + Nix",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        220,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docker/Dockerfile",
+          "line": 125,
+          "end_line": 125,
+          "label": "dev stage"
+        },
+        {
+          "path": ".devcontainer/devcontainer.json",
+          "line": 1,
+          "end_line": 25
+        }
+      ]
+    },
+    {
+      "id": "p",
+      "type": "frontend",
+      "label": "1 · picasso/, Nix",
+      "sublabel": "gfortran 16.2, Open MPI, CUDA 12.9",
+      "pos": [
+        300,
+        60
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "VERSIONS.md",
+          "line": 33,
+          "end_line": 45
+        }
+      ],
+      "tag": "o toolchain de referência"
+    },
+    {
+      "id": "d",
+      "type": "frontend",
+      "label": "2 · imagem Docker",
+      "sublabel": "Ubuntu, gfortran 15.2, só CPU",
+      "pos": [
+        580,
+        60
+      ],
+      "size": [
+        220,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docker/Dockerfile",
+          "line": 25,
+          "end_line": 25,
+          "label": "toolchain stage"
+        },
+        {
+          "path": "VERSIONS.md",
+          "line": 59,
+          "end_line": 66
+        }
+      ]
+    },
+    {
+      "id": "h",
+      "type": "backend",
+      "label": "scripts/ww3-gpu.sh",
+      "sublabel": "justfile, regtests/: Bash, Python, CMake",
+      "pos": [
+        300,
+        230
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "scripts/ww3-gpu.sh",
+          "line": 2,
+          "end_line": 12
+        }
+      ]
+    },
+    {
+      "id": "m1",
+      "type": "backend",
+      "label": "--ww3-noaa",
+      "sublabel": "o par do --ww3-gpu",
+      "pos": [
+        40,
+        400
+      ],
+      "size": [
+        220,
+        64
+      ],
+      "sources": [
+        {
+          "path": "scripts/ww3-gpu.sh",
+          "line": 8,
+          "end_line": 8
+        }
+      ]
+    },
+    {
+      "id": "m2",
+      "type": "backend",
+      "label": "--ww3-gpu",
+      "sublabel": "Fortran e Kokkos, um executável",
+      "pos": [
+        300,
+        400
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "scripts/ww3-gpu.sh",
+          "line": 11,
+          "end_line": 12
+        }
+      ]
+    },
+    {
+      "id": "m4",
+      "type": "backend",
+      "label": "just ww3-gpu-matrix",
+      "sublabel": "os regtests do WW3",
+      "pos": [
+        580,
+        400
+      ],
+      "size": [
+        220,
+        64
+      ],
+      "sources": [
+        {
+          "path": "justfile",
+          "line": 102,
+          "end_line": 102
+        }
+      ]
+    },
+    {
+      "id": "m3",
+      "type": "backend",
+      "label": "--ww4",
+      "sublabel": "WAVEWATCH IV",
+      "pos": [
+        840,
+        400
+      ],
+      "size": [
+        220,
+        64
+      ],
+      "sources": [
+        {
+          "path": "README.md",
+          "line": 62,
+          "end_line": 62
+        }
+      ]
+    },
+    {
+      "id": "n",
+      "type": "external",
+      "label": "WW3-noaa/",
+      "sublabel": "WW3 puro da NOAA, Fortran",
+      "pos": [
+        40,
+        580
+      ],
+      "size": [
+        220,
+        64
+      ],
+      "sources": [
+        {
+          "path": "README.md",
+          "line": 60,
+          "end_line": 60
+        }
+      ],
+      "tag": "nunca editado"
+    },
+    {
+      "id": "f",
+      "type": "external",
+      "label": "WW3/",
+      "sublabel": "fork: + switch KOKKOS, chamadas ao shim",
+      "pos": [
+        300,
+        580
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "README.md",
+          "line": 61,
+          "end_line": 61
+        },
+        {
+          "path": "README.md",
+          "line": 67,
+          "end_line": 72
+        }
+      ],
+      "tag": "submódulo, nunca editado"
+    },
+    {
+      "id": "w4",
+      "type": "external",
+      "label": "WW4/",
+      "sublabel": "fork h0ffmann, C++",
+      "pos": [
+        840,
+        580
+      ],
+      "size": [
+        220,
+        64
+      ],
+      "sources": [
+        {
+          "path": "README.md",
+          "line": 62,
+          "end_line": 62
+        }
+      ],
+      "tag": "submódulo, nunca editado"
+    },
+    {
+      "id": "k",
+      "type": "backend",
+      "label": "kokkos/",
+      "sublabel": "o port: C++20, Kokkos",
+      "pos": [
+        580,
+        580
+      ],
+      "size": [
+        220,
+        64
+      ],
+      "sources": [
+        {
+          "path": "scripts/ww3-gpu.sh",
+          "line": 11,
+          "end_line": 12
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Ambientes",
+      "wraps": [
+        "c",
+        "p",
+        "d"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Modos de execução",
+      "wraps": [
+        "m1",
+        "m2",
+        "m4",
+        "m3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "c-p",
+      "from": "c",
+      "to": "p",
+      "label": "entra"
+    },
+    {
+      "id": "p-h",
+      "from": "p",
+      "to": "h",
+      "label": "todo modo; GPU só com o dono",
+      "variant": "emphasis"
+    },
+    {
+      "id": "d-h",
+      "from": "d",
+      "to": "h",
+      "label": "só CPU"
+    },
+    {
+      "id": "h-m1",
+      "from": "h",
+      "to": "m1",
+      "label": ""
+    },
+    {
+      "id": "h-m2",
+      "from": "h",
+      "to": "m2",
+      "label": "",
+      "variant": "emphasis"
+    },
+    {
+      "id": "h-m4",
+      "from": "h",
+      "to": "m4",
+      "label": ""
+    },
+    {
+      "id": "h-m3",
+      "from": "h",
+      "to": "m3",
+      "label": ""
+    },
+    {
+      "id": "m2-m1",
+      "from": "m2",
+      "to": "m1",
+      "label": "comparado com",
+      "variant": "dashed"
+    },
+    {
+      "id": "m1-n",
+      "from": "m1",
+      "to": "n",
+      "label": "compilado de"
+    },
+    {
+      "id": "m2-f",
+      "from": "m2",
+      "to": "f",
+      "label": "compilado de",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m2-k",
+      "from": "m2",
+      "to": "k",
+      "label": "liga",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m4-f",
+      "from": "m4",
+      "to": "f",
+      "label": ""
+    },
+    {
+      "id": "m4-k",
+      "from": "m4",
+      "to": "k",
+      "label": ""
+    },
+    {
+      "id": "m3-w4",
+      "from": "m3",
+      "to": "w4",
+      "label": "compilado de"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Fontes",
+      "items": [
+        "WW3-noaa/: WW3 da NOAA em 03adda91, sem mudança",
+        "WW3/: o fork, + switch KOKKOS",
+        "WW4/: fork do WAVEWATCH IV",
+        "Nenhuma é editada aqui",
+        "Fora do desenho: --ww3 (WW3 da MetOcean, a referência) e --chaceon",
+        "--ww3-noaa se chamava --ww3 até 11 de novembro de 2026"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Este repositório",
+      "items": [
+        "kokkos/: o port C++/Kokkos",
+        "scripts/ww3-gpu.sh: um script, todos os modos"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Ambientes",
+      "items": [
+        "o Nix do picasso/ é a referência",
+        "Docker: execuções em CPU sem Nix"
+      ]
+    }
+  ]
+}

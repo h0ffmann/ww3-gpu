@@ -7,7 +7,7 @@ better anyway given how NOAA runs WW3 operationally, with honest concerns. Issue
 [`CPU_GPU_SPLIT_202610.md`](CPU_GPU_SPLIT_202610.md) (what Kokkos allows, the PCIe arithmetic of a
 split by physics, the bit-for-bit constraint on a split) and does not repeat it; the plan it
 serves is [`KOKKOS_H100_PLAN_202609.md`](KOKKOS_H100_PLAN_202609.md), and the regtest cadence is
-[ADR-0012](ADRs/ADR-0012-translate-and-wire-now-regtest-matrix-on-the-h100.md) (Proposed).
+[ADR-0012](ADRs.md#adr-0012) (Proposed).
 
 Nothing here is a measurement on an H100. No `--ww3-gpu --gpu` run of the port inside WW3 exists
 (`kokkos/PORT_STATUS.md`, "On a GPU: none yet"). Every speed statement below is either a recorded
@@ -244,7 +244,7 @@ NOAA's build scripts, not read here ⚠.
   single domain with CPU *and* GPU efficiency as its focus (v, NCEP Office Note 525,
   [doi:10.25923/h7j3-1h25](https://doi.org/10.25923/h7j3-1h25), and Office Note 528,
   [doi:10.25923/0wyp-9f39](https://doi.org/10.25923/0wyp-9f39), as read for
-  [lesson 14](../course/14-ww4-and-the-future.md)). Its code has no Kokkos, no GPU path and no
+  [lesson 14](https://github.com/h0ffmann/ww3-gpu/blob/f9ce3a0/course/14-ww4-and-the-future.md)). Its code has no Kokkos, no GPU path and no
   physics yet, and the CPU-GPU architecture question was closed without a recorded decision
   (lesson 14, snapshot of 2026-10-07 in `docs/ww4-status.json`: `kokkos_files` empty; the
   repository page, read 2026-10-16, mentions no GPU, Kokkos or OpenACC). WW4's default spectral

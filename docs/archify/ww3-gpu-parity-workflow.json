@@ -9,7 +9,7 @@
     "repository": {
       "url": "git@github.com:h0ffmann/ww3-gpu.git",
       "link_mode": "local-only",
-      "revision": "b38b5fc81924284d62eaf453db30f8c2986f80e2"
+      "revision": "28178fe10a8ec37ab38c809326ba8964c11f992c"
     }
   },
   "lanes": [
@@ -136,8 +136,8 @@
       "lane": "runs",
       "col": 3,
       "type": "external",
-      "label": "--ww3 run",
-      "sublabel": "WW3-noaa, no KOKKOS",
+      "label": "--ww3-noaa run",
+      "sublabel": "NOAA WW3, no KOKKOS",
       "width": 132,
       "sources": [
         {
@@ -242,9 +242,9 @@
           "end_line": 285
         },
         {
-          "path": "docs/ADRs/ADR-0014-gpu-runs-judged-by-tolerance.md",
-          "line": 36,
-          "end_line": 38
+          "path": "docs/ADRs.md",
+          "line": 1675,
+          "end_line": 1677
         }
       ]
     },
@@ -323,9 +323,9 @@
       "width": 132,
       "sources": [
         {
-          "path": "docs/ADRs/ADR-0014-gpu-runs-judged-by-tolerance.md",
-          "line": 27,
-          "end_line": 41
+          "path": "docs/ADRs.md",
+          "line": 1666,
+          "end_line": 1680
         }
       ]
     }
@@ -368,7 +368,7 @@
       "id": "noaa-nccmp",
       "from": "noaa",
       "to": "nccmp",
-      "label": "K vs --ww3"
+      "label": "K vs --ww3-noaa"
     },
     {
       "id": "nccmp-parity",
@@ -458,14 +458,15 @@
       "items": [
         "Bit for bit with the Fortran of the same executable: test.comp finding a file different fails the entry",
         "Only files that two Fortran runs already write differently (ww3_self) are excused",
-        "nccmp-tol FAIL also fails; its PASS never excuses a byte difference"
+        "nccmp-tol FAIL also fails; its PASS never excuses a byte difference",
+        "--ww3-noaa (pure NOAA WW3) was named --ww3 until 11 November 2026"
       ]
     },
     {
       "dot": "rose",
       "title": "GPU rule (ADR-0014)",
       "items": [
-        "CUDA verdict is nccmp-tol with tolerances.txt, against the Fortran and --ww3",
+        "CUDA verdict is nccmp-tol with tolerances.txt, against the Fortran and --ww3-noaa",
         "Its timing record says: GPU: judged by tolerance, not bits",
         "Runs only under the owner; none has been recorded yet"
       ]

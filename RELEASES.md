@@ -1,25 +1,80 @@
 # Releases
 
-Each release of the WW3 GPU Lab, its permanent DOI and what changed. A release is an edition of
-the book ([ADR-0004](docs/ADRs/ADR-0004-book-channels-and-first-slice.md)). The concept DOI
+Each release of the WW3 GPU Lab, its permanent DOI and what changed. From v0.1.1 to v0.1.5 a
+release was an edition of the book ([ADR-0004](docs/ADRs.md#adr-0004)); the book left the
+repository with [ADR-0023](docs/ADRs.md#adr-0023), and v0.2.0 is the first release without it. The concept DOI
 [10.5281/zenodo.23221351](https://doi.org/10.5281/zenodo.23221351) always resolves to the latest
 one; cite a version DOI to pin the exact text and code you read.
 
-Date of record: 2026-10-14. The versions and their dates are DataCite's (`HasVersion` of the
+Date of record: 2026-11-11. The versions and their dates are DataCite's (`HasVersion` of the
 concept DOI, and each version's `Issued` date); the merged pull requests are the generated notes
 of each GitHub release. The format follows h0ffmann/closed-source's `RELEASES.md`
 ([at `5cf9a6a`](https://github.com/h0ffmann/closed-source/blob/5cf9a6a/RELEASES.md)).
 
 | Version | Date | Permanent DOI | Release | PRs merged |
 |---|---|---|---|---|
+| v0.2.0 | 2026-11-11 | [10.5281/zenodo.24130909](https://doi.org/10.5281/zenodo.24130909) | [v0.2.0](https://github.com/h0ffmann/ww3-gpu/releases/tag/v0.2.0) | 26 |
+| v0.1.5 | 2026-10-23 | [10.5281/zenodo.23600920](https://doi.org/10.5281/zenodo.23600920) | [v0.1.5](https://github.com/h0ffmann/ww3-gpu/releases/tag/v0.1.5) | 40 |
+| v0.1.4 | 2026-10-16 | [10.5281/zenodo.23422195](https://doi.org/10.5281/zenodo.23422195) | [v0.1.4](https://github.com/h0ffmann/ww3-gpu/releases/tag/v0.1.4) | 58 |
 | v0.1.3 | 2026-10-09 | [10.5281/zenodo.23268515](https://doi.org/10.5281/zenodo.23268515) | [v0.1.3](https://github.com/h0ffmann/ww3-gpu/releases/tag/v0.1.3) | 2 |
 | v0.1.2 | 2026-10-09 | [10.5281/zenodo.23263632](https://doi.org/10.5281/zenodo.23263632) | [v0.1.2](https://github.com/h0ffmann/ww3-gpu/releases/tag/v0.1.2) | 10 |
 | v0.1.1 | 2026-10-08 | [10.5281/zenodo.23233540](https://doi.org/10.5281/zenodo.23233540) | [v0.1.1](https://github.com/h0ffmann/ww3-gpu/releases/tag/v0.1.1) | 20 |
 | v0.1.0 | 2026-10-07 | [10.5281/zenodo.23221352](https://doi.org/10.5281/zenodo.23221352) | [v0.1.0](https://github.com/h0ffmann/ww3-gpu/releases/tag/v0.1.0) | 33 |
 
-The next release is the first with the record typed as a book on Zenodo (`publication_type:
-book`, [ADR-0009](docs/ADRs/ADR-0009-ww3-gpu-adopts-ai-memory-from-fabio-akita.md)). v0.1.0 to
-v0.1.3 stay typed as software.
+v0.1.4 and v0.1.5 are typed as a book on Zenodo (`publication_type: book`,
+[ADR-0009](docs/ADRs.md#adr-0009)); v0.1.0 to v0.1.3 are typed as software, and so is v0.2.0,
+since the book is gone ([ADR-0023](docs/ADRs.md#adr-0023)). The types are DataCite's
+`resourceTypeGeneral`, read on 2026-11-11 (v).
+
+## v0.2.1: the preprint on aiXiv, with its claims corrected
+
+The next release, not tagged yet: it has no row in the table above until DataCite lists its DOI.
+The preprint "Wave models on GPUs" is on aiXiv as
+[aiXiv:2611.01104](https://aixiv.online/abs/2611.01104) since 2026-11-11, and both READMEs carry
+its badge (#239). After aiXiv's check of its first version, the preprint states the DIA coverage
+as run: 125 of the 310 `NL1` entries of WW3's regression matrix, all 100 serial and 25 of the 50
+OpenMP ones, and no MPI entry. It gives the sections of NCEP Office Note 525 that it quotes, and
+it has a new section that states and proves the `f32` division fact of chaceon (#240). The
+READMEs quote the current counts of `kokkos/PORT_STATUS.md`.
+
+## v0.2.0: a new home and a twin in Rust
+
+The website moved to <https://wave.piabrota.art/>, built from piabrota/nix-os, and the Gleam
+code left this repository (#231, [ADR-0024](docs/ADRs.md#adr-0024)); GitHub Pages still serves
+the progress, ADR and figure pages. chaceon (<https://github.com/h0ffmann/chaceon>), WW3 written
+in Rust, is the twin of the Kokkos port: the site presents it beside that port (#214), and it is
+a submodule and a runtime of its own, which `--chaceon` builds and compares with `--ww3` (#228).
+
+`just run` runs one case on six runtimes with one command, on MetOcean's WW3 7.14
+(`WW3-metocean-7.14/`, tag `7.14.mos-92e2cf6`) as the reference, with fresh IFS wind from
+ECMWF Open Data (`just ifs-get`, #220, #228). The WW3 submodules are now that one reference and
+the h0ffmann/WW3 fork; NOAA's WW3 is written from the fork's history by `scripts/ww3_base.sh`
+(#233). The course and the book left the repository (#222, ADR-0023), and every diagram is a
+dark Archify drawing, with no Mermaid (#219, #223, #224, #226, #230, #234). The preprint
+"Wave models on GPUs" compares the Kokkos and Rust ports, in English
+([PDF](pubs/preprint/wave-models-on-gpus.pdf)) and in pt-BR
+([PDF](pubs/preprint/wave-models-on-gpus.pt-BR.pdf)) (#213); it replaces the book's PDF as the
+text this release carries. MPI
+enters the port's plans (ADR-0020), the C++ translated from WW3 carries SPDX headers with
+`NOTICE` and `LICENSES/`, and the ondaseventos image builds MetOcean's WW3 (#211).
+The WW3 7.14 manual is summarised for agents in `docs/ww3-manual/` (#218); the ADRs are one
+document (#217); Vale reports ASD-STE100 and Português Técnico Controlado checks (#232, #235); `llms.txt` indexes the repository
+(#227); the README names UFSC's ondaseventos as the first user (#225); the lineage page joined
+the site (#221); Oh My Pi loads the Claude Code setup (#216); the WeatherNext 3 spec and the
+Kimi Code folder were removed (#215); the project snapshot was refreshed (#212); the justfile parses on just 1.21 again (#237); and this release's metadata was prepared in #236.
+
+## v0.1.5: the device-resident step
+
+The spectrum `VA` stays on the device through the time step (WFIP-0005), the device computes
+glibc's libm bits (WFIP-0006), and the resident preset was validated on the CPU (#173 to #191).
+W3SDS4, W3SIN4 and W3SRCE run with sea points in vector lanes (#197 to #201); W3XYPUG and
+W3XYPFSN2 run on an unstructured grid, `ww3_tp2.6` byte-identical (#202, #204).
+
+## v0.1.4: the regtest matrix
+
+The Kokkos DIA runs inside WW3 and is checked by WW3's own regtests across the 311 NL1 entries
+of `matrix.base` (ADR-0010, WFIP-0003, #119 to #124); ST4 and most of the remaining source
+terms, propagation and W3WAVE support were translated, phase 1 (#135 to #159).
 
 ## v0.1.3: four decisions accepted
 

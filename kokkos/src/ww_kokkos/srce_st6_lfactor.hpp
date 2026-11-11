@@ -13,6 +13,7 @@
 // IDTIME and of TAU_NND (:1036, :1067) only feed WRITEs to NDST, and are dropped.
 // ⚠ On a device expf, logf, tanhf, sincosf and sqrtf are CUDA's, and libmvec does not
 // exist: the EXP loop (:1065) cannot be bit for bit there.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

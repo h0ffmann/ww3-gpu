@@ -15,8 +15,8 @@ looser.
   independent researchers in wave modelling, numerical methods and HPC; every claim carries `(v)`
   with what was checked or `⚠` when it was not, and every number comes with the command that
   reproduces it ([Audience and evidence](#audience-and-evidence-hard-rule)).
-- **WW3 is read-only**: never vendor WW3 source or edit the Fortran physics; the `WW3/` and `WW3-noaa/` submodules
-  and `$WW3` are references, and the only Fortran this repo adds is a shim behind a switch
+- **WW3 is read-only**: never vendor WW3 source or edit the Fortran physics; the `WW3/` and
+  `WW3-metocean-7.14/` submodules, the fork's NOAA base in `WW3-noaa/` and `$WW3` are references, and the only Fortran this repo adds is a shim behind a switch
   ([WW3 source](#ww3-source-is-read-only-hard-rule)).
 - **No citation of a third party's issues**: an issue, pull request or discussion of a repository
   this project does not own (NOAA-EMC/WW3, NOAA-EMC/WW4, Kokkos, any other) is never cited,
@@ -38,21 +38,27 @@ looser.
   with Kokkos and CUDA without changing the Fortran's arithmetic; a speed figure carries the
   machine, the command and the median of three runs, and says "regtest pending ⚠" until WW3's
   regtests passed on its commit; the tables built from `bench/results/` still need that pass
-  ([ADR-0016](docs/ADRs/ADR-0016-speed-first-regtests-postponed-one-person-loop.md)).
+  ([ADR-0016](docs/ADRs.md#adr-0016)).
 - **The port has no tests of its own**: Kokkos code is validated only by WW3's regtests, run inside
   WW3 from the h0ffmann/WW3 fork and compared with the same WW3 without it; no L1, GoogleTest or
   fixture of a ported routine is written here
-  ([ADR-0010](docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md)).
+  ([ADR-0010](docs/ADRs.md#adr-0010)).
 - **Regtests postponed to a validation phase**: WW3's regtests run when the owner calls the
   validation phase, which checks that the translation from Fortran to C++ was accurate; until
   then bit parity is argued statically (the `-O3` GIMPLE or disassembly of both compilers,
   `libm_bits` for device math), a row's `regtested` stays "no: postponed (ADR-0016)", and every
   flag defaults to the Fortran
-  ([ADR-0016](docs/ADRs/ADR-0016-speed-first-regtests-postponed-one-person-loop.md), superseding
+  ([ADR-0016](docs/ADRs.md#adr-0016), superseding
   ADR-0011).
-- **Engineering work follows the compound loop**: when the owner asks for engineering work, plan,
-  work, review and compound with Compound Engineering's skills, sized to the change, and redirect
-  the steps that clash with these rules ([Engineering work](#engineering-work-the-compound-loop)).
+- **Engineering work is sized to the change**: when the owner asks for engineering work, plan,
+  work and review in proportion to it, and the hard rules here win over any step
+  ([Engineering work](#engineering-work)).
+- **Diagrams are Archify, dark**: no diagram is Mermaid; every diagram is an Archify drawing in
+  DESIGN.md's dark look with its reading card ([Figures](#figures-hard-rule)).
+- **A paper's figure is drawn for its page and for the eye**: at the width a paper prints it, a
+  figure is between 5:4 and 2:1, its box text is at least 7 pt and no text is under 6 pt, and its
+  layout is balanced; `docs/archify/paper.tsv` lists those figures and `just archify fit`
+  measures them ([Figures](#figures-hard-rule)).
 - **The proposal goes through the reviewer**: any change under `pubs/proposal/` passes
   `revisor-proposta` and `just proposal-lint` before the PR, and the review is recorded
   ([The proposal](#the-proposal-hard-rule)).
@@ -64,27 +70,24 @@ looser.
 ## What this repository is
 
 Its main goal is to make WAVEWATCH III® (WW3) run faster with Kokkos and CUDA, without changing the
-Fortran's arithmetic ([ADR-0016](docs/ADRs/ADR-0016-speed-first-regtests-postponed-one-person-loop.md),
+Fortran's arithmetic ([ADR-0016](docs/ADRs.md#adr-0016),
 the owner, 17 October 2026). It is a one-person project, and its engineering framework is chosen
 for that goal and that size: the next routine is the most expensive one in the measured profile,
 a change is judged by the wall time it removes, and the process is as light as the change allows.
 
-It is also a book in progress on agentic coding and agentic research, compiled from this repository, written
-around the same problem: moving the expensive kernels of WW3 to GPUs without changing
-the answer ([ADR-0003](docs/ADRs/ADR-0003-repository-is-a-book.md),
-[WFIP-0002](docs/WFIPs/WFIP-0002-lab-as-a-book.md)). The repository is the book's source and its
-evidence: the 17 lessons of `course/` are its chapters, built into a PDF on every merge; a
-Nix-pinned Fortran/MPI/NetCDF toolchain; a C++/Kokkos port of the DIA source term (`W3SNL1`) that
-matches the Fortran bit for bit on Serial, OpenMP and CUDA; benchmarks, plans, decisions and the
-UFRJ/DEL project proposal co-advised at LabECO/UFSC. The lab's rules below do not change because
-the repository is read as a book; a chapter that contradicts `kokkos/PORT_STATUS.md` is a bug in
-the chapter. `README.md` has the study areas and their state; `README.pt-BR.md` is its Portuguese mirror, and a change in one
+It holds a Nix-pinned Fortran/MPI/NetCDF toolchain; a C++/Kokkos port of the DIA source term
+(`W3SNL1`) that matches the Fortran bit for bit on Serial, OpenMP and CUDA; benchmarks, plans and
+decisions; and the texts written from that work, each with a Markdown source under `pubs/`: the
+preprint, the UFRJ/DEL project proposal co-advised at LabECO/UFSC and, when it starts, the thesis.
+The course and the book built from it were removed
+([ADR-0023](docs/ADRs.md#adr-0023), the owner, 11 November 2026). A text
+that contradicts `kokkos/PORT_STATUS.md` is a bug in the text. `README.md` has the study areas and their state; `README.pt-BR.md` is its Portuguese mirror, and a change in one
 is made in the other (content must match, length need not; see `CONTRIBUTING.md`, "Ground rules").
 
 Lab code is C++, Fortran and shell. Python appears only in the publishing and repo tooling
 (`scripts/*.py`, `tests/`), never in lab code or kernels, with one exception: a Triton GPU kernel
 that is better fitted than the Kokkos one, integrated with the Fortran/C++ code and regtested by
-WW3's regtests ([ADR-0015](docs/ADRs/ADR-0015-triton-kernels-allowed-under-three-conditions.md)). `just` is the task runner and every
+WW3's regtests ([ADR-0015](docs/ADRs.md#adr-0015)). `just` is the task runner and every
 recipe is a thin wrapper over a script in `scripts/`, except the `ww3-gpu-matrix*` recipes, which
 configure and run the CMake/CTest driver in `regtests/`; `just` lists them.
 
@@ -98,21 +101,21 @@ configure and run the CMake/CTest driver in `regtests/`; `just` lists them.
 | Something tried, including a negative result | a dated entry in `docs/log/` | [`docs/log/README.md`](docs/log/README.md): append, never rewrite |
 | A plan, an evaluation, a survey | `docs/` as `NAME_YYYYMM.md`, dated in the name | this file; the `(v)`/`⚠` convention; `docs/GLOSSARY.md` for every new abbreviation |
 | A non-trivial change, designed before it is built | a WFIP in `docs/WFIPs/`, numbered, tied to a proposal deliverable (D1–D6) with its definition of done in §7; a Spec Kit spec in `specs/<NNN-slug>/` when behaviour is worth specifying | [`docs/WFIPs/TEMPLATE.md`](docs/WFIPs/TEMPLATE.md), the `wfip` skill; `scripts/wfip.py check` is the gate and regenerates the index |
-| A decision that several plans or WFIPs follow (a tool, a method, a scope) | an ADR in `docs/ADRs/`, numbered, Proposed until the owner accepts it | [`docs/ADRs/README.md`](docs/ADRs/README.md); an accepted ADR is superseded, not edited |
-| A chapter (a lesson), an example, an exercise | `course/`, `examples/`, `exercises/` | lessons are numbered and cross-linked and are the book's chapters (`pubs/book/`, WFIP-0002); examples use `.nml`, never `.inp` |
+| A decision that several plans or WFIPs follow (a tool, a method, a scope) | a section of `docs/ADRs.md`, numbered, Proposed until the owner accepts it | [`docs/ADRs.md`](docs/ADRs.md); an accepted ADR is superseded, not edited |
+| An example | `examples/` | examples use `.nml`, never `.inp` |
+| The preprint, the thesis | `pubs/preprint/`, `pubs/thesis/` when it starts | a Markdown source, built like the proposal ([ADR-0023](docs/ADRs.md#adr-0023)); a figure in it is a drawing of `docs/archify/paper.tsv` ([Figures](#figures-hard-rule)) |
 | The proposal | `pubs/proposal/pt/` (reference) and `en/` (mirror) | [The proposal](#the-proposal-hard-rule) |
-| A diagram | a Mermaid fence in the page it illustrates | [Figures](#figures-hard-rule) |
-| An interactive twin of a diagram | its source `docs/archify/<slug>.json`, listed in [`docs/archify/README.md`](docs/archify/README.md); the HTML is rendered, never committed | the `archify` skill; never a figure on its own |
-| A plan or a learning of the compound loop | `docs/compound/plans/`, `docs/compound/solutions/` | [Engineering work](#engineering-work-the-compound-loop) |
+| A diagram | an Archify source `docs/archify/<slug>.json` with its dark PNG, shown in the page it illustrates and linked to its page on the website; never a Mermaid fence | [Figures](#figures-hard-rule), [`DESIGN.md`](DESIGN.md) "Pictures", the `archify` skill; the HTML is built by `pages.yml`, never committed |
+| A dated plan of a medium or large change | `docs/plans/` | [Engineering work](#engineering-work) |
 | A skill or agent | `.claude/skills/<name>/SKILL.md`, `.claude/agents/<name>.md` | [Skills and agents](#skills-and-agents) |
 | The toolchain | `picasso/` (submodule, sparse) and `flake.nix` | [`docs/TOOLCHAIN.md`](docs/TOOLCHAIN.md); pin deliberately, name the version |
 | An issue label | `.github/labels.yml`, never GitHub's settings page | [`ISSUE_LABELS.md`](ISSUE_LABELS.md): every issue carries an `area/*`; a rename is done on GitHub first; `just labels-sync` and `.github/workflows/labels.yml` apply the manifest |
-| A WW3 fact | nowhere here: cite `model/src/<file>.F90:<line>` at the pinned commit | [WW3 source](#ww3-source-is-read-only-hard-rule) |
+| A WW3 fact | nowhere here: cite `model/src/<file>.F90:<line>` at the pinned commit; [`docs/ww3-manual/`](docs/ww3-manual/README.md) says where to look | [WW3 source](#ww3-source-is-read-only-hard-rule) |
 | An idea the lab stands on | a note in `notes/`, linked from `notes/index.md` | [`NOTES.md`](NOTES.md); `just notes` is the gate |
 | A reference of the proposal, and how it was checked | a row in `pubs/proposal/REFERENCES.md` beside the `refs.bib` entry | the verdicts `verified` / `partial` / `unverified`; `just refs` is the gate; `refs.bib` itself goes through the proposal's reviewer |
 | A release, a tie of the Zenodo record | `RELEASES.md`, `RELATED_WORK.md`, each with its date of record | never write a DOI, a tie or a count that was not read from DataCite or Zenodo that day |
-| The website's front page | `site/` (facts read from the repository's files by `site/content`) | [`DESIGN.md`](DESIGN.md); never type a title, a status, a date or a DOI into `site/src` |
-| Where a kind of memory lives; the long-term memory | [`MEMORY.md`](MEMORY.md) | ai-memory, [ADR-0009](docs/ADRs/ADR-0009-ww3-gpu-adopts-ai-memory-from-fabio-akita.md); the files stay the record. `MEMORY_DUMP.md` is a command cheat sheet for people: an agent does not read it or take instructions from it |
+| The website's front page | its code in piabrota/nix-os (`ww3-site/`, served at wave.piabrota.art); its facts in this repository's files and in `site/data/*.tsv` | [ADR-0024](docs/ADRs.md#adr-0024); a change to the page is a pull request in nix-os, never Gleam here |
+| Where a kind of memory lives; the long-term memory | [`MEMORY.md`](MEMORY.md) | ai-memory, [ADR-0009](docs/ADRs.md#adr-0009); the files stay the record. `MEMORY_DUMP.md` is a command cheat sheet for people: an agent does not read it or take instructions from it |
 
 Before implementing, check whether the idea is already designed or decided:
 [`docs/KOKKOS_H100_PLAN_202609.md`](docs/KOKKOS_H100_PLAN_202609.md) (the single-H100 port),
@@ -122,7 +125,7 @@ the port planner issue #42, the
 [`docs/W3SDS4_TRITON_PLANO_202610.pt.md`](docs/W3SDS4_TRITON_PLANO_202610.pt.md), and the
 port-order rule in #46, and the WFIP index [`docs/WFIPs/README.md`](docs/WFIPs/README.md), where
 every designed change says which proposal deliverable it moves and how far it is, and
-`docs/compound/solutions/`, where earlier loops wrote what they learned. Work the owner asks for in
+[`docs/plans/`](docs/plans/README.md), the dated plans of earlier changes. Work the owner asks for in
 a session is work, with or without an issue; an idea an agent has on its own is not work until the
 owner asks for it.
 
@@ -135,7 +138,8 @@ just get                     # upstream NOAA-EMC/WW3 develop into ~/src/WW3 (or 
 just rt                      # build with ww3_tp1.1's switch and run that regtest
 just build                   # the lab switch (switches/switch_lab_shrd, ST4)
 just kokkos-test serial-debug
-just smoke                   # WW3 as written (--ww3), then WW3 with the Kokkos DIA (--ww3-gpu)
+just smoke                   # MetOcean's WW3 as written (--ww3), then WW3 with the Kokkos port (--ww3-gpu)
+just run --ww3 --case <dir> --wind ifs   # one command, six runtimes, a case of your own on fresh wind
 just smoke-ww4               # WAVEWATCH IV from the WW4/ fork; exit 5 while a part is not ported
 ```
 
@@ -147,21 +151,22 @@ Run the gates of what you changed before calling it done. CI (`.github/workflows
 | any `*.sh` or `justfile` recipe | `bash -n <script>` and `shellcheck <script>`; a hook also has `--self-test` (`.claude/hooks/proposal-review.sh --self-test`) |
 | `kokkos/` | `just kokkos-test serial-debug` (sanitizers, bounds checks) and `just kokkos-test openmp-release`, which build the port and run the tests of the intro programs and the tools (the port has none, ADR-0010); for a ported routine, the static parity argument of ADR-0016 (the `-O3` GIMPLE or disassembly of both compilers); `just smoke-ww3-gpu` in the validation phase |
 | a kernel WW3 calls, or the `WW3/` pin | in the validation phase the owner calls (ADR-0016; regtests are postponed until then): `just smoke` (CPU); `just full-ww3-gpu` and `just ww3-gpu-matrix` (the WW3 regtest matrix, WFIP-0003, serial entries by default, `omp` for the OpenMP ones) before a status in `kokkos/ports.tsv` moves to L2. Never `--gpu` without the owner (hard rule) |
-| `scripts/ww3-gpu.sh` or `scripts/ww4_parts.py` | `bash scripts/ww3-gpu.sh --self-test`, `python3 scripts/ww4_parts.py --self-test`, shellcheck; `just smoke-ww3-gpu` (CPU, pair to pair with `--ww3`) |
+| `scripts/ww3-gpu.sh`, `scripts/ww3_base.sh` or `scripts/ww4_parts.py` | `bash scripts/ww3-gpu.sh --self-test`, `bash scripts/ww3_base.sh --self-test`, `python3 scripts/ww4_parts.py --self-test`, shellcheck; `just smoke-ww3-gpu` (CPU, pair to pair with `--ww3-noaa`) |
 | `regtests/` | `just ww3-gpu-matrix-selftest` (the selection, the argument lists and the verdict on fixtures) and `just ww3-gpu-matrix-list` (the entry count at the pin) |
 | `kokkos/ports.tsv`, `kokkos/port_claims.tsv` or `docs/data/ww3_*_gprof.tsv` | `python3 scripts/port_score.py --write`, then `--check` (CI runs `--self-test` and `--check`) |
-| Fortran in `gpu/`, `examples/`, `exercises/` | they must compile with gfortran with directives ignored; the exercise parity test must pass |
+| Fortran in `gpu/`, `examples/` | they must compile with gfortran with directives ignored |
 | a Mermaid fence or its page | `python3 scripts/figures.py check`, then `just figures` to re-render and `python3 -m unittest tests/test_figures.py` |
-| `docs/archify/*.json` or the `vendor/archify` pin | `just archify check`, then `just archify refresh` to redraw the stale PDFs (`/drawings-refresh` does both kinds); not run in CI or on a merge |
+| `docs/archify/*.json` or the `vendor/archify` pin | `just archify check`, then `just archify refresh` to redraw the stale PDFs (`/drawings-refresh` does both kinds); not run in CI or on a merge. For a drawing of `docs/archify/paper.tsv`, also `just archify fit` and `just preprint`, then look at the figure's page at 100 % |
 | `pubs/proposal/` | `just proposal-lint`, the `revisor-proposta` review, `just proposal-review-record <parecer>`, `just proposal-review-check` |
-| `scripts/*.py` | `python3 -m unittest discover tests`; `scripts/leanpub_manuscript.py --self-test` also runs in `ci.yml` and the Leanpub workflow |
+| `scripts/*.py` | `python3 -m unittest discover tests` |
 | `bench/results/` or a table it quotes | `just results check` (`just results table` regenerates) |
 | `CITATION.cff` or `.zenodo.json` | `just codemeta` to regenerate `codemeta.json`, then `just codemeta --check` |
 | `notes/` or `NOTES.md` | `just notes` (`scripts/notes_check.py`) |
 | `pubs/proposal/refs.bib` or its `REFERENCES.md` | `just refs` (`scripts/refs_check.py`) |
-| `site/`, `DESIGN.md`, `scripts/build_html.sh`, `scripts/build_site.sh` | `just site` (the book pages, then the front page's tests and prerender) |
+| `pubs/site/`, `DESIGN.md`, `scripts/build_html.sh` | `just site` (the progress, ADR and report pages and the redirects to wave.piabrota.art) |
 | `docs/WFIPs/` or `specs/` | `just wfip check` (`scripts/wfip.py check`: index current, deliverable ids valid, every section present, DoD consistent with Status); `just wfip index` regenerates |
 | `.claude/skills/` or `.claude/agents/` | `python3 .claude/hooks/check_agent_frontmatter.py`; for a vendored skill, `skills-vendor check --lock .claude/skills/skills.lock` |
+| `.claude/agents/`, `.omp/` or AGENTS.md's repo invariants and GPU rule | `python3 scripts/omp_sync.py --write`, then `--check` (CI runs `--self-test` and `--check`) |
 | `.github/labels.yml` | `just labels-sync --dry-run` (the manifest parses, and the plan is what you meant) |
 | any Markdown | links are checked by lychee in CI; a relative link must resolve from the file; `just vale` (`scripts/vale.sh`) must pass on English Markdown |
 
@@ -199,14 +204,31 @@ statement. In practice:
 ## WW3 source is read-only (hard rule)
 
 `WW3/` is the `h0ffmann/WW3` fork of NOAA-EMC/WW3 as a submodule, pinned (`just src-st` shows the
-pin), and `WW3-noaa/` is pure NOAA-EMC/WW3 at the commit the fork branched from: `--ww3` builds it,
-and `scripts/ww3-gpu.sh` stops when the fork differs from it outside the KOKKOS patch; `just get` clones upstream into `~/src/WW3`. Neither is edited from here, and no WW3 source is
+pin), and `WW3-noaa/` is pure NOAA-EMC/WW3 at the commit the fork branched from
+(`kokkos/src/fortran_iface/WW3_BASE`). It is not a submodule (the owner, 11 November 2026: the one
+WW3 reference submodule is MetOcean's): `scripts/ww3_base.sh` writes it from the fork's own
+history, git ignores it, `--ww3-noaa` builds it,
+and `scripts/ww3-gpu.sh` stops when the fork differs from it outside the KOKKOS patch; `just get` clones upstream into `~/src/WW3`.
+`WW3-metocean-7.14/` is MetOcean's WW3 (metocean/WW3, tag `7.14.mos-92e2cf6`), the reference `--ww3`
+builds since 11 November 2026 (the owner; [`docs/RUN_COMMAND_202611.md`](docs/RUN_COMMAND_202611.md)):
+the fork is not rebased onto it yet ⚠, so `--ww3-gpu` is still compared with `--ww3-noaa`, its own
+base, and a difference between `--ww3` and `--ww3-gpu` is MetOcean's ten commits, not the port
+(`docs/plans/2026-10-29-001-metocean-upstream-plan.md`). `chaceon/` is the `h0ffmann/chaceon`
+submodule, WW3 in Rust, which `--chaceon` builds and compares with `--ww3`. None is edited from here, and no WW3 source is
 copied into this repository (`CONTRIBUTING.md`, "Don't vendor WW3 source. Scripts fetch it."). The
 exceptions are a `bind(C)` shim module and the caller patch described in
 `kokkos/src/fortran_iface/PATCH.md`, which live on a fork branch, behind a switch, and leave the
 original routine selectable. Every statement about WW3 cites `model/src/<file>.F90:<line>` at the
 pinned commit (`WW3@6d1bcdfe` at the time of writing), never a comment, a paper or memory.
 Namelists are written against the templates in `$WW3/model/nml/` and are `⚠` until executed.
+
+How WW3 works, as its manual says, is summarised by topic in
+[`docs/ww3-manual/`](docs/ww3-manual/README.md): the action balance equation, every source term
+and its switch, the fractional steps and the source term integration, the grids and the storage
+of the spectrum, the programs and modules. Read the page the task needs before opening
+`WW3/model/src`. It summarises the manual of version 7.14, the version the pins declare; it is a
+map, never the citation: the manual says what a routine is meant to compute, and a statement
+about what WW3 computes still cites `model/src`.
 
 ## Third-party issues and pull requests (hard rule)
 
@@ -216,7 +238,7 @@ included.
 - **What it covers.** An issue, pull request or discussion of a repository that is not
   `h0ffmann/*` or `marola-dev/*` (NOAA-EMC/WW3, NOAA-EMC/WW4, kokkos/kokkos, any other). It is
   not written as `owner/repo#N`, as its URL, or as "WW4 PR #72", "issue #1583" in any file of this
-  repository (code comments, docs, lessons, the proposal, data a person reads), in a commit
+  repository (code comments, docs, the proposal, data a person reads), in a commit
   message, or in an issue, comment or pull request of this repository.
 - **Why it is outward-facing.** GitHub links `owner/repo#N` and the URL of an issue or pull
   request, and "by default, references generate a backlink" on the item referenced, which its
@@ -243,10 +265,10 @@ broken most often:
   vectorisation, no "simplification"; loop nesting changes only where a kernel may not allocate.
   Contraction is off (`-ffp-contract=off`, `--fmad=false`): turning it on is a physics change, not
   a tuning knob, and it invalidates every regtest verdict (`kokkos/PORT_STATUS.md`).
-- **The port has no tests of its own** ([ADR-0010](docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md),
+- **The port has no tests of its own** ([ADR-0010](docs/ADRs.md#adr-0010),
   the owner, 14 October 2026): no L1 test, GoogleTest or captured fixture of a ported routine. Its
   tests are WW3's regtests: `just smoke-ww3-gpu` and `just full-ww3-gpu` (`--ww3-gpu --cpu` pair to pair with
-  `--ww3`) and `just ww3-gpu-matrix`, the `NL1` entries of WW3's `matrix.base` (serial by default,
+  `--ww3-noaa`) and `just ww3-gpu-matrix`, the `NL1` entries of WW3's `matrix.base` (serial by default,
   the shared-memory OpenMP ones with `omp`) compared by `test.comp` and `nccmp-tol` (WFIP-0003).
   `just ww3-gpu-matrix` is a CMake/CTest driver in `regtests/`, one CTest test per entry; CTest there
   runs WW3's own regtests, the Fortran routine against the Kokkos routine, and is not a test of
@@ -255,7 +277,7 @@ broken most often:
   is its own PR, with L2 evidence.
 - **Never widen a tolerance.** Report and stop.
 - **Order follows wall time.** The next routine is the one the committed profile says is most
-  expensive, not the one that is easiest to validate or already has a fixture ([ADR-0002](docs/ADRs/ADR-0002-port-order-wall-time.md),
+  expensive, not the one that is easiest to validate or already has a fixture ([ADR-0002](docs/ADRs.md#adr-0002),
   applied in #45; `W3SDS4` before `W3SIN4`, both after `W3SNL1`).
 - **Every ported routine has a port report**, `kokkos/port_report/<ROUTINE>_KOKKOS.md`: what was
   ported, its benchmarks in the table the website reads, and how it was regtested (the owner, 14
@@ -276,7 +298,7 @@ broken most often:
   agents never port the same routine) or timed by a committed profile, the next port first, with its
   checkpoint, `test.comp` and `nccmp-tol` record. `--check` fails
   when any of them is stale.
-- **CI keeps h1 alive**: `--ww3-gpu --cpu` on `ww3_ts1`, pair to pair with `--ww3`
+- **CI keeps h1 alive**: `--ww3-gpu --cpu` on `ww3_ts1`, pair to pair with `--ww3-noaa`
   ([`health.yml`](.github/workflows/health.yml)). It is the only combination in CI for now.
 - **Done means all of §1.5:** the kernel with its heritage header, the shim with its argument
   table, the L2 regtest replay and the regtest matrix passed within `tolerances.txt`, a timing line
@@ -353,9 +375,9 @@ the kernels `WW_KOKKOS_ALL` runs, ST4's five libmvec loops included, to device c
 host on every input checked; no device run has compared them yet (`scripts/libm_bits.sh
 --device`, the owner's), and W3OUTG's too (the `resident` preset), and the other switches' kernels still call
 libdevice. Until such a run, the rule is the CPU backend's: a GPU run is judged by `nccmp-tol`'s
-tolerances against the Fortran of the same executable and against `--ww3`, with every field's
+tolerances against the Fortran of the same executable and against `--ww3-noaa`, with every field's
 differences recorded and no tolerance ever widened, and its timing enters a table only after
-that pass ([ADR-0014](docs/ADRs/ADR-0014-gpu-runs-judged-by-tolerance.md), the owner, 17 October
+that pass ([ADR-0014](docs/ADRs.md#adr-0014), the owner, 17 October
 2026). How far a device is from glibc's bits, function by function, and how the host CPU's FMA
 enters the Fortran's: [`docs/GPU_LIBM_BITS_202610.md`](docs/GPU_LIBM_BITS_202610.md).
 
@@ -374,11 +396,13 @@ be regtested pair to pair to existing ww3 src."
   `WW3GPU_GPU_CONFIRMED` (which the CUDA matrix's `setup:kokkos` and entries require), no piped
   answer. `--build-only` compiles for the GPU without running it and is allowed.
 - **The agents' regtest is `--ww3-gpu --cpu`** (the default; Kokkos on OpenMP). Its Kokkos run is
-  compared pair to pair with `--ww3`, WW3 from the existing source built without the KOKKOS
+  compared pair to pair with `--ww3-noaa`, WW3 from the existing source built without the KOKKOS
   switch, by `nccmp-tol`, after the comparison with the Fortran DIA of the same executable. Run
   `just smoke-ww3-gpu` and `just full-ww3-gpu` in the validation phase of ADR-0016, and always before a
   status in `kokkos/ports.tsv` moves to L2.
-- `--ww3 --gpu` and `--ww4 --gpu` are refused (exit 64): neither has a GPU path here.
+- `--ww3 --gpu`, `--ww3-noaa --gpu` and `--ww4 --gpu` are refused (exit 64): none has a GPU path
+  here. `--chaceon --gpu` stops with exit 5 before it builds or asks anything: chaceon has no run
+  on a real GPU yet, and when it has one the same supervision applies.
 
 ## The proposal (hard rule)
 
@@ -395,24 +419,39 @@ Portuguese. Placeholders such as `(REFERÊNCIA)` are defects, not notes.
 
 ## Figures (hard rule)
 
-A diagram is a ```` ```mermaid ```` fence in the page it illustrates, starting with
-`%% figure: <id>` and `%% title: <question>`, followed by a *How to read this figure* card
-(*Como ler esta figura* in a `.pt.` file): takeaway, how to read, not shown, evidence. The `figure`
-skill has the visual grammar; `scripts/figures.py check` fails CI when a fence has no card or its
-render is stale, so `just figures` renders and the renders, `index.json` and the gallery
-`pubs/figures/README.md` are committed with the page. A bar chart of a measured table goes through
-`figures.py chart` so the table and the chart cannot drift. Where a figure and its prose disagree,
-the figure is the bug.
+The owner, 11 November 2026: no diagram is Mermaid. Every diagram is an Archify drawing in the
+dark look of [`DESIGN.md`](DESIGN.md), "Pictures": its source is `docs/archify/<slug>.json`, it
+has a row in `docs/archify/dark.tsv` and in [`docs/archify/README.md`](docs/archify/README.md), and
+the page it illustrates shows `docs/archify/<slug>.png` linked to its zoomable page on the website
+(`/figures/<slug>/`, built by `pages.yml`), followed by a *How to read this figure* card (*Como ler
+esta figura* in a `.pt.` file): takeaway, how to read, not shown, evidence. `just archify png`
+draws the picture and `just archify check` says whether it is stale. Every node and label traces to
+a file read, a WW3 fact cites `model/src/<file>.F90:<line>` at the pin, and a speed figure says
+"regtest pending" until WW3's regtests have run on its commit. Where a figure and its prose
+disagree, the figure is the bug.
 
-## Engineering work: the compound loop
+A figure attached to a paper considers proportion and human seeing (the owner, 11 November 2026):
+it is drawn for the page that prints it, never a screen drawing scaled down. It has a row in
+[`docs/archify/paper.tsv`](docs/archify/paper.tsv) with the width it is printed at, and at that
+width its frame is between 5:4 and 2:1, the text of a box is at least 7 pt and no text is under
+6 pt; `just archify png` refuses to draw one that does not fit, and `just archify fit` measures
+every row. Balance (one reading direction, the reference in the centre or at the start, the same
+margin on every side, no empty half) is judged by a person on the built page at 100 %. A paper in
+Portuguese prints the Portuguese drawing. [`DESIGN.md`](DESIGN.md), "Pictures in a paper", is the
+full rule.
 
-The owner, 17 October 2026: agents follow Compound Engineering's pattern when the owner guides them
-through engineering work, with the agility a one-person project needs
-([ADR-0016](docs/ADRs/ADR-0016-speed-first-regtests-postponed-one-person-loop.md)). The plugin
-(`compound-engineering@compound-engineering-plugin`, EveryInc, MIT) is enabled in
-`.claude/settings.json`, pinned to `compound-engineering-v3.30.3`; another agent follows the same
-steps by name. Every step serves the goal: a plan names the routine or the cost it attacks and the
-profile row that ranks it (ADR-0002), and its result is measured as wall time.
+A new diagram is never a Mermaid fence. The fences still in the repository (the proposal's, the
+course's and the docs not yet redrawn) are being replaced ⚠; until the last one goes,
+`scripts/figures.py check` keeps gating them in CI and `just figures` keeps their renders current.
+
+## Engineering work
+
+The owner, 17 October 2026: engineering work the owner guides is sized to the change, with the
+agility a one-person project needs ([ADR-0016](docs/ADRs.md#adr-0016)). Compound Engineering's
+plugin, which carried that loop, was dropped on 11 November 2026
+([ADR-0021](docs/ADRs.md#adr-0021)); the steps below are plain work, named by what they do. Every
+step serves the goal: a plan names the routine or the cost it attacks and the profile row that
+ranks it (ADR-0002), and its result is measured as wall time.
 
 **Size the loop to the change.** Say which size you chose; the owner can always ask for more or
 less.
@@ -420,42 +459,30 @@ less.
 | Size | Example | Steps |
 |---|---|---|
 | Small | a fix in one file, a doc, a flag, a script option | work, the gates of [Setup and commands](#setup-and-commands), `just pr` |
-| Medium | a routine to translate, a tool, a shim, a recipe | `/ce-plan`, `/ce-work`, `/ce-code-review`, `/ce-compound` when the lesson is not obvious from the diff |
-| Large | a unit such as all of ST4, a new backend, the memory contract, a run-time preset | `/ce-brainstorm` first, then the medium loop; a WFIP only when it moves a proposal deliverable |
+| Medium | a routine to translate, a tool, a shim, a recipe | a plan, the work, a report-only review, a learning when the lesson is not obvious from the diff |
+| Large | a unit such as all of ST4, a new backend, the memory contract, a run-time preset | the requirements first, then the medium loop; a WFIP only when it moves a proposal deliverable |
 
-**Where each step writes and what it must not do.** Where a step's default clashes with a hard rule
-of this file, the rule wins:
+**What each step must not do.** Where a step clashes with a hard rule of this file, the rule wins:
 
-- **Artifacts** go under `docs/compound/` (`docs_root` in `.compound-engineering/config.yaml`):
-  plans in `docs/compound/plans/`, learnings in `docs/compound/solutions/`. They follow the
-  `(v)`/`⚠` rule like any page, and a plan or learning never stands in for evidence: a number in it
-  carries its command.
-- **`/ce-plan` and `/ce-brainstorm`** read `docs/compound/solutions/`, `docs/log/`, the port
-  ledger (`kokkos/PORT_TABLE.tsv`) and the ADRs before planning. A plan for a ported routine lists
-  the Fortran at the pin, the static parity argument it will make, and the regtest it leaves for the
-  validation phase.
-- **`/ce-work`** commits with this repository's conventions (`Tested:` trailer, never `Cost:`),
-  on a `goal/<id>-<slug>` branch from `origin/main`, and ships with `just pr`, never
-  `ce-commit-push-pr`. The port has no tests of its own (ADR-0010): for Kokkos code, "verify" is
-  the gates and the static parity argument, never a new unit test or fixture of a ported routine.
-  No WW3 regtest runs until the validation phase, and no `--gpu` run without the owner.
-- **`/ce-simplify-code`** never touches code translated from Fortran (kernels, shims, the
-  Fortran-shaped loops): that is "Translate, don't improve". It may tidy scripts, tools and docs.
-- **`/ce-code-review`** is report-only; its cross-model pass is off
-  (`cross_model_review_mode: off`) because it would send the diff to another provider; the owner
-  can ask for it in a run. That key does not cover the Bake-off that `/ce-plan` and
-  `/ce-brainstorm` may start, nor `ce-pov`'s cross-family judge: neither runs with another model
-  family or an external CLI unless the owner asks for it in that session. `security-reviewer` still runs before a PR that touches `.claude/`,
+- **A plan** goes to `docs/plans/` and reads `docs/log/`, the port ledger
+  (`kokkos/PORT_TABLE.tsv`) and the ADRs first. A plan for a ported routine lists the Fortran at
+  the pin, the static parity argument it will make, and the regtest it leaves for the validation
+  phase. It follows the `(v)`/`⚠` rule like any page and never stands in for evidence: a number in
+  it carries its command.
+- **The work** commits with this repository's conventions (`Tested:` trailer, never `Cost:`), on a
+  `goal/<id>-<slug>` branch from `origin/main`, and ships with `just pr`. The port has no tests of
+  its own (ADR-0010): for Kokkos code, "verify" is the gates and the static parity argument, never
+  a new unit test or fixture of a ported routine. No WW3 regtest runs until the validation phase,
+  and no `--gpu` run without the owner.
+- **A cleanup** never touches code translated from Fortran (kernels, shims, the Fortran-shaped
+  loops): that is "Translate, don't improve". It may tidy scripts, tools and docs.
+- **A review** is report-only and never sends the diff to another model provider unless the owner
+  asks for it in that session. `security-reviewer` still runs before a PR that touches `.claude/`,
   `.github/workflows/` or `scripts/`.
-- **`/ce-compound`** writes one learning to `docs/compound/solutions/` only when the lesson is
-  non-obvious, durable and material, its own test. A dated record of something tried still goes
-  to `docs/log/`; a WW3 porting trap also goes into the `ww3-port` skill. New vocabulary goes to
-  `docs/GLOSSARY.md`, never a `CONCEPTS.md`, and it edits this file or `CLAUDE.md` only when the
-  owner agrees in that session.
-- **`/lfg`** (the whole pipeline unattended) runs only when the owner asks for it, stops at local
-  commits, and leaves the PR to `just pr`. `ce-babysit-pr` is off by default (`auto_babysit:
-  false`). The skills for browsers, Xcode, product metrics and publishing (`ce-test-browser`,
-  `ce-test-xcode`, `ce-product-pulse`, `ce-promote`, `ce-proof`) have no use here.
+- **A learning** is written only when the lesson is non-obvious, durable and material: a dated
+  record of something tried goes to `docs/log/`, a WW3 porting trap goes into the `ww3-port`
+  skill, new vocabulary goes to `docs/GLOSSARY.md`. It edits this file or `CLAUDE.md` only when
+  the owner agrees in that session.
 
 **Documentation lookups** go through Context7 (`context7@context7-marketplace`, Upstash, MIT,
 enabled in `.claude/settings.json`, pinned to the `@upstash/context7-mcp@4.1.2` tag): current
@@ -469,8 +496,9 @@ only the server's URL, not what the server returns.
 ## Skills and agents
 
 Skills live in `.claude/skills/<name>/SKILL.md`, agents in `.claude/agents/`; `.agents/skills` is
-a symlink to the same directory so Antigravity and Kimi Code load the same files (`CONTRIBUTING.md`,
-"Working with Antigravity" and "Working with Kimi Code", say what they do not get). Each restates the
+a symlink to the same directory so Antigravity loads the same files, and Oh My Pi reads
+`.claude/skills` itself (`CONTRIBUTING.md`, "Working with Antigravity" and "Working with Oh My
+Pi", say what they do not get). Each restates the
 audience rule for its own job; a new one does too, and its YAML front matter must parse
 (`check_agent_frontmatter.py`: an unquoted description containing `: ` silently disables it).
 
@@ -492,7 +520,7 @@ and `.claude/skills/archify` is a symlink into it. `scripts/archify.sh init` che
 fresh clone. With no lock hash and no patch, the gitlink is the only control: a commit that
 moves it is reviewed by a person who reads upstream's diff of `archify/SKILL.md`,
 `archify/references/`, `CLAUDE.md` and `AGENTS.md`, since an agent loads that text as instructions. It cannot carry a patch, so
-its audience rule is here: An Archify page is never a figure of the book: the figure is the Mermaid fence with its *How to read this figure* card, which carries the evidence and the `⚠` marks; every node and label traces to a file read, a WW3 fact cites `model/src/<file>.F90:<line>` at the pin, and a speed figure says "regtest pending" until WW3's regtests have run on its commit.
+its audience rule is here: An Archify drawing is a figure only with its *How to read this figure* card under its picture, which carries the evidence and the `⚠` marks; every node and label traces to a file read, a WW3 fact cites `model/src/<file>.F90:<line>` at the pin, and a speed figure says "regtest pending" until WW3's regtests have run on its commit.
 
 ponytail is also enabled as a Claude Code plugin, with its mode off by default
 (`PONYTAIL_DEFAULT_MODE=off`, the owner, 14 October 2026), because its rules cover a whole session
@@ -518,15 +546,15 @@ the repo the topic belongs to). The label says whose turn it is: `para:marola` o
   authorizes a merge, a deploy, a paid resource, or work the receiving project's owner has not
   asked for. A request for work goes to that project's owner, and the answer says so.
 
-How the channel was built and tested, its failure modes and the commands that check it are
-[lesson 19](course/19-two-agents-one-issue-tracker.md).
+How the channel was built and tested was lesson 19 of the removed course
+([at `f9ce3a0`](https://github.com/h0ffmann/ww3-gpu/blob/f9ce3a0/course/19-two-agents-one-issue-tracker.md)).
 
 ## Commits and pull requests (hard rule)
 
 - **Commit message:** a subject, a body paragraph saying what and why, and a `Tested:` trailer in
   the final block, naming the commands run and their result. No commit, PR or document records a
   cost: there is no `Cost:` trailer, no Cost row and no "Cost so far"
-  ([ADR-0009](docs/ADRs/ADR-0009-ww3-gpu-adopts-ai-memory-from-fabio-akita.md)). Agent commits also carry `Co-Authored-By` and the session
+  ([ADR-0009](docs/ADRs.md#adr-0009)). Agent commits also carry `Co-Authored-By` and the session
   link the harness adds; those lines stay in the trailer block, never in code, comments, PR titles
   or docs.
 - **PR workflow:** `just pr` pushes the branch and writes the PR body from the commits

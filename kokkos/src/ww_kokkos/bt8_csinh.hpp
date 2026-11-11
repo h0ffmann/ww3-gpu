@@ -4,6 +4,7 @@
 // WW3 heritage: WW3-noaa/model/src/w3sbt8md.F90:504-511 at NOAA-EMC/WW3 03adda91;
 // authors M. Orzech, W. E. Rogers (module header; the routine says "NA").
 // Evidence: kokkos/port_report/CSINH_KOKKOS.md.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

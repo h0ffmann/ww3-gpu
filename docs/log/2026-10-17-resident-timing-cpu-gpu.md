@@ -2,7 +2,7 @@
 
 2026-10-17, an agent for M. Hoffmann; issue #42,
 [WFIP-0005](../WFIPs/WFIP-0005-device-resident-step.md),
-[ADR-0016](../ADRs/ADR-0016-speed-first-regtests-postponed-one-person-loop.md).
+[ADR-0016](../ADRs.md#adr-0016).
 
 ## Question
 

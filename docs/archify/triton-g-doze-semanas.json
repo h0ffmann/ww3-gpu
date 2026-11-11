@@ -1,0 +1,338 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Triton G em 12 semanas",
+    "output": "docs/archify/triton-g-doze-semanas.html",
+    "quality_profile": "showcase",
+    "locale": "pt-BR",
+    "repository": {
+      "url": "https://github.com/h0ffmann/ww3-gpu.git",
+      "link_mode": "local-only",
+      "revision": "28178fe10a8ec37ab38c809326ba8964c11f992c"
+    }
+  },
+  "components": [
+    {
+      "id": "t0",
+      "type": "backend",
+      "label": "T0 toolchain",
+      "sublabel": "sem. 1, a partir de 12/10",
+      "pos": [
+        40,
+        60
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/W3SDS4_TRITON_PLANO_202610.pt.md",
+          "line": 132,
+          "end_line": 153
+        }
+      ]
+    },
+    {
+      "id": "t1",
+      "type": "security",
+      "label": "T1 perfil, T2 SDSCUM",
+      "sublabel": "sem. 2, 19/10",
+      "pos": [
+        320,
+        60
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/W3SDS4_TRITON_PLANO_202610.pt.md",
+          "line": 132,
+          "end_line": 153
+        }
+      ]
+    },
+    {
+      "id": "t3a",
+      "type": "backend",
+      "label": "T3 fixture do W3SDS4",
+      "sublabel": "sem. 3, 26/10",
+      "pos": [
+        640,
+        60
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/W3SDS4_TRITON_PLANO_202610.pt.md",
+          "line": 132,
+          "end_line": 153
+        }
+      ]
+    },
+    {
+      "id": "t3b",
+      "type": "security",
+      "label": "T3 NumPy e portão L1",
+      "sublabel": "sem. 4, 02/11",
+      "pos": [
+        920,
+        60
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/W3SDS4_TRITON_PLANO_202610.pt.md",
+          "line": 132,
+          "end_line": 153
+        }
+      ]
+    },
+    {
+      "id": "t4a",
+      "type": "backend",
+      "label": "T4 kernel A literal",
+      "sublabel": "sem. 5 e 6, 09/11",
+      "pos": [
+        40,
+        260
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/W3SDS4_TRITON_PLANO_202610.pt.md",
+          "line": 132,
+          "end_line": 153
+        }
+      ]
+    },
+    {
+      "id": "t4b",
+      "type": "backend",
+      "label": "T4 kernel B tl.dot ieee",
+      "sublabel": "sem. 7, 23/11",
+      "pos": [
+        320,
+        260
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/W3SDS4_TRITON_PLANO_202610.pt.md",
+          "line": 132,
+          "end_line": 153
+        }
+      ]
+    },
+    {
+      "id": "t5",
+      "type": "backend",
+      "label": "T5 Triton C",
+      "sublabel": "sem. 8, 30/11: mesmo fonte",
+      "pos": [
+        600,
+        260
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/W3SDS4_TRITON_PLANO_202610.pt.md",
+          "line": 132,
+          "end_line": 153
+        }
+      ]
+    },
+    {
+      "id": "t6",
+      "type": "backend",
+      "label": "T6 benchmark",
+      "sublabel": "sem. 9 e 10, 07/12",
+      "pos": [
+        40,
+        460
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/W3SDS4_TRITON_PLANO_202610.pt.md",
+          "line": 132,
+          "end_line": 153
+        }
+      ]
+    },
+    {
+      "id": "aot",
+      "type": "backend",
+      "label": "AOT e shim",
+      "sublabel": "sem. 11, 21/12: para o Fortran",
+      "pos": [
+        320,
+        460
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/W3SDS4_TRITON_PLANO_202610.pt.md",
+          "line": 132,
+          "end_line": 153
+        }
+      ]
+    },
+    {
+      "id": "t8",
+      "type": "frontend",
+      "label": "T8 relatório",
+      "sublabel": "sem. 12, 28/12",
+      "pos": [
+        600,
+        460
+      ],
+      "size": [
+        240,
+        64
+      ],
+      "sources": [
+        {
+          "path": "docs/W3SDS4_TRITON_PLANO_202610.pt.md",
+          "line": 132,
+          "end_line": 153
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Base",
+      "wraps": [
+        "t0",
+        "t1"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Referência",
+      "wraps": [
+        "t3a",
+        "t3b"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Kernels",
+      "wraps": [
+        "t4a",
+        "t4b",
+        "t5"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Medir e decidir",
+      "wraps": [
+        "t6",
+        "aot",
+        "t8"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "a",
+      "from": "t0",
+      "to": "t1",
+      "label": ""
+    },
+    {
+      "id": "b",
+      "from": "t1",
+      "to": "t3a",
+      "label": ""
+    },
+    {
+      "id": "c",
+      "from": "t3a",
+      "to": "t3b",
+      "label": ""
+    },
+    {
+      "id": "d",
+      "from": "t3b",
+      "to": "t4a",
+      "label": "passou",
+      "variant": "emphasis"
+    },
+    {
+      "id": "e",
+      "from": "t4a",
+      "to": "t4b",
+      "label": ""
+    },
+    {
+      "id": "f",
+      "from": "t4b",
+      "to": "t5",
+      "label": ""
+    },
+    {
+      "id": "g",
+      "from": "t5",
+      "to": "t6",
+      "label": ""
+    },
+    {
+      "id": "h",
+      "from": "t6",
+      "to": "aot",
+      "label": ""
+    },
+    {
+      "id": "i",
+      "from": "aot",
+      "to": "t8",
+      "label": ""
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Etapas",
+      "items": [
+        "uma semana cada, salvo T4 kernel A e T6, duas",
+        "de 12/10/2026 a 04/01/2027"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Portões",
+      "items": [
+        "T2: o LabECO escolhe o ramo do SDSCUM",
+        "T3: a referência NumPy passa no L1"
+      ]
+    }
+  ]
+}

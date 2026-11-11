@@ -34,9 +34,9 @@ lang: pt-BR
 | Métricas do port | [`kokkos/PORT_STATUS.md`][port-status], [`kokkos/PORT_TABLE.tsv`][port-table], [`kokkos/PORT_RANKING.md`][port-ranking] e a seção "port" do site |
 | Resultados na CPU, escritos para os modeladores da NOAA | [`docs/NOAA_PROGRESS_RECORD_202610.md`][noaa-record] |
 | O que falta para uso operacional | [`docs/PRODUCTION_READINESS_202610.md`][readiness] |
-| Decisões (ADRs, *Architecture Decision Records*) | [`docs/ADRs/`][adrs] e a página <https://h0ffmann.github.io/ww3-gpu/adrs/> |
+| Decisões (ADRs, *Architecture Decision Records*) | [`docs/ADRs.md`][adrs] e a página <https://h0ffmann.github.io/ww3-gpu/adrs/> |
 | Desenhos de mudança (WFIPs, *Wave Forecaster Improvement Proposals*) | [`docs/WFIPs/`][wfips] |
-| Planos de engenharia | [`docs/compound/plans/`][plans] |
+| Planos de engenharia | [`docs/plans/`][plans] |
 | Diário do que foi tentado | [`docs/log/`][log] |
 | O livro (17 lições) | <https://h0ffmann.github.io/ww3-gpu/book/> e o [PDF](https://h0ffmann.github.io/ww3-gpu/ww3-lab-course.pdf) |
 | O pedido de acesso à H100 | [h0ffmann/ww3-gpu#143][h100] |
@@ -129,14 +129,14 @@ O script `scripts/ww3-gpu.sh` controla os três modos:
 
 | Modo | O que executa | Compilado de |
 |---|---|---|
-| `--ww3` | o WW3 como a NOAA escreve | `WW3-noaa/` |
+| `--ww3-noaa` | o WW3 como a NOAA escreve | `WW3-noaa/` |
 | `--ww3-gpu` | o WW3 do fork com o código Kokkos. O script executa o caso duas vezes no mesmo executável, uma vez com o Fortran e uma vez com o Kokkos, e compara as saídas | `WW3/` e `kokkos/` |
 | `--ww4` | o WAVEWATCH IV. Hoje esse modo termina com o código de saída 5, porque o WW4 ainda não tem as partes que os casos usam | `WW4/` |
 
 Cada modo aceita `--cpu` (o padrão) ou `--gpu`. Só o `--ww3-gpu` tem caminho de GPU. Uma execução
 na GPU exige uma pessoa como supervisora. O script pede um "yes" digitado no terminal e não continua sem essa resposta.
 
-![O sistema inteiro numa página: de onde vem o código, o que o ww3-gpu acrescenta, os modos de executar e os ambientes.](../figures/mermaid/ww3-gpu-at-a-glance-pt.png)
+![O sistema inteiro numa página: de onde vem o código, o que o ww3-gpu acrescenta, os modos de executar e os ambientes.](../../docs/archify/ww3-gpu-at-a-glance-pt.png)
 
 ### A chave em tempo de execução
 
@@ -152,7 +152,7 @@ compilador. A opção `--kokkos` escolhe um conjunto de partes:
 | `gpu` | `SRCE` | o padrão do `--gpu`: o `W3SRCE` inteiro em cada chamada ([ADR-0013][adr13]) |
 | `resident` | `SRCE`, `XYP3`, `KTP3`, `OUTG`, `IOPE`, `UPDV`, `CPRT` | o passo de tempo inteiro em Kokkos, com o espectro guardado no lado do Kokkos |
 
-![Um executável do WW3, dois caminhos: a chave escolhe a rotina original em Fortran ou o kernel em Kokkos, que executa em CPU ou em GPU.](../figures/mermaid/kokkos-interop-one-binary.png)
+![Um executável do WW3, dois caminhos: a chave escolhe a rotina original em Fortran ou o kernel em Kokkos, que executa em CPU ou em GPU.](../../docs/archify/kokkos-interop-one-binary.png)
 
 **Kokkos** é uma biblioteca C++ do Sandia National Laboratories (⚠, `docs/GLOSSARY.md`). Quem programa escreve o kernel uma vez e compila esse kernel para vários *backends*: Serial, OpenMP (vários núcleos
 da CPU) ou CUDA (GPU NVIDIA). O Fortran chama o C++ por uma interface `bind(C)`, o padrão
@@ -253,7 +253,7 @@ Fortran para Kokkos**:
   foi idêntico byte a byte nas 125 entradas que executaram (100 seriais e 25 com OpenMP).
 
 **O ciclo de trabalho.** O projeto tem uma pessoa só. Cada mudança de engenharia segue o ciclo do plugin Compound Engineering, no tamanho da mudança: planejar, fazer, revisar e registrar o que a mudança ensinou. Uma mudança pequena vai direto ao trabalho e às verificações. Os
-planos ficam em [`docs/compound/plans/`][plans].
+planos ficam em [`docs/plans/`][plans].
 
 ## 7. Como a tradução é verificada
 
@@ -334,7 +334,7 @@ feita. A ADR descreve o contexto, a decisão, as alternativas e as consequência
 trabalho. Uma ADR aceita não muda. Uma ADR nova substitui a ADR antiga.
 
 O repositório tem 18 ADRs
-([`docs/ADRs/`][adrs]). Estas ADRs importam mais para o port:
+([`docs/ADRs.md`][adrs]). Estas ADRs importam mais para o port:
 
 | ADR | Decisão | Situação |
 |---|---|---|
@@ -429,18 +429,18 @@ relatório.
 [gfs-runs]: https://github.com/h0ffmann/ww3-gpu/blob/main/docs/log/2026-10-19-gfs-risk-runs.md
 [cuda-build]: https://github.com/h0ffmann/ww3-gpu/blob/main/docs/log/2026-10-18-cuda-build-only.md
 [af11]: https://github.com/h0ffmann/ww3-gpu/blob/main/docs/log/2026-10-14-snl1-bitwise-af11.md
-[plans]: https://github.com/h0ffmann/ww3-gpu/tree/main/docs/compound/plans
-[plan3]: https://github.com/h0ffmann/ww3-gpu/blob/main/docs/compound/plans/2026-10-18-003-gpu-first-supervised-run-plan.md
-[plan7]: https://github.com/h0ffmann/ww3-gpu/blob/main/docs/compound/plans/2026-10-19-007-gfs-wave-target-plan.md
-[adrs]: https://github.com/h0ffmann/ww3-gpu/blob/main/docs/ADRs/README.md
-[adr2]: https://github.com/h0ffmann/ww3-gpu/blob/main/docs/ADRs/ADR-0002-port-order-wall-time.md
-[adr10]: https://github.com/h0ffmann/ww3-gpu/blob/main/docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md
-[adr11]: https://github.com/h0ffmann/ww3-gpu/blob/main/docs/ADRs/ADR-0011-port-in-units-regtest-at-checkpoints.md
-[adr13]: https://github.com/h0ffmann/ww3-gpu/blob/main/docs/ADRs/ADR-0013-operational-parts-default-to-kokkos.md
-[adr14]: https://github.com/h0ffmann/ww3-gpu/blob/main/docs/ADRs/ADR-0014-gpu-runs-judged-by-tolerance.md
-[adr16]: https://github.com/h0ffmann/ww3-gpu/blob/main/docs/ADRs/ADR-0016-speed-first-regtests-postponed-one-person-loop.md
-[adr17]: https://github.com/h0ffmann/ww3-gpu/blob/main/docs/ADRs/ADR-0017-kokkos-port-is-single-node-mpi-stays-fortran.md
-[adr19]: https://github.com/h0ffmann/ww3-gpu/blob/main/docs/ADRs/ADR-0019-googletest-for-runtime-infrastructure.md
+[plans]: https://github.com/h0ffmann/ww3-gpu/tree/main/docs/plans
+[plan3]: https://github.com/h0ffmann/ww3-gpu/blob/main/docs/plans/2026-10-18-003-gpu-first-supervised-run-plan.md
+[plan7]: https://github.com/h0ffmann/ww3-gpu/blob/main/docs/plans/2026-10-19-007-gfs-wave-target-plan.md
+[adrs]: https://github.com/h0ffmann/ww3-gpu/blob/main/docs/ADRs.md
+[adr2]: https://github.com/h0ffmann/ww3-gpu/blob/main/docs/ADRs.md#adr-0002
+[adr10]: https://github.com/h0ffmann/ww3-gpu/blob/main/docs/ADRs.md#adr-0010
+[adr11]: https://github.com/h0ffmann/ww3-gpu/blob/main/docs/ADRs.md#adr-0011
+[adr13]: https://github.com/h0ffmann/ww3-gpu/blob/main/docs/ADRs.md#adr-0013
+[adr14]: https://github.com/h0ffmann/ww3-gpu/blob/main/docs/ADRs.md#adr-0014
+[adr16]: https://github.com/h0ffmann/ww3-gpu/blob/main/docs/ADRs.md#adr-0016
+[adr17]: https://github.com/h0ffmann/ww3-gpu/blob/main/docs/ADRs.md#adr-0017
+[adr19]: https://github.com/h0ffmann/ww3-gpu/blob/main/docs/ADRs.md#adr-0019
 [wfips]: https://github.com/h0ffmann/ww3-gpu/blob/main/docs/WFIPs/README.md
 [wfip1]: https://github.com/h0ffmann/ww3-gpu/blob/main/docs/WFIPs/WFIP-0001-weathernext3-wind-rtx4090.md
 [wfip2]: https://github.com/h0ffmann/ww3-gpu/blob/main/docs/WFIPs/WFIP-0002-lab-as-a-book.md

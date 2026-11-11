@@ -21,6 +21,8 @@
 // prints. Codes: 1 grids not initialised (:2029-2032), 2 illegal IMOD (:2034-2037),
 // 3 illegal MK/MTH (:2039-2042), 4 already allocated (:2044-2047), 99 ALLOCATE
 // failed (CHECK_ALLOC_STATUS, w3macros.h:49-51, at :2073, :2093, :2102).
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <cstddef>

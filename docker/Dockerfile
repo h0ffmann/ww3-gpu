@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-# A runtime image for WAVEWATCH III three ways (scripts/ww3-gpu.sh): --ww3 (pure NOAA WW3, from
+# A runtime image for WAVEWATCH III three ways (scripts/ww3-gpu.sh): --ww3-noaa (pure NOAA WW3, from
 # WW3-noaa/), --ww3-gpu (the fork WW3/ with the Kokkos port, W3SNL1 and ST4, OpenMP backend) and --ww4 (WAVEWATCH IV). Ubuntu packages only, no
 # Nix: the build stage compiles everything, and the final image keeps the programs, their
 # runtime libraries and the case inputs, not the sources. CPU only; the GPU image is Dockerfile.cuda.
@@ -64,7 +64,7 @@ RUN cmake -S kokkos --preset openmp-release -B /build/kokkos -DCMAKE_PREFIX_PATH
  && install -D -m 644 kokkos/tools/nccmp-tol/tolerances.txt "$P/share/tolerances.txt"
 
 # WW3 twice, as scripts/ww3-gpu.sh builds it: pure NOAA WW3 from WW3-noaa/ with the lab switch
-# (--ww3), and the fork WW3/ with the same switch plus KOKKOS linked to the port (--ww3-gpu).
+# (--ww3-noaa), and the fork WW3/ with the same switch plus KOKKOS linked to the port (--ww3-gpu).
 # WW3's own Release flags.
 RUN cat switches/switch_lab_ompg > /tmp/switch_ww3 \
  && printf '%s KOKKOS\n' "$(cat switches/switch_lab_ompg)" > /tmp/switch_ww3gpu \

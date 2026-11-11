@@ -1,0 +1,11 @@
+# Português Técnico Controlado (PTC), the skill of Kayque Rotondo (MIT,
+# https://github.com/kayquer/portugues-tecnico-controlado at 8938f58, SKILL.md v1.2.0).
+# PTC-6: the ambiguous connectors of references/lexico.md; each has two readings, and "e/ou" is refused.
+extends: existence
+message: "PTC-6: '%s' tem duas leituras; use 'porque', 'quando', 'se', 'e' ou 'ou', ou um ponto final."
+level: warning
+ignorecase: true
+nonword: true
+tokens:
+  - '(?<!\p{L})(?:uma vez que|desde que|na medida em que|sendo que)(?!\p{L})'
+  - '(?<!\p{L})e/ou(?!\p{L})'

@@ -1,0 +1,308 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Six Runtimes of ww3-gpu",
+    "output": "docs/archify/ww3-gpu-runtimes.html",
+    "quality_profile": "showcase",
+    "locale": "en",
+    "repository": {
+      "url": "https://github.com/h0ffmann/ww3-gpu.git",
+      "link_mode": "local-only",
+      "revision": "65f3b18baa2a35c8caf90c5ddb90a8e8fb3a90f6"
+    }
+  },
+  "components": [
+    {
+      "id": "ww3",
+      "type": "backend",
+      "label": "--ww3, the reference",
+      "sublabel": "MetOcean WW3 7.14, Fortran",
+      "pos": [
+        242,
+        64
+      ],
+      "size": [
+        154,
+        148
+      ],
+      "sources": [
+        {
+          "path": "scripts/ww3-gpu.sh",
+          "line": 4,
+          "end_line": 5,
+          "label": "--ww3"
+        },
+        {
+          "path": "VERSIONS.md",
+          "line": 18,
+          "end_line": 18,
+          "label": "metocean/WW3 7.14.mos-92e2cf6"
+        }
+      ]
+    },
+    {
+      "id": "kokkos_cpu",
+      "type": "backend",
+      "label": "--ww3-gpu --cpu",
+      "sublabel": "Fortran + Kokkos, OpenMP",
+      "pos": [
+        50,
+        64
+      ],
+      "size": [
+        154,
+        60
+      ],
+      "sources": [
+        {
+          "path": "scripts/ww3-gpu.sh",
+          "line": 6,
+          "end_line": 8,
+          "label": "--ww3-gpu"
+        },
+        {
+          "path": "scripts/ww3-gpu.sh",
+          "line": 57,
+          "end_line": 57,
+          "label": "--cpu is the default"
+        },
+        {
+          "path": "scripts/ww3-gpu.sh",
+          "line": 18,
+          "end_line": 22,
+          "label": "compared with --ww3-noaa"
+        }
+      ]
+    },
+    {
+      "id": "kokkos_gpu",
+      "type": "backend",
+      "label": "--ww3-gpu --gpu",
+      "sublabel": "Fortran + Kokkos, CUDA",
+      "pos": [
+        434,
+        64
+      ],
+      "size": [
+        154,
+        60
+      ],
+      "sources": [
+        {
+          "path": "scripts/ww3-gpu.sh",
+          "line": 6,
+          "end_line": 8,
+          "label": "--ww3-gpu"
+        },
+        {
+          "path": "scripts/ww3-gpu.sh",
+          "line": 59,
+          "end_line": 61,
+          "label": "--gpu, supervised"
+        },
+        {
+          "path": "scripts/ww3-gpu.sh",
+          "line": 18,
+          "end_line": 22,
+          "label": "compared with --ww3-noaa"
+        }
+      ]
+    },
+    {
+      "id": "chaceon_cpu",
+      "type": "backend",
+      "label": "--chaceon --cpu",
+      "sublabel": "Rust, no Fortran, CPU",
+      "pos": [
+        50,
+        152
+      ],
+      "size": [
+        154,
+        60
+      ],
+      "sources": [
+        {
+          "path": "scripts/ww3-gpu.sh",
+          "line": 9,
+          "end_line": 11,
+          "label": "--chaceon, --cceon"
+        },
+        {
+          "path": "pubs/preprint/prose/02-shapes.md",
+          "line": 5,
+          "end_line": 5,
+          "label": "replaces WW3"
+        }
+      ]
+    },
+    {
+      "id": "chaceon_gpu",
+      "type": "backend",
+      "label": "--chaceon --gpu",
+      "sublabel": "Rust, SPIR-V or PTX",
+      "pos": [
+        434,
+        152
+      ],
+      "size": [
+        154,
+        60
+      ],
+      "sources": [
+        {
+          "path": "scripts/ww3-gpu.sh",
+          "line": 9,
+          "end_line": 12,
+          "label": "--gpu exits 5"
+        },
+        {
+          "path": "pubs/preprint/prose/02-shapes.md",
+          "line": 8,
+          "end_line": 8,
+          "label": "device targets"
+        }
+      ]
+    },
+    {
+      "id": "ww4",
+      "type": "backend",
+      "label": "--ww4",
+      "sublabel": "WAVEWATCH IV, on release",
+      "pos": [
+        242,
+        284
+      ],
+      "size": [
+        154,
+        60
+      ],
+      "sources": [
+        {
+          "path": "scripts/ww3-gpu.sh",
+          "line": 13,
+          "end_line": 16,
+          "label": "--ww4"
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "ww3-gpu: one command, six runtimes",
+      "wraps": [
+        "ww3",
+        "kokkos_cpu",
+        "kokkos_gpu",
+        "chaceon_cpu",
+        "chaceon_gpu",
+        "ww4"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "kokkos_cpu-vs-ww3",
+      "from": "kokkos_cpu",
+      "to": "ww3",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          223.0,
+          94.0
+        ],
+        [
+          223.0,
+          138.0
+        ]
+      ]
+    },
+    {
+      "id": "kokkos_gpu-vs-ww3",
+      "from": "kokkos_gpu",
+      "to": "ww3",
+      "variant": "dashed",
+      "fromSide": "left",
+      "toSide": "right",
+      "via": [
+        [
+          415.0,
+          94.0
+        ],
+        [
+          415.0,
+          138.0
+        ]
+      ]
+    },
+    {
+      "id": "chaceon_cpu-vs-ww3",
+      "from": "chaceon_cpu",
+      "to": "ww3",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          223.0,
+          182.0
+        ],
+        [
+          223.0,
+          138.0
+        ]
+      ]
+    },
+    {
+      "id": "chaceon_gpu-vs-ww3",
+      "from": "chaceon_gpu",
+      "to": "ww3",
+      "variant": "dashed",
+      "fromSide": "left",
+      "toSide": "right",
+      "via": [
+        [
+          415.0,
+          182.0
+        ],
+        [
+          415.0,
+          138.0
+        ]
+      ]
+    },
+    {
+      "id": "ww4-vs-ww3",
+      "from": "ww4",
+      "to": "ww3",
+      "label": "same bits as",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "One command, six runtimes",
+      "items": [
+        "1 --ww3: MetOcean WW3 7.14 (metocean/WW3 92e2cf66), Fortran, the reference every other runtime must give the bits of",
+        "2, 3 --ww3-gpu with --cpu or --gpu: the fork with the KOKKOS switch, linked to kokkos/",
+        "4, 5 --chaceon (alias --cceon) with --cpu or --gpu: WW3 rewritten in Rust, no Fortran in its process",
+        "6 --ww4: WAVEWATCH IV, when it is released"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Not yet true of the script",
+      "items": [
+        "--ww3-gpu is compared with --ww3-noaa (NOAA WW3 03adda91, the base of its fork) until the fork is moved onto MetOcean WW3 7.14",
+        "--chaceon --gpu stops with exit 5: nothing of chaceon has run on a real GPU",
+        "--ww4 stops with exit 5 while the case needs a part that is not ported to WW4",
+        "No runtime has run the whole model on a real GPU"
+      ]
+    }
+  ]
+}

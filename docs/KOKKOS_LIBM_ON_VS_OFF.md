@@ -14,7 +14,7 @@ Tags in this page:
 | **WIP** | Work that is designed or started, and not complete |
 
 Related: [WFIP-0006](WFIPs/WFIP-0006-device-libm-bits.md),
-[ADR-0014](ADRs/ADR-0014-gpu-runs-judged-by-tolerance.md),
+[ADR-0014](ADRs.md#adr-0014),
 [GPU_LIBM_BITS_202610.md](GPU_LIBM_BITS_202610.md),
 [`gen_tables.cpp`](../kokkos/tools/libm_bits/gen_tables.cpp),
 [`CMakeLists.txt`](../kokkos/src/ww_kokkos/CMakeLists.txt), [AGENTS.md](../AGENTS.md), and the
@@ -61,7 +61,7 @@ host: its glibc, its `rcpps` and its fma choice.
 
 **OFF.** The kernels call NVIDIA's libdevice, as before #178. No `gen_tables` runs. A GPU run is
 judged by the tolerances of `nccmp-tol` (v, `CMakeLists.txt:308-309`;
-`docs/ADRs/ADR-0014-gpu-runs-judged-by-tolerance.md:27-40`).
+`docs/ADRs.md:1666-1679`).
 
 **The CPU build.** The option does not exist there. The host branches call glibc as before (v,
 `CMakeLists.txt:309`, `:310` `if(Kokkos_ENABLE_CUDA)`).

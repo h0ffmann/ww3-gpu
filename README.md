@@ -1,20 +1,26 @@
 <div align="center">
 
-<img src="site/static/favicon.svg" width="120" alt="" />
+<img src="https://wave.piabrota.art/favicon.svg" width="120" alt="" />
 
 # ww3-gpu
 
-<sub>the WW3 GPU Lab · since 2026 · <a href="https://h0ffmann.github.io/ww3-gpu/">the site</a> · <a href="https://h0ffmann.github.io/ww3-gpu/book/">the book</a> · <a href="RELEASES.md">releases</a> · <a href="#how-to-cite">cite</a> · <a href="README.pt-BR.md">português</a></sub>
+<sub>the WW3 GPU Lab · since 2026 · <a href="https://wave.piabrota.art/">the site</a> · <a href="RELEASES.md">releases</a> · <a href="#how-to-cite">cite</a> · <a href="README.pt-BR.md">português</a></sub>
 
 [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.23221351-1682D4?style=flat-square)](https://doi.org/10.5281/zenodo.23221351)
+[![aiXiv](https://img.shields.io/badge/aiXiv-2611.01104-B31B1B?style=flat-square)](https://aixiv.online/abs/2611.01104)
 [![release](https://img.shields.io/github/v/tag/h0ffmann/ww3-gpu?style=flat-square&label=release&color=FF4F00)](RELEASES.md)
 [![CI](https://github.com/h0ffmann/ww3-gpu/actions/workflows/ci.yml/badge.svg)](https://github.com/h0ffmann/ww3-gpu/actions/workflows/ci.yml)
-[![site](https://img.shields.io/badge/site-live-3FB950?style=flat-square)](https://h0ffmann.github.io/ww3-gpu/)
+[![site](https://img.shields.io/badge/site-live-3FB950?style=flat-square)](https://wave.piabrota.art/)
 [![deliverable: ww3-dia-gpu-v2](https://img.shields.io/badge/deliverable-ww3--dia--gpu--v2-181717?style=flat-square&logo=github)](https://github.com/h0ffmann/ww3-dia-gpu-v2)
 [![license](https://img.shields.io/badge/license-MIT%20%2B%20LGPL--3.0%20kernels-1682D4?style=flat-square)](#licensing)
 [![leia em português](https://img.shields.io/badge/leia%20em-portugu%C3%AAs-3FB950?style=flat-square)](README.pt-BR.md)
 
 </div>
+
+> [!IMPORTANT]
+> **Used by the Federal University of Santa Catarina (UFSC).** LabECO/UFSC's operational wave
+> forecast, [ondaseventos.ufsc.br](https://ondaseventos.ufsc.br/), is the first consumer of
+> ww3-gpu; [marola](https://github.com/marola-dev/marola) is the second.
 
 ## in one minute
 
@@ -31,16 +37,16 @@
   Fortran, to the last bit, in the same program. We do not edit WW3. A fork of WW3 adds a switch.
   At run time, you can select the Fortran routine or the Kokkos routine for each translated part,
   so you can always compare the two.
-- **The repository is also a book.** The book tells how coding agents do this work under that
-  rule. Its chapters are the [17 lessons](course/README.md), and each merge builds them into a
-  [PDF](pdf/ww3-lab-course.pdf). The first readers are scientists in wave modelling, numerical
-  methods and HPC. Each claim has `(v)` when we checked it and `⚠` when we did not.
+- **The texts are the preprint and the proposal.** The [preprint](pubs/preprint/README.md) and
+  the UFRJ/DEL [project proposal](pubs/proposal/) are written in Markdown here. The first readers
+  are scientists in wave modelling, numerical methods and HPC. Each claim has `(v)` when we checked
+  it and `⚠` when we did not.
 
 ## where to start
 
 | If you want to | Go to |
 |---|---|
-| learn about WW3, GPUs and this project from the start | [`course/00-orientation.md`](course/00-orientation.md), then the [book](https://h0ffmann.github.io/ww3-gpu/book/) |
+| learn about WW3, GPUs and this project from the start | the [preprint](pubs/preprint/README.md), then the [glossary](docs/GLOSSARY.md) |
 | run WW3, then WW3 with the Kokkos port | [quick start](#quick-start) |
 | see which routines run on Kokkos, and how fast | [where it stands](#where-it-stands), [`kokkos/PORT_STATUS.md`](kokkos/PORT_STATUS.md) |
 | read the CPU results, their limits and what is not shown yet, as written for NOAA's wave modellers | [`docs/NOAA_PROGRESS_RECORD_202610.md`](docs/NOAA_PROGRESS_RECORD_202610.md), then the gap list [`docs/PRODUCTION_READINESS_202610.md`](docs/PRODUCTION_READINESS_202610.md) |
@@ -52,78 +58,61 @@
 
 ## how it works
 
-`scripts/ww3-gpu.sh` runs WAVEWATCH in three modes. The model source code comes from three
-submodules. This repository contains only the Kokkos code and its tools.
+`scripts/ww3-gpu.sh` is one command for six runtimes of WAVEWATCH, and `just run` is that script:
+`--ww3`, `--ww3-gpu --cpu`, `--ww3-gpu --gpu`, `--chaceon --cpu`, `--chaceon --gpu` and `--ww4`
+([`docs/RUN_COMMAND_202611.md`](docs/RUN_COMMAND_202611.md)). The model source code comes from
+four submodules. This repository contains only the Kokkos code and its tools.
 
 | Directory | What it is | Used by |
 |---|---|---|
-| `WW3-noaa/` | WW3 from NOAA: [NOAA-EMC/WW3](https://github.com/NOAA-EMC/WW3) at `03adda91`, with no change | `--ww3`, the reference |
-| `WW3/` | the fork [h0ffmann/WW3](https://github.com/h0ffmann/WW3) at `50a10730` (branch `ww3-gpu/kokkos-pnt`): `WW3-noaa/` plus the KOKKOS patch. The patch changes 9 files and adds 7 modules under `model/src/`, with 5 687 added lines and no removed line | `--ww3-gpu` and the regtest matrix |
+| `WW3-metocean-7.14/` | WW3 from MetOcean: [metocean/WW3](https://github.com/metocean/WW3) at `92e2cf66` (tag `7.14.mos-92e2cf6`), with no change | `--ww3`, the reference |
+| `WW3/` | the fork [h0ffmann/WW3](https://github.com/h0ffmann/WW3) at `50a10730` (branch `ww3-gpu/kokkos-pnt`): NOAA's WW3 at `03adda91` plus the KOKKOS patch. The patch changes 9 files and adds 7 modules under `model/src/`, with 5 687 added lines and no removed line | `--ww3-gpu` and the regtest matrix |
 | `WW4/` | [h0ffmann/WW4](https://github.com/h0ffmann/WW4), `develop` | `--ww4` |
+| `chaceon/` | [h0ffmann/chaceon](https://github.com/h0ffmann/chaceon) at `89a11e4`: WW3 in Rust, with MetOcean's WW3 at `92e2cf66` as its reference | `--chaceon` (`--cceon` is the same flag) |
 
 `(v)` The numbers of the patch are from `git -C WW3 diff --stat 03adda91 50a10730 -- model`
 (16 files, 5 687 insertions, 0 deletions), on 2026-10-18.
 
+NOAA's WW3 has no submodule (the owner, 11 November 2026: one WW3 reference, MetOcean's 7.14).
+[NOAA-EMC/WW3](https://github.com/NOAA-EMC/WW3) at `03adda91`, the commit the fork branched from,
+is in the fork's own history. `scripts/ww3_base.sh` (`just ww3-base export`) writes that tree to
+`WW3-noaa/`, a directory that git ignores, and `--ww3-noaa` does this before it builds. `--ww3-noaa`
+is the pair of `--ww3-gpu`.
+
 The fork has one purpose. WW3 must call the Kokkos code from inside WW3, for example from
 `W3SRCE` (`model/src/w3srcemd.F90`), and this repository does not edit WW3. Thus the fork adds the
-calls behind the `KOKKOS` switch, and each Fortran routine stays available. Before each `--ww3`
+calls behind the `KOKKOS` switch, and each Fortran routine stays available. Before each `--ww3-noaa`
 run, `scripts/ww3-gpu.sh` compares the two source trees. If the fork is different from
-`WW3-noaa/` outside the KOKKOS patch, the script stops with exit code 3. Thus `--ww3` is always
+`WW3-noaa/` outside the KOKKOS patch, the script stops with exit code 3. Thus `--ww3-noaa` is always
 WW3 from NOAA, and `--ww3-gpu --cpu` compares the Kokkos port with it.
+
+`⚠` Since 11 November 2026 the reference `--ww3` is MetOcean's WW3, the source that LabECO's
+forecast builds. The fork is not on that source yet: MetOcean's ten commits change the arithmetic
+of ST4, and a rebase of the fork is a re-translation of the Kokkos kernels
+([plan](docs/plans/2026-10-29-001-metocean-upstream-plan.md)). Until then `--ww3-gpu` has
+`--ww3-noaa` as its pair, and a difference between `--ww3` and `--ww3-gpu` is MetOcean's change,
+not the port.
 
 The figure shows the full system: the sources of the model, the code of this repository, the run
 modes and the three runtimes.
 
-```mermaid
-%% figure: ww3-gpu-at-a-glance
-%% title: What does ww3-gpu build, from which sources, and on which runtime does each run mode run?
-flowchart TD
-    subgraph RT["Runtimes"]
-        C["3 · dev container<br/>Dockerfile dev stage + Nix"]
-        P["1 · picasso/, Nix<br/>gfortran 16.2 · Open MPI · CUDA 12.9<br/>the reference toolchain"]
-        D["2 · Docker image<br/>Ubuntu, gfortran 15.2 · CPU only"]
-    end
-    H["scripts/ww3-gpu.sh, justfile, regtests/<br/>Bash · Python · CMake, CTest"]
-    subgraph RUN["Run modes"]
-        M1["--ww3<br/>the reference"]
-        M2["--ww3-gpu<br/>Fortran and Kokkos DIA,<br/>one executable"]
-        M4["just ww3-gpu-matrix<br/>WW3's regtests"]
-        M3["--ww4"]
-    end
-    subgraph SRC["Model sources: submodules, never edited here"]
-        N["WW3-noaa/<br/>pure NOAA WW3 · Fortran"]
-        F["WW3/<br/>h0ffmann fork · Fortran<br/>+ KOKKOS switch, shim call"]
-        W4["WW4/<br/>h0ffmann fork · C++"]
-    end
-    subgraph OWN["ww3-gpu's own code"]
-        B["course/, pubs/, site/<br/>Markdown to PDF · Gleam site"]
-        K["kokkos/<br/>the port · C++20, Kokkos"]
-    end
-    C -- "enters" --> P
-    P -- "every mode;<br/>GPU only with the owner" --> H
-    D -- "CPU only:<br/>the just d… recipes" --> H
-    H --> M1 & M2 & M4 & M3
-    M2 -. "compared with" .-> M1
-    M1 -- "built from" --> N
-    M2 -- "built from" --> F & K
-    M4 -- "built from" --> F & K
-    M3 -- "built from" --> W4
-```
+[![What does ww3-gpu build, from which sources, and on which runtime does each run mode run? (Archify drawing)](docs/archify/ww3-gpu-at-a-glance.png)](https://h0ffmann.github.io/ww3-gpu/figures/ww3-gpu-at-a-glance/)
 
 <details open>
 <summary>How to read this figure</summary>
 
-**Takeaway.** Two copies of WW3 come in from outside, pure NOAA WW3 and the owner's fork; this
+**Takeaway.** Pure NOAA WW3 and the owner's fork of it come in from outside; this
 repository adds only the C++ rewrite and its tools, and every way of running the model works on
 the Nix toolchain, while the Docker image covers the CPU runs without Nix.
 
 **How to read.** Top to bottom. A runtime runs the one script, `scripts/ww3-gpu.sh` with its
 recipes; the script offers the run modes; each run mode is built from the sources below it.
 Solid arrows say what enters, runs or is built from what; the dashed arrow is the comparison of
-the Kokkos run with pure NOAA WW3. The runtimes are numbered from the reference (1) to the most
+the Kokkos run with pure NOAA WW3 (`--ww3-noaa`). The runtimes are numbered from the reference (1) to the most
 derived (3); the dev container reaches the modes only through picasso.
 
-**Not shown.** The book and the site (`course/`, `pubs/`, `site/`) build in CI, not on these runtimes. The fork's branch and the files of its KOKKOS patch (the table above), the
+**Not shown.** `--ww3`, which builds MetOcean's WW3 and is the reference, and `--chaceon`: the
+figure of the six runtimes, below, has them. The publications and the site (`pubs/`, `site/`) build in CI, not on these runtimes. The fork's branch and the files of its KOKKOS patch (the table above), the
 CUDA build and its supervision rule (`AGENTS.md`, "Running on the GPU"), CI, and the versions of
 each runtime ([`VERSIONS.md`](VERSIONS.md)).
 
@@ -135,7 +124,35 @@ full clone).
 
 </details>
 
-![ww3-gpu: three ways to run WAVEWATCH. --ww3 runs pure NOAA WW3 from WW3-noaa/; --ww3-gpu links the same fork to this repository's Kokkos rewrite and compares the two; --ww4 builds WAVEWATCH IV from its fork, and stops with exit 5 when a part the case needs is not ported](docs/figures/three-ways.svg)
+[![Six runtimes of ww3-gpu, one command. --ww3 runs WW3's Fortran (MetOcean WW3 7.14) and is the reference. The other five must give its bits: --ww3-gpu with --cpu (Fortran and Kokkos, OpenMP) or --gpu (CUDA), --chaceon with --cpu (Rust, no Fortran) or --gpu (SPIR-V or PTX), and --ww4 (WAVEWATCH IV, on release)](docs/archify/ww3-gpu-runtimes.png)](https://h0ffmann.github.io/ww3-gpu/figures/ww3-gpu-runtimes/)
+
+<details open>
+<summary>How to read this figure</summary>
+
+**Takeaway.** One command, `scripts/ww3-gpu.sh`, is meant to run WAVEWATCH six ways, and five of
+them answer to the sixth: `--ww3`, WW3's Fortran, is the reference whose bits every other runtime
+must give.
+
+**How to read.** From the edges to the centre. An amber box is a runtime; a green dashed arrow
+points to the run whose bits a runtime must give, and all five point to `--ww3`. The left column
+runs on the CPU and the right one on a GPU; the top row is the Kokkos port inside WW3
+(`--ww3-gpu`), the second row is [h0ffmann/chaceon](https://github.com/h0ffmann/chaceon), WW3
+rewritten in Rust (`--chaceon`, or `--cceon`). `--ww4` is WAVEWATCH IV.
+
+**Not shown.** The sources each runtime is built from (the figure above), the routines the Kokkos
+flag selects (the table below), and the supervision rule of a `--gpu` run (`AGENTS.md`, "Running
+on the GPU"). No runtime has run the whole model on a real GPU.
+
+**Evidence.** (v) read 2026-11-11: `scripts/ww3-gpu.sh` (header) for the six flags;
+[`VERSIONS.md`](VERSIONS.md) for MetOcean WW3 7.14 (`92e2cf66`), which `--ww3` builds;
+[`docs/RUN_COMMAND_202611.md`](docs/RUN_COMMAND_202611.md) for what ran. Two arrows are the
+owner's design of 11 November 2026 and not what the script does yet ⚠: `--ww3-gpu` is compared
+with `--ww3-noaa` (NOAA WW3 `03adda91`, the base of the fork) until the fork is moved onto
+MetOcean's WW3, and `--chaceon --gpu` stops with exit 5 because chaceon has no run on a real GPU.
+The drawing's own notes and the preprint's caption say the same. The drawing is [`docs/archify/ww3-gpu-runtimes.json`](docs/archify/ww3-gpu-runtimes.json), also the
+preprint's Figure 1, drawn for a 174 mm column ([`DESIGN.md`](DESIGN.md), "Pictures in a paper").
+
+</details>
 
 ### the Kokkos switch, part by part
 
@@ -149,7 +166,7 @@ with `--kokkos`:
 |---|---|---|
 | `none` | none | the Fortran only, in the Kokkos build |
 | `all` | all the parts of the build (`WW_KOKKOS_ALL=1`), but not the opt-in parts below | the widest test of the translation |
-| `gpu` | `SRCE` | the default of `--gpu`: all of `W3SRCE` in each call ([ADR-0013](docs/ADRs/ADR-0013-operational-parts-default-to-kokkos.md)) |
+| `gpu` | `SRCE` | the default of `--gpu`: all of `W3SRCE` in each call ([ADR-0013](docs/ADRs.md#adr-0013)) |
 | `resident` | `SRCE,XYP3,KTP3,OUTG,IOPE,UPDV,CPRT` | the full time step on Kokkos, with the spectrum kept on the Kokkos side ([next section](#what---kokkos-resident-does)) |
 | a list, for example `SNL1,SDS4` | the parts in the list | a test of one part at a time |
 
@@ -179,13 +196,13 @@ Kokkos side one time at the start. It comes back only when WW3 writes output
   three test cases (`kokkos/src/fortran_iface/PATCH.md`, sections 11 to 18).
 - `⚠` `resident` is opt-in. It is not a default. `XYP3`, `KTP3`, `OUTG`, `IOPE` and `UPDV` did
   not pass WW3's regtests yet. The regtests wait for the validation phase
-  ([ADR-0016](docs/ADRs/ADR-0016-speed-first-regtests-postponed-one-person-loop.md)).
+  ([ADR-0016](docs/ADRs.md#adr-0016)).
 - `⚠` The first end-to-end timing is one run on the CPU. Refer to [where it stands](#where-it-stands).
 
 To run `resident`:
 
 ```bash
-scripts/ww3-gpu.sh --ww3-gpu full --cpu --kokkos resident            # OpenMP; compares with the Fortran and with --ww3
+scripts/ww3-gpu.sh --ww3-gpu full --cpu --kokkos resident            # OpenMP; compares with the Fortran and with --ww3-noaa
 scripts/ww3-gpu.sh --ww3-gpu full --cpu --kokkos resident --timers   # shows the time of each part
 scripts/ww3-gpu.sh --ww3-gpu full --gpu --kokkos resident            # CUDA: a person must type "yes" at the terminal
 ```
@@ -200,12 +217,32 @@ To see how many times `VA` crossed, and in which direction, set `WW_KOKKOS_VA_CO
 | `full` | `kokkos/tests/fixtures/bench_small`: a 120 × 80 grid, 9 520 sea points, 24 × 24, 12 hours |
 | `coast` | `kokkos/tests/fixtures/coast`: 80 × 50 cells of 5 km, 3 791 sea points and 50 boundary points, 24 × 24, 12 hours. It has hourly currents, water levels, ice and boundary spectra (`scripts/coast_case.sh`). These inputs use code paths that the other two cases do not use |
 
+A case of your own is a directory with `ww3_grid.nml`, `ww3_shel.nml` and the files they name, on
+a regular grid or on a triangular one (`GRID%TYPE = 'UNST'`, a Gmsh mesh). `--wind ifs` gives it
+the newest ECMWF IFS wind for its box and its length, from the cache of `just wind` when the cycle
+is already there, and moves the dates of the namelists to that cycle. `--temp cmems` stages the
+sea surface temperature of the Copernicus Marine forecast the same way (`just temp`; it needs a
+Copernicus Marine account):
+
+```bash
+just run --ww3 --case <dir> --wind ifs               # MetOcean's WW3 on fresh wind
+just run --ww3-gpu --case <dir> --wind ifs --cpu     # the same case with the Kokkos port
+just run --chaceon --case <dir> --wind "$(just wind --print-path -b -52,-44,-32,-24)"
+just run --ww3 --case <dir> --wind ifs --temp cmems  # and the temperature beside the run
+```
+
+`(v)` `--ww3` ran a regular grid and a triangular grid on IFS wind on 2026-11-11; `⚠` the
+Copernicus download was not run (no account in that session), and WW3 does not read the
+temperature with the lab switches ([`docs/RUN_COMMAND_202611.md`](docs/RUN_COMMAND_202611.md)).
+
 Each run mode has a `just` recipe:
 
 ```bash
+just run --help        # the one command: every runtime, every option
 just smoke             # smoke-ww3, then smoke-ww3-gpu: regtest ww3_ts1, seconds
-just smoke-ww3         # --ww3: WW3 as written
-just smoke-ww3-gpu        # --ww3-gpu --cpu: WW3 with the Kokkos DIA (W3SNL1), compared with the Fortran and --ww3
+just smoke-ww3         # --ww3: MetOcean's WW3 as written
+just smoke-chaceon     # --chaceon --cpu: WW3 in Rust, compared with --ww3 built with chaceon's switch
+just smoke-ww3-gpu        # --ww3-gpu --cpu: WW3 with the Kokkos DIA (W3SNL1), compared with the Fortran and --ww3-noaa
 just full-ww3          # the expensive case: bench_small, 9 520 sea points, minutes
 just full-ww3-gpu         # the same with the Kokkos DIA
 just smoke-ww4         # --ww4: WAVEWATCH IV; exit 5 while a part the case needs is not ported
@@ -215,15 +252,15 @@ just port-score        # how much of WW3 runs on Kokkos, and the routines ranked
 
 ## where it stands
 
-The numbers below are from [`kokkos/PORT_STATUS.md`](kokkos/PORT_STATUS.md) on 2026-10-17
+The numbers below are from [`kokkos/PORT_STATUS.md`](kokkos/PORT_STATUS.md) on 2026-11-11
 (`just port-score`). The shares of run time are from a gprof profile of `bench_small` on one
 thread (`just profile-case full`).
 
 | Level | Routines | Share of the profiled run time |
 |---|---|---|
-| translated: a Kokkos version exists | 310 of 1 023 | 99.3 % |
-| ported: WW3 calls it when its flag is set | 60 | 99.3 % |
-| regtested: WW3's regtests agree with the Fortran | 10 | 48.6 % |
+| translated: a Kokkos version exists | 316 of 1 023 | 99.3 % |
+| ported: WW3 calls it when its flag is set | 72 | 99.3 % |
+| regtested: WW3's regtests agree with the Fortran | 14 | 48.6 % |
 
 - `(v)` The DIA (`W3SNL1`) is byte-identical to the Fortran on all 100 serial `NL1` entries of
   WW3's regtests, on the CPU.
@@ -237,7 +274,7 @@ thread (`just profile-case full`).
   ([`AGENTS.md`](AGENTS.md#running-on-the-gpu-hard-rule)).
 - WW3's regtests wait for a validation phase, which the owner starts. Until then, the parity
   argument comes from the compiled code of the two sides
-  ([ADR-0016](docs/ADRs/ADR-0016-speed-first-regtests-postponed-one-person-loop.md)).
+  ([ADR-0016](docs/ADRs.md#adr-0016)).
 
 ## quick start
 
@@ -253,36 +290,28 @@ just full-ww3-gpu         # the same on bench_small, 9 520 sea points
 just port-score           # the part of WW3 that runs on Kokkos, and the routines in order of time
 ```
 
-Then read [`course/00-orientation.md`](course/00-orientation.md). To see all the tasks, run `just`.
+To see all the tasks, run `just`.
 
 ## everything else
 
 Click a section to open it.
 
-## the book
+## the publications
 
-<details><summary>The book that this repository builds: its subject, and how to build it</summary>
+<details><summary>The texts this repository holds, and how to build them</summary>
 
-*Without Changing the Answer* (working title) is written in the tradition of self-published
-technical books built from a public repository, such as Sandy Maguire's *Thinking with Types* and
-Gabriel Volpe's *Practical FP in Scala* `(v)` marola's
-[MIP-0014 §4](https://github.com/marola-dev/marola/blob/main/docs/MIPs/MIP-0014-marola-book.md),
-read 2026-10-08. Its subject is a method: how coding agents port Fortran under a bit-for-bit gate
-and a validation ladder (agentic coding), and how plans, evaluations and measurements are written so
-that an agent can be held to them (agentic research). The rules in [`AGENTS.md`](AGENTS.md), the
-design docs in [`docs/WFIPs/`](docs/WFIPs/README.md), the decisions in
-[`docs/ADRs/`](docs/ADRs/README.md) and the research log in [`docs/log/`](docs/log/README.md) are
-chapters in waiting. [ADR-0003](docs/ADRs/ADR-0003-repository-is-a-book.md) records the decision and
-[WFIP-0002](docs/WFIPs/WFIP-0002-lab-as-a-book.md) the plan.
+Only texts with a Markdown source live here: the preprint, the project proposal and the GTA
+report.
 
-Each tagged release is an edition, archived on Zenodo as a book ([`RELEASES.md`](RELEASES.md)). A
-free Leanpub edition is fed by CI from the same chapters
-([`docs/LEANPUB_202610.md`](docs/LEANPUB_202610.md)).
+| Text | Source | Built file |
+|---|---|---|
+| Preprint, *wave models on GPUs* | [`pubs/preprint/`](pubs/preprint/README.md) | `pubs/preprint/wave-models-on-gpus.pdf` |
+| UFRJ/DEL project proposal, pt-BR (reference) and en | [`pubs/proposal/`](pubs/proposal/) | [`pdf/proposal_pt.pdf`](pdf/proposal_pt.pdf), [`pdf/proposal_en.pdf`](pdf/proposal_en.pdf) |
+| Easy pt-BR report for the GTA, DEL/UFRJ | [`pubs/relatorio-gta/`](pubs/relatorio-gta/relatorio.easy.pt-BR.md) | [`pdf/relatorio-gta-pedro-cruz.pdf`](pdf/relatorio-gta-pedro-cruz.pdf) |
 
 ```console
-just book          # the chapters as a PDF (nix, picasso's publisher lab)
-just book-html     # the chapters as web pages, into build/site/book/
-just leanpub       # the chapters as a Leanpub manuscript
+just proposal pt   # the proposal as a PDF (nix, picasso's publisher lab)
+just proposal-docx # the proposal in Word, for review
 just adrs          # one line per decision
 just wfip check    # the design docs and their definitions of done
 ```
@@ -293,35 +322,26 @@ just wfip check    # the design docs and their definitions of done
 
 <details><summary>The website: what it shows, and how to build it</summary>
 
-<https://h0ffmann.github.io/ww3-gpu/> is a Gleam + Lustre front page, prerendered, with no script.
-Every fact on it is read from this repository's files by `site/content`: the chapters, the
-decisions, the designs, the notes, the DOI and the people. The chapters are at
-[`/book/`](https://h0ffmann.github.io/ww3-gpu/book/), next to the
-[PDF](https://h0ffmann.github.io/ww3-gpu/ww3-lab-course.pdf), the progress page
-(`/andamento/`), the decisions (`/adrs/`) and an easy Brazilian Portuguese report for the GTA,
-DEL/UFRJ (`/relatorio-gta/`, from [`pubs/relatorio-gta/`](pubs/relatorio-gta/relatorio.easy.pt-BR.md), PDF in
-[`pdf/relatorio-gta-pedro-cruz.pdf`](pdf/relatorio-gta-pedro-cruz.pdf)). [`DESIGN.md`](DESIGN.md) has its look: a sea at night,
-and three lights on it. The same page is built in Brazilian Portuguese at
-[`/pt-BR/`](https://h0ffmann.github.io/ww3-gpu/pt-BR/), from one source and a table of
-translations, [`site/data/translations/pt-BR.tsv`](site/data/translations/pt-BR.tsv): the build
-fails when a sentence has no row.
+<https://wave.piabrota.art/> is the front page and the lineage, in English and at `/pt-BR/` in
+Brazilian Portuguese. Its code lives in [piabrota/nix-os](https://github.com/piabrota/nix-os)
+(`ww3-site/`, since 11 November 2026, [ADR-0024](docs/ADRs.md#adr-0024)), which builds it from this
+repository's files at a pinned commit: the decisions, the designs, the notes, the port's numbers
+(`kokkos/ports.tsv`, `site/data/port_score.tsv`), the lineage and related works
+(`site/data/lineage.tsv`, `site/data/related.tsv`), the DOI and the people. A change to those
+files reaches the site when nix-os moves its pin. A change to the page itself is a pull request
+there.
+
+GitHub Pages, at <https://h0ffmann.github.io/ww3-gpu/>, still serves the progress page
+(`/andamento/`), the decisions (`/adrs/`), the zoomable drawings (`/figures/`) and an easy
+Brazilian Portuguese report for the GTA, DEL/UFRJ (`/relatorio-gta/`, from
+[`pubs/relatorio-gta/`](pubs/relatorio-gta/relatorio.easy.pt-BR.md), PDF in
+[`pdf/relatorio-gta-pedro-cruz.pdf`](pdf/relatorio-gta-pedro-cruz.pdf)); its old front page and
+lineage addresses redirect to wave.piabrota.art.
 
 ```console
-just site          # the chapters, then the front page, into build/site/
+just site          # the progress, ADR and report pages and the redirects, into build/site/
 just site-serve    # serve build/site on http://localhost:8000
 ```
-
-<details><summary>Environment details</summary>
-
-| Type | Program |
-| :---- | :-----: |
-| Language | Gleam (JavaScript target), Lustre |
-| Bundling and tests | node, esbuild, gleeunit |
-| Toolchain | picasso's `labs/gleam-website`, through `flake.nix` (`nix develop .#site`) |
-| Book pages | pandoc (`scripts/build_html.sh`) |
-| Deploy | `.github/workflows/pages.yml`, GitHub Pages |
-
-</details>
 
 </details>
 
@@ -335,7 +355,7 @@ with its source and a status (`unverified` until a source is checked), linked to
 [`docs/log/`](docs/log/README.md), append-only. Where each kind of memory lives is in
 [`MEMORY.md`](MEMORY.md); the long-term memory across sessions and agents is
 [ai-memory](https://github.com/akitaonrails/ai-memory), chosen in
-[ADR-0009](docs/ADRs/ADR-0009-ww3-gpu-adopts-ai-memory-from-fabio-akita.md).
+[ADR-0009](docs/ADRs.md#adr-0009).
 
 Part of that memory is published. The ai-memory pages the owner tags `publish` are copied into
 [`memory/`](memory/README.md), which starts with [`HUMAN.md`](memory/HUMAN.md): who owns this
@@ -364,17 +384,17 @@ or issues, linked so you can follow them.
 
 | Area | Question it answers | Where | State |
 |---|---|---|---|
-| The course | How do you build, run and measure WW3, then port a kernel? | [`course/`](course/README.md), [`examples/`](examples/README.md), [`exercises/`](exercises/README.md) | 17 lessons, merged |
-| Kokkos port of `W3SNL1` | Can a WW3 kernel run on a GPU with bit-identical results? | [`kokkos/`](kokkos/README.md), [lesson 12](course/12-porting-a-kernel-w3snl1.md) | Bit-identical on 3 backends in the unit tests ADR-0010 removed; WW3 regtest matrix on the CPU byte-identical to the Fortran DIA on all 100 serial `NL1` entries (2026-10-15) |
-| Benchmarks | What do an i9 and an RTX 4090 actually give WW3? | [`bench/`](bench/README.md), [`gpu/`](gpu/README.md), [lesson 09](course/09-benchmark-profile-compile-run.md) | Tooling merged |
-| Port priority | Which routine should be ported next? | [ADR-0002](docs/ADRs/ADR-0002-port-order-wall-time.md), [`PORT_STATUS.md`](kokkos/PORT_STATUS.md) | Port by measured wall time. A first profile puts `W3SDS4` at 67 % of source-term time ([#45](https://github.com/h0ffmann/ww3-gpu/issues/45)) |
-| Porting with agents | How can coding agents port forty routines without a human redoing the checks? | [`AGENTS_KOKKOS`](docs/AGENTS_KOKKOS_202609.md), [lesson 13](course/13-bulk-porting-with-agents.md), [#42](https://github.com/h0ffmann/ww3-gpu/issues/42) | Rules merged; task queue and parity ladder in #42 |
-| Agent tooling | Which agent frameworks and research tools fit that workflow? | [#25](https://github.com/h0ffmann/ww3-gpu/pull/25), [#41](https://github.com/h0ffmann/ww3-gpu/pull/41), [#38](https://github.com/h0ffmann/ww3-gpu/issues/38), [ADR-0009](docs/ADRs/ADR-0009-ww3-gpu-adopts-ai-memory-from-fabio-akita.md) | Evaluations in review; ai-memory chosen |
-| Bit-for-bit proof | What can be proved, and not only tested, about the Fortran → C++ translation? | [`BITWISE_PROOF`](docs/BITWISE_PROOF_202610.md), [`docs/proof/`](docs/proof/README.md), [ADR-0001](docs/ADRs/ADR-0001-proof-language.md) | No proof language; exhaustive sweeps, GIMPLE diffs and SMT queries. `W3SNL1` section 1 swept over all 2^32 inputs |
+| Examples | How do you run WW3 on a real case? | [`examples/`](examples/README.md) | Two runnable cases, merged |
+| Kokkos port of `W3SNL1` | Can a WW3 kernel run on a GPU with bit-identical results? | [`kokkos/`](kokkos/README.md), [port report](kokkos/port_report/W3SNL1_KOKKOS.md) | Bit-identical on 3 backends in the unit tests ADR-0010 removed; WW3 regtest matrix on the CPU byte-identical to the Fortran DIA on all 100 serial `NL1` entries (2026-10-15) |
+| Benchmarks | What do an i9 and an RTX 4090 actually give WW3? | [`bench/`](bench/README.md), [`gpu/`](gpu/README.md) | Tooling merged |
+| Port priority | Which routine should be ported next? | [ADR-0002](docs/ADRs.md#adr-0002), [`PORT_STATUS.md`](kokkos/PORT_STATUS.md) | Port by measured wall time. A first profile puts `W3SDS4` at 67 % of source-term time ([#45](https://github.com/h0ffmann/ww3-gpu/issues/45)) |
+| Porting with agents | How can coding agents port forty routines without a human redoing the checks? | [`AGENTS_KOKKOS`](docs/AGENTS_KOKKOS_202609.md), [#42](https://github.com/h0ffmann/ww3-gpu/issues/42) | Rules merged; task queue and parity ladder in #42 |
+| Agent tooling | Which agent frameworks and research tools fit that workflow? | [`EVAL-NOOA_202609.md`](docs/EVAL-NOOA_202609.md), [`LLM_TOOLING_202610.md`](docs/LLM_TOOLING_202610.md), [#38](https://github.com/h0ffmann/ww3-gpu/issues/38), [ADR-0009](docs/ADRs.md#adr-0009) | Evaluations in review; ai-memory chosen |
+| Bit-for-bit proof | What can be proved, and not only tested, about the Fortran → C++ translation? | [`BITWISE_PROOF`](docs/BITWISE_PROOF_202610.md), [`docs/proof/`](docs/proof/README.md), [ADR-0001](docs/ADRs.md#adr-0001) | No proof language; exhaustive sweeps, GIMPLE diffs and SMT queries. `W3SNL1` section 1 swept over all 2^32 inputs |
 | Triton and ML weather forcing | Does a Triton kernel of the `W3SDS4` cumulative term beat the Kokkos one? Does WeatherNext 3 wind improve the wave forecast? | [#45](https://github.com/h0ffmann/ww3-gpu/issues/45), [`W3SDS4_TRITON_PLANO`](docs/W3SDS4_TRITON_PLANO_202610.pt.md) (pt-BR) | Planned |
 | Single-H100 port | What would a full port to one H100 take? | [`KOKKOS_H100_PLAN`](docs/KOKKOS_H100_PLAN_202609.md), [WFIP-0005](docs/WFIPs/WFIP-0005-device-resident-step.md), [WFIP-0006](docs/WFIPs/WFIP-0006-device-libm-bits.md) | Plan. The device-resident step (`--kokkos resident`) runs on the CPU byte-identical to the Fortran, with the spectrum crossing once each way on `bench_small` ([#179](https://github.com/h0ffmann/ww3-gpu/pull/179)); the device's libm calls go to copies of glibc's ([#178](https://github.com/h0ffmann/ww3-gpu/pull/178)). Nothing has run on a GPU |
-| WW4 and SWAN | What replaces WW3, and what covers the coast? | [lesson 14](course/14-ww4-and-the-future.md), [lesson 15](course/15-swan.md) | Merged |
-| The book and the proposal | The lessons compiled as a book, and the project proposal | [`pubs/`](pubs/README.md), PDFs and Word files in [`pdf/`](pdf/), [WFIP-0002](docs/WFIPs/WFIP-0002-lab-as-a-book.md) | Built by CI on every merge |
+| WW4 and SWAN | What replaces WW3, and what covers the coast? | [`docs/ww4-status.json`](docs/ww4-status.json), [`scripts/04_get_swan.sh`](scripts/04_get_swan.sh) | Snapshot kept by `just ww4-status` |
+| The preprint and the proposal | The texts written from this work | [`pubs/`](pubs/README.md), PDFs and Word files in [`pdf/`](pdf/) | The proposal is built by CI on every merge |
 
 [`docs/AWESOME-WW3_202609.md`](docs/AWESOME-WW3_202609.md) is a curated link list, and
 [`docs/GLOSSARY.md`](docs/GLOSSARY.md) expands every abbreviation, switch, routine and tool name.
@@ -413,7 +433,7 @@ just submodule-init             # sparse-checkout picasso (once per clone)
 just get                        # clone upstream NOAA-EMC/WW3 develop into ~/src/WW3
 just rt                         # build with ww3_tp1.1's own switch and run that regtest (~30 s)
 just build                      # rebuild with the lab switch (switches/switch_lab_shrd, ST4 physics)
-just example01                  # first course example: fetch-limited growth (~1 min)
+just example01                  # first example: fetch-limited growth (~1 min)
 just kokkos-test serial-debug   # build and test the C++/Kokkos kernels
 ```
 
@@ -427,7 +447,7 @@ just coast-ww3-gpu      # the forced case: currents, water levels, ice, boundary
 just ww3-gpu-matrix     # WW3's regtest matrix, CPU only
 ```
 
-Then start at [`course/00-orientation.md`](course/00-orientation.md). `just` lists every task; each
+`just` lists every task; each
 recipe is a thin wrapper over a script in `scripts/`, except `just ww3-gpu-matrix*`, which drive WW3's
 regtest matrix through CMake/CTest in `regtests/`. The toolchain, the WW3 fork and the Kokkos
 presets are in [`docs/TOOLCHAIN.md`](docs/TOOLCHAIN.md). For coastal cases, add SWAN with
@@ -477,7 +497,7 @@ No GitHub Actions workflow builds a Docker image on its own: every one starts by
 
 The Kokkos code on the GPU has its own image, `docker/Dockerfile.cuda`: NVIDIA's CUDA 13.4 on
 Ubuntu 26.04, Kokkos 5.2.2 built with CUDA for compute capability 8.9 (the RTX 4090; `KOKKOS_ARCH`
-picks another), with `--ww3-gpu --gpu` and, as its reference on the CPU, `--ww3`. Its kernels call CUDA's libdevice, not the device copies of glibc's libm (`WW_KOKKOS_LIBM=OFF`: Ubuntu ships libmvec stripped, and the copies need a symbol of it), so a GPU run in the image is judged by tolerance ([ADR-0014](docs/ADRs/ADR-0014-gpu-runs-judged-by-tolerance.md)). The host needs the NVIDIA driver and the
+picks another), with `--ww3-gpu --gpu` and, as its reference on the CPU, `--ww3-noaa`. Its kernels call CUDA's libdevice, not the device copies of glibc's libm (`WW_KOKKOS_LIBM=OFF`: Ubuntu ships libmvec stripped, and the copies need a symbol of it), so a GPU run in the image is judged by tolerance ([ADR-0014](docs/ADRs.md#adr-0014)). The host needs the NVIDIA driver and the
 [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)
 for `docker run --gpus all`. As on the host, every `--gpu` run asks the supervising person for
 `yes` at the terminal ([Running on the GPU](AGENTS.md#running-on-the-gpu-hard-rule)).
@@ -504,8 +524,8 @@ toolchain of [`docs/TOOLCHAIN.md`](docs/TOOLCHAIN.md), which uses another gfortr
 
 **Published images.** `.github/workflows/docker-dist.yml` runs only when a person starts it from
 Actions (Run workflow); no push, pull request or schedule triggers it. It builds the chosen
-runtime images and checks, without running a case, that each holds NOAA's WW3 (`--ww3`, compiled
-from `WW3-noaa/` at its pin) and ww3-gpu (`--ww3-gpu`) and no source file (`just dcheck` runs the
+runtime images and checks, without running a case, that each holds NOAA's WW3 (`--ww3-noaa`, compiled
+from the fork's base commit) and ww3-gpu (`--ww3-gpu`) and no source file (`just dcheck` runs the
 same check). With `push` ticked it also pushes `ghcr.io/h0ffmann/ww3-gpu:<tag>` (CPU) and
 `ghcr.io/h0ffmann/ww3-gpu-cuda:<tag>`, and `latest` too when the run is on main. The labels
 `io.github.h0ffmann.ww3-gpu.ww3-noaa` and `io.github.h0ffmann.ww3-gpu.ww3` name the two WW3 commits
@@ -515,7 +535,7 @@ case and compare the outputs with only Docker:
 ```console
 img=ghcr.io/h0ffmann/ww3-gpu:<tag>
 docker inspect "$img" --format '{{json .Config.Labels}}'    # which WW3 commits
-docker run --rm --user "$(id -u):$(id -g)" -v "$PWD/runs:/work/runs" "$img" --ww3 smoke
+docker run --rm --user "$(id -u):$(id -g)" -v "$PWD/runs:/work/runs" "$img" --ww3-noaa smoke
 docker run --rm --user "$(id -u):$(id -g)" -v "$PWD/runs:/work/runs" "$img" --ww3-gpu smoke
 ```
 
@@ -577,14 +597,13 @@ solvers and source terms, no physics and no release. The first public release is
 January 2027 according to the proposal's advisor ⚠ (no NOAA source; ON 525 said summer 2027). The
 plan, including the commitment to stop supporting WW3 once WW4 matures, is in
 [NCEP Office Note 525](https://doi.org/10.25923/h7j3-1h25). WW3 is still worth learning: the
-physics is the same and the concepts carry over. See
-[`course/14-ww4-and-the-future.md`](course/14-ww4-and-the-future.md); `just ww4-status` diffs WW4
+physics is the same and the concepts carry over. `just ww4-status` diffs WW4
 against the last snapshot (`docs/ww4-status.json`).
 
 SWAN is the other half of the toolkit. It is implicit and unconditionally stable, has no CFL limit
 and runs in stationary mode, so the standard coastal set-up is WW3 offshore and SWAN nearshore. Its
-source now lives on [TU Delft GitLab](https://gitlab.tudelft.nl/citg/wavemodels/swan). See
-[`course/15-swan.md`](course/15-swan.md).
+source now lives on [TU Delft GitLab](https://gitlab.tudelft.nl/citg/wavemodels/swan);
+`just swan` clones and builds it.
 
 </details>
 
@@ -603,8 +622,7 @@ module, `W3SRCEMD`, and got about 1.3× against 42 CPU cores on Summit's V100s. 
 the result, and the code was not merged into `NOAA-EMC/WW3`. So compile WW3 with `nvfortran` for the
 CPU, use `gpu/` to learn GPU Fortran, and `bench/` to measure your own hardware instead of trusting
 anyone's table, including the ones here. The Kokkos port takes the other route: kernels that keep
-their data on the device and match the Fortran within the tolerances WW3's regtests are judged by
-([`course/09-benchmark-profile-compile-run.md`](course/09-benchmark-profile-compile-run.md)).
+their data on the device and match the Fortran within the tolerances WW3's regtests are judged by.
 
 </details>
 
@@ -616,18 +634,21 @@ their data on the device and match the Fortran within the tolerances WW3's regte
 
 | id | combination | what it runs | in CI |
 |---|---|---|---|
-| h1 | `--ww3-gpu --cpu` | WW3 with the Kokkos DIA on OpenMP, against the Fortran DIA and pair to pair against `--ww3` (`ww3_ts1`) | **yes**: [`health.yml`](.github/workflows/health.yml), on every pull request and on `main` |
+| h1 | `--ww3-gpu --cpu` | WW3 with the Kokkos DIA on OpenMP, against the Fortran DIA and pair to pair against `--ww3-noaa` (`ww3_ts1`) | **yes**: [`health.yml`](.github/workflows/health.yml), on every pull request and on `main` |
 | h2 | `--ww3-gpu --gpu` | the same on CUDA | no: it needs a GPU and the owner supervising (AGENTS.md hard rule) |
-| w3 | `--ww3 --cpu` | WW3 as written | inside h1, as its pair |
+| w3 | `--ww3-noaa --cpu` | NOAA's WW3 as written | inside h1, as its pair |
+| m3 | `--ww3 --cpu` | MetOcean's WW3 as written, the reference | no |
+| c1 | `--chaceon --cpu` | WW3 in Rust, against `--ww3` | no |
+| c2 | `--chaceon --gpu` | the same on a GPU | no: it exits 5, chaceon has no run on a real GPU yet |
 | w4 | `--ww4 --cpu` | WAVEWATCH IV | no: it exits 5 until WW4 has the parts |
 
 Only h1 is in CI, by the owner's word of 14 October 2026. Each ported routine has a report in
 [`kokkos/port_report/`](kokkos/port_report/README.md): what was ported, every benchmark, how it
 was regtested. The port has no tests of its own; WW3's regtests are its tests
-([ADR-0010](docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md)). The website draws its benchmarks.
+([ADR-0010](docs/ADRs.md#adr-0010)). The website draws its benchmarks.
 
 `--ww3-gpu` runs on the CPU (Kokkos OpenMP) by default, and is then compared pair to pair with
-`--ww3`. `just smoke-ww3-gpu gpu` runs CUDA, only with a human supervising: it asks at the terminal
+`--ww3-noaa`. `just smoke-ww3-gpu gpu` runs CUDA, only with a human supervising: it asks at the terminal
 (AGENTS.md hard rule). An NVIDIA GPU whose driver does not answer stops it with exit 4 and the
 cause. On
 14 October 2026 both cases passed on OpenMP; the GPU run was not made yet. `--ww4` stops with
@@ -643,18 +664,17 @@ solver yet
 
 | Path | Contents |
 |---|---|
-| `course/` | The book's chapters: 17 lessons, 00 to 15 and 19 |
-| `examples/`, `exercises/` | Runnable cases with real `.nml` inputs; exercises for lessons 09 to 13, with solutions |
+| `examples/` | Runnable cases with real `.nml` inputs |
 | `kokkos/` | The `ww_kokkos` kernel library (`W3SNL1` ported), the tools and their GoogleTest suites (none for the port, ADR-0010) |
 | `gpu/`, `bench/` | GPU Fortran sandbox for an RTX 4090; i9 against 4090 benchmarks |
 | `proof/` | The runnable half of the proof plan (all 2^32 inputs of `W3SNL1` section 1; SMT queries) |
-| `docs/` | Plans, decisions (`ADRs/`), designs (`WFIPs/`), the research log, the link list, the glossary |
+| `docs/` | Plans, decisions (`ADRs.md`), designs (`WFIPs/`), the research log, the link list, the glossary |
 | `notes/` | The second brain ([`NOTES.md`](NOTES.md)) |
-| `site/` | The Gleam front page ([`DESIGN.md`](DESIGN.md)) |
-| `pubs/` | The book's build and the UFRJ/DEL project proposal; built files land in `pdf/` |
+| `site/data/` | The tables the website reads (piabrota/nix-os, `ww3-site/`) |
+| `pubs/` | The preprint, the UFRJ/DEL project proposal and the GTA report; built files land in `pdf/` |
 | `scripts/`, `switches/`, `env/` | Get, build and run WW3 and SWAN; annotated switch files; conda and an untested build-environment Dockerfile |
 | `docker/`, `.dockerignore` | The Ubuntu runtime image: WW3, WW3 with the Kokkos DIA and WW4 compiled, no sources ([the Docker image](#2--the-docker-image)) |
-| `picasso/`, `WW3-noaa/`, `WW3/`, `WW4/` | Submodules: the pinned toolchain, pure [NOAA-EMC/WW3](https://github.com/NOAA-EMC/WW3), the [h0ffmann/WW3](https://github.com/h0ffmann/WW3) fork, the [h0ffmann/WW4](https://github.com/h0ffmann/WW4) fork |
+| `picasso/`, `WW3-metocean-7.14/`, `WW3/`, `WW4/`, `chaceon/` | Submodules: the pinned toolchain, MetOcean's WW3 7.14 ([metocean/WW3](https://github.com/metocean/WW3)), the [h0ffmann/WW3](https://github.com/h0ffmann/WW3) fork, the [h0ffmann/WW4](https://github.com/h0ffmann/WW4) fork, [h0ffmann/chaceon](https://github.com/h0ffmann/chaceon) |
 
 Lab code is C++, Fortran and shell. Python appears only in the publishing pipeline and the repo's
 own checks. CI checks shell syntax, compiles the Fortran sandbox and examples, builds and tests
@@ -671,7 +691,7 @@ and link-checks the Markdown. It does not build WW3, which needs the NOAA FTP da
 - `(v)` marks a claim verified against a source fetched while building this repo.
 - Input files use the namelist (`.nml`) interface instead of the legacy fixed-format `.inp` files.
 - A commit carries a `Tested:` trailer and no cost record
-  ([ADR-0009](docs/ADRs/ADR-0009-ww3-gpu-adopts-ai-memory-from-fabio-akita.md)).
+  ([ADR-0009](docs/ADRs.md#adr-0009)).
 
 </details>
 
@@ -699,47 +719,27 @@ against "Translate, don't improve", the rule of the ported kernels ([`AGENTS.md`
 
 ## the engineering loop
 
-<details><summary>Compound Engineering, Archify and Context7: the tools for work with coding agents</summary>
+<details><summary>The loop, Archify and Context7: how work with coding agents is done</summary>
 
 One person works here, so the process is as light as the change allows
-([ADR-0016](docs/ADRs/ADR-0016-speed-first-regtests-postponed-one-person-loop.md)). WW3's regtests
+([ADR-0016](docs/ADRs.md#adr-0016)). WW3's regtests
 are postponed to a validation phase that checks the translation from Fortran to C++; until then a
-speed figure says "regtest pending ⚠". Three tools come with the repository, each pinned.
+speed figure says "regtest pending ⚠". Two tools come with the repository, each pinned.
 
-### Compound Engineering: plan, work, review, compound
-
-[Compound Engineering](https://github.com/EveryInc/compound-engineering-plugin) (EveryInc, MIT) is
-a Claude Code plugin, pinned to `compound-engineering-v3.30.3` in
-[`.claude/settings.json`](.claude/settings.json). Its idea is in the last step: every problem
-solved leaves a short written lesson, and the next plan reads those lessons first, so each change
-makes the following one cheaper. Agents follow it when the owner guides engineering work.
-
-The loop is sized to the change:
+### The loop: sized to the change
 
 | Size | Example | Steps |
 |---|---|---|
 | Small | a fix in one file, a doc, a flag | do it, run the gates, `just pr` |
-| Medium | a routine to translate, a tool, a recipe | `/ce-plan`, `/ce-work`, `/ce-code-review`, `/ce-compound` |
-| Large | a unit such as all of ST4, a new backend | `/ce-brainstorm` first, then the medium steps |
+| Medium | a routine to translate, a tool, a recipe | a plan in [`docs/plans/`](docs/plans/README.md), the work, a report-only review |
+| Large | a unit such as all of ST4, a new backend | its requirements first, then the medium steps |
 
-What each step does here:
-
-- `/ce-plan` writes a plan to [`docs/compound/plans/`](docs/compound/README.md) after reading the
-  lessons, the log, the port ledger and the ADRs. A plan for a ported routine names the Fortran at
-  the pinned commit, the profile row that ranks it and the parity argument it will make.
-- `/ce-work` builds it on a `goal/<id>-<slug>` branch, with the repository's gates and a `Tested:`
-  trailer; the PR is opened with `just pr`.
-- `/ce-code-review` reports and does not rewrite; its pass with a second model is off, because it
-  would send the diff to another provider.
-- `/ce-compound` writes the lesson to `docs/compound/solutions/`, when it is not obvious from the
-  diff.
-
-A hard rule of [`AGENTS.md`](AGENTS.md) always wins over a step's default:
-`/ce-simplify-code` never touches code translated from Fortran ("Translate, don't improve"), and
-`/ce-work` never adds a unit test of a ported routine (ADR-0010). The full list is
-[`AGENTS.md`, "Engineering work"](AGENTS.md#engineering-work-the-compound-loop). If `/ce-plan` is
-not offered in your session, run `/plugin` and install `compound-engineering` from the
-`compound-engineering-plugin` marketplace that `.claude/settings.json` names.
+A plan for a ported routine names the Fortran at the pinned commit, the profile row that ranks it
+and the parity argument it will make. A hard rule of [`AGENTS.md`](AGENTS.md) always wins over a
+step: a cleanup never touches code translated from Fortran ("Translate, don't improve"), and the
+work never adds a unit test of a ported routine (ADR-0010). The full list is
+[`AGENTS.md`, "Engineering work"](AGENTS.md#engineering-work). Compound Engineering's plugin carried
+this loop until 11 November 2026 ([ADR-0021](docs/ADRs.md#adr-0021)).
 
 ### Archify: interactive twins of the figures
 
@@ -788,13 +788,19 @@ what it returns is read as data, never as instructions.
 - **Fabio Akita** ([akitaonrails](https://github.com/akitaonrails)), legendary br dev (the owner's
   words, 2026-10-14): the author of [ai-memory](https://github.com/akitaonrails/ai-memory) (MIT),
   the long-term memory this repository adopts
-  ([ADR-0009](docs/ADRs/ADR-0009-ww3-gpu-adopts-ai-memory-from-fabio-akita.md)).
+  ([ADR-0009](docs/ADRs.md#adr-0009)).
 
 </details>
 
 ## related work
 
 <details><summary>marola, and the sister works of this repository</summary>
+
+Two forecast systems run WAVEWATCH III from this repository. The first is ondaseventos, LabECO/UFSC's
+operational forecast ([ondaseventos.ufsc.br](https://ondaseventos.ufsc.br/)); the second is marola.
+`just ifs-get` fetches the ECMWF IFS winds that ondaseventos names as its atmospheric model
+([`docs/IFS_FORCING_202611.md`](docs/IFS_FORCING_202611.md); how ondaseventos itself fetches them
+was not read ⚠).
 
 [marola](https://github.com/marola-dev/marola) ([marola.dev](https://marola.dev/)) is an open,
 non-profit platform for sea conditions and bathing-water quality at Brazilian beaches, by the same
@@ -873,11 +879,11 @@ you ran. A new patch release is cut every Friday when `main` has changed, or by 
 | What | Whose | Terms |
 |---|---|---|
 | This repository | Matheus Hoffmann | MIT ([`LICENSE`](LICENSE)) |
-| The kernels translated from WW3: `kokkos/src/ww_kokkos/snl1_*`, `kokkos/src/fortran_iface/w3kokkosmd.F90`, the patch in `kokkos/src/fortran_iface/PATCH.md` | derived works of WW3 | `LGPL-3.0-or-later`, stated in each file's `SPDX-License-Identifier` line |
+| The C++ translated from WW3 Fortran: the files of [`kokkos/src/ww_kokkos/`](kokkos/src/ww_kokkos/) whose header cites a "WW3 heritage" | derived works of WW3; copyright National Weather Service (NWS), NOAA | `LGPL-3.0-or-later`, in each file's `SPDX-License-Identifier` line, with the NWS copyright in `SPDX-FileCopyrightText` |
 | Vendored skills (`humanizar`, `humanizer`, `ponytail*`, `sharingan`) | their authors | their own licences, pinned in [`.claude/skills/skills.lock`](.claude/skills/skills.lock) |
 | ai-memory, used and not vendored | Fabio Akita | MIT |
 
-No WW3 source is vendored here. `scripts/01_get_ww3.sh` clones it, and upstream regression-test
+The texts are in [`LICENSES/`](LICENSES/) and the split by directory is in [`NOTICE`](NOTICE). This is compliance housekeeping, not legal advice. No WW3 source is vendored here. `scripts/01_get_ww3.sh` clones it, and upstream regression-test
 inputs are fetched, not redistributed. Third-party tools listed in
 `docs/AWESOME-WW3_202609.md` keep their own licences.
 

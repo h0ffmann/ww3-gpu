@@ -1,0 +1,32 @@
+# Português Técnico Controlado (PTC), the skill of Kayque Rotondo (MIT,
+# https://github.com/kayquer/portugues-tecnico-controlado at 8938f58, SKILL.md v1.2.0).
+# PTC-6: the unambiguous rows of the skill's references/lexico.md (avoid, use). The rows
+# whose replacement depends on the sense (validar, gerar, atualizar, acessar) are left out,
+# and so is "seta", which is also the noun "arrow".
+extends: substitution
+message: "PTC-6: use '%s' em vez de '%s'."
+level: warning
+ignorecase: true
+nonword: true
+swap:
+  '(?<!\p{L})utiliz\p{L}*(?!\p{L})': usar|uso
+  '(?<!\p{L})(?:possuir|possui|possuem)(?!\p{L})': ter
+  '(?<!\p{L})através d[eoa]s?(?!\p{L})': por|por meio de
+  '(?<!\p{L})no âmbito d[eoa]s?(?!\p{L})': em
+  '(?<!\p{L})no que tange a(?!\p{L})': sobre
+  '(?<!\p{L})tendo em vista que(?!\p{L})': porque
+  '(?<!\p{L})a fim de que(?!\p{L})': para que
+  '(?<!\p{L})(?:de forma a|de modo a)(?!\p{L})': para
+  '(?<!\p{L})performance(?!\p{L})': desempenho
+  '(?<!\p{L})(?:setar|setado|setada)(?!\p{L})': definir
+  '(?<!\p{L})(?:deployar|deploya|deployado)(?!\p{L})': implantar|publicar
+  '(?<!\p{L})(?:startar|starta)(?!\p{L})': iniciar
+  '(?<!\p{L})(?:checar|checa|checado|checada)(?!\p{L})': verificar|conferir
+  '(?<!\p{L})(?:deletar|deleta|deletado|deletada)(?!\p{L})': excluir|apagar
+  '(?<!\p{L})requerimentos?(?!\p{L})': requisito
+  '(?<!\p{L})ficheiros?(?!\p{L})': arquivo
+  '(?<!\p{L})utilizador(?:es)?(?!\p{L})': usuário
+  '(?<!\p{L})ecrã(?!\p{L})': tela
+  '(?<!\p{L})equipa(?!\p{L})': equipe
+  '(?<!\p{L})registo(?!\p{L})': registro|cadastro
+  '(?<!\p{L})(?:API|URL|PR|CPU|GPU)''s(?!\p{L})': APIs (plural sem apóstrofo)

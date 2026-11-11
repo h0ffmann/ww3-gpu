@@ -9,36 +9,6 @@
     "config": "pubs/figures/mermaid-config.json"
   },
   "figures": {
-    "a2a-label-handover": {
-      "file": "course/19-two-agents-one-issue-tracker.md",
-      "title": "How do two agents that are never awake at the same time hold one conversation in an issue?",
-      "sha256": "9523e86afd404ac00830fb25d563be3e975eb5d12b3836c3105ae24e572e3330"
-    },
-    "gpu-operation-decision": {
-      "file": "course/13-bulk-porting-with-agents.md",
-      "title": "When does a C++/Kokkos kernel enter the operational configuration?",
-      "sha256": "84b970f871dc4b6ed954c1861cd4c5bfe1c071615fbe00aa65d437535d2568d1"
-    },
-    "kokkos-interop-one-binary": {
-      "file": "course/13-bulk-porting-with-agents.md",
-      "title": "How do the original Fortran routine and its Kokkos kernel coexist in one WW3 binary?",
-      "sha256": "6261d3f0afbabd85ec225dc5c077fa942900ead2347f1bb38dfd080f949d05ab"
-    },
-    "kokkos-one-source-backends": {
-      "file": "kokkos/README.md",
-      "title": "How does one Kokkos source reach the CPU and the GPU of the lab's workstation?",
-      "sha256": "9179f59dd8b28f5afe0a293a165c69b8f1960246281410030fa6292d71dc86b0"
-    },
-    "optimisation-ladder-gates": {
-      "file": "course/13-bulk-porting-with-agents.md",
-      "title": "Which gate must each optimisation step pass before the next step starts?",
-      "sha256": "6c48e094643ef80fc5905d7c9deb36e3327d114ebace5a1c06e4104748097d82"
-    },
-    "porting-validation-ladder": {
-      "file": "course/13-bulk-porting-with-agents.md",
-      "title": "How is each translated version of a kernel checked against the one before it?",
-      "sha256": "b5b40d9f043114063d1a8c6153da5c6df82613f75c870d5fc6de34b46638c153"
-    },
     "proposal-schedule": {
       "file": "pubs/proposal/schedule.en.md",
       "title": "When does each activity of the project happen?",
@@ -79,75 +49,10 @@
       "title": "Do que trata a proposta, em um único mapa?",
       "sha256": "4ef3ee99bb373454affcafdc56b81b9aa5944e2bcccaa3956a41906cba82b9a6"
     },
-    "sds4-profile-ts1": {
-      "file": "docs/W3SDS4_TRITON_202610.md",
-      "title": "Where does the source-term time go, and how much of it is W3SDS4?",
-      "sha256": "4f7e6b64b35c4b0da4f7a41341b402fd6d2486d0eca20f2ba3e2bb48481eaccd"
-    },
-    "sds4-sdscum-branches": {
-      "file": "docs/W3SDS4_TRITON_202610.md",
-      "title": "Which branch of the cumulative-breaking term does W3SDS4 run, and what does each cost?",
-      "sha256": "c6507ef5d52e90d2441e1197b5613be77f9ff0cb7f1ccfcbe053df6896e73678"
-    },
     "testes-ww3-ww4": {
       "file": "pubs/proposal/mapas-mentais.pt.md",
       "title": "Que testes o WW3 e o WW4 ofereciam em setembro e outubro de 2026, e o que o projeto acrescenta?",
       "sha256": "3da37b6eaacadf8557d484cf388c2471f9ba788d009c04a1d459e142f9879342"
-    },
-    "triton-benchmark-arms": {
-      "file": "docs/W3SDS4_TRITON_202610.md",
-      "title": "Which implementations of W3SDS4 are timed, and when does a timing count?",
-      "sha256": "07156b88b10db8cf84a838acdf6fc97e0cd04d912892aefd92d3c90b17c5f25d"
-    },
-    "triton-g-doze-semanas": {
-      "file": "docs/W3SDS4_TRITON_PLANO_202610.pt.md",
-      "title": "Em que ordem o braço Triton G acontece em três meses, e onde ficam os portões?",
-      "sha256": "495db7973da6df3b008cf5c0d66027cf518e23618b8af7f8a46bf551bb3e55b1"
-    },
-    "triton-port-plan": {
-      "file": "docs/W3SDS4_TRITON_202610.md",
-      "title": "In what order is W3SDS4 ported to Triton, and what gate does each step pass?",
-      "sha256": "648fe9170d2d3487807e8219200b7e9332f332b2167e39cff9eaf976e789f80b"
-    },
-    "weathernext-wind-chain": {
-      "file": "docs/W3SDS4_TRITON_202610.md",
-      "title": "How does WeatherNext 3 enter the benchmark, and what are the waves compared with?",
-      "sha256": "007b04d16adf55c27f5807a191022eef7972183c23f460e2b27516c500597961"
-    },
-    "ww3-gpu-at-a-glance": {
-      "file": "README.md",
-      "title": "What does ww3-gpu build, from which sources, and on which runtime does each run mode run?",
-      "sha256": "8cc238cc103867cb13ea85510203fa0f66372ea92dba2179e36ce01c7c8265ef"
-    },
-    "ww3-gpu-at-a-glance-pt": {
-      "file": "README.pt-BR.md",
-      "title": "O que o ww3-gpu compila, de quais fontes, e em qual ambiente roda cada modo?",
-      "sha256": "04bec6c5a285918cdd63d9c3dcf0cf59b574108dc35df2ae51a0a5dffb5da052"
-    },
-    "ww3-gpu-device-math-dataflow": {
-      "file": "docs/WW3_GPU_VS_NOAA_202610.md",
-      "title": "How does a kernel's expf or logf get the bits of NOAA's CPU build on a GPU, and what has been checked?",
-      "sha256": "6a4904102a576344a67e9282c281c748c595dd15aef8aa04f8a451efa2384e63"
-    },
-    "ww3-gpu-parity-workflow": {
-      "file": "docs/WW3_GPU_VS_NOAA_202610.md",
-      "title": "How is a ww3-gpu result judged against NOAA's WW3 before a timing may be recorded?",
-      "sha256": "e0743d9886e1a9ed29306bf0c4217941cc0bb0823efa23f13e4e0e780eba8cd6"
-    },
-    "ww3-gpu-port-lifecycle": {
-      "file": "docs/WW3_GPU_VS_NOAA_202610.md",
-      "title": "Which states does a WW3 routine pass through in ww3-gpu, and how many routines are in each?",
-      "sha256": "043ab99d1f23935850635d3be3f8a19b9a7ff3af509e44dd4096987b2ced1973"
-    },
-    "ww3-gpu-step-sequence": {
-      "file": "docs/WW3_GPU_VS_NOAA_202610.md",
-      "title": "Where does a time step leave the Fortran in ww3-gpu, and what does NOAA's WW3 do at the same place?",
-      "sha256": "a23ba2815043f554daef44e77662a0ffb1c7a28e88ef34f0187a6406619e26dd"
-    },
-    "ww3-gpu-vs-noaa-architecture": {
-      "file": "docs/WW3_GPU_VS_NOAA_202610.md",
-      "title": "What is the same and what differs between NOAA's WW3 and ww3-gpu?",
-      "sha256": "87dd7a876a87eacee136e8013dbe06ec2475f668bb9248fb3f6b64e931bcb2d0"
     }
   }
 }

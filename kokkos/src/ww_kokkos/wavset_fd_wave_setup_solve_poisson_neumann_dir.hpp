@@ -4,6 +4,7 @@
 // WW3 heritage: WW3-noaa/model/src/w3wavset.F90:2742-2852 at NOAA-EMC/WW3 03adda91;
 // authors M. Dutour-Sikiric, A. Roland. Evidence:
 // kokkos/port_report/FD_WAVE_SETUP_SOLVE_POISSON_NEUMANN_DIR_KOKKOS.md.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

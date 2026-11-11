@@ -10,6 +10,7 @@
 // and the callees' ALLOCATEs are `work`. EXTCDE becomes a return code.
 // ⚠ On a device tanhf, sincosf and sqrtf are CUDA's, and libmvec does not exist: the
 // TANH loops (:497-498, :524-525) cannot be bit for bit there.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

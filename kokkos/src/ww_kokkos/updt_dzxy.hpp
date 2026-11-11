@@ -29,6 +29,8 @@
 // second source). A product gives the same bits either way, except which NaN
 // payload survives when both operands are NaN: DFAC is never NaN, a NaN grid
 // metric DPDY/DQDY together with a NaN tx/ty is the only case, not checked ⚠.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <Kokkos_Core.hpp>

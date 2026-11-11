@@ -1,9 +1,9 @@
 # The resident Kokkos preset on WW3's regtest inputs: refused by every `matrix.base` switch, passed with the lab switch's source terms
 
 2026-10-18, an agent for M. Hoffmann; the CPU validation plan
-([`docs/compound/plans/2026-10-18-001-cpu-resident-validation-plan.md`](../compound/plans/2026-10-18-001-cpu-resident-validation-plan.md),
+([`docs/plans/2026-10-18-001-cpu-resident-validation-plan.md`](../plans/2026-10-18-001-cpu-resident-validation-plan.md),
 units U3, U4, U4a), [WFIP-0003](../WFIPs/WFIP-0003-kokkos-regtest-matrix.md),
-[ADR-0016](../ADRs/ADR-0016-speed-first-regtests-postponed-one-person-loop.md).
+[ADR-0016](../ADRs.md#adr-0016).
 
 ## Question
 

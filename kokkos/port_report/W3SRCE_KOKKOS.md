@@ -99,7 +99,7 @@ does; otherwise the loop runs as before (v, read in the fork). The C ABI is `ww_
 Checked 2026-10-17 on the CPU (Kokkos OpenMP backend; Intel Core i9-14900, 32 threads, the pinned
 `ww3` shell), never on the GPU (v):
 
-| Run | Switch | Batched calls / launches / points | Against the Fortran, same executable | Against `--ww3` |
+| Run | Switch | Batched calls / launches / points | Against the Fortran, same executable | Against `--ww3-noaa` |
 |---|---|---|---|---|
 | `bash scripts/ww3-gpu.sh --ww3-gpu smoke --cpu --kokkos SRCE` | `switch_lab_ompg` | 2 161 / 2 161 / 2 161 | byte-identical, `nccmp-tol` PASS | `out_grd.ww3`, `out_pnt.ww3`, `restart.ww3` equal (`cmp`), `nccmp-tol` PASS |
 | `... --ww3-gpu full --cpu --kokkos SRCE` | `switch_lab_ompg` | 25 / 25 / 230 100 | byte-identical, PASS | `out_grd.ww3` equal, PASS |
@@ -127,7 +127,7 @@ and copied them both ways per step (v, `WW_KOKKOS_VA_COUNT=1`, below).
 Checked 2026-10-17 on the CPU (Kokkos OpenMP backend; the machine above), never on the GPU (v):
 every run byte-identical to the Fortran of the same executable (`ww3_ounf` NetCDF, `cmp`),
 `out_grd.ww3` (and in the smoke `out_pnt.ww3`, `restart.ww3`) `cmp`-equal to the Fortran and to
-`--ww3`, `nccmp-tol` PASS both:
+`--ww3-noaa`, `nccmp-tol` PASS both:
 
 | Run (`bash scripts/ww3-gpu.sh --ww3-gpu ... --cpu`) | Switches | `WW_KOKKOS_VA_RESIDENT` | VA copies H2D / D2H |
 |---|---|---|---|
@@ -157,7 +157,7 @@ Since `2f35368a` (`ww3-gpu/kokkos-pnt`, PATCH.md section 17), with `WW_KOKKOS_IO
 `--kokkos resident`) the point output copies back from the resident `VA` only the columns `W3IOPE`
 interpolates, and the state stays `DEVICE`. The batch is unchanged; what changes is how often its
 output crosses: `VA` D2H 2 161 → 37 in the smoke and 36 → 24 in the coast case, every output
-byte-identical to the Fortran and to `--ww3` on both switches, with and without
+byte-identical to the Fortran and to `--ww3-noaa` on both switches, with and without
 `WW_KOKKOS_VA_RESIDENT=1` (v, 2026-10-17, the table there).
 
 ## Inputs kept on the device (WFIP-0005 unit 4)
@@ -172,7 +172,7 @@ Checked 2026-10-17 on the CPU (the machine above, never the GPU) (v): 15 runs of
 `bash scripts/ww3-gpu.sh --ww3-gpu full|smoke --cpu --kokkos resident` and `smoke --kokkos all`, on
 `switch_lab_ompg` and `switch_lab_shrd`, plain, with `WW_KOKKOS_VA_RESIDENT=1` and with
 `WW_KOKKOS_SRCE_STAGED=1` (the device's copy-and-skip run on the host), each byte-identical to the
-Fortran of the same executable and to `--ww3` (`ww3_ounf` NetCDF but its switches attribute,
+Fortran of the same executable and to `--ww3-noaa` (`ww3_ounf` NetCDF but its switches attribute,
 `out_grd.ww3`, and in the smoke `out_pnt.ww3`, `restart.ww3`). Source-term input traffic from
 `WW_KOKKOS_SRCE_COUNT=1`, per run (on the CPU, projected for a device ⚠):
 
@@ -209,11 +209,11 @@ backends only) sets the most points per team; the exit counters print it. It def
 L1; since L2 the default is 8 (the owner, 2026-10-18), and a launch with fewer points than
 8 x threads takes one point per team, so every thread still gets a team. This unit vectorises nothing yet:
 it is the layer the later units of
-[plan 005](../../docs/compound/plans/2026-10-18-005-srce-points-in-lanes-plan.md) vectorise across.
+[plan 005](../../docs/plans/2026-10-18-005-srce-points-in-lanes-plan.md) vectorise across.
 
 | Check, 2026-10-18, `WW3@50a10730`, `switch_lab_ompg` | `WW_KOKKOS_SRCE_LANES` | Result |
 |---|---|---|
-| `bash scripts/ww3-gpu.sh --ww3-gpu smoke --cpu --kokkos resident`, `WW_KOKKOS_STRICT=1 WW_KOKKOS_VA_POISON=1` | 1 and 8 | every model file byte-identical to the Fortran of the same executable (`out_grd.ww3`, `out_pnt.ww3`, `restart.ww3`, `ww3.196806.nc`); every file but the NetCDF to `--ww3`'s, `nccmp-tol` PASS (v) |
+| `bash scripts/ww3-gpu.sh --ww3-gpu smoke --cpu --kokkos resident`, `WW_KOKKOS_STRICT=1 WW_KOKKOS_VA_POISON=1` | 1 and 8 | every model file byte-identical to the Fortran of the same executable (`out_grd.ww3`, `out_pnt.ww3`, `restart.ww3`, `ww3.196806.nc`); every file but the NetCDF to `--ww3-noaa`'s, `nccmp-tol` PASS (v) |
 | the same on `full` | 1 and 8 | the same verdicts (`out_grd.ww3`, `ww3.field.nc`) (v) |
 | `just kokkos-test openmp-release`, `serial-debug` | | 11/11, 11/11, no warning (v) |
 
@@ -232,7 +232,7 @@ lane's operations those of the scalar statement in its order, each lane's stress
 
 | Check, 2026-10-18 | Result |
 |---|---|
-| `smoke`, `full`, `WW_KOKKOS_SRCE_LANES=8`, strict, poisoned | every model file byte-identical to the Fortran of the same executable; every file but the NetCDF to `--ww3`'s (v) |
+| `smoke`, `full`, `WW_KOKKOS_SRCE_LANES=8`, strict, poisoned | every model file byte-identical to the Fortran of the same executable; every file but the NetCDF to `--ww3-noaa`'s (v) |
 | `srce.batch.kernel`, `full`, one thread on a performance core, 3 alternated runs each | 105.17 s with 1 point per team, 99.77 s with 8: 5.1 % less (v, [log](../../docs/log/2026-10-18-srce-lanes-sin4.md)) |
 | `ww3_shel`, `full`, 32 threads, 3 alternated runs each | 15.88 s with 1, 15.47 s with the default 8: 2.6 % less (v, the same log) |
 | `bash scripts/ww3-gpu.sh --ww3-gpu smoke --gpu --kokkos resident --build-only` | compiles and links, no warning; the lane path is host-only and a device keeps one point per team; nothing run on a device (v) |
@@ -249,7 +249,7 @@ sums its own and in the routine's order; the libmvec sites stay one grouped call
 
 | Check, 2026-10-18 | Result |
 |---|---|
-| `smoke`, `full`, `WW_KOKKOS_SRCE_LANES` 1 and 8, strict, poisoned | every model file byte-identical to the Fortran of the same executable; every file but the NetCDF to `--ww3`'s (v) |
+| `smoke`, `full`, `WW_KOKKOS_SRCE_LANES` 1 and 8, strict, poisoned | every model file byte-identical to the Fortran of the same executable; every file but the NetCDF to `--ww3-noaa`'s (v) |
 | `just regtest-selected` | `ww3_tp2.15` x4 and `ww3_ts2` `ST4_PR3_UQ`: `test.comp` 0 files different, `nccmp-tol` PASS (v) |
 | `srce.batch.kernel`, `full`, one thread on a performance core, 3 alternated runs each | 104.99 s with 1 point per team, 80.55 s with 8: 23.3 % less, L2 and L3 together (v, [log](../../docs/log/2026-10-18-srce-lanes-sds4.md)) |
 | `--gpu --build-only` | compiles and links, no warning; nothing run on a device (v) |
@@ -262,14 +262,14 @@ One CPU measurement of the batched path, after the replay above passed on the sa
 
 | Run | Three runs (s) | Median (s) |
 |---|---|---|
-| `--ww3` (pure NOAA WW3, OpenMP) | 25.26, 25.86, 24.26 | 25.26 |
+| `--ww3-noaa` (pure NOAA WW3, OpenMP) | 25.26, 25.86, 24.26 | 25.26 |
 | `--ww3-gpu`, Kokkos `W3SRCE` batched, OpenMP backend | 31.20, 31.71, 31.87 | 31.71 |
 
 On this CPU the batch is 0.80x of WW3's own OpenMP loop. It is a CPU number on the OpenMP
 backend, not a GPU one and not a projection of one. Why it is slower here was not measured ⚠ (one
 guess: most of `w3srce_team` runs in `Kokkos::single`, so every thread of a team past the first
 waits). With `switch_lab_shrd`, where WW3 has one thread, the full ran 34.71 s with the batch
-against 154.70 s for `--ww3` (one run each, not a median).
+against 154.70 s for `--ww3-noaa` (one run each, not a median).
 
 On the resident spectrum (`513954a6`), the same command after the replay of
 [Resident spectrum](#resident-spectrum-wfip-0005-units-1-and-2) passed on the same tree,
@@ -277,10 +277,10 @@ On the resident spectrum (`513954a6`), the same command after the replay of
 
 | Run | Three runs (s) | Median (s) |
 |---|---|---|
-| `--ww3` (pure NOAA WW3, OpenMP) | 46.46, 29.33, 45.48 | 45.48 |
+| `--ww3-noaa` (pure NOAA WW3, OpenMP) | 46.46, 29.33, 45.48 | 45.48 |
 | `--ww3-gpu`, Kokkos `W3SRCE` on the resident `VA`, OpenMP backend | 67.35, 47.84, 67.43 | 67.35 |
 
-0.68x; the spread of `--ww3` itself (29 to 46 s) says the load, not the change, sets these
+0.68x; the spread of `--ww3-noaa` itself (29 to 46 s) says the load, not the change, sets these
 numbers, so they are not a speed-up or slow-down of unit 2 ⚠. A quiet machine is needed.
 
 ## How it was regtested

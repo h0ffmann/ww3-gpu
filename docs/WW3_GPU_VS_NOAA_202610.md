@@ -4,50 +4,28 @@ What ww3-gpu changes in NOAA's WAVEWATCH III® and what it keeps: how the two ex
 built, how a result is judged against NOAA's, where a time step leaves the Fortran, which states a
 routine passes through on its way to Kokkos, and how the GPU can return the CPU's bits. Read
 2026-10-17 at this repository's `b38b5fc8`, the fork `WW3/` at `769c44f0` and pure NOAA WW3
-(`WW3-noaa/`) at `03adda91`. No speed figure appears: none has passed WW3's regtests yet, and those
-are postponed to a validation phase ([ADR-0016](ADRs/ADR-0016-speed-first-regtests-postponed-one-person-loop.md)).
+(`WW3-noaa/`) at `03adda91`. The mode that builds pure NOAA WW3 was named `--ww3` on that date and
+is `--ww3-noaa` since 11 November 2026, when `--ww3` became MetOcean's WW3
+([`RUN_COMMAND_202611.md`](RUN_COMMAND_202611.md)): the figures and their reading cards use the
+new name, and the line numbers and the `--ww3` of the evidence lists are those of `b38b5fc8`.
+No speed figure appears: none has passed WW3's regtests yet, and those
+are postponed to a validation phase ([ADR-0016](ADRs.md#adr-0016)).
 
-Each figure is a Mermaid fence with its reading card; its interactive twin is rendered from a
-source in [`docs/archify/`](archify/README.md) by `scripts/archify.sh render`, and printed to a PDF
-next to it.
+Each figure is an Archify drawing in the dark look of [`DESIGN.md`](../DESIGN.md), "Pictures",
+with its reading card under it. Its source is in [`docs/archify/`](archify/README.md); `just archify
+png` takes the picture, and the picture links to the drawing's page on the website, where it can be
+zoomed.
 
 ## The two builds
 
-```mermaid
-%% figure: ww3-gpu-vs-noaa-architecture
-%% title: What is the same and what differs between NOAA's WW3 and ww3-gpu?
-flowchart LR
-  subgraph NOAA["NOAA reference: Fortran only"]
-    direction LR
-    noaa_src["WW3-noaa/<br/>NOAA WW3 @ 03adda91"] -->|source| noaa_build["--ww3 build<br/>lab switch, Fortran only"]
-    noaa_build -->|CMake Release| noaa_exe["ww3_shel (NOAA)<br/>every routine Fortran"]
-  end
-  guard{{"Fork guard<br/>diff outside the KOKKOS patch: exit 3"}}
-  toolchain[("picasso / Nix<br/>pratico #ww3, #cuda")]
-  noaa_src -.->|diff -rq| guard
-  fork_src["WW3/ fork<br/>same Fortran @ 769c44f0"] -.->|diff -rq| guard
-  toolchain -.->|pinned compilers| noaa_build
-  toolchain -.->|pinned compilers| gpu_build
-  fork_src ==>|source| gpu_build["--ww3-gpu build<br/>switch + KOKKOS, -DWW_KOKKOS=ON"]
-  gpu_build ==>|links ww_kokkos| gpu_exe["ww3_shel (ww3-gpu)<br/>caller patch, behind KOKKOS"]
-  flags{{"WW_KOKKOS_* flags<br/>unset or 0: Fortran"}} -->|read per part| gpu_exe
-  gpu_exe -->|flag 0 or unset| fortran_rt["Fortran routine<br/>still compiled, selectable"]
-  gpu_exe ==>|flag = 1| shims
-  subgraph PORT["Kokkos port (kokkos/, this repository)"]
-    direction TB
-    shims["bind(C) shims<br/>w3kokkosmd, fortran_iface"] ==>|calls| lib["libww_kokkos<br/>C++/Kokkos port"]
-    lib -->|OpenMP build, --cpu| host["Host backend<br/>OpenMP, Serial; glibc"]
-    lib -->|CUDA build, --gpu| device["CUDA backend<br/>nvcc_wrapper, sm_89"]
-    device -.->|WW_KOKKOS_LIBM| libm[("ww::libm copies<br/>glibc 2.44 algorithms")]
-  end
-```
+[![What is the same and what differs between NOAA's WW3 and ww3-gpu? (Archify drawing, dark)](archify/ww3-gpu-vs-noaa-architecture.png)](https://h0ffmann.github.io/ww3-gpu/figures/ww3-gpu-vs-noaa-architecture/)
 
 <details open>
 <summary>How to read this figure</summary>
 
 **Takeaway.** Both executables compile the same Fortran physics. ww3-gpu adds a `KOKKOS` switch, call-site branches and `bind(C)` shims into a C++/Kokkos library, and every Kokkos part can be switched back to the Fortran routine at run time inside the same binary.
 
-**How to read.** The top row is pure NOAA WW3 as `scripts/ww3-gpu.sh --ww3` builds it from `WW3-noaa/`. The bottom row is `--ww3-gpu` built from the `WW3/` fork. The fork guard sits between the two source trees: before `--ww3` builds, the script runs `diff -rq` over `model/` and stops with exit 3 when a file outside the KOKKOS patch differs. Both builds take their compilers from the pinned `picasso/labs/pratico` flake. Inside the ww3-gpu executable a `WW_KOKKOS_<PART>` flag set to `1` (or `WW_KOKKOS_ALL=1` with the part flag unset) sends that part through the shims to Kokkos; unset or `0` keeps the Fortran routine. The Kokkos library runs on the OpenMP or Serial backend on the host (`--cpu`, glibc's libm) or on the CUDA backend (`--gpu`), where kernels call `ww::libm` copies of glibc's algorithms when `WW_KOKKOS_LIBM` is defined.
+**How to read.** The top row is pure NOAA WW3 as `scripts/ww3-gpu.sh --ww3-noaa` builds it from `WW3-noaa/`. The bottom row is `--ww3-gpu` built from the `WW3/` fork. The fork guard sits between the two source trees: before `--ww3-noaa` builds, the script runs `diff -rq` over `model/` and stops with exit 3 when a file outside the KOKKOS patch differs. Both builds take their compilers from the pinned `picasso/labs/pratico` flake. Inside the ww3-gpu executable a `WW_KOKKOS_<PART>` flag set to `1` (or `WW_KOKKOS_ALL=1` with the part flag unset) sends that part through the shims to Kokkos; unset or `0` keeps the Fortran routine. The Kokkos library runs on the OpenMP or Serial backend on the host (`--cpu`, glibc's libm) or on the CUDA backend (`--gpu`), where kernels call `ww::libm` copies of glibc's algorithms when `WW_KOKKOS_LIBM` is defined.
 
 **Not shown.** Which parts are wired, translated or regtested (see `kokkos/PORT_STATUS.md` and `kokkos/ports.tsv`); the per-call host to device copies of phase 1 and the resident spectrum of phase 2; WW4; the MPI (`DIST`) branches, which the Kokkos path does not cover; any timing, since no end-to-end figure has passed a regtest replay.
 
@@ -63,34 +41,14 @@ flowchart LR
 
 ## The verdict
 
-```mermaid
-%% figure: ww3-gpu-parity-workflow
-%% title: How is a ww3-gpu result judged against NOAA's WW3 before a timing may be recorded?
-flowchart LR
-  case["Regtest case<br/>ww3_ts1, matrix entry"] ==> fortran["Fortran run<br/>same exe, WW_KOKKOS_ALL=0"]
-  fortran ==>|same build| kokkos["Kokkos run<br/>--ww3-gpu --cpu"]
-  kokkos -->|then| noaa["--ww3 run<br/>WW3-noaa, no KOKKOS"]
-  kokkos ==>|F vs K| testcomp{{"test.comp<br/>cmp, file by file (matrix, STRICT)"}}
-  testcomp ==>|identical| nccmp{{"nccmp-tol<br/>tolerances.txt, max abs diff"}}
-  noaa -->|K vs --ww3| nccmp
-  nccmp ==>|PASS| parity["Parity passed<br/>on this commit"]
-  testcomp -.->|differs| rerun["Fortran rerun<br/>work_G: F against G"]
-  rerun -.->|F/G identical| defect["Port defect<br/>fails; never widen"]
-  rerun -.->|ww3_self only| nccmp
-  nccmp -.->|FAIL| defect
-  parity ==> timing["Timed runs<br/>--repeat N >= 3, median"]
-  timing ==> record[("bench/results/<br/>results.py record")]
-  case -.->|--gpu| gpurun{{"--gpu run<br/>owner types yes, else exit 7"}}
-  gpurun -.->|pair on CUDA| gpuverdict{{"Tolerance verdict<br/>CUDA: nccmp-tol, ADR-0014"}}
-  gpuverdict -.->|PASS, then timed| record
-```
+[![How is a ww3-gpu result judged against NOAA's WW3 before a timing may be recorded? (Archify drawing, dark)](archify/ww3-gpu-parity-workflow.png)](https://h0ffmann.github.io/ww3-gpu/figures/ww3-gpu-parity-workflow/)
 
 <details open>
 <summary>How to read this figure</summary>
 
 **Takeaway.** On the CPU a ported routine passes only when its output files are byte-identical to the Fortran routine of the same executable, apart from files two Fortran runs already write differently. A GPU run is judged by `nccmp-tol`'s tolerances instead (ADR-0014). A timing enters `bench/results/` only after one of these verdicts passed on the same commit.
 
-**How to read.** Thick arrows are the passing path. The executable built with the `KOKKOS` switch runs the case twice, the Fortran run with every flag off and the Kokkos run with the selected parts on. In the regtest matrix (`just ww3-gpu-matrix`, `WW3GPU_STRICT=ON`) WW3's `test.comp` compares the two run directories with `cmp`. When a file differs, the Fortran run is repeated (`work_G`): a file that also differs between the two Fortran runs is WW3's own variation (`ww3_self`) and is excused, any other file fails the entry. `nccmp-tol` then compares every `ww3.*.nc` with `kokkos/tools/nccmp-tol/tolerances.txt`. A FAIL fails, and a PASS never excuses a byte difference. `scripts/ww3-gpu.sh --ww3-gpu <case> --cpu` (CI job h1 on `ww3_ts1`) runs the same pair and then `--ww3`, pure NOAA WW3, and compares the Kokkos output with both by `nccmp-tol`. It reports, without failing on it, whether the Fortran and Kokkos files are byte-identical. After parity, `--repeat N` alternates the runs, checks every output against run 1's and writes medians that `scripts/results.py record` turns into a record, refusing fewer than three runs. The dashed branch at the bottom is the GPU path: it needs the owner at a terminal, and its verdict is the tolerance check, which the record states as "GPU: judged by tolerance, not bits".
+**How to read.** Amber arrows are the passing path; green dashed arrows lead into the two exception lanes, a difference found and the GPU run. The executable built with the `KOKKOS` switch runs the case twice, the Fortran run with every flag off and the Kokkos run with the selected parts on. In the regtest matrix (`just ww3-gpu-matrix`, `WW3GPU_STRICT=ON`) WW3's `test.comp` compares the two run directories with `cmp`. When a file differs, the Fortran run is repeated (`work_G`): a file that also differs between the two Fortran runs is WW3's own variation (`ww3_self`) and is excused, any other file fails the entry. `nccmp-tol` then compares every `ww3.*.nc` with `kokkos/tools/nccmp-tol/tolerances.txt`. A FAIL fails, and a PASS never excuses a byte difference. `scripts/ww3-gpu.sh --ww3-gpu <case> --cpu` (CI job h1 on `ww3_ts1`) runs the same pair and then `--ww3-noaa`, pure NOAA WW3, and compares the Kokkos output with both by `nccmp-tol`. It reports, without failing on it, whether the Fortran and Kokkos files are byte-identical. After parity, `--repeat N` alternates the runs, checks every output against run 1's and writes medians that `scripts/results.py record` turns into a record, refusing fewer than three runs. The dashed branch at the bottom is the GPU path: it needs the owner at a terminal, and its verdict is the tolerance check, which the record states as "GPU: judged by tolerance, not bits".
 
 **Not shown.** The build steps (first figure); the MPI and OpenMP selections of the matrix; the `kokkos_spectra` column, which says whether an entry exercised the port at all; the static GIMPLE argument that stands in for the regtests until the validation phase (ADR-0016); the `--timers` breakdown. No speed-up figure is shown: the only record in `bench/results/` is a 2026-09-15 kernel study kept under the older `l1` rule, not an end-to-end run that passed this workflow.
 
@@ -101,7 +59,7 @@ flowchart LR
 - `scripts/ww3-gpu.sh:567-572` (two runs, one executable), `:604` (byte-identical message only), `:605-617` (`nccmp-tol` against the Fortran and against `--ww3`, the script stops on failure under `set -e`), `:623-646` (alternated `--repeat`, medians), `:649-676` (`perf.tsv`), `:317-328` (owner's typed yes) (v, read 2026-10-17).
 - `.github/workflows/health.yml:46-47` (CI h1 runs `--ww3-gpu smoke --cpu`) (v, read 2026-10-17).
 - `scripts/results.py:42-48` (refuses a timing without `regtest: passed`), `:108-113` (fewer than three runs refused), `:131-133` (the ADR-0014 wording for CUDA) (v, read 2026-10-17).
-- `docs/ADRs/ADR-0014-gpu-runs-judged-by-tolerance.md:27-41` (CPU unchanged, CUDA judged by tolerance, never widened, timing after a pass) (v, read 2026-10-17).
+- `docs/ADRs.md:1666-1680` (CPU unchanged, CUDA judged by tolerance, never widened, timing after a pass) (v, read 2026-10-17).
 - `bench/results/snl1-i9-14900-rtx4090-2026-09-15.json` (the only record, `l1`, no end-to-end `regtest`) (v, read 2026-10-17).
 - That `just ww3-gpu-matrix-cuda` applies the ADR-0014 verdict ⚠: `WW3GPU_STRICT` defaults to ON for every backend and the cuda recipe does not turn it off, so a CUDA matrix run would still fail on a byte difference; no CUDA run of the matrix or of `--gpu` has been recorded.
 
@@ -109,68 +67,14 @@ flowchart LR
 
 ## One time step
 
-```mermaid
-%% figure: ww3-gpu-step-sequence
-%% title: Where does a time step leave the Fortran in ww3-gpu, and what does NOAA's WW3 do at the same place?
-sequenceDiagram
-    participant WAVE as W3WAVE
-    participant SRCE as W3SRCE (one sea point)
-    participant FTN as Fortran ST4 + DIA
-    participant MOD as W3KOKKOSMD (bind C)
-    participant FLG as part_flags.cpp
-    participant SHIM as C++ shims
-    participant DEV as Kokkos kernel, device VA
-
-    rect rgb(240, 240, 240)
-    Note over WAVE,FTN: NOAA WW3 at 03adda91
-    WAVE->>SRCE: CALL W3SRCE, w3wavemd.F90:2311 (loop :2246)
-    SRCE->>FTN: W3SIN4 :1239, W3SNL1 :1260, W3SDS4 :1303
-    FTN-->>SRCE: S_in, S_nl, S_ds
-    SRCE-->>WAVE: VA(:,JSEA) updated
-    end
-
-    rect rgb(225, 240, 250)
-    Note over WAVE,DEV: Fork at 769c44f0, phase 1 (one point per call)
-    MOD->>FLG: W3KOKKOS_SETUP asks WW_KOKKOS_PART flags
-    FLG-->>MOD: on or off (unset means off)
-    WAVE->>SRCE: CALL W3SRCE, w3wavemd.F90:2500 (loop :2417)
-    alt flag off
-        SRCE->>FTN: W3SIN4 :1244, W3SNL1 :1544, W3SDS4 :1622
-        FTN-->>SRCE: same Fortran as NOAA
-    else flag on
-        SRCE->>MOD: W3KOKKOS_SIN4 :1240, WW_SNL1 :1535, W3KOKKOS_SDS4 :1619
-        MOD->>SHIM: ww_sin4, ww_snl1, ww_sds4
-        SHIM->>DEV: copy one point in
-        DEV-->>SHIM: kernel, fence, copy out
-        SHIM-->>SRCE: VSNL, VDNL, last error
-    end
-    opt WW_KOKKOS_SRCE: whole W3SRCE for one point
-        WAVE->>MOD: W3KOKKOS_SRCE, w3wavemd.F90:2486
-        MOD-->>WAVE: VA(:,JSEA), fluxes
-    end
-    end
-
-    rect rgb(225, 245, 230)
-    Note over WAVE,DEV: Fork, --kokkos resident (opt-in parts)
-    WAVE->>MOD: W3KOKKOS_SRCE_BATCH, w3wavemd.F90:2408
-    MOD->>SHIM: ww_srce_batch_va, all sea points
-    SHIM->>DEV: batched source terms on device VA
-    SHIM-->>MOD: UST, TAUW, WHITECAP unpacked on host
-    WAVE->>MOD: W3KOKKOS_OUTG, w3wavemd.F90:2699 (NOAA: W3OUTG :2490)
-    MOD->>DEV: ww_outg_va on device VA
-    DEV-->>WAVE: gridded fields, no VA copy
-    WAVE->>MOD: W3KOKKOS_VA_HOST_READ before a host reader
-    MOD->>DEV: ww_va_host_read
-    DEV-->>WAVE: VA copied back if the device copy is newer
-    end
-```
+[![Where does a time step leave the Fortran in ww3-gpu, and what does NOAA's WW3 do at the same place? (Archify drawing, dark)](archify/ww3-gpu-step-sequence.png)](https://h0ffmann.github.io/ww3-gpu/figures/ww3-gpu-step-sequence/)
 
 <details open>
 <summary>How to read this figure</summary>
 
 **Takeaway.** In NOAA's WW3, W3WAVE calls W3SRCE once per sea point and W3SRCE calls the Fortran source terms. The ww3-gpu fork keeps those same calls in the same executable and adds a branch at each one: when a `WW_KOKKOS_<PART>` flag is on, the call goes through a `bind(C)` interface in `w3kokkosmd.F90` to a C++ shim and a Kokkos kernel. In phase 1 the shim copies one sea point to the device and back for every call. The `--kokkos resident` preset keeps the spectrum `VA` on the device, replaces the sea-point loop with one batched launch, computes W3OUTG's fields there, and copies `VA` back only before a host statement reads it.
 
-**How to read.** Time runs downward. The three shaded bands are NOAA's code, the fork's per-call path, and the fork's resident path. Solid arrows are calls, dashed arrows are returns. Line numbers are in `model/src/w3wavemd.F90` or `model/src/w3srcemd.F90` at the commit named in the band. Under `alt`, exactly one branch runs per call, and with every flag off the fork runs the same Fortran call as NOAA.
+**How to read.** Time runs downward. The three framed bands are NOAA's code, the fork's per-call path, and the fork's resident path. Solid arrows are calls, dashed arrows are returns. Line numbers are in `model/src/w3wavemd.F90` or `model/src/w3srcemd.F90` at the commit named in the band. Under `alt`, exactly one branch runs per call, and with every flag off the fork runs the same Fortran call as NOAA.
 
 **Not shown.** Propagation (W3XYP3, W3KTP3 and the support routines W3GATH, W3SCAT, W3UWND and others), which the fork routes the same way. The `!$OMP CRITICAL` around `WW_SNL1`. The conditions under which `W3KOKKOS_SRCE_ON(IT)` leaves a call to the Fortran (GQM, Liu's ice dispersion, `SINTAILPAR(4) <= 0.5` with `IT > 0`). The PDLIB branch. Timings: none are claimed.
 
@@ -184,31 +88,7 @@ sequenceDiagram
 
 ## A routine's states
 
-```mermaid
-%% figure: ww3-gpu-port-lifecycle
-%% title: Which states does a WW3 routine pass through in ww3-gpu, and how many routines are in each?
-stateDiagram-v2
-    direction LR
-    state "Fortran only, as in NOAA (713 of 1023)" as Fortran
-    state "Claimed in port_claims.tsv (0)" as Claimed
-    state "Translated: Kokkos code exists (310)" as Translated
-    state "Wired: called behind its flag at the pin (60)" as Wired
-    state "Regtested: regtested yes (10)" as Regtested
-    state "L2: CPU replay inside WW3 (2)" as L2
-    state "gpu: L2 on CUDA (0)" as GPU
-    state "Default on, host build (0 parts)" as DefHost
-    state "Default on, device build (0 parts)" as DefDev
-
-    [*] --> Fortran
-    Fortran --> Claimed: claim row added
-    Claimed --> Translated: ports.tsv row, claim removed
-    Translated --> Wired: fork pin calls it
-    Wired --> Regtested: validation phase passes (ADR-0016)
-    Regtested --> L2: L2 replay
-    L2 --> GPU: CUDA replay, owner present
-    L2 --> DefHost: ADR-0013 timing with parity
-    GPU --> DefDev: batched or resident, GPU bits match
-```
+[![Which states does a WW3 routine pass through in ww3-gpu, and how many routines are in each? (Archify drawing, dark)](archify/ww3-gpu-port-lifecycle.png)](https://h0ffmann.github.io/ww3-gpu/figures/ww3-gpu-port-lifecycle/)
 
 <details open>
 <summary>How to read this figure</summary>
@@ -224,28 +104,14 @@ stateDiagram-v2
 - `kokkos/ports.tsv:4-17` (the meaning of status, regtested and wired). Counting its 310 rows gives status L2 for 2 rows and gpu for none, wired yes for 60, regtested yes for 10 (v, read 2026-10-17).
 - `kokkos/port_claims.tsv:1-7`: a header with no rows. `kokkos/PORT_TABLE.tsv` states: 250 translated, 50 wired, 10 regtested, 0 claimed (v, read 2026-10-17).
 - `scripts/port_score.py:19-22` and `:118-131` (the three levels and `at_level`) (v, read 2026-10-17).
-- `docs/ADRs/ADR-0013-operational-parts-default-to-kokkos.md:68-92` (conditions for a default) and `kokkos/src/fortran_iface/part_flags.cpp:33-46` (`kOptInOnly`, and no default list: an unset flag with an unset `WW_KOKKOS_ALL` is off) (v, read 2026-10-17).
-- `docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md` (WW3's regtests are the port's only tests) ⚠ (not reread for this figure); [ADR-0016](ADRs/ADR-0016-speed-first-regtests-postponed-one-person-loop.md) moves them from ADR-0011's checkpoints to a validation phase the owner calls (v, 2026-10-17).
+- `docs/ADRs.md:1585-1609` (conditions for a default) and `kokkos/src/fortran_iface/part_flags.cpp:33-46` (`kOptInOnly`, and no default list: an unset flag with an unset `WW_KOKKOS_ALL` is off) (v, read 2026-10-17).
+- `docs/ADRs.md#adr-0010` (WW3's regtests are the port's only tests) ⚠ (not reread for this figure); [ADR-0016](ADRs.md#adr-0016) moves them from ADR-0011's checkpoints to a validation phase the owner calls (v, 2026-10-17).
 
 </details>
 
 ## Device math
 
-```mermaid
-%% figure: ww3-gpu-device-math-dataflow
-%% title: How does a kernel's expf or logf get the bits of NOAA's CPU build on a GPU, and what has been checked?
-flowchart LR
-    K["Kokkos kernel<br/>expf, logf, powf, sincosf, atan2f"] -->|libm call| DM{"ww::dm<br/>libm_device.hpp"}
-    DM -->|KOKKOS_IF_ON_HOST| H["Kokkos::exp and others<br/>host branch, glibc"]
-    DM -->|KOKKOS_IF_ON_DEVICE| L["ww::libm<br/>copies of glibc, libmvec, CORE-MATH"]
-    DM -.->|WW_KOKKOS_LIBM=OFF| LD["CUDA libdevice"]
-    G["gen_tables, build time<br/>libmvec tables, rcpps, fma or sse2"] -->|ww_libm_tables.hpp| L
-    H -->|-ffp-contract=off| CB["CPU result<br/>the Fortran's glibc bits"]
-    L -->|--fmad=false| GB["GPU result<br/>glibc's algorithms"]
-    LD -.->|a few ULP, other bits| GB
-    CB --> HC["libm_bits on the host<br/>every float, 0 differ (v)"]
-    GB -.-> DC["device_check.cu<br/>not run, needs the owner ⚠"]
-```
+[![How does a kernel's expf or logf get the bits of NOAA's CPU build on a GPU, and what has been checked? (Archify drawing, dark)](archify/ww3-gpu-device-math-dataflow.png)](https://h0ffmann.github.io/ww3-gpu/figures/ww3-gpu-device-math-dataflow/)
 
 <details open>
 <summary>How to read this figure</summary>
@@ -261,7 +127,7 @@ flowchart LR
 - `kokkos/src/ww_kokkos/CMakeLists.txt:288-303` (`-ffp-contract=off` on the host, `--fmad=false` on the device) and `:305-337` (`WW_KOKKOS_LIBM`, the `gen_tables` step) (v, read 2026-10-17).
 - `kokkos/tools/libm_bits/glibc_mathf.hpp:1-25` (source of the algorithms and tables), `kokkos/tools/libm_bits/gen_tables.cpp:1-15` (what it generates), `kokkos/tools/libm_bits/device_check.cu:1-12` (the supervised device comparison) (v, read 2026-10-17).
 - `docs/GPU_LIBM_BITS_202610.md:114-160` (host results, `scripts/libm_bits.sh all 4`, i9-14900, glibc 2.44: 0 differing on all 2^32 inputs for `expf`, `logf`, `sincosf` and the other unary copies) and `:161-187` (SASS counts) (v, read 2026-10-17, as reported by the document; the checks were not rerun).
-- `docs/ADRs/ADR-0014-gpu-runs-judged-by-tolerance.md:51` ("a few ULP per step" for libdevice and the libmvec sites) ⚠: that number is the ADR's expectation, not a measurement.
+- `docs/ADRs.md:1690` ("a few ULP per step" for libdevice and the libmvec sites) ⚠: that number is the ADR's expectation, not a measurement.
 - ⚠ Device bits: `scripts/libm_bits.sh --device` has not run (it needs the owner at the terminal).
 
 </details>

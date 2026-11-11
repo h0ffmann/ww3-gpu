@@ -7,10 +7,10 @@ agent never runs them, never sets `WW3GPU_IN_SHELL` or `WW3GPU_GPU_CONFIRMED`, a
 the answer.
 
 A GPU run is judged by `nccmp-tol` with `kokkos/tools/nccmp-tol/tolerances.txt`, against the
-Fortran of the same executable and against `--ww3`, and a tolerance is never widened to make it
-pass ([ADR-0014](ADRs/ADR-0014-gpu-runs-judged-by-tolerance.md)). Why the bits can differ, site
+Fortran of the same executable and against `--ww3-noaa`, and a tolerance is never widened to make it
+pass ([ADR-0014](ADRs.md#adr-0014)). Why the bits can differ, site
 by site, is [`GPU_LIBM_BITS_202610.md`](GPU_LIBM_BITS_202610.md). This page is unit U5 of
-[`compound/plans/2026-10-18-002-production-single-node-plan.md`](compound/plans/2026-10-18-002-production-single-node-plan.md)
+[`plans/2026-10-18-002-production-single-node-plan.md`](plans/2026-10-18-002-production-single-node-plan.md)
 and the GPU half of gap 4 of [`PRODUCTION_READINESS_202610.md`](PRODUCTION_READINESS_202610.md).
 
 Nothing on this page has run on a GPU. The build of step 0 was compiled on 2026-10-18 without a
@@ -22,7 +22,7 @@ about a device result is ⚠ until the step that answers it has run.
 **The build.** Both commands compile only; neither touches the device.
 
 ```bash
-git submodule update --init WW3 WW3-noaa && just submodule-init
+git submodule update --init WW3 && just ww3-base export && just submodule-init
 nix develop ./picasso/labs/pratico#cuda --command cmake -S kokkos --preset cuda-release
 nix develop ./picasso/labs/pratico#cuda --command cmake --build kokkos/build/cuda-release -j8
 scripts/ww3-gpu.sh --ww3-gpu smoke --gpu --kokkos resident --build-only
@@ -38,7 +38,7 @@ entry above). A new warning in the build of the run's commit is read before step
 | What | Command |
 |---|---|
 | ww3-gpu commit, and whether the tree is clean | `git rev-parse --short HEAD`, `git status --porcelain` |
-| `WW3/` pin (fork), `WW3-noaa/` pin, `picasso/` pin | `git submodule status WW3 WW3-noaa picasso` |
+| `WW3/` pin (fork), its NOAA base, `picasso/` pin | `git submodule status WW3 picasso`; `just ww3-base rev` |
 | CPU model and hardware threads | `grep -m1 'model name' /proc/cpuinfo`, `nproc --all` |
 | GPU model and driver version | `nvidia-smi --query-gpu=name,driver_version --format=csv,noheader` |
 | the CUDA version the driver supports | the header of `nvidia-smi` |
@@ -88,11 +88,11 @@ scripts/ww3-gpu.sh --ww3-gpu smoke --gpu --kokkos resident
 
 The first is `--kokkos gpu` (`SRCE` alone, ADR-0013), the default of `--gpu`; the second is the
 resident preset (`SRCE,XYP3,KTP3,OUTG,IOPE,UPDV`). Both run `ww3_ts1` twice in one executable
-(the Fortran, then Kokkos), then `--ww3`, pure NOAA WW3 from `WW3-noaa/` on the CPU.
+(the Fortran, then Kokkos), then `--ww3-noaa`, pure NOAA WW3 at the fork's base on the CPU.
 
 Record, for each of the two commands:
 
-- the `nccmp-tol` table against the Fortran of the same executable, and the one against `--ww3`,
+- the `nccmp-tol` table against the Fortran of the same executable, and the one against `--ww3-noaa`,
   every field, listed or not: `max|d|`, rms, largest relative difference, and the verdict of the
   judged ones (`hs` on the smoke: "1 judged, 25 unlisted", ADR-0014, "Consequences");
 - which model files `cmp` found different, against each reference (on CUDA the script reports

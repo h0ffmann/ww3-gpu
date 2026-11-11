@@ -6,6 +6,7 @@
 // Evidence: kokkos/port_report/SIG2WN_KOKKOS.md.
 // tanhf and coshf go through ww::dm: glibc's on the host, its device copies on a device built with
 // WW_KOKKOS_LIBM (libdevice otherwise).
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

@@ -14,6 +14,8 @@
 // no libm call; one quotient SIX/DSIE is shared by INT() and R1; DSIE and N1MAX
 // are run-time loads from the module, not folded; GRAV and 0.5*GRAV are folded
 // to 0x411CE560 and 0x409CE560; no MIN/MAX, no FMA, nothing vectorised.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <Kokkos_Core.hpp>

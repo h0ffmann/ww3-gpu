@@ -5,6 +5,7 @@
 // PDLIB_W3XYPFSN2_KOKKOS.md, PDLIB_W3XYPFSPSI2_KOKKOS.md. LayoutLeft with the Fortran's
 // extents (a lower bound 0 kept at index 0); stored index values stay 1-based; rkind = 4
 // (PDLIB/yowdatapool.F90:48), so every REAL array is float.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

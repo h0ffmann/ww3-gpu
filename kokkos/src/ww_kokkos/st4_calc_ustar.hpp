@@ -9,6 +9,8 @@
 // folded at REAL precision (SQRT(CDRAG), 0.11*NU_AIR, XM+1), (1-X)**XM kept as
 // powf(_, 0.5), USTOLD**2 and UST**2. as x*x. The W3_T/W3_S branches are not
 // ported: a kernel never prints.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <Kokkos_Core.hpp>

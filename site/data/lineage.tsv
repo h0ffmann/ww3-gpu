@@ -1,0 +1,26 @@
+# The lineage page (/lineage/): the works this repository's line of work descends from or runs beside,
+# one row per dated event. Add a row to track a new one; the page sorts by date.
+# date: YYYY, YYYY-MM or YYYY-MM-DD, as precise as the source states it, never more.
+# status: done (it happened, the source says so) or planned (a date someone committed to; the page
+#   marks it planned until a row with done replaces it).
+# kind: model (a wave, ocean or weather model; the sea light) or port (a model moved to other
+#   hardware or another language; the machine light). Nothing else (DESIGN.md, "The lineage").
+# line: the family it belongs to, in a word or two. what: one line, lower case. source: where the
+#   date and the claim were read, and when.
+# date	status	kind	line	name	link	what	source
+1988-12	done	model	wave models	WAM	https://doi.org/10.1175/1520-0485(1988)018%3C1775:TWMTGO%3E2.0.CO;2	the WAMDI group's third-generation ocean wave prediction model	Crossref, JPO 18(12) 1775-1810, read 2026-11-11
+1991-06	done	model	WAVEWATCH	Tolman's third-generation wave model	https://doi.org/10.1175/1520-0485(1991)021%3C0782:ATGMFW%3E2.0.CO;2	a third-generation model for wind waves on slowly varying, unsteady and inhomogeneous depths and currents, by H. L. Tolman; that it is where WAVEWATCH III starts is not checked here ⚠	Crossref, JPO 21(6) 782-797, read 2026-11-11
+1999-04-15	done	model	SWAN	SWAN	https://doi.org/10.1029/98JC02622	a third-generation wave model for coastal regions (Booij, Ris and Holthuijsen), the model for the coast beside WW3 offshore	Crossref, JGR Oceans 104(C4), read 2026-11-11
+2017-02-17	done	model	FESOM	FESOM2	https://doi.org/10.5194/gmd-10-765-2017	the Finite-volumE Sea ice-Ocean Model, version 2 (Danilov et al.)	Crossref, GMD 10, 765-789, read 2026-11-11
+2023-03-03	done	port	WAVEWATCH	WW3 source terms on a GPU	https://doi.org/10.5194/gmd-16-1445-2023	porting the WAVEWATCH III (v6.07) wave action source terms to GPU (Ikuyajolu et al.)	Crossref, GMD 16, 1445-1458, read 2026-11-11
+2023-12-22	done	model	Google weather	GraphCast	https://doi.org/10.1126/science.adi2336	learning skillful medium-range global weather forecasting (Lam et al.), Google DeepMind's graph neural network forecast	Crossref, Science, published date, read 2026-11-11
+2024-08-16	done	port	wave models	WAM6-GPU	https://doi.org/10.5194/gmd-17-6123-2024	towards real-time modelling of global ocean waves with the fully GPU-accelerated spectral wave model WAM6-GPU v1.0 (Yuan et al.)	Crossref, GMD 17(16), 6123-6136, read 2026-11-11
+2024-12-04	done	model	Google weather	GenCast	https://doi.org/10.1038/s41586-024-08252-9	probabilistic weather forecasting with machine learning (Price et al.), Google DeepMind's ensemble forecast	Crossref, Nature, published date, read 2026-11-11
+2025	done	model	WAVEWATCH	WW3 modernization, phase I	https://doi.org/10.25923/h7j3-1h25	NCEP Office Note 525 (Tolman): the WAVEWATCH III software modernization project, phase I report	DataCite, publication year 2025, read 2026-11-11
+2025-11-17	done	model	Google weather	WeatherNext 2	https://blog.google/innovation-and-ai/models-and-research/google-deepmind/weathernext-2/	Google's forecast model built on a functional generative network; the post says it is 8x faster, with resolution up to 1 hour	Google blog post of 2025-11-17, read 2026-11-11
+2026	done	model	WAVEWATCH	WAVEWATCH IV, phase II	https://doi.org/10.25923/0wyp-9f39	NCEP Office Note 528 (Tolman): the WAVEWATCH IV project, phase II report	DataCite, publication year 2026, read 2026-11-11
+2026-06-09	done	port	FESOM	FESOM2 in C++/Kokkos, by a language model	https://doi.org/10.48550/arXiv.2606.11356	an ocean model ported by a large language model: Fortran to C to C++/Kokkos (Koldunov et al.), a preprint	arXiv 2606.11356, submitted 2026-06-09, read 2026-11-11
+2026-09-03	done	model	Google weather	WeatherNext 3	https://blog.google/innovation-and-ai/models-and-research/google-deepmind/introducing-weathernext-3/	hourly forecasts, surface variables at 5 km to 10 km and atmospheric ones such as wind at 25 km	Google blog post of 2026-09-03, read 2026-11-11
+2026-10-07	done	port	this work	ww3-gpu v0.1.0	https://doi.org/10.5281/zenodo.23221352	the first release of this repository, cited by its version DOI	RELEASES.md, the version's DataCite issued date, record of 2026-10-14
+2026-11-04	done	port	this work	chaceon, a run with no Fortran	https://github.com/h0ffmann/chaceon/blob/ba4e452ef2400b6dcf15718441b4108c3cf7480b/README.md	the sister port in Rust: its ww3_grid, ww3_strt, ww3_prep and ww3_shel write 96 files byte-identical to WW3 7.14; no GPU run, no timing	chaceon README.md at ba4e452, "State, 2026-11-04", read 2026-11-11
+2027-02	planned	port	this work	ww3-gpu release	https://github.com/h0ffmann/ww3-gpu/blob/main/RELEASES.md	the release the owner plans for February 2027	the owner's words, 2026-11-11

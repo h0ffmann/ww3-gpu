@@ -1,0 +1,38 @@
+ww3-gpu
+Copyright (c) 2026 Matheus Hoffmann
+
+This repository holds work under two licences. Each source file says which in its own
+SPDX-License-Identifier line; the texts are in LICENSES/.
+
+This file is compliance housekeeping written by the maintainers. It is not legal advice.
+
+1. MIT (LICENSES/MIT.txt, LICENSE)
+   The repository's own work: scripts, tooling, documentation, course, proposal, benchmarks,
+   the Kokkos introductory programs, the bind(C) shims in kokkos/src/fortran_iface/ that only
+   marshal arguments, and the C++ tools in kokkos/tools/ and kokkos/tests/.
+
+2. LGPL-3.0-or-later (LICENSES/LGPL-3.0-or-later.txt, which incorporates the GNU GPL v3 by
+   reference: LICENSES/GPL-3.0-or-later.txt)
+   The C++ translated from WAVEWATCH III Fortran: the files of kokkos/src/ww_kokkos/ whose
+   header carries a "WW3 heritage" line. They are derived works of WAVEWATCH III. They carry
+   this notice, in the wording of WW3's own LICENSE.md:
+
+     Copyright 2009 National Weather Service (NWS),
+     National Oceanic and Atmospheric Administration.
+     WAVEWATCH III is a trademark of the NWS.
+
+   WW3's source headers give year ranges per file (for example 2009-2012, 2009-2022). The
+   translated files use 2009, the year in WW3's LICENSE.md; the Fortran routine they cite is the
+   record for its own years.
+
+WAVEWATCH III is not vendored here. WW3/ (a fork) and WW3-metocean-7.14/ (MetOcean's WW3) are git
+submodules that scripts read and build, and WW3-noaa/ (NOAA-EMC/WW3 at the commit the fork
+branched from) is written from the fork's history by scripts/ww3_base.sh and ignored by git; no
+WW3 source is copied into this repository. Their licence is WW3/LICENSE.md (LGPL v3).
+
+WAVEWATCH III(R) is a trademark of the National Weather Service. This project is independent
+and is not affiliated with, sponsored by or endorsed by NOAA or the NWS.
+
+Other third-party material keeps its own licence: the vendored skills (.claude/skills/skills.lock),
+and the submodules picasso/, WW4/ and vendor/archify. Files of kokkos/tools/libm_bits/ reproduce algorithms of glibc (LGPL-2.1-or-later) and CORE-MATH
+(MIT); they are marked MIT today and that marking is not yet reviewed against those licences.

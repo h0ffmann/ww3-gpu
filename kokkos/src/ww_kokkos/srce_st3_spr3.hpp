@@ -4,6 +4,7 @@
 // WW3 heritage: WW3-noaa/model/src/w3src3md.F90:134-347 at NOAA-EMC/WW3 03adda91;
 // authors F. Ardhuin, H. L. Tolman. Evidence: kokkos/port_report/W3SPR3_KOKKOS.md.
 // ⚠ On a device there is no libmvec (section 2) and powf, sqrtf are CUDA's.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

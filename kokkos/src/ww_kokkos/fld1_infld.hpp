@@ -4,6 +4,7 @@
 // WW3 heritage: WW3-noaa/model/src/w3fld1md.F90:781-875 at NOAA-EMC/WW3 03adda91 (state :76-88);
 // author B. G. Reichl.
 // Evidence: kokkos/port_report/INFLD_KOKKOS.md.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

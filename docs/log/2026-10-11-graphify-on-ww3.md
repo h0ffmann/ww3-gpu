@@ -1,7 +1,7 @@
 # Graphify on WW3 at the pin: raw and preprocessed, code only
 
 2026-10-11, an agent for Hoffmann, [#68](https://github.com/h0ffmann/ww3-gpu/issues/68) and
-[ADR-0007](../ADRs/ADR-0007-graphify-ww3-locator.md).
+[ADR-0007](../ADRs.md#adr-0007).
 
 ## Question
 

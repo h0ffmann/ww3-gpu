@@ -30,6 +30,8 @@
 // reduction, atomic or accumulation across points. The one cross-point read is
 // :3169-3175 reading TRIX/TRIY of the neighbours, which runs after a fence that
 // follows the pass writing TRIX/TRIY (:3066-3127).
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <Kokkos_Core.hpp>

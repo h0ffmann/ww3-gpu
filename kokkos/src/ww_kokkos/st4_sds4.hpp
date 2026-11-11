@@ -16,6 +16,8 @@
 // libmvec (_ZGVbN4vv_powf, _ZGVbN4v_expf) in groups of four from ITH = 1, scalar
 // for the last NTH mod 4; libmvec bits differ from scalar powf/expf. Each is
 // marked LIBMVEC SITE and goes through st4_libmvec.hpp (the owner, 2026-10-15).
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <Kokkos_Core.hpp>

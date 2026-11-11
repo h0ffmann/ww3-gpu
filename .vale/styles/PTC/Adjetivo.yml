@@ -1,0 +1,12 @@
+# Português Técnico Controlado (PTC), the skill of Kayque Rotondo (MIT,
+# https://github.com/kayquer/portugues-tecnico-controlado at 8938f58, SKILL.md v1.2.0).
+# PTC-5: an adjective before the noun changes the sense ("um simples teste" is "only a
+# test"); only the pairs the skill names are checked.
+extends: existence
+message: "PTC-5: '%s' tem adjetivo anteposto; ponha depois do substantivo ou use 'apenas'."
+level: warning
+ignorecase: true
+nonword: true
+tokens:
+  - '(?<!\p{L})(?:um|uma) simples(?!\p{L})'
+  - '(?<!\p{L})cert[oa]s? (?:procedimento|caso|valor|arquivo)s?(?!\p{L})'

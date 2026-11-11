@@ -20,7 +20,7 @@ The table on the page is generated between `<!-- results:<study>:start -->` and 
 by `python3 scripts/results.py table`; CI (`results.py check`) fails when a record lacks a command
 or a passed parity check, or a quoted table no longer matches its record. Parity is a passed WW3
 regtest replay on the same commit (`regtest: passed: <command>`,
-[ADR-0010](../docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md)); a record made before
+[ADR-0010](../docs/ADRs.md#adr-0010)); a record made before
 2026-10-14 keeps the `l1: passed` of its day as history.
 
 ```bash
@@ -36,8 +36,8 @@ just bench                                 # or just do everything (builds the g
 alone, by default, or `resident`, SRCE with the PR3/UQ propagation so the spectrum stays on the
 device between output times; `--cpu` through
 `scripts/ww3-gpu.sh --ww3-gpu <case> --cpu --repeat N` for the OpenMP backend) times `ww3_shel`
-of pure NOAA WW3 (`--ww3`) against ww3-gpu, both built with `switches/switch_lab_ompg`. It first
-compares the Kokkos run with the Fortran of the same executable and with `--ww3` (`nccmp-tol`),
+of pure NOAA WW3 (`--ww3-noaa`) against ww3-gpu, both built with `switches/switch_lab_ompg`. It first
+compares the Kokkos run with the Fortran of the same executable and with `--ww3-noaa` (`nccmp-tol`),
 then alternates N runs of each, checks every output against run 1's, and prints the medians.
 Only then does it write `build/runs/ww3-gpu-<case>-<backend>/perf.tsv`.
 `python3 scripts/results.py record <perf.tsv>` turns it into a record here. It refuses fewer than
@@ -110,7 +110,7 @@ off, before `ww3_shel`, so both runs of a pair read the same forcing files.
 
 The output is every hourly field of the case (`HS FP DIR DP T0M1 CUR WLV ICE DPT`) and 5 point
 spectra every 30 min (`out_pnt.ww3`). Whether `FLCK` reaches the answer was checked once, by hand,
-on 2026-10-17: the same `--ww3` case with `RUN%FLCK = F` gave an `hs` up to 0.073 m different
+on 2026-10-17: the same `--ww3-noaa` case with `RUN%FLCK = F` gave an `hs` up to 0.073 m different
 (`nccmp-tol` FAIL on `hs`, `dir`, `dp`), so a port of `W3QCK2` that went wrong would show in the
 output (v). None of the forcing is a physical study; it is a case that takes those branches.
 

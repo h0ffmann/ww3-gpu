@@ -98,7 +98,7 @@ Mostly yes, with one correction.
   the memory space, the layout and the team sizes, which the tuning step sets per kernel.
 - **The correction: regtests do not wait for the whole port.** ADR-0011 rejected "port in units
   and run no regtest until the whole port ends" because defects pile up and a failure maps to
-  thousands of lines ([ADR-0011](ADRs/ADR-0011-port-in-units-regtest-at-checkpoints.md)). The
+  thousands of lines ([ADR-0011](ADRs.md#adr-0011)). The
   order is translate a unit, regtest it at its checkpoint, and tune once the step is in C++ and
   regtested. Tuning that changes a reduction's order or the arithmetic is a physics change: its
   own PR, asked about first, with L2 evidence.

@@ -9,6 +9,7 @@
 // w3iogrmd.F90:355,1493): the table depends on no grid. The W3_T, W3_T0 and W3_T1 test
 // output (:960-962, :977-1029, :1160-1162, :1185-1188, :1206-1208) and NDST, which only
 // they read, are dropped; W3_S is tracing.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
 // SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 

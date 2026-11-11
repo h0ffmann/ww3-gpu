@@ -1,0 +1,109 @@
+# ww3-gpu: the WW3 GPU Lab
+
+> ww3-gpu makes the WAVEWATCH III (WW3) ocean wave model run faster with Kokkos and CUDA, without changing the Fortran's arithmetic: each translated routine must give the same bits as the Fortran routine it replaces, in the same WW3 executable. It is a one-person research project of h0ffmann (Matheus Hoffmann), done with LabECO/UFSC and written up as a UFRJ/DEL project proposal and a preprint.
+
+This file is an index for language models and for people, in the format of https://llmstxt.org. It lives at the root of https://github.com/h0ffmann/ww3-gpu and the website serves it at https://wave.piabrota.art/llms.txt. Each link has one short note; the detail is behind the link. When this file and a linked file disagree, the linked file is right, and for any statement about WW3 itself the source is WW3's `model/src` at the commit ww3-gpu pins, not this file. The list of other work was read from GitHub on 2026-11-11 and names public repositories only.
+
+## Start here
+
+- [README](https://github.com/h0ffmann/ww3-gpu/blob/main/README.md): what the lab is, in one minute, with its study areas and their state. Portuguese mirror: README.pt-BR.md.
+- [Website](https://wave.piabrota.art/): the front page (research, numbers, tools, figures, port, decisions, designs, how to cite) and the lineage page, built from this repository's files at a pinned commit.
+- [AGENTS.md](https://github.com/h0ffmann/ww3-gpu/blob/main/AGENTS.md): the repository's invariants (bit for bit with the Fortran, WW3 is read-only, translate don't improve, evidence on every claim) and where each kind of change belongs.
+- [CONTRIBUTING.md](https://github.com/h0ffmann/ww3-gpu/blob/main/CONTRIBUTING.md): the longer form of those rules, including whether WW3 itself is deterministic enough for bit-for-bit comparison.
+
+## The port
+
+- [kokkos/README.md](https://github.com/h0ffmann/ww3-gpu/blob/main/kokkos/README.md): the C++/Kokkos port, why Kokkos, how a routine is wired into WW3 behind a switch.
+- [kokkos/PORT_STATUS.md](https://github.com/h0ffmann/ww3-gpu/blob/main/kokkos/PORT_STATUS.md): the port ledger and the port score (how much of WW3's run time and code is translated, ported and regtested), written by `scripts/port_score.py`. A text that contradicts it is wrong.
+- [kokkos/PORT_TABLE.tsv](https://github.com/h0ffmann/ww3-gpu/blob/main/kokkos/PORT_TABLE.tsv): every routine translated, claimed or timed, the next port first.
+- [kokkos/port_report/](https://github.com/h0ffmann/ww3-gpu/tree/main/kokkos/port_report): one report per ported routine: what was ported, its benchmarks and how it was regtested.
+- [bench/README.md](https://github.com/h0ffmann/ww3-gpu/blob/main/bench/README.md): how a timing is taken and recorded; a timing enters a table only after WW3's regtests pass on its commit.
+- [regtests/](https://github.com/h0ffmann/ww3-gpu/tree/main/regtests): the CMake/CTest driver that runs WW3's own regtest matrix, Fortran routine against Kokkos routine.
+- [ww3-dia-gpu-v2](https://github.com/h0ffmann/ww3-dia-gpu-v2): an earlier deliverable, the whole W3SNL1 (DIA nonlinear interactions) inside WW3, bit for bit. Archived.
+
+## Decisions, designs and records
+
+- [docs/ADRs.md](https://github.com/h0ffmann/ww3-gpu/blob/main/docs/ADRs.md): the numbered architecture decisions, with status and date.
+- [docs/WFIPs/README.md](https://github.com/h0ffmann/ww3-gpu/blob/main/docs/WFIPs/README.md): the design proposals (WFIPs), each tied to a deliverable of the project proposal.
+- [docs/log/](https://github.com/h0ffmann/ww3-gpu/tree/main/docs/log): dated entries of what was tried, negative results included.
+- [notes/index.md](https://github.com/h0ffmann/ww3-gpu/blob/main/notes/index.md): the ideas the lab stands on.
+- [docs/ww3-manual/README.md](https://github.com/h0ffmann/ww3-gpu/blob/main/docs/ww3-manual/README.md): WW3's manual (version 7.14) summarised by topic, as a map to the source.
+- [docs/GLOSSARY.md](https://github.com/h0ffmann/ww3-gpu/blob/main/docs/GLOSSARY.md): every abbreviation, switch, routine and tool name used in the repository.
+
+## Texts
+
+- [Preprint](https://github.com/h0ffmann/ww3-gpu/blob/main/pubs/preprint/README.md): the paper on wave models on GPUs, in English and Brazilian Portuguese, with its Markdown source.
+- [Project proposal](https://github.com/h0ffmann/ww3-gpu/tree/main/pubs/proposal): the UFRJ/DEL undergraduate project proposal, co-advised at LabECO/UFSC; `pt/` is the reference text, `en/` its mirror.
+
+## Cite and releases
+
+- [CITATION.cff](https://github.com/h0ffmann/ww3-gpu/blob/main/CITATION.cff): how to cite the software; the README's "How to cite" section has the formatted citation.
+- [RELEASES.md](https://github.com/h0ffmann/ww3-gpu/blob/main/RELEASES.md): the releases and what each changed.
+- [RELATED_WORK.md](https://github.com/h0ffmann/ww3-gpu/blob/main/RELATED_WORK.md): the works this one cites or runs beside.
+
+## Other research and personal work of h0ffmann
+
+- [All the work of h0ffmann](https://github.com/piabrota/nix-os/blob/main/llms.txt): the full index of his public work, kept in piabrota/nix-os.
+- [GitHub profile](https://github.com/h0ffmann) and [website](https://h0ffmann.github.io/h0ffmann/): the timeline, the works and how they connect.
+- [chaceon](https://github.com/h0ffmann/chaceon): CPU and GPU wave modelling in Rust, written by agents.
+- [picasso](https://github.com/h0ffmann/picasso): deterministic toolchains with just, Nix and Rust; ww3-gpu's Fortran/MPI/NetCDF toolchain is pinned from it. Pages: https://h0ffmann.github.io/picasso/.
+- [proof](https://github.com/h0ffmann/proof): write what you can do, do what you write; its pages are at https://proof.piabrota.art/.
+- [closed-source](https://github.com/h0ffmann/closed-source): a book on why closed source failed as a protection. Site: https://closed.piabrota.art/.
+- [nashkell](https://github.com/h0ffmann/nashkell): game theory in Haskell. Pages: https://h0ffmann.github.io/nashkell/.
+- [sharingan](https://github.com/h0ffmann/sharingan): when Aider meets an instruction DSL.
+- [awesome-ocean-science](https://github.com/h0ffmann/awesome-ocean-science): a list of ocean-science resources.
+- [forecast-energy-demand](https://github.com/h0ffmann/forecast-energy-demand): forecasting algorithms applied to hourly electricity demand.
+- [astrbot_dw_ext_br_south_disaster](https://github.com/h0ffmann/astrbot_dw_ext_br_south_disaster): disaster alerts for the South of Brazil (RS, SC, PR), an extension of an AstrBot plugin.
+- [astrbot_dw_ext_br_south_waterq](https://github.com/h0ffmann/astrbot_dw_ext_br_south_waterq): bathing-water quality alerts for the South of Brazil, an extension of the same plugin.
+- [gcp-agentic-architect](https://github.com/h0ffmann/gcp-agentic-architect): learning agents on GCP.
+- [awesome-agentic-ai](https://github.com/h0ffmann/awesome-agentic-ai), [awesome-neurosymbolic-ai](https://github.com/h0ffmann/awesome-neurosymbolic-ai), [awesome-prediction-markets](https://github.com/h0ffmann/awesome-prediction-markets): curated lists.
+- [okekara](https://github.com/h0ffmann/okekara): synchronized lyrics and a karaoke mode for YouTube Music.
+- [swim-sync](https://github.com/h0ffmann/swim-sync): a swim training app.
+- [chemo-rx](https://github.com/h0ffmann/chemo-rx): his undergraduate thesis.
+
+## marola-dev: the water super app
+
+- [marola.dev](https://marola.dev): the live map: nearby beaches, sea and weather, bathing-water quality and a 0 to 100 swimability score. marola is the second consumer of ww3-gpu.
+- [marola](https://github.com/marola-dev/marola): the umbrella repository: the design proposals (MIPs), the ways of working and every code repository as a submodule. Docs: https://docs.marola.dev/.
+- [marola-app](https://github.com/marola-dev/marola-app): the backend.
+- [marola-site](https://github.com/marola-dev/marola-site): the marola.dev frontend.
+- [marola-ml](https://github.com/marola-dev/marola-ml): marolaGPT, its fine-tune, the DSPy prompt compile, the local model image and the benchmark gate.
+- [marola-research](https://github.com/marola-dev/marola-research): the research of the project. Pages: https://marola-dev.github.io/marola-research/.
+- [marola-corpus](https://github.com/marola-dev/marola-corpus): sourced ocean and marine-safety notes, released as a pinned tarball.
+- [marola-oods](https://github.com/marola-dev/marola-oods): the open ocean data store, Brazilian bathing-water data as versioned files.
+- [marola-devkit](https://github.com/marola-dev/marola-devkit): the development harness: scripts, a Claude Code plugin marketplace and reusable workflows.
+- [marola-skills](https://github.com/marola-dev/marola-skills) and [marola-agents](https://github.com/marola-dev/marola-agents): the skills and agents of the marola repositories.
+- [awesome-ocean-sciences](https://github.com/marola-dev/awesome-ocean-sciences): a curated list of ocean-science software, models, data and resources.
+
+## piabrota: the AI studio
+
+- [www.piabrota.art](https://www.piabrota.art/): the studio's site. Its own index for agents: https://www.piabrota.art/llms.txt.
+- [nix-os](https://github.com/piabrota/nix-os): the NixOS configuration of the servers that host piabrota.art, wave.piabrota.art included.
+- [mu](https://github.com/piabrota/mu): the company chart: the dogma, the standards, the journal and the index of the repositories.
+- [pirsig](https://github.com/piabrota/pirsig): an agentic second brain.
+- [rax](https://github.com/piabrota/rax): an agentic runtime on Kubernetes, in Rust.
+- [agents](https://github.com/piabrota/agents): piabrota's agents.
+- [skills](https://github.com/piabrota/skills): piabrota's skill set. Site: https://skills.piabrota.art/.
+- [gramatico](https://github.com/piabrota/gramatico): Brazilian Portuguese on rails. Pages: https://piabrota.github.io/gramatico/.
+- [room](https://github.com/piabrota/room): a personal site that is a 3D room, with camera shots, VHS tapes and a lofi radio. Site: https://room.piabrota.art/.
+- [alerts](https://github.com/piabrota/alerts) and [dojo](https://github.com/piabrota/dojo): the alerts realm and the dojo.
+
+## ouroboric-dev: open factories that improve themselves
+
+- [ouroboric](https://github.com/ouroboric-dev/ouroboric): the charter, standards, journal and brand.
+- [yggdrasil](https://github.com/ouroboric-dev/yggdrasil): an open software factory where agents build and humans steer. Design phase.
+- [asgard](https://github.com/ouroboric-dev/asgard): the company factory, running on Yggdrasil. Design phase.
+- [odin](https://github.com/ouroboric-dev/odin): the orchestrator: the graph engine and the ygg CLI.
+- [gungnir](https://github.com/ouroboric-dev/gungnir): the contract: Go interface types and JSON schemas for ledger events and the graph, pack and factory files.
+- [jormungandr](https://github.com/ouroboric-dev/jormungandr): the loop: build, check and fix with attempts, backoff, budgets and escalation.
+- [gleipnir](https://github.com/ouroboric-dev/gleipnir): the harness: agent adapters, the devcontainer sandbox driver, policies and the check runner.
+- [voluspa](https://github.com/ouroboric-dev/voluspa): the graph library, one folder per graph with its stage prompts.
+- [havamal](https://github.com/ouroboric-dev/havamal): the skill library, vendored and own skills with their evals.
+- [mimir](https://github.com/ouroboric-dev/mimir): the public benchmark kit: briefs, task format, sample suites and results.
+- [helheim-go](https://github.com/ouroboric-dev/helheim-go), [midgard-react](https://github.com/ouroboric-dev/midgard-react), [niflheim-local](https://github.com/ouroboric-dev/niflheim-local): the realm flavours for Go backends, React frontends and one machine with no cloud.
+- [ouroboric-packages](https://github.com/ouroboric-dev/ouroboric-packages): the placeholder packages on PyPI and crates.io that hold the project's name.
+
+## Optional
+
+- [ondaseventos.ufsc.br](https://ondaseventos.ufsc.br/): LabECO/UFSC's operational wave forecast, the first consumer of ww3-gpu.
+- Older and smaller public repositories of h0ffmann: [hoffmagic](https://github.com/h0ffmann/hoffmagic), [literator](https://github.com/h0ffmann/literator), [bigiot](https://github.com/h0ffmann/bigiot), [scala-spice](https://github.com/h0ffmann/scala-spice), [mdd-risk-analysis](https://github.com/h0ffmann/mdd-risk-analysis), [akka-bank](https://github.com/h0ffmann/akka-bank), [scan4s](https://github.com/h0ffmann/scan4s), [scalabase](https://github.com/h0ffmann/scalabase), [fp-gym](https://github.com/h0ffmann/fp-gym), [quad-ci](https://github.com/h0ffmann/quad-ci), [go-hello](https://github.com/h0ffmann/go-hello), [tf-gcp-workspace](https://github.com/h0ffmann/tf-gcp-workspace), [ops-cheat-sheet](https://github.com/h0ffmann/ops-cheat-sheet), [predictive-content](https://github.com/h0ffmann/predictive-content), [ihoje](https://github.com/h0ffmann/ihoje), [zex](https://github.com/h0ffmann/zex), [the-garden-of-aflictions](https://github.com/h0ffmann/the-garden-of-aflictions), [js-advanced-es6](https://github.com/h0ffmann/js-advanced-es6), [manus-playground](https://github.com/h0ffmann/manus-playground), [che-scala-template](https://github.com/h0ffmann/che-scala-template), [elyra-fork-test](https://github.com/h0ffmann/elyra-fork-test), [hoffmannxd.github.io](https://github.com/h0ffmann/hoffmannxd.github.io), and the archived [smart-notes](https://github.com/h0ffmann/smart-notes) and [montaigne](https://github.com/h0ffmann/montaigne).

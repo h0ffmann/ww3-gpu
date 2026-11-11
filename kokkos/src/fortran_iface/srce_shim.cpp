@@ -12,6 +12,7 @@
 // only when its bits change (ww_srce_batch_va, WFIP-0005 unit 4); with
 // WW_KOKKOS_SRCE_COUNT=1 it counts those copies, and on a host backend what a
 // device would copy.
+// SPDX-License-Identifier: MIT
 
 #include "fortran_iface/ww_kokkos_c.hpp"
 #include "fortran_iface/resident_c.hpp"

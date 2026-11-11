@@ -1,6 +1,6 @@
 # OpenMP or MPI for the Kokkos runtime: why the port is single node, and why MPI could slow it down
 
-2026-10-18. Status: **rationale of [ADR-0017](ADRs/ADR-0017-kokkos-port-is-single-node-mpi-stays-fortran.md)
+2026-10-18. Status: **rationale of [ADR-0017](ADRs.md#adr-0017)
 (Accepted).** Every WW3 line is at the fork pin `WW3@80644ba9` (h0ffmann/WW3, `ww3-gpu/kokkos-pnt`).
 The measurements quoted are one run each on a loaded machine ⚠ and are not speed figures for a
 table (`bench/README.md`). The projections in the last sections are arithmetic on WW3's array

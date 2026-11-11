@@ -19,6 +19,8 @@
 //   no libmvec, no vectorised loop (w3dispmd.vec.txt is empty).
 // - (COSH(x))**2 is c*c; W0**2 and W0*W0 are both w*w on the signed W (same bits).
 // - Every division is a divss, never a reciprocal multiply; no MIN/MAX; no FMA.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #pragma once
 
 #include <cmath>

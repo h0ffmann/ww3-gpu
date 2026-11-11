@@ -5,6 +5,8 @@
 // Phase 1, translated, not regtested.
 //
 // WW3 heritage: WW3/model/src/w3src4md.F90:1427-1596 at WW3@bb08623a.
+// SPDX-FileCopyrightText: 2009 National Weather Service (NWS), National Oceanic and Atmospheric Administration
+// SPDX-License-Identifier: LGPL-3.0-or-later
 #include <cmath>
 
 #include <Kokkos_Core.hpp>
