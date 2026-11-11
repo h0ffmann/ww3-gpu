@@ -5,7 +5,7 @@
 # course/*.md into one HTML page per chapter with the same pandoc reader and figure filter as the
 # PDF; math is MathML. It also serves the committed pdf/ww3-lab-course.pdf, the progress page
 # pubs/site/andamento/ and the ADR list pubs/site/adrs/, which scripts/adrs.py fills from
-# docs/ADRs/ at build time, at their old URLs.
+# docs/ADRs.md at build time, at their old URLs.
 # A pull request only builds it, so a lesson that breaks the site fails there; a push to main,
 # a published release or a manual run also deploys it to https://h0ffmann.github.io/ww3-gpu/.
 # Needs the repository's Pages source set to "GitHub Actions" (Settings -> Pages), once.
@@ -13,10 +13,10 @@ name: Pages
 
 on:
   pull_request:
-    paths: ['course/**', 'pubs/figures/mermaid/**', 'pubs/filters/mermaid.lua', 'pubs/site/**', 'pdf/ww3-lab-course.pdf', 'pubs/relatorio-gta/**', 'scripts/build_relatorio.sh', 'scripts/book_prep.py', 'scripts/build_html.sh', 'scripts/build_site.sh', 'docs/ADRs/**', 'docs/WFIPs/**', 'notes/**', 'site/**', 'DESIGN.md', '.zenodo.json', 'CITATION.cff', 'RELEASES.md', 'flake.nix', 'flake.lock', 'scripts/adrs.py', '.github/workflows/pages.yml']
+    paths: ['course/**', 'pubs/figures/mermaid/**', 'pubs/filters/mermaid.lua', 'pubs/site/**', 'pdf/ww3-lab-course.pdf', 'pubs/relatorio-gta/**', 'scripts/build_relatorio.sh', 'scripts/book_prep.py', 'scripts/build_html.sh', 'scripts/build_site.sh', 'docs/ADRs.md', 'docs/WFIPs/**', 'notes/**', 'site/**', 'DESIGN.md', '.zenodo.json', 'CITATION.cff', 'RELEASES.md', 'flake.nix', 'flake.lock', 'scripts/adrs.py', '.github/workflows/pages.yml']
   push:
     branches: [main]
-    paths: ['course/**', 'pubs/figures/mermaid/**', 'pubs/filters/mermaid.lua', 'pubs/site/**', 'pdf/ww3-lab-course.pdf', 'pubs/relatorio-gta/**', 'scripts/build_relatorio.sh', 'scripts/book_prep.py', 'scripts/build_html.sh', 'scripts/build_site.sh', 'docs/ADRs/**', 'docs/WFIPs/**', 'notes/**', 'site/**', 'DESIGN.md', '.zenodo.json', 'CITATION.cff', 'RELEASES.md', 'flake.nix', 'flake.lock', 'scripts/adrs.py', '.github/workflows/pages.yml']
+    paths: ['course/**', 'pubs/figures/mermaid/**', 'pubs/filters/mermaid.lua', 'pubs/site/**', 'pdf/ww3-lab-course.pdf', 'pubs/relatorio-gta/**', 'scripts/build_relatorio.sh', 'scripts/book_prep.py', 'scripts/build_html.sh', 'scripts/build_site.sh', 'docs/ADRs.md', 'docs/WFIPs/**', 'notes/**', 'site/**', 'DESIGN.md', '.zenodo.json', 'CITATION.cff', 'RELEASES.md', 'flake.nix', 'flake.lock', 'scripts/adrs.py', '.github/workflows/pages.yml']
   release:
     types: [published]
   # pubs.yml commits the rebuilt PDF with [skip ci], which starts no push run; redeploy after it.

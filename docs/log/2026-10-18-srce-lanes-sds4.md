@@ -1,7 +1,7 @@
 # `W3SDS4` with one sea point per vector lane: bit-identical, 19 % off the one-thread `W3SRCE` kernel after L2
 
 2026-10-18, for M. Hoffmann (goal `5afd9379-4417`), unit L3 of
-[the points-in-lanes plan](../compound/plans/2026-10-18-005-srce-points-in-lanes-plan.md),
+[the points-in-lanes plan](../plans/2026-10-18-005-srce-points-in-lanes-plan.md),
 after [L2](2026-10-18-srce-lanes-sin4.md) (PR #199).
 
 ## Question

@@ -145,9 +145,9 @@
           "label": "Kokkos fallback"
         },
         {
-          "path": "docs/ADRs/ADR-0014-gpu-runs-judged-by-tolerance.md",
-          "line": 51,
-          "end_line": 52,
+          "path": "docs/ADRs.md",
+          "line": 1690,
+          "end_line": 1691,
           "label": "a few ULP"
         }
       ]

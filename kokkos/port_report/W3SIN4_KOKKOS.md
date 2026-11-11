@@ -49,7 +49,7 @@ same commit (`AGENTS.md`, "No timing without parity").
 
 ## How it was regtested
 
-Not yet. ST4 is one unit under [ADR-0011](../../docs/ADRs/ADR-0011-port-in-units-regtest-at-checkpoints.md):
+Not yet. ST4 is one unit under [ADR-0011](../../docs/ADRs.md#adr-0011):
 its checkpoint runs `just smoke-ww3-gpu`, `just full-ww3-gpu` and `just ww3-gpu-matrix` with
 `WW3GPU_PHYSICS=ST4`, one flag at a time, after the CMake changes of
 [`ST4_KOKKOS_PLAN_202610.md`](../../docs/ST4_KOKKOS_PLAN_202610.md) §10.3 and the `WW3/` pin bump

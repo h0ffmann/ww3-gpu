@@ -1,6 +1,6 @@
 # The Kokkos port's own tests removed; WW3's regtests are its only tests
 
-2026-10-14, the owner with agents. [ADR-0010](../ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md),
+2026-10-14, the owner with agents. [ADR-0010](../ADRs.md#adr-0010),
 [WFIP-0003](../WFIPs/WFIP-0003-kokkos-regtest-matrix.md), branch `claude/wfip-0003-impl-regtests-only`.
 
 ## Question

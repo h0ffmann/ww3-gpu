@@ -1,7 +1,7 @@
 # `W3SIN4`'s stress scan with one sea point per vector lane: bit-identical, 5.1 % off the one-thread `W3SRCE` kernel
 
 2026-10-18, for M. Hoffmann (goal `c3e7eecf-6142`), unit L2 of
-[the points-in-lanes plan](../compound/plans/2026-10-18-005-srce-points-in-lanes-plan.md).
+[the points-in-lanes plan](../plans/2026-10-18-005-srce-points-in-lanes-plan.md).
 
 ## Question
 

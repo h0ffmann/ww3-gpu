@@ -1,7 +1,7 @@
 # Releases
 
 Each release of the WW3 GPU Lab, its permanent DOI and what changed. A release is an edition of
-the book ([ADR-0004](docs/ADRs/ADR-0004-book-channels-and-first-slice.md)). The concept DOI
+the book ([ADR-0004](docs/ADRs.md#adr-0004)). The concept DOI
 [10.5281/zenodo.23221351](https://doi.org/10.5281/zenodo.23221351) always resolves to the latest
 one; cite a version DOI to pin the exact text and code you read.
 
@@ -18,7 +18,7 @@ of each GitHub release. The format follows h0ffmann/closed-source's `RELEASES.md
 | v0.1.0 | 2026-10-07 | [10.5281/zenodo.23221352](https://doi.org/10.5281/zenodo.23221352) | [v0.1.0](https://github.com/h0ffmann/ww3-gpu/releases/tag/v0.1.0) | 33 |
 
 The next release is the first with the record typed as a book on Zenodo (`publication_type:
-book`, [ADR-0009](docs/ADRs/ADR-0009-ww3-gpu-adopts-ai-memory-from-fabio-akita.md)). v0.1.0 to
+book`, [ADR-0009](docs/ADRs.md#adr-0009)). v0.1.0 to
 v0.1.3 stay typed as software.
 
 ## v0.1.3: four decisions accepted

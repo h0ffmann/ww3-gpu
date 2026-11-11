@@ -1,10 +1,10 @@
 # W3SRCE on Kokkos: the source-term integrator as one unit (phase 1, translation only)
 
-Status: **Tasks 1-6, 8, 9 done; Task 7 written on the fork, not pushed**, 2026-10-15 ([log](log/2026-10-15-w3srce-kokkos-translation.md)), the checkpoint of §7 has not run; under [ADR-0011](ADRs/ADR-0011-port-in-units-regtest-at-checkpoints.md).
+Status: **Tasks 1-6, 8, 9 done; Task 7 written on the fork, not pushed**, 2026-10-15 ([log](log/2026-10-15-w3srce-kokkos-translation.md)), the checkpoint of §7 has not run; under [ADR-0011](ADRs.md#adr-0011).
 It answers the owner's request of 2026-10-15 ("do the next port, by wall time, most expensive
 routines first"), with the port planner issue [#42](https://github.com/h0ffmann/ww3-gpu/issues/42)
-as its issue: no issue names `W3SRCE` alone. [ADR-0002](ADRs/ADR-0002-port-order-wall-time.md) sets
-the order, [ADR-0010](ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md) what "tested" means,
+as its issue: no issue names `W3SRCE` alone. [ADR-0002](ADRs.md#adr-0002) sets
+the order, [ADR-0010](ADRs.md#adr-0010) what "tested" means,
 and ADR-0011 makes this a unit with its regtests at a checkpoint after it. The owner started this
 unit while the ST4 checkpoint was still running (ADR-0011 asks for the checkpoint first); the log
 entry records it.

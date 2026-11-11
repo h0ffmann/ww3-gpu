@@ -194,7 +194,7 @@ Depois dessas frentes, o dono do projeto vai iniciar a fase de validação.
 | Resumo do projeto em português | [`README.pt-BR.md`][readme-pt] |
 | Site | <https://h0ffmann.github.io/ww3-gpu/pt-BR/> |
 | Versão completa deste relatório | <https://h0ffmann.github.io/ww3-gpu/relatorio-gta/> |
-| Decisões (18 ADRs) e desenhos de mudança (5 WFIPs) | [`docs/ADRs/`][adrs] e [`docs/WFIPs/`][wfips] |
+| Decisões (18 ADRs) e desenhos de mudança (5 WFIPs) | [`docs/ADRs.md`][adrs] e [`docs/WFIPs/`][wfips] |
 | A skill de escrita deste texto | [Português Técnico Controlado][ptc] (PTC), versão 1.1.0, de Kayque Rotondo, nível `descritivo` |
 | Citação | o DOI [10.5281/zenodo.23221351](https://doi.org/10.5281/zenodo.23221351) abre sempre a versão mais recente; a mais recente publicada é a `v0.1.3`, de 2026-10-09 (v, [`RELEASES.md`][releases]) |
 
@@ -214,13 +214,13 @@ commit `cfdffad`, licença MIT.
 [readiness]: https://github.com/h0ffmann/ww3-gpu/blob/main/docs/PRODUCTION_READINESS_202610.md
 [cuda-build]: https://github.com/h0ffmann/ww3-gpu/blob/main/docs/log/2026-10-18-cuda-build-only.md
 [af11]: https://github.com/h0ffmann/ww3-gpu/blob/main/docs/log/2026-10-14-snl1-bitwise-af11.md
-[plan3]: https://github.com/h0ffmann/ww3-gpu/blob/main/docs/compound/plans/2026-10-18-003-gpu-first-supervised-run-plan.md
-[plan7]: https://github.com/h0ffmann/ww3-gpu/blob/main/docs/compound/plans/2026-10-19-007-gfs-wave-target-plan.md
-[adrs]: https://github.com/h0ffmann/ww3-gpu/blob/main/docs/ADRs/README.md
-[adr10]: https://github.com/h0ffmann/ww3-gpu/blob/main/docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md
-[adr14]: https://github.com/h0ffmann/ww3-gpu/blob/main/docs/ADRs/ADR-0014-gpu-runs-judged-by-tolerance.md
-[adr16]: https://github.com/h0ffmann/ww3-gpu/blob/main/docs/ADRs/ADR-0016-speed-first-regtests-postponed-one-person-loop.md
-[adr17]: https://github.com/h0ffmann/ww3-gpu/blob/main/docs/ADRs/ADR-0017-kokkos-port-is-single-node-mpi-stays-fortran.md
+[plan3]: https://github.com/h0ffmann/ww3-gpu/blob/main/docs/plans/2026-10-18-003-gpu-first-supervised-run-plan.md
+[plan7]: https://github.com/h0ffmann/ww3-gpu/blob/main/docs/plans/2026-10-19-007-gfs-wave-target-plan.md
+[adrs]: https://github.com/h0ffmann/ww3-gpu/blob/main/docs/ADRs.md
+[adr10]: https://github.com/h0ffmann/ww3-gpu/blob/main/docs/ADRs.md#adr-0010
+[adr14]: https://github.com/h0ffmann/ww3-gpu/blob/main/docs/ADRs.md#adr-0014
+[adr16]: https://github.com/h0ffmann/ww3-gpu/blob/main/docs/ADRs.md#adr-0016
+[adr17]: https://github.com/h0ffmann/ww3-gpu/blob/main/docs/ADRs.md#adr-0017
 [wfips]: https://github.com/h0ffmann/ww3-gpu/blob/main/docs/WFIPs/README.md
 [releases]: https://github.com/h0ffmann/ww3-gpu/blob/main/RELEASES.md
 [h100]: https://github.com/h0ffmann/ww3-gpu/issues/143

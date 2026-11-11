@@ -258,9 +258,9 @@ just route section docs/AGENTS_KOKKOS_202609.md 1.5   # one section of a long pl
 
 | Then, to understand the method | Words | Time |
 |---|---|---|
-| `docs/ADRs/ADR-0002-port-order-wall-time.md` (what to port next) | 872 | 4 min |
-| `docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md` (why no unit tests) | 894 | 4 min |
-| `docs/ADRs/ADR-0011-port-in-units-regtest-at-checkpoints.md` (units and checkpoints) | 2 330 | 12 min |
+| `docs/ADRs.md#adr-0002` (what to port next) | 872 | 4 min |
+| `docs/ADRs.md#adr-0010` (why no unit tests) | 894 | 4 min |
+| `docs/ADRs.md#adr-0011` (units and checkpoints) | 2 330 | 12 min |
 | `.claude/skills/ww3-port/SKILL.md` (the translation traps) | 953 | 5 min |
 | `docs/log/2026-10-14-snl1-bitwise-af11.md` (one ULP traced to gfortran's `x**11`) | 695 | 3 min |
 | `kokkos/port_report/W3SNL1_KOKKOS.md` (what a finished port report looks like) | 1 496 | 7 min |

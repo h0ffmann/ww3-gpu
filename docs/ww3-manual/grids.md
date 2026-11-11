@@ -112,7 +112,7 @@ optimisation, set up at initialisation. The vector optimisation dates from 1997.
 
 For this repository: the transpose is why a resident spectrum on a device meets MPI at steps 3
 and at output, and nowhere else in the time step
-([ADR-0020](../ADRs/ADR-0020-mpi-in-scope-exchange-on-the-resident-spectrum.md)).
+([ADR-0020](../ADRs.md#adr-0020)).
 
 ## Nesting (3.14, appendix B)
 

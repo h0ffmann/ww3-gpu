@@ -1,8 +1,8 @@
 # The CUDA build of `ww_kokkos` and of the fork for the resident preset, build only: 51 nvcc warnings, none in a wired part
 
 2026-10-18, an agent for M. Hoffmann; unit U5 of
-[`2026-10-18-002-production-single-node-plan.md`](../compound/plans/2026-10-18-002-production-single-node-plan.md),
-[ADR-0014](../ADRs/ADR-0014-gpu-runs-judged-by-tolerance.md). No device run.
+[`2026-10-18-002-production-single-node-plan.md`](../plans/2026-10-18-002-production-single-node-plan.md),
+[ADR-0014](../ADRs.md#adr-0014). No device run.
 
 ## Question
 

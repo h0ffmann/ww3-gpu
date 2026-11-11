@@ -20,7 +20,7 @@ This repository's attack surface is not a web service. What matters here:
 
 - **Secrets and personal data in git.** Tokens, keys, connection strings, the owner's e-mail address,
   account ids or session links in code, docs, JSON or the `.claude/project/` snapshot
-  ([ADR-0005](../../docs/ADRs/ADR-0005-claude-project-settings-in-repo.md)). A trigger id or a
+  ([ADR-0005](../../docs/ADRs.md#adr-0005)). A trigger id or a
   public repository URL is not a secret.
 - **Agent configuration as code.** A hook in `.claude/settings.json` or `.claude/hooks/` runs on
   every session that opens the repository; a skill, agent or routine prompt is executed by a model

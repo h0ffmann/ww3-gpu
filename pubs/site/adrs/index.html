@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<!-- Template: scripts/build_html.sh runs `scripts/adrs.py --site` to fill ADRS from docs/ADRs/ on every build, so this page cannot drift from the records. -->
+<!-- Template: scripts/build_html.sh runs `scripts/adrs.py --site` to fill ADRS from docs/ADRs.md on every build, so this page cannot drift from the records. -->
 <title>Decisões do ww3-gpu</title>
 <style>
 /* Same layout and tokens as ../andamento/: one narrow column, summary strip, then one row per ADR, newest first, with its status pill */
@@ -81,14 +81,14 @@ footer a, .lede a { color: var(--accent); }
   </section>
 
   <footer>
-    <p>Gerada a cada build do site a partir de <code>docs/ADRs/</code> por <code>scripts/adrs.py --site</code>, o mesmo leitor de <code>just adrs</code>: o título é a linha <code># ADR-NNNN</code> e o estado e a data vêm da tabela de cabeçalho de cada registro.</p>
+    <p>Gerada a cada build do site a partir de <code>docs/ADRs.md</code> por <code>scripts/adrs.py --site</code>, o mesmo leitor de <code>just adrs</code>: o título é a linha <code>## ADR-NNNN</code> e o estado e a data vêm da tabela de cabeçalho de cada registro.</p>
     <p><a href="../">O livro</a> · <a href="../andamento/">Andamento do projeto</a></p>
   </footer>
 </div>
 
 <script>
-const BLOB = "https://github.com/h0ffmann/ww3-gpu/blob/main/docs/ADRs/";
-// n, status, date, title, file; filled from docs/ADRs/ at build time.
+const BLOB = "https://github.com/h0ffmann/ww3-gpu/blob/main/docs/";
+// n, status, date, title, file ("ADRs.md#adr-NNNN"); filled from docs/ADRs.md at build time.
 const ADRS = [];
 const KIND = s => /^accepted/i.test(s) ? "accepted" : /^proposed/i.test(s) ? "proposed" : "closed";
 const LABEL = { accepted: "Aceita", proposed: "Proposta", closed: "Substituída ou rejeitada" };
@@ -102,7 +102,7 @@ document.getElementById("stats").innerHTML =
 function render(f) {
   document.getElementById("feed").innerHTML = ADRS.filter(a => f === "all" || KIND(a.status) === f).map(a => `
     <article class="thread">
-      <div class="row1"><a class="num" href="${BLOB}${encodeURIComponent(a.file)}">${esc(a.n)}</a><span class="pill ${CLS[KIND(a.status)]}" title="${esc(a.status)}">${LABEL[KIND(a.status)]}</span><span class="when">${fmt(a.date)}</span><span class="title">${esc(a.title)}</span></div>
+      <div class="row1"><a class="num" href="${BLOB}${a.file.split("#").map(encodeURIComponent).join("#")}">${esc(a.n)}</a><span class="pill ${CLS[KIND(a.status)]}" title="${esc(a.status)}">${LABEL[KIND(a.status)]}</span><span class="when">${fmt(a.date)}</span><span class="title">${esc(a.title)}</span></div>
     </article>`).join("") || `<article class="thread"><p class="desc">Nenhum registro neste estado.</p></article>`;
 }
 document.querySelectorAll(".filters button").forEach(b => b.addEventListener("click", () => {

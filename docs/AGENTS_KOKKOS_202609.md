@@ -109,7 +109,7 @@ using SpecView  = Kokkos::View<Real****, Kokkos::LayoutLeft, DeviceMem>;
 ### 1.5 Validation contract (what "done" means for one ported routine)
 
 > **2026-10-14:** item 3 is withdrawn and item 4 is the only test: the port has no tests of its own,
-> and WW3's regtests validate it ([ADR-0010](ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md),
+> and WW3's regtests validate it ([ADR-0010](ADRs.md#adr-0010),
 > [WFIP-0003](WFIPs/WFIP-0003-kokkos-regtest-matrix.md)). Item 4 is `scripts/ww3-gpu.sh --ww3-gpu --cpu`
 > pair to pair with `--ww3` (`just smoke-ww3-gpu`, `just full-ww3-gpu`) and the regtest matrix
 > (`just ww3-gpu-matrix`, CTest in `regtests/` running WW3's own regtests, Fortran against Kokkos, since

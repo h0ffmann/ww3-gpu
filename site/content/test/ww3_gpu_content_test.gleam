@@ -35,6 +35,15 @@ pub fn status_word_test() {
   assert c.status_word("") == ""
 }
 
+pub fn sections_test() {
+  let doc =
+    "# Architecture Decision Records\n\n| **Status** | not a record |\n\n<a id=\"adr-0001\"></a>\n\n## ADR-0001: First\n\n| **Status** | Accepted |\n\n### Context\n\n## ADR-0002: Second\n\n| **Date** | 2026-10-08 |\n"
+  let parts = c.sections(doc, "ADR-")
+  assert list.map(parts, c.heading) == ["ADR-0001: First", "ADR-0002: Second"]
+  assert list.map(parts, fn(s) { c.field(s, "Status") }) == ["Accepted", ""]
+  assert c.sections("no records", "ADR-") == []
+}
+
 pub fn split_id_test() {
   assert c.split_id("ADR-0007: the decision: with a colon")
     == #("ADR-0007", "the decision: with a colon")

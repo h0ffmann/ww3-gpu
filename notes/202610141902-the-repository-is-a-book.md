@@ -3,7 +3,7 @@ id: "202610141902"
 title: "The repository is a book"
 type: permanent
 status: verified
-source: "docs/ADRs/ADR-0003-repository-is-a-book.md at da226b2"
+source: "docs/ADRs.md#adr-0003 at da226b2"
 tags: [book]
 created: 2026-10-14
 ---

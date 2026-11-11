@@ -1,39 +1,38 @@
 #!/usr/bin/env python3
-"""adrs — one line per Architecture Decision Record in docs/ADRs/: number, status, date, decision.
+"""adrs — one line per Architecture Decision Record in docs/ADRs.md: number, status, date, decision.
 
     scripts/adrs.py              # all ADRs
     scripts/adrs.py --status accepted
     scripts/adrs.py --site TEMPLATE OUT   # the site's /adrs/ page: TEMPLATE with the list filled in
 
-The decision is the ADR's title (the `# ADR-NNNN: …` line); every ADR so far titles itself with its
-choice. Status and Date come from the header table. Standard library only.
+Every ADR is a section of docs/ADRs.md (ADR-0022) whose heading, `## ADR-NNNN: …`, states its
+choice. Status and Date come from the section's header table. Standard library only.
 """
 import argparse
 import json
 import pathlib
 import re
 
-ADRS = pathlib.Path(__file__).resolve().parent.parent / "docs" / "ADRs"
-TITLE_RE = re.compile(r"^#\s*ADR-(\d{4}):\s*(.+?)\s*$", re.M)
+ADRS = pathlib.Path(__file__).resolve().parent.parent / "docs" / "ADRs.md"
+TITLE_RE = re.compile(r"^##\s*ADR-(\d{4}):\s*(.+?)\s*$", re.M)
 ROW_RE = re.compile(r"^\|\s*\*\*(Status|Date)\*\*\s*\|\s*(.*?)\s*\|\s*$", re.M)
 
 
-def load(folder=ADRS):
+def load(path=ADRS):
+    """(number, status, date, title) per section, in the document's order."""
+    text = path.read_text(encoding="utf-8")
+    heads = list(TITLE_RE.finditer(text))
     out = []
-    for p in sorted(folder.glob("ADR-[0-9][0-9][0-9][0-9]-*.md")):
-        text = p.read_text(encoding="utf-8")
-        m = TITLE_RE.search(text)
-        rows = dict(ROW_RE.findall(text))
-        out.append((f"ADR-{m.group(1)}" if m else p.stem[:8], rows.get("Status", "?"),
-                    rows.get("Date", "?"), m.group(2) if m else p.stem))
+    for m, nxt in zip(heads, heads[1:] + [None]):
+        rows = dict(ROW_RE.findall(text[m.end():nxt.start() if nxt else len(text)]))
+        out.append((f"ADR-{m.group(1)}", rows.get("Status", "?"), rows.get("Date", "?"), m.group(2)))
     return out
 
 
-def site(template, out, folder=ADRS):
+def site(template, out, path=ADRS):
     """Write TEMPLATE to OUT with `const ADRS = [];` replaced by the records, newest number first."""
-    files = sorted(folder.glob("ADR-[0-9][0-9][0-9][0-9]-*.md"))  # the order load() reads them in
-    rows = [dict(zip(("n", "status", "date", "title"), r), file=f.name)
-            for r, f in zip(load(folder), files)][::-1]
+    rows = [dict(zip(("n", "status", "date", "title"), r), file=f"{path.name}#{r[0].lower()}")
+            for r in load(path)][::-1]
     text = pathlib.Path(template).read_text(encoding="utf-8")
     if "const ADRS = [];" not in text:
         raise SystemExit(f"{template}: no `const ADRS = [];` placeholder")

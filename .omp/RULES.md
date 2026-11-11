@@ -43,9 +43,9 @@ The full rulebook is `AGENTS.md` at the repository root; where this list and it 
   flag defaults to the Fortran
   (ADR-0016, superseding
   ADR-0011).
-- **Engineering work follows the compound loop**: when the owner asks for engineering work, plan,
-  work, review and compound with Compound Engineering's skills, sized to the change, and redirect
-  the steps that clash with these rules (AGENTS.md, "Engineering work").
+- **Engineering work is sized to the change**: when the owner asks for engineering work, plan,
+  work and review in proportion to it, and the hard rules here win over any step
+  (AGENTS.md, "Engineering work").
 - **The proposal goes through the reviewer**: any change under `pubs/proposal/` passes
   `revisor-proposta` and `just proposal-lint` before the PR, and the review is recorded
   (AGENTS.md, "The proposal").

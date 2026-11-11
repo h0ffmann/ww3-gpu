@@ -2,7 +2,7 @@
 
 The look of the website (`site/`, `just site`), in rules. It follows the manner of the author's
 sister sites, h0ffmann/h0ffmann and h0ffmann/closed-source, with its own palette. The record of
-the decision is [ADR-0009](docs/ADRs/ADR-0009-ww3-gpu-adopts-ai-memory-from-fabio-akita.md).
+the decision is [ADR-0009](docs/ADRs.md#adr-0009).
 
 ## One sentence
 
@@ -63,7 +63,7 @@ The fonts load from Google Fonts, as on the sister sites. No font file is stored
 ## Facts
 
 Every fact on the page comes from a file of this repository, through `site/content`: the chapters
-from `course/`, the decisions from `docs/ADRs/`, the designs from `docs/WFIPs/`, the notes from
+from `course/`, the decisions from `docs/ADRs.md`, the designs from `docs/WFIPs/`, the notes from
 `notes/`, the port's benchmarks from `kokkos/port_report/`, the DOI and the people from `CITATION.cff` and `.zenodo.json`, the latest release from
 `RELEASES.md`. A fact that no other file holds (a related author, a sister work) is a row of
 `site/data/related.tsv`, with its source. The sister port in Rust, chaceon, is a `port` row there,

@@ -6,7 +6,7 @@
 | **Author** | M. Hoffmann (asked 2026-10-08 in the project thread: shift the repository, incrementally, into a compiled book on agentic coding and agentic research, in the tradition of Volpe's and Maguire's self-published books) |
 | **Created** | 2026-10-08 |
 | **Deliverable** | D6 |
-| **Related** | [ADR-0003](../ADRs/ADR-0003-repository-is-a-book.md) (the decision this WFIP builds); [ADR-0004](../ADRs/ADR-0004-book-channels-and-first-slice.md) (the channels, with the results of task 1 and 4b); marola's [MIP-0014](https://github.com/marola-dev/marola/blob/main/docs/MIPs/MIP-0014-marola-book.md), the design this one is translated from; [`pubs/README.md`](../../pubs/README.md) and [`pubs/book/`](../../pubs/book/) (the pipeline that already exists); [`course/README.md`](../../course/README.md) (the chapters); the `release` skill |
+| **Related** | [ADR-0003](../ADRs.md#adr-0003) (the decision this WFIP builds); [ADR-0004](../ADRs.md#adr-0004) (the channels, with the results of task 1 and 4b); marola's [MIP-0014](https://github.com/marola-dev/marola/blob/main/docs/MIPs/MIP-0014-marola-book.md), the design this one is translated from; [`pubs/README.md`](../../pubs/README.md) and [`pubs/book/`](../../pubs/book/) (the pipeline that already exists); [`course/README.md`](../../course/README.md) (the chapters); the `release` skill |
 | **Effort** | L: no new toolchain (the pandoc and TeX pipeline is in the root flake); the work is front matter and parts, three new chapters, a listings gate, a PDF on each release, and the metadata |
 | **Gain** | `outreach` (a citable, dated book that a researcher can read start to finish, where today there are sixteen lessons and a dozen plans); `proposal` (D6 asks for tools, results and recommendations published so the lab can repeat them: the book is that publication); `lab/dev-loop` (the rules agents follow here become chapters, so a new agent or person reads one text, not twelve) |
 | **Effort vs Gain** | do next, in slices: each slice is one PR that leaves the repository consistent, and nothing here competes with a measurement for the same machine |
@@ -15,7 +15,7 @@
 | **Risk** | the chapters drift from the code they describe: a `file:line` or a pasted listing that no longer exists; MIP-0014 §5.3 names this as the central risk of a book about a moving repository, and this repository already quotes `WW3/model/src/<file>.F90:<line>` by hand in dozens of places |
 
 > **Partially implemented, 2026-10-16.** The owner asked to mark it implemented; of §7 only the first box is shown done (ADR-0003 accepted on 2026-10-09, v0.1.3, and named in the READMEs). The book PDF is built in CI and the `leanpub` branch exists, but no box asks for only that. Before that:
-> **Postponed on 2026-10-15.** [ADR-0011](../ADRs/ADR-0011-port-in-units-regtest-at-checkpoints.md) puts the port of ST4 first; the book builds already run in CI, and the rest of this WFIP waits. Returns to Draft after the ST4 checkpoint.
+> **Postponed on 2026-10-15.** [ADR-0011](../ADRs.md#adr-0011) puts the port of ST4 first; the book builds already run in CI, and the rest of this WFIP waits. Returns to Draft after the ST4 checkpoint.
 
 ### Readiness
 
@@ -219,7 +219,7 @@ None: it does not touch a kernel, a namelist or a measurement.
 ## 7. Verification plan and definition of done
 
 - [x] ADR-0003 is Accepted and the README, `AGENTS.md`, `CONTRIBUTING.md` and `DESCRIPTION.md`
-      say the repository is a book in progress: `grep -l "ADR-0003" README.md README.pt-BR.md docs/ADRs/README.md`
+      say the repository is a book in progress: `grep -l "ADR-0003" README.md README.pt-BR.md docs/ADRs.md`
 - [ ] The next release's Zenodo record carries the new title and keywords:
       `curl -s 'https://api.datacite.org/dois?query=ww3-gpu' | python3 -c 'import json,sys; print(json.load(sys.stdin)["data"][0]["attributes"]["titles"])'`
 - [ ] The book builds with its title page, parts and copyright page: `just book && pdfinfo build/ww3-lab-course.pdf`

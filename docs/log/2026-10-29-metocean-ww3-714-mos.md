@@ -2,7 +2,7 @@
 
 2026-10-29, agent session `ef7f3ca1` for the owner; no issue. Goal branch
 `goal/ef7f3ca1-4821-metocean-ww3`; the fork rebase it leaves is
-[plan 2026-10-29-001](../compound/plans/2026-10-29-001-metocean-upstream-plan.md).
+[plan 2026-10-29-001](../plans/2026-10-29-001-metocean-upstream-plan.md).
 
 ## Question
 
@@ -65,7 +65,7 @@ to `metocean/WW3`, which the owner named as the 7.14 that ondaseventos uses?
   records it with the ⚠ that ondaseventos' own build was not read.
 - The `WW3-noaa/` submodule, the fork's base and every `file:line` at the pin stay on NOAA-EMC/WW3
   for now (the owner, 2026-10-29: "metadata now, fork later"). Moving them is
-  [plan 2026-10-29-001](../compound/plans/2026-10-29-001-metocean-upstream-plan.md): a Kokkos
+  [plan 2026-10-29-001](../plans/2026-10-29-001-metocean-upstream-plan.md): a Kokkos
   kernel translated from NOAA's `W3SIN4` does not reproduce MetOcean's, so the bit-for-bit claims
   of the ST4 ports do not carry over.
 - To close the ⚠: read ondaseventos' Dockerfile, switch file or `BUILD_INFO` with access to

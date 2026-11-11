@@ -108,8 +108,6 @@ site/src/ww3_gpu_site/content.gleam
 # ...except the screenshots a pull request shows
 !site/preview/*.png
 
-# Compound Engineering per-checkout overrides
-.compound-engineering/*.local.yaml
 # Archify: pages are rendered from docs/archify/*.json (scripts/archify.sh render), and its receipts are run evidence
 .archify/
 docs/archify/*.html

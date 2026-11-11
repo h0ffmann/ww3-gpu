@@ -3,7 +3,7 @@ id: "202610141901"
 title: "Port order is measured wall time"
 type: permanent
 status: verified
-source: "docs/ADRs/ADR-0002-port-order-wall-time.md at da226b2"
+source: "docs/ADRs.md#adr-0002 at da226b2"
 tags: [porting, method]
 created: 2026-10-14
 ---

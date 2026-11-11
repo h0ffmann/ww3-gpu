@@ -183,9 +183,9 @@
       "tag": "0 parts",
       "sources": [
         {
-          "path": "docs/ADRs/ADR-0013-operational-parts-default-to-kokkos.md",
-          "line": 70,
-          "end_line": 81,
+          "path": "docs/ADRs.md",
+          "line": 1587,
+          "end_line": 1598,
           "label": "conditions 1, 2"
         },
         {
@@ -206,9 +206,9 @@
       "tag": "0 parts",
       "sources": [
         {
-          "path": "docs/ADRs/ADR-0013-operational-parts-default-to-kokkos.md",
-          "line": 82,
-          "end_line": 88,
+          "path": "docs/ADRs.md",
+          "line": 1599,
+          "end_line": 1605,
           "label": "condition 3"
         }
       ]

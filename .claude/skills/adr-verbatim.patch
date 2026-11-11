@@ -1,0 +1,20 @@
+--- a/adr-verbatim/SKILL.md
++++ b/adr-verbatim/SKILL.md
+@@ -3,6 +3,17 @@
+ description: 'Record concise ADRs that preserve the user''s decisions without conversational noise. Use for "adr-verbatim", "new ADR", "document that as an ADR", "record this decision", or supplied ADR wording.'
+ ---
+ 
++**In this repository.** The readers of an ADR are scientists (PhD and independent researchers in
++wave modelling and HPC; see `CONTRIBUTING.md`, "Who this repository is for"), so keep domain
++terms, `file:line` references at the pinned commit and the `(v)`/`⚠` marks exactly as the owner
++gave them. Every ADR is a section of the one document `docs/ADRs.md` (ADR-0022), never a file of
++its own: append it at the end, take the next number, put `<a id="adr-NNNN"></a>` on the line
++before its heading, write the heading as `## ADR-NNNN: <the decision>` (a colon, no dash:
++`scripts/adrs.py` and the website read that line), follow it with the header table (at least
++**Status** and **Date**), and add its row to the index table at the top. A decision that changes
++an older one supersedes it: set the older one's Status to "Superseded by ADR-NNNN" and nothing
++else in it. Run `just adrs` to check that the new record is read.
++
+ # ADR Verbatim
+ 
+ Preserve the user's meaning, not the conversation transcript. Record only the decision and context needed to understand it.

@@ -712,7 +712,7 @@ with `WW_KOKKOS_ALL=0` in both runs.
 `--kokkos gpu` is `SRCE` alone, the part list for Kokkos' CUDA backend and the default of `--gpu`
 when neither `--kokkos` nor `WW3GPU_ROUTINES` is given: phase 1 copies one sea point per call,
 and `W3SRCE` routed whole makes one round trip per point and time step where the DIA and ST4
-routed one by one make one each ([ADR-0013](../../../docs/ADRs/ADR-0013-operational-parts-default-to-kokkos.md)).
+routed one by one make one each ([ADR-0013](../../../docs/ADRs.md#adr-0013)).
 WW3's own defaults are unchanged: every flag unset is the Fortran.
 
 The parity column is a judgement (⚠) from the port report's evidence unless it names a
@@ -1997,7 +1997,7 @@ Five commits on `80644ba9` (section 22), pushed to h0ffmann/WW3 on 2026-10-18: `
 (`W3KOKKOS_RESIDENTMD` and the ABI), `bb5c516e` (`wminiomd.F90`), `f4df761a` (`wmwavemd.F90`),
 `5ef94512` (`w3wavemd.F90`) and `f330dc53` (the remark of gap 13 of
 [`PRODUCTION_READINESS_202610.md`](../../../docs/PRODUCTION_READINESS_202610.md)). Unit U1 + U7
-of [the production single-node plan](../../../docs/compound/plans/2026-10-18-002-production-single-node-plan.md),
+of [the production single-node plan](../../../docs/plans/2026-10-18-002-production-single-node-plan.md),
 under the resident-spectrum rule of `AGENTS.md`. The ABI is `ww_kokkos` 0.10.0 (one entry point
 added, `ww_va_host_wrote_cols`); the fork asks for `0.10`.
 
@@ -2249,7 +2249,7 @@ binds it on the first sync, `w3kokkos_residentmd.F90:68-70`), so it needs no syn
 - Not covered: the NUOPC cap of the UFS (`wav_comp_nuopc.F90`, `wav_import_export.F90`,
   `wav_restart_mod.F90`), which is not in the fork at `a304018c`; `production/GFS.v17` has it, with
   16 and 13 uses of `VA` in the last two (v, `git show`). The pin move to that branch
-  ([plan](../../../docs/compound/plans/2026-10-18-004-pin-gfs-v17-plan.md)) lists and syncs them.
+  ([plan](../../../docs/plans/2026-10-18-004-pin-gfs-v17-plan.md)) lists and syncs them.
 
 ## 30. `W3XYPUG` and `W3KTP3` on an unstructured grid, `ww3-gpu/xypug-196-rebased`
 

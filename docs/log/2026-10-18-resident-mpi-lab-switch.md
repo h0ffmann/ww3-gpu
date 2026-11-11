@@ -1,7 +1,7 @@
 # The resident preset under MPI: refused by design; SRCE and KTP3 alone run, one entry differs
 
 2026-10-18, an agent for the owner. Issue [#42](https://github.com/h0ffmann/ww3-gpu/issues/42),
-plan [`2026-10-18-001-cpu-resident-validation-plan.md`](../compound/plans/2026-10-18-001-cpu-resident-validation-plan.md)
+plan [`2026-10-18-001-cpu-resident-validation-plan.md`](../plans/2026-10-18-001-cpu-resident-validation-plan.md)
 (U4a), [WFIP-0003](../WFIPs/WFIP-0003-kokkos-regtest-matrix.md). The same day the owner put MPI
 out of scope for the Kokkos port (single node: `SHRD` with OpenMP and one GPU; an MPI build keeps
 the Fortran path; an ADR will record it). This entry is the evidence behind that scope.

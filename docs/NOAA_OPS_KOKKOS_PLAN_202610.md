@@ -2,8 +2,8 @@
 
 Status: **batches A, B and C translated and reviewed**, 2026-10-16 (PR #152); `kokkos/PORT_TABLE.tsv` has each routine's state. Not wired, not regtested. Issue [#42](https://github.com/h0ffmann/ww3-gpu/issues/42),
 the port planner. Translation only, bit for bit, no test run, under
-[ADR-0011](ADRs/ADR-0011-port-in-units-regtest-at-checkpoints.md); the port has no tests of its own
-([ADR-0010](ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md)).
+[ADR-0011](ADRs.md#adr-0011); the port has no tests of its own
+([ADR-0010](ADRs.md#adr-0010)).
 
 ## Why these routines
 
@@ -16,7 +16,7 @@ read 2026-10-16). What NOAA runs and this repository has not translated is elsew
   System switch) and of `ww3_ufs1.1`'s `input_unstr`, with `IC4`, `REF1`, `TR1` in the former;
 - `BT4` in `ww3_tp2.17`'s switches; `NL3` in `switch_NCEP_glwu`.
 
-Port order is wall time ([ADR-0002](ADRs/ADR-0002-port-order-wall-time.md)). The committed profile
+Port order is wall time ([ADR-0002](ADRs.md#adr-0002)). The committed profile
 is the lab switch's, where none of these runs, so a gprof profile of `ww3_tp2.17` with
 `switch_PDLIB` on one MPI rank is being added (`scripts/profile_case.sh pdlib`,
 `docs/data/ww3_pdlib_gprof.tsv`); until it is committed, the order below is by what the

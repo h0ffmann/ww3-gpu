@@ -16,7 +16,7 @@ data movement, nothing of the averaging or the conversion.
 | WW3 routine | `WMIOHG`, the store loop 2.e, `model/src/wminiomd.F90:2260-2266` at NOAA-EMC/WW3 `03adda91`: `VA(I,JSEA) = SPEC2(I,IS) / SIG2(I) * CG(1+(I-1)/NTH,ISEA)`, `JSEA = HGSTGE(IMOD,J)%LJSEA(IS)`, every `I = 1..NSPEC` |
 | Kokkos code | `ww_va_host_wrote_cols` in [`../src/fortran_iface/resident_shim.cpp`](../src/fortran_iface/resident_shim.cpp) (`host_wrote_cols`, kernel `ww_va.scatter_cols`), declared in [`../src/fortran_iface/resident_c.hpp`](../src/fortran_iface/resident_c.hpp) |
 | Fortran side | `W3KOKKOS_VA_WRITE_COLS` of the fork's `w3kokkos_residentmd.F90`, called after the loop with `LJSEA(1:NTOT)` ([`PATCH.md`](../src/fortran_iface/PATCH.md), section 26) |
-| Plan | [the production single-node plan](../../docs/compound/plans/2026-10-18-002-production-single-node-plan.md), unit U1 |
+| Plan | [the production single-node plan](../../docs/plans/2026-10-18-002-production-single-node-plan.md), unit U1 |
 
 ## Arithmetic
 

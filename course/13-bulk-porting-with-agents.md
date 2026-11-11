@@ -46,7 +46,7 @@ flowchart LR
 
 **Not shown.** The tolerances (`kokkos/tools/nccmp-tol/tolerances.txt`, lesson 12), and the shortcut taken for `W3SNL1`, where the C stage was skipped and Kokkos serial was compared with the Fortran fixture directly until that test was removed (text below).
 
-**Evidence.** The recipe of Koldunov et al. (2026) as summarised in `pubs/proposal/pt/05-justification.md` and applied in `pubs/proposal/pt/07-methodology.md`, paragraph *Interoperabilidade e testes dos kernels* (v); the test group as amended by [ADR-0010](../docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md) (v).
+**Evidence.** The recipe of Koldunov et al. (2026) as summarised in `pubs/proposal/pt/05-justification.md` and applied in `pubs/proposal/pt/07-methodology.md`, paragraph *Interoperabilidade e testes dos kernels* (v); the test group as amended by [ADR-0010](../docs/ADRs.md#adr-0010) (v).
 
 </details>
 

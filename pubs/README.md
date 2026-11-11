@@ -6,7 +6,7 @@ proposal, in English and Portuguese. CI builds them on every merge to `main` and
 results to [`pdf/`](../pdf/). The directory keeps that name for the sake of existing links, though
 it also holds `.docx` files.
 
-The book is the repository's public form ([ADR-0003](../docs/ADRs/ADR-0003-repository-is-a-book.md)):
+The book is the repository's public form ([ADR-0003](../docs/ADRs.md#adr-0003)):
 a book in progress on agentic coding and agentic research, written around moving WW3's kernels to
 GPUs without changing the answer. [WFIP-0002](../docs/WFIPs/WFIP-0002-lab-as-a-book.md) is the plan
 that turns the lessons into parts, adds the chapters on how this lab is run with agents, checks

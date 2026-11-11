@@ -152,7 +152,7 @@ duas rodadas. Escolha as partes com `--kokkos`:
 |---|---|---|
 | `none` | nenhuma | só o Fortran, no build com Kokkos |
 | `all` | todas as partes do build (`WW_KOKKOS_ALL=1`), menos as opcionais abaixo | o teste mais amplo da tradução |
-| `gpu` | `SRCE` | o padrão do `--gpu`: o `W3SRCE` inteiro em cada chamada ([ADR-0013](docs/ADRs/ADR-0013-operational-parts-default-to-kokkos.md)) |
+| `gpu` | `SRCE` | o padrão do `--gpu`: o `W3SRCE` inteiro em cada chamada ([ADR-0013](docs/ADRs.md#adr-0013)) |
 | `resident` | `SRCE,XYP3,KTP3,OUTG,IOPE,UPDV,CPRT` | o passo de tempo inteiro em Kokkos, com o espectro guardado do lado do Kokkos ([próxima seção](#o-que-o---kokkos-resident-faz)) |
 | uma lista, por exemplo `SNL1,SDS4` | as partes da lista | o teste de uma parte por vez |
 
@@ -182,7 +182,7 @@ para o lado do Kokkos uma vez, no começo, e só volta quando o WW3 escreve saí
   casos de teste (`kokkos/src/fortran_iface/PATCH.md`, seções 11 a 18).
 - `⚠` O `resident` é opcional e não é padrão. `XYP3`, `KTP3`, `OUTG`, `IOPE` e `UPDV` ainda não
   passaram pelos regtests do WW3, que esperam a fase de validação
-  ([ADR-0016](docs/ADRs/ADR-0016-speed-first-regtests-postponed-one-person-loop.md)).
+  ([ADR-0016](docs/ADRs.md#adr-0016)).
 - `⚠` A primeira medição de ponta a ponta é uma rodada só, na CPU. Veja
   [onde o projeto está](#onde-o-projeto-está).
 
@@ -241,7 +241,7 @@ uma thread (`just profile-case full`).
   ([`AGENTS.md`](AGENTS.md#running-on-the-gpu-hard-rule)).
 - Os regtests do WW3 esperam uma fase de validação, que o dono inicia. Até lá, o argumento de
   paridade vem do código compilado dos dois lados
-  ([ADR-0016](docs/ADRs/ADR-0016-speed-first-regtests-postponed-one-person-loop.md)).
+  ([ADR-0016](docs/ADRs.md#adr-0016)).
 
 ## começo rápido
 
@@ -276,9 +276,9 @@ do marola, lida em 2026-10-08. O assunto é um método: como agentes de código 
 critério bit a bit e uma escada de validação (programação com agentes), e como planos, avaliações e
 medições são escritos de modo que um agente possa ser cobrado por eles (pesquisa com agentes). As
 regras em [`AGENTS.md`](AGENTS.md), os documentos de desenho em [`docs/WFIPs/`](docs/WFIPs/README.md),
-as decisões em [`docs/ADRs/`](docs/ADRs/README.md) e o diário de pesquisa em
+as decisões em [`docs/ADRs.md`](docs/ADRs.md) e o diário de pesquisa em
 [`docs/log/`](docs/log/README.md) são capítulos à espera. A
-[ADR-0003](docs/ADRs/ADR-0003-repository-is-a-book.md) registra a decisão e a
+[ADR-0003](docs/ADRs.md#adr-0003) registra a decisão e a
 [WFIP-0002](docs/WFIPs/WFIP-0002-lab-as-a-book.md), o plano.
 
 Cada versão etiquetada é uma edição, arquivada no Zenodo como livro ([`RELEASES.md`](RELEASES.md)).
@@ -341,7 +341,7 @@ si, sob as regras do [`NOTES.md`](NOTES.md). O que foi tentado, inclusive o que 
 diário: [`docs/log/`](docs/log/README.md), só por acréscimo. Onde fica cada tipo de memória está no
 [`MEMORY.md`](MEMORY.md); a memória de longo prazo entre sessões e agentes é o
 [ai-memory](https://github.com/akitaonrails/ai-memory), escolhido na
-[ADR-0009](docs/ADRs/ADR-0009-ww3-gpu-adopts-ai-memory-from-fabio-akita.md).
+[ADR-0009](docs/ADRs.md#adr-0009).
 
 Parte dessa memória é publicada. As páginas do ai-memory que o dono marca com `publish` são
 copiadas para [`memory/`](memory/README.md), que começa por [`HUMAN.md`](memory/HUMAN.md): quem é
@@ -374,10 +374,10 @@ request ou issue aberta, com link para acompanhar.
 | Curso | Como compilar, rodar e medir o WW3, e depois portar um kernel? | [`course/`](course/README.md), [`examples/`](examples/README.md), [`exercises/`](exercises/README.md) | 17 lições, integrado |
 | Port do `W3SNL1` para Kokkos | Um kernel do WW3 roda na GPU com resultado idêntico bit a bit? | [`kokkos/`](kokkos/README.md), [lição 12](course/12-porting-a-kernel-w3snl1.md) | Idêntico em 3 backends nos testes unitários que o ADR-0010 removeu; a matriz de regtests do WW3 na CPU é idêntica byte a byte ao DIA em Fortran nas 100 entradas seriais `NL1` (2026-10-15) |
 | Benchmarks | Quanto um i9 e uma RTX 4090 entregam de fato para o WW3? | [`bench/`](bench/README.md), [`gpu/`](gpu/README.md), [lição 09](course/09-benchmark-profile-compile-run.md) | Ferramentas integradas |
-| Prioridade do port | Qual rotina portar em seguida? | [ADR-0002](docs/ADRs/ADR-0002-port-order-wall-time.md), [`PORT_STATUS.md`](kokkos/PORT_STATUS.md) | Portar pela ordem do tempo de parede medido. Um primeiro perfil coloca o `W3SDS4` em 67 % do tempo dos termos-fonte ([#45](https://github.com/h0ffmann/ww3-gpu/issues/45)) |
+| Prioridade do port | Qual rotina portar em seguida? | [ADR-0002](docs/ADRs.md#adr-0002), [`PORT_STATUS.md`](kokkos/PORT_STATUS.md) | Portar pela ordem do tempo de parede medido. Um primeiro perfil coloca o `W3SDS4` em 67 % do tempo dos termos-fonte ([#45](https://github.com/h0ffmann/ww3-gpu/issues/45)) |
 | Port com agentes | Como agentes de código podem portar quarenta rotinas sem que uma pessoa refaça as verificações? | [`AGENTS_KOKKOS`](docs/AGENTS_KOKKOS_202609.md), [lição 13](course/13-bulk-porting-with-agents.md), [#42](https://github.com/h0ffmann/ww3-gpu/issues/42) | Regras integradas; fila de tarefas e escada de paridade na #42 |
-| Ferramentas para agentes | Quais frameworks de agentes e ferramentas de pesquisa servem a esse fluxo? | [`EVAL-NOOA_202609.md`](docs/EVAL-NOOA_202609.md), [`LLM_TOOLING_202610.md`](docs/LLM_TOOLING_202610.md), [#38](https://github.com/h0ffmann/ww3-gpu/issues/38), [ADR-0009](docs/ADRs/ADR-0009-ww3-gpu-adopts-ai-memory-from-fabio-akita.md) | Avaliações em revisão; ai-memory escolhido |
-| Prova bit a bit | O que dá para provar, e não só testar, sobre a tradução de Fortran para C++? | [`BITWISE_PROOF`](docs/BITWISE_PROOF_202610.md), [`docs/proof/`](docs/proof/README.md), [ADR-0001](docs/ADRs/ADR-0001-proof-language.md) | Nenhuma linguagem de prova; varreduras exaustivas, diff de GIMPLE e consultas SMT. Seção 1 do `W3SNL1` varrida nas 2^32 entradas |
+| Ferramentas para agentes | Quais frameworks de agentes e ferramentas de pesquisa servem a esse fluxo? | [`EVAL-NOOA_202609.md`](docs/EVAL-NOOA_202609.md), [`LLM_TOOLING_202610.md`](docs/LLM_TOOLING_202610.md), [#38](https://github.com/h0ffmann/ww3-gpu/issues/38), [ADR-0009](docs/ADRs.md#adr-0009) | Avaliações em revisão; ai-memory escolhido |
+| Prova bit a bit | O que dá para provar, e não só testar, sobre a tradução de Fortran para C++? | [`BITWISE_PROOF`](docs/BITWISE_PROOF_202610.md), [`docs/proof/`](docs/proof/README.md), [ADR-0001](docs/ADRs.md#adr-0001) | Nenhuma linguagem de prova; varreduras exaustivas, diff de GIMPLE e consultas SMT. Seção 1 do `W3SNL1` varrida nas 2^32 entradas |
 | Triton e vento de ML | Um kernel Triton do termo cumulativo do `W3SDS4` supera o do Kokkos? O vento do WeatherNext 3 melhora a previsão de ondas? | [#45](https://github.com/h0ffmann/ww3-gpu/issues/45), [`W3SDS4_TRITON_PLANO`](docs/W3SDS4_TRITON_PLANO_202610.pt.md) | Planejado |
 | Port para uma H100 | O que exigiria um port completo para uma única H100? | [`KOKKOS_H100_PLAN`](docs/KOKKOS_H100_PLAN_202609.md), [WFIP-0005](docs/WFIPs/WFIP-0005-device-resident-step.md), [WFIP-0006](docs/WFIPs/WFIP-0006-device-libm-bits.md) | Plano. O passo de tempo residente no dispositivo (`--kokkos resident`) roda na CPU idêntico byte a byte ao Fortran, com o espectro cruzando uma vez em cada sentido no `bench_small` ([#179](https://github.com/h0ffmann/ww3-gpu/pull/179)); as chamadas de libm do dispositivo vão para cópias das da glibc ([#178](https://github.com/h0ffmann/ww3-gpu/pull/178)). Nada rodou numa GPU |
 | WW4 e SWAN | O que substitui o WW3, e o que cobre a costa? | [lição 14](course/14-ww4-and-the-future.md), [lição 15](course/15-swan.md) | Integrado |
@@ -476,7 +476,7 @@ Nenhum workflow do GitHub Actions constrói uma imagem Docker sozinho: todos com
 
 O código Kokkos na GPU tem sua própria imagem, `docker/Dockerfile.cuda`: o CUDA 13.4 da NVIDIA
 sobre Ubuntu 26.04, o Kokkos 5.2.2 compilado com CUDA para a capacidade de computação 8.9 (a RTX
-4090; `KOKKOS_ARCH` escolhe outra), com o `--ww3-gpu --gpu` e, como referência na CPU, o `--ww3`. Os kernels chamam a libdevice do CUDA, não as cópias da libm da glibc no dispositivo (`WW_KOKKOS_LIBM=OFF`: o Ubuntu distribui a libmvec sem a tabela de símbolos, e as cópias precisam de um símbolo dela), então uma rodada na GPU dentro da imagem é julgada por tolerância ([ADR-0014](docs/ADRs/ADR-0014-gpu-runs-judged-by-tolerance.md)). O host precisa do driver da
+4090; `KOKKOS_ARCH` escolhe outra), com o `--ww3-gpu --gpu` e, como referência na CPU, o `--ww3`. Os kernels chamam a libdevice do CUDA, não as cópias da libm da glibc no dispositivo (`WW_KOKKOS_LIBM=OFF`: o Ubuntu distribui a libmvec sem a tabela de símbolos, e as cópias precisam de um símbolo dela), então uma rodada na GPU dentro da imagem é julgada por tolerância ([ADR-0014](docs/ADRs.md#adr-0014)). O host precisa do driver da
 NVIDIA e do [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)
 para `docker run --gpus all`. Como no host, toda rodada `--gpu` pede um `yes` no terminal a quem
 supervisiona ([Running on the GPU](AGENTS.md#running-on-the-gpu-hard-rule)).
@@ -627,7 +627,7 @@ compilados, [a imagem Docker](#2--a-imagem-docker)).
 - `(v)` marca uma afirmação conferida numa fonte buscada durante o trabalho.
 - Os arquivos de entrada usam a interface de namelist (`.nml`), não os `.inp` de formato fixo.
 - Um commit traz o trailer `Tested:` e nenhum registro de custo
-  ([ADR-0009](docs/ADRs/ADR-0009-ww3-gpu-adopts-ai-memory-from-fabio-akita.md)).
+  ([ADR-0009](docs/ADRs.md#adr-0009)).
 
 </details>
 
@@ -655,46 +655,27 @@ puxam contra "traduzir, não melhorar", a regra dos kernels portados ([`AGENTS.m
 
 ## o ciclo de engenharia
 
-<details><summary>Compound Engineering, Archify e Context7: as ferramentas do trabalho com agentes</summary>
+<details><summary>O ciclo, Archify e Context7: como se trabalha com agentes</summary>
 
 Uma pessoa trabalha aqui, então o processo é tão leve quanto a mudança permite
-([ADR-0016](docs/ADRs/ADR-0016-speed-first-regtests-postponed-one-person-loop.md)). Os regtests do
+([ADR-0016](docs/ADRs.md#adr-0016)). Os regtests do
 WW3 ficam para uma fase de validação que confere a tradução do Fortran para C++; até lá, um número
-de velocidade diz "regtest pendente ⚠". Três ferramentas vêm com o repositório, cada uma fixada.
+de velocidade diz "regtest pendente ⚠". Duas ferramentas vêm com o repositório, cada uma fixada.
 
-### Compound Engineering: planejar, executar, revisar, registrar
-
-O [Compound Engineering](https://github.com/EveryInc/compound-engineering-plugin) (EveryInc, MIT)
-é um plugin do Claude Code, fixado em `compound-engineering-v3.30.3` no
-[`.claude/settings.json`](.claude/settings.json). A ideia está no último passo: cada problema
-resolvido deixa uma lição curta por escrito, e o próximo plano lê essas lições primeiro, então
-cada mudança barateia a seguinte. Os agentes o seguem quando o dono conduz trabalho de engenharia.
-
-O ciclo tem o tamanho da mudança:
+### O ciclo: do tamanho da mudança
 
 | Tamanho | Exemplo | Passos |
 |---|---|---|
 | Pequena | uma correção num arquivo, um doc, uma flag | fazer, rodar os gates, `just pr` |
-| Média | uma rotina a traduzir, uma ferramenta, uma receita | `/ce-plan`, `/ce-work`, `/ce-code-review`, `/ce-compound` |
-| Grande | uma unidade como todo o ST4, um backend novo | `/ce-brainstorm` antes, depois os passos da média |
+| Média | uma rotina a traduzir, uma ferramenta, uma receita | um plano em [`docs/plans/`](docs/plans/README.md), o trabalho, uma revisão que só aponta |
+| Grande | uma unidade como todo o ST4, um backend novo | os requisitos antes, depois os passos da média |
 
-O que cada passo faz aqui:
-
-- `/ce-plan` escreve um plano em [`docs/compound/plans/`](docs/compound/README.md) depois de ler
-  as lições, o log, o registro do port e os ADRs. O plano de uma rotina portada nomeia o Fortran no
-  commit fixado, a linha do perfil que a ordena e o argumento de paridade que vai fazer.
-- `/ce-work` executa num branch `goal/<id>-<slug>`, com os gates do repositório e um trailer
-  `Tested:`; o PR é aberto com `just pr`.
-- `/ce-code-review` aponta e não reescreve; a passada com um segundo modelo fica desligada, porque
-  mandaria o diff a outro provedor.
-- `/ce-compound` escreve a lição em `docs/compound/solutions/`, quando ela não é óbvia pelo diff.
-
-Uma regra rígida do [`AGENTS.md`](AGENTS.md) sempre vence o padrão de um passo:
-`/ce-simplify-code` nunca toca código traduzido do Fortran ("Translate, don't improve") e
-`/ce-work` nunca cria teste unitário de rotina portada (ADR-0010). A lista completa está em
-[`AGENTS.md`, "Engineering work"](AGENTS.md#engineering-work-the-compound-loop). Se `/ce-plan` não
-aparecer na sua sessão, rode `/plugin` e instale `compound-engineering` do marketplace
-`compound-engineering-plugin` que o `.claude/settings.json` nomeia.
+O plano de uma rotina portada nomeia o Fortran no commit fixado, a linha do perfil que a ordena e
+o argumento de paridade que vai fazer. Uma regra rígida do [`AGENTS.md`](AGENTS.md) sempre vence
+um passo: uma limpeza nunca toca código traduzido do Fortran ("Translate, don't improve") e o
+trabalho nunca cria teste unitário de rotina portada (ADR-0010). A lista completa está em
+[`AGENTS.md`, "Engineering work"](AGENTS.md#engineering-work). O plugin Compound Engineering
+conduziu este ciclo até 11 de novembro de 2026 ([ADR-0021](docs/ADRs.md#adr-0021)).
 
 ### Archify: gêmeos interativos das figuras
 
@@ -744,7 +725,7 @@ ele devolve é lido como dado, nunca como instrução.
 - **Fabio Akita** ([akitaonrails](https://github.com/akitaonrails)), lendário dev brasileiro
   ("legendary br dev", nas palavras do dono do repositório, 2026-10-14): o autor do
   [ai-memory](https://github.com/akitaonrails/ai-memory) (MIT), a memória de longo prazo que este
-  repositório adota ([ADR-0009](docs/ADRs/ADR-0009-ww3-gpu-adopts-ai-memory-from-fabio-akita.md)).
+  repositório adota ([ADR-0009](docs/ADRs.md#adr-0009)).
 
 </details>
 

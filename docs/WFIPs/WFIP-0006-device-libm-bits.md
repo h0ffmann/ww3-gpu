@@ -6,7 +6,7 @@
 | **Author** | M. Hoffmann (asked 2026-10-17 in the project thread: "move the compute to GPU without changing the answer") |
 | **Created** | 2026-10-17 |
 | **Deliverable** | D5 |
-| **Related** | issue #42 (the port planner); [`GPU_LIBM_BITS_202610.md`](../GPU_LIBM_BITS_202610.md) (the measurements this design rests on); `kokkos/tools/libm_bits/` (the transcriptions); [ADR-0014](../ADRs/ADR-0014-gpu-runs-judged-by-tolerance.md) (its "revisit when"); [ADR-0010](../ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md); [ADR-0011](../ADRs/ADR-0011-port-in-units-regtest-at-checkpoints.md); [WFIP-0005](WFIP-0005-device-resident-step.md) |
+| **Related** | issue #42 (the port planner); [`GPU_LIBM_BITS_202610.md`](../GPU_LIBM_BITS_202610.md) (the measurements this design rests on); `kokkos/tools/libm_bits/` (the transcriptions); [ADR-0014](../ADRs.md#adr-0014) (its "revisit when"); [ADR-0010](../ADRs.md#adr-0010); [ADR-0011](../ADRs.md#adr-0011); [WFIP-0005](WFIP-0005-device-resident-step.md) |
 | **Effort** | M: one routing header in `kokkos/src`, one build step, the call sites of twelve kernel files re-pointed; no physics changes |
 | **Gain** | `proposal` (D5: a GPU result that is the Fortran's, so its timing needs no tolerance caveat); `science` (whether a whole WW3 time step on a GPU can be bit for bit with glibc's x86 libm) |
 | **Effort vs Gain** | do when WFIP-0005's units have merged: the call sites live in the files that work is changing, and one rebase is cheaper than two |
@@ -29,7 +29,7 @@
 
 The CUDA build of the port calls NVIDIA's libdevice for `expf`, `logf`, `powf`, `sin`/`cos`,
 `tanhf`, `atan2f`, `log10f`, `exp` and `tanh`, and scalar functions where the Fortran's object
-calls libmvec. That is why [ADR-0014](../ADRs/ADR-0014-gpu-runs-judged-by-tolerance.md) judges a GPU
+calls libmvec. That is why [ADR-0014](../ADRs.md#adr-0014) judges a GPU
 run by tolerance. `kokkos/tools/libm_bits` now has host-and-device transcriptions of glibc 2.44's
 functions that equal glibc on the host on every input checked. This WFIP routes every device call
 of the `W3SRCE` unit through them, keeps the CPU backend calling glibc itself, and ends with the

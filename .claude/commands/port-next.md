@@ -16,7 +16,7 @@ Every WW3 fact you write cites `model/src/<file>.F90:<line>` at the pin, read fr
 **1. The order.** Run `python3 scripts/port_score.py --check`, then read `kokkos/PORT_TABLE.tsv` (a
 `claimed` row belongs to the branch in its `claim` column: skip it) and `kokkos/PORT_RANKING.md`.
 If `$ARGUMENTS` is not row 1, stop and ask the owner. A unit (ADR-0016) is ported with a plan
-in `docs/` or `docs/compound/plans/` (`/ce-plan`), such as `docs/ST4_KOKKOS_PLAN_202610.md`: run this command once per routine of the
+in `docs/` or `docs/plans/`, such as `docs/ST4_KOKKOS_PLAN_202610.md`: run this command once per routine of the
 unit, in the unit's order, and the first routine must be row 1; the others may sit lower. Name row 1 and both shares; the order is
 wall time (ADR-0002), and choosing another routine is the owner's call. A row below the
 10 ms line has no measured cost: say so.

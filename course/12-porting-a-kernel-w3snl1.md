@@ -96,7 +96,7 @@ shim is now checked only by the WW3 run that calls it.
 
 Since 14 October 2026 the Kokkos code is validated only by WW3's regression tests, run inside WW3
 with the Fortran routine and with the Kokkos routine, on the CPU, and compared within
-`kokkos/tools/nccmp-tol/tolerances.txt` ([ADR-0010](../docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md);
+`kokkos/tools/nccmp-tol/tolerances.txt` ([ADR-0010](../docs/ADRs.md#adr-0010);
 the owner: "kokkos code should NOT have its own tests, hard rule") (v). If WW3's regtests agree for
 the Fortran `W3SNL1` and the Kokkos `snl1`, the routine is ported; nothing else is asked of it. The
 reason is that one reference is enough: the Fortran WW3 ships, through the harness NOAA runs. A

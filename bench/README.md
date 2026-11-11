@@ -20,7 +20,7 @@ The table on the page is generated between `<!-- results:<study>:start -->` and 
 by `python3 scripts/results.py table`; CI (`results.py check`) fails when a record lacks a command
 or a passed parity check, or a quoted table no longer matches its record. Parity is a passed WW3
 regtest replay on the same commit (`regtest: passed: <command>`,
-[ADR-0010](../docs/ADRs/ADR-0010-kokkos-validated-by-ww3-regtests-only.md)); a record made before
+[ADR-0010](../docs/ADRs.md#adr-0010)); a record made before
 2026-10-14 keeps the `l1: passed` of its day as history.
 
 ```bash
