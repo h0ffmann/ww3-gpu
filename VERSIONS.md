@@ -85,7 +85,6 @@ table first said 3.14.3, and a dev container built later the same day had 3.14.4
 | Contraction | `-ffp-contract=off` on the host, `--fmad=false` on the device | `kokkos/src/ww_kokkos/CMakeLists.txt` |
 | WW3 | `cmake_minimum_required(VERSION 3.19)`; Release `-O3` for GNU | `WW3/CMakeLists.txt:4`; `WW3/model/src/CMakeLists.txt:87-89` |
 | Regtest matrix | `cmake_minimum_required(VERSION 3.21)` | `regtests/CMakeLists.txt:38` |
-| Exercises | `cmake_minimum_required(VERSION 3.25)`; C++20 | `exercises/solutions/CMakeLists.txt:13-16` |
 
 ## The workstation (not pinned)
 
