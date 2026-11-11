@@ -397,19 +397,23 @@ WW3 reescrito em Rust, sem Fortran no processo, na CPU ou em uma GPU. O
 \texttt{-\/-ww4} é para o WAVEWATCH IV quando ele for lançado. Hoje, o
 \texttt{-\/-ww4} compila o código de desenvolvimento a partir de um fork
 e para com o código de saída 5 quando o caso precisa de uma parte não
-portada. Duas partes desse desenho ainda não estão no script ⚠. O script
-não tem a flag \texttt{-\/-chaceon}. E o \texttt{-\/-ww3} compila o WW3
-da NOAA em \texttt{03adda91}, enquanto o chaceon compara com o WW3 7.14
-da MetOcean, compilado em separado. O desenho dá aos seis runtimes uma
-referência só, o WW3 7.14 da MetOcean.
+portada. O \texttt{-\/-ww3} compila o WW3 7.14 da MetOcean em
+\texttt{92e2cf66}, e o script compara os arquivos de uma execução do
+\texttt{-\/-chaceon} com os do \texttt{-\/-ww3}, compilado com o switch
+do chaceon. Duas setas da figura são o desenho, e ainda não o que o
+script faz ⚠. O script compara o \texttt{-\/-ww3-gpu} com o WW3 da NOAA
+em \texttt{03adda91}, a base do fork, até o fork passar para o WW3 da
+MetOcean. E o \texttt{-\/-chaceon\ -\/-gpu} para com o código de saída
+5, porque o chaceon ainda não rodou em uma GPU real.
 
 \begin{figure}
 \centering
-\includegraphics[width=1\linewidth,height=\textheight,keepaspectratio,alt={Os seis runtimes do ww3-gpu. Uma seta tracejada aponta para a execução que precisa dar os mesmos bits: as cinco apontam para o -\/-ww3, a referência. Desenho do Archify a partir de docs/archify/ww3-gpu-runtimes-pt.json (Hoffmann 2026c).}]{figures/runtimes.pt-BR.pdf}
+\includegraphics[width=1\linewidth,height=\textheight,keepaspectratio,alt={Os seis runtimes do ww3-gpu. Uma seta tracejada aponta para a execução que precisa dar os mesmos bits: as cinco apontam para o -\/-ww3, a referência. Hoje o script compara o -\/-ww3-gpu com o WW3 da NOAA em 03adda91. Desenho do Archify a partir de docs/archify/ww3-gpu-runtimes-pt.json (Hoffmann 2026c).}]{figures/runtimes.pt-BR.pdf}
 \caption{Os seis runtimes do ww3-gpu. Uma seta tracejada aponta para a
 execução que precisa dar os mesmos bits: as cinco apontam para o
-\texttt{-\/-ww3}, a referência. Desenho do Archify a partir de
-\texttt{docs/archify/ww3-gpu-runtimes-pt.json}
+\texttt{-\/-ww3}, a referência. Hoje o script compara o
+\texttt{-\/-ww3-gpu} com o WW3 da NOAA em \texttt{03adda91}. Desenho do
+Archify a partir de \texttt{docs/archify/ww3-gpu-runtimes-pt.json}
 (\citeproc{ref-ww3gpu}{Hoffmann 2026c}).}\label{fig:runtimes}
 \end{figure}
 

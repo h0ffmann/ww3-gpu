@@ -386,18 +386,22 @@ routine selects the Fortran or the Kokkos code. \texttt{-\/-chaceon}, or
 process, on the CPU or on a GPU. \texttt{-\/-ww4} is for WAVEWATCH IV
 when it is released. Today it builds the development code from a fork,
 and it stops with exit code 5 when the case needs a part that is not
-ported. Two parts of this design are not in the script yet ⚠. The script
-has no \texttt{-\/-chaceon} flag. And \texttt{-\/-ww3} builds NOAA WW3
-\texttt{03adda91}, while chaceon compares with MetOcean WW3 7.14,
-compiled separately. The design gives the six runtimes one reference,
-MetOcean WW3 7.14.
+ported. \texttt{-\/-ww3} builds MetOcean WW3 7.14 at \texttt{92e2cf66},
+and the script compares the files of a \texttt{-\/-chaceon} run with
+those of \texttt{-\/-ww3}, built with chaceon's switch. Two arrows of
+the figure are the design and not what the script does yet ⚠. The script
+compares \texttt{-\/-ww3-gpu} with NOAA WW3 \texttt{03adda91}, the base
+of its fork, until the fork is moved onto MetOcean WW3. And
+\texttt{-\/-chaceon\ -\/-gpu} stops with exit code 5, because chaceon
+has not run on a real GPU.
 
 \begin{figure}
 \centering
-\includegraphics[width=1\linewidth,height=\textheight,keepaspectratio,alt={The six runtimes of ww3-gpu. A dashed arrow points to the run that must give the same bits: all five point to -\/-ww3, the reference. Drawn with Archify from docs/archify/ww3-gpu-runtimes.json (Hoffmann 2026c).}]{figures/runtimes.pdf}
+\includegraphics[width=1\linewidth,height=\textheight,keepaspectratio,alt={The six runtimes of ww3-gpu. A dashed arrow points to the run that must give the same bits: all five point to -\/-ww3, the reference. Today the script compares -\/-ww3-gpu with NOAA WW3 03adda91. Drawn with Archify from docs/archify/ww3-gpu-runtimes.json (Hoffmann 2026c).}]{figures/runtimes.pdf}
 \caption{The six runtimes of ww3-gpu. A dashed arrow points to the run
 that must give the same bits: all five point to \texttt{-\/-ww3}, the
-reference. Drawn with Archify from
+reference. Today the script compares \texttt{-\/-ww3-gpu} with NOAA WW3
+\texttt{03adda91}. Drawn with Archify from
 \texttt{docs/archify/ww3-gpu-runtimes.json}
 (\citeproc{ref-ww3gpu}{Hoffmann 2026c}).}\label{fig:runtimes}
 \end{figure}
