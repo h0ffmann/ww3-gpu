@@ -1,18 +1,18 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><title>Two bit-for-bit ports of WW3</title>
 <style>
-@page{size:A4;margin:18mm 17mm}
-body{font-family:"Latin Modern Roman","CMU Serif",Georgia,serif;font-size:10.3pt;line-height:1.38;color:#111;background:#fff}
+@page{size:A4;margin:12mm 14mm}
+body{font-family:"Latin Modern Roman","CMU Serif",Georgia,serif;font-size:9.3pt;line-height:1.27;color:#111;background:#fff}
 h1{font-size:15.5pt;text-align:center;margin:0 0 4pt;line-height:1.2}
 .au{text-align:center;margin:0 0 2pt}.af{text-align:center;font-size:8.8pt;color:#333;margin:0 0 10pt}
-.abs{margin:0 6% 10pt;font-size:9.4pt}.abs b{display:block;text-align:center;margin-bottom:2pt}
-h2{font-size:11.2pt;margin:11pt 0 3pt}
+.abs{margin:0 5% 8pt;font-size:9pt}.abs b{display:block;text-align:center;margin-bottom:2pt}
+h2{font-size:11pt;margin:8pt 0 2pt}
 p{margin:0 0 5pt;text-align:justify;hyphens:auto}
 code{font-family:"DejaVu Sans Mono",monospace;font-size:8.4pt}
 table{break-inside:avoid;border-collapse:collapse;width:100%;font-size:8.5pt;margin:4pt 0 6pt}
-th,td{border-top:.5pt solid #999;border-bottom:.5pt solid #999;padding:2.5pt 4pt;vertical-align:top;text-align:left}
+th,td{border-top:.5pt solid #999;border-bottom:.5pt solid #999;padding:1.8pt 4pt;vertical-align:top;text-align:left}
 th{background:#f1f1f1}
 .cap{font-size:8.6pt;color:#333;margin:-2pt 0 7pt}
-.small{font-size:8.6pt}
+.small{font-size:8pt}.small code{font-size:7.2pt}
 ol{margin:0 0 5pt 14pt;padding:0}li{margin-bottom:2pt}
 </style></head><body>
 <h1>One rule, two languages: C++/Kokkos and Rust ports of WAVEWATCH III that must give the Fortran's bits</h1>
@@ -37,7 +37,7 @@ We report two agent-written ports of the WAVEWATCH III (WW3) spectral wave model
 <tr><td>Licence</td><td>MIT, LGPL-3.0 kernels</td><td>MPL-2.0</td></tr>
 </table>
 <p class="cap">Table 1. Sources: chaceon <code>docs/WW3_GPU_PARITY_202611.md</code> (2026-11-09) and README at <code>0c098fe</code>; ww3-gpu <code>kokkos/PORT_STATUS.md</code> at <code>58167d7</code>.</p>
-<p>The Kokkos route keeps every WW3 program and swaps routines one at a time, so a single regtest can isolate one routine's effect. The Rust route has to rebuild the programs, the file formats and the time loop before a whole run can be compared, but once it can, there is no Fortran left to share state with the port.</p>
+<p>The Kokkos route keeps every WW3 program and swaps routines one at a time, so a single regtest can isolate one routine's effect. The Rust route has to rebuild the programs, the file formats and the time loop before a whole run can be compared, but once it can, there is no Fortran left to share state with the port. ww3-gpu's CPU results for its whole runtime, the resident spectrum included, and their limits are kept in its NOAA progress record <a href="https://github.com/h0ffmann/ww3-gpu/blob/58167d7/docs/NOAA_PROGRESS_RECORD_202610.md">[3]</a>; its DIA port is also published on its own, with a comparison against an earlier CUDA kernel of the same routine, as ww3-dia-gpu-v2 <a href="https://github.com/h0ffmann/ww3-dia-gpu-v2/tree/32aa2ef">[4]</a>.</p>
 
 <h2>3. Evidence ladders</h2>
 <p>Each project names its steps, and a step in one ledger is not the same evidence as a step in the other.</p>
@@ -54,18 +54,26 @@ We report two agent-written ports of the WAVEWATCH III (WW3) spectral wave model
 <h2>4. What each project found</h2>
 <p><b>ww3-gpu: the reference is the optimised code.</b> Reaching byte identity for the DIA required one fact that reading the source could not give: gfortran expands <code>x**11</code> as a different chain of multiplications at <code>-O0</code> and at <code>-O3</code>, and the two chains disagree on 643 427 of 1 000 000 single-precision inputs. Before this was found, the research log explained the residual differences as round-off amplified by WW3; that explanation was wrong. The port's reference is therefore the code WW3's own build produces, read as GIMPLE or disassembly, not the Fortran text. The port has no unit tests of its own: it is judged only by WW3's regression tests, compared by <code>test.comp</code>.</p>
 <p><b>chaceon: a run with no Fortran in it.</b> Rust's <code>ww3_grid</code>, <code>ww3_strt</code>, <code>ww3_prep</code> and <code>ww3_shel</code>, run in sequence from the namelists, write <code>mod_def.ww3</code>, the forcing, gridded and point outputs, the track file and both restarts byte-identical to the reference on 96 files; boundaries give 214 identical comparisons over 34 cases, and the track post-processors 74. <code>ww3_shel --threads N</code> and an MPI build give the same bytes. With <code>W3SRCE</code>, <code>W3XYP3</code> and <code>W3KTP3</code> compiled to SPIR-V and run on a CPU Vulkan driver, the files are still identical. Where enumeration cannot reach (2<sup>64</sup> pairs of <code>f32</code> operands), a Lean proof states the division fact the port relies on; it says nothing about whether Rust equals Fortran, which has no usable formal semantics.</p>
+<p><b>Why ww3-gpu has no proof yet, and what comes next.</b> In this first phase ww3-gpu adopted no proof assistant <a href="https://github.com/h0ffmann/ww3-gpu/blob/58167d7/docs/ADRs/ADR-0001-proof-language.md">[5]</a>. No proof assistant reads Fortran or C++, so a proof is about a hand-written model and says nothing about the gfortran and nvcc binaries unless the model is shown to match them, which is the open question; bit equality is a property of two binaries built with given flags. For straight-line IEEE-754 code it is decidable: SMT queries in <code>QF_FP</code> and sweeps over all 2<sup>32</sup> <code>float32</code> inputs answer it in seconds to minutes, against months per routine for an interactive proof that agents must also write and a person review. A first formal layer sits beside the ports: the Lean 4 <code>ocean-waves</code> package <a href="https://github.com/h0ffmann/proof/tree/b863c15/ocean-waves">[6]</a> proves, with no <code>sorry</code> or <code>axiom</code>, that <i>σ</i>²(<i>k</i>) is strictly increasing, that <i>c</i>/2 ≤ <i>c</i><sub>g</sub> ≤ <i>c</i>, that the depth CFL bounds every Courant number by 1, that upwind propagation and a DIA-shaped exchange conserve action, and that the semi-implicit source step stays positive; it runs in exact <code>Rat</code> on a reduced model, so it says nothing about bits either. Agda is the next step: it has no 32-bit float, so its role is a total, executable reference semantics of each source term, with table indices typed as <code>Fin</code> so that every read is in bounds for every grid. The bits stay with the sweeps, the solver queries and WW3's regression tests.</p>
 
 <h2>5. What is not claimed</h2>
 <ol>
-<li>Neither project has run the whole model on a real GPU. chaceon's PTX has never executed; ww3-gpu has run one DIA benchmark kernel on an RTX 4090.</li>
-<li>No speed-up is claimed. ww3-gpu's recorded timings are marked "regtest pending" by its own rules, and chaceon has no timings.</li>
+<li>Neither project has run the whole model on a real GPU. chaceon's PTX has never executed; ww3-gpu has run one DIA benchmark kernel on an RTX 4090 <a href="https://github.com/h0ffmann/ww3-dia-gpu-v2/tree/32aa2ef">[4]</a>.</li>
+<li>No speed-up is claimed. ww3-gpu's recorded timings <a href="https://github.com/h0ffmann/ww3-gpu/blob/58167d7/docs/NOAA_PROGRESS_RECORD_202610.md">[3]</a> are marked "regtest pending" by its own rules, and chaceon has no timings.</li>
 <li>On a GPU, bit identity also needs the device's <code>expf</code> and <code>logf</code> to return glibc's bits. ww3-gpu routes its kernels to device copies of glibc 2.44's functions, equal to the host's on every input checked, but no device run has compared them yet; until one does, a GPU run is judged by a fixed tolerance.</li>
 <li>The two references are different WW3 lines (NOAA-EMC and MetOcean), so the two ports are compared by routine name, not by source text: 85 routines are in both ledgers.</li>
 </ol>
 
 <h2>6. Use of AI</h2>
-<p>The C++/Kokkos and Rust code, the shims, the comparison scripts, the investigations and drafts of this text were produced by Claude coding agents (Anthropic), under the author's direction, in the two repositories. The agents' rules, skills and hooks are published in each repository's <code>AGENTS.md</code> and <code>.claude/</code> directory. Every number above was read from a file of the repository at the commit named; none was run for this note.</p>
+<p>The C++/Kokkos and Rust code, the shims, the comparison scripts, the investigations and drafts of this text were produced by Claude coding agents (Anthropic), under the author's direction, in the two repositories. The agents' rules, skills and hooks are published in each repository's <code>AGENTS.md</code> and <code>.claude/</code> directory. Every number above was read from a file of the repository at the commit named; none was run for this note. WW3's physics is used unmodified; WAVEWATCH III is a registered trademark of NOAA.</p>
 
-<h2>Availability</h2>
-<p class="small">ww3-gpu: <a href="https://github.com/h0ffmann/ww3-gpu">github.com/h0ffmann/ww3-gpu</a>, concept DOI <a href="https://doi.org/10.5281/zenodo.23221351">10.5281/zenodo.23221351</a>. chaceon: <a href="https://github.com/h0ffmann/chaceon">github.com/h0ffmann/chaceon</a>. WW3's physics is used unmodified; WAVEWATCH III is a registered trademark of NOAA.</p>
+<h2>Availability and references</h2>
+<ol class="small">
+<li>ww3-gpu, <a href="https://github.com/h0ffmann/ww3-gpu">github.com/h0ffmann/ww3-gpu</a>, DOI <a href="https://doi.org/10.5281/zenodo.23221351">10.5281/zenodo.23221351</a>.</li>
+<li>chaceon, <a href="https://github.com/h0ffmann/chaceon">github.com/h0ffmann/chaceon</a> at <code>0c098fe</code>.</li>
+<li>A bit-identical Kokkos runtime for WAVEWATCH III: CPU results and five speed-ups. ww3-gpu <a href="https://github.com/h0ffmann/ww3-gpu/blob/58167d7/docs/NOAA_PROGRESS_RECORD_202610.md"><code>docs/NOAA_PROGRESS_RECORD_202610.md</code></a> at <code>58167d7</code>.</li>
+<li>ww3-dia-gpu-v2: the whole W3SNL1, inside WAVEWATCH III, bit for bit. <a href="https://github.com/h0ffmann/ww3-dia-gpu-v2/tree/32aa2ef">github.com/h0ffmann/ww3-dia-gpu-v2</a> at <code>32aa2ef</code>.</li>
+<li>ADR-0001: No proof language for the GPU port. ww3-gpu <a href="https://github.com/h0ffmann/ww3-gpu/blob/58167d7/docs/ADRs/ADR-0001-proof-language.md"><code>docs/ADRs/ADR-0001-proof-language.md</code></a> at <code>58167d7</code>.</li>
+<li>Ocean waves: the physics of a spectral wave model in Lean 4. <a href="https://github.com/h0ffmann/proof/tree/b863c15/ocean-waves">github.com/h0ffmann/proof, <code>ocean-waves/</code></a> at <code>b863c15</code>.</li>
+</ol>
 </body></html>

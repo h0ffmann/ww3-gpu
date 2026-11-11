@@ -11,6 +11,10 @@ for aiXiv, 2026-11-11.
 | [`two-ports.pdf`](two-ports.pdf) | The PDF, printed from the source with Chromium (Playwright `page.pdf`, A4) |
 
 Every number in it was read from a file at ww3-gpu `58167d7` (`kokkos/PORT_STATUS.md`) or
-chaceon `0c098fe` (`README.md`, `docs/WW3_GPU_PARITY_202611.md`) (v, read 2026-11-11). Nothing was
+chaceon `0c098fe` (`README.md`, `docs/WW3_GPU_PARITY_202611.md`) (v, read 2026-11-11). It cites
+the NOAA progress record (`docs/NOAA_PROGRESS_RECORD_202610.md`) and ADR-0001 at `58167d7`,
+[h0ffmann/ww3-dia-gpu-v2](https://github.com/h0ffmann/ww3-dia-gpu-v2) at `32aa2ef`, and the Lean 4
+`ocean-waves` formalization in [h0ffmann/proof](https://github.com/h0ffmann/proof/tree/b863c15/ocean-waves)
+at `b863c15`, whose theorems are quoted from its README (v, read 2026-11-11). Nothing was
 run for it, and it claims no speed-up and no real-GPU run. The full paper on the discrete
 interaction approximation (DIA) port is a separate document, under review on its own branch.
