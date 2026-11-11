@@ -13,7 +13,7 @@ of each GitHub release. The format follows h0ffmann/closed-source's `RELEASES.md
 
 | Version | Date | Permanent DOI | Release | PRs merged |
 |---|---|---|---|---|
-| v0.2.0 | 2026-11-11 | minted by Zenodo after the tag ⚠ | [v0.2.0](https://github.com/h0ffmann/ww3-gpu/releases/tag/v0.2.0) | 23 |
+| v0.2.0 | 2026-11-11 | [10.5281/zenodo.24130909](https://doi.org/10.5281/zenodo.24130909) | [v0.2.0](https://github.com/h0ffmann/ww3-gpu/releases/tag/v0.2.0) | 26 |
 | v0.1.5 | 2026-10-23 | [10.5281/zenodo.23600920](https://doi.org/10.5281/zenodo.23600920) | [v0.1.5](https://github.com/h0ffmann/ww3-gpu/releases/tag/v0.1.5) | 40 |
 | v0.1.4 | 2026-10-16 | [10.5281/zenodo.23422195](https://doi.org/10.5281/zenodo.23422195) | [v0.1.4](https://github.com/h0ffmann/ww3-gpu/releases/tag/v0.1.4) | 58 |
 | v0.1.3 | 2026-10-09 | [10.5281/zenodo.23268515](https://doi.org/10.5281/zenodo.23268515) | [v0.1.3](https://github.com/h0ffmann/ww3-gpu/releases/tag/v0.1.3) | 2 |
@@ -47,10 +47,10 @@ text this release carries. MPI
 enters the port's plans (ADR-0020), the C++ translated from WW3 carries SPDX headers with
 `NOTICE` and `LICENSES/`, and the ondaseventos image builds MetOcean's WW3 (#211).
 The WW3 7.14 manual is summarised for agents in `docs/ww3-manual/` (#218); the ADRs are one
-document (#217); Vale reports ASD-STE100 checks (#232); `llms.txt` indexes the repository
+document (#217); Vale reports ASD-STE100 and Português Técnico Controlado checks (#232, #235); `llms.txt` indexes the repository
 (#227); the README names UFSC's ondaseventos as the first user (#225); the lineage page joined
 the site (#221); Oh My Pi loads the Claude Code setup (#216); the WeatherNext 3 spec and the
-Kimi Code folder were removed (#215); the project snapshot was refreshed (#212).
+Kimi Code folder were removed (#215); the project snapshot was refreshed (#212); the justfile parses on just 1.21 again (#237); and this release's metadata was prepared in #236.
 
 ## v0.1.5: the device-resident step
 
