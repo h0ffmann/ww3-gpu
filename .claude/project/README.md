@@ -7,7 +7,7 @@ left out.
 
 | File | What it holds | Read with |
 |---|---|---|
-| [`project.json`](project.json) | name, visibility, instructions, repositories, the default model, memory and routine settings, what a thread session runs with, the cloud environment, the routines | `get_project_settings`, `get_session`, `list_environments`, `list_triggers` |
+| [`project.json`](project.json) | name, visibility, instructions, repositories, the default model, memory and routine settings, what a thread session runs with, the cloud environment, the routines | `get_project_settings`, `get_session`, `list_environments`, `get_environment`, `list_triggers` |
 | [`routines/a2a-wave-forecaster.txt`](routines/a2a-wave-forecaster.txt) | the stored prompt of the A2A routine, verbatim | `get_trigger trig_01JZ1SZK9ZimYALDctnzBRJW` |
 | [`routines/weekly-settings-snapshot.txt`](routines/weekly-settings-snapshot.txt) | the stored prompt of the routine that refreshes this folder every Friday, verbatim | `get_trigger trig_01HJAzDq4ne2KxY4c56dd1zR` |
 | [`routines/daily-deps-update.txt`](routines/daily-deps-update.txt) | the stored prompt of the daily dependency updater, verbatim | `get_trigger trig_01DtvFBzo5Y6USkhN4YVkxRf` |
@@ -22,9 +22,17 @@ Everything the repository already holds is not repeated here: the hooks and perm
 All values were read on 2026-10-09 `(v)`: the `project` block with `get_project_settings`, which
 only the project's coordinator session has, and the rest from a thread session. `project.model` is
 the project's default; the project sets no effort default, so `thread_sessions.effort` is what the
-service gave the session that wrote this file. The environment is the account's only one; the
-project names no default. Memory is on for the project but off in the owner's account settings, so
-there was nothing to read.
+service gave the session that wrote this file. The project names no default environment. Memory
+is on for the project but off in the owner's account settings, so there was nothing to read.
+
+On 2026-11-06 the weekly routine re-read everything but the `project` block `(v)`. Only the
+environment changed: `get_environment` reports the Default environment's network as
+`unrestricted`, where the 2026-10-09 value, "trusted network access", came from that
+environment's description, which the service no longer returns. Whether the policy itself changed
+or only the way it is read is not known `⚠`. The account now has two more environments, "Marola
+cloud" and "test mip", which belong to the Marola project and stay out. The thread sessions run in
+the service's managed environment, not in a user-defined one, so `get_environment` cannot read it
+from inside a session.
 
 ## Restoring the project
 
