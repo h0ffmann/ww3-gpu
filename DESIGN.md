@@ -111,8 +111,8 @@ no toolbar and no grid, on the night ground with the faint `--wave` glow.
   (`just archify png`, committed with `png.lock`) and an HTML page on the website, at
   `/figures/<slug>/`, built by `pages.yml` with `just archify site`. The picture links to
   the page. No HTML is committed.
-- The PDFs of `docs/archify/` and the preprint's Figure 1 are older than this rule and still light;
-  they are to be redrawn ⚠.
+- The PDFs of `docs/archify/` are printed in the same look. The preprint's Figure 1
+  (`pubs/preprint/figures/four-runtimes.pdf`) is older than this rule and still light ⚠.
 
 ## Motion
 

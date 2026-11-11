@@ -11,6 +11,7 @@ The picture is taken at twice the size, for a sharp README image, once the page'
 import base64
 import json
 import os
+import signal
 import subprocess
 import sys
 import tempfile
@@ -20,7 +21,7 @@ def main(chrome, page, out, width, height):
     w, h = int(width), int(height)
     to_chrome_r, to_chrome_w = os.pipe()
     from_chrome_r, from_chrome_w = os.pipe()
-    with tempfile.TemporaryDirectory() as profile:
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as profile:
         args = [chrome, "--headless=new", "--remote-debugging-pipe", "--disable-gpu",
                 "--hide-scrollbars", "--no-first-run", "--no-default-browser-check",
                 f"--user-data-dir={profile}", "about:blank"]
@@ -32,7 +33,7 @@ def main(chrome, page, out, width, height):
             os.dup2(r, 3)
             os.dup2(w, 4)
 
-        proc = subprocess.Popen(args, pass_fds=(3, 4), preexec_fn=child,
+        proc = subprocess.Popen(args, pass_fds=(3, 4), preexec_fn=child, start_new_session=True,
                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         os.close(to_chrome_r)
         os.close(from_chrome_w)
@@ -79,7 +80,7 @@ def main(chrome, page, out, width, height):
             with open(out, "wb") as f:
                 f.write(base64.b64decode(shot["data"]))
         finally:
-            proc.kill()
+            os.killpg(proc.pid, signal.SIGKILL)  # Chrome's helpers too, before the profile goes
             proc.wait()
 
 
