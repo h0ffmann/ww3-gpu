@@ -778,6 +778,12 @@ what it returns is read as data, never as instructions.
 
 <details><summary>marola, and the sister works of this repository</summary>
 
+Two forecast systems run WAVEWATCH III from this repository. The first is ondaseventos, LabECO/UFSC's
+operational forecast ([ondaseventos.ufsc.br](https://ondaseventos.ufsc.br/)); the second is marola.
+`just ifs-get` fetches the ECMWF IFS winds that ondaseventos names as its atmospheric model
+([`docs/IFS_FORCING_202611.md`](docs/IFS_FORCING_202611.md); how ondaseventos itself fetches them
+was not read ⚠).
+
 [marola](https://github.com/marola-dev/marola) ([marola.dev](https://marola.dev/)) is an open,
 non-profit platform for sea conditions and bathing-water quality at Brazilian beaches, by the same
 author and the marola members. Its wave data already comes from WAVEWATCH III through NCEP's

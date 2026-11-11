@@ -342,6 +342,10 @@ bench ww3=ww3_src: (kokkos-build "openmp-release")
 bench-case *args: (kokkos-build "openmp-release")
     "{{kokkos_dir}}/build/openmp-release/tools/bench_case/ww_bench_case" "$@"
 
+# Fetch one ECMWF IFS cycle from Open Data (no key) as ww3_prnc wind forcing, e.g. `just ifs-get -c 00 -H 120 -b -52,-44,-32,-24`; `--help` lists the options.
+ifs-get *args:
+    @if command -v grib_to_netcdf >/dev/null && command -v ncks >/dev/null; then bash scripts/ifs_get.sh "$@"; else {{ww3_shell}} bash scripts/ifs_get.sh "$@"; fi
+
 # Build the GPU sandbox (needs nvfortran; `just gpu CC_ARCH=cc90` for an H100).
 gpu *args:
     make -C gpu "$@"
