@@ -190,6 +190,29 @@ compara como cada projeto define e confere a própria evidência.
 bit; Kokkos; Rust; porte para GPU; agentes de programação.
 \end{quote}
 
+\section*{Prefácio}\label{prefuxe1cio}
+\addcontentsline{toc}{section}{Prefácio}
+
+Este projeto existe para apoiar o Ondas \& Ventos
+(\citeproc{ref-ondasventos}{Universidade Federal de Santa Catarina
+2026}), um sistema operacional de previsão de ondas da Universidade
+Federal de Santa Catarina (UFSC). O LabECO da UFSC roda o WW3 de forma
+operacional para a ReNOMO, a Rede Nacional de Observação e Monitoramento
+Oceânico (\citeproc{ref-renomo}{LabECO/UFSC 2025}). A ReNOMO começou em
+2023, com a chamada CNPq/MCTI/Finep 062/2022. Mais de 100 pesquisadores
+de 31 instituições brasileiras participam da rede
+(\citeproc{ref-renomo}{LabECO/UFSC 2025}).
+
+O sistema precisa rodar o modelo de ondas a cada ciclo de previsão, e o
+tempo de execução do WW3 limita o ciclo. O sistema também planeja forçar
+o modelo de ondas com mais de um modelo de vento: o IFS do ECMWF, o GFS
+do NCEP e o WeatherNext do Google ⚠. Cada modelo de vento acrescenta uma
+execução completa do WW3, e por isso um conjunto de modelos de vento
+multiplica o custo do ciclo. Um WW3 mais rápido em GPU, com os mesmos
+bits, torna essas execuções viáveis sem mudança na previsão. O ww3-gpu e
+o chaceon trabalham para chegar a esse WW3, e este texto não afirma
+ganho de velocidade.
+
 \setcounter{section}{-1}
 
 \section{Contexto: um modelo oceânico portado por um modelo de
@@ -668,6 +691,10 @@ Ported by a Large Language Model: Experience and Lessons from {FESOM2}
 ({Fortran} to {C} to {C++/Kokkos})''}. arXiv:2606.11356
 {[}physics.ao-ph{]}. \url{https://doi.org/10.48550/arXiv.2606.11356}.
 
+\bibitem[\citeproctext]{ref-renomo}
+LabECO/UFSC. 2025. {``{ReNOMO}: Rede Nacional de Observação e
+Monitoramento Oceânico''}. \url{https://labeco.ufsc.br/renomo/}.
+
 \bibitem[\citeproctext]{ref-ww4}
 NOAA Environmental Modeling Center. 2026. {``{WAVEWATCH IV}''}.
 \url{https://github.com/NOAA-EMC/WW4}.
@@ -676,6 +703,10 @@ NOAA Environmental Modeling Center. 2026. {``{WAVEWATCH IV}''}.
 Tolman, Hendrik L. 2025. {``The {WAVEWATCH III} Software Modernization
 Project: Phase {I} report''}. Office Note 525. College Park, MD:
 NOAA/NWS/NCEP. \url{https://doi.org/10.25923/h7j3-1h25}.
+
+\bibitem[\citeproctext]{ref-ondasventos}
+Universidade Federal de Santa Catarina. 2026. {``Ondas \& Ventos''}.
+\url{https://ondaseventos.ufsc.br/}.
 
 \end{CSLReferences}
 

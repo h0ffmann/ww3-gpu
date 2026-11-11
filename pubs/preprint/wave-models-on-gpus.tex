@@ -188,6 +188,28 @@ project defines and checks its evidence.
 reproducibility; Kokkos; Rust; GPU porting; coding agents.
 \end{quote}
 
+\section*{Preface}\label{preface}
+\addcontentsline{toc}{section}{Preface}
+
+This project exists to support Ondas \& Ventos
+(\citeproc{ref-ondasventos}{Universidade Federal de Santa Catarina
+2026}), an operational wave forecast system at the Federal University of
+Santa Catarina (UFSC). LabECO at UFSC runs WW3 operationally for ReNOMO,
+the Brazilian national network for ocean observation and monitoring
+(\citeproc{ref-renomo}{LabECO/UFSC 2025}). ReNOMO started in 2023 with
+the CNPq/MCTI/Finep call 062/2022. More than 100 researchers from 31
+Brazilian institutions take part in it
+(\citeproc{ref-renomo}{LabECO/UFSC 2025}).
+
+The system must run the wave model at each forecast cycle, and the run
+time of WW3 limits the cycle. The system also plans to force the wave
+model with more than one wind model: the IFS of ECMWF, the GFS of NCEP
+and Google's WeatherNext ⚠. Each wind model adds one full WW3 run, so an
+ensemble of wind models multiplies the cost of the cycle. A WW3 that
+runs faster on GPUs and gives the same bits makes these runs affordable
+without a change to the forecast. ww3-gpu and chaceon work toward that
+WW3, and this note claims no speed-up.
+
 \setcounter{section}{-1}
 
 \section{Context: an ocean model ported by a language
@@ -645,6 +667,10 @@ Ported by a Large Language Model: Experience and Lessons from {FESOM2}
 ({Fortran} to {C} to {C++/Kokkos}).''} arXiv:2606.11356
 {[}physics.ao-ph{]}. \url{https://doi.org/10.48550/arXiv.2606.11356}.
 
+\bibitem[\citeproctext]{ref-renomo}
+LabECO/UFSC. 2025. {``{ReNOMO}: Rede Nacional de Observação e
+Monitoramento Oceânico.''} \url{https://labeco.ufsc.br/renomo/}.
+
 \bibitem[\citeproctext]{ref-ww4}
 NOAA Environmental Modeling Center. 2026. {``{WAVEWATCH IV}.''}
 \url{https://github.com/NOAA-EMC/WW4}.
@@ -653,6 +679,10 @@ NOAA Environmental Modeling Center. 2026. {``{WAVEWATCH IV}.''}
 Tolman, Hendrik L. 2025. {``The {WAVEWATCH III} Software Modernization
 Project: Phase {I} Report.''} Office Note 525. College Park, MD:
 NOAA/NWS/NCEP. \url{https://doi.org/10.25923/h7j3-1h25}.
+
+\bibitem[\citeproctext]{ref-ondasventos}
+Universidade Federal de Santa Catarina. 2026. {``Ondas \& Ventos.''}
+\url{https://ondaseventos.ufsc.br/}.
 
 \end{CSLReferences}
 
