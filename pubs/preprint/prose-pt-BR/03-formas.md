@@ -44,11 +44,14 @@ roda em OpenMP. Com `--gpu`, roda em CUDA. Nesse executável, uma flag para cada
 código Fortran ou o código Kokkos. O `--chaceon`, ou `--cceon`, roda o WW3 reescrito em Rust, sem
 Fortran no processo, na CPU ou em uma GPU. O `--ww4` é para o WAVEWATCH IV quando ele for
 lançado. Hoje, o `--ww4` compila o código de desenvolvimento a partir de um fork e para com o
-código de saída 5 quando o caso precisa de uma parte não portada. Duas partes desse desenho ainda
-não estão no script ⚠. O script não tem a flag `--chaceon`. E o `--ww3` compila o WW3 da NOAA em
-`03adda91`, enquanto o chaceon compara com o WW3 7.14 da MetOcean, compilado em separado. O
-desenho dá aos seis runtimes uma referência só, o WW3 7.14 da MetOcean.
+código de saída 5 quando o caso precisa de uma parte não portada. O `--ww3` compila o WW3 7.14 da
+MetOcean em `92e2cf66`, e o script compara os arquivos de uma execução do `--chaceon` com os do
+`--ww3`, compilado com o switch do chaceon. Duas setas da figura são o desenho, e ainda não o que
+o script faz ⚠. O script compara o `--ww3-gpu` com o WW3 da NOAA em `03adda91`, a base do fork,
+até o fork passar para o WW3 da MetOcean. E o `--chaceon --gpu` para com o código de saída 5,
+porque o chaceon ainda não rodou em uma GPU real.
 
 ![Os seis runtimes do ww3-gpu. Uma seta tracejada aponta para a execução que precisa dar os mesmos
-bits: as cinco apontam para o `--ww3`, a referência. Desenho do Archify a partir de
+bits: as cinco apontam para o `--ww3`, a referência. Hoje o script compara o `--ww3-gpu` com o WW3
+da NOAA em `03adda91`. Desenho do Archify a partir de
 `docs/archify/ww3-gpu-runtimes-pt.json` [@ww3gpu].](figures/runtimes.pt-BR.pdf){#fig:runtimes width=100%}

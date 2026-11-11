@@ -142,8 +142,7 @@ on the GPU"). No runtime has run the whole model on a real GPU.
 owner's design of 11 November 2026 and not what the script does yet ⚠: `--ww3-gpu` is compared
 with `--ww3-noaa` (NOAA WW3 `03adda91`, the base of the fork) until the fork is moved onto
 MetOcean's WW3, and `--chaceon --gpu` stops with exit 5 because chaceon has no run on a real GPU.
-The note inside the drawing that `--ww3` builds NOAA WW3 is the state before that day ⚠. The
-drawing is [`docs/archify/ww3-gpu-runtimes.json`](docs/archify/ww3-gpu-runtimes.json), also the
+The drawing's own notes and the preprint's caption say the same. The drawing is [`docs/archify/ww3-gpu-runtimes.json`](docs/archify/ww3-gpu-runtimes.json), also the
 preprint's Figure 1, drawn for a 174 mm column ([`DESIGN.md`](DESIGN.md), "Pictures in a paper").
 
 </details>
