@@ -209,6 +209,21 @@ bit-for-bit agreement between Fortran and C ``across compilers and
 arithmetic orderings is neither attainable nor necessary''. On the GPU,
 they accept differences up to a recorded ceiling for each field.
 
+The successor of WW3 is also in progress. NCEP Office Note 525
+(\citeproc{ref-on525}{Tolman 2025}) chose a bottom-up rewrite, with a
+C++ core first and a Rust core later. The same report demotes Fortran to
+a solver-only language. The WAVEWATCH IV repository
+(\citeproc{ref-ww4}{NOAA Environmental Modeling Center 2026}) is
+pre-alpha: on 2026-11-11 its \texttt{develop} branch had 40 commits,
+from 2025-11-17 to 2026-10-16 (\texttt{875f49a}). Its 97 source files
+are C++ (66 \texttt{.cpp}, 31 \texttt{.h}), and no physics kernel of WW3
+is in it yet.
+
+Thus the core kernels of the wave model stay in Fortran for some years.
+This is the first reason why the first author will continue to maintain
+ww3-gpu and chaceon. They make the Fortran kernels of WW3 run on GPUs
+now, without a change to their bits.
+
 This note starts from that result and asks a narrower question. Can an
 agent port a spectral wave model, and give the bits of the Fortran
 itself? The two ports below have no C stage, and their reference is the
@@ -467,6 +482,60 @@ will have a \texttt{Fin} type, so every read is in bounds for every
 grid, not only for one grid. The sweeps, the solver queries and the WW3
 regression tests continue to decide the bits.
 
+\section{Challenges: the regression tests are
+large}\label{sec:challenges}
+
+WW3's regression tests are the only judge of the Kokkos port, and they
+are large. Table Table~\ref{tbl:regtests} gives their size at the fork
+commit \texttt{80644ba9}, counted on 2026-10-18.
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.7158}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.0842}}@{}}
+\caption{\label{tbl:regtests}Size of the WW3 regression matrix. Source:
+ww3-gpu \texttt{regtests/README.md} at \texttt{58167d7}, counts from
+\texttt{just\ ww3-gpu-matrix-list}. The count of all entries is the
+number of lines that \texttt{matrix.base} writes, and a machine section
+can disable some of them.}\tabularnewline
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Set of \texttt{matrix.base} entries
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Entries
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Share
+\end{minipage} \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Set of \texttt{matrix.base} entries
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Entries
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Share
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+All entries & 758, in 60 tests & 100 \% \\
+Entries with the DIA (\texttt{NL1}) & 310 & 41 \% \\
+Entries with ST4 physics (\texttt{ST4}) & 136 & 18 \% \\
+Entries that the resident preset can select & 7 (all serial) & 0.9 \% \\
+Selected regtests of ww3-gpu & 5, and the \texttt{ww3\_ts1} pair & 0.7
+\% \\
+\end{longtable}
+
+One run of the 310 \texttt{NL1} entries takes days. The selected set
+takes one to three hours on one workstation (Intel i9-14900, 32 hardware
+threads); this time is an estimate, not a measurement. Thus a full
+matrix run cannot follow each commit. ww3-gpu runs the selected set as a
+guardrail, and it postpones the full matrix to a validation phase. Until
+then, a static argument supports bit parity: the \texttt{-O3} GIMPLE or
+the disassembly of both compilers.
+
 \section{What is not claimed}\label{sec:limits}
 
 \begin{enumerate}
@@ -559,6 +628,15 @@ Sidorenko, Sebastian Beyer, and Thomas Jung. 2026. {``An Ocean Model
 Ported by a Large Language Model: Experience and Lessons from {FESOM2}
 ({Fortran} to {C} to {C++/Kokkos}).''} arXiv:2606.11356
 {[}physics.ao-ph{]}. \url{https://doi.org/10.48550/arXiv.2606.11356}.
+
+\bibitem[\citeproctext]{ref-ww4}
+NOAA Environmental Modeling Center. 2026. {``{WAVEWATCH IV}.''}
+\url{https://github.com/NOAA-EMC/WW4}.
+
+\bibitem[\citeproctext]{ref-on525}
+Tolman, Hendrik L. 2025. {``The {WAVEWATCH III} Software Modernization
+Project: Phase {I} Report.''} Office Note 525. College Park, MD:
+NOAA/NWS/NCEP. \url{https://doi.org/10.25923/h7j3-1h25}.
 
 \end{CSLReferences}
 
