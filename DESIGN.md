@@ -98,18 +98,21 @@ white or light grey ground, and no picture has a light theme to switch to. The m
 piabrota/nix-os's figures (its `docs/archify/piabrota.css` and `just figure`): only the drawing,
 no toolbar and no grid, on the night ground with the faint `--wave` glow.
 
+- **Every diagram is an Archify drawing**, never Mermaid (the owner, 11 November 2026). A
+  diagram that is not yet redrawn stays a Mermaid fence only until it is ⚠.
 - **An Archify drawing** (`docs/archify/<slug>.json`) is dressed by
   [`docs/archify/ww3-gpu.css`](docs/archify/ww3-gpu.css): a box for a source the repository reads
-  is `--wave`, a box for what it builds or runs is `--code`, a "same bits as" arrow is `--proof`,
-  every other arrow `--muted`. Labels are Bricolage Grotesque, the small text JetBrains Mono.
+  is `--wave`, a box for what it builds or runs is `--code`, a gate or a check is `--proof`, and
+  every other kind of box is neutral. A "same bits as" (dashed) arrow is `--proof`, an emphasised
+  arrow `--code`, every other arrow `--muted`. Labels are Bricolage Grotesque, the small text JetBrains Mono.
   Archify's legend and its source badges are hidden: the reading card under the picture carries
   that, in words.
-- **Where it lives.** A drawing listed in `docs/archify/dark.tsv` is a PNG for the README
+- **Where it lives.** A drawing listed in `docs/archify/dark.tsv` is a PNG for the page that shows it
   (`just archify png`, committed with `png.lock`) and an HTML page on the website, at
-  `/figures/<slug>/`, built by `pages.yml` with `just archify site`. The README's picture links to
+  `/figures/<slug>/`, built by `pages.yml` with `just archify site`. The picture links to
   the page. No HTML is committed.
-- The PDFs of `docs/archify/` and the preprint's Figure 1 are older than this rule and still light;
-  they are to be redrawn ⚠.
+- The PDFs of `docs/archify/` are printed in the same look. The preprint's Figure 1
+  (`pubs/preprint/figures/four-runtimes.pdf`) is older than this rule and still light ⚠.
 
 ## Motion
 

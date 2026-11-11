@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
-"""archify_shot — a PNG of one local HTML page, taken by headless Chrome over its DevTools pipe.
+"""archify_shot — a PNG (or a PDF) of one local HTML page, by headless Chrome over its DevTools pipe.
 
-    archify_shot.py <chrome> <page.html> <out.png> <width> <height>
+    archify_shot.py <chrome> <page.html> <out.png|out.pdf> <width> <height>
 
-scripts/archify.sh png calls it. Chrome's own --screenshot flag never returns in some containers
-(a cloud agent session, 2026-11-11); the pipe is what Archify's browser check uses and does.
+scripts/archify.sh png and pdf call it; a .pdf is printed with the page's own @page size.
+Chrome's own --screenshot and --print-to-pdf flags never return in some containers (a cloud agent
+session, 2026-11-11); the pipe is what Archify's browser check uses, and it does return.
 The picture is taken at twice the size, for a sharp README image, once the page's fonts are ready.
 """
 import base64
 import json
 import os
+import signal
 import subprocess
 import sys
 import tempfile
@@ -19,7 +21,7 @@ def main(chrome, page, out, width, height):
     w, h = int(width), int(height)
     to_chrome_r, to_chrome_w = os.pipe()
     from_chrome_r, from_chrome_w = os.pipe()
-    with tempfile.TemporaryDirectory() as profile:
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as profile:
         args = [chrome, "--headless=new", "--remote-debugging-pipe", "--disable-gpu",
                 "--hide-scrollbars", "--no-first-run", "--no-default-browser-check",
                 f"--user-data-dir={profile}", "about:blank"]
@@ -31,7 +33,7 @@ def main(chrome, page, out, width, height):
             os.dup2(r, 3)
             os.dup2(w, 4)
 
-        proc = subprocess.Popen(args, pass_fds=(3, 4), preexec_fn=child,
+        proc = subprocess.Popen(args, pass_fds=(3, 4), preexec_fn=child, start_new_session=True,
                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         os.close(to_chrome_r)
         os.close(from_chrome_w)
@@ -70,11 +72,15 @@ def main(chrome, page, out, width, height):
                      " setTimeout(() => r(true), 300));"
                      " document.readyState === 'complete' ? go() : addEventListener('load', go); })")
             send("Runtime.evaluate", {"expression": ready, "awaitPromise": True}, s)
-            shot = send("Page.captureScreenshot", {"format": "png"}, s)
+            if out.endswith(".pdf"):
+                shot = send("Page.printToPDF", {"preferCSSPageSize": True, "printBackground": True,
+                                                "displayHeaderFooter": False}, s)
+            else:
+                shot = send("Page.captureScreenshot", {"format": "png"}, s)
             with open(out, "wb") as f:
                 f.write(base64.b64decode(shot["data"]))
         finally:
-            proc.kill()
+            os.killpg(proc.pid, signal.SIGKILL)  # Chrome's helpers too, before the profile goes
             proc.wait()
 
 

@@ -128,36 +128,14 @@ portão passa, e um portão que não passa é um resultado que vai para o relat�
 | 11 | (novo) | `compile.py` para `cuda:89` e `cuda:90`; shim C com a mesma ABI de `ww_snl1`; programa Fortran no estilo de `shim_roundtrip` chamando o kernel AOT | o Fortran chama o kernel sem Python no processo, ou o motivo pelo qual não chama |
 | 12 | T8 | relatório curto: custo e ganho do Triton contra Fortran e Kokkos para a mesma resposta; decisão sobre T7 | resposta sim ou não à pergunta "vale continuar" |
 
-```mermaid
-%% figure: triton-g-doze-semanas
-%% title: Em que ordem o braço Triton G acontece em três meses, e onde ficam os portões?
-gantt
-    title Triton G em 12 semanas
-    dateFormat YYYY-MM-DD
-    axisFormat %d/%m
-    todayMarker off
-    section Base
-    T0 toolchain                 :t0, 2026-10-12, 1w
-    T1 perfil e T2 pergunta SDSCUM :t1, after t0, 1w
-    section Referência
-    T3 fixture do W3SDS4         :t3a, after t1, 1w
-    T3 NumPy e portão L1         :t3b, after t3a, 1w
-    section Kernels
-    T4 kernel A literal          :t4a, after t3b, 2w
-    T4 kernel B tl.dot ieee      :t4b, after t4a, 1w
-    T5 Triton C mesmo fonte      :t5, after t4b, 1w
-    section Medir e decidir
-    T6 benchmark                 :t6, after t5, 2w
-    AOT e shim para o Fortran    :aot, after t6, 1w
-    T8 relatório                 :t8, after aot, 1w
-```
+[![Em que ordem o braço Triton G acontece em três meses, e onde ficam os portões? (desenho Archify)](archify/triton-g-doze-semanas.png)](https://h0ffmann.github.io/ww3-gpu/figures/triton-g-doze-semanas/)
 
 <details open>
 <summary>Como ler esta figura</summary>
 
 **Em uma frase.** Três meses divididos em quatro blocos: preparar as ferramentas, construir a resposta de referência, escrever as duas versões do programa novo e, por fim, medir e decidir.
 
-**Como ler.** Da esquerda para a direita, uma semana por coluna. Cada barra é uma etapa da tabela acima; uma barra só começa quando a anterior passou no seu portão. As duas semanas de "kernel A" e as duas de "benchmark" são as etapas em que a experiência do port Kokkos diz que o tempo aperta.
+**Como ler.** Da esquerda para a direita e de cima para baixo, uma faixa por seção. Cada caixa é uma etapa da tabela acima, com a semana em que começa; as caixas verdes são os portões, e uma etapa só começa quando a anterior passou no seu portão. As duas semanas de "kernel A" e as duas de "benchmark" são as etapas em que a experiência do port Kokkos diz que o tempo aperta.
 
 **Fora da figura.** Os portões em si (a tabela os nomeia), a decisão do LabECO sobre `SDSCUM`, que é humana e pode atrasar, e a dependência do acesso a um H100 nas semanas 9 e 10.
 

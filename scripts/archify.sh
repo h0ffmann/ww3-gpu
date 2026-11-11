@@ -39,7 +39,8 @@ slugs() {
     done
 }
 pin() { git -C "$root" ls-files -s -- "$sub" | awk '{print $2}'; }
-want() { printf '%s\t%s\t%s\n' "$1" "$(sha256sum "$dir/$1.json" | cut -d' ' -f1)" "$(pin)"; }
+# a drawing of dark.tsv is printed in the dark look, so its PDF goes stale with the look too
+want() { if is_dark "$1"; then want_png "$1"; else printf '%s\t%s\t%s\n' "$1" "$(sha256sum "$dir/$1.json" | cut -d' ' -f1)" "$(pin)"; fi; }
 stale() {
     local s names
     mapfile -t names < <(slugs)
@@ -51,9 +52,10 @@ stale() {
 # dark.tsv: "<slug>\t<height>" for each drawing in the dark look.
 dark() { awk -F'\t' '!/^#/ && NF >= 2 {print $1}' "$dir/dark.tsv"; }
 want_png() {
-    printf '%s\t%s\t%s\n' "$1" "$(cat "$dir/$1.json" "$dir/ww3-gpu.css" "$dir/dark.tsv" \
-        "$root/scripts/archify_dress.py" | sha256sum | cut -d' ' -f1)" "$(pin)"
+    printf '%s\t%s\t%s\n' "$1" "$({ cat "$dir/$1.json" "$dir/ww3-gpu.css" "$root/scripts/archify_dress.py"
+        awk -F'\t' -v s="$1" '$1 == s' "$dir/dark.tsv"; } | sha256sum | cut -d' ' -f1)" "$(pin)"
 }
+is_dark() { dark | grep -qxF "$1"; }
 stale_png() {
     local s names
     mapfile -t names < <(dark)
@@ -87,8 +89,9 @@ render() {
 }
 
 # A printed copy of each page gets one @page rule sized from the diagram's viewBox, so the whole
-# diagram lands on page 1 (the template's own landscape Letter page cuts a tall sequence);
-# the template's print stylesheet still sets the light palette and hides the toolbar.
+# diagram lands on page 1 (the template's own landscape Letter page cuts a tall sequence). A drawing
+# of dark.tsv is printed in the dark look, the drawing alone on a page its own size; any other keeps
+# the template's print stylesheet (light palette, summary cards after the drawing).
 pdf() {
     local s html page chrome
     chrome="${CHROME:-$(command -v google-chrome || command -v chromium || true)}"
@@ -98,15 +101,21 @@ pdf() {
         html="$dir/$s.html"
         [ "$dry" -eq 1 ] || [ -e "$html" ] || { echo "archify: no $s.html; run scripts/archify.sh render $s" >&2; exit 1; }
         page="$tmp/$s.html"
-        [ "$dry" -eq 1 ] || python3 - "$html" "$page" <<'PY'
+        if [ "$dry" -eq 0 ] && is_dark "$s"; then
+            python3 "$root/scripts/archify_dress.py" "$html" "$tmp/$s.frame.html" "$s"
+            html="$tmp/$s.frame.html"
+        fi
+        [ "$dry" -eq 1 ] || python3 - "$html" "$page" "$(is_dark "$s" && echo dark)" <<'PY'
 import re, sys
 src = open(sys.argv[1], encoding="utf-8").read()
 w, h = map(float, re.search(r'<svg viewBox="0 0 ([\d.]+) ([\d.]+)"', src).groups())
-rule = f"<style>@page {{ size: {w + 160:.0f}px {h + 260:.0f}px; margin: 40px; }}</style>"
+if sys.argv[3] == "dark":
+    rule = f"<style>@page {{ size: {w:.0f}px {h:.0f}px; margin: 0; }}</style>"
+else:
+    rule = f"<style>@page {{ size: {w + 160:.0f}px {h + 260:.0f}px; margin: 40px; }}</style>"
 open(sys.argv[2], "w", encoding="utf-8").write(src.replace("</head>", rule + "</head>", 1))
 PY
-        run "$chrome" --headless --disable-gpu --no-pdf-header-footer --user-data-dir="$tmp/profile" \
-            --print-to-pdf="$dir/$s.pdf" "file://$page"
+        run python3 "$root/scripts/archify_shot.py" "$chrome" "$page" "$dir/$s.pdf" 1280 800
     done
 }
 
@@ -176,7 +185,7 @@ EOF
 write_lock() {
     local s names
     mapfile -t names < <(slugs)
-    { echo "# slug, sha256 of docs/archify/<slug>.json, vendor/archify commit; written by scripts/archify.sh refresh"
+    { echo "# slug, sha256 of docs/archify/<slug>.json (with the dark look for a dark.tsv drawing), vendor/archify commit; written by scripts/archify.sh refresh"
       for s in "${names[@]}"; do want "$s"; done; } > "$lock"
 }
 

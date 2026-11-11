@@ -98,14 +98,16 @@ and the alternatives weighed are
 
 ## Figures
 
-Diagrams are Mermaid fences in the page they illustrate, so GitHub draws them in place. Each one
-starts with `%% figure: <id>` and `%% title: <question>` and is followed by a *How to read this
-figure* card (takeaway, how to read, what is not shown, evidence) for readers new to the topic.
-`just figures` renders every fence with a pinned mermaid-cli, fonts and one house style
-(`pubs/figures/mermaid-config.json`) into `pubs/figures/mermaid/`,
-which the PDF and Word builds use, and rewrites the gallery `pubs/figures/README.md`; CI runs
-`python3 scripts/figures.py check`. The `figure` skill (`.claude/skills/figure/`) has the rules.
-A mistake in a figure is as welcome as one in the text: the gallery links an issue for each.
+Diagrams are Archify drawings in the dark look of [`DESIGN.md`](DESIGN.md), "Pictures", never
+Mermaid (the owner, 11 November 2026). A drawing's source is `docs/archify/<slug>.json` with a row
+in `docs/archify/dark.tsv`; `just archify png` draws `docs/archify/<slug>.png`, which the page
+shows, linked to the drawing's zoomable page at `/figures/<slug>/` on the website, and a *How to
+read this figure* card (takeaway, how to read, what is not shown, evidence) follows it for readers
+new to the topic. [`docs/archify/README.md`](docs/archify/README.md) has the commands.
+The Mermaid fences not yet redrawn (the proposal's, the course's, some docs) are still rendered by
+`just figures` into `pubs/figures/mermaid/` and checked in CI by `python3 scripts/figures.py
+check` until they are gone ⚠; no new fence is added.
+A mistake in a figure is as welcome as one in the text.
 
 ## Ground rules
 
@@ -221,7 +223,7 @@ edit a vendored skill through its patch); this is what each one is for.
 
 | Name | Job |
 |---|---|
-| `figure` | add or change a Mermaid diagram and its reading card; `figures.py` is its harness |
+| `figure` | the reading card and the Mermaid fences still being redrawn; a new diagram is an Archify drawing (AGENTS.md, "Figures") |
 | `eli5` | explain a topic to someone from another field (the second audience exception) |
 | `release` | cut a citable release: tag, GitHub release, Zenodo DOI, `CITATION.cff`, `.zenodo.json` |
 | `ww4-status` | diff NOAA-EMC/WW4 against `docs/ww4-status.json` and refresh lesson 14 and the proposal |
@@ -232,7 +234,7 @@ edit a vendored skill through its patch); this is what each one is for.
 | `humanizar`, `humanizer` | remove AI tells from pt-BR and English prose without changing facts; third-party |
 | `ste` | write or rewrite English procedures, runbooks, port reports, log entries, commit and PR bodies in ASD-STE100 Simplified Technical English; keeps `(v)`/`⚠`, numbers and technical names; never the proposal or pt-BR |
 | `ponytail`, `ponytail-review`, `ponytail-audit` | the laziest solution that works; over-engineering review and audit; third-party |
-| `archify` | an interactive HTML twin of a Mermaid figure from `docs/archify/<slug>.json`, rendered by `scripts/archify.sh render`, never committed and never a figure on its own; third-party, a pinned submodule (`vendor/archify`), not a copy |
+| `archify` | every diagram, from `docs/archify/<slug>.json`, in DESIGN.md's dark look (`just archify png`, the page built by `pages.yml`); the HTML is never committed; third-party, a pinned submodule (`vendor/archify`), not a copy |
 | `routing` | find where something is in one bounded call (`scripts/route.py`): a glossary term, a definition, the pages that name a file, the paragraph that answers a why, one section of a plan |
 | `sharingan` | port a skill, workflow or pattern from another repository by URL: fetch it pinned, let the licence decide vendor, adapt or rewrite, map each upstream concept to a home here; third-party (marola-devkit) |
 | `revisor-proposta` (agent) | the proposal's scientific reviewer, read-only |

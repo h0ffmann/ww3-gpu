@@ -74,41 +74,7 @@ WW3 from NOAA, and `--ww3-gpu --cpu` compares the Kokkos port with it.
 The figure shows the full system: the sources of the model, the code of this repository, the run
 modes and the three runtimes.
 
-```mermaid
-%% figure: ww3-gpu-at-a-glance
-%% title: What does ww3-gpu build, from which sources, and on which runtime does each run mode run?
-flowchart TD
-    subgraph RT["Runtimes"]
-        C["3 · dev container<br/>Dockerfile dev stage + Nix"]
-        P["1 · picasso/, Nix<br/>gfortran 16.2 · Open MPI · CUDA 12.9<br/>the reference toolchain"]
-        D["2 · Docker image<br/>Ubuntu, gfortran 15.2 · CPU only"]
-    end
-    H["scripts/ww3-gpu.sh, justfile, regtests/<br/>Bash · Python · CMake, CTest"]
-    subgraph RUN["Run modes"]
-        M1["--ww3<br/>the reference"]
-        M2["--ww3-gpu<br/>Fortran and Kokkos DIA,<br/>one executable"]
-        M4["just ww3-gpu-matrix<br/>WW3's regtests"]
-        M3["--ww4"]
-    end
-    subgraph SRC["Model sources: submodules, never edited here"]
-        N["WW3-noaa/<br/>pure NOAA WW3 · Fortran"]
-        F["WW3/<br/>h0ffmann fork · Fortran<br/>+ KOKKOS switch, shim call"]
-        W4["WW4/<br/>h0ffmann fork · C++"]
-    end
-    subgraph OWN["ww3-gpu's own code"]
-        B["course/, pubs/, site/<br/>Markdown to PDF · Gleam site"]
-        K["kokkos/<br/>the port · C++20, Kokkos"]
-    end
-    C -- "enters" --> P
-    P -- "every mode;<br/>GPU only with the owner" --> H
-    D -- "CPU only:<br/>the just d… recipes" --> H
-    H --> M1 & M2 & M4 & M3
-    M2 -. "compared with" .-> M1
-    M1 -- "built from" --> N
-    M2 -- "built from" --> F & K
-    M4 -- "built from" --> F & K
-    M3 -- "built from" --> W4
-```
+[![What does ww3-gpu build, from which sources, and on which runtime does each run mode run? (Archify drawing)](docs/archify/ww3-gpu-at-a-glance.png)](https://h0ffmann.github.io/ww3-gpu/figures/ww3-gpu-at-a-glance/)
 
 <details open>
 <summary>How to read this figure</summary>
