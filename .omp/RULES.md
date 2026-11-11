@@ -8,8 +8,8 @@ The full rulebook is `AGENTS.md` at the repository root; where this list and it 
   independent researchers in wave modelling, numerical methods and HPC; every claim carries `(v)`
   with what was checked or `⚠` when it was not, and every number comes with the command that
   reproduces it (AGENTS.md, "Audience and evidence").
-- **WW3 is read-only**: never vendor WW3 source or edit the Fortran physics; the `WW3/`, `WW3-noaa/`
-  and `WW3-metocean/` submodules and `$WW3` are references, and the only Fortran this repo adds is a shim behind a switch
+- **WW3 is read-only**: never vendor WW3 source or edit the Fortran physics; the `WW3/` and
+  `WW3-metocean-7.14/` submodules, the fork's NOAA base in `WW3-noaa/` and `$WW3` are references, and the only Fortran this repo adds is a shim behind a switch
   (AGENTS.md, "WW3 source").
 - **No citation of a third party's issues**: an issue, pull request or discussion of a repository
   this project does not own (NOAA-EMC/WW3, NOAA-EMC/WW4, Kokkos, any other) is never cited,

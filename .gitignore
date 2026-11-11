@@ -112,3 +112,6 @@ docs/archify/*.browser-check.json
 # IFS forcing fetched by `just ifs-get`
 data/ifs/
 data/cmems/
+
+# NOAA's WW3 at the fork's base commit, written by scripts/ww3_base.sh (a submodule until 2026-11-11)
+/WW3-noaa/

@@ -1,4 +1,4 @@
-# docker-dist — the distribution images, binaries only: NOAA's WW3 at the WW3-noaa/ pin (--ww3-noaa)
+# docker-dist — the distribution images, binaries only: NOAA's WW3 at the fork's base commit (--ww3-noaa)
 # and ww3-gpu (--ww3-gpu, the fork with the Kokkos port) compiled side by side, so a user can run a
 # case with both and compare the outputs pair to pair (scripts/ww3-gpu.sh is the entry point).
 #   cpu   docker/Dockerfile       ghcr.io/<owner>/ww3-gpu        Kokkos on OpenMP, plus WW4
@@ -54,7 +54,7 @@ jobs:
           submodules: false
       - name: Free disk space
         run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL && df -h /
-      - name: Fetch WW3, WW3-noaa and WW4 at their pins
+      - name: Fetch WW3 and WW4 at their pins, and write NOAA's WW3 from the fork's base commit
         run: bash scripts/docker.sh submodules
       - name: Build
         env:

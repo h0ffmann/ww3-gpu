@@ -23,7 +23,7 @@ import sys
 from collections import Counter
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-SUBMODULES = ("WW3/", "WW3-noaa/", "WW4/", "picasso/")
+SUBMODULES = ("WW3/", "WW3-metocean-7.14/", "WW4/", "chaceon/", "picasso/")
 CODE = (".cpp", ".hpp", ".h", ".cu", ".py", ".sh", ".F90", ".f90", ".cmake", "CMakeLists.txt",
         "justfile", ".nix")
 WHY_DIRS = ("docs/", "notes/", "kokkos/port_report/")

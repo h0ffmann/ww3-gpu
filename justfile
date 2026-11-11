@@ -62,12 +62,13 @@ toolchain-smoke:
 
 # ---------------------------------------------------------------------
 # One command, six runtimes (scripts/ww3-gpu.sh, docs/RUN_COMMAND_202611.md): --ww3, MetOcean's
-# WW3 7.14 from WW3-metocean/, the reference; --ww3-gpu --cpu or --gpu, WW3 built with the KOKKOS
+# WW3 7.14 from WW3-metocean-7.14/, the reference; --ww3-gpu --cpu or --gpu, WW3 built with the KOKKOS
 # switch from the h0ffmann/WW3 fork and linked to kokkos/; --chaceon --cpu or --gpu (--cceon),
 # the Rust port; --ww4, WAVEWATCH IV when it is released. --ww3-gpu runs on the CPU (Kokkos
 # OpenMP) unless asked: `just smoke-ww3-gpu gpu` runs CUDA, and only with a human supervising
 # (AGENTS.md hard rule; it asks at the terminal). The Kokkos run is compared pair to pair with
-# --ww3-noaa, pure NOAA WW3 from WW3-noaa/, the commit the fork branched from.
+# --ww3-noaa, pure NOAA WW3 at the commit the fork branched from (scripts/ww3_base.sh writes it
+# to WW3-noaa/ from the fork's history; it is not a submodule).
 # ---------------------------------------------------------------------
 
 # Run a case in one of the six runtimes, e.g. `just run --ww3 smoke`, `just run --ww3-gpu full --cpu`, `just run --chaceon smoke`, `just run --ww3 --case <dir> --wind ifs --temp cmems`; `just run --help` lists the options.
@@ -529,6 +530,11 @@ src-sync branch="develop":
 # Pin ./WW3 to an unmerged upstream pull request, e.g. `just src-pr 1234`.
 src-pr n:
     bash {{src_script}} . --pr {{n}}
+
+# The NOAA commit the fork branched from: `rev` prints it, `export` writes its tree to WW3-noaa/
+# (git ignores it; --ww3-noaa builds it). It is not a submodule.
+ww3-base *args:
+    bash scripts/ww3_base.sh {{args}}
 
 # WW3 pinned commit vs. fork and upstream tips.
 src-st:

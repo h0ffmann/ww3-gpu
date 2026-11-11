@@ -9,7 +9,7 @@ evidence for each line below.
 
 - **Start in this repository's root.** omp reads `.omp/extensions`, `.claude/commands` and
   `.mcp.json` from the working directory only, so elsewhere the hooks and commands are missing.
-  `WW3/`, `WW3-noaa/`, `WW4/` and `picasso/` are submodules you read, not repositories you work in.
+  `WW3/`, `WW3-metocean-7.14/`, `chaceon/`, `WW4/` and `picasso/` are submodules you read, not repositories you work in.
 - **Skills and slash commands** load from `.claude/skills` and `.claude/commands` as Claude Code
   writes them (`/port-next`, `/adrs`, `/drawings-refresh`, `/graph-check`, `/graph-view`,
   `/update-sub-modules`); edit a vendored skill through its `.patch`, never the copy. A skill step

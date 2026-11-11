@@ -25,16 +25,19 @@ just run --ww4      smoke|full [--cpu]
 
 | Runtime | Source | What runs | State on 2026-11-11 |
 |---|---|---|---|
-| `--ww3` | `WW3-metocean/`: metocean/WW3 `92e2cf66`, tag `7.14.mos-92e2cf6` | MetOcean's WW3 as written, Fortran, `switches/switch_lab_shrd` | `(v)` `smoke`, `full`, a regular grid and a triangular grid on IFS wind reached "End of program" |
+| `--ww3` | `WW3-metocean-7.14/`: metocean/WW3 `92e2cf66`, tag `7.14.mos-92e2cf6` | MetOcean's WW3 as written, Fortran, `switches/switch_lab_shrd` | `(v)` `smoke`, `full`, a regular grid and a triangular grid on IFS wind reached "End of program" |
 | `--ww3-gpu --cpu` | `WW3/`: the h0ffmann/WW3 fork, plus `kokkos/` | the Fortran and the Kokkos port in one executable, Kokkos on OpenMP, compared with each other and with `--ww3-noaa` | ⚠ not built in that container (no Kokkos 5 without the pinned toolchain); `health.yml` runs `smoke` on every pull request |
 | `--ww3-gpu --gpu` | the same | the same on Kokkos' CUDA backend | ⚠ not run: only with the owner supervising (AGENTS.md, "Running on the GPU") |
 | `--chaceon --cpu` | `chaceon/`: h0ffmann/chaceon `89a11e4` | WW3 in Rust (`ww3_grid`, `ww3_strt`, `ww3_prnc`, `ww3_shel`), compared with `--ww3` built with chaceon's switch | `(v)` `smoke` and a regular grid on IFS wind ran; the comparison is counted, not judged, on x86_64 (below) |
 | `--chaceon --gpu` | the same | nothing: exit 5 | `(v)` "Nothing has run on a real GPU, the PTX has never executed" (`chaceon/README.md:37` at `89a11e4`; its SPIR-V kernels run on CPU Vulkan), so there is no GPU run to start |
 | `--ww4` | `WW4/`: h0ffmann/WW4 | WAVEWATCH IV, when it is released: exit 5 while a part the case needs is not ported (`scripts/ww4_parts.py`) | unchanged by this work |
 
-A seventh mode is not a runtime. `--ww3-noaa` builds pure NOAA-EMC/WW3 from `WW3-noaa/`
-(`03adda91`), the commit the fork branched from, and is what `--ww3-gpu` is compared with pair to
-pair. Until 11 November 2026 that mode was named `--ww3`; a log entry, a plan or an ADR written
+A seventh mode is not a runtime. `--ww3-noaa` builds pure NOAA-EMC/WW3 at `03adda91`, the commit
+the fork branched from, and is what `--ww3-gpu` is compared with pair to pair. NOAA's WW3 has no
+submodule since 11 November 2026 (the owner: "should be only metocean for now"): the commit is in
+the fork's own history, `kokkos/src/fortran_iface/WW3_BASE` names it, and `scripts/ww3_base.sh`
+(`just ww3-base export`) writes its tree to `WW3-noaa/`, a directory git ignores, before
+`--ww3-noaa` builds `(v)` the tree it writes is the removed submodule's, `diff -rq`, 2026-11-11. Until 11 November 2026 that mode was named `--ww3`; a log entry, a plan or an ADR written
 before that date means NOAA's WW3 by `--ww3`.
 
 `--cpu` is the default everywhere. `--ww3 --gpu`, `--ww3-noaa --gpu` and `--ww4 --gpu` are
@@ -48,9 +51,10 @@ The owner's words were "--WW3 always on 7.13 MetOcean". metocean/WW3 has no 7.13
 tags are `6.07` and `6.07.1`) `(v)`. The submodule is therefore pinned to `7.14.mos-92e2cf6`
 (`92e2cf66`, 2026-09-01), the ref the owner chose for ondaseventos on 2026-10-29
 ([log](log/2026-10-29-metocean-ww3-714-mos.md)), the one `docker/Dockerfile.ondaseventos` builds
-and the one chaceon's own `WW3/` submodule holds `(v)` `git -C chaceon ls-tree HEAD WW3`. Whether
-"7.13" meant this ref is asked of the owner ⚠. `model/src/w3initmd.F90:129` at that commit reads
-`WWVER = '7.14'`.
+and the one chaceon's own `WW3/` submodule holds `(v)` `git -C chaceon ls-tree HEAD WW3`. Asked
+which ref "7.13" meant, the owner answered "7.14" on 11 November 2026 and asked that the
+submodule's name say so: it is `WW3-metocean-7.14/`. `model/src/w3initmd.F90:129` at that commit
+reads `WWVER = '7.14'`.
 
 ## Why `--ww3-gpu` is still compared with NOAA's WW3
 
@@ -70,8 +74,8 @@ grep -c '^<<<<<<<' model/src/w3{srce,wave,init,iotr}md.F90
 
 `w3srcemd.F90` and `w3wavemd.F90` are where the kernels are called, and the kernels themselves
 would then have to be translated again from MetOcean's Fortran (plan units U3 to U5). This change
-does unit U2 only, as an added submodule: the reference `--ww3` builds is MetOcean's, and the fork
-keeps its base. Until U1, a difference between `--ww3` and `--ww3-gpu` on the same case is
+does unit U2 only: the reference `--ww3` builds is MetOcean's, in the one WW3 reference submodule,
+and the fork keeps its base. Until U1, a difference between `--ww3` and `--ww3-gpu` on the same case is
 MetOcean's ten commits and three years of NOAA's development, not the port ⚠.
 
 ## A case of your own: `--case <dir>`
@@ -184,7 +188,7 @@ examples/03-fresh-forcing/stage.sh triangular build/cases/limon
 examples/03-fresh-forcing/stage.sh regular build/cases/sbrazil
 ```
 
-- **LIMON**, triangular: `WW3-metocean/regtests/ww3_tp2.6/input` (`limon_ll.msh`,
+- **LIMON**, triangular: `WW3-metocean-7.14/regtests/ww3_tp2.6/input` (`limon_ll.msh`,
   `namelists_LIMON.nml`, `points.list`, `ww3_grid.nml`, `ww3_shel.nml`, `ww3_ounf.nml`,
   `ww3_strt.inp`) copied flat, the `../input/` paths made `./`, the homogeneous wind of
   `ww3_shel.nml` replaced by `INPUT%FORCING%WINDS = 'T'`, one hour.

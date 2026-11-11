@@ -1,6 +1,6 @@
 ---
-description: Bump every submodule (picasso, WW3, WW3-noaa, WW4) to its latest, summarise what changed upstream, and open a PR.
-argument-hint: "[picasso|WW3|WW3-noaa|WW4 ...]  (default: all four)"
+description: Bump every submodule (picasso, WW3, WW4) to its latest, summarise what changed upstream, and open a PR.
+argument-hint: "[picasso|WW3|WW4 ...]  (default: all three)"
 ---
 
 Bump the submodules named in `$ARGUMENTS` (all when empty) and open one pull request.
@@ -13,9 +13,9 @@ Give the command that reproduces each count.
 |---|---|---|---|---|
 | `picasso` | h0ffmann/picasso | none | `main` | sparse: only `labs/pratico` is checked out |
 | `WW3` | h0ffmann/WW3 | NOAA-EMC/WW3 | `develop` | fork may carry its own commits |
-| `WW3-noaa` | NOAA-EMC/WW3 | none | `develop` | pure WW3 for `--ww3-noaa`: move it only to the NOAA commit the fork branched from (`git -C WW3 merge-base HEAD <NOAA develop>`), never to the tip on its own; `scripts/ww3-gpu.sh --ww3-noaa` stops when the two disagree |
+| (no submodule) `kokkos/src/fortran_iface/WW3_BASE` | NOAA-EMC/WW3 | none | `develop` | the NOAA commit the fork branched from, which `--ww3-noaa` builds (`scripts/ww3_base.sh`): when the `WW3` pin moves onto a newer NOAA commit, write that commit here (`git -C WW3 merge-base HEAD <NOAA develop>`), never the tip on its own; `scripts/ww3-gpu.sh --ww3-noaa` stops when the two disagree |
 | `WW4` | h0ffmann/WW4 | NOAA-EMC/WW4 | `develop` | read-only reference; `docs/ww4-status.json` records the last snapshot |
-| `WW3-metocean` | metocean/WW3 | none | tag `7.14.mos-92e2cf6` | the reference `--ww3` builds: **not bumped by this command**; it moves only to a ref the owner names, and `chaceon`'s own `WW3` gitlink must stay equal to it |
+| `WW3-metocean-7.14` | metocean/WW3 | none | tag `7.14.mos-92e2cf6` | the reference `--ww3` builds: **not bumped by this command**; it moves only to a ref the owner names, and `chaceon`'s own `WW3` gitlink must stay equal to it |
 | `chaceon` | h0ffmann/chaceon | none | `main` | WW3 in Rust for `--chaceon`: not bumped by this command either; move it in a pull request that says what changed in chaceon and reruns `just smoke-chaceon` |
 
 ## 1. Sync and bump

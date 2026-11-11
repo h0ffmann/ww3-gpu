@@ -17,7 +17,7 @@ just run --ww3-gpu --case build/cases/sbrazil --wind ifs  # the Kokkos port on t
 
 | Case | Grid | From | Length |
 |---|---|---|---|
-| `triangular` | LIMON: 1 778 nodes and 3 328 triangles of a Gmsh mesh, `GRID%TYPE = 'UNST'`, near 83°W 10°N | WW3's regtest `ww3_tp2.6`, read from the `WW3-metocean/` submodule when the script runs | 1 h |
+| `triangular` | LIMON: 1 778 nodes and 3 328 triangles of a Gmsh mesh, `GRID%TYPE = 'UNST'`, near 83°W 10°N | WW3's regtest `ww3_tp2.6`, read from the `WW3-metocean-7.14/` submodule when the script runs | 1 h |
 | `regular` | southern Brazil, 81 × 81 points at 0.1°, `GRID%TYPE = 'RECT'` | example 02's namelists, without its boundary points | 3 h |
 
 The script changes only what a case directory needs: the regtest's `../input/` paths become

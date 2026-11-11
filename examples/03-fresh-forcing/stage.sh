@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # stage — write a case directory for `just run --case <dir> --wind ifs` (README.md beside this
 # file), from inputs the repository already holds. Nothing of WW3 is copied into the repository:
-# the triangular case is read from the WW3-metocean/ submodule when this runs.
+# the triangular case is read from the WW3-metocean-7.14/ submodule when this runs.
 #
 #   examples/03-fresh-forcing/stage.sh triangular|regular <dir> [-n]
 #
@@ -34,9 +34,9 @@ esac
 if [ -e "$dir" ] && [ -n "$(ls -A "$dir" 2>/dev/null)" ]; then die "$dir is not empty"; fi
 
 if [ "$kind" = triangular ]; then
-    src="$root/WW3-metocean/regtests/ww3_tp2.6/input"
+    src="$root/WW3-metocean-7.14/regtests/ww3_tp2.6/input"
     files=(limon_ll.msh namelists_LIMON.nml points.list ww3_grid.nml ww3_shel.nml ww3_ounf.nml ww3_strt.inp)
-    [ -f "$src/limon_ll.msh" ] || die "WW3-metocean/ is empty: git submodule update --init WW3-metocean"
+    [ -f "$src/limon_ll.msh" ] || die "WW3-metocean-7.14/ is empty: git submodule update --init WW3-metocean-7.14"
 else
     src="$root/examples/02-regional-real-forcing"
     files=(namelists.nml points.list ww3_grid.nml ww3_shel.nml ww3_ounf.nml ww3_ounp.nml ww3_prnc_wind.nml)
