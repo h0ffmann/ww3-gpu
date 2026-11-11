@@ -18,7 +18,6 @@ v0.1.3, the latest, carries only the first and the marola one.
 | Tie | To | What it is | Whose work |
 |---|---|---|---|
 | `isSupplementTo` | [github.com/h0ffmann/ww3-gpu](https://github.com/h0ffmann/ww3-gpu) (software) | this repository, the source and the code | the author |
-| `isVariantFormOf` | [ww3-lab-course.pdf](https://h0ffmann.github.io/ww3-gpu/ww3-lab-course.pdf) (book), *next release* | the book's PDF, rebuilt on every merge | the author |
 | `isReferencedBy` | [10.5281/zenodo.23224155](https://doi.org/10.5281/zenodo.23224155) (software) | marola: sea conditions and bathing-water quality at Brazilian beaches | the author and the marola members |
 | `requires` | [10.5281/zenodo.23311208](https://doi.org/10.5281/zenodo.23311208) (software), *next release* | picasso: the Nix labs of the toolchain, the paper and the website | the author |
 | `isCitedBy` | [10.5281/zenodo.23333656](https://doi.org/10.5281/zenodo.23333656) (book), *next release* | *Closed Source: The God that Failed*, whose citation and paper discipline this repository adopts | the author |

@@ -48,7 +48,6 @@ RESULTS.md
 # builds
 build/
 kokkos/build/
-exercises/solutions/build/
 swan/
 *.ninja
 .ninja_deps
@@ -115,3 +114,6 @@ docs/archify/*.html
 docs/archify/*.finalize*.json
 docs/archify/*.delivery*.json
 docs/archify/*.browser-check.json
+
+# IFS forcing fetched by `just ifs-get`
+data/ifs/

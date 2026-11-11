@@ -65,5 +65,4 @@ Notes
 * SWASH (non-hydrostatic, phase-resolving, same group):
       https://gitlab.tudelft.nl/citg/wavemodels/swash
 
-See course/15-swan.md for when to use SWAN instead of -- or downstream of -- WW3.
 NOTE

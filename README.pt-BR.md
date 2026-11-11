@@ -4,7 +4,7 @@
 
 # ww3-gpu
 
-<sub>o WW3 GPU Lab · desde 2026 · <a href="https://h0ffmann.github.io/ww3-gpu/">o site</a> · <a href="https://h0ffmann.github.io/ww3-gpu/book/">o livro</a> · <a href="RELEASES.md">versões</a> · <a href="#como-citar">citar</a> · <a href="README.md">english</a></sub>
+<sub>o WW3 GPU Lab · desde 2026 · <a href="https://h0ffmann.github.io/ww3-gpu/">o site</a> · <a href="RELEASES.md">versões</a> · <a href="#como-citar">citar</a> · <a href="README.md">english</a></sub>
 
 [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.23221351-1682D4?style=flat-square)](https://doi.org/10.5281/zenodo.23221351)
 [![versão](https://img.shields.io/github/v/tag/h0ffmann/ww3-gpu?style=flat-square&label=vers%C3%A3o&color=FF4F00)](RELEASES.md)
@@ -31,17 +31,16 @@
   o último bit, no mesmo programa. Não editamos o WW3. Um fork do WW3 acrescenta uma chave. Em
   tempo de execução, cada parte traduzida pode usar a rotina em Fortran ou a rotina em Kokkos, e
   assim as duas sempre podem ser comparadas.
-- **O repositório também é um livro.** O livro conta como agentes de código fazem esse trabalho
-  sob essa regra. Os capítulos são as [17 lições](course/README.md), e cada merge gera o
-  [PDF](pdf/ww3-lab-course.pdf). Os primeiros leitores são cientistas de modelagem de ondas,
-  métodos numéricos e HPC. Cada afirmação tem `(v)` quando foi conferida e `⚠` quando não foi. O
+- **Os textos são o preprint e a proposta.** O [preprint](pubs/preprint/README.md) e a
+  [proposta de projeto](pubs/proposal/) da UFRJ/DEL são escritos aqui em Markdown. Os primeiros
+  leitores são cientistas de modelagem de ondas, métodos numéricos e HPC. Cada afirmação tem `(v)` quando foi conferida e `⚠` quando não foi. O
   material técnico está em inglês; esta página resume o projeto em português.
 
 ## por onde começar
 
 | Se você quer | Vá para |
 |---|---|
-| entender o WW3, as GPUs e este projeto do zero | [`course/00-orientation.md`](course/00-orientation.md), depois o [livro](https://h0ffmann.github.io/ww3-gpu/book/) |
+| entender o WW3, as GPUs e este projeto do zero | o [preprint](pubs/preprint/README.md), depois o [glossário](docs/GLOSSARY.md) |
 | rodar o WW3, depois o WW3 com o port em Kokkos | [começo rápido](#começo-rápido) |
 | ver quais rotinas rodam em Kokkos, e com que velocidade | [onde o projeto está](#onde-o-projeto-está), [`kokkos/PORT_STATUS.md`](kokkos/PORT_STATUS.md) |
 | ler os resultados em CPU, seus limites e o que ainda não foi mostrado, escritos para os modeladores de ondas da NOAA | [`docs/NOAA_PROGRESS_RECORD_202610.md`](docs/NOAA_PROGRESS_RECORD_202610.md), depois a lista de lacunas [`docs/PRODUCTION_READINESS_202610.md`](docs/PRODUCTION_READINESS_202610.md) (em inglês) |
@@ -90,7 +89,7 @@ cheias dizem o que entra, roda ou é compilado de quê; a seta tracejada é a co
 Kokkos com o WW3 puro da NOAA. Os ambientes estão numerados da referência (1) ao mais derivado
 (3); o dev container chega aos modos só pelo picasso.
 
-**Fora da figura.** O livro e o site (`course/`, `pubs/`, `site/`) são compilados na CI, não nesses ambientes. O branch do fork e os arquivos do patch KOKKOS (a tabela acima), o
+**Fora da figura.** As publicações e o site (`pubs/`, `site/`) são compilados na CI, não nesses ambientes. O branch do fork e os arquivos do patch KOKKOS (a tabela acima), o
 build CUDA e sua regra de supervisão (`AGENTS.md`, "Running on the GPU"), a CI e as versões de
 cada ambiente ([`VERSIONS.md`](VERSIONS.md)).
 
@@ -223,38 +222,28 @@ just full-ww3-gpu         # o mesmo no bench_small, 9 520 pontos de mar
 just port-score           # quanto do WW3 roda em Kokkos, e as rotinas em ordem de tempo
 ```
 
-Depois leia o [`course/00-orientation.md`](course/00-orientation.md). Para ver todas as tarefas,
-rode `just`.
+Para ver todas as tarefas, rode `just`.
 
 ## todo o resto
 
 Clique numa seção para abri-la.
 
-## o livro
+## as publicações
 
-<details><summary>O livro que este repositório gera: o assunto, e como compilar</summary>
+<details><summary>Os textos que este repositório guarda, e como compilar</summary>
 
-*Without Changing the Answer* (título provisório) segue a tradição dos livros técnicos
-autopublicados a partir de um repositório público, como *Thinking with Types*, de Sandy Maguire,
-e *Practical FP in Scala*, de Gabriel Volpe `(v)`
-[MIP-0014 §4](https://github.com/marola-dev/marola/blob/main/docs/MIPs/MIP-0014-marola-book.md)
-do marola, lida em 2026-10-08. O assunto é um método: como agentes de código portam Fortran sob um
-critério bit a bit e uma escada de validação (programação com agentes), e como planos, avaliações e
-medições são escritos de modo que um agente possa ser cobrado por eles (pesquisa com agentes). As
-regras em [`AGENTS.md`](AGENTS.md), os documentos de desenho em [`docs/WFIPs/`](docs/WFIPs/README.md),
-as decisões em [`docs/ADRs.md`](docs/ADRs.md) e o diário de pesquisa em
-[`docs/log/`](docs/log/README.md) são capítulos à espera. A
-[ADR-0003](docs/ADRs.md#adr-0003) registra a decisão e a
-[WFIP-0002](docs/WFIPs/WFIP-0002-lab-as-a-book.md), o plano.
+Só ficam aqui os textos com fonte em Markdown: o preprint, a proposta do projeto e o relatório
+para o GTA.
 
-Cada versão etiquetada é uma edição, arquivada no Zenodo como livro ([`RELEASES.md`](RELEASES.md)).
-Uma edição gratuita no Leanpub é alimentada pelo CI a partir dos mesmos capítulos
-([`docs/LEANPUB_202610.md`](docs/LEANPUB_202610.md)).
+| Texto | Fonte | Arquivo gerado |
+|---|---|---|
+| Preprint, *wave models on GPUs* | [`pubs/preprint/`](pubs/preprint/README.md) | `pubs/preprint/wave-models-on-gpus.pt-BR.pdf` |
+| Proposta de projeto da UFRJ/DEL, em português (referência) e inglês | [`pubs/proposal/`](pubs/proposal/) | [`pdf/proposal_pt.pdf`](pdf/proposal_pt.pdf), [`pdf/proposal_en.pdf`](pdf/proposal_en.pdf) |
+| Relatório em português fácil para o GTA, do DEL/UFRJ | [`pubs/relatorio-gta/`](pubs/relatorio-gta/relatorio.easy.pt-BR.md) | [`pdf/relatorio-gta-pedro-cruz.pdf`](pdf/relatorio-gta-pedro-cruz.pdf) |
 
 ```console
-just book          # os capítulos em PDF (nix, o laboratório publisher do picasso)
-just book-html     # os capítulos como páginas web, em build/site/book/
-just leanpub       # os capítulos como manuscrito do Leanpub
+just proposal pt   # a proposta em PDF (nix, o laboratório publisher do picasso)
+just proposal-docx # a proposta em Word, para revisão
 just adrs          # uma linha por decisão
 just wfip check    # os documentos de desenho e seus critérios de pronto
 ```
@@ -266,10 +255,8 @@ just wfip check    # os documentos de desenho e seus critérios de pronto
 <details><summary>O site: o que ele mostra, e como compilar</summary>
 
 <https://h0ffmann.github.io/ww3-gpu/> é uma página inicial em Gleam + Lustre, pré-renderizada, sem
-script. Cada fato que ela mostra vem dos arquivos deste repositório, lidos pelo `site/content`: os
-capítulos, as decisões, os desenhos, as notas, o DOI e as pessoas. Os capítulos ficam em
-[`/book/`](https://h0ffmann.github.io/ww3-gpu/book/), ao lado do
-[PDF](https://h0ffmann.github.io/ww3-gpu/ww3-lab-course.pdf), da página de andamento (`/andamento/`),
+script. Cada fato que ela mostra vem dos arquivos deste repositório, lidos pelo `site/content`: as
+decisões, os desenhos, as notas, o DOI e as pessoas. Ao lado dela ficam a página de andamento (`/andamento/`),
 das decisões (`/adrs/`) e de um relatório em português fácil para o GTA, do DEL/UFRJ
 (`/relatorio-gta/`, feito de [`pubs/relatorio-gta/`](pubs/relatorio-gta/relatorio.easy.pt-BR.md), com PDF em
 [`pdf/relatorio-gta-pedro-cruz.pdf`](pdf/relatorio-gta-pedro-cruz.pdf)). O visual está em [`DESIGN.md`](DESIGN.md): um mar à noite, com três
@@ -279,7 +266,7 @@ de uma fonte só e de uma tabela de traduções,
 frase fica sem tradução.
 
 ```console
-just site          # os capítulos, depois a página inicial, em build/site/
+just site          # as páginas de andamento, ADRs e relatório, depois a página inicial, em build/site/
 just site-serve    # serve build/site em http://localhost:8000
 ```
 
@@ -290,7 +277,7 @@ just site-serve    # serve build/site em http://localhost:8000
 | Linguagem | Gleam (alvo JavaScript), Lustre |
 | Empacotamento e testes | node, esbuild, gleeunit |
 | Toolchain | o `labs/gleam-website` do picasso, pelo `flake.nix` (`nix develop .#site`) |
-| Páginas do livro | pandoc (`scripts/build_html.sh`) |
+| Páginas do relatório | pandoc (`scripts/build_html.sh`) |
 | Publicação | `.github/workflows/pages.yml`, GitHub Pages |
 
 </details>
@@ -337,17 +324,17 @@ request ou issue aberta, com link para acompanhar.
 
 | Frente | Pergunta | Onde | Situação |
 |---|---|---|---|
-| Curso | Como compilar, rodar e medir o WW3, e depois portar um kernel? | [`course/`](course/README.md), [`examples/`](examples/README.md), [`exercises/`](exercises/README.md) | 17 lições, integrado |
-| Port do `W3SNL1` para Kokkos | Um kernel do WW3 roda na GPU com resultado idêntico bit a bit? | [`kokkos/`](kokkos/README.md), [lição 12](course/12-porting-a-kernel-w3snl1.md) | Idêntico em 3 backends nos testes unitários que o ADR-0010 removeu; a matriz de regtests do WW3 na CPU é idêntica byte a byte ao DIA em Fortran nas 100 entradas seriais `NL1` (2026-10-15) |
-| Benchmarks | Quanto um i9 e uma RTX 4090 entregam de fato para o WW3? | [`bench/`](bench/README.md), [`gpu/`](gpu/README.md), [lição 09](course/09-benchmark-profile-compile-run.md) | Ferramentas integradas |
+| Exemplos | Como rodar o WW3 num caso real? | [`examples/`](examples/README.md) | Dois casos executáveis, integrado |
+| Port do `W3SNL1` para Kokkos | Um kernel do WW3 roda na GPU com resultado idêntico bit a bit? | [`kokkos/`](kokkos/README.md), [relatório do port](kokkos/port_report/W3SNL1_KOKKOS.md) | Idêntico em 3 backends nos testes unitários que o ADR-0010 removeu; a matriz de regtests do WW3 na CPU é idêntica byte a byte ao DIA em Fortran nas 100 entradas seriais `NL1` (2026-10-15) |
+| Benchmarks | Quanto um i9 e uma RTX 4090 entregam de fato para o WW3? | [`bench/`](bench/README.md), [`gpu/`](gpu/README.md) | Ferramentas integradas |
 | Prioridade do port | Qual rotina portar em seguida? | [ADR-0002](docs/ADRs.md#adr-0002), [`PORT_STATUS.md`](kokkos/PORT_STATUS.md) | Portar pela ordem do tempo de parede medido. Um primeiro perfil coloca o `W3SDS4` em 67 % do tempo dos termos-fonte ([#45](https://github.com/h0ffmann/ww3-gpu/issues/45)) |
-| Port com agentes | Como agentes de código podem portar quarenta rotinas sem que uma pessoa refaça as verificações? | [`AGENTS_KOKKOS`](docs/AGENTS_KOKKOS_202609.md), [lição 13](course/13-bulk-porting-with-agents.md), [#42](https://github.com/h0ffmann/ww3-gpu/issues/42) | Regras integradas; fila de tarefas e escada de paridade na #42 |
+| Port com agentes | Como agentes de código podem portar quarenta rotinas sem que uma pessoa refaça as verificações? | [`AGENTS_KOKKOS`](docs/AGENTS_KOKKOS_202609.md), [#42](https://github.com/h0ffmann/ww3-gpu/issues/42) | Regras integradas; fila de tarefas e escada de paridade na #42 |
 | Ferramentas para agentes | Quais frameworks de agentes e ferramentas de pesquisa servem a esse fluxo? | [`EVAL-NOOA_202609.md`](docs/EVAL-NOOA_202609.md), [`LLM_TOOLING_202610.md`](docs/LLM_TOOLING_202610.md), [#38](https://github.com/h0ffmann/ww3-gpu/issues/38), [ADR-0009](docs/ADRs.md#adr-0009) | Avaliações em revisão; ai-memory escolhido |
 | Prova bit a bit | O que dá para provar, e não só testar, sobre a tradução de Fortran para C++? | [`BITWISE_PROOF`](docs/BITWISE_PROOF_202610.md), [`docs/proof/`](docs/proof/README.md), [ADR-0001](docs/ADRs.md#adr-0001) | Nenhuma linguagem de prova; varreduras exaustivas, diff de GIMPLE e consultas SMT. Seção 1 do `W3SNL1` varrida nas 2^32 entradas |
 | Triton e vento de ML | Um kernel Triton do termo cumulativo do `W3SDS4` supera o do Kokkos? O vento do WeatherNext 3 melhora a previsão de ondas? | [#45](https://github.com/h0ffmann/ww3-gpu/issues/45), [`W3SDS4_TRITON_PLANO`](docs/W3SDS4_TRITON_PLANO_202610.pt.md) | Planejado |
 | Port para uma H100 | O que exigiria um port completo para uma única H100? | [`KOKKOS_H100_PLAN`](docs/KOKKOS_H100_PLAN_202609.md), [WFIP-0005](docs/WFIPs/WFIP-0005-device-resident-step.md), [WFIP-0006](docs/WFIPs/WFIP-0006-device-libm-bits.md) | Plano. O passo de tempo residente no dispositivo (`--kokkos resident`) roda na CPU idêntico byte a byte ao Fortran, com o espectro cruzando uma vez em cada sentido no `bench_small` ([#179](https://github.com/h0ffmann/ww3-gpu/pull/179)); as chamadas de libm do dispositivo vão para cópias das da glibc ([#178](https://github.com/h0ffmann/ww3-gpu/pull/178)). Nada rodou numa GPU |
-| WW4 e SWAN | O que substitui o WW3, e o que cobre a costa? | [lição 14](course/14-ww4-and-the-future.md), [lição 15](course/15-swan.md) | Integrado |
-| O livro e a proposta | As lições compiladas em livro e a proposta do projeto | [`pubs/`](pubs/README.md), PDFs e arquivos Word em [`pdf/`](pdf/), [WFIP-0002](docs/WFIPs/WFIP-0002-lab-as-a-book.md) | Gerados pelo CI a cada merge |
+| WW4 e SWAN | O que substitui o WW3, e o que cobre a costa? | [`docs/ww4-status.json`](docs/ww4-status.json), [`scripts/04_get_swan.sh`](scripts/04_get_swan.sh) | Retrato mantido por `just ww4-status` |
+| O preprint e a proposta | Os textos escritos a partir deste trabalho | [`pubs/`](pubs/README.md), PDFs e arquivos Word em [`pdf/`](pdf/) | A proposta é gerada pelo CI a cada merge |
 
 A proposta do projeto de graduação está em português em [`pubs/proposal/pt/`](pubs/proposal/pt/),
 com PDF em [`pdf/proposal_pt.pdf`](pdf/proposal_pt.pdf); a checagem de cada referência dela está em
@@ -402,7 +389,7 @@ just coast-ww3-gpu      # o caso forçado: correntes, nível do mar, gelo, conto
 just ww3-gpu-matrix     # a matriz de regtests do WW3, só CPU
 ```
 
-Depois disso, comece por [`course/00-orientation.md`](course/00-orientation.md). `just` lista todas
+`just` lista todas
 as tarefas, e cada uma chama um script em `scripts/`, exceto `just ww3-gpu-matrix*`, que roda a matriz
 de regtests do WW3 por CMake/CTest em `regtests/`. O toolchain, o fork do WW3 e os presets do
 Kokkos estão em [`docs/TOOLCHAIN.md`](docs/TOOLCHAIN.md). Para casos costeiros, `just swan` instala
@@ -544,9 +531,8 @@ O WAVEWATCH IV™ (WW4) existe, e o WW3 tem fim programado. O
 [NOAA-EMC/WW4](https://github.com/NOAA-EMC/WW4) é uma reescrita do zero, sem compatibilidade com o
 WW3. Em 2026-10-07 ele não tinha física nem versão. O plano, com o compromisso de deixar de dar
 suporte ao WW3 quando o WW4 amadurecer, está no
-[NCEP Office Note 525](https://doi.org/10.25923/h7j3-1h25). Os detalhes estão na
-[lição 14](course/14-ww4-and-the-future.md). O SWAN é a outra metade: o WW3 ao largo e o SWAN perto
-da costa ([lição 15](course/15-swan.md)).
+[NCEP Office Note 525](https://doi.org/10.25923/h7j3-1h25); `just ww4-status` compara o WW4 com o
+último retrato. O SWAN é a outra metade: o WW3 ao largo e o SWAN perto da costa (`just swan`).
 
 </details>
 
@@ -560,7 +546,7 @@ num módulo só, o `W3SRCEMD`, e chegou a cerca de 1,3× contra 42 núcleos de C
 A transferência de dados limitou o ganho, e o código não entrou no `NOAA-EMC/WW3`. Este laboratório
 segue outro caminho: kernels em Kokkos que mantêm os dados na GPU e concordam com o Fortran dentro
 das tolerâncias pelas quais os regtests do WW3 são julgados,
-portados na ordem do tempo de parede medido ([lição 09](course/09-benchmark-profile-compile-run.md)).
+portados na ordem do tempo de parede medido.
 
 O `--ww3-gpu` roda na CPU (Kokkos OpenMP) por padrão, e é comparado par a par com o `--ww3`. O
 `just smoke-ww3-gpu gpu` roda em CUDA, só com uma pessoa supervisionando: ele pergunta no terminal
@@ -578,9 +564,9 @@ solver de propagação
 <details><summary>Os diretórios do repositório</summary>
 
 A tabela completa está na seção [structure](README.md#structure) do README em inglês. Em resumo:
-`course/` (os capítulos), `kokkos/` (os kernels), `bench/` e `gpu/` (as medições), `proof/` (a
+`examples/` (os casos executáveis), `kokkos/` (os kernels), `bench/` e `gpu/` (as medições), `proof/` (a
 prova), `docs/` (planos, decisões, desenhos, o diário), `notes/` (o segundo cérebro), `site/` (a
-página inicial em Gleam), `pubs/` (o livro e a proposta) e `docker/` (a imagem Ubuntu com os programas
+página inicial em Gleam), `pubs/` (o preprint, a proposta e o relatório para o GTA) e `docker/` (a imagem Ubuntu com os programas
 compilados, [a imagem Docker](#2--a-imagem-docker)).
 
 </details>
@@ -698,6 +684,12 @@ ele devolve é lido como dado, nunca como instrução.
 ## trabalhos relacionados
 
 <details><summary>O marola, e as obras irmãs deste repositório</summary>
+
+Dois sistemas de previsão rodam o WAVEWATCH III a partir deste repositório. O primeiro é o
+ondaseventos, a previsão operacional do LabECO/UFSC ([ondaseventos.ufsc.br](https://ondaseventos.ufsc.br/));
+o segundo é o marola. `just ifs-get` baixa os ventos do IFS do ECMWF, o modelo atmosférico que o
+ondaseventos declara ([`docs/IFS_FORCING_202611.md`](docs/IFS_FORCING_202611.md); como o próprio
+ondaseventos os baixa não foi lido ⚠).
 
 O [marola](https://github.com/marola-dev/marola) ([marola.dev](https://marola.dev/)) é uma
 plataforma aberta e sem fins lucrativos sobre mar e balneabilidade nas praias brasileiras, do mesmo

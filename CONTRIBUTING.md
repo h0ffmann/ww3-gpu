@@ -8,11 +8,9 @@ the invariants, where a change belongs, and the gates. This file is the longer f
 The first readers of this repository are scientists: PhD researchers, postdocs and independent
 researchers working on ocean wave modelling, numerical methods or HPC. Every document, skill, agent
 and piece of metadata here is written for them, unless a section below names a different reader.
-The repository is read as a book in progress on agentic coding and agentic research
-([ADR-0003](docs/ADRs.md#adr-0003)), which adds a second reader without
-lowering the bar: a researcher or engineer from another field who wants to run coding agents on
-scientific code without losing the answer. A chapter is wrong if a wave modeller reading over the
-shoulder finds a mistake in it.
+A second reader comes without lowering the bar: a researcher or engineer from another field who
+wants to run coding agents on scientific code without losing the answer. A text is wrong if a wave
+modeller reading over the shoulder finds a mistake in it.
 
 - Write for a specialist. Do not gloss the action balance equation or what a source term is; give
   the equation, the routine and `file:line`, the source, and the measured number with its unit,
@@ -38,8 +36,8 @@ Corrections are very welcome, especially the following, in order of usefulness:
    2026-09-11; unmarked ones are from memory and may be wrong.
 4. **The wind direction convention in `examples/01`.** Deliberately left as an
    exercise, but a confirmed answer with the WW3 version you used is welcome.
-5. **WW4 status.** `course/14-ww4-and-the-future.md` quotes a repository snapshot from
-   2026-10-07 (issue #49) and a timeline from NCEP Office Note 525. That will go stale faster than
+5. **WW4 status.** `docs/ww4-status.json` holds a repository snapshot from
+   2026-10-07 (issue #49), and the proposal a timeline from NCEP Office Note 525. That will go stale faster than
    anything else here. Updates very welcome, with the date you checked; `just ww4-status`
    shows what changed since the last snapshot.
 
@@ -169,7 +167,7 @@ A mistake in a figure is as welcome as one in the text.
   `file:line`). A comment that restates the code or narrates the history of a fix is deleted in
   review. Verbatim upstream text (the WW3 section comments `snl1_dia.cpp` keeps) keeps its comments
   as provenance.
-- Length is not a measure of a research doc (the proposal, the course, `docs/`). A Portuguese
+- Length is not a measure of a research doc (the proposal, the preprint, `docs/`). A Portuguese
   and an English version, or a revision and the text it replaces, may differ in length, and
   that is not a defect: do not pad or trim a text to match another one. What must match across
   languages is content, the same claims, citations and numbers (`just proposal-lint` checks
@@ -226,7 +224,7 @@ edit a vendored skill through its patch); this is what each one is for.
 | `figure` | the reading card and the Mermaid fences still being redrawn; a new diagram is an Archify drawing (AGENTS.md, "Figures") |
 | `eli5` | explain a topic to someone from another field (the second audience exception) |
 | `release` | cut a citable release: tag, GitHub release, Zenodo DOI, `CITATION.cff`, `.zenodo.json` |
-| `ww4-status` | diff NOAA-EMC/WW4 against `docs/ww4-status.json` and refresh lesson 14 and the proposal |
+| `ww4-status` | diff NOAA-EMC/WW4 against `docs/ww4-status.json` and refresh the proposal |
 | `noaa-notices` | list NOAA notices (NWS PNS/SCN, NCEP model changes, NOAA-EMC/WW3 production branches) new since `docs/noaa-notices.json` and route each to the file it breaks or dates |
 | `find-sources` | find a paper through the Consensus MCP server (`.mcp.json`), verify it at the DOI, then add it to `refs.bib` and `REFERENCES.md`; a query is sent to a third party ([`docs/LLM_TOOLING_202610.md`](docs/LLM_TOOLING_202610.md)) |
 | `ww3-port` | the WW3-specific traps of a Fortran-to-Kokkos translation (gfortran `-O3` powers, array bases, per-grid tables, OpenMP nesting) and of claiming a routine regtested; follows `/port-next` |

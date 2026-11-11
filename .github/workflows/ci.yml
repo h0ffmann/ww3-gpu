@@ -63,9 +63,6 @@ jobs:
           bash scripts/ww3-gpu.sh --self-test
           python3 scripts/ww4_parts.py --self-test
 
-      - name: The Leanpub manuscript exports from the lessons
-        run: python3 scripts/leanpub_manuscript.py --self-test && python3 scripts/leanpub_manuscript.py --out "$RUNNER_TEMP/leanpub"
-
       # The gate fails on the error-level rules of .vale.ini; the report prints the
       # judgement rules of .vale-report.ini for the reviewer and never fails.
       - name: Prose has no AI-writing tells (Vale, vale-ai-tells)
@@ -102,16 +99,13 @@ jobs:
           gfortran -O1 -std=f2018 -c gpu/02_do_concurrent.f90 -o /dev/null || \
             echo "note: 02_do_concurrent needs a compiler with F2018 LOCAL() support"
 
-      - name: Example and exercise Fortran compiles and the parity test passes
+      - name: Example Fortran compiles and runs
         run: |
-          # The example-01 input generator and the exercise-11 refactor need
-          # nothing but gfortran, so they are built and run here, strictly.
+          # The example-01 input generator needs nothing but gfortran, so it is
+          # built and run here, strictly.
           gfortran -O2 -std=f2018 -Wall -Wextra -Werror -fimplicit-none \
             -o /tmp/make_inputs examples/01-fetch-limited-growth/make_inputs.F90
           (cd /tmp && ./make_inputs && test -s depth.inp && test -s mask.inp)
-          gfortran -O2 -std=f2018 -Wall -Wextra -Werror -fimplicit-none \
-            -o /tmp/ex11_test exercises/solutions/ex11_refactor.F90 exercises/solutions/ex11_refactor_test.F90
-          /tmp/ex11_test
           # examples/02's make_bathy.F90 needs netcdf-fortran; its run.sh builds it
           # in the pinned nix shell rather than against the runner's apt state.
 

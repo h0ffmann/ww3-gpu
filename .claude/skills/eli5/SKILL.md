@@ -7,7 +7,7 @@ description: "Explain a wave-modelling, Fortran or HPC topic to someone who know
 researchers; see `CONTRIBUTING.md`, "Who this repository is for"). This skill is the exception that
 serves newcomers: students, committee members and researchers from another field. Simplify the
 words, never the physics, so a wave modeller reading the explainer finds nothing wrong, and end
-with the lesson, `file:line` or paper a researcher would go to next.
+with the `file:line`, document or paper a researcher would go to next.
 
 # eli5
 
@@ -19,12 +19,11 @@ Topic: $ARGUMENTS
 
 ## Ground it in this repository first
 
-This is a teaching repository, so an explanation that contradicts the course is worse than no
-explanation. Before writing:
+An explanation that contradicts the repository is worse than no explanation. Before writing:
 
 - `docs/GLOSSARY.md`: the term as this repo defines it.
-- `course/*.md`: the lesson that already teaches it, if there is one. Point the reader there at
-  the end ("the long version is in `course/03-…`").
+- `docs/` and `kokkos/README.md`: the plan or page that already covers it, if there is one.
+  Point the reader there at the end.
 - `pubs/proposal/pt|en`: for anything about the project's own plan.
 
 If the repository and your memory disagree, the repository wins. If neither covers it, say so
@@ -42,7 +41,7 @@ plainly rather than filling the gap with a plausible-sounding invention.
    the reader can follow a paper or a code comment afterwards.
 4. **Why it matters here.** One or two lines connecting it to what this repository does: the
    forecast cycle at LabECO, the run time, the rungs of the optimisation ladder.
-5. **Where to read more.** The lesson, the manual section, or the paper, with the repo's
+5. **Where to read more.** The repository page, the manual section, or the paper, with the repo's
    verification markers: `(v)` for a claim checked against a source you actually opened, `⚠` for
    one you did not.
 
@@ -64,8 +63,7 @@ answers should use the vocabulary in `docs/GLOSSARY.md`.
 The default is a chat answer: short paragraphs and the diagram inline. If the user asks for a page,
 a slide, something printable or something to send to someone, write a standalone HTML file with
 large type and few words into `build/eli5/<topic>.html` (`build/` is gitignored) and give them the
-path. Do not add files anywhere else in the tree. Explanations that belong in the course go
-through a lesson, not through this skill.
+path. Do not add files anywhere else in the tree.
 
 ## Do not
 

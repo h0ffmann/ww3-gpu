@@ -4,6 +4,7 @@ import gleeunit
 import ww3_gpu_site/app
 import ww3_gpu_site/content
 import ww3_gpu_site/prerender
+import ww3_gpu_site/prerender_lineage
 
 pub fn main() -> Nil {
   gleeunit.main()
@@ -16,8 +17,8 @@ fn html() -> String {
 // One source, two pages: the Portuguese one is the same page, every sentence looked up by its
 // English in site/data/translations/pt-BR.tsv (h0ffmann/h0ffmann#86).
 pub fn a_sentence_is_translated_by_its_source_test() {
-  assert app.t("pt-BR", "the book") == "o livro"
-  assert app.t("en", "the book") == "the book"
+  assert app.t("pt-BR", "the repository") == "o repositório"
+  assert app.t("en", "the repository") == "the repository"
   assert app.t("pt-BR", "a sentence with no row") == "a sentence with no row"
 }
 
@@ -26,16 +27,13 @@ pub fn the_page_in_portuguese_test() {
   assert string.contains(pt, "<html lang=\"pt-BR\">")
   assert string.contains(pt, "o segundo cérebro")
   // The files of the site are one level up from /pt-BR/; the anchors stay on the page.
-  assert string.contains(pt, "href=\"../book/\"")
+  assert string.contains(pt, "href=\"../andamento/\"")
   assert string.contains(pt, "href=\"../style.css\"")
-  assert string.contains(pt, "href=\"#book\"")
+  assert string.contains(pt, "href=\"#about\"")
   assert string.contains(pt, "https://h0ffmann.github.io/ww3-gpu/pt-BR/")
   // Every section and every fact is there, as on the English page.
-  list.each(["book", "chapters", "decisions", "port", "cite"], fn(id) {
+  list.each(["about", "decisions", "port", "cite"], fn(id) {
     assert string.contains(pt, "id=\"" <> id <> "\"")
-  })
-  list.each(content.chapters, fn(c) {
-    assert string.contains(pt, c.file)
   })
 }
 
@@ -53,8 +51,7 @@ pub fn every_section_test() {
   let page = html()
   list.each(
     [
-      "book",
-      "chapters",
+      "about",
       "decisions",
       "designs",
       "port",
@@ -67,14 +64,6 @@ pub fn every_section_test() {
       assert string.contains(page, "id=\"" <> id <> "\"")
     },
   )
-}
-
-pub fn every_chapter_test() {
-  let page = html()
-  assert content.chapters != []
-  list.each(content.chapters, fn(c) {
-    assert string.contains(page, c.file)
-  })
 }
 
 pub fn every_record_test() {
@@ -95,12 +84,6 @@ pub fn related_authors_test() {
   assert string.contains(page, "https://orcid.org/0000-0002-1686-4722")
   assert string.contains(page, "https://github.com/akitaonrails")
   assert string.contains(page, "legendary br dev")
-}
-
-pub fn the_book_links_test() {
-  let page = html()
-  assert string.contains(page, "href=\"book/\"")
-  assert string.contains(page, "href=\"ww3-lab-course.pdf\"")
 }
 
 pub fn no_script_test() {
@@ -164,4 +147,34 @@ pub fn the_rust_port_test() {
   list.each(facts, fn(l) {
     assert string.contains(page, l.url)
   })
+}
+
+// The lineage: every row of site/data/lineage.tsv is on the page, oldest first, with its link;
+// a planned row says so; the front page links to it and the two languages link each other.
+pub fn the_lineage_test() {
+  let page = prerender_lineage.render("en")
+  assert string.contains(page, "id=\"lineage\"")
+  assert content.events != []
+  list.each(content.events, fn(e) {
+    assert string.contains(page, e.date)
+    assert string.contains(page, string.replace(e.url, "&", "&amp;"))
+  })
+  let dates = list.map(content.events, fn(e) { e.date })
+  assert dates == list.sort(dates, string.compare)
+  assert list.any(content.events, fn(e) { e.status == "planned" })
+  assert string.contains(page, "event port planned")
+  assert string.contains(page, ">planned<")
+  assert string.contains(page, "href=\"../style.css\"")
+  assert string.contains(page, "https://h0ffmann.github.io/ww3-gpu/lineage/")
+  assert string.contains(page, "href=\"../pt-BR/lineage/\" hreflang=\"pt-BR\"")
+  assert string.contains(html(), "href=\"lineage/\"")
+  let pt = prerender_lineage.render("pt-BR")
+  assert string.contains(pt, "<html lang=\"pt-BR\">")
+  assert string.contains(pt, "linhagem")
+  assert string.contains(pt, "href=\"../../style.css\"")
+  assert string.contains(pt, "href=\"../../lineage/\" hreflang=\"en\"")
+  assert string.contains(
+    pt,
+    "https://h0ffmann.github.io/ww3-gpu/pt-BR/lineage/",
+  )
 }

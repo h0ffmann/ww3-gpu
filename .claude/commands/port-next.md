@@ -57,8 +57,8 @@ The WW3 caller patch is not written here: it goes on the `h0ffmann/WW3` fork bra
 `KOKKOS` switch (`kokkos/src/fortran_iface/PATCH.md`), when the owner asks.
 
 **5. Build, regtest and record.** `just kokkos-test serial-debug` and `just kokkos-test
-openmp-release` (the port builds with sanitizers and bounds checks; their tests are the lessons'
-and the tools', not the port's), then `python3 scripts/port_score.py --write` and `--check`, so
+openmp-release` (the port builds with sanitizers and bounds checks; their tests are the intro
+programs' and the tools', not the port's), then `python3 scripts/port_score.py --write` and `--check`, so
 `kokkos/PORT_RANKING.md` shows the new row. The validation is WW3's regtests, pair to pair with
 the same WW3 without the port: `just smoke-ww3-gpu`, `just full-ww3-gpu` and `just ww3-gpu-matrix` (CTest in
 `regtests/`, which runs WW3's regtests and is not a test of the port's own), all on

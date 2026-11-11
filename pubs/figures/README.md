@@ -11,15 +11,7 @@ re-renders and CI fails when a render no longer matches its source.
 
 Found something wrong in a figure? Each entry has a link that opens an issue for it.
 
-## [`course/13-bulk-porting-with-agents.md`](../../course/13-bulk-porting-with-agents.md)
-
-### How is each translated version of a kernel checked against the one before it?
-
-Fortran is translated into GPU-ready C++ in small steps, and each version is checked against the one before it: Kokkos serial must be bit-identical to the C, and the GPU version is compared statistically with the CPU one.
-
-<img src="mermaid/porting-validation-ladder.png" alt="Fortran is translated into GPU-ready C++ in small steps, and each version is checked against the one before it: Kokkos serial must be bit-identical to the C, and the GPU version is compared statistically with the CPU one." width="560" />
-
-`porting-validation-ladder` · [source](../../course/13-bulk-porting-with-agents.md) · [PDF](mermaid/porting-validation-ladder.pdf) · [report a mistake](https://github.com/h0ffmann/ww3-gpu/issues/new?title=Figure%20porting-validation-ladder%3A%20)
+## [`kokkos/README.md`](../../kokkos/README.md)
 
 ### How do the original Fortran routine and its Kokkos kernel coexist in one WW3 binary?
 
@@ -27,34 +19,7 @@ The GPU code is added next to the original Fortran, not in place of it; a switch
 
 <img src="mermaid/kokkos-interop-one-binary.png" alt="The GPU code is added next to the original Fortran, not in place of it; a switch read at run time picks which one runs, so both are tested with the same executable." width="560" />
 
-`kokkos-interop-one-binary` · [source](../../course/13-bulk-porting-with-agents.md) · [PDF](mermaid/kokkos-interop-one-binary.pdf) · [report a mistake](https://github.com/h0ffmann/ww3-gpu/issues/new?title=Figure%20kokkos-interop-one-binary%3A%20)
-
-### Which gate must each optimisation step pass before the next step starts?
-
-The project tries cheap changes before expensive ones, and a change only moves on if the forecast it produces still matches the reference within the agreed tolerances and, in step 4, if it is measurably faster.
-
-<img src="mermaid/optimisation-ladder-gates.png" alt="The project tries cheap changes before expensive ones, and a change only moves on if the forecast it produces still matches the reference within the agreed tolerances and, in step 4, if it is measurably faster." width="560" />
-
-`optimisation-ladder-gates` · [source](../../course/13-bulk-porting-with-agents.md) · [PDF](mermaid/optimisation-ladder-gates.pdf) · [report a mistake](https://github.com/h0ffmann/ww3-gpu/issues/new?title=Figure%20optimisation-ladder-gates%3A%20)
-
-### When does a C++/Kokkos kernel enter the operational configuration?
-
-A rewritten piece of the model is used for real forecasts only if its results agree with the original's within the agreed tolerances and it makes the whole forecast faster on the GPU.
-
-<img src="mermaid/gpu-operation-decision.png" alt="A rewritten piece of the model is used for real forecasts only if its results agree with the original's within the agreed tolerances and it makes the whole forecast faster on the GPU." width="560" />
-
-`gpu-operation-decision` · [source](../../course/13-bulk-porting-with-agents.md) · [PDF](mermaid/gpu-operation-decision.pdf) · [report a mistake](https://github.com/h0ffmann/ww3-gpu/issues/new?title=Figure%20gpu-operation-decision%3A%20)
-
-
-## [`course/19-two-agents-one-issue-tracker.md`](../../course/19-two-agents-one-issue-tracker.md)
-
-### How do two agents that are never awake at the same time hold one conversation in an issue?
-
-The two agents never talk directly: each leaves its move in the issue and hands the turn over by swapping one label. The conversation goes on even though both sides are asleep most of the time.
-
-<img src="mermaid/a2a-label-handover.png" alt="The two agents never talk directly: each leaves its move in the issue and hands the turn over by swapping one label. The conversation goes on even though both sides are asleep most of the time." width="560" />
-
-`a2a-label-handover` · [source](../../course/19-two-agents-one-issue-tracker.md) · [PDF](mermaid/a2a-label-handover.pdf) · [report a mistake](https://github.com/h0ffmann/ww3-gpu/issues/new?title=Figure%20a2a-label-handover%3A%20)
+`kokkos-interop-one-binary` · [source](../../kokkos/README.md) · [PDF](mermaid/kokkos-interop-one-binary.pdf) · [report a mistake](https://github.com/h0ffmann/ww3-gpu/issues/new?title=Figure%20kokkos-interop-one-binary%3A%20)
 
 
 ## [`pubs/proposal/mapas-mentais.pt.md`](../../pubs/proposal/mapas-mentais.pt.md)

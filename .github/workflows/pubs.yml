@@ -5,10 +5,10 @@ name: Publications
 
 on:
   pull_request:
-    paths: ['course/**', 'pubs/**', 'scripts/build_pdf.sh', 'scripts/book_prep.py', 'scripts/translate_md.py', 'tests/**', 'flake.nix', 'flake.lock', '.github/workflows/pubs.yml']
+    paths: ['pubs/**', 'scripts/build_pdf.sh', 'scripts/build_docx.sh', 'scripts/translate_md.py', 'tests/**', 'flake.nix', 'flake.lock', '.github/workflows/pubs.yml']
   push:
     branches: [main]
-    paths: ['course/**', 'pubs/**', 'scripts/build_pdf.sh', 'scripts/book_prep.py', 'scripts/translate_md.py', 'tests/**', 'flake.nix', 'flake.lock', '.github/workflows/pubs.yml']
+    paths: ['pubs/**', 'scripts/build_pdf.sh', 'scripts/build_docx.sh', 'scripts/translate_md.py', 'tests/**', 'flake.nix', 'flake.lock', '.github/workflows/pubs.yml']
   workflow_dispatch:
 
 permissions:

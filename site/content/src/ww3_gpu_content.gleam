@@ -11,10 +11,6 @@ import gleam/string
 /// The repository's root, seen from site/content.
 const root = "../../"
 
-pub type Chapter {
-  Chapter(number: String, title: String, file: String)
-}
-
 /// An ADR or a WFIP: its number, the title its heading states, its status and its date.
 pub type Record {
   Record(id: String, title: String, status: String, date: String, file: String)
@@ -36,6 +32,21 @@ pub type Person {
 
 pub type Link {
   Link(kind: String, name: String, url: String, what: String, source: String)
+}
+
+/// One dated event of site/data/lineage.tsv, the lineage page: a work this one descends from or
+/// runs beside, or a release of this one, done or planned.
+pub type Event {
+  Event(
+    date: String,
+    status: String,
+    kind: String,
+    line: String,
+    name: String,
+    url: String,
+    what: String,
+    source: String,
+  )
 }
 
 /// A port report of kokkos/port_report/: its name, its status line, its file, and the record of
@@ -349,15 +360,6 @@ pub fn port_record(ports_tsv: String, report: String) -> String {
   }
 }
 
-/// "00" and "Orientation: what WW3 actually computes" from "00. Orientation: …".
-pub fn chapter(file: String, text: String) -> Chapter {
-  let title = heading(text)
-  case string.split_once(title, ". ") {
-    Ok(#(number, rest)) -> Chapter(number, rest, file)
-    Error(_) -> Chapter("", title, file)
-  }
-}
-
 /// The first `## ` heading of RELEASES.md, or "" when the file has none.
 pub fn latest_release(text: String) -> String {
   text
@@ -386,6 +388,70 @@ pub fn link(line: String) -> Result(Link, Nil) {
       Ok(Link(kind, name, url, what, source))
     _, _ -> Error(Nil)
   }
+}
+
+// ---- the lineage -------------------------------------------------------------------------------
+
+/// "2026", "2026-02" or "2026-02-17": a date as precise as its source, never more.
+pub fn is_date(s: String) -> Bool {
+  let digits = fn(part, n) { string.length(part) == n && is_number(part) }
+  case string.split(s, "-") {
+    [y] -> digits(y, 4)
+    [y, m] -> digits(y, 4) && digits(m, 2)
+    [y, m, d] -> digits(y, 4) && digits(m, 2) && digits(d, 2)
+    _ -> False
+  }
+}
+
+/// What is wrong with site/data/lineage.tsv: a row without its eight cells, a date that is not
+/// YYYY[-MM[-DD]], a status other than done or planned, a kind other than model or port, or an
+/// empty name, link or source. The page is not built while this is not empty.
+pub fn lineage_errors(table: String) -> List(String) {
+  tsv_rows(table, "date")
+  |> list.flat_map(fn(cells) {
+    case cells {
+      [date, status, kind, _, name, url, _, source] -> {
+        let where = "the row " <> lit(name)
+        list.flatten([
+          case is_date(date) {
+            True -> []
+            False -> [where <> ": date is " <> lit(date)]
+          },
+          case status {
+            "done" | "planned" -> []
+            _ -> [where <> ": status is " <> lit(status)]
+          },
+          case kind {
+            "model" | "port" -> []
+            _ -> [where <> ": kind is " <> lit(kind)]
+          },
+          case name == "" || url == "" || source == "" {
+            True -> [where <> " needs a name, a link and a source"]
+            False -> []
+          },
+        ])
+      }
+      _ -> [
+        "a row has "
+        <> int.to_string(list.length(cells))
+        <> " cells, and it needs date, status, kind, line, name, link, what and source: "
+        <> string.join(cells, " | "),
+      ]
+    }
+  })
+}
+
+/// The events of a table that passed `lineage_errors`, oldest first.
+pub fn lineage(table: String) -> List(Event) {
+  tsv_rows(table, "date")
+  |> list.filter_map(fn(cells) {
+    case cells {
+      [date, status, kind, line, name, url, what, source] ->
+        Ok(Event(date, status, kind, line, name, url, what, source))
+      _ -> Error(Nil)
+    }
+  })
+  |> list.sort(fn(a, b) { string.compare(a.date, b.date) })
 }
 
 fn drop_suffix(s: String, suffix: String) -> String {
@@ -427,11 +493,7 @@ fn items(name: String, type_: String, rows: List(String)) -> String {
 }
 
 const types =
-  "pub type Chapter {
-  Chapter(number: String, title: String, file: String)
-}
-
-pub type Record {
+  "pub type Record {
   Record(id: String, title: String, status: String, date: String, file: String)
 }
 
@@ -445,6 +507,10 @@ pub type Person {
 
 pub type Link {
   Link(kind: String, name: String, url: String, what: String, source: String)
+}
+
+pub type Event {
+  Event(date: String, status: String, kind: String, line: String, name: String, url: String, what: String, source: String)
 }
 
 pub type Report {
@@ -461,12 +527,11 @@ pub type Bench {
 "
 
 pub fn render(
-  book: #(String, String),
+  site: #(String, String),
   doi: String,
   record_title: String,
   release: String,
   rev: String,
-  chapters: List(Chapter),
   adrs: List(Record),
   wfips: List(Record),
   notes: List(Note),
@@ -476,6 +541,7 @@ pub fn render(
   bench_rows: List(Bench),
   stats: List(Stat),
   pt_br: List(#(String, String)),
+  events: List(Event),
 ) -> String {
   let record = fn(r: Record) {
     call("Record", [r.id, r.title, r.status, r.date, r.file])
@@ -484,8 +550,8 @@ pub fn render(
     [
       "//// Generated by site/content from the files of this repository (`just site`). Do not edit:\n//// change the file it was read from.\n",
       types,
-      "pub const book_title = " <> lit(book.0) <> "\n",
-      "pub const book_subtitle = " <> lit(book.1) <> "\n",
+      "pub const site_title = " <> lit(site.0) <> "\n",
+      "pub const site_subtitle = " <> lit(site.1) <> "\n",
       "pub const doi = " <> lit(doi) <> "\n",
       "pub const record_title = " <> lit(record_title) <> "\n",
       "pub const latest_release = " <> lit(release) <> "\n",
@@ -495,13 +561,6 @@ pub fn render(
         "pt_br",
         "#(String, String)",
         list.map(pt_br, fn(p) { "#(" <> lit(p.0) <> ", " <> lit(p.1) <> ")" }),
-      ),
-      items(
-        "chapters",
-        "Chapter",
-        list.map(chapters, fn(c) {
-          call("Chapter", [c.number, c.title, c.file])
-        }),
       ),
       items("adrs", "Record", list.map(adrs, record)),
       items("wfips", "Record", list.map(wfips, record)),
@@ -524,6 +583,22 @@ pub fn render(
         "Link",
         list.map(links, fn(l) {
           call("Link", [l.kind, l.name, l.url, l.what, l.source])
+        }),
+      ),
+      items(
+        "events",
+        "Event",
+        list.map(events, fn(e) {
+          call("Event", [
+            e.date,
+            e.status,
+            e.kind,
+            e.line,
+            e.name,
+            e.url,
+            e.what,
+            e.source,
+          ])
         }),
       ),
       items(
@@ -624,14 +699,14 @@ pub fn main() -> Nil {
       exit(1)
     }
   }
-  let chapters =
-    list_dir(root <> "course")
-    |> list.filter(fn(name) {
-      string.ends_with(name, ".md") && is_number(string.slice(name, 0, 2))
-    })
-    |> list.map(fn(name) {
-      chapter("course/" <> name, read(root <> "course/" <> name))
-    })
+  let lineage_table = read("../data/lineage.tsv")
+  case lineage_errors(lineage_table) {
+    [] -> Nil
+    errors -> {
+      list.each(errors, fn(e) { io.println_error("lineage.tsv: " <> e) })
+      exit(1)
+    }
+  }
   let notes =
     matching("notes/", "")
     |> list.filter(fn(name) { name != "index.md" && name != "README.md" })
@@ -691,7 +766,6 @@ pub fn main() -> Nil {
       yaml(cff, "title"),
       latest_release(read(root <> "RELEASES.md")),
       revision(),
-      chapters,
       sectioned_records("docs/ADRs.md", "ADR-"),
       records("docs/WFIPs/", "WFIP-", "Created"),
       notes,
@@ -701,6 +775,7 @@ pub fn main() -> Nil {
       bench_rows,
       stats,
       translations(table),
+      lineage(lineage_table),
     )
   write("../src/ww3_gpu_site/content.gleam", text)
 }

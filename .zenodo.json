@@ -2,7 +2,7 @@
   "title": "WW3 GPU Lab: agentic coding and agentic research on a bit-for-bit GPU port of WAVEWATCH III",
   "upload_type": "publication",
   "publication_type": "book",
-  "description": "<p>A book in progress on agentic coding and agentic research, compiled from the repository that is its evidence, written around one problem: moving the expensive kernels of the WAVEWATCH III (WW3) third-generation spectral wind-wave model to GPUs without changing the answer.</p><ul><li>Seventeen lessons, built into a PDF on every merge, from the wave spectrum to running the Fortran model on real cases with a pinned Nix toolchain and annotated switch files.</li><li>Benchmarks on CPU (OpenMP, MPI) and GPU (OpenACC, CUDA Fortran), each number with the command that reproduces it.</li><li>A C++/Kokkos port of W3SNL1, the Discrete Interaction Approximation (DIA) of nonlinear four-wave interactions, written with coding agents and shown bit-identical to the Fortran on the Serial, OpenMP and CUDA backends by a field-by-field parity harness.</li><li>The method itself: the rules coding agents follow here, design docs with a definition of done (WFIPs), decision records (ADRs), a research log, and plans whose every claim carries its evidence.</li></ul><p>Includes runnable examples, exercises with solutions, and an undergraduate project proposal (Escola Politécnica, UFRJ, co-advised at LabECO, UFSC).</p>",
+  "description": "<p>Software and texts on one problem: moving the expensive kernels of the WAVEWATCH III (WW3) third-generation spectral wind-wave model to GPUs without changing the answer.</p><ul><li>A Nix-pinned toolchain to build and run the Fortran model on real cases with annotated switch files.</li><li>Benchmarks on CPU (OpenMP, MPI) and GPU (OpenACC, CUDA Fortran), each number with the command that reproduces it.</li><li>A C++/Kokkos port of W3SNL1, the Discrete Interaction Approximation (DIA) of nonlinear four-wave interactions, written with coding agents and shown bit-identical to the Fortran on the Serial, OpenMP and CUDA backends by a field-by-field parity harness.</li><li>The method itself: the rules coding agents follow here, design docs with a definition of done (WFIPs), decision records (ADRs), a research log, and plans whose every claim carries its evidence.</li></ul><p>Includes runnable examples, a preprint, and an undergraduate project proposal (Escola Politécnica, UFRJ, co-advised at LabECO, UFSC).</p>",
   "creators": [
     {
       "name": "Hoffmann, Matheus",
@@ -54,8 +54,6 @@
     "numerical parity",
     "scientific software engineering",
     "legacy code modernization",
-    "technical book",
-    "open textbook",
     "research software",
     "reproducibility"
   ],
@@ -65,12 +63,6 @@
       "relation": "isSupplementTo",
       "scheme": "url",
       "resource_type": "software"
-    },
-    {
-      "identifier": "https://h0ffmann.github.io/ww3-gpu/ww3-lab-course.pdf",
-      "relation": "isVariantFormOf",
-      "scheme": "url",
-      "resource_type": "publication-book"
     },
     {
       "identifier": "10.5281/zenodo.23224155",
