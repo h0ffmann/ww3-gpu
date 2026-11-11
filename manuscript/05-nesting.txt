@@ -1,0 +1,77 @@
+# 05. Nesting and multi-grid {#ch-nesting}
+Two ways to combine grids of different resolution. They are genuinely different, not two
+spellings of the same thing.
+
+## One-way nesting: chained `ww3_shel` runs
+
+```
+coarse run  →  ww3_ounp at points along the fine grid's boundary
+            →  ww3_bounc  →  nest.ww3
+            →  fine run
+```
+
+Simple, debuggable, embarrassingly parallel across the fine domains, and the standard
+approach when the parent is somebody else's operational output. The cost: no feedback. The
+fine grid cannot tell the coarse grid that a storm just generated a lot of energy.
+
+Boundary setup lives in `ww3_grid.nml` for the *fine* grid:
+
+```
+&INBND_COUNT_NML
+  INBND_COUNT%N_POINT = 2
+/
+&INBND_POINT_NML
+  INBND_POINT(1) = 2  2  F
+  INBND_POINT(2) = 2  80 T     ! CONNECT=T fills in everything between
+/
+```
+
+Rules, both of which catch everyone:
+
+- **Boundary points must be inside the grid.** Never on row/column 1 or N. The propagation
+  stencil needs a cell outside them. This is the most frequently asked question on the WW3
+  Discussions board.
+- `CONNECT = T` fills in every point on the straight line or diagonal from the previous
+  point. Two entries define a whole edge.
+
+Reference configuration: regtest **`ww3_tp2.17`**.
+
+## Two-way: `ww3_multi`
+
+One executable runs a mosaic of grids simultaneously, exchanging spectra both directions
+each timestep. Driven by `ww3_multi.nml` instead of `ww3_shel.nml`, with one `mod_def.<grd>`
+per grid.
+
+The grid definition line carries a rank and a group number. Ranks control which grid wins
+where they overlap; groups control which grids are computed concurrently. Getting this right
+is the actual skill in multi-grid WW3, and the reference material is the `mww3_test_01`
+through `mww3_test_08` regression tests plus the UFS documentation, which describes the
+`NFGRIDS` / `WINDLINE` / `ICELINE` / `CURRLINE` / `UNIPOINTS` / `WW3GRIDLINE` structure.
+
+`UNIPOINTS` is worth knowing about: it gathers point output from all grids into one unified
+file, which otherwise is a genuine annoyance.
+
+Two-way is what NOAA runs operationally. It is also substantially harder to debug, because
+a problem in one grid propagates into all of them.
+
+## Which to use
+
+| | One-way | Two-way |
+|---|---|---|
+| Parent is someone else's data | ✔ only option | ✘ |
+| Exploring / learning | ✔ | |
+| Debugging | ✔ much easier | |
+| Storm generated *inside* the fine domain | ✘ feedback lost | ✔ |
+| Operational forecasting | | ✔ |
+| Many independent coastal domains | ✔ trivially parallel | |
+
+Start one-way. Move to `ww3_multi` when you have a specific reason.
+
+## Unstructured as an alternative
+
+A single unstructured mesh with 10 km elements offshore and 200 m in the inlet sidesteps
+nesting entirely. The trade: implicit schemes, PDLIB + ParMetis for parallel decomposition,
+and mesh generation becomes its own craft (OceanMesh2D, GMSH, SMS). Regtest `ww3_tp2.7` is
+the reference.
+
+→ [`06-output.md`](#ch-output)
