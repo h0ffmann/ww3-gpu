@@ -11,6 +11,9 @@ degrau no outro registro.
 | Idêntico por uma API de GPU | nenhum                                                     | *spirv*: os mesmos arquivos a partir de SPIR-V no Vulkan de CPU; 5.189 linhas |
 | Idêntico numa GPU real      | *gpu*: nenhum                                              | *cuda*: nenhum                                              |
 
-: Degraus de evidência. As contagens do ww3-gpu vêm de `scripts/port_score.py --write` (perfil
-`bench_small`, 120 × 80 pontos, 12 h, uma thread, gprof, 2026-10-14); as contagens do chaceon vêm
-de `just port-summary`. {#tbl:ladders}
+: Degraus de evidência. As contagens do ww3-gpu são as do `kokkos/PORT_STATUS.md` no commit
+`58167d7` (2026-11-11), escritas por `scripts/port_score.py --write`. As frações do tempo de
+execução vêm de um perfil (`bench_small`, 120 × 80 pontos, 12 h, uma thread, gprof, 2026-10-14).
+Em 2026-10-17, o mesmo registro tinha 310, 60 e 10 rotinas, com as mesmas frações até uma casa
+decimal: rotinas entraram no registro depois dessa data. As contagens do chaceon vêm de
+`just port-summary`. {#tbl:ladders}

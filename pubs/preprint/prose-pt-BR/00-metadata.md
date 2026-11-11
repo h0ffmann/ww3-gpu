@@ -26,8 +26,9 @@ abstract: |
   *chaceon* substitui o WW3 por Rust, compilado para a CPU, para SPIR-V (rust-gpu) e para PTX
   (Rust-CUDA). Nenhum Fortran roda no processo do chaceon, e a referência do chaceon é um WW3
   compilado em separado. O ww3-gpu porta a aproximação de interação discreta (DIA) da
-  transferência entre quatro ondas. Na CPU, a DIA portada é idêntica byte a byte nas 100 entradas
-  seriais e nas 25 entradas OpenMP da matriz de regressão do WW3 que selecionam a DIA. A DIA
+  transferência entre quatro ondas. 310 entradas da matriz de regressão do WW3 selecionam a DIA, e 125 dessas
+  entradas rodaram na CPU: as 100 entradas seriais e 25 das 50 entradas OpenMP. A DIA portada é
+  idêntica byte a byte em cada uma das 125. Nenhuma entrada MPI rodou. A DIA
   ocupa 48,4 % do tempo próprio em uma thread, num caso de 9.520 pontos. O chaceon roda
   `ww3_grid`, `ww3_strt`, `ww3_prep` e `ww3_shel` sem Fortran, e 96 arquivos de saída são
   idênticos byte a byte à referência. Nenhum dos dois portes rodou o modelo inteiro numa GPU real,

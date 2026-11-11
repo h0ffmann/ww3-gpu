@@ -176,12 +176,13 @@ referência do ww3-gpu é o caminho Fortran do mesmo executável. O
 SPIR-V (rust-gpu) e para PTX (Rust-CUDA). Nenhum Fortran roda no
 processo do chaceon, e a referência do chaceon é um WW3 compilado em
 separado. O ww3-gpu porta a aproximação de interação discreta (DIA) da
-transferência entre quatro ondas. Na CPU, a DIA portada é idêntica byte
-a byte nas 100 entradas seriais e nas 25 entradas OpenMP da matriz de
-regressão do WW3 que selecionam a DIA. A DIA ocupa 48,4 \% do tempo
-próprio em uma thread, num caso de 9.520 pontos. O chaceon roda
-\texttt{ww3\_grid}, \texttt{ww3\_strt}, \texttt{ww3\_prep} e
-\texttt{ww3\_shel} sem Fortran, e 96 arquivos de saída são idênticos
+transferência entre quatro ondas. 310 entradas da matriz de regressão do
+WW3 selecionam a DIA, e 125 dessas entradas rodaram na CPU: as 100
+entradas seriais e 25 das 50 entradas OpenMP. A DIA portada é idêntica
+byte a byte em cada uma das 125. Nenhuma entrada MPI rodou. A DIA ocupa
+48,4 \% do tempo próprio em uma thread, num caso de 9.520 pontos. O
+chaceon roda \texttt{ww3\_grid}, \texttt{ww3\_strt}, \texttt{ww3\_prep}
+e \texttt{ww3\_shel} sem Fortran, e 96 arquivos de saída são idênticos
 byte a byte à referência. Nenhum dos dois portes rodou o modelo inteiro
 numa GPU real, e este texto não afirma ganho de velocidade. O texto
 compara como cada projeto define e confere a própria evidência.
@@ -240,10 +241,13 @@ necessary''. Na GPU, os autores aceitam diferenças até um teto
 registrado para cada campo.
 
 O sucessor do WW3 também está em desenvolvimento. A NCEP Office Note 525
-(\citeproc{ref-on525}{Tolman 2025}) escolheu uma reescrita de baixo para
-cima, com um núcleo em C++ primeiro e um núcleo em Rust depois ⚠. O
-mesmo relatório rebaixa o Fortran a uma linguagem só de solvers ⚠. O
-repositório do WAVEWATCH IV (\citeproc{ref-ww4}{NOAA Environmental
+(\citeproc{ref-on525}{Tolman 2025}) decidiu construir o sucessor como um
+modelo novo, num repositório novo (seção 3.3 do relatório). A seção
+3.4.4 do relatório seleciona uma ``abordagem dupla'': o C++ é a
+linguagem inicial de desenvolvimento, e o Rust é testado em paralelo ou
+depois do desenvolvimento em C++, conforme os recursos. A mesma seção
+aceita o Fortran ``somente como linguagem de solver'' (tradução nossa).
+O repositório do WAVEWATCH IV (\citeproc{ref-ww4}{NOAA Environmental
 Modeling Center 2026}) está em pré-alfa: em 2026-11-11, o branch
 \texttt{develop} tinha 40 commits, de 2025-11-17 a 2026-10-16
 (\texttt{875f49a}). Os 97 arquivos-fonte do WAVEWATCH IV são C++ (66
@@ -427,10 +431,14 @@ a mesma evidência que um degrau no outro registro.
   >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3800}}
   >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3800}}@{}}
 \caption{\label{tbl:ladders}Degraus de evidência. As contagens do
-ww3-gpu vêm de \texttt{scripts/port\_score.py\ -\/-write} (perfil
-\texttt{bench\_small}, 120 × 80 pontos, 12 h, uma thread, gprof,
-2026-10-14); as contagens do chaceon vêm de
-\texttt{just\ port-summary}.}\tabularnewline
+ww3-gpu são as do \texttt{kokkos/PORT\_STATUS.md} no commit
+\texttt{58167d7} (2026-11-11), escritas por
+\texttt{scripts/port\_score.py\ -\/-write}. As frações do tempo de
+execução vêm de um perfil (\texttt{bench\_small}, 120 × 80 pontos, 12 h,
+uma thread, gprof, 2026-10-14). Em 2026-10-17, o mesmo registro tinha
+310, 60 e 10 rotinas, com as mesmas frações até uma casa decimal:
+rotinas entraram no registro depois dessa data. As contagens do chaceon
+vêm de \texttt{just\ port-summary}.}\tabularnewline
 \toprule\noalign{}
 \begin{minipage}[b]{\linewidth}\raggedright
 Degrau
@@ -494,10 +502,10 @@ mesmos bytes.
 Os arquivos continuam idênticos quando o \texttt{W3SRCE}, o
 \texttt{W3XYP3} e o \texttt{W3KTP3} são compilados para SPIR-V e rodam
 num driver Vulkan de CPU. A enumeração não alcança os \(2^{64}\) pares
-de operandos \texttt{f32}. Nesse caso, uma prova em Lean enuncia o fato
-sobre a divisão que o porte usa. A prova não diz nada sobre a igualdade
-entre Rust e Fortran, porque o Fortran não tem semântica formal
-utilizável.
+de operandos \texttt{f32}. Nesse caso, uma prova em Lean verifica o fato
+sobre a divisão que o porte usa. A Seção~\ref{sec:division} enuncia e
+prova esse fato. A prova não diz nada sobre a igualdade entre Rust e
+Fortran, porque o Fortran não tem semântica formal utilizável.
 
 \textbf{Por que o ww3-gpu ainda não tem prova, e o que vem depois.}
 Nesta primeira fase, o ww3-gpu não adotou assistente de prova
@@ -525,14 +533,21 @@ Nesta primeira fase, o ww3-gpu não adotou assistente de prova
   cada prova. A prova é um segundo artefato para cada rotina.
 \end{enumerate}
 
-Sem prova, o porte da DIA tem a evidência mais forte abaixo de uma
-prova. O porte é idêntico byte a byte nas 125 entradas da matriz de
-regressão do WW3 que selecionam a DIA (100 seriais, 25 OpenMP). A seção
-1 do kernel também passou por uma varredura das \(2^{32}\) entradas
-\texttt{float32}, com 0 diferenças (\citeproc{ref-adr0001}{Hoffmann
-2026f}). Por isso, os testes do próprio modelo validam o porte da DIA em
-toda entrada que chama o porte. Essa validação não é uma prova formal, e
-este texto não chama a validação de prova.
+Sem prova, a evidência do porte da DIA é um conjunto de execuções. No
+commit \texttt{80644ba9} do fork, 310 entradas da matriz de regressão do
+WW3 selecionam a DIA (Tabela~\ref{tbl:regtests}). 125 dessas entradas
+rodaram, no commit \texttt{6d1bcdfe} do fork: as 100 entradas seriais
+(\citeproc{ref-matrixserial}{Hoffmann 2026h}) e 25 das 50 entradas
+OpenMP (\citeproc{ref-matrixomp}{Hoffmann 2026i}). As outras 25 entradas
+OpenMP rodam o \texttt{ww3\_multi} com três grades, e o porte recusa
+esse caso. Nenhuma entrada MPI ou híbrida rodou. Em cada uma das 125
+entradas, a saída é idêntica byte a byte à DIA em Fortran do mesmo
+executável. A seção 1 do kernel também passou por uma varredura das
+\(2^{32}\) entradas \texttt{float32}, com 0 diferenças
+(\citeproc{ref-adr0001}{Hoffmann 2026f}). Por isso, os testes do próprio
+modelo validam o porte da DIA em 125 de 310 entradas, e não em toda
+entrada que chama o porte. Essa validação não é uma prova formal, e este
+texto não chama a validação de prova.
 
 Uma primeira camada formal já existe ao lado dos portes. O pacote Lean 4
 \texttt{ocean-waves} (\citeproc{ref-oceanwaves}{Hoffmann 2026b}) enuncia
@@ -565,6 +580,102 @@ de referência total e executável de cada termo-fonte. Cada índice de
 tabela terá um tipo \texttt{Fin}, e toda leitura fica dentro dos limites
 para toda grade, não só para uma grade. As varreduras, as consultas ao
 solver e os testes de regressão do WW3 continuam a decidir os bits.
+
+\section{O fato sobre a divisão, enunciado e
+provado}\label{sec:division}
+
+O Vulkan permite um erro de 2,5 ULP na divisão \texttt{OpFDiv} de
+\texttt{f32}. Por isso, uma divisão em SPIR-V nem sempre devolve o
+quociente corretamente arredondado, e a divisão do Fortran devolve. O
+chaceon reescreve cada divisão \(a/b\) de \texttt{f32}: o chaceon alarga
+\(a\) e \(b\) para \texttt{f64}, divide e arredonda o resultado para
+\texttt{f32} (\citeproc{ref-chaceonlean}{Hoffmann 2026g}). A afirmação é
+esta: o resultado é o quociente \texttt{f32} corretamente arredondado
+quando a divisão em \texttt{f64} tem erro relativo de no máximo
+\(\tfrac{5}{2}\cdot 2^{-52}\), para um quociente na faixa normal.
+
+Escreva \(a = A\cdot 2^{e_a}\) e \(b = B\cdot 2^{e_b}\), com inteiros
+\(0 < A, B < 2^{24}\). O fator \(2^{e_a-e_b}\) é comum ao quociente e à
+grade de \texttt{f32}, então seja \(q = A/B\). Dois valores \texttt{f32}
+adjacentes na faixa normal são \(k/2^{s}\) e \((k+1)/2^{s}\), com
+\(2^{23} \le k < 2^{24}\) e \(s\) inteiro. O ponto médio desses valores
+é \(m = M/2^{t}\), com \(M = 2k+1\) e \(t = s+1\). Por isso, \(M\) é
+ímpar, \(2^{24} \le M < 2^{25}\), e \(t\) é um inteiro que pode ser
+negativo.
+
+\textbf{Lema 1 (sem empate).} \(q \ne m\).
+
+\emph{Prova.} Suponha \(A/B = M/2^{t}\). Se \(t \ge 0\), então
+\(A\cdot 2^{t} = B\cdot M\). \(M\) é ímpar, então \(M\) divide \(A\).
+Mas \(0 < A < 2^{24} \le M\), uma contradição. Se \(t < 0\), então
+\(A = B\cdot M\cdot 2^{-t} \ge M \ge 2^{24}\), uma contradição.
+\(\mdlgwhtsquare\)
+
+\textbf{Lema 2 (margem).} \(|q - m| \ge m/2^{49}\).
+
+\emph{Prova.} Se \(t \ge 0\), então
+\(q - m = (A\cdot 2^{t} - B\cdot M)/(B\cdot 2^{t})\). O numerador é um
+inteiro, e o Lema 1 diz que o numerador não é zero. Por isso,
+\(|q - m| \ge 1/(B\cdot 2^{t}) = m/(B\cdot M) > m/2^{49}\), porque
+\(B\cdot M < 2^{24}\cdot 2^{25}\). Se \(t < 0\), então
+\(m = M\cdot 2^{-t} \ge 2M \ge 2^{25}\) e \(q \le A < 2^{24} \le m/2\).
+Por isso, \(|q - m| > m/2 > m/2^{49}\). \(\mdlgwhtsquare\)
+
+\textbf{Lema 3 (mesmo lado).} Seja \(r\) um racional com
+\(|r - q| \le \varepsilon q\), onde
+\(\varepsilon = \tfrac{5}{2}\cdot 2^{-52}\). Então \(r < m\) se e
+somente se \(q < m\), e \(r \ne m\).
+
+\emph{Prova.} Seja \(\delta = 2^{-49}\), então
+\(\varepsilon = \tfrac{5}{16}\delta\). O Lema 2 dá
+\(|q - m| \ge \delta m\). Se \(q < m\), então
+\(r - q \le \varepsilon q < \delta q < \delta m \le m - q\), logo
+\(r < m\). Se \(q > m\), então \(q \ge (1+\delta)m\) e
+\(r \ge (1-\varepsilon)q \ge
+(1-\varepsilon)(1+\delta)m\). Aqui
+\((1-\varepsilon)(1+\delta) = 1 + \delta - \varepsilon -
+\varepsilon\delta > 1\), porque
+\(\delta - \varepsilon = \tfrac{11}{16}\delta > \varepsilon\delta\).
+Logo \(r > m\). O Lema 1 exclui \(q = m\). \(\mdlgwhtsquare\)
+
+\textbf{Corolário.} O arredondamento para o mais próximo entre dois
+valores adjacentes da grade é a comparação com o ponto médio desses
+valores. \(r\) e \(q\) ficam do mesmo lado de todo ponto médio da faixa
+normal, e nenhum dos dois fica sobre um ponto médio. Por isso, o
+resultado \(r\) em \texttt{f64} e o quociente exato \(q\) arredondam
+para o mesmo valor \texttt{f32}.
+
+O arquivo Lean 4 \texttt{lean/Chaceon/Division.lean} do chaceon enuncia
+esses fatos sobre \(\mathbb{Q}\), nos teoremas \texttt{no\_tie},
+\texttt{margin}, \texttt{same\_side} e \texttt{rounds\_same}. O registro
+do chaceon diz que o arquivo compila sem \texttt{sorry} e que cada
+teorema usa só os axiomas \texttt{propext}, \texttt{Classical.choice} e
+\texttt{Quot.sound} (\citeproc{ref-chaceonlean}{Hoffmann 2026g}). Essa
+compilação não foi repetida para este texto.
+
+O fato tem estes limites (\citeproc{ref-chaceonlean}{Hoffmann 2026g}):
+
+\begin{itemize}
+\tightlist
+\item
+  O fato não cobre um quociente subnormal. Nesse caso, um ponto médio
+  tem \(M < 2^{24}\) e um empate pode ocorrer: \(1/2 = M/2^{t}\) com
+  \(M = 1\) e \(t = 1\).
+\item
+  O fato não cobre overflow, zero, infinito ou NaN.
+\item
+  O corolário trata de dois valores adjacentes e de um ponto médio por
+  vez. O corolário não define o arredondamento para o mais próximo sobre
+  a grade inteira.
+\item
+  O fato supõe que o alargamento para \texttt{f64} é exato, que a
+  conversão para \texttt{f32} arredonda para o mais próximo e que o
+  dispositivo cumpre o limite de 2,5 ULP. Nenhum dispositivo Vulkan
+  rodou o código reescrito ⚠.
+\item
+  O fato trata de números racionais. O fato não diz nada sobre o código
+  Rust ou SPIR-V.
+\end{itemize}
 
 \section{Desafios: os testes de regressão são
 grandes}\label{sec:challenges}
@@ -737,6 +848,25 @@ III}: {CPU} results and five speed-ups''}. ww3-gpu,
 {SMT} queries and exhaustive sweeps instead''}. ww3-gpu,
 \texttt{docs/ADRs/ADR-0001-proof-language.md}, commit 58167d7.
 \url{https://github.com/h0ffmann/ww3-gpu/blob/58167d7/docs/ADRs/ADR-0001-proof-language.md}.
+
+\bibitem[\citeproctext]{ref-chaceonlean}
+---------. 2026g. {``Lean in chaceon: what it is here, and what it is
+not''}. chaceon, \texttt{docs/LEAN\_202610.md} and
+\texttt{lean/Chaceon/Division.lean}, commit 0c098fe.
+\url{https://github.com/h0ffmann/chaceon/blob/0c098fe/docs/LEAN_202610.md}.
+
+\bibitem[\citeproctext]{ref-matrixserial}
+---------. 2026h. {``The {Kokkos} {DIA} against the {Fortran} {DIA} on
+every serial {NL1} entry of the {WW3} regression matrix: results of
+2026-10-15''}. ww3-gpu, \texttt{docs/data/hoff\_matrix\_2026-10-15.tsv},
+commit 58167d7.
+\url{https://github.com/h0ffmann/ww3-gpu/blob/58167d7/docs/data/hoff_matrix_2026-10-15.tsv}.
+
+\bibitem[\citeproctext]{ref-matrixomp}
+---------. 2026i. {``The {OpenMP} entries of the regtest matrix: 25 of
+25 byte-identical, with nesting allowed''}. ww3-gpu,
+\texttt{docs/log/2026-10-15-hoff-matrix-omp.md}, commit 58167d7.
+\url{https://github.com/h0ffmann/ww3-gpu/blob/58167d7/docs/log/2026-10-15-hoff-matrix-omp.md}.
 
 \bibitem[\citeproctext]{ref-koldunov2026}
 Koldunov, Nikolay V., Suvarchal K. Cheedela, Sergey Danilov, Dmitry

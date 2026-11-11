@@ -175,14 +175,16 @@ executable. \emph{chaceon} replaces WW3 with Rust, compiled for the CPU,
 for SPIR-V (rust-gpu) and for PTX (Rust-CUDA). No Fortran runs in its
 process, and its reference is a WW3 that is compiled separately. ww3-gpu
 ports the discrete interaction approximation (DIA) of the four-wave
-transfer. On the CPU, it is byte-identical on all 100 serial and 25
-OpenMP entries of the WW3 regression matrix that select it. The DIA
-takes 48.4 \% of single-thread self time on a case of 9 520 points.
-chaceon runs \texttt{ww3\_grid}, \texttt{ww3\_strt}, \texttt{ww3\_prep}
-and \texttt{ww3\_shel} without Fortran, and 96 output files are
-byte-identical to the reference. Neither port has run the whole model on
-a real GPU, and this note claims no speed-up. We compare how each
-project defines and checks its evidence.
+transfer. 310 entries of the WW3 regression matrix select the DIA, and
+125 of them were run on the CPU: all 100 serial entries and 25 of the 50
+OpenMP entries. The port is byte-identical on each of the 125. No MPI
+entry was run. The DIA takes 48.4 \% of single-thread self time on a
+case of 9 520 points. chaceon runs \texttt{ww3\_grid},
+\texttt{ww3\_strt}, \texttt{ww3\_prep} and \texttt{ww3\_shel} without
+Fortran, and 96 output files are byte-identical to the reference.
+Neither port has run the whole model on a real GPU, and this note claims
+no speed-up. We compare how each project defines and checks its
+evidence.
 
 \textbf{Keywords:} WAVEWATCH III; bit-for-bit
 reproducibility; Kokkos; Rust; GPU porting; coding agents.
@@ -235,14 +237,16 @@ arithmetic orderings is neither attainable nor necessary''. On the GPU,
 they accept differences up to a recorded ceiling for each field.
 
 The successor of WW3 is also in progress. NCEP Office Note 525
-(\citeproc{ref-on525}{Tolman 2025}) chose a bottom-up rewrite, with a
-C++ core first and a Rust core later ⚠. The same report demotes Fortran
-to a solver-only language ⚠. The WAVEWATCH IV repository
-(\citeproc{ref-ww4}{NOAA Environmental Modeling Center 2026}) is
-pre-alpha: on 2026-11-11 its \texttt{develop} branch had 40 commits,
-from 2025-11-17 to 2026-10-16 (\texttt{875f49a}). Its 97 source files
-are C++ (66 \texttt{.cpp}, 31 \texttt{.h}), and no physics kernel of WW3
-is in it yet.
+(\citeproc{ref-on525}{Tolman 2025}) decided to build the successor as a
+new model in a new repository (its Section 3.3). Its Section 3.4.4
+selects a ``dual approach'': C++ is the initial development language,
+and Rust is tested in parallel or after the C++ development, as
+resources allow. The same section accepts Fortran ``as a solver language
+only''. The WAVEWATCH IV repository (\citeproc{ref-ww4}{NOAA
+Environmental Modeling Center 2026}) is pre-alpha: on 2026-11-11 its
+\texttt{develop} branch had 40 commits, from 2025-11-17 to 2026-10-16
+(\texttt{875f49a}). Its 97 source files are C++ (66 \texttt{.cpp}, 31
+\texttt{.h}), and no physics kernel of WW3 is in it yet.
 
 Thus the core kernels of the wave model stay in Fortran for some years
 ⚠. This is the first reason why the first author will continue to
@@ -415,10 +419,13 @@ same evidence as a step in the other ledger.
   >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.2400}}
   >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3800}}
   >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3800}}@{}}
-\caption{\label{tbl:ladders}Evidence steps. ww3-gpu counts come from
-\texttt{scripts/port\_score.py\ -\/-write} (profile
-\texttt{bench\_small}, 120 × 80 points, 12 h, one thread, gprof,
-2026-10-14); chaceon counts come from
+\caption{\label{tbl:ladders}Evidence steps. ww3-gpu counts are those of
+\texttt{kokkos/PORT\_STATUS.md} at \texttt{58167d7} (2026-11-11),
+written by \texttt{scripts/port\_score.py\ -\/-write}. The run-time
+shares come from one profile (\texttt{bench\_small}, 120 × 80 points, 12
+h, one thread, gprof, 2026-10-14). On 2026-10-17 the same ledger had
+310, 60 and 10 routines, with the same shares to one decimal: routines
+were added to the ledger after that date. chaceon counts come from
 \texttt{just\ port-summary}.}\tabularnewline
 \toprule\noalign{}
 \begin{minipage}[b]{\linewidth}\raggedright
@@ -479,9 +486,10 @@ and the track post-processors give 74.
 The files stay identical when \texttt{W3SRCE}, \texttt{W3XYP3} and
 \texttt{W3KTP3} are compiled to SPIR-V and run on a CPU Vulkan driver.
 Enumeration cannot reach the \(2^{64}\) pairs of \texttt{f32} operands.
-There, a Lean proof states the division fact that the port uses. The
-proof says nothing about whether Rust equals Fortran, because Fortran
-has no usable formal semantics.
+There, a Lean proof checks the division fact that the port uses.
+Section~\ref{sec:division} states that fact and proves it. The proof
+says nothing about whether Rust equals Fortran, because Fortran has no
+usable formal semantics.
 
 \textbf{Why ww3-gpu has no proof yet, and what comes next.} In this
 first phase, ww3-gpu adopted no proof assistant
@@ -508,14 +516,21 @@ first phase, ww3-gpu adopted no proof assistant
   second artefact for each routine.
 \end{enumerate}
 
-Without a proof, the DIA port has the strongest evidence short of one.
-It is byte-identical on all 125 entries of the WW3 regression matrix
-that select it (100 serial, 25 OpenMP). Section 1 of the kernel was also
-swept over all \(2^{32}\) \texttt{float32} inputs, with 0 differences
-(\citeproc{ref-adr0001}{Hoffmann 2026f}). Thus the DIA port is validated
-by the tests of the model that it replaces, on every entry that calls
-it. This validation is not a formal proof, and the note does not call it
-one.
+Without a proof, the evidence of the DIA port is a set of runs. At the
+fork commit \texttt{80644ba9}, 310 entries of the WW3 regression matrix
+select the DIA (Table~\ref{tbl:regtests}). 125 of them were run, at the
+fork commit \texttt{6d1bcdfe}: all 100 serial entries
+(\citeproc{ref-matrixserial}{Hoffmann 2026h}) and 25 of the 50 OpenMP
+entries (\citeproc{ref-matrixomp}{Hoffmann 2026i}). The other 25 OpenMP
+entries run \texttt{ww3\_multi} with three grids, which the port
+refuses. No MPI or hybrid entry was run. On each of the 125 entries, the
+output is byte-identical to the Fortran DIA of the same executable.
+Section 1 of the kernel was also swept over all \(2^{32}\)
+\texttt{float32} inputs, with 0 differences
+(\citeproc{ref-adr0001}{Hoffmann 2026f}). Thus the tests of the model
+that the port replaces validate it on 125 of 310 entries, not on every
+entry that calls it. This validation is not a formal proof, and the note
+does not call it one.
 
 A first formal layer is already next to the ports. The Lean 4 package
 \texttt{ocean-waves} (\citeproc{ref-oceanwaves}{Hoffmann 2026b}) states
@@ -547,12 +562,107 @@ will have a \texttt{Fin} type, so every read is in bounds for every
 grid, not only for one grid. The sweeps, the solver queries and the WW3
 regression tests continue to decide the bits.
 
+\section{The division fact, stated and proved}\label{sec:division}
+
+Vulkan allows an error of 2.5 ULP in the \texttt{f32} division
+\texttt{OpFDiv}. Thus a SPIR-V division does not always return the
+correctly rounded quotient, and the Fortran division does. chaceon
+rewrites each \texttt{f32} division \(a/b\): it widens \(a\) and \(b\)
+to \texttt{f64}, divides, and rounds the result to \texttt{f32}
+(\citeproc{ref-chaceonlean}{Hoffmann 2026g}). The claim is that this
+result is the correctly rounded \texttt{f32} quotient when the
+\texttt{f64} division has a relative error of at most
+\(\tfrac{5}{2}\cdot 2^{-52}\), for a quotient in the normal range.
+
+Write \(a = A\cdot 2^{e_a}\) and \(b = B\cdot 2^{e_b}\), with integers
+\(0 < A, B < 2^{24}\). The factor \(2^{e_a-e_b}\) is common to the
+quotient and to the \texttt{f32} grid, so let \(q = A/B\). Two adjacent
+\texttt{f32} values in the normal range are \(k/2^{s}\) and
+\((k+1)/2^{s}\), with \(2^{23} \le k < 2^{24}\) and an integer \(s\).
+Their midpoint is \(m = M/2^{t}\), with \(M = 2k+1\) and \(t = s+1\).
+Thus \(M\) is odd, \(2^{24} \le M < 2^{25}\), and \(t\) is an integer
+that can be negative.
+
+\textbf{Lemma 1 (no tie).} \(q \ne m\).
+
+\emph{Proof.} Assume \(A/B = M/2^{t}\). If \(t \ge 0\), then
+\(A\cdot 2^{t} = B\cdot M\). \(M\) is odd, so \(M\) divides \(A\). But
+\(0 < A < 2^{24} \le M\), a contradiction. If \(t < 0\), then
+\(A = B\cdot M\cdot 2^{-t} \ge M \ge 2^{24}\), a contradiction.
+\(\mdlgwhtsquare\)
+
+\textbf{Lemma 2 (margin).} \(|q - m| \ge m/2^{49}\).
+
+\emph{Proof.} If \(t \ge 0\), then
+\(q - m = (A\cdot 2^{t} - B\cdot M)/(B\cdot 2^{t})\). The numerator is
+an integer, and Lemma 1 says that it is not zero. Thus
+\(|q - m| \ge 1/(B\cdot 2^{t}) = m/(B\cdot M) > m/2^{49}\), because
+\(B\cdot M < 2^{24}\cdot 2^{25}\). If \(t < 0\), then
+\(m = M\cdot 2^{-t} \ge 2M \ge 2^{25}\) and
+\(q \le A < 2^{24} \le m/2\). Thus \(|q - m| > m/2 > m/2^{49}\).
+\(\mdlgwhtsquare\)
+
+\textbf{Lemma 3 (same side).} Let \(r\) be a rational with
+\(|r - q| \le \varepsilon q\), where
+\(\varepsilon = \tfrac{5}{2}\cdot 2^{-52}\). Then \(r < m\) if and only
+if \(q < m\), and \(r \ne m\).
+
+\emph{Proof.} Let \(\delta = 2^{-49}\), so
+\(\varepsilon = \tfrac{5}{16}\delta\). Lemma 2 gives
+\(|q - m| \ge \delta m\). If \(q < m\), then
+\(r - q \le \varepsilon q < \delta q < \delta m \le m - q\), so
+\(r < m\). If \(q > m\), then \(q \ge (1+\delta)m\) and
+\(r \ge (1-\varepsilon)q \ge
+(1-\varepsilon)(1+\delta)m\). Here
+\((1-\varepsilon)(1+\delta) = 1 + \delta - \varepsilon -
+\varepsilon\delta > 1\), because
+\(\delta - \varepsilon = \tfrac{11}{16}\delta > \varepsilon\delta\).
+Thus \(r > m\). Lemma 1 excludes \(q = m\). \(\mdlgwhtsquare\)
+
+\textbf{Corollary.} Round to nearest between two adjacent grid values is
+the comparison with their midpoint. \(r\) and \(q\) are on the same side
+of every midpoint of the normal range, and neither is on one. Thus the
+\texttt{f64} result \(r\) and the exact quotient \(q\) round to the same
+\texttt{f32} value.
+
+The Lean 4 file \texttt{lean/Chaceon/Division.lean} of chaceon states
+these facts over \(\mathbb{Q}\) as the theorems \texttt{no\_tie},
+\texttt{margin}, \texttt{same\_side} and \texttt{rounds\_same}. The
+chaceon record says that the file builds with no \texttt{sorry}, and
+that each theorem uses only the axioms \texttt{propext},
+\texttt{Classical.choice} and \texttt{Quot.sound}
+(\citeproc{ref-chaceonlean}{Hoffmann 2026g}). That build was not run
+again for this note.
+
+The fact has these limits (\citeproc{ref-chaceonlean}{Hoffmann 2026g}):
+
+\begin{itemize}
+\tightlist
+\item
+  It does not cover a subnormal quotient. There, a midpoint has
+  \(M < 2^{24}\) and a tie can occur: \(1/2 = M/2^{t}\) with \(M = 1\)
+  and \(t = 1\).
+\item
+  It does not cover overflow, a zero, an infinity or a NaN.
+\item
+  The corollary is about two adjacent values and one midpoint at a time.
+  It does not define round to nearest over the whole grid.
+\item
+  It assumes that the widening to \texttt{f64} is exact, that the
+  conversion to \texttt{f32} rounds to nearest, and that the device
+  meets the 2.5 ULP limit. No Vulkan device has run the rewritten code
+  ⚠.
+\item
+  It is a fact about rational numbers. It says nothing about the Rust or
+  the SPIR-V code.
+\end{itemize}
+
 \section{Challenges: the regression tests are
 large}\label{sec:challenges}
 
 WW3's regression tests are the only judge of the Kokkos port, and they
-are large. Table Table~\ref{tbl:regtests} gives their size at the fork
-commit \texttt{80644ba9}, counted on 2026-10-18.
+are large. Table~\ref{tbl:regtests} gives their size at the fork commit
+\texttt{80644ba9}, counted on 2026-10-18.
 
 \begin{longtable}[]{@{}
   >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.7158}}
@@ -710,6 +820,25 @@ III}: {CPU} Results and Five Speed-Ups.''} ww3-gpu,
 {SMT} Queries and Exhaustive Sweeps Instead.''} ww3-gpu,
 \texttt{docs/ADRs/ADR-0001-proof-language.md}, commit 58167d7.
 \url{https://github.com/h0ffmann/ww3-gpu/blob/58167d7/docs/ADRs/ADR-0001-proof-language.md}.
+
+\bibitem[\citeproctext]{ref-chaceonlean}
+---------. 2026g. {``Lean in Chaceon: What It Is Here, and What It Is
+Not.''} chaceon, \texttt{docs/LEAN\_202610.md} and
+\texttt{lean/Chaceon/Division.lean}, commit 0c098fe.
+\url{https://github.com/h0ffmann/chaceon/blob/0c098fe/docs/LEAN_202610.md}.
+
+\bibitem[\citeproctext]{ref-matrixserial}
+---------. 2026h. {``The {Kokkos} {DIA} Against the {Fortran} {DIA} on
+Every Serial {NL1} Entry of the {WW3} Regression Matrix: Results of
+2026-10-15.''} ww3-gpu, \texttt{docs/data/hoff\_matrix\_2026-10-15.tsv},
+commit 58167d7.
+\url{https://github.com/h0ffmann/ww3-gpu/blob/58167d7/docs/data/hoff_matrix_2026-10-15.tsv}.
+
+\bibitem[\citeproctext]{ref-matrixomp}
+---------. 2026i. {``The {OpenMP} Entries of the Regtest Matrix: 25 of
+25 Byte-Identical, with Nesting Allowed.''} ww3-gpu,
+\texttt{docs/log/2026-10-15-hoff-matrix-omp.md}, commit 58167d7.
+\url{https://github.com/h0ffmann/ww3-gpu/blob/58167d7/docs/log/2026-10-15-hoff-matrix-omp.md}.
 
 \bibitem[\citeproctext]{ref-koldunov2026}
 Koldunov, Nikolay V., Suvarchal K. Cheedela, Sergey Danilov, Dmitry

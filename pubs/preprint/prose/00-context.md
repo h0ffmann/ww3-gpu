@@ -17,9 +17,11 @@ the C model. The authors write that bit-for-bit agreement between Fortran and C 
 arithmetic orderings is neither attainable nor necessary". On the GPU, they accept differences up to a recorded ceiling for each
 field.
 
-The successor of WW3 is also in progress. NCEP Office Note 525 [@on525] chose a bottom-up
-rewrite, with a C++ core first and a Rust core later ⚠. The same report demotes Fortran to a
-solver-only language ⚠. The WAVEWATCH IV repository [@ww4] is pre-alpha: on 2026-11-11 its
+The successor of WW3 is also in progress. NCEP Office Note 525 [@on525] decided to build
+the successor as a new model in a new repository (its Section 3.3). Its Section 3.4.4 selects a
+"dual approach": C++ is the initial development language, and Rust is tested in parallel or
+after the C++ development, as resources allow. The same section accepts Fortran "as a solver
+language only". The WAVEWATCH IV repository [@ww4] is pre-alpha: on 2026-11-11 its
 `develop` branch had 40 commits, from 2025-11-17 to 2026-10-16 (`875f49a`). Its 97 source files
 are C++ (66 `.cpp`, 31 `.h`), and no physics kernel of WW3 is in it yet.
 

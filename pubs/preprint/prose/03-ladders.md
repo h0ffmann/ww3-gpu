@@ -11,6 +11,8 @@ the other ledger.
 | Identical through a GPU API | none                                                       | *spirv*: the same files from SPIR-V on CPU Vulkan; 5 189 lines |
 | Identical on a real GPU     | *gpu*: none                                                | *cuda*: none                                                |
 
-: Evidence steps. ww3-gpu counts come from `scripts/port_score.py --write` (profile
-`bench_small`, 120 × 80 points, 12 h, one thread, gprof, 2026-10-14); chaceon counts come from
-`just port-summary`. {#tbl:ladders}
+: Evidence steps. ww3-gpu counts are those of `kokkos/PORT_STATUS.md` at `58167d7`
+(2026-11-11), written by `scripts/port_score.py --write`. The run-time shares come from one
+profile (`bench_small`, 120 × 80 points, 12 h, one thread, gprof, 2026-10-14). On 2026-10-17 the
+same ledger had 310, 60 and 10 routines, with the same shares to one decimal: routines were
+added to the ledger after that date. chaceon counts come from `just port-summary`. {#tbl:ladders}
