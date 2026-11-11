@@ -1,0 +1,10 @@
+# Português Técnico Controlado (PTC), the skill of Kayque Rotondo (MIT,
+# https://github.com/kayquer/portugues-tecnico-controlado at 8938f58, SKILL.md v1.2.0).
+# PTC-5: 30 words or fewer in "descritivo" (25 in "estrito", which a regex cannot tell
+# apart). Inline code is masked, so a command or path counts as one word or none.
+extends: occurrence
+message: "PTC-5: mais de 30 palavras nesta frase; divida."
+level: warning
+scope: sentence
+max: 30
+token: '[\p{L}\p{N}''’-]+'

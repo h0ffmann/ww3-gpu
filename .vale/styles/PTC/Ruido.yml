@@ -1,0 +1,20 @@
+# Português Técnico Controlado (PTC), the skill of Kayque Rotondo (MIT,
+# https://github.com/kayquer/portugues-tecnico-controlado at 8938f58, SKILL.md v1.2.0).
+# PTC-9: text that carries no proposition (references/ruido-ia.md). Density, not the word,
+# is the defect: "estimador robusto" and a "dessa forma" of a real consequence stay, so
+# the rule is a warning and the person reading it decides.
+extends: existence
+message: "PTC-9: '%s' não afirma nada; corte, ou dê o fato ou a fonte."
+level: warning
+ignorecase: true
+nonword: true
+tokens:
+  - '(?<!\p{L})(?:espero ter ajudado|espero que (?:isso )?ajude|ótima pergunta|fique à vontade para|vamos lá|vamos explorar|até onde sei|com base nas informações disponíveis)(?!\p{L})'
+  - '(?<!\p{L})(?:o futuro é promissor|só o tempo dirá|uma coisa é certa)(?!\p{L})'
+  - '(?<!\p{L})(?:além disso|ademais|outrossim|nesse sentido|em suma|em síntese|quando se trata de|no cenário atual|nos dias de hoje)(?!\p{L})'
+  - '(?<!\p{L})(?:vale (?:destacar|ressaltar|notar)|cabe (?:destacar|ressaltar)|é importante (?:mencionar|notar|ressaltar|destacar))(?!\p{L})'
+  - '(?<!\p{L})(?:notavelmente|curiosamente|surpreendentemente|sem dúvida|indiscutivelmente)(?!\p{L})'
+  - '(?<!\p{L})(?:estudos mostram|especialistas apontam|pesquisas indicam|é sabido que|é consenso que)(?!\p{L})'
+  - '(?<!\p{L})(?:atua como|se configura como|conta com|dispõe de|se destaca por)(?!\p{L})'
+  - '(?<!\p{L})(?:alavanc|potencializ|impulsion)\p{L}*(?!\p{L})'
+  - '(?<!\p{L})(?:divisor de águas|revolucionári[oa]s?|de ponta|de última geração|sem atrito)(?!\p{L})'

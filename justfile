@@ -590,7 +590,7 @@ figures *args:
 figures-check:
     python3 scripts/figures.py check
 
-# AI-writing tells in the English Markdown: the gate CI runs; --report lists every judgement rule (issue #36); --ste the ASD-STE100 checks.
+# AI-writing tells in the English Markdown: the gate CI runs; --report lists every judgement rule (issue #36); --ste the ASD-STE100 checks; --ptc Português Técnico Controlado.
 vale *args:
     scripts/vale.sh {{args}}
 

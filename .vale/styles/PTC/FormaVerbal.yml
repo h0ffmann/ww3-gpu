@@ -1,0 +1,13 @@
+# Português Técnico Controlado (PTC), the skill of Kayque Rotondo (MIT,
+# https://github.com/kayquer/portugues-tecnico-controlado at 8938f58, SKILL.md v1.2.0).
+# PTC-2: one verb form per instruction; no "deve-se", "por favor" or a gerund that joins
+# two clauses ("Execute o script, gerando o relatório").
+extends: existence
+message: "PTC-2: '%s' mistura a forma verbal; use o imperativo, ou duas frases."
+level: warning
+ignorecase: true
+nonword: true
+tokens:
+  - '(?<!\p{L})deve-se(?!\p{L})'
+  - '(?<!\p{L})por favor(?!\p{L})'
+  - ',\s+\p{L}{3,}(?:ando|endo|indo)(?!\p{L})'

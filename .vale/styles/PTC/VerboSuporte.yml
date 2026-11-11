@@ -1,0 +1,15 @@
+# Português Técnico Controlado (PTC), the skill of Kayque Rotondo (MIT,
+# https://github.com/kayquer/portugues-tecnico-controlado at 8938f58, SKILL.md v1.2.0).
+# PTC-4: a light verb with a nominalisation hides the action ("realize a validação" is
+# "valide"). A nominalisation alone, as a domain term, is legal and does not fire.
+extends: existence
+message: "PTC-4: '%s' é verbo-suporte; use o verbo pleno."
+level: warning
+ignorecase: true
+nonword: true
+tokens:
+  - '(?<!\p{L})(?:realiz|efetu|proced|promov)\p{L}*\s+(?:[ao]s?|à|ao)\s+\p{L}+(?:ção|ções|mento|mentos)(?!\p{L})'
+  - '(?<!\p{L})(?:fazer|faz|fazem|fez|fizeram) uso de(?!\p{L})'
+  - '(?<!\p{L})(?:dar|dá|deu) início a(?!\p{L})'
+  - '(?<!\p{L})(?:levar|leva|levam|levou) em consideração(?!\p{L})'
+  - '(?<!\p{L})(?:ter|tem|têm|teve) (?:como objetivo|conhecimento de)(?!\p{L})'
