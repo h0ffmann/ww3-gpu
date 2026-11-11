@@ -36,3 +36,17 @@ O registro de progresso do ww3-gpu para a NOAA [@noaarecord] guarda os resultado
 runtime ww3-gpu inteiro, com o espectro residente, e os limites desses resultados. O porte da DIA
 também está publicado sozinho, como ww3-dia-gpu-v2 [@diagpuv2]. O repositório ww3-dia-gpu-v2
 compara o porte com um kernel CUDA anterior da mesma rotina.
+
+A @fig:runtimes mostra os quatro runtimes. O ww3-gpu tem três, todos atrás de um script só,
+`scripts/ww3-gpu.sh`. O `--ww3` compila o WW3 puro da NOAA a partir de `WW3-noaa/` e é a
+referência. O `--ww3-gpu` compila o fork com a switch KOKKOS e liga o porte Kokkos. Nesse
+executável, uma flag para cada rotina escolhe o código Fortran ou o código Kokkos. O `--ww4`
+compila o WAVEWATCH IV a partir do fork do WAVEWATCH IV e para com o código de saída 5 quando o
+caso precisa de uma parte não portada. O chaceon é o quarto runtime, `--chaceon`, uma flag que o
+script ainda não tem ⚠. O chaceon roda o WW3 reescrito em Rust, sem Fortran no processo. A
+referência do chaceon é o WW3 7.14 da MetOcean, compilado em separado. Hoje, o ww3-gpu fixa o WW3
+da NOAA em `03adda91`, e o chaceon fixa o WW3 7.14.
+
+![Os quatro runtimes (desenho em inglês). Uma seta contínua mostra o que compila ou liga o quê;
+uma seta tracejada aponta para a execução que precisa dar os mesmos bits. Desenho do Archify a
+partir de `docs/archify/ww3-gpu-four-runtimes.json` [@ww3gpu].](figures/four-runtimes.pdf){#fig:runtimes width=100%}

@@ -36,3 +36,16 @@ The CPU results of the whole ww3-gpu runtime, with the resident spectrum, and th
 in its NOAA progress record [@noaarecord]. The DIA port is also published alone as
 ww3-dia-gpu-v2 [@diagpuv2]. That repository compares the port with an earlier CUDA kernel of the
 same routine.
+
+@fig:runtimes shows the four runtimes. ww3-gpu has three, all behind one script,
+`scripts/ww3-gpu.sh`. `--ww3` builds pure NOAA WW3 from `WW3-noaa/` and is the reference.
+`--ww3-gpu` builds the fork with the KOKKOS switch and links the Kokkos port. In that executable,
+one flag for each routine selects the Fortran or the Kokkos code. `--ww4` builds WAVEWATCH IV from
+its fork, and it stops with exit code 5 when the case needs a part that is not ported. chaceon is
+the fourth runtime, `--chaceon`, a flag that the script does not have yet ⚠. It runs WW3 rewritten
+in Rust, with no Fortran in the process. Its reference is MetOcean WW3 7.14, compiled separately.
+Today ww3-gpu pins NOAA WW3 `03adda91` and chaceon pins WW3 7.14.
+
+![The four runtimes. A solid arrow shows what builds or links what; a dashed arrow points to the
+run that must give the same bits. Drawn with Archify from
+`docs/archify/ww3-gpu-four-runtimes.json` [@ww3gpu].](figures/four-runtimes.pdf){#fig:runtimes width=100%}

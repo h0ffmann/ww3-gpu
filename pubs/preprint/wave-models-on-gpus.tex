@@ -375,6 +375,28 @@ published alone as ww3-dia-gpu-v2 (\citeproc{ref-diagpuv2}{Hoffmann
 2026d}). That repository compares the port with an earlier CUDA kernel
 of the same routine.
 
+Figure~\ref{fig:runtimes} shows the four runtimes. ww3-gpu has three,
+all behind one script, \texttt{scripts/ww3-gpu.sh}. \texttt{-\/-ww3}
+builds pure NOAA WW3 from \texttt{WW3-noaa/} and is the reference.
+\texttt{-\/-ww3-gpu} builds the fork with the KOKKOS switch and links
+the Kokkos port. In that executable, one flag for each routine selects
+the Fortran or the Kokkos code. \texttt{-\/-ww4} builds WAVEWATCH IV
+from its fork, and it stops with exit code 5 when the case needs a part
+that is not ported. chaceon is the fourth runtime, \texttt{-\/-chaceon},
+a flag that the script does not have yet ⚠. It runs WW3 rewritten in
+Rust, with no Fortran in the process. Its reference is MetOcean WW3
+7.14, compiled separately. Today ww3-gpu pins NOAA WW3 \texttt{03adda91}
+and chaceon pins WW3 7.14.
+
+\begin{figure}
+\centering
+\includegraphics[width=1\linewidth,height=\textheight,keepaspectratio,alt={The four runtimes. A solid arrow shows what builds or links what; a dashed arrow points to the run that must give the same bits. Drawn with Archify from docs/archify/ww3-gpu-four-runtimes.json (Hoffmann 2026c).}]{figures/four-runtimes.pdf}
+\caption{The four runtimes. A solid arrow shows what builds or links
+what; a dashed arrow points to the run that must give the same bits.
+Drawn with Archify from \texttt{docs/archify/ww3-gpu-four-runtimes.json}
+(\citeproc{ref-ww3gpu}{Hoffmann 2026c}).}\label{fig:runtimes}
+\end{figure}
+
 \section{Evidence ladders}\label{sec:ladders}
 
 Each project gives names to its steps. A step in one ledger is not the
@@ -597,7 +619,7 @@ the disassembly of both compilers.
 
 \section{Next steps}\label{sec:next}
 
-The authors plan three steps:
+The authors plan four steps:
 
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
@@ -606,6 +628,8 @@ The authors plan three steps:
   Continue the development of ww3-gpu and chaceon on an NVIDIA RTX 4090.
 \item
   Run the selected regression tests on an NVIDIA H100 that UFSC owns.
+\item
+  Pin every runtime to WW3 7.14.
 \item
   Publish version 1.0.0 of ww3-gpu and of chaceon before February 2027.
 \end{enumerate}

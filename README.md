@@ -135,7 +135,9 @@ full clone).
 
 </details>
 
-![ww3-gpu: three ways to run WAVEWATCH. --ww3 runs pure NOAA WW3 from WW3-noaa/; --ww3-gpu links the same fork to this repository's Kokkos rewrite and compares the two; --ww4 builds WAVEWATCH IV from its fork, and stops with exit 5 when a part the case needs is not ported](docs/figures/three-ways.svg)
+![Four runtimes of WAVEWATCH. ww3-gpu's script runs three: --ww3 builds pure NOAA WW3 from WW3-noaa/; --ww3-gpu builds the fork with the KOKKOS switch, links kokkos/ and must give the same bits as --ww3; --ww4 builds WAVEWATCH IV from its fork and stops with exit 5 when a part is not ported. The fourth, --chaceon (a planned flag), runs chaceon, WW3 rewritten in Rust with no Fortran, compiled for the CPU, SPIR-V and PTX, and must give the same bits as MetOcean WW3 7.14](docs/figures/four-runtimes.svg)
+
+The drawing is [`docs/archify/ww3-gpu-four-runtimes.json`](docs/archify/ww3-gpu-four-runtimes.json) ([PDF](docs/archify/ww3-gpu-four-runtimes.pdf)). The fourth runtime, `--chaceon`, is [h0ffmann/chaceon](https://github.com/h0ffmann/chaceon); `scripts/ww3-gpu.sh` does not have the flag yet ⚠. Today ww3-gpu pins NOAA WW3 `03adda91` and chaceon pins WW3 7.14; the plan is to pin every runtime to WW3 7.14 ⚠.
 
 ### the Kokkos switch, part by part
 

@@ -385,6 +385,30 @@ ww3-dia-gpu-v2 (\citeproc{ref-diagpuv2}{Hoffmann 2026d}). O repositório
 ww3-dia-gpu-v2 compara o porte com um kernel CUDA anterior da mesma
 rotina.
 
+A Figura~\ref{fig:runtimes} mostra os quatro runtimes. O ww3-gpu tem
+três, todos atrás de um script só, \texttt{scripts/ww3-gpu.sh}. O
+\texttt{-\/-ww3} compila o WW3 puro da NOAA a partir de
+\texttt{WW3-noaa/} e é a referência. O \texttt{-\/-ww3-gpu} compila o
+fork com a switch KOKKOS e liga o porte Kokkos. Nesse executável, uma
+flag para cada rotina escolhe o código Fortran ou o código Kokkos. O
+\texttt{-\/-ww4} compila o WAVEWATCH IV a partir do fork do WAVEWATCH IV
+e para com o código de saída 5 quando o caso precisa de uma parte não
+portada. O chaceon é o quarto runtime, \texttt{-\/-chaceon}, uma flag
+que o script ainda não tem ⚠. O chaceon roda o WW3 reescrito em Rust,
+sem Fortran no processo. A referência do chaceon é o WW3 7.14 da
+MetOcean, compilado em separado. Hoje, o ww3-gpu fixa o WW3 da NOAA em
+\texttt{03adda91}, e o chaceon fixa o WW3 7.14.
+
+\begin{figure}
+\centering
+\includegraphics[width=1\linewidth,height=\textheight,keepaspectratio,alt={Os quatro runtimes (desenho em inglês). Uma seta contínua mostra o que compila ou liga o quê; uma seta tracejada aponta para a execução que precisa dar os mesmos bits. Desenho do Archify a partir de docs/archify/ww3-gpu-four-runtimes.json (Hoffmann 2026c).}]{figures/four-runtimes.pdf}
+\caption{Os quatro runtimes (desenho em inglês). Uma seta contínua
+mostra o que compila ou liga o quê; uma seta tracejada aponta para a
+execução que precisa dar os mesmos bits. Desenho do Archify a partir de
+\texttt{docs/archify/ww3-gpu-four-runtimes.json}
+(\citeproc{ref-ww3gpu}{Hoffmann 2026c}).}\label{fig:runtimes}
+\end{figure}
+
 \section{Escadas de evidência}\label{sec:ladders}
 
 Cada projeto dá nome aos próprios degraus. Um degrau num registro não é
@@ -619,7 +643,7 @@ fase, um argumento estático sustenta a paridade de bits: o GIMPLE em
 
 \section{Próximos passos}\label{sec:next}
 
-Os autores planejam três passos:
+Os autores planejam quatro passos:
 
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
@@ -629,6 +653,8 @@ Os autores planejam três passos:
   4090.
 \item
   Rodar os testes de regressão selecionados numa NVIDIA H100 da UFSC.
+\item
+  Fixar todos os runtimes no WW3 7.14.
 \item
   Publicar a versão 1.0.0 do ww3-gpu e do chaceon antes de fevereiro de
   2027.

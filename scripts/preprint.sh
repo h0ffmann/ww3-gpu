@@ -31,6 +31,7 @@ one() {  # out prose-dir: the edition's .tex and .pdf; prose-pt-BR/00-metadata.m
     --metadata-file "$here/format/crossref.yaml" --bibliography "$here/refs.bib" \
     -o "$here/$1.tex" "$here/metadata.md" "$here/$2"/*.md
   cp "$here/$1.tex" "$build/"
+  [ ! -d "$here/figures" ] || cp -r "$here/figures" "$build/"
   (cd "$build" && for _ in 1 2; do
     xelatex -interaction=nonstopmode -halt-on-error "$1.tex" > /dev/null \
       || { tail -n 30 "$1.log" >&2; exit 1; }
