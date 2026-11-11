@@ -26,6 +26,17 @@ v0.1.4 and v0.1.5 are typed as a book on Zenodo (`publication_type: book`,
 since the book is gone ([ADR-0023](docs/ADRs.md#adr-0023)). The types are DataCite's
 `resourceTypeGeneral`, read on 2026-11-11 (v).
 
+## v0.2.1: the preprint on aiXiv, with its claims corrected
+
+The next release, not tagged yet: it has no row in the table above until DataCite lists its DOI.
+The preprint "Wave models on GPUs" is on aiXiv as
+[aiXiv:2611.01104](https://aixiv.online/abs/2611.01104) since 2026-11-11, and both READMEs carry
+its badge (#239). After aiXiv's check of its first version, the preprint states the DIA coverage
+as run: 125 of the 310 `NL1` entries of WW3's regression matrix, all 100 serial and 25 of the 50
+OpenMP ones, and no MPI entry. It gives the sections of NCEP Office Note 525 that it quotes, and
+it has a new section that states and proves the `f32` division fact of chaceon (#240). The
+READMEs quote the current counts of `kokkos/PORT_STATUS.md`.
+
 ## v0.2.0: a new home and a twin in Rust
 
 The website moved to <https://wave.piabrota.art/>, built from piabrota/nix-os, and the Gleam

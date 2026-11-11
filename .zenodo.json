@@ -64,8 +64,14 @@
       "resource_type": "software"
     },
     {
-      "identifier": "https://github.com/h0ffmann/ww3-gpu/blob/v0.2.0/pubs/preprint/wave-models-on-gpus.pdf",
+      "identifier": "https://github.com/h0ffmann/ww3-gpu/blob/v0.2.1/pubs/preprint/wave-models-on-gpus.pdf",
       "relation": "hasPart",
+      "scheme": "url",
+      "resource_type": "publication-preprint"
+    },
+    {
+      "identifier": "https://aixiv.online/abs/2611.01104",
+      "relation": "isDocumentedBy",
       "scheme": "url",
       "resource_type": "publication-preprint"
     },
