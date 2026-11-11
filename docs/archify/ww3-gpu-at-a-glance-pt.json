@@ -113,8 +113,8 @@
     {
       "id": "m1",
       "type": "backend",
-      "label": "--ww3",
-      "sublabel": "a referência",
+      "label": "--ww3-noaa",
+      "sublabel": "o par do --ww3-gpu",
       "pos": [
         40,
         400
@@ -214,7 +214,7 @@
           "end_line": 60
         }
       ],
-      "tag": "submódulo, nunca editado"
+      "tag": "nunca editado"
     },
     {
       "id": "f",
@@ -404,10 +404,12 @@
       "dot": "cyan",
       "title": "Fontes",
       "items": [
-        "WW3-noaa/: WW3 da NOAA, sem mudança",
-        "submódulos, nunca editados aqui",
+        "WW3-noaa/: WW3 da NOAA em 03adda91, sem mudança",
         "WW3/: o fork, + switch KOKKOS",
-        "WW4/: fork do WAVEWATCH IV"
+        "WW4/: fork do WAVEWATCH IV",
+        "Nenhuma é editada aqui",
+        "Fora do desenho: --ww3 (WW3 da MetOcean, a referência) e --chaceon",
+        "--ww3-noaa se chamava --ww3 até 11 de novembro de 2026"
       ]
     },
     {

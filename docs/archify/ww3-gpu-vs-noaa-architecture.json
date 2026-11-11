@@ -15,7 +15,7 @@
   "components": [
     { "id": "noaa_src", "type": "external", "label": "WW3-noaa/", "sublabel": "NOAA WW3 @ 03adda91", "pos": [40, 60], "size": [160, 60],
       "sources": [ { "path": "scripts/ww3-gpu.sh", "line": 2, "end_line": 8, "label": "two submodules" } ] },
-    { "id": "noaa_build", "type": "backend", "label": "--ww3 build", "sublabel": "lab switch, Fortran only", "pos": [300, 60], "size": [190, 60],
+    { "id": "noaa_build", "type": "backend", "label": "--ww3-noaa build", "sublabel": "lab switch, Fortran only", "pos": [300, 60], "size": [190, 60],
       "sources": [ { "path": "scripts/ww3-gpu.sh", "line": 397, "end_line": 398, "label": "--ww3 builds WW3-noaa" }, { "path": "scripts/ww3-gpu.sh", "line": 474, "end_line": 482 } ] },
     { "id": "noaa_exe", "type": "backend", "label": "ww3_shel (NOAA)", "sublabel": "every routine Fortran", "pos": [630, 60], "size": [180, 60],
       "sources": [ { "path": "scripts/ww3-gpu.sh", "line": 557, "end_line": 565 } ] },
@@ -67,9 +67,10 @@
   ],
   "cards": [
     { "dot": "cyan", "title": "Same", "items": [
-      "Fortran physics: the fork is WW3-noaa plus the KOKKOS patch, checked by diff before --ww3 builds",
+      "Fortran physics: the fork is WW3-noaa plus the KOKKOS patch, checked by diff before --ww3-noaa builds",
       "Lab switch (switch_lab_ompg by default), CMake Release, pinned pratico toolchain",
-      "Every WW_KOKKOS_<PART> unset or 0 runs the Fortran routine in the ww3-gpu binary"
+      "Every WW_KOKKOS_<PART> unset or 0 runs the Fortran routine in the ww3-gpu binary",
+      "--ww3-noaa was named --ww3 until 11 November 2026; --ww3 now builds MetOcean WW3"
     ] },
     { "dot": "emerald", "title": "Differs", "items": [
       "KOKKOS switch adds w3kokkosmd.F90 and #ifdef W3_KOKKOS branches at the call sites",
@@ -77,7 +78,7 @@
       "A flag set to 1 sends that part to Kokkos; WW_KOKKOS_ALL=1 sends every wired part"
     ] },
     { "dot": "rose", "title": "GPU", "items": [
-      "CUDA backend only for --ww3-gpu; --ww3 --gpu is refused (exit 64)",
+      "CUDA backend only for --ww3-gpu; --ww3-noaa --gpu is refused (exit 64)",
       "--gpu runs only after the owner types yes at a terminal (exit 7 otherwise)",
       "Device math: ww::libm copies of glibc with WW_KOKKOS_LIBM; device bits not yet compared on a GPU (unverified)"
     ] }

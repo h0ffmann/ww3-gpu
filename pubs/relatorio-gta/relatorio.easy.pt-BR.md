@@ -129,7 +129,7 @@ O script `scripts/ww3-gpu.sh` controla os três modos:
 
 | Modo | O que executa | Compilado de |
 |---|---|---|
-| `--ww3` | o WW3 como a NOAA escreve | `WW3-noaa/` |
+| `--ww3-noaa` | o WW3 como a NOAA escreve | `WW3-noaa/` |
 | `--ww3-gpu` | o WW3 do fork com o código Kokkos. O script executa o caso duas vezes no mesmo executável, uma vez com o Fortran e uma vez com o Kokkos, e compara as saídas | `WW3/` e `kokkos/` |
 | `--ww4` | o WAVEWATCH IV. Hoje esse modo termina com o código de saída 5, porque o WW4 ainda não tem as partes que os casos usam | `WW4/` |
 

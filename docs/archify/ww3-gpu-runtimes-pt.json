@@ -288,7 +288,7 @@
       "dot": "cyan",
       "title": "Um comando, seis runtimes",
       "items": [
-        "1 --ww3: o WW3 7.14 da MetOcean (WW3-metocean/, 92e2cf66), Fortran, a referência cujos bits os outros runtimes precisam dar",
+        "1 --ww3: o WW3 7.14 da MetOcean (metocean/WW3 92e2cf66), Fortran, a referência cujos bits os outros runtimes precisam dar",
         "2, 3 --ww3-gpu com --cpu ou --gpu: o fork com a chave KOKKOS, ligado a kokkos/",
         "4, 5 --chaceon (ou --cceon) com --cpu ou --gpu: o WW3 reescrito em Rust, sem Fortran no processo",
         "6 --ww4: o WAVEWATCH IV, quando for lançado"
