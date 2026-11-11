@@ -1,0 +1,11 @@
+# Português Técnico Controlado (PTC), the skill of Kayque Rotondo (MIT,
+# https://github.com/kayquer/portugues-tecnico-controlado at 8938f58, SKILL.md v1.2.0).
+# PTC-1: no "o mesmo" as a pronoun; repeat the noun. "o mesmo valor"
+# (an adjective before a noun) is legal, so only "o mesmo" before punctuation or a verb fires.
+extends: existence
+message: "PTC-1: '%s' cria correferência falsa; repita o substantivo."
+level: warning
+ignorecase: true
+nonword: true
+tokens:
+  - '(?<!\p{L})(?:[oa]s?|d[oa]s?|n[oa]s?) mesm[oa]s?(?=\s*[.,;:)]|\s+(?:é|são|foi|foram|está|estão|deve|pode|tem|têm)(?!\p{L}))'

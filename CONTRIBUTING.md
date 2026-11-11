@@ -172,6 +172,11 @@ A mistake in a figure is as welcome as one in the text.
   paragraph length, passive voice, -ing forms, non-simple tenses, phrasal verbs, the replacements
   of the `ste` skill's `words.md`) as warnings and suggestions; it never fails, and it is meant for
   the procedures and reports the `ste` skill covers, not for every page.
+  `just vale --ptc [FILE...]` does the same for the Portuguese Markdown, `pubs/` included, with the
+  mechanical rules of Português Técnico Controlado (`.vale/styles/PTC/`, from Kayque Rotondo's MIT
+  skill): sentences over 30 words, `-se` apassivador, `o mesmo`, gerúndio conector, `deveria`,
+  verbo-suporte, the unambiguous rows of its léxico, number and date formats, the Acordo de 1990 and
+  the AI filler of PTC-9. It never fails and never replaces `revisor-proposta`.
   Out of scope: the submodules, `.claude/`, `pubs/` (its own reviewer) and Portuguese files.
 - Code comments are of three kinds, and only these: a *why* (a rejected alternative, an external
   constraint), a *trap* (what breaks if the line changes), or a *pointer* (an issue, a plan, a

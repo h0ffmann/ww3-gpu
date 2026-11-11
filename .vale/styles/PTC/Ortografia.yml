@@ -1,0 +1,25 @@
+# Português Técnico Controlado (PTC), the skill of Kayque Rotondo (MIT,
+# https://github.com/kayquer/portugues-tecnico-controlado at 8938f58, SKILL.md v1.2.0).
+# PTC-8: the Acordo Ortográfico de 1990 (mandatory in Brazil since 2016-01-01). Only the
+# forms the skill names; in doubt, the VOLP of the Academia Brasileira de Letras decides.
+extends: substitution
+message: "PTC-8: escreva '%s', não '%s' (Acordo de 1990)."
+level: warning
+ignorecase: true
+nonword: true
+swap:
+  '(?<!\p{L})infra-estruturas?(?!\p{L})': infraestrutura
+  '(?<!\p{L})micro-serviços?(?!\p{L})': microsserviço
+  '(?<!\p{L})auto-serviços?(?!\p{L})': autosserviço
+  '(?<!\p{L})co-autor(?:es|a|as)?(?!\p{L})': coautor
+  '(?<!\p{L})co-processador(?:es)?(?!\p{L})': coprocessador
+  '(?<!\p{L})re-escrev\p{L}*(?!\p{L})': reescrever
+  '(?<!\p{L})multi-usuários?(?!\p{L})': multiusuário
+  '(?<!\p{L})pre-requisitos?(?!\p{L})': pré-requisito
+  '(?<!\p{L})idéias?(?!\p{L})': ideia
+  '(?<!\p{L})assembléias?(?!\p{L})': assembleia
+  '(?<!\p{L})heróic[oa]s?(?!\p{L})': heroico
+  '(?<!\p{L})européi?[ao]s?(?!\p{L})': europeu|europeia
+  '(?<!\p{L})vôos?(?!\p{L})': voo
+  '(?<!\p{L})(?:lêem|crêem|vêem|dêem)(?!\p{L})': leem|creem|veem|deem
+  '(?<!\p{L})\p{L}*ü\p{L}*(?!\p{L})': a forma sem trema

@@ -1,0 +1,13 @@
+# Português Técnico Controlado (PTC), the skill of Kayque Rotondo (MIT,
+# https://github.com/kayquer/portugues-tecnico-controlado at 8938f58, SKILL.md v1.2.0).
+# PTC-7: number, date and unit formats, where the error is wrong data. Inline code is
+# masked, so a version or a file:line in backticks does not fire.
+extends: existence
+message: "PTC-7: '%s': em PT use vírgula decimal, data ISO 8601, 24 h e espaço antes da unidade."
+level: warning
+nonword: true
+tokens:
+  - '(?<![\p{L}\p{N}.])\d+\.\d+\s?(?:%|ms|ns|µs|s|min|h|GB|MB|KB|TB|GHz|MHz|km|m|K|°C|W)(?![\p{L}\p{N}])'
+  - '(?<![\p{N}/])\d{2}/\d{2}/\d{4}(?![\p{N}/])'
+  - '(?<!\p{N})\d{1,2}:\d{2}\s?(?:AM|PM|am|pm)(?!\p{L})'
+  - '(?<![\p{L}\p{N}.])\d+(?:,\d+)?(?:ms|ns|µs|GB|MB|KB|TB|GHz|MHz|kgs?|km)(?![\p{L}\p{N}])'

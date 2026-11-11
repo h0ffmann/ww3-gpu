@@ -1,0 +1,11 @@
+# Português Técnico Controlado (PTC), the skill of Kayque Rotondo (MIT,
+# https://github.com/kayquer/portugues-tecnico-controlado at 8938f58, SKILL.md v1.2.0).
+# PTC-1: no "-se" apassivador. A regex cannot tell it from a pronominal verb ("o serviço
+# se reinicia") and the rule only fails in the "estrito" level, so it is a suggestion.
+extends: existence
+message: "PTC-1: '%s' pode ser -se apassivador; nomeie quem faz ou use o imperativo."
+level: suggestion
+ignorecase: true
+nonword: true
+tokens:
+  - '(?<!\p{L})(?!deve-se)\p{L}{3,}-se(?!\p{L}|-)'

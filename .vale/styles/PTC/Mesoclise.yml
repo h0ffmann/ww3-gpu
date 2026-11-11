@@ -1,0 +1,10 @@
+# Português Técnico Controlado (PTC), the skill of Kayque Rotondo (MIT,
+# https://github.com/kayquer/portugues-tecnico-controlado at 8938f58, SKILL.md v1.2.0).
+# PTC-1: no mesóclise ("far-se-á"); write the future with a named subject.
+extends: existence
+message: "PTC-1: '%s' é mesóclise; escreva o futuro com o sujeito nomeado."
+level: warning
+ignorecase: true
+nonword: true
+tokens:
+  - '(?<!\p{L})\p{L}+-(?:se|lo|la|los|las|lhe|lhes)-(?:á|ão|ia|iam|emos|íamos)(?!\p{L})'

@@ -1,0 +1,10 @@
+# Português Técnico Controlado (PTC), the skill of Kayque Rotondo (MIT,
+# https://github.com/kayquer/portugues-tecnico-controlado at 8938f58, SKILL.md v1.2.0).
+# Six sentences or fewer per paragraph ("estrito" and "descritivo"). A full stop followed
+# by a space counts as a sentence end, so "p. ex. " over-counts.
+extends: occurrence
+message: "PTC: mais de seis frases neste parágrafo."
+level: warning
+scope: paragraph
+max: 6
+token: '[.!?](?=\s|$)'
