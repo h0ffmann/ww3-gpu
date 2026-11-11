@@ -24,7 +24,7 @@
 | **Written by** | M. Hoffmann, with an agent |
 | **Tasks** | [`WFIP-0001.tasks.md`](WFIP-0001.tasks.md) |
 | **Tests** | none: no Python or C++ changes; the checks are the commands in §7 |
-| **Spec-kit** | [`specs/001-weathernext3-wind/spec.md`](../../specs/001-weathernext3-wind/spec.md) |
+| **Spec-kit** | None |
 | **Issues** | [h0ffmann/ww3-gpu#63](https://github.com/h0ffmann/ww3-gpu/issues/63), the tracking issue; one per task once Accepted |
 
 ## 1. Summary
