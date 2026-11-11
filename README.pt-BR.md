@@ -733,6 +733,12 @@ ele devolve é lido como dado, nunca como instrução.
 
 <details><summary>O marola, e as obras irmãs deste repositório</summary>
 
+Dois sistemas de previsão rodam o WAVEWATCH III a partir deste repositório. O primeiro é o
+ondaseventos, a previsão operacional do LabECO/UFSC ([ondaseventos.ufsc.br](https://ondaseventos.ufsc.br/));
+o segundo é o marola. `just ifs-get` baixa os ventos do IFS do ECMWF, o modelo atmosférico que o
+ondaseventos declara ([`docs/IFS_FORCING_202611.md`](docs/IFS_FORCING_202611.md); como o próprio
+ondaseventos os baixa não foi lido ⚠).
+
 O [marola](https://github.com/marola-dev/marola) ([marola.dev](https://marola.dev/)) é uma
 plataforma aberta e sem fins lucrativos sobre mar e balneabilidade nas praias brasileiras, do mesmo
 autor com os membros do marola. Os dados de onda dele já vêm do WAVEWATCH III, pelo GFS-Wave do NCEP.
