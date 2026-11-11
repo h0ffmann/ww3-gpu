@@ -16,6 +16,11 @@
 
 </div>
 
+> [!IMPORTANT]
+> **Used by the Federal University of Santa Catarina (UFSC).** LabECO/UFSC's operational wave
+> forecast, [ondaseventos.ufsc.br](https://ondaseventos.ufsc.br/), is the first consumer of
+> ww3-gpu; [marola](https://github.com/marola-dev/marola) is the second.
+
 ## in one minute
 
 - **WW3 forecasts ocean waves.** WAVEWATCH III® (WW3) keeps a *spectrum* at each sea point of a
