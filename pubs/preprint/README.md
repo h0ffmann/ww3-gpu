@@ -1,4 +1,4 @@
-# Preprint: one rule, two languages
+# Preprint: wave models on GPUs
 
 **Status: preprint, not peer reviewed.** A note that compares two ports of WAVEWATCH III (WW3)
 held to the same rule, the Fortran's bits: this repository's C++/Kokkos port and the Rust port in
@@ -12,9 +12,9 @@ aiXiv, 2026-11-11. Authors: Matheus Hoffmann, Pedro Veras Guimarães (LabECO, UF
 | [`metadata.md`](metadata.md), [`prose/`](prose/) | The source, Pandoc Markdown, in ASD-STE100 style |
 | [`refs.bib`](refs.bib) | The references |
 | [`format/`](format/) | The LaTeX template and pandoc-crossref settings of h0ffmann/closed-source (MIT) at `6b3aae5` |
-| [`two-ports.tex`](two-ports.tex) | The LaTeX that pandoc writes, the source sent to aiXiv |
-| [`two-ports.pdf`](two-ports.pdf) | The PDF, XeLaTeX run twice |
-| [`prose-pt-BR/`](prose-pt-BR/), [`two-ports.pt-BR.pdf`](two-ports.pt-BR.pdf) | The Brazilian Portuguese edition, translated from the controlled English and written in [Português Técnico Controlado](https://github.com/kayquer/portugues-tecnico-controlado) (Kayque Rotondo, MIT, `8938f58`), level `descritivo`; `prose-pt-BR/00-metadata.md` overrides the title, abstract, language and labels |
+| [`wave-models-on-gpus.tex`](wave-models-on-gpus.tex) | The LaTeX that pandoc writes, the source sent to aiXiv |
+| [`wave-models-on-gpus.pdf`](wave-models-on-gpus.pdf) | The PDF, XeLaTeX run twice |
+| [`prose-pt-BR/`](prose-pt-BR/), [`wave-models-on-gpus.pt-BR.pdf`](wave-models-on-gpus.pt-BR.pdf) | The Brazilian Portuguese edition, translated from the controlled English and written in [Português Técnico Controlado](https://github.com/kayquer/portugues-tecnico-controlado) (Kayque Rotondo, MIT, `8938f58`), level `descritivo`; `prose-pt-BR/00-metadata.md` overrides the title, abstract, language and labels |
 
 `just preprint` builds both editions, with pandoc, pandoc-crossref and XeLaTeX from h0ffmann/picasso's
 `labs/paper` shell; `just preprint --self-test` checks that the inputs exist.

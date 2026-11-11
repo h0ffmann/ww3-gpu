@@ -1,5 +1,5 @@
 ---
-title: "Uma regra, duas linguagens"
+title: "Modelos de ondas em GPUs"
 subtitle: "Portes do WAVEWATCH III em C++/Kokkos e em Rust que precisam dar os bits do Fortran"
 author:
   - name: Matheus Hoffmann

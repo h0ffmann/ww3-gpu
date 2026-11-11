@@ -414,7 +414,7 @@ notes *args:
 memory *args:
     python3 scripts/memory.py "$@"
 
-# The aiXiv preprint: pubs/preprint/*.md -> two-ports.tex and two-ports.pdf (pandoc + XeLaTeX).
+# The aiXiv preprint: pubs/preprint/*.md -> wave-models-on-gpus.tex and wave-models-on-gpus.pdf (pandoc + XeLaTeX).
 preprint *args:
     bash scripts/preprint.sh "$@"
 

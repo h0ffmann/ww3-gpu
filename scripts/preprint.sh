@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Build pubs/preprint: Markdown -> pandoc (pandoc-crossref, citeproc) -> LaTeX -> XeLaTeX twice,
 # with the template and recipe of h0ffmann/closed-source's Paper Fabric (justfile `_pdf` at 6b3aae5).
-# Writes pubs/preprint/two-ports.tex (the aiXiv source) and two-ports.pdf, and the pt-BR edition
-# two-ports.pt-BR.tex and .pdf from prose-pt-BR/.
+# Writes pubs/preprint/wave-models-on-gpus.tex (the aiXiv source) and wave-models-on-gpus.pdf, and the pt-BR edition
+# wave-models-on-gpus.pt-BR.tex and .pdf from prose-pt-BR/.
 # Tools: pandoc, pandoc-crossref, xelatex, as in h0ffmann/picasso's labs/paper shell.
 set -euo pipefail
 
@@ -39,6 +39,6 @@ one() {  # out prose-dir: the edition's .tex and .pdf; prose-pt-BR/00-metadata.m
   echo "preprint: $here/$1.pdf ($(pdfinfo "$here/$1.pdf" | awk '/^Pages/ {print $2}') pages)" >&2
 }
 
-one two-ports prose
+one wave-models-on-gpus prose
 # The Brazilian Portuguese edition, in Kayque Rotondo's Português Técnico Controlado (PTC).
-[ ! -d "$here/prose-pt-BR" ] || one two-ports.pt-BR prose-pt-BR
+[ ! -d "$here/prose-pt-BR" ] || one wave-models-on-gpus.pt-BR prose-pt-BR
