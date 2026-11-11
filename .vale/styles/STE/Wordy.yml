@@ -1,0 +1,10 @@
+# ASD-STE100: say the instruction or the fact; these openers add words and no meaning.
+extends: existence
+message: "STE: delete '%s' or write the instruction in the imperative."
+level: warning
+ignorecase: true
+tokens:
+  - it should be noted that
+  - it is (?:necessary|important|recommended) (?:to|that)
+  - please note that
+  - note that

@@ -6,6 +6,8 @@ Open this file only when a word choice is not clear or you need a model rewrite.
 
 ⚠ From general knowledge of the STE dictionary, not checked against the Issue 9 dictionary.
 When the dictionary is available, check a word there before you add it here.
+`.vale/styles/STE/Words.yml` and `PhrasalVerbs.yml` hold the same list for `just vale --ste`;
+change them together.
 
 | Do not write | Write |
 |---|---|

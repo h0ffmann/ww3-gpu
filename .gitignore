@@ -97,6 +97,7 @@ result-*
 # Vale packages, fetched by `vale sync` (scripts/vale.sh)
 .vale/styles/*
 !.vale/styles/ww3gpu/
+!.vale/styles/STE/
 
 # graphify output from an in-tree run; the graph lives in ~/.cache/ww3-gpu-graph/ (ADR-0007)
 graphify-out/

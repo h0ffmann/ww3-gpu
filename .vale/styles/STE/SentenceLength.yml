@@ -1,0 +1,9 @@
+# ASD-STE100: a descriptive sentence has 25 words or fewer (a procedural one 20, which a
+# regex cannot tell apart). Inline code is masked by Vale, so a command or path counts as
+# one word or none, as the ste skill says.
+extends: occurrence
+message: "STE: more than 25 words in this sentence; split it."
+level: warning
+scope: sentence
+max: 25
+token: '\b[\w''’-]+\b'

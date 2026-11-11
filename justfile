@@ -584,7 +584,7 @@ figures *args:
 figures-check:
     python3 scripts/figures.py check
 
-# AI-writing tells in the English Markdown: the gate CI runs; --report lists every judgement rule (issue #36).
+# AI-writing tells in the English Markdown: the gate CI runs; --report lists every judgement rule (issue #36); --ste the ASD-STE100 checks.
 vale *args:
     scripts/vale.sh {{args}}
 

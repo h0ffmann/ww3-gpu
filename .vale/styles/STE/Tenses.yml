@@ -1,0 +1,11 @@
+# ASD-STE100: simple tenses only (present, past, future). Perfect, continuous and modal
+# perfect constructions are flagged; "has" alone and "will" alone are fine.
+extends: existence
+message: "STE: '%s' is not a simple tense; use the present, the past or the future."
+level: warning
+ignorecase: true
+tokens:
+  - '\b(?:would|could|should|might|must|may|will) have\b'
+  - '\bhad been\b'
+  - '\b(?:has|have) been\s+\w+ing\b'
+  - '\b(?:will|would) be\s+\w+ing\b'
