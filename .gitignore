@@ -90,12 +90,8 @@ result-*
 !docs/media/*.png
 !human/*.png
 
-# Spec Kit (github/spec-kit): `just specify init` regenerates these; only the constitution and
-# specs/ are ours and tracked
-.specify/*
-!.specify/memory/
-.specify/memory/*
-!.specify/memory/constitution.md
+# Spec Kit (github/spec-kit): `just specify init` regenerates these; only specs/ is ours and tracked
+.specify/
 .claude/skills/speckit-*/
 
 # Vale packages, fetched by `vale sync` (scripts/vale.sh)

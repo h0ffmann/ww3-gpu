@@ -32,8 +32,7 @@ refactor with no behaviour change, or a one-file tweak: do those directly.
 3. Fill every section; "None" rather than a deleted heading; §10 skipped on purpose. Each §7 box
    is one verifiable outcome with its command. Each §11 question carries a **Default**.
 4. Spec Kit, when the change has user-facing behaviour worth specifying: `just specify init`
-   once per clone (it generates `.specify/` and the `/speckit-*` skills, which are gitignored;
-   `.specify/memory/constitution.md` is tracked and restates `AGENTS.md`), then
+   once per clone (it generates `.specify/` and the `/speckit-*` skills, which are gitignored), then
    `/speckit-specify` writes `specs/<NNN-slug>/spec.md`; name it in the *Spec-kit* row. A spec
    written by hand in that shape is fine.
 5. `just wfip index` regenerates `README.md`; `just wfip check` is the CI gate.
