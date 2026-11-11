@@ -141,8 +141,7 @@ flag do Kokkos escolhe (a tabela abaixo) e a regra de supervisão de uma rodada 
 desenho do autor em 11 de novembro de 2026 e ainda não o que o script faz ⚠: o `--ww3-gpu` é
 comparado com o `--ww3-noaa` (o WW3 da NOAA em `03adda91`, a base do fork) até o fork passar
 para o WW3 da MetOcean, e o `--chaceon --gpu` para com código 5 porque o chaceon não rodou em
-uma GPU real. A nota dentro do desenho, de que o `--ww3` compila o WW3 da NOAA, é o estado
-anterior a esse dia ⚠. O desenho é
+uma GPU real. As notas do próprio desenho e a legenda do preprint dizem o mesmo. O desenho é
 [`docs/archify/ww3-gpu-runtimes-pt.json`](docs/archify/ww3-gpu-runtimes-pt.json), também a
 Figura 1 do preprint, desenhado para uma coluna de 174 mm ([`DESIGN.md`](DESIGN.md), "Pictures
 in a paper").

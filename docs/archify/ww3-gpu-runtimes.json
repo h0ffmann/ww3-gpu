@@ -9,7 +9,7 @@
     "repository": {
       "url": "https://github.com/h0ffmann/ww3-gpu.git",
       "link_mode": "local-only",
-      "revision": "56c5a32124b58ddbc11a1e38ef92028059a35b3b"
+      "revision": "65f3b18baa2a35c8caf90c5ddb90a8e8fb3a90f6"
     }
   },
   "components": [
@@ -29,14 +29,14 @@
       "sources": [
         {
           "path": "scripts/ww3-gpu.sh",
-          "line": 8,
-          "end_line": 8,
+          "line": 4,
+          "end_line": 5,
           "label": "--ww3"
         },
         {
           "path": "VERSIONS.md",
-          "line": 22,
-          "end_line": 22,
+          "line": 18,
+          "end_line": 18,
           "label": "metocean/WW3 7.14.mos-92e2cf6"
         }
       ]
@@ -57,15 +57,21 @@
       "sources": [
         {
           "path": "scripts/ww3-gpu.sh",
-          "line": 11,
-          "end_line": 13,
+          "line": 6,
+          "end_line": 8,
           "label": "--ww3-gpu"
         },
         {
           "path": "scripts/ww3-gpu.sh",
-          "line": 22,
-          "end_line": 22,
+          "line": 57,
+          "end_line": 57,
           "label": "--cpu is the default"
+        },
+        {
+          "path": "scripts/ww3-gpu.sh",
+          "line": 18,
+          "end_line": 22,
+          "label": "compared with --ww3-noaa"
         }
       ]
     },
@@ -85,9 +91,21 @@
       "sources": [
         {
           "path": "scripts/ww3-gpu.sh",
-          "line": 22,
-          "end_line": 25,
+          "line": 6,
+          "end_line": 8,
+          "label": "--ww3-gpu"
+        },
+        {
+          "path": "scripts/ww3-gpu.sh",
+          "line": 59,
+          "end_line": 61,
           "label": "--gpu, supervised"
+        },
+        {
+          "path": "scripts/ww3-gpu.sh",
+          "line": 18,
+          "end_line": 22,
+          "label": "compared with --ww3-noaa"
         }
       ]
     },
@@ -105,6 +123,12 @@
         60
       ],
       "sources": [
+        {
+          "path": "scripts/ww3-gpu.sh",
+          "line": 9,
+          "end_line": 11,
+          "label": "--chaceon, --cceon"
+        },
         {
           "path": "pubs/preprint/prose/02-shapes.md",
           "line": 5,
@@ -127,6 +151,12 @@
         60
       ],
       "sources": [
+        {
+          "path": "scripts/ww3-gpu.sh",
+          "line": 9,
+          "end_line": 12,
+          "label": "--gpu exits 5"
+        },
         {
           "path": "pubs/preprint/prose/02-shapes.md",
           "line": 8,
@@ -151,7 +181,7 @@
       "sources": [
         {
           "path": "scripts/ww3-gpu.sh",
-          "line": 14,
+          "line": 13,
           "end_line": 16,
           "label": "--ww4"
         }
@@ -258,7 +288,7 @@
       "dot": "cyan",
       "title": "One command, six runtimes",
       "items": [
-        "1 --ww3: WW3's Fortran, the reference every other runtime must give the bits of",
+        "1 --ww3: MetOcean WW3 7.14 (WW3-metocean/, 92e2cf66), Fortran, the reference every other runtime must give the bits of",
         "2, 3 --ww3-gpu with --cpu or --gpu: the fork with the KOKKOS switch, linked to kokkos/",
         "4, 5 --chaceon (alias --cceon) with --cpu or --gpu: WW3 rewritten in Rust, no Fortran in its process",
         "6 --ww4: WAVEWATCH IV, when it is released"
@@ -266,10 +296,11 @@
     },
     {
       "dot": "rose",
-      "title": "Not yet in the script",
+      "title": "Not yet true of the script",
       "items": [
-        "--chaceon and --cceon are the owner's design of 11 November 2026; scripts/ww3-gpu.sh has no such flag at this commit",
-        "--ww3 builds NOAA WW3 03adda91 at this commit; MetOcean WW3 7.14 (92e2cf66) is the reference decided the same day",
+        "--ww3-gpu is compared with --ww3-noaa (NOAA WW3 03adda91, the base of its fork) until the fork is moved onto MetOcean WW3 7.14",
+        "--chaceon --gpu stops with exit 5: nothing of chaceon has run on a real GPU",
+        "--ww4 stops with exit 5 while the case needs a part that is not ported to WW4",
         "No runtime has run the whole model on a real GPU"
       ]
     }

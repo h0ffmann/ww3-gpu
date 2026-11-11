@@ -44,10 +44,13 @@ with `--gpu` it runs on CUDA. In that executable, one flag for each routine sele
 or the Kokkos code. `--chaceon`, or `--cceon`, runs WW3 rewritten in Rust, with no Fortran in
 the process, on the CPU or on a GPU. `--ww4` is for WAVEWATCH IV when it is released. Today it
 builds the development code from a fork, and it stops with exit code 5 when the case needs a part
-that is not ported. Two parts of this design are not in the script yet ⚠. The script has no
-`--chaceon` flag. And `--ww3` builds NOAA WW3 `03adda91`, while chaceon compares with MetOcean
-WW3 7.14, compiled separately. The design gives the six runtimes one reference, MetOcean WW3 7.14.
+that is not ported. `--ww3` builds MetOcean WW3 7.14 at `92e2cf66`, and the script compares the
+files of a `--chaceon` run with those of `--ww3`, built with chaceon's switch. Two arrows of the
+figure are the design and not what the script does yet ⚠. The script compares `--ww3-gpu` with
+NOAA WW3 `03adda91`, the base of its fork, until the fork is moved onto MetOcean WW3. And
+`--chaceon --gpu` stops with exit code 5, because chaceon has not run on a real GPU.
 
 ![The six runtimes of ww3-gpu. A dashed arrow points to the run that must give the same bits: all
-five point to `--ww3`, the reference. Drawn with Archify from `docs/archify/ww3-gpu-runtimes.json`
+five point to `--ww3`, the reference. Today the script compares `--ww3-gpu` with NOAA WW3
+`03adda91`. Drawn with Archify from `docs/archify/ww3-gpu-runtimes.json`
 [@ww3gpu].](figures/runtimes.pdf){#fig:runtimes width=100%}
