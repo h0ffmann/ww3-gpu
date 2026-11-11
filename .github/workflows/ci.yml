@@ -61,6 +61,7 @@ jobs:
           python3 scripts/port_score.py --self-test
           python3 scripts/port_score.py --check
           bash scripts/ww3-gpu.sh --self-test
+          bash scripts/ww3_base.sh --self-test
           python3 scripts/ww4_parts.py --self-test
 
       # The gate fails on the error-level rules of .vale.ini; the report prints the

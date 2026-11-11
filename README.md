@@ -60,18 +60,23 @@
 `scripts/ww3-gpu.sh` is one command for six runtimes of WAVEWATCH, and `just run` is that script:
 `--ww3`, `--ww3-gpu --cpu`, `--ww3-gpu --gpu`, `--chaceon --cpu`, `--chaceon --gpu` and `--ww4`
 ([`docs/RUN_COMMAND_202611.md`](docs/RUN_COMMAND_202611.md)). The model source code comes from
-five submodules. This repository contains only the Kokkos code and its tools.
+four submodules. This repository contains only the Kokkos code and its tools.
 
 | Directory | What it is | Used by |
 |---|---|---|
-| `WW3-metocean/` | WW3 from MetOcean: [metocean/WW3](https://github.com/metocean/WW3) at `92e2cf66` (tag `7.14.mos-92e2cf6`), with no change | `--ww3`, the reference |
-| `WW3-noaa/` | WW3 from NOAA: [NOAA-EMC/WW3](https://github.com/NOAA-EMC/WW3) at `03adda91`, with no change | `--ww3-noaa`, the base of the fork and the pair of `--ww3-gpu` |
-| `WW3/` | the fork [h0ffmann/WW3](https://github.com/h0ffmann/WW3) at `50a10730` (branch `ww3-gpu/kokkos-pnt`): `WW3-noaa/` plus the KOKKOS patch. The patch changes 9 files and adds 7 modules under `model/src/`, with 5 687 added lines and no removed line | `--ww3-gpu` and the regtest matrix |
+| `WW3-metocean-7.14/` | WW3 from MetOcean: [metocean/WW3](https://github.com/metocean/WW3) at `92e2cf66` (tag `7.14.mos-92e2cf6`), with no change | `--ww3`, the reference |
+| `WW3/` | the fork [h0ffmann/WW3](https://github.com/h0ffmann/WW3) at `50a10730` (branch `ww3-gpu/kokkos-pnt`): NOAA's WW3 at `03adda91` plus the KOKKOS patch. The patch changes 9 files and adds 7 modules under `model/src/`, with 5 687 added lines and no removed line | `--ww3-gpu` and the regtest matrix |
 | `WW4/` | [h0ffmann/WW4](https://github.com/h0ffmann/WW4), `develop` | `--ww4` |
 | `chaceon/` | [h0ffmann/chaceon](https://github.com/h0ffmann/chaceon) at `89a11e4`: WW3 in Rust, with MetOcean's WW3 at `92e2cf66` as its reference | `--chaceon` (`--cceon` is the same flag) |
 
 `(v)` The numbers of the patch are from `git -C WW3 diff --stat 03adda91 50a10730 -- model`
 (16 files, 5 687 insertions, 0 deletions), on 2026-10-18.
+
+NOAA's WW3 has no submodule (the owner, 11 November 2026: one WW3 reference, MetOcean's 7.14).
+[NOAA-EMC/WW3](https://github.com/NOAA-EMC/WW3) at `03adda91`, the commit the fork branched from,
+is in the fork's own history. `scripts/ww3_base.sh` (`just ww3-base export`) writes that tree to
+`WW3-noaa/`, a directory that git ignores, and `--ww3-noaa` does this before it builds. `--ww3-noaa`
+is the pair of `--ww3-gpu`.
 
 The fork has one purpose. WW3 must call the Kokkos code from inside WW3, for example from
 `W3SRCE` (`model/src/w3srcemd.F90`), and this repository does not edit WW3. Thus the fork adds the
@@ -518,7 +523,7 @@ toolchain of [`docs/TOOLCHAIN.md`](docs/TOOLCHAIN.md), which uses another gfortr
 **Published images.** `.github/workflows/docker-dist.yml` runs only when a person starts it from
 Actions (Run workflow); no push, pull request or schedule triggers it. It builds the chosen
 runtime images and checks, without running a case, that each holds NOAA's WW3 (`--ww3-noaa`, compiled
-from `WW3-noaa/` at its pin) and ww3-gpu (`--ww3-gpu`) and no source file (`just dcheck` runs the
+from the fork's base commit) and ww3-gpu (`--ww3-gpu`) and no source file (`just dcheck` runs the
 same check). With `push` ticked it also pushes `ghcr.io/h0ffmann/ww3-gpu:<tag>` (CPU) and
 `ghcr.io/h0ffmann/ww3-gpu-cuda:<tag>`, and `latest` too when the run is on main. The labels
 `io.github.h0ffmann.ww3-gpu.ww3-noaa` and `io.github.h0ffmann.ww3-gpu.ww3` name the two WW3 commits
@@ -667,7 +672,7 @@ solver yet
 | `pubs/` | The preprint, the UFRJ/DEL project proposal and the GTA report; built files land in `pdf/` |
 | `scripts/`, `switches/`, `env/` | Get, build and run WW3 and SWAN; annotated switch files; conda and an untested build-environment Dockerfile |
 | `docker/`, `.dockerignore` | The Ubuntu runtime image: WW3, WW3 with the Kokkos DIA and WW4 compiled, no sources ([the Docker image](#2--the-docker-image)) |
-| `picasso/`, `WW3-noaa/`, `WW3/`, `WW4/` | Submodules: the pinned toolchain, pure [NOAA-EMC/WW3](https://github.com/NOAA-EMC/WW3), the [h0ffmann/WW3](https://github.com/h0ffmann/WW3) fork, the [h0ffmann/WW4](https://github.com/h0ffmann/WW4) fork |
+| `picasso/`, `WW3-metocean-7.14/`, `WW3/`, `WW4/`, `chaceon/` | Submodules: the pinned toolchain, MetOcean's WW3 7.14 ([metocean/WW3](https://github.com/metocean/WW3)), the [h0ffmann/WW3](https://github.com/h0ffmann/WW3) fork, the [h0ffmann/WW4](https://github.com/h0ffmann/WW4) fork, [h0ffmann/chaceon](https://github.com/h0ffmann/chaceon) |
 
 Lab code is C++, Fortran and shell. Python appears only in the publishing pipeline and the repo's
 own checks. CI checks shell syntax, compiles the Fortran sandbox and examples, builds and tests

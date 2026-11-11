@@ -22,7 +22,7 @@ about a device result is ⚠ until the step that answers it has run.
 **The build.** Both commands compile only; neither touches the device.
 
 ```bash
-git submodule update --init WW3 WW3-noaa && just submodule-init
+git submodule update --init WW3 && just ww3-base export && just submodule-init
 nix develop ./picasso/labs/pratico#cuda --command cmake -S kokkos --preset cuda-release
 nix develop ./picasso/labs/pratico#cuda --command cmake --build kokkos/build/cuda-release -j8
 scripts/ww3-gpu.sh --ww3-gpu smoke --gpu --kokkos resident --build-only
@@ -38,7 +38,7 @@ entry above). A new warning in the build of the run's commit is read before step
 | What | Command |
 |---|---|
 | ww3-gpu commit, and whether the tree is clean | `git rev-parse --short HEAD`, `git status --porcelain` |
-| `WW3/` pin (fork), `WW3-noaa/` pin, `picasso/` pin | `git submodule status WW3 WW3-noaa picasso` |
+| `WW3/` pin (fork), its NOAA base, `picasso/` pin | `git submodule status WW3 picasso`; `just ww3-base rev` |
 | CPU model and hardware threads | `grep -m1 'model name' /proc/cpuinfo`, `nproc --all` |
 | GPU model and driver version | `nvidia-smi --query-gpu=name,driver_version --format=csv,noheader` |
 | the CUDA version the driver supports | the header of `nvidia-smi` |
@@ -88,7 +88,7 @@ scripts/ww3-gpu.sh --ww3-gpu smoke --gpu --kokkos resident
 
 The first is `--kokkos gpu` (`SRCE` alone, ADR-0013), the default of `--gpu`; the second is the
 resident preset (`SRCE,XYP3,KTP3,OUTG,IOPE,UPDV`). Both run `ww3_ts1` twice in one executable
-(the Fortran, then Kokkos), then `--ww3-noaa`, pure NOAA WW3 from `WW3-noaa/` on the CPU.
+(the Fortran, then Kokkos), then `--ww3-noaa`, pure NOAA WW3 at the fork's base on the CPU.
 
 Record, for each of the two commands:
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ww3-gpu — one command, six runtimes of WAVEWATCH (`just run` is this script):
 #
-#   --ww3                 the reference: MetOcean's WW3 7.14, built from WW3-metocean/ (metocean/WW3
+#   --ww3                 the reference: MetOcean's WW3 7.14, built from WW3-metocean-7.14/ (metocean/WW3
 #                         tag 7.14.mos-92e2cf6), the lab switch, Fortran only. Always this source.
 #   --ww3-gpu --cpu       WW3 from the fork WW3/ (h0ffmann/WW3), built with the KOKKOS switch and
 #   --ww3-gpu --gpu       linked to this repository's Kokkos port (kokkos/, the ww_kokkos package), on
@@ -15,9 +15,11 @@
 #                         (scripts/ww4_parts.py); if one is not, it exits 5 and says which, before
 #                         building anything.
 #
-# A seventh mode is not a runtime: --ww3-noaa builds pure NOAA-EMC/WW3 from WW3-noaa/, the commit
-# the fork branched from. It is what --ww3-gpu is compared with pair to pair, because the fork is
-# WW3-noaa/ plus the KOKKOS patch and is not rebased onto MetOcean's WW3 yet
+# A seventh mode is not a runtime: --ww3-noaa builds pure NOAA-EMC/WW3 at the commit the fork
+# branched from (kokkos/src/fortran_iface/WW3_BASE). It has no submodule: scripts/ww3_base.sh
+# writes its tree from WW3/'s own history to WW3-noaa/, which git ignores. It is what --ww3-gpu is
+# compared with pair to pair, because the fork is that commit plus the KOKKOS patch and is not
+# rebased onto MetOcean's WW3 yet
 # (docs/plans/2026-10-29-001-metocean-upstream-plan.md, U1); MetOcean's ST4 arithmetic is not
 # NOAA's, so --ww3 cannot be the bit-for-bit partner of --ww3-gpu until then.
 # --ww3-noaa and --ww3-gpu build the lab switch with OpenMP, switches/switch_lab_ompg, so that
@@ -81,7 +83,7 @@
 # never a regtest verdict.
 #
 # Exit codes: 0 pass; 1 a run or a comparison failed; 3 a submodule is missing, on the wrong
-# branch, or the fork is more than WW3-noaa/ plus the KOKKOS patch; 4 an NVIDIA GPU whose driver does not answer (--ww3-gpu --gpu); 5 a part the case needs is not
+# branch, or the fork is more than its base (WW3-noaa/) plus the KOKKOS patch; 4 an NVIDIA GPU whose driver does not answer (--ww3-gpu --gpu); 5 a part the case needs is not
 # ported to WW4 (--ww4), or chaceon cannot run what was asked (--chaceon --gpu, a triangular grid);
 # 6 WW4 has every part but this repository has no WW4 input for the case;
 # 7 --ww3-gpu --gpu without a supervising human; 64 a bad argument or combination.
@@ -682,7 +684,7 @@ if [ -n "$pre" ]; then
   smoke_in="$pre/cases/ww3_ts1${metocean_case:+-metocean}/input" full_in="$pre/cases/bench_small" ww4_in="$pre/cases/ww4"
 else
   smoke_in="$root/WW3/regtests/ww3_ts1/input" full_in="$root/kokkos/tests/fixtures/bench_small"
-  [ -z "$metocean_case" ] || smoke_in="$root/WW3-metocean/regtests/ww3_ts1/input"
+  [ -z "$metocean_case" ] || smoke_in="$root/WW3-metocean-7.14/regtests/ww3_ts1/input"
   coast_in="$root/kokkos/tests/fixtures/coast"
   ww4_in="$root/kokkos/tests/fixtures/ww4"
 fi
@@ -734,11 +736,11 @@ if [ "$mode" = chaceon ]; then
   [ -f "$cz/rust/Cargo.toml" ] || { echo "ww3-gpu: chaceon/ is empty: git submodule update --init chaceon" >&2; exit 3; }
   command -v cargo >/dev/null || { echo "ww3-gpu: --chaceon needs cargo on PATH (rustup.rs); chaceon's VERSIONS.md names the Rust it was built with" >&2; exit 3; }
   # chaceon is compared with --ww3, so the WW3 it was ported from (its own WW3 gitlink) must be
-  # the commit WW3-metocean/ holds.
+  # the commit WW3-metocean-7.14/ holds.
   cz_ref="$(git -C "$cz" ls-tree HEAD WW3 2>/dev/null | awk '{print $3}')"
-  mo_ref="$(git -C "$root/WW3-metocean" rev-parse HEAD 2>/dev/null || true)"
+  mo_ref="$(git -C "$root/WW3-metocean-7.14" rev-parse HEAD 2>/dev/null || true)"
   if [ -n "$cz_ref" ] && [ -n "$mo_ref" ] && [ "$cz_ref" != "$mo_ref" ]; then
-    echo "ww3-gpu: chaceon's reference is WW3 ${cz_ref:0:8} and WW3-metocean/ is ${mo_ref:0:8}: move one pin to the other before comparing them" >&2; exit 3
+    echo "ww3-gpu: chaceon's reference is WW3 ${cz_ref:0:8} and WW3-metocean-7.14/ is ${mo_ref:0:8}: move one pin to the other before comparing them" >&2; exit 3
   fi
   if [ "$case_name" = coast ]; then
     echo "ww3-gpu: --chaceon has no coast case: it needs ww3_bounc, which chaceon has not ported (chaceon/README.md, \"State\")" >&2; exit 5
@@ -774,17 +776,21 @@ elif [ -n "$pre" ]; then
   echo ">> WW3 --$mode prebuilt: $bin"
   [ -z "$build_only" ] || exit 0
 else
+  # NOAA's WW3 is not a submodule: WW3-noaa/ is the fork's base commit, written from WW3/'s history
+  # by scripts/ww3_base.sh, and git ignores it.
   fork="$root/WW3" noaa="$root/WW3-noaa"
   case "$mode" in
-    ww3) ww3="$root/WW3-metocean" ;;
-    ww3-noaa) ww3="$noaa" ;;
+    ww3) ww3="$root/WW3-metocean-7.14" ;;
+    ww3-noaa) ww3="$noaa"
+      [ -f "$fork/model/src/CMakeLists.txt" ] || { echo "ww3-gpu: WW3/ is empty: git submodule update --init WW3" >&2; exit 3; }
+      bash "$root/scripts/ww3_base.sh" export >/dev/null ;;
     *) ww3="$fork" ;;
   esac
   sm="${ww3#"$root/"}"
   [ -f "$ww3/model/src/CMakeLists.txt" ] || { echo "ww3-gpu: $sm/ is empty: git submodule update --init $sm" >&2; exit 3; }
-  # --ww3-noaa is the partner of --ww3-gpu, so the fork must be WW3-noaa/ plus the KOKKOS patch and
-  # nothing else: a fork rebased onto a newer NOAA commit, with WW3-noaa/ left behind, would
-  # compare two versions of WW3's physics.
+  # --ww3-noaa is the partner of --ww3-gpu, so the fork must be its base commit
+  # (kokkos/src/fortran_iface/WW3_BASE) plus the KOKKOS patch and nothing else: a fork rebased onto
+  # a newer NOAA commit, with WW3_BASE left behind, would compare two versions of WW3's physics.
   # Plus every wiring unit's own module (model/src/w3kokkos_<unit>md.F90, matched below) and the
   # fork files a unit's parent hook edits (its FILE lines in parts.d).
   kokkos_patch=(model/src/CMakeLists.txt model/src/cmake/switches.json model/src/w3initmd.F90
@@ -807,9 +813,9 @@ else
     done
     extra="${extra#$'\n'}"
     if [ -n "$extra" ]; then
-      echo "ww3-gpu: the fork WW3/ differs from WW3-noaa/ ($(git -C "$noaa" rev-parse --short HEAD)) outside the KOKKOS patch:" >&2
+      echo "ww3-gpu: the fork WW3/ differs from its base, NOAA WW3 $(bash "$root/scripts/ww3_base.sh" rev | cut -c1-8) in WW3-noaa/, outside the KOKKOS patch:" >&2
       printf '%s\n' "$extra" | sed 's/^/  /' >&2
-      echo "      move WW3-noaa/ to the NOAA commit the fork branched from, or add a new patch file to kokkos_patch" >&2
+      echo "      write the NOAA commit the fork branched from in kokkos/src/fortran_iface/WW3_BASE, or add a new patch file to kokkos_patch" >&2
       exit 3
     fi
   fi
@@ -1045,7 +1051,10 @@ if [ "$mode" = ww3 ] || [ "$mode" = ww3-noaa ]; then
   prepare "$d"
   wall="$(run_model "$d" 0)"
   echo "$wall" > "$d/ww3_shel.wall"
-  echo ">> --$mode $case_name ($(git -C "${ww3:-$root}" rev-parse --short HEAD 2>/dev/null || echo prebuilt), $lab_switch): ww3_shel finished in ${wall} s; output: $(cd "$d" && ls ww3.*nc | tr '\n' ' ')"
+  # WW3-noaa/ is a tree without a repository: git there would answer with this checkout's commit.
+  src_rev="$(git -C "${ww3:-$root}" rev-parse --short HEAD 2>/dev/null || echo prebuilt)"
+  if [ "$mode" = ww3-noaa ] && [ -n "${ww3:-}" ]; then src_rev="$(bash "$root/scripts/ww3_base.sh" rev | cut -c1-7)"; fi
+  echo ">> --$mode $case_name ($src_rev, $lab_switch): ww3_shel finished in ${wall} s; output: $(cd "$d" && ls ww3.*nc | tr '\n' ' ')"
   exit 0
 fi
 
@@ -1163,7 +1172,7 @@ if cmp_files "$d0" "$d1" "the Fortran of the same executable" nc; then
 elif [ "$backend" != cuda ]; then
   echo "ww3-gpu: the Kokkos run's model files are not the Fortran's" >&2; exit 1
 fi
-# Pair to pair with --ww3-noaa, pure NOAA WW3 (WW3-noaa/) at the fork's base, without the KOKKOS
+# Pair to pair with --ww3-noaa, pure NOAA WW3 at the fork's base (WW3-noaa/), without the KOKKOS
 # switch, on the CPU: the agents' regtest for --cpu, and for --gpu the reference whose wall time
 # the GPU run is set against. A GPU image built before it carried the reference has no $pre/ww3.
 if [ -n "$pre" ] && [ ! -x "$pre/ww3/bin/ww3_shel" ]; then

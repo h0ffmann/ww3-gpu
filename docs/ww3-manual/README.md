@@ -27,10 +27,10 @@ Read the one the task needs. Each is under 14 kB.
 - Nothing here was checked against `model/src`, with one exception: a sentence that says "at the
   pin" was read at NOAA-EMC/WW3 `03adda91`, and gives its file and line.
 - That pin is the base of the fork `WW3/` and the source of `--ww3-noaa`. Since 2026-11-11 the
-  reference `--ww3` builds MetOcean's WW3 (`WW3-metocean/`, metocean/WW3 `92e2cf66`): a 2023
+  reference `--ww3` builds MetOcean's WW3 (`WW3-metocean-7.14/`, metocean/WW3 `92e2cf66`): a 2023
   state of version 7.14 plus ten MetOcean commits that change ST4. No line cited on these pages
   was read again at `92e2cf66` ⚠; a statement about what `--ww3` computes cites
-  `WW3-metocean/model/src` ([`../RUN_COMMAND_202611.md`](../RUN_COMMAND_202611.md)).
+  `WW3-metocean-7.14/model/src` ([`../RUN_COMMAND_202611.md`](../RUN_COMMAND_202611.md)).
 - A parameter default, a constant or an equation taken from here into a port report, a commit or
   a table is `⚠` until its line in `model/src` was read. The manual's namelist name and the
   Fortran variable differ by a doubled first letter (`SINTHP`, `SSINTHP`; manual, tables 2.5 to
@@ -83,7 +83,7 @@ may be redistributed is the owner's call, not settled here.
 
 | Tree | Commit | Version it declares | Read with |
 |---|---|---|---|
-| `WW3-noaa/` | NOAA-EMC/WW3 `03adda91` (2026-10-05) | 7.14 | (v) `git show 03adda91:VERSION`; `manual/defs.tex:1`, `\newcommand{\WWver}{7.14}` |
+| `WW3-noaa/` (the fork's base, written by `scripts/ww3_base.sh`; not a submodule) | NOAA-EMC/WW3 `03adda91` (2026-10-05) | 7.14 | (v) `git show 03adda91:VERSION`; `manual/defs.tex:1`, `\newcommand{\WWver}{7.14}` |
 | `WW3/` (the fork) | based on `03adda91` ([VERSIONS.md](../../VERSIONS.md)) | 7.14 ⚠ (the fork was not read in this session) | `cat WW3/VERSION` |
 
 So the pins already are version 7.14, and they were not moved. Pinning to the tree the supplied

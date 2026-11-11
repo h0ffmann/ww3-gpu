@@ -49,7 +49,7 @@ narrow the question before widening the budget. `where` says when `WW3/` is not 
 
 ## Habits that keep the context small
 
-- Never grep the whole tree: `WW3/`, `WW3-noaa/`, `WW4/` and `picasso/` are read-only submodules
+- Never grep the whole tree: `WW3/`, `WW3-metocean-7.14/`, `chaceon/`, `WW4/` and `picasso/` are read-only submodules
   far larger than the repository. Scope a search to a directory, and search `WW3/model/src` only
   for a Fortran routine.
 - Read a large file around a hit (`offset`/`limit`, or `route section`), never whole. The largest

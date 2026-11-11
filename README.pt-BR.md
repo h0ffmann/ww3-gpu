@@ -60,18 +60,23 @@
 O `scripts/ww3-gpu.sh` é um comando só para seis runtimes do WAVEWATCH, e o `just run` é esse
 script: `--ww3`, `--ww3-gpu --cpu`, `--ww3-gpu --gpu`, `--chaceon --cpu`, `--chaceon --gpu` e
 `--ww4` ([`docs/RUN_COMMAND_202611.md`](docs/RUN_COMMAND_202611.md)). O código dos modelos vem de
-cinco submódulos. Este repositório guarda só o código em Kokkos e as suas ferramentas.
+quatro submódulos. Este repositório guarda só o código em Kokkos e as suas ferramentas.
 
 | Diretório | O que é | Usado por |
 |---|---|---|
-| `WW3-metocean/` | o WW3 da MetOcean: [metocean/WW3](https://github.com/metocean/WW3) em `92e2cf66` (tag `7.14.mos-92e2cf6`), sem mudança | `--ww3`, a referência |
-| `WW3-noaa/` | o WW3 da NOAA: [NOAA-EMC/WW3](https://github.com/NOAA-EMC/WW3) em `03adda91`, sem mudança | `--ww3-noaa`, a base do fork e o par do `--ww3-gpu` |
-| `WW3/` | o fork [h0ffmann/WW3](https://github.com/h0ffmann/WW3) em `50a10730` (branch `ww3-gpu/kokkos-pnt`): o `WW3-noaa/` mais o patch KOKKOS. O patch muda 9 arquivos e acrescenta 7 módulos em `model/src/`, com 5 687 linhas acrescentadas e nenhuma removida | `--ww3-gpu` e a matriz de regtests |
+| `WW3-metocean-7.14/` | o WW3 da MetOcean: [metocean/WW3](https://github.com/metocean/WW3) em `92e2cf66` (tag `7.14.mos-92e2cf6`), sem mudança | `--ww3`, a referência |
+| `WW3/` | o fork [h0ffmann/WW3](https://github.com/h0ffmann/WW3) em `50a10730` (branch `ww3-gpu/kokkos-pnt`): o WW3 da NOAA em `03adda91` mais o patch KOKKOS. O patch muda 9 arquivos e acrescenta 7 módulos em `model/src/`, com 5 687 linhas acrescentadas e nenhuma removida | `--ww3-gpu` e a matriz de regtests |
 | `WW4/` | [h0ffmann/WW4](https://github.com/h0ffmann/WW4), `develop` | `--ww4` |
 | `chaceon/` | [h0ffmann/chaceon](https://github.com/h0ffmann/chaceon) em `89a11e4`: o WW3 em Rust, com o WW3 da MetOcean em `92e2cf66` como referência | `--chaceon` (`--cceon` é a mesma opção) |
 
 `(v)` Os números do patch vêm de `git -C WW3 diff --stat 03adda91 50a10730 -- model`
 (16 arquivos, 5 687 inserções, 0 remoções), em 18/10/2026.
+
+O WW3 da NOAA não tem submódulo (o dono, 11/11/2026: uma referência só de WW3, o 7.14 da
+MetOcean). O [NOAA-EMC/WW3](https://github.com/NOAA-EMC/WW3) em `03adda91`, o commit de onde o
+fork saiu, está no histórico do próprio fork. O `scripts/ww3_base.sh` (`just ww3-base export`)
+escreve essa árvore em `WW3-noaa/`, um diretório que o git ignora, e o `--ww3-noaa` faz isso antes
+de compilar. O `--ww3-noaa` é o par do `--ww3-gpu`.
 
 O fork tem um objetivo só. O WW3 precisa chamar o código em Kokkos de dentro do WW3, por exemplo do
 `W3SRCE` (`model/src/w3srcemd.F90`), e este repositório não edita o WW3. Por isso o fork
@@ -514,7 +519,7 @@ outro gfortran.
 **Imagens publicadas.** O `.github/workflows/docker-dist.yml` só roda quando uma pessoa o dispara
 pelo Actions (Run workflow); nenhum push, pull request ou agendamento o aciona. Ele constrói as
 imagens de execução escolhidas e confere, sem rodar caso nenhum, que cada uma traz o WW3 da NOAA
-(`--ww3-noaa`, compilado do `WW3-noaa/` no seu pin) e o ww3-gpu (`--ww3-gpu`) e nenhum arquivo-fonte (o
+(`--ww3-noaa`, compilado do commit de base do fork) e o ww3-gpu (`--ww3-gpu`) e nenhum arquivo-fonte (o
 `just dcheck` faz a mesma conferência). Com `push` marcado, ele também publica
 `ghcr.io/h0ffmann/ww3-gpu:<tag>` (CPU) e `ghcr.io/h0ffmann/ww3-gpu-cuda:<tag>`, e também `latest`
 quando a rodada é na main. Os rótulos

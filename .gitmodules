@@ -11,16 +11,12 @@
 	path = WW4
 	url = git@github.com:h0ffmann/WW4.git
 	branch = develop
-[submodule "WW3-noaa"]
-	path = WW3-noaa
-	url = https://github.com/NOAA-EMC/WW3.git
-	branch = develop
 [submodule "vendor/archify"]
 	path = vendor/archify
 	url = https://github.com/tt-a1i/archify.git
 	shallow = true
-[submodule "WW3-metocean"]
-	path = WW3-metocean
+[submodule "WW3-metocean-7.14"]
+	path = WW3-metocean-7.14
 	url = https://github.com/metocean/WW3
 	branch = mos-custom
 	shallow = true

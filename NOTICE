@@ -25,9 +25,10 @@ This file is compliance housekeeping written by the maintainers. It is not legal
    translated files use 2009, the year in WW3's LICENSE.md; the Fortran routine they cite is the
    record for its own years.
 
-WAVEWATCH III is not vendored here. WW3/ (a fork) and WW3-noaa/ (NOAA-EMC/WW3 at the commit the
-fork branched from) are git submodules that scripts read and build; no WW3 source is copied into
-this repository. Their licence is WW3/LICENSE.md (LGPL v3).
+WAVEWATCH III is not vendored here. WW3/ (a fork) and WW3-metocean-7.14/ (MetOcean's WW3) are git
+submodules that scripts read and build, and WW3-noaa/ (NOAA-EMC/WW3 at the commit the fork
+branched from) is written from the fork's history by scripts/ww3_base.sh and ignored by git; no
+WW3 source is copied into this repository. Their licence is WW3/LICENSE.md (LGPL v3).
 
 WAVEWATCH III(R) is a trademark of the National Weather Service. This project is independent
 and is not affiliated with, sponsored by or endorsed by NOAA or the NWS.

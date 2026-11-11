@@ -15,8 +15,8 @@ looser.
   independent researchers in wave modelling, numerical methods and HPC; every claim carries `(v)`
   with what was checked or `⚠` when it was not, and every number comes with the command that
   reproduces it ([Audience and evidence](#audience-and-evidence-hard-rule)).
-- **WW3 is read-only**: never vendor WW3 source or edit the Fortran physics; the `WW3/`, `WW3-noaa/`
-  and `WW3-metocean/` submodules and `$WW3` are references, and the only Fortran this repo adds is a shim behind a switch
+- **WW3 is read-only**: never vendor WW3 source or edit the Fortran physics; the `WW3/` and
+  `WW3-metocean-7.14/` submodules, the fork's NOAA base in `WW3-noaa/` and `$WW3` are references, and the only Fortran this repo adds is a shim behind a switch
   ([WW3 source](#ww3-source-is-read-only-hard-rule)).
 - **No citation of a third party's issues**: an issue, pull request or discussion of a repository
   this project does not own (NOAA-EMC/WW3, NOAA-EMC/WW4, Kokkos, any other) is never cited,
@@ -151,7 +151,7 @@ Run the gates of what you changed before calling it done. CI (`.github/workflows
 | any `*.sh` or `justfile` recipe | `bash -n <script>` and `shellcheck <script>`; a hook also has `--self-test` (`.claude/hooks/proposal-review.sh --self-test`) |
 | `kokkos/` | `just kokkos-test serial-debug` (sanitizers, bounds checks) and `just kokkos-test openmp-release`, which build the port and run the tests of the intro programs and the tools (the port has none, ADR-0010); for a ported routine, the static parity argument of ADR-0016 (the `-O3` GIMPLE or disassembly of both compilers); `just smoke-ww3-gpu` in the validation phase |
 | a kernel WW3 calls, or the `WW3/` pin | in the validation phase the owner calls (ADR-0016; regtests are postponed until then): `just smoke` (CPU); `just full-ww3-gpu` and `just ww3-gpu-matrix` (the WW3 regtest matrix, WFIP-0003, serial entries by default, `omp` for the OpenMP ones) before a status in `kokkos/ports.tsv` moves to L2. Never `--gpu` without the owner (hard rule) |
-| `scripts/ww3-gpu.sh` or `scripts/ww4_parts.py` | `bash scripts/ww3-gpu.sh --self-test`, `python3 scripts/ww4_parts.py --self-test`, shellcheck; `just smoke-ww3-gpu` (CPU, pair to pair with `--ww3-noaa`) |
+| `scripts/ww3-gpu.sh`, `scripts/ww3_base.sh` or `scripts/ww4_parts.py` | `bash scripts/ww3-gpu.sh --self-test`, `bash scripts/ww3_base.sh --self-test`, `python3 scripts/ww4_parts.py --self-test`, shellcheck; `just smoke-ww3-gpu` (CPU, pair to pair with `--ww3-noaa`) |
 | `regtests/` | `just ww3-gpu-matrix-selftest` (the selection, the argument lists and the verdict on fixtures) and `just ww3-gpu-matrix-list` (the entry count at the pin) |
 | `kokkos/ports.tsv`, `kokkos/port_claims.tsv` or `docs/data/ww3_*_gprof.tsv` | `python3 scripts/port_score.py --write`, then `--check` (CI runs `--self-test` and `--check`) |
 | Fortran in `gpu/`, `examples/` | they must compile with gfortran with directives ignored |
@@ -204,9 +204,12 @@ statement. In practice:
 ## WW3 source is read-only (hard rule)
 
 `WW3/` is the `h0ffmann/WW3` fork of NOAA-EMC/WW3 as a submodule, pinned (`just src-st` shows the
-pin), and `WW3-noaa/` is pure NOAA-EMC/WW3 at the commit the fork branched from: `--ww3-noaa` builds it,
+pin), and `WW3-noaa/` is pure NOAA-EMC/WW3 at the commit the fork branched from
+(`kokkos/src/fortran_iface/WW3_BASE`). It is not a submodule (the owner, 11 November 2026: the one
+WW3 reference submodule is MetOcean's): `scripts/ww3_base.sh` writes it from the fork's own
+history, git ignores it, `--ww3-noaa` builds it,
 and `scripts/ww3-gpu.sh` stops when the fork differs from it outside the KOKKOS patch; `just get` clones upstream into `~/src/WW3`.
-`WW3-metocean/` is MetOcean's WW3 (metocean/WW3, tag `7.14.mos-92e2cf6`), the reference `--ww3`
+`WW3-metocean-7.14/` is MetOcean's WW3 (metocean/WW3, tag `7.14.mos-92e2cf6`), the reference `--ww3`
 builds since 11 November 2026 (the owner; [`docs/RUN_COMMAND_202611.md`](docs/RUN_COMMAND_202611.md)):
 the fork is not rebased onto it yet ⚠, so `--ww3-gpu` is still compared with `--ww3-noaa`, its own
 base, and a difference between `--ww3` and `--ww3-gpu` is MetOcean's ten commits, not the port
