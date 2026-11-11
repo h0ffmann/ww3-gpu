@@ -113,8 +113,8 @@
     {
       "id": "m1",
       "type": "backend",
-      "label": "--ww3",
-      "sublabel": "the reference",
+      "label": "--ww3-noaa",
+      "sublabel": "the pair of --ww3-gpu",
       "pos": [
         40,
         400
@@ -214,7 +214,7 @@
           "end_line": 60
         }
       ],
-      "tag": "submodule, never edited"
+      "tag": "never edited"
     },
     {
       "id": "f",
@@ -404,10 +404,12 @@
       "dot": "cyan",
       "title": "Sources",
       "items": [
-        "WW3-noaa/: NOAA WW3, unchanged",
-        "submodules, never edited here",
+        "WW3-noaa/: NOAA WW3 03adda91, unchanged",
         "WW3/: the fork, + KOKKOS switch",
-        "WW4/: WAVEWATCH IV fork"
+        "WW4/: WAVEWATCH IV fork",
+        "None is edited here",
+        "Not drawn: --ww3 (MetOcean WW3, the reference) and --chaceon",
+        "--ww3-noaa was named --ww3 until 11 November 2026"
       ]
     },
     {

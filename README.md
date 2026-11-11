@@ -100,17 +100,18 @@ modes and the three runtimes.
 <details open>
 <summary>How to read this figure</summary>
 
-**Takeaway.** Two copies of WW3 come in from outside, pure NOAA WW3 and the owner's fork; this
+**Takeaway.** Pure NOAA WW3 and the owner's fork of it come in from outside; this
 repository adds only the C++ rewrite and its tools, and every way of running the model works on
 the Nix toolchain, while the Docker image covers the CPU runs without Nix.
 
 **How to read.** Top to bottom. A runtime runs the one script, `scripts/ww3-gpu.sh` with its
 recipes; the script offers the run modes; each run mode is built from the sources below it.
 Solid arrows say what enters, runs or is built from what; the dashed arrow is the comparison of
-the Kokkos run with pure NOAA WW3. The runtimes are numbered from the reference (1) to the most
+the Kokkos run with pure NOAA WW3 (`--ww3-noaa`). The runtimes are numbered from the reference (1) to the most
 derived (3); the dev container reaches the modes only through picasso.
 
-**Not shown.** The publications and the site (`pubs/`, `site/`) build in CI, not on these runtimes. The fork's branch and the files of its KOKKOS patch (the table above), the
+**Not shown.** `--ww3`, which builds MetOcean's WW3 and is the reference, and `--chaceon`: the
+figure of the six runtimes, below, has them. The publications and the site (`pubs/`, `site/`) build in CI, not on these runtimes. The fork's branch and the files of its KOKKOS patch (the table above), the
 CUDA build and its supervision rule (`AGENTS.md`, "Running on the GPU"), CI, and the versions of
 each runtime ([`VERSIONS.md`](VERSIONS.md)).
 

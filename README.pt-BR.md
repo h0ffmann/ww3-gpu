@@ -99,17 +99,18 @@ rodar e os três ambientes.
 <details open>
 <summary>Como ler esta figura</summary>
 
-**Em uma frase.** Duas cópias do WW3 vêm de fora, o WW3 puro da NOAA e o fork do dono; este
+**Em uma frase.** O WW3 puro da NOAA e o fork dele, do dono, vêm de fora; este
 repositório acrescenta só a reescrita em C++ e suas ferramentas, e todo jeito de rodar o modelo
 funciona no toolchain Nix, enquanto a imagem Docker cobre as rodadas em CPU sem Nix.
 
 **Como ler.** De cima para baixo. Um ambiente roda o script único, `scripts/ww3-gpu.sh` com suas
 receitas; o script oferece os modos de rodar; cada modo é compilado das fontes abaixo dele. Setas
 cheias dizem o que entra, roda ou é compilado de quê; a seta tracejada é a comparação da rodada em
-Kokkos com o WW3 puro da NOAA. Os ambientes estão numerados da referência (1) ao mais derivado
+Kokkos com o WW3 puro da NOAA (`--ww3-noaa`). Os ambientes estão numerados da referência (1) ao mais derivado
 (3); o dev container chega aos modos só pelo picasso.
 
-**Fora da figura.** As publicações e o site (`pubs/`, `site/`) são compilados na CI, não nesses ambientes. O branch do fork e os arquivos do patch KOKKOS (a tabela acima), o
+**Fora da figura.** O `--ww3`, que compila o WW3 da MetOcean e é a referência, e o `--chaceon`: a
+figura dos seis runtimes, abaixo, mostra os dois. As publicações e o site (`pubs/`, `site/`) são compilados na CI, não nesses ambientes. O branch do fork e os arquivos do patch KOKKOS (a tabela acima), o
 build CUDA e sua regra de supervisão (`AGENTS.md`, "Running on the GPU"), a CI e as versões de
 cada ambiente ([`VERSIONS.md`](VERSIONS.md)).
 

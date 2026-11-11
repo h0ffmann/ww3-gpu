@@ -136,8 +136,8 @@
       "lane": "runs",
       "col": 3,
       "type": "external",
-      "label": "--ww3 run",
-      "sublabel": "WW3-noaa, no KOKKOS",
+      "label": "--ww3-noaa run",
+      "sublabel": "NOAA WW3, no KOKKOS",
       "width": 132,
       "sources": [
         {
@@ -368,7 +368,7 @@
       "id": "noaa-nccmp",
       "from": "noaa",
       "to": "nccmp",
-      "label": "K vs --ww3"
+      "label": "K vs --ww3-noaa"
     },
     {
       "id": "nccmp-parity",
@@ -458,14 +458,15 @@
       "items": [
         "Bit for bit with the Fortran of the same executable: test.comp finding a file different fails the entry",
         "Only files that two Fortran runs already write differently (ww3_self) are excused",
-        "nccmp-tol FAIL also fails; its PASS never excuses a byte difference"
+        "nccmp-tol FAIL also fails; its PASS never excuses a byte difference",
+        "--ww3-noaa (pure NOAA WW3) was named --ww3 until 11 November 2026"
       ]
     },
     {
       "dot": "rose",
       "title": "GPU rule (ADR-0014)",
       "items": [
-        "CUDA verdict is nccmp-tol with tolerances.txt, against the Fortran and --ww3",
+        "CUDA verdict is nccmp-tol with tolerances.txt, against the Fortran and --ww3-noaa",
         "Its timing record says: GPU: judged by tolerance, not bits",
         "Runs only under the owner; none has been recorded yet"
       ]
