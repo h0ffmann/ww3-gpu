@@ -1,11 +1,11 @@
 # Archify pages
 
-Interactive HTML twins of Mermaid figures, drawn with the `archify` skill (tt-a1i/archify v3.0.1,
-MIT). The skill is the submodule `vendor/archify`, pinned and sparse, with
+Every diagram of the repository, drawn with the `archify` skill (tt-a1i/archify v3.0.1, MIT); no
+diagram is Mermaid (AGENTS.md, "Figures"). The skill is the submodule `vendor/archify`, pinned and sparse, with
 `.claude/skills/archify` a symlink into it; nothing of it is copied here. Each page is one
 standalone file with inline SVG, light and dark themes, and image export.
 
-A page is never a figure of the book: the figure is the Mermaid fence with its *How to read this figure* card, which carries the evidence and the `⚠` marks; every node and label traces to a file read, a WW3 fact cites `model/src/<file>.F90:<line>` at the pin, and a speed figure says "regtest pending" until WW3's regtests have run on its commit.
+A drawing is a figure only with its *How to read this figure* card under its picture, which carries the evidence and the `⚠` marks; every node and label traces to a file read, a WW3 fact cites `model/src/<file>.F90:<line>` at the pin, and a speed figure says "regtest pending" until WW3's regtests have run on its commit.
 
 Only the typed source (`<slug>.json`) is committed. The pages are build output, about 830 kB each
 because every page inlines Archify's template, and git ignores them:
@@ -68,3 +68,4 @@ Every drawing below also has its dark `<slug>.png` here and its page at
 | [weathernext-wind-chain.json](weathernext-wind-chain.json) | [PDF](weathernext-wind-chain.pdf), [PNG](weathernext-wind-chain.png), [page](https://h0ffmann.github.io/ww3-gpu/figures/weathernext-wind-chain/) | architecture | How does WeatherNext 3 enter the benchmark, and what are the waves compared with? | [W3SDS4_TRITON_202610.md](../W3SDS4_TRITON_202610.md) |
 | [triton-g-doze-semanas.json](triton-g-doze-semanas.json) | [PDF](triton-g-doze-semanas.pdf), [PNG](triton-g-doze-semanas.png), [page](https://h0ffmann.github.io/ww3-gpu/figures/triton-g-doze-semanas/) | architecture | Em que ordem o braço Triton G acontece em três meses, e onde ficam os portões? | [W3SDS4_TRITON_PLANO_202610.pt.md](../W3SDS4_TRITON_PLANO_202610.pt.md) |
 | [kokkos-one-source-backends.json](kokkos-one-source-backends.json) | [PDF](kokkos-one-source-backends.pdf), [PNG](kokkos-one-source-backends.png), [page](https://h0ffmann.github.io/ww3-gpu/figures/kokkos-one-source-backends/) | architecture | How does one Kokkos source reach the CPU and the GPU of the lab's workstation? | [kokkos/README.md](../../kokkos/README.md) |
+| [kokkos-interop-one-binary.json](kokkos-interop-one-binary.json) | [PDF](kokkos-interop-one-binary.pdf), [PNG](kokkos-interop-one-binary.png), [page](https://h0ffmann.github.io/ww3-gpu/figures/kokkos-interop-one-binary/) | architecture | How do the original Fortran routine and its Kokkos kernel coexist in one WW3 binary? | [kokkos/README.md](../../kokkos/README.md#the-bindc-boundary) |

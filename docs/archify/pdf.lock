@@ -1,4 +1,5 @@
 # slug, sha256 of docs/archify/<slug>.json (with the dark look for a dark.tsv drawing), vendor/archify commit; written by scripts/archify.sh refresh
+kokkos-interop-one-binary	56ffc413f21d6087757d47c09abb7d8d6aba5d09db9b56eeb61c3030310989a6	2ab3cae7ac2c2a55d7386ca789d03c4fcd31816c
 kokkos-one-source-backends	addf37839f69e224aa266714f12a74c4892c8236a001867ada3e6d0ace34b1f4	2ab3cae7ac2c2a55d7386ca789d03c4fcd31816c
 sds4-sdscum-branches	31ac9df4039e5f891af0d9598bbc0817961dc0090743b7c6f83777228a6a17c7	2ab3cae7ac2c2a55d7386ca789d03c4fcd31816c
 triton-benchmark-arms	3a09afc8ba3dfacec3e7542f3ae9c9e0520ba1761da0174fad047e6929f1b5a9	2ab3cae7ac2c2a55d7386ca789d03c4fcd31816c

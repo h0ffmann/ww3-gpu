@@ -136,7 +136,7 @@ O script `scripts/ww3-gpu.sh` controla os três modos:
 Cada modo aceita `--cpu` (o padrão) ou `--gpu`. Só o `--ww3-gpu` tem caminho de GPU. Uma execução
 na GPU exige uma pessoa como supervisora. O script pede um "yes" digitado no terminal e não continua sem essa resposta.
 
-![O sistema inteiro numa página: de onde vem o código, o que o ww3-gpu acrescenta, os modos de executar e os ambientes.](../figures/mermaid/ww3-gpu-at-a-glance-pt.png)
+![O sistema inteiro numa página: de onde vem o código, o que o ww3-gpu acrescenta, os modos de executar e os ambientes.](../../docs/archify/ww3-gpu-at-a-glance-pt.png)
 
 ### A chave em tempo de execução
 
@@ -152,7 +152,7 @@ compilador. A opção `--kokkos` escolhe um conjunto de partes:
 | `gpu` | `SRCE` | o padrão do `--gpu`: o `W3SRCE` inteiro em cada chamada ([ADR-0013][adr13]) |
 | `resident` | `SRCE`, `XYP3`, `KTP3`, `OUTG`, `IOPE`, `UPDV`, `CPRT` | o passo de tempo inteiro em Kokkos, com o espectro guardado no lado do Kokkos |
 
-![Um executável do WW3, dois caminhos: a chave escolhe a rotina original em Fortran ou o kernel em Kokkos, que executa em CPU ou em GPU.](../figures/mermaid/kokkos-interop-one-binary.png)
+![Um executável do WW3, dois caminhos: a chave escolhe a rotina original em Fortran ou o kernel em Kokkos, que executa em CPU ou em GPU.](../../docs/archify/kokkos-interop-one-binary.png)
 
 **Kokkos** é uma biblioteca C++ do Sandia National Laboratories (⚠, `docs/GLOSSARY.md`). Quem programa escreve o kernel uma vez e compila esse kernel para vários *backends*: Serial, OpenMP (vários núcleos
 da CPU) ou CUDA (GPU NVIDIA). O Fortran chama o C++ por uma interface `bind(C)`, o padrão

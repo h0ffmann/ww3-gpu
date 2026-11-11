@@ -11,17 +11,6 @@ re-renders and CI fails when a render no longer matches its source.
 
 Found something wrong in a figure? Each entry has a link that opens an issue for it.
 
-## [`kokkos/README.md`](../../kokkos/README.md)
-
-### How do the original Fortran routine and its Kokkos kernel coexist in one WW3 binary?
-
-The GPU code is added next to the original Fortran, not in place of it; a switch read at run time picks which one runs, so both are tested with the same executable.
-
-<img src="mermaid/kokkos-interop-one-binary.png" alt="The GPU code is added next to the original Fortran, not in place of it; a switch read at run time picks which one runs, so both are tested with the same executable." width="560" />
-
-`kokkos-interop-one-binary` · [source](../../kokkos/README.md) · [PDF](mermaid/kokkos-interop-one-binary.pdf) · [report a mistake](https://github.com/h0ffmann/ww3-gpu/issues/new?title=Figure%20kokkos-interop-one-binary%3A%20)
-
-
 ## [`pubs/proposal/mapas-mentais.pt.md`](../../pubs/proposal/mapas-mentais.pt.md)
 
 ### Do que trata a proposta, em um único mapa?

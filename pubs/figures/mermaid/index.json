@@ -9,11 +9,6 @@
     "config": "pubs/figures/mermaid-config.json"
   },
   "figures": {
-    "kokkos-interop-one-binary": {
-      "file": "kokkos/README.md",
-      "title": "How do the original Fortran routine and its Kokkos kernel coexist in one WW3 binary?",
-      "sha256": "6261d3f0afbabd85ec225dc5c077fa942900ead2347f1bb38dfd080f949d05ab"
-    },
     "proposal-schedule": {
       "file": "pubs/proposal/schedule.en.md",
       "title": "When does each activity of the project happen?",
