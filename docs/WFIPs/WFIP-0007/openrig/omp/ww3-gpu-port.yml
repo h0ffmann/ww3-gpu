@@ -1,0 +1,39 @@
+# omp rules of the ww3-gpu-port seats, on top of piabrota/nix-os's hermes/omp.yml (its model roles,
+# its disabled LSP, eval, browser and memory, its deny list for push, gh, installs and secrets).
+# Destination: piabrota/nix-os, omp/ww3-gpu-port.yml, read as a second config overlay by the seat's
+# omp wrapper (WFIP-0007, section 5.9). Whether PI_CONFIG_FILES takes two files, and with which
+# separator, was not checked ⚠; if it takes one, this list is appended to a copy of hermes/omp.yml.
+# An array in an overlay replaces the one before it, so this file must repeat hermes/omp.yml's
+# bash.patterns in full before its own ⚠ (omp docs/settings.md, read for hermes/omp.yml at v18.16.0).
+#
+# These rules make "regtests only after selection" and "never --gpu without the owner"
+# (ww3-gpu AGENTS.md, "Running on the GPU") hold in the seat, not only in its prose.
+bash:
+  patterns:
+    # ... hermes/omp.yml's bash.patterns, verbatim, here ...
+    # No WW3 run on this box: the regtests run on the selected batch, on the owner's workstation.
+    - { match: "*just smoke*", approval: deny }
+    - { match: "*just full*", approval: deny }
+    - { match: "*just perf*", approval: deny }
+    - { match: "*just rt*", approval: deny }
+    - { match: "*just run *", approval: deny }
+    - { match: "*just ww3-gpu-matrix*", approval: deny }
+    - { match: "*just d*-ww3-gpu*", approval: deny }
+    - { match: "*scripts/ww3-gpu.sh --ww3*", approval: deny }
+    - { match: "*ctest*", approval: deny }
+    - { match: "*mpirun*", approval: deny }
+    - { match: "*mpiexec*", approval: deny }
+    # No device run, and no way around the terminal "yes" of ww3-gpu.sh and gpu_supervised.sh.
+    - { match: "*--gpu*", approval: deny }
+    - { match: "*libm_bits.sh --device*", approval: deny }
+    - { match: "*gpu_supervised*", approval: deny }
+    - { match: "*WW3GPU_GPU_CONFIRMED*", approval: deny }
+    - { match: "*WW3GPU_IN_SHELL*", approval: deny }
+    - { match: "*nvidia-smi*", approval: deny }
+    # The claims are ww3port's: a seat never touches the claim files by hand. ww3port itself writes
+    # kokkos/port_claims.tsv on submit, so that file stays readable.
+    - { match: "*claims/*.claim*", approval: deny }
+    # No PR body, label or release tooling from a seat; Hermes does those.
+    - { match: "*just pr*", approval: deny }
+    - { match: "*just release*", approval: deny }
+    - { match: "*just labels-sync*", approval: deny }

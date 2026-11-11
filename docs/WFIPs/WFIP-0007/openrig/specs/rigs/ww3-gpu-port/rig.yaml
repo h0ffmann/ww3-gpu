@@ -1,0 +1,70 @@
+# The port rig of h0ffmann/ww3-gpu: two porters claim rows of the port with `ww3port`, translate,
+# wire or build an MPI unit (ADR-0020, docs/plans/2026-11-01-002-mpi-kokkos-plan.md), argue bit
+# parity statically, and hand each commit to the reviewer. Three omp seats, the box's limit
+# (docs/OPENRIG.md, "Limits"). WW3's regtests are not in this rig: they run on the batch the owner
+# selects, on the owner's workstation (WFIP-0007, section 5.6).
+# Destination: piabrota/nix-os, openrig/specs/rigs/ww3-gpu-port/rig.yaml. Not validated yet: run
+#   rig spec validate /etc/openrig/specs/rigs/ww3-gpu-port/rig.yaml
+#   rig up /etc/openrig/specs/rigs/ww3-gpu-port/rig.yaml --plan
+# The keeper `openrig-ww3-keeper` starts it and nudges idle porters. Do not run it at the same time as
+# another rig: the unit has one memory budget.
+version: "0.2"
+name: ww3-gpu-port
+summary: Two porters and a reviewer that finish the Kokkos port of WW3, one claimed row at a time
+
+# The seats must run without prompts: in RPC mode nobody answers one, and an omp seat with
+# `always-ask` stops at its first tool call (hermes-omp/references/openrig-seats.md). The guard is the
+# omp overlay: hermes/omp.yml and omp/ww3-gpu-port.yml (WFIP-0007, section 5.9).
+permission_policy: builtin:yolo
+
+env:
+  USER: openrig
+  LOGNAME: openrig
+  HOME: /var/lib/openrig
+  WW3PORT_HOME: /var/lib/openrig/work/ww3-gpu-port
+  WW3PORT_OUTBOX: /var/lib/rig-outbox/ww3-gpu-port
+  # One build at a time across the three seats; every gate the role runs takes this lock.
+  WW3PORT_BUILD_LOCK: /var/lib/openrig/work/ww3-gpu-port/build.lock
+  # Kokkos and gfortran builds inside the unit's MemoryHigh: one job.
+  CMAKE_BUILD_PARALLEL_LEVEL: "1"
+  MAKEFLAGS: "-j1"
+
+pods:
+  - id: port
+    label: Port
+    summary: Each porter claims a row with ww3port, does it, and asks the reviewer. The reviewer reads it against the Fortran.
+    members:
+      - id: porter-a
+        agent_ref: "local:../../agents/wg-porter"
+        profile: default
+        runtime: omp
+        # The form for which the runner passes the key (openrig-seats.md).
+        model: anthropic/claude-sonnet-5-5
+        # The seat's own folder: OpenRig merges the norms into its AGENTS.md. The ww3-gpu clone is
+        # ww3-gpu/ under it, made by `ww3port init` before the first `rig up`.
+        cwd: /var/lib/openrig/work/ww3-gpu-port/porter-a
+        restore_policy: resume_if_possible
+      - id: porter-b
+        agent_ref: "local:../../agents/wg-porter"
+        profile: default
+        runtime: omp
+        model: anthropic/claude-sonnet-5-5
+        cwd: /var/lib/openrig/work/ww3-gpu-port/porter-b
+        restore_policy: resume_if_possible
+      - id: reviewer
+        agent_ref: "local:../../agents/wg-reviewer"
+        profile: default
+        runtime: omp
+        model: anthropic/claude-sonnet-5-5
+        cwd: /var/lib/openrig/work/ww3-gpu-port/reviewer
+        restore_policy: resume_if_possible
+    edges:
+      # Each porter asks the reviewer. The porters start first.
+      - kind: delegates_to
+        from: porter-a
+        to: reviewer
+      - kind: delegates_to
+        from: porter-b
+        to: reviewer
+
+edges: []
