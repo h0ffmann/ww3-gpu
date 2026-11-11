@@ -7,10 +7,10 @@ author:
     affiliation: Escola Politécnica, Universidade Federal do Rio de Janeiro, Brazil
   - name: Pedro Veras Guimarães
     orcid: 0000-0002-1686-4722
-    affiliation: LabECO, Departamento de Engenharia Mecânica, Universidade Federal de Santa Catarina, Brazil
+    affiliation: Co-advisor of the first author. LabECO, Departamento de Engenharia Mecânica, Universidade Federal de Santa Catarina, Brazil
   - name: Pedro Cruz
     orcid: 0000-0002-2019-133X
-    affiliation: Grupo de Teleinformática e Automação (GTA), DEL, Escola Politécnica, Universidade Federal do Rio de Janeiro, Brazil
+    affiliation: Advisor of the first author. Grupo de Teleinformática e Automação (GTA), DEL, Escola Politécnica, Universidade Federal do Rio de Janeiro, Brazil
 date: "11 November 2026"
 version: "v0 (preprint, not peer reviewed)"
 abstract: |
@@ -38,10 +38,10 @@ lang: en-US
 papersize: a4
 fontsize: 10pt
 geometry:
-  - top=18mm
-  - bottom=20mm
-  - left=20mm
-  - right=20mm
+  - top=14mm
+  - bottom=17mm
+  - left=18mm
+  - right=18mm
 link-citations: true
 header-includes:
   - \AtBeginEnvironment{longtable}{\small}

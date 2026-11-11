@@ -1,4 +1,5 @@
 % SPDX-License-Identifier: MIT
+% From h0ffmann/closed-source format/tex/template.tex at 6b3aae5; one change: the author line prints the ORCID iD.
 % Paper Fabric article template for pandoc. Compiles with XeLaTeX (the local and CI build) and
 % with pdfLaTeX, which is the engine arXiv runs on submitted sources (just arxiv). Modelled on the layout of Sandy Maguire's
 % book templates (isovector/thinking-with-types, format/tex/template.tex): one hand-written
@@ -123,7 +124,7 @@ $if(subtitle)$
 $endif$
 \vspace{12pt}
 $for(author)$
-{\large $author.name$}\,$if(author.orcid)$\href{https://orcid.org/$author.orcid$}{\footnotesize\color{fabric}ORCID}$endif$\\
+{\large $author.name$}\,$if(author.orcid)$\href{https://orcid.org/$author.orcid$}{\footnotesize\color{fabric}ORCID $author.orcid$}$endif$\\
 {\small\itshape $author.affiliation$}\par\vspace{4pt}
 $endfor$
 \vspace{6pt}
