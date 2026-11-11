@@ -83,6 +83,13 @@ The translation backend reads `TRANSLATE_BASE_URL`, `TRANSLATE_API_KEY` and `TRA
 Locally, `http://127.0.0.1:11434/v1`, `ollama` and an Ollama model work. In CI the same three names
 are repository secrets; without them the step is skipped and the committed `pt/` is used.
 
+## The preprint
+
+[`preprint/`](preprint/README.md) holds a two-page preprint, not peer reviewed, that compares this
+repository's C++/Kokkos port with the Rust port in
+[h0ffmann/chaceon](https://github.com/h0ffmann/chaceon) under the same bit-for-bit rule. Its
+source is HTML and its PDF is printed with Chromium, like the GTA report, so it needs no TeX.
+
 ## Explaining the vocabulary
 
 `/eli5 <topic>` explains any of this (the action balance equation, a switch file, a Kokkos backend,
