@@ -1,0 +1,4 @@
+# The drawings redone in the dark look (DESIGN.md, "Pictures"): slug, then the height of the picture in
+# viewBox units, which cuts Archify's legend and the empty space under the drawing. scripts/archify.sh
+# png and site work on these rows.
+ww3-gpu-four-runtimes	470

@@ -17,7 +17,7 @@ names stale figures, run `just figures`, which re-renders only the fences whose 
 
 **2. Archify** (skip if `$ARGUMENTS` is `mermaid`). Run `just archify check`. If it names stale
 drawings: `just archify init` when `vendor/archify/archify/` is missing, then `just archify
-refresh`, which renders and prints only those and rewrites `docs/archify/pdf.lock`. A failed
+refresh`, which renders and prints only those and rewrites `docs/archify/pdf.lock`, and redraws the stale dark PNGs of `docs/archify/dark.tsv` with `png.lock`. A failed
 `finalize` gate stops it with the PDF and the lock untouched: read the diagnostics, fix the JSON,
 run it again. Then `just archify check` must say every drawing is current.
 

@@ -136,9 +136,9 @@ O dev container rodou `just kokkos-test serial-debug` e `just smoke-ww3-gpu` pel
 
 </details>
 
-![Quatro runtimes do WAVEWATCH. O script do ww3-gpu roda três: --ww3 compila o WW3 puro da NOAA, do WW3-noaa/; --ww3-gpu compila o fork com a switch KOKKOS, liga o kokkos/ e precisa dar os mesmos bits do --ww3; --ww4 compila o WAVEWATCH IV do seu fork e para com código 5 quando falta portar uma parte. O quarto, --chaceon (uma flag planejada), roda o chaceon, o WW3 reescrito em Rust sem Fortran, compilado para CPU, SPIR-V e PTX, e precisa dar os mesmos bits do WW3 7.14 da MetOcean](docs/figures/four-runtimes.svg)
+[![Quatro runtimes do WAVEWATCH. O script do ww3-gpu roda três: --ww3 compila o WW3 puro da NOAA, do WW3-noaa/; --ww3-gpu compila o fork com a switch KOKKOS, liga o kokkos/ e precisa dar os mesmos bits do --ww3; --ww4 compila o WAVEWATCH IV do seu fork e para com código 5 quando falta portar uma parte. O quarto, --chaceon (uma flag planejada), roda o chaceon, o WW3 reescrito em Rust sem Fortran, compilado para CPU, SPIR-V e PTX, e precisa dar os mesmos bits do WW3 7.14 da MetOcean](docs/archify/ww3-gpu-four-runtimes.png)](https://h0ffmann.github.io/ww3-gpu/figures/ww3-gpu-four-runtimes/)
 
-O desenho é [`docs/archify/ww3-gpu-four-runtimes.json`](docs/archify/ww3-gpu-four-runtimes.json) ([PDF](docs/archify/ww3-gpu-four-runtimes.pdf)), em inglês. O quarto runtime, `--chaceon`, é o [h0ffmann/chaceon](https://github.com/h0ffmann/chaceon); o `scripts/ww3-gpu.sh` ainda não tem a flag ⚠. Hoje o ww3-gpu fixa o WW3 da NOAA em `03adda91` e o chaceon fixa o WW3 7.14; o plano é fixar todos os runtimes no WW3 7.14 ⚠.
+O desenho é [`docs/archify/ww3-gpu-four-runtimes.json`](docs/archify/ww3-gpu-four-runtimes.json), em inglês; abra-o como uma [página com zoom](https://h0ffmann.github.io/ww3-gpu/figures/ww3-gpu-four-runtimes/) no site. Uma caixa azul é uma fonte que o script lê, uma caixa âmbar é o que ele compila ou roda, e uma seta verde tracejada diz qual execução precisa dar os mesmos bits de qual. O quarto runtime, `--chaceon`, é o [h0ffmann/chaceon](https://github.com/h0ffmann/chaceon); o `scripts/ww3-gpu.sh` ainda não tem a flag ⚠. Hoje o ww3-gpu fixa o WW3 da NOAA em `03adda91` e o chaceon fixa o WW3 7.14; o plano é fixar todos os runtimes no WW3 7.14 ⚠.
 
 ### a chave do Kokkos, parte por parte
 

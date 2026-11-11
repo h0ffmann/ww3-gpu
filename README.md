@@ -135,9 +135,9 @@ full clone).
 
 </details>
 
-![Four runtimes of WAVEWATCH. ww3-gpu's script runs three: --ww3 builds pure NOAA WW3 from WW3-noaa/; --ww3-gpu builds the fork with the KOKKOS switch, links kokkos/ and must give the same bits as --ww3; --ww4 builds WAVEWATCH IV from its fork and stops with exit 5 when a part is not ported. The fourth, --chaceon (a planned flag), runs chaceon, WW3 rewritten in Rust with no Fortran, compiled for the CPU, SPIR-V and PTX, and must give the same bits as MetOcean WW3 7.14](docs/figures/four-runtimes.svg)
+[![Four runtimes of WAVEWATCH. ww3-gpu's script runs three: --ww3 builds pure NOAA WW3 from WW3-noaa/; --ww3-gpu builds the fork with the KOKKOS switch, links kokkos/ and must give the same bits as --ww3; --ww4 builds WAVEWATCH IV from its fork and stops with exit 5 when a part is not ported. The fourth, --chaceon (a planned flag), runs chaceon, WW3 rewritten in Rust with no Fortran, compiled for the CPU, SPIR-V and PTX, and must give the same bits as MetOcean WW3 7.14](docs/archify/ww3-gpu-four-runtimes.png)](https://h0ffmann.github.io/ww3-gpu/figures/ww3-gpu-four-runtimes/)
 
-The drawing is [`docs/archify/ww3-gpu-four-runtimes.json`](docs/archify/ww3-gpu-four-runtimes.json) ([PDF](docs/archify/ww3-gpu-four-runtimes.pdf)). The fourth runtime, `--chaceon`, is [h0ffmann/chaceon](https://github.com/h0ffmann/chaceon); `scripts/ww3-gpu.sh` does not have the flag yet ⚠. Today ww3-gpu pins NOAA WW3 `03adda91` and chaceon pins WW3 7.14; the plan is to pin every runtime to WW3 7.14 ⚠.
+The drawing is [`docs/archify/ww3-gpu-four-runtimes.json`](docs/archify/ww3-gpu-four-runtimes.json); open it as a [page you can zoom](https://h0ffmann.github.io/ww3-gpu/figures/ww3-gpu-four-runtimes/) on the website. A blue box is a source the script reads, an amber box is what it builds or runs, and a green dashed arrow says which run must give the same bits as which. The fourth runtime, `--chaceon`, is [h0ffmann/chaceon](https://github.com/h0ffmann/chaceon); `scripts/ww3-gpu.sh` does not have the flag yet ⚠. Today ww3-gpu pins NOAA WW3 `03adda91` and chaceon pins WW3 7.14; the plan is to pin every runtime to WW3 7.14 ⚠.
 
 ### the Kokkos switch, part by part
 
