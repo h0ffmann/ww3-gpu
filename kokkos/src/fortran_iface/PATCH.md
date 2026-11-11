@@ -725,7 +725,7 @@ shim's strides and lower bounds. "smoke" is `scripts/ww3-gpu.sh --ww3-gpu smoke 
 `ww3` shell, an Intel Core i9-14900 with 32 threads); "full" is the same on `bench_small` (120 x 80, 9 520 sea points, 12 h).
 "byte-identical" means `cmp` found `out_grd.ww3`, `out_pnt.ww3`, `restart.ww3` and the
 `ww3_ounf` NetCDF file equal to the Fortran run of the same executable, and the first three equal
-to `--ww3` (pure NOAA WW3 at `WW3-noaa/`); the NetCDF file against `--ww3` differs only in its
+to `--ww3-noaa` (pure NOAA WW3 at `WW3-noaa/`); the NetCDF file against `--ww3-noaa` differs only in its
 `WAVEWATCH_III_switches` attribute, which names `KOKKOS` (`ncdump` diff, v).
 
 | Part | Flag | Switch it needs | Replaces | Counter (at exit) | Parity |
@@ -785,7 +785,7 @@ before these entry points is refused at configure time, not at link.
   bits. `W3UTRN`'s `TRNY(0)` read (`w3updtmd.F90:2954` at the pin, `TRFLAG` 1, 3 or 5 with a sea
   point at `IXY = 1`) is done by the shim at `trny[-1]`, the address the Fortran reads.
 - **Without `KOKKOS`**: the hunks are not compiled, so the routines are the Fortran's. With
-  `KOKKOS` and every flag off, the built binary ran `ww3_ts1` byte-identical to `--ww3` (smoke
+  `KOKKOS` and every flag off, the built binary ran `ww3_ts1` byte-identical to `--ww3-noaa` (smoke
   with `--kokkos none`, v 2026-10-16).
 
 Not wired, one line each (the six host-side translations of goal 42, read in
@@ -808,7 +808,7 @@ grids (`W3MAP3` with `GTYPE >= 3`), and the `W3UWND` variants `WNT0`, `WNT2`, `O
 ADR-0011's pin-move checkpoint on the CPU (OpenMP backend; never `--gpu`). The commands and
 their output are in this change's `Tested:` record.
 
-| Run | Parts on Kokkos | Calls made (counters) | Against the Fortran, same executable | Against `--ww3` |
+| Run | Parts on Kokkos | Calls made (counters) | Against the Fortran, same executable | Against `--ww3-noaa` |
 |---|---|---|---|---|
 | `just smoke-ww3-gpu` (default, `WW3GPU_ROUTINES=SNL1`) | SNL1 | (no counter set) | byte-identical | byte-identical; `nccmp-tol` PASS |
 | smoke `--kokkos none` (`WW_KOKKOS_ALL=0`) | none (0 of 14) | none | byte-identical | byte-identical |
@@ -980,7 +980,7 @@ source terms of a time step reach Kokkos in one call, without a copy per point a
 
 The checkpoint on the CPU, 2026-10-17 (OpenMP backend; never `--gpu`; `kokkos/port_report/W3SRCE_KOKKOS.md` has the table):
 `--kokkos SRCE` smoke and full, with `switch_lab_ompg` and `switch_lab_shrd`, byte-identical to
-the Fortran of the same executable and to `--ww3`, `nccmp-tol` PASS both; the full also with
+the Fortran of the same executable and to `--ww3-noaa`, `nccmp-tol` PASS both; the full also with
 `WW_KOKKOS_SRCE_BATCH_MIB=64` (200 launches instead of 25), byte-identical (v). The CUDA build
 compiles (`--gpu --build-only`); whether it gives the CPU's bits is not known ⚠. The regtest matrix
 did not run ⚠.
@@ -1031,14 +1031,14 @@ tables are in the comments above `ww_xyp3_batch` and `ww_ktp3_batch` in the shim
   closure none and no boundary input (`ww3_grid.out`); the smoke case is one point and makes no
   call of either part. Those branches were translated and statically argued; since 2026-10-17
   the coast case (`scripts/ww3-gpu.sh --ww3-gpu coast`, bench/README.md) runs the current, the
-  wavenumber shift and the boundary input, byte-identical to the Fortran and to `--ww3` on both lab
+  wavenumber shift and the boundary input, byte-identical to the Fortran and to `--ww3-noaa` on both lab
   switches (v; the rows are in `port_report/W3KTP3_KOKKOS.md`, "The coast case"). Index closure
   still never ran ⚠.
 
 The checkpoint on the CPU, 2026-10-17 (OpenMP backend, Kokkos 5.2.2, gfortran/g++ 16.2.0, an
 Intel Core i9-14900 with 32 threads, shared with other sessions; never `--gpu`):
 
-| Run | Calls (counters) | Against the Fortran, same executable | Against `--ww3` |
+| Run | Calls (counters) | Against the Fortran, same executable | Against `--ww3-noaa` |
 |---|---|---|---|
 | full `--kokkos XYP3,KTP3,SRCE`, `switch_lab_ompg` | `W3XYP3` 24 calls, 13 824 spectra; `W3KTP3` 48 calls, 441 792 point calls; `W3SRCE` 230 100 | byte-identical (`out_grd.ww3`, the NetCDF field) | `out_grd.ww3` byte-identical; the NetCDF differs only in `WAVEWATCH_III_switches`; `nccmp-tol` PASS |
 | the same, `WW_KOKKOS_PROP3_BATCH_MIB=64` | the same counts, in 144 launches each (6 per call of `W3XYP3`, 3 of `W3KTP3`) | byte-identical | byte-identical (`out_grd.ww3`) |
@@ -1118,7 +1118,7 @@ The checkpoint on the CPU, 2026-10-17 (OpenMP backend; never `--gpu`; the table 
 `kokkos/port_report/W3SRCE_KOKKOS.md`, "Resident spectrum"): `--kokkos SRCE` smoke and full and
 `--kokkos all` smoke, with `switch_lab_ompg` and `switch_lab_shrd`, each with and without
 `WW_KOKKOS_VA_RESIDENT=1`, plus `--kokkos all` and `--kokkos XYP3,KTP3,SRCE` full on
-`switch_lab_ompg`, byte-identical to the Fortran of the same executable and to `--ww3`,
+`switch_lab_ompg`, byte-identical to the Fortran of the same executable and to `--ww3-noaa`,
 `nccmp-tol` PASS both (v). The same set passed on unit 1 alone, before unit 2, at `caa5da36` plus
 unit 1: there the counters read 0 copies in every run without the diagnostic, so no kernel had
 `VA` and the state never left `HOST`. Traffic of `VA` per run (`WW_KOKKOS_VA_COUNT=1`):
@@ -1221,7 +1221,7 @@ The checkpoint on the CPU, 2026-10-17 (OpenMP backend, Kokkos 5.2.2, gfortran/g+
 Intel Core i9-14900 with 32 threads, shared with other sessions; never `--gpu`). Every run below
 gave `out_grd.ww3` and the NetCDF field (and in the smoke `out_pnt.ww3`, `restart.ww3`)
 `cmp`-equal to the Fortran of the same executable, `out_grd.ww3` (and `out_pnt.ww3`,
-`restart.ww3`) `cmp`-equal to `--ww3`, whose NetCDF differs only in `WAVEWATCH_III_switches`, and
+`restart.ww3`) `cmp`-equal to `--ww3-noaa`, whose NetCDF differs only in `WAVEWATCH_III_switches`, and
 `nccmp-tol` PASS both (v): `bash scripts/ww3-gpu.sh --ww3-gpu full --cpu --kokkos XYP3,KTP3,SRCE`
 and `... smoke --cpu --kokkos XYP3,KTP3,SRCE` and `... smoke --cpu --kokkos all`, on
 `switch_lab_ompg` and `WW3GPU_SWITCH=switch_lab_shrd`, each with and without
@@ -1290,7 +1290,7 @@ and the inout `BPSC` (`UST`, `USTDIR`, `TAUWX` .. `WNMEAN`), `BWC`, `BTB`, `BTI`
 The checkpoint on the CPU, 2026-10-17 (OpenMP backend, Kokkos 5.2.2, gfortran/g++ 16.2.0, Intel
 Core i9-14900, 32 threads, shared with other sessions; never `--gpu`). Each run below gave
 `out_grd.ww3` and the `ww3_ounf` NetCDF (full) or `out_grd.ww3`, `out_pnt.ww3`, `restart.ww3`
-(smoke) `cmp`-equal to the Fortran of the same executable and to `--ww3`, whose NetCDF differs only
+(smoke) `cmp`-equal to the Fortran of the same executable and to `--ww3-noaa`, whose NetCDF differs only
 in `WAVEWATCH_III_switches`, `nccmp-tol` PASS both (v): `bash scripts/ww3-gpu.sh --ww3-gpu full
 --cpu --kokkos resident` and `... smoke ... --kokkos resident`, each plain, with
 `WW_KOKKOS_VA_RESIDENT=1` and with `WW_KOKKOS_SRCE_STAGED=1` (smoke staged on `switch_lab_ompg`
@@ -1379,7 +1379,7 @@ them. The ABI is `ww_kokkos` 0.7.0 (one entry point added, `SameMajorVersion`); 
 The checkpoint on the CPU, 2026-10-17 (OpenMP backend, Kokkos 5.2.2, gfortran/g++ 16.2.0, Intel
 Core i9-14900, 32 threads, shared with other sessions; never `--gpu`).
 Each run gave every file it wrote `cmp`-equal to the Fortran of the same executable and to
-`--ww3`, whose NetCDF differs only in `WAVEWATCH_III_switches`, `nccmp-tol` PASS both (v):
+`--ww3-noaa`, whose NetCDF differs only in `WAVEWATCH_III_switches`, `nccmp-tol` PASS both (v):
 `out_grd.ww3` and the `ww3_ounf` NetCDF (full), with `out_pnt.ww3` and `restart.ww3` (smoke), with
 `out_pnt.ww3`, `nest.ww3` and the boundary, current, level and ice NetCDF (coast). `bash
 scripts/ww3-gpu.sh --ww3-gpu full --cpu --kokkos SRCE,XYP3,KTP3,OUTG`, `... smoke ...` and `...
@@ -1491,7 +1491,7 @@ bash scripts/ww3-gpu.sh --ww3-gpu <case> --cpu --kokkos resident --timers`, for 
 `AUTO`, 1, 4 and 16, `<case>` full and coast, on `switch_lab_ompg` and
 `WW3GPU_SWITCH=switch_lab_shrd`: 20 runs. In every one, every file the run wrote
 (`out_grd.ww3` and the NetCDF field; in coast also `out_pnt.ww3`) is `cmp`-equal to the Fortran of
-the same executable, `out_grd.ww3` (and `out_pnt.ww3`) `cmp`-equal to `--ww3`, and `nccmp-tol`
+the same executable, `out_grd.ww3` (and `out_pnt.ww3`) `cmp`-equal to `--ww3-noaa`, and `nccmp-tol`
 PASS both (v). `W3XYP3 team launches` read 0 with the flag unset and 24 (full) or 72 (coast), one
 per call, with it set; the spectra are 13 824 and 41 472 in every run. `xyp3.kernel`, one fenced
 run each, a breakdown and not a timing (the machine was shared, load average 9 to 15):
@@ -1569,7 +1569,7 @@ smoke|full|coast --cpu --kokkos SRCE,XYP3,KTP3,OUTG,IOPE` and `... smoke ... --k
 `switch_lab_ompg` and `WW3GPU_SWITCH=switch_lab_shrd`, each plain and with `WW_KOKKOS_VA_RESIDENT=1`:
 16 runs. In each, every file the run wrote, `out_grd.ww3`, the `ww3_ounf` NetCDF, and in the smoke
 `out_pnt.ww3` and `restart.ww3`, in the coast `out_pnt.ww3`, was `cmp`-equal to the Fortran of the
-same executable, and `out_grd.ww3`, `out_pnt.ww3`, `restart.ww3` to `--ww3`, whose NetCDF differs only
+same executable, and `out_grd.ww3`, `out_pnt.ww3`, `restart.ww3` to `--ww3-noaa`, whose NetCDF differs only
 in `WAVEWATCH_III_switches` (`ncdump` diff); `nccmp-tol` PASS both, every `max|d|` 0 (v). `--kokkos
 all` leaves `IOPE` off (opt-in), so its 4 runs check that the default path is unchanged.
 
@@ -1761,7 +1761,7 @@ forced on the CPU), and smoke with `<env>` empty.
 Run on `main` at `d8905a3b` with these changes, 26 runs. In every one, every file the run wrote
 (`out_grd.ww3` and the NetCDF field; in coast also `out_pnt.ww3`; in smoke also `out_pnt.ww3` and
 `restart.ww3`) is `cmp`-equal to the Fortran of the same executable, `out_grd.ww3` (and
-`out_pnt.ww3`, `restart.ww3`) `cmp`-equal to `--ww3`, whose NetCDF differs only in the
+`out_pnt.ww3`, `restart.ww3`) `cmp`-equal to `--ww3-noaa`, whose NetCDF differs only in the
 `WAVEWATCH_III_switches` attribute (`diff` of the two `ncdump`, full and coast), and `nccmp-tol`
 PASS both (v). `W3XYP3 team launches` read 0 with the flag unset and with `0`, 24 (full) or 72
 (coast) with `AUTO`, 4 and 16; `W3SRCE batched launches` 25 (full) and 72 (coast) at the host
@@ -1812,7 +1812,7 @@ and leaves a correct run's bits unchanged (v: coast, smoke and full byte-identic
   of section 15 wants copied back into WW3's arrays, so a field the selection misses keeps its old
   bits and shows in `out_grd.ww3`.
 - **`scripts/ww3-gpu.sh`**: every model file (`out_grd.*`, `out_pnt.*`, `restart*.ww3`, every
-  NetCDF) is compared byte for byte with the Fortran run's, the binary ones with `--ww3`'s; on the
+  NetCDF) is compared byte for byte with the Fortran run's, the binary ones with `--ww3-noaa`'s; on the
   CPU a difference fails the run, where before `nccmp-tol` judged one NetCDF within its tolerances.
   A run whose `VA` is still newer on the device at finalize fails. For `--kokkos resident` on the
   coast case the calls per part must match `kokkos/tests/fixtures/coast/counts_resident.txt`, so a
@@ -1896,7 +1896,7 @@ did not drop in these two entries. In `ww3_tp2.2` the track times are the wind t
 `ww3_tr1` (`PR1`) the host write before the Fortran propagation copies it at every step. What each
 reader copied is now its columns, and the count per run drops only where no other full sync
 follows in the same step. `bash scripts/ww3-gpu.sh --ww3-gpu smoke|full --cpu --kokkos resident`:
-byte-identical to the Fortran and to `--ww3`, `nccmp-tol` PASS, D2H 37 (smoke) and 1 (full), as in
+byte-identical to the Fortran and to `--ww3-noaa`, `nccmp-tol` PASS, D2H 37 (smoke) and 1 (full), as in
 section 17 (v). The matrix driver drops the empty options of a first-kept entry
 (`regtests/cmake/ww3gpu_common.cmake:337-343`: a `list(APPEND)` of an empty string onto an empty
 list adds nothing), so `ww3_tr1` cannot be configured there; it ran through
@@ -2052,7 +2052,7 @@ scalar `VA`, not the spectrum. `WMIOBG` writes `BBPI0`/`BBPIN`, not `VA`. `PDLIB
   rejected it on 2026-10-18, because on a GPU it costs a whole host-to-device copy of `VA` per
   grid per call. The syncs belong where `ww3_multi` reads and writes, and they move only the
   columns exchanged. Both files are `FILE` lines of `parts.d/resident.txt`, so
-  `scripts/ww3-gpu.sh --ww3` still accepts the fork.
+  `scripts/ww3-gpu.sh --ww3-noaa` still accepts the fork.
 - **Without `KOKKOS`**, `gfortran -E -P` of `w3wavemd.F90`, `wminiomd.F90` and `wmwavemd.F90` with
   `switches/switch_lab_shrd` and with `mww3_test_08`'s `switch_ST4_PR3_UQ_MPI` is identical to
   `WW3-noaa/`'s, blank lines and the include path in one comment aside (v, 2026-10-18). With
@@ -2085,7 +2085,7 @@ are [`ww3gpu_matrix_multi_va_2026-10-18.tsv`](../../../docs/data/ww3gpu_matrix_m
   in each step and declares the host newer, as gap 2 predicted.
 - `ww3_shel`: `bash scripts/ww3-gpu.sh --ww3-gpu full|smoke --cpu --kokkos resident`, plain and
   with `WW_KOKKOS_VA_POISON=1 WW_KOKKOS_VA_CHECK=1`: every model file byte-identical to the
-  Fortran's and every file but the NetCDF to `--ww3`'s, `nccmp-tol` PASS; whole-`VA` D2H on full
+  Fortran's and every file but the NetCDF to `--ww3-noaa`'s, `nccmp-tol` PASS; whole-`VA` D2H on full
   1 → 0 (one copy of 21.21 MB per run), on smoke 37 → 37 (the output readers of section 23) (v).
   Wall time of full, one run each on the shared machine ⚠: 40.86 s before, 43.99 s and 32.35 s
   after; no difference can be read from these.
@@ -2153,7 +2153,7 @@ throwaway `bench_small` variants with partitioning on and the numbers are in
 - `bash scripts/ww3-gpu.sh --ww3-gpu full --cpu --kokkos SRCE,XYP3,KTP3,OUTG,IOPE,UPDV[,CPRT]` with
   `WW_KOKKOS_VA_POISON=1 WW_KOKKOS_VA_COUNT=1`, five runs on `switch_lab_shrd` and
   `switch_lab_ompg`: every model file and `partition.ww3` byte-identical to the Fortran of the
-  same executable and to `--ww3` (v). `VA` device-to-host copies in 12 hours with 13 output times:
+  same executable and to `--ww3-noaa` (v). `VA` device-to-host copies in 12 hours with 13 output times:
   13 before, 1 after (the read at `W3WAVE`'s return, which section 26 removes), with only the
   partition file and with all 17 partition fields (v). Per output time a device would move back
   1.14 MB of table and, with every partition field requested, 3.39 MB of fields, against the
@@ -2224,7 +2224,7 @@ with both parts silently on the Fortran.
 
 `bash scripts/ww3-gpu.sh --ww3-gpu smoke|full --cpu --kokkos resident` with `WW_KOKKOS_VA_POISON=1
 WW_KOKKOS_VA_COUNT=1`, at `711afb80` (2026-10-18, same machine, one run each): every model file
-byte-identical to the Fortran of the same executable and every file but the NetCDF to `--ww3`'s,
+byte-identical to the Fortran of the same executable and every file but the NetCDF to `--ww3-noaa`'s,
 `nccmp-tol` PASS; whole-`VA` D2H 37 on smoke and 0 on full, as in section 26; `CPRT=K` with 0 calls,
 since neither case partitions (v).
 
@@ -2375,7 +2375,7 @@ The `smoke` case (`ww3_ts1`) asks for `WBT` and `SKW` among its fields, so its `
 taken this branch: `scripts/ww3-gpu.sh --ww3-gpu smoke --cpu --kokkos resident` at `fac74069` ends
 with `calls left on the Fortran (...): SRCE=0 CPRT=0 OUTG=37`, one per output time, with every
 model file byte-identical to the Fortran of the same executable and every file but the NetCDF to
-`--ww3`'s (v). At `50a10730` no `OUTG` counter exists, so the line names `SRCE` and `CPRT` alone (v, by reading the set-up; that run was not repeated). The `full` case asks for `HS`
+`--ww3-noaa`'s (v). At `50a10730` no `OUTG` counter exists, so the line names `SRCE` and `CPRT` alone (v, by reading the set-up; that run was not repeated). The `full` case asks for `HS`
 alone and ends with `OUTG=0` and 13 `W3OUTG` Kokkos calls (v).
 
 ## 32. The batched `W3SRCE` admits `SEED`, `FLD2` and no `LN1`, `ww3-gpu/gfs-srce-be5bdbea`
@@ -2429,7 +2429,7 @@ Checked 2026-10-19 on the CPU (Kokkos OpenMP backend, gfortran 16.2.0, never `--
 - The fork with the `ww3_ufs1.2` switch and `KOKKOS` compiles and links.
 - `WW3GPU_SWITCH=switch_lab_gfs` (`switch_lab_ompg` with `SEED FLD2` for `LN1`), `scripts/ww3-gpu.sh --ww3-gpu smoke`
   and `full --cpu --kokkos SRCE` with `WW_KOKKOS_STRICT=1`: every model file byte-identical to the Fortran of the same
-  executable, the binary ones also to `--ww3`, `nccmp-tol` PASS, `SRCE=0` fallbacks. The smoke wind is 12 m/s, so `W3FLD2`
+  executable, the binary ones also to `--ww3-noaa`, `nccmp-tol` PASS, `SRCE=0` fallbacks. The smoke wind is 12 m/s, so `W3FLD2`
   runs (the output `CHA` is 0.016, not `FLDALPHA` = 0.0095).
 - The unchanged `switch_lab_ompg` smoke is still byte-identical.
 - `WW3GPU_KOKKOS=all WW3GPU_MPI_RANKS=1 WW3GPU_OMP_THREADS=1 WW_KOKKOS_STRICT=1 just ww3-gpu-matrix 1 mpi -R '^323:'`,

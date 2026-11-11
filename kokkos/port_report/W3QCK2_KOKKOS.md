@@ -45,7 +45,7 @@ resident` (and `KTP3,SRCE` under `WW_KOKKOS_VA_RESIDENT=1`) has `FLCK` and `FLCU
 `W3KTP3` calls this routine for the wavenumber shift inside its 517 660 point calls
 (`prop_ktp3.hpp:324-344`, `WW_KOKKOS_PROP3_COUNT=1`). `out_grd.ww3`, `out_pnt.ww3` and the NetCDF field
 are `cmp`-equal to the Fortran of the same executable and `out_grd.ww3` and `out_pnt.ww3` to
-`--ww3`, on `switch_lab_ompg` and `switch_lab_shrd`, with and without `WW_KOKKOS_VA_RESIDENT=1`;
+`--ww3-noaa`, on `switch_lab_ompg` and `switch_lab_shrd`, with and without `WW_KOKKOS_VA_RESIDENT=1`;
 `nccmp-tol` PASS. With `RUN%FLCK = F` the same case gives an `hs` up to 0.073 m different, so the
 shift reaches the compared output. The rows and the case are in [W3KTP3_KOKKOS.md](W3KTP3_KOKKOS.md),
 "The coast case". There is no counter of this routine's own calls ⚠; the count above is of

@@ -42,8 +42,9 @@ script reads none. `IFS_BASE_URL` points it at a mirror with the same directory 
 - Surface parameters on that index include `10u`, `10v`, `10fg` (gust), `msl`, `2t`, `sp` and
   `sithick` `(v)` same index. `10u 10v` are the default; `-p "10u 10v msl 10fg"` adds pressure
   and gust, the other two fields ondaseventos shows.
-- The grid is 1440 × 721, longitude -180 to 179.75, latitude 90 to -90 `(v)` `ncdump` of the
-  file below, so no longitude relabelling is needed (example 02's GFS needs one).
+- The grid is 1440 × 721, longitude -180 to 179.75, latitude 90 to -90 as served `(v)` `ncdump`
+  of the file below before the recipe reversed the latitudes, so no longitude relabelling is
+  needed (example 02's GFS needs one).
 
 ## What the recipe writes
 
@@ -51,15 +52,23 @@ script reads none. `IFS_BASE_URL` points it at a mirror with the same directory 
 just ifs-get -d 20261110 -c 00 -H 120 -b -52,-44,-32,-24 -o data/ifs/2026111000
 ```
 
-`data/ifs/2026111000/ifs_2026111000_f120.nc` with `u10` and `v10` (`short`, packed with
+`data/ifs/2026111000/ifs_2026111000_f120_box_-52_-44_-32_-24.nc` (the box is in the name since
+2026-11-11; a global file has none) with `u10` and `v10` (`short`, packed with
 `scale_factor` and `add_offset`) on `longitude`, `latitude`, `time` (41 steps, 3 h apart). The GRIB
 messages stay in `grib/` so a rerun downloads nothing. That command took 1 min 33 s and 59 MB of
 GRIB on a cloud container `(v)` run 2026-11-11 (one run, network-bound, not a benchmark).
 
 `ww3_prnc` applies `scale_factor` and `add_offset` when it reads a field
 (`model/src/ww3_prnc.F90:1533` at the `WW3/` pin `96892c95`) `(v)`. The names match example 02's
-`ww3_prnc_wind.nml`, which reads `u10`/`v10` on `longitude`/`latitude`/`time`. That `ww3_prnc`
-ran on this file has **not** been checked ⚠; it is the next step.
+`ww3_prnc_wind.nml`, which reads `u10`/`v10` on `longitude`/`latitude`/`time`.
+
+`ww3_prnc` of MetOcean's WW3 (`92e2cf66`) read the file on a triangular grid and on a regular
+grid `(v)` 2026-11-11, [`RUN_COMMAND_202611.md`](RUN_COMMAND_202611.md), "What ran". The regular
+grid found a defect: `ww3_prnc` stops when the latitudes of the file descend
+(`model/src/ww3_prnc.F90:942` at that commit), and IFS is written from 90° to -90°. The recipe
+now turns the latitudes south to north with NCO's `ncpdq`, so the file's latitudes ascend and the
+`ncdump` above no longer shows the order ECMWF serves. `just run --case <dir> --wind ifs` calls
+the recipe for a case's box and length; `just wind` is the same recipe.
 
 Two traps the script works around: `cdo sellonlatbox` on the GRIB left `grib_to_netcdf` writing
 fill values for longitude and latitude, so the box is cut after the conversion with `ncks`; and
@@ -75,6 +84,6 @@ fill values for longitude and latitude, so the box is cut after the conversion w
 | URLs and byte ranges, no download | `just ifs-get -n -H 6` |
 | The newest 00z cycle, five days, global | `just ifs-get` |
 
-Tools: `curl`, ecCodes' `grib_to_netcdf`, `ncdump`, and NCO's `ncks` for `-b`. The recipe runs
+Tools: `curl`, ecCodes' `grib_to_netcdf`, `ncdump`, and NCO's `ncpdq`, with `ncks` for `-b`. The recipe runs
 on the host when they are on `PATH` and in `just ww3` otherwise (pratico's shell carries ecCodes
 and NCO).

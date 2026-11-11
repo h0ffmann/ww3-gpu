@@ -28,7 +28,7 @@ Ten Newton steps per entry; `TAUT(I,0)` zeroed at the end.
 
 ## Host parallel loop
 
-The (I,J) elements are independent at `:1376-1401`: each element reads only scalars, runs its own `NITER` loop and writes only `TAUT(I,J)`; `TAUT(I,0)=0` follows serially, as written. So they run in a host `parallel_for` with the Fortran's arithmetic per element unchanged: no reduction crosses elements, and the order of the elements does not enter any value. Host only: on a device `expf`/`logf`/`powf` are not glibc's (`AGENTS.md`, "Bit for bit"). (v) 2026-10-17: `ST4 tables rebuilt in C++: 0 values differ from the Fortran's` on smoke, full and coast with `--kokkos all` (which rebuilt the tables until commit d6b321af made `ST4_TABLES` opt-in) and `--kokkos SRCE,ST4_TABLES`, `switch_lab_ompg` and `switch_lab_shrd`, every output byte-identical to the Fortran of the same executable and to `--ww3`.
+The (I,J) elements are independent at `:1376-1401`: each element reads only scalars, runs its own `NITER` loop and writes only `TAUT(I,J)`; `TAUT(I,0)=0` follows serially, as written. So they run in a host `parallel_for` with the Fortran's arithmetic per element unchanged: no reduction crosses elements, and the order of the elements does not enter any value. Host only: on a device `expf`/`logf`/`powf` are not glibc's (`AGENTS.md`, "Bit for bit"). (v) 2026-10-17: `ST4 tables rebuilt in C++: 0 values differ from the Fortran's` on smoke, full and coast with `--kokkos all` (which rebuilt the tables until commit d6b321af made `ST4_TABLES` opt-in) and `--kokkos SRCE,ST4_TABLES`, `switch_lab_ompg` and `switch_lab_shrd`, every output byte-identical to the Fortran of the same executable and to `--ww3-noaa`.
 
 ## Static parity
 

@@ -1,12 +1,13 @@
 # Examples
 
-Two hand-written cases, plus a catalogue of the upstream regression tests. They are the
+Two hand-written cases and one staged from them, plus a catalogue of the upstream regression tests. They are the
 real treasure and are far better than anything I could write from scratch.
 
 | Dir | What | Needs external data? |
 |---|---|---|
 | `01-fetch-limited-growth/` | Cartesian box, flat bottom, constant wind. Compares against the classic empirical growth laws. | No |
 | `02-regional-real-forcing/` | 0.1° spherical grid off southern Brazil, GEBCO bathymetry, GFS winds from NOMADS, partitioned + spectral output. | Yes (GEBCO; GFS via `get_gfs.sh`) |
+| `03-fresh-forcing/` | `just run --case <dir> --wind ifs` on a triangular grid (WW3's `ww3_tp2.6`) and on example 02's regular grid with a flat test bathymetry: one command, any runtime, the newest IFS wind. | No (the wind is fetched by the command) |
 
 Start with 01. It runs in a minute and has an analytic answer, so if it's wrong you know
 your build is wrong rather than your configuration.

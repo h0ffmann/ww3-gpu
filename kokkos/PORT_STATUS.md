@@ -202,7 +202,7 @@ itself stays as the benchmark's frozen input
 **L2** is the validation now: a WW3 regtest replay. `scripts/ww3-gpu.sh --ww3-gpu --cpu`
 runs WW3 from one executable with `WW_KOKKOS_SNL1` flipped, compares the NetCDF
 output field by field with `kokkos/tools/nccmp-tol`, then compares the Kokkos run
-pair to pair with `--ww3` (WW3 built without the KOKKOS switch). The caller patch
+pair to pair with `--ww3-noaa` (WW3 built without the KOKKOS switch). The caller patch
 lives on the h0ffmann/WW3 branch `ww3-gpu/kokkos-st4` (`src/fortran_iface/PATCH.md`);
 nothing in this repository modifies `WW3/`. The WW3 regtest matrix of WFIP-0003
 (`just ww3-gpu-matrix`, CTest in `regtests/` since 2026-10-15) extends the replay to WW3's own

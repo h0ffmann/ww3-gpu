@@ -118,7 +118,7 @@ def from_perf(perf):
         "study": f"ww3-vs-ww3gpu-{kv['case']}-{kv['backend']}-{kv['date']}",
         "date": kv["date"],
         "routine": f"WW3 end to end (ww3_shel): pure NOAA WW3 against ww3-gpu with {kv['parts']}",
-        "what": (f"ww3_shel wall time, case {kv['case']}, {kv['switch']}: --ww3 is NOAA WW3 from WW3-noaa/, "
+        "what": (f"ww3_shel wall time, case {kv['case']}, {kv['switch']}: --ww3-noaa is NOAA WW3 from WW3-noaa/, "
                  f"--ww3-gpu the fork with those parts on Kokkos {kv['backend']} and the rest in Fortran; "
                  f"{n} runs of each, alternated, every output byte-identical to run 1's"),
         "machine": (f"{kv['cpu']} ({kv['threads']} hardware threads){gpu}"
@@ -129,13 +129,13 @@ def from_perf(perf):
         "commit": kv["commit"] or None,
         "ww3_commit": kv["ww3_commit"],
         "regtest": (f"passed: {kv['command']} (nccmp-tol PASS against the Fortran of the same executable "
-                    f"and against --ww3, before the timed runs)"
+                    f"and against --ww3-noaa, before the timed runs)"
                     + ("; GPU: judged by tolerance, not bits (ADR-0014)" if kv["backend"] == "cuda" else "")),
         "statistic": f"median of {n} runs",
         "columns": [["build", "backend"], ["ww3_shel median (s)", "median_s"], ["runs (s)", "runs_s"],
-                    ["--ww3 median / this median", "ratio"]],
+                    ["--ww3-noaa median / this median", "ratio"]],
         "runs": [
-            {"backend": f"--ww3, pure NOAA WW3 ({kv['baseline']})", "command": kv["command"],
+            {"backend": f"--ww3-noaa, pure NOAA WW3 ({kv['baseline']})", "command": kv["command"],
              "median_s": m3, "runs_s": kv["ww3_s"], "ratio": "1.00x"},
             {"backend": f"--ww3-gpu, {kv['parts']} on {kv['backend']}", "command": kv["command"],
              "median_s": m1, "runs_s": kv["ww3gpu_s"], "ratio": f"{m3 / m1:.2f}x"},

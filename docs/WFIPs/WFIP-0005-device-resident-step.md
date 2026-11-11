@@ -12,7 +12,7 @@
 | **Effort vs Gain** | do when the batched `W3SRCE` shim lands: without it every unit here re-does its packing; with it, unit 1 can start the same day |
 | **Depends on** | the batched shim of PR #173 (its device buffers become the resident `VA`); the propagation lane's per-call wiring of `W3XYP3`, `W3KTP3`, `W3QCK3`, `W3CFLXY` (§5.3, unit 3a); ADR-0014 accepted for the GPU verdict; the owner at the terminal for every GPU run |
 | **Blocked by** | none |
-| **Risk** | the GPU run passes `nccmp-tol` but is not faster than `--ww3` on 32 threads, because the `W3SRCE` body runs on one thread per team (`srce_kernel.hpp:176,267,277,396`) and the H100 wins only on points, not inside a point |
+| **Risk** | the GPU run passes `nccmp-tol` but is not faster than `--ww3-noaa` on 32 threads, because the `W3SRCE` body runs on one thread per team (`srce_kernel.hpp:176,267,277,396`) and the H100 wins only on points, not inside a point |
 
 ### Readiness
 
@@ -38,12 +38,12 @@ bit-for-bit gate, built on the batched `W3SRCE` shim.
 ## 2. Motivation
 
 Phase 1 copies one sea point per call and is slower than the Fortran on the CPU: `bench_small`
-(120 x 80, 9 520 sea points, NK=NTH=24, NSPEC 576, 24 global steps) runs in 20.73 s with `--ww3`
+(120 x 80, 9 520 sea points, NK=NTH=24, NSPEC 576, 24 global steps) runs in 20.73 s with `--ww3-noaa`
 on `switches/switch_lab_ompg` and 32 threads, and in 248.53 s with the Kokkos DIA on the OpenMP
 backend, one point per call behind `!$OMP CRITICAL`, one run each (v, the owner's workstation,
 Intel Core i9-14900, 2026-10-17; not yet a `bench/results/` record ⚠). On a GPU each of those calls
 would be about ten PCIe copies and one launch for one point's work (ADR-0013, "What crosses
-between host and device"), so a phase 1 GPU run is expected slower than `--ww3`, not faster ⚠.
+between host and device"), so a phase 1 GPU run is expected slower than `--ww3-noaa`, not faster ⚠.
 
 The batched shim removes the per-call latency but not the bytes: it still moves the whole
 spectrum to the device and back once per step, and `W3GATH`/`W3SCAT`, which the Fortran runs
@@ -64,7 +64,7 @@ ran where. After, `log.ww3` also carries a traffic line, printed by the resident
 ```
 
 and `just perf-ww3-gpu full 3`, run by the owner, prints the median of three `ww3_shel` wall
-times for `--ww3` (32 threads) and `--ww3-gpu --gpu`, then the `nccmp-tol` table of every field.
+times for `--ww3-noaa` (32 threads) and `--ww3-gpu --gpu`, then the `nccmp-tol` table of every field.
 The line above is the shape, not a result ⚠; its numbers come from §5.5 and are checked by §7.
 
 ## 4. Sources and dependencies reviewed
@@ -190,7 +190,7 @@ Each unit is one PR, on a fork branch from `ww3-gpu/kokkos-wire-base` (`PATCH.md
 and `--ww3-gpu full --cpu --kokkos all`, each with `WW3GPU_SWITCH=switch_lab_ompg` (the default)
 and `WW3GPU_SWITCH=switch_lab_shrd`, with `cmp` finding `out_grd.ww3`, `out_pnt.ww3`,
 `restart.ww3` and the `ww3_ounf` file byte-identical to the Fortran of the same executable and to
-`--ww3`, as the 2026-10-16 checkpoint did (`PATCH.md` §8); ADR-0011 adds the matrix at the pin
+`--ww3-noaa`, as the 2026-10-16 checkpoint did (`PATCH.md` §8); ADR-0011 adds the matrix at the pin
 move. "Lane" names the sibling checkouts of this machine (`git -C <checkout> branch
 --show-current` over the owner's sibling checkouts, 2026-10-17): the propagation lane is `ww3-gpu-prop`
 (`claude/42-port-propagation`), `ww3-gpu-prop3` (detached at `898635f`, with an untracked
@@ -263,7 +263,7 @@ over points (none in these kernels) would be asked about first.
 - [ ] Unit 5 merged: `W3OUTG` on `d_va`, the `ww3_ounf` file byte-identical on the CPU, one `B_VA` D2H in the full run (the restart): `WW_KOKKOS_VA_COUNT=1 just full-ww3-gpu`
 - [ ] The CUDA build compiles every unit and the GPU smoke passes `nccmp-tol` under the owner's supervision: `just smoke-ww3-gpu gpu`
 - [ ] A dated `docs/log/` entry records each checkpoint, its wall time and any difference bisected by flag: `ls docs/log/2026-*-resident-*.md`
-- [ ] The owner's supervised `just perf-ww3-gpu full 3` ran, `nccmp-tol` passed on every listed field, the GPU median is lower than `--ww3`'s on OpenMP with 32 threads, and the record says "GPU: judged by tolerance, not bits": `just perf-ww3-gpu full 3 && python3 scripts/results.py record && python3 scripts/results.py check`
+- [ ] The owner's supervised `just perf-ww3-gpu full 3` ran, `nccmp-tol` passed on every listed field, the GPU median is lower than `--ww3-noaa`'s on OpenMP with 32 threads, and the record says "GPU: judged by tolerance, not bits": `just perf-ww3-gpu full 3 && python3 scripts/results.py record && python3 scripts/results.py check`
 
 ## 8. Risks, limitations, and honest caveats
 
@@ -333,7 +333,7 @@ over points (none in these kernels) would be asked about first.
 - Point and track output on `bench_small`: gather the output points on the device, or pay a
   `B_VA` copy at their times? **Default:** pay the copy and count it; revisit if the traffic line
   shows it dominates.
-- What is the baseline unit 6 must beat? **Default:** `--ww3` on `switch_lab_ompg` with every
+- What is the baseline unit 6 must beat? **Default:** `--ww3-noaa` on `switch_lab_ompg` with every
   thread, median of three, from the same `perf-ww3-gpu` run and recorded by
   `scripts/results.py record`; the owner's 20.73 s of 2026-10-17 is the expected size ⚠.
 

@@ -136,7 +136,7 @@ Not by the regtest matrix. The CPU replay ran it inside WW3, 2026-10-17 (v; Open
 5.2.2, gfortran/g++ 16.2.0, fork `e0cc8ee9`): `bash scripts/ww3-gpu.sh --ww3-gpu full|smoke|coast
 --cpu --kokkos SRCE,XYP3,KTP3,OUTG`, plain and with `WW_KOKKOS_VA_RESIDENT=1`, on `switch_lab_ompg`
 and `WW3GPU_SWITCH=switch_lab_shrd`: every output file `cmp`-equal to the Fortran of the same
-executable and to `--ww3` (the NetCDF only differs from `--ww3` in `WAVEWATCH_III_switches`), 13
+executable and to `--ww3-noaa` (the NetCDF only differs from `--ww3-noaa` in `WAVEWATCH_III_switches`), 13
 Kokkos calls in full and coast; the smoke requests `WBT` and `SKW` and ran the Fortran fallback.
 `full` writes `HS` alone and coast `HS FP DIR DP T0M1`, so a diagnostic `bench_small` beside the
 script asked for 36 output names (every field this port computes, the 3-D ones and `P2SMS` with

@@ -61,18 +61,29 @@ toolchain-smoke:
     just -f {{pratico}}/justfile smoke
 
 # ---------------------------------------------------------------------
-# WW3 two ways (scripts/ww3-gpu.sh): --ww3, pure NOAA WW3 from WW3-noaa/; --ww3-gpu, WW3 built
-# with the KOKKOS switch from the h0ffmann/WW3 branch ww3-gpu/kokkos-pnt and linked to kokkos/.
-# --ww3-gpu runs on the CPU (Kokkos OpenMP) unless asked: `just smoke-ww3-gpu gpu` runs CUDA, and only
-# with a human supervising (AGENTS.md hard rule; it asks at the terminal).
+# One command, six runtimes (scripts/ww3-gpu.sh, docs/RUN_COMMAND_202611.md): --ww3, MetOcean's
+# WW3 7.14 from WW3-metocean/, the reference; --ww3-gpu --cpu or --gpu, WW3 built with the KOKKOS
+# switch from the h0ffmann/WW3 fork and linked to kokkos/; --chaceon --cpu or --gpu (--cceon),
+# the Rust port; --ww4, WAVEWATCH IV when it is released. --ww3-gpu runs on the CPU (Kokkos
+# OpenMP) unless asked: `just smoke-ww3-gpu gpu` runs CUDA, and only with a human supervising
+# (AGENTS.md hard rule; it asks at the terminal). The Kokkos run is compared pair to pair with
+# --ww3-noaa, pure NOAA WW3 from WW3-noaa/, the commit the fork branched from.
 # ---------------------------------------------------------------------
 
-# Both smoke tests: WW3 as written, then WW3 with the Kokkos port (ww3_ts1, seconds on a CPU).
+# Run a case in one of the six runtimes, e.g. `just run --ww3 smoke`, `just run --ww3-gpu full --cpu`, `just run --chaceon smoke`, `just run --ww3 --case <dir> --wind ifs --temp cmems`; `just run --help` lists the options.
+run *args:
+    @bash scripts/ww3-gpu.sh "$@"
+
+# Both smoke tests: MetOcean's WW3 as written, then WW3 with the Kokkos port (ww3_ts1, seconds on a CPU).
 smoke: smoke-ww3 smoke-ww3-gpu
 
-# WW3 as written: regtest ww3_ts1 (one point, ST4 + NL1, 10 model days) must finish.
+# MetOcean's WW3 as written: regtest ww3_ts1 (one point, ST4 + NL1, 10 model days) must finish.
 smoke-ww3:
     bash scripts/ww3-gpu.sh --ww3 smoke
+
+# chaceon, the Rust port, on ww3_ts1, compared byte for byte with MetOcean's WW3 built with chaceon's switch.
+smoke-chaceon:
+    bash scripts/ww3-gpu.sh --chaceon smoke
 
 # WW3 with the Kokkos DIA: ww3_ts1 with the Fortran and the Kokkos W3SNL1, compared by nccmp-tol.
 smoke-ww3-gpu device="cpu":
@@ -86,9 +97,9 @@ full-ww3:
 full-ww3-gpu device="cpu":
     bash scripts/ww3-gpu.sh --ww3-gpu full --{{device}}
 
-# The forced case, as written: coast (80 x 50, currents, water levels, ice, boundary input, FLCK).
+# The forced case, as written by NOAA at the fork's base: coast (80 x 50, currents, water levels, ice, boundary input, FLCK). MetOcean's ww3_bounc stops on its boundary spectra, so not --ww3.
 coast-ww3:
-    bash scripts/ww3-gpu.sh --ww3 coast
+    bash scripts/ww3-gpu.sh --ww3-noaa coast
 
 # The forced case with the Kokkos parts <parts> (resident: SRCE, XYP3, KTP3), against the Fortran.
 coast-ww3-gpu parts="resident" device="cpu":
@@ -239,21 +250,21 @@ dsmoke-ww3-gpu-cuda:
 dfull-ww3-gpu-cuda:
     bash scripts/docker.sh run-cuda --ww3-gpu full --gpu
 
-# `just smoke` in the image: WW3 as written, then WW3 with the Kokkos DIA.
+# In the image: NOAA's WW3 as written, then WW3 with the Kokkos DIA.
 dsmoke: dsmoke-ww3 dsmoke-ww3-gpu
 
-# `just smoke-ww3` in the image.
+# NOAA's WW3 in the image (--ww3-noaa, the fork's base): the images do not hold MetOcean's WW3, `just smoke-ww3`, yet.
 dsmoke-ww3:
-    bash scripts/docker.sh run --ww3 smoke
+    bash scripts/docker.sh run --ww3-noaa smoke
 
 # `just smoke-ww3-gpu [gpu]` in an image: the CPU image, or with `gpu` the GPU image
 # (just dbuild-cuda), which asks the supervising human for "yes" (AGENTS.md).
 dsmoke-ww3-gpu device="cpu":
     {{ if device == "gpu" { "bash scripts/docker.sh run-cuda --ww3-gpu smoke --gpu" } else if device == "cpu" { "bash scripts/docker.sh run --ww3-gpu smoke" } else { error("dsmoke-ww3-gpu: cpu or gpu") } }}
 
-# `just full-ww3` in the image.
+# The expensive case with NOAA's WW3 in the image (--ww3-noaa), as dsmoke-ww3.
 dfull-ww3:
-    bash scripts/docker.sh run --ww3 full
+    bash scripts/docker.sh run --ww3-noaa full
 
 # `just full-ww3-gpu [gpu]` in an image, as dsmoke-ww3-gpu.
 dfull-ww3-gpu device="cpu":
@@ -342,9 +353,17 @@ bench ww3=ww3_src: (kokkos-build "openmp-release")
 bench-case *args: (kokkos-build "openmp-release")
     "{{kokkos_dir}}/build/openmp-release/tools/bench_case/ww_bench_case" "$@"
 
-# Fetch one ECMWF IFS cycle from Open Data (no key) as ww3_prnc wind forcing, e.g. `just ifs-get -c 00 -H 120 -b -52,-44,-32,-24`; `--help` lists the options.
+# Fetch one ECMWF IFS cycle from Open Data (no key) as ww3_prnc wind forcing, e.g. `just ifs-get -c 00 -H 120 -b -52,-44,-32,-24`; `--help` lists the options. `just wind` is the same recipe: `just run --ww3 --case <dir> --wind "$(just wind --print-path -b W,E,S,N)"`.
 ifs-get *args:
     @if command -v grib_to_netcdf >/dev/null && command -v ncks >/dev/null; then bash scripts/ifs_get.sh "$@"; else {{ww3_shell}} bash scripts/ifs_get.sh "$@"; fi
+
+alias wind := ifs-get
+
+# Fetch sea surface temperature from the Copernicus Marine global forecast (an account is needed), e.g. `just cmems-get -s 2026111100 -H 120 -b -52,-44,-32,-24`; `--help` lists the options. `just temp` is the same recipe, for `just run ... --temp "$(just temp --print-path -b W,E,S,N)"`.
+cmems-get *args:
+    @bash scripts/cmems_get.sh "$@"
+
+alias temp := cmems-get
 
 # Build the GPU sandbox (needs nvfortran; `just gpu CC_ARCH=cc90` for an H100).
 gpu *args:
