@@ -1,0 +1,29 @@
+# The figure index: one row per drawing of dark.tsv. scripts/archify.sh site groups the pages by it,
+# scripts/archify_dress.py stamps the `ww3` text under each picture (PNG, PDF and page), and
+# tests/test_archify_index.py fails when a drawing has no row, a row has no stamp, or a page or a
+# group does not exist. Facts for the website (ADR-0024): piabrota/nix-os may read this file.
+# slug: docs/archify/<slug>.json; lang: en or pt-BR; group: a row of groups.tsv; twin: the same
+# drawing in the other language, or empty; page: the repository page the figure illustrates, with
+# its anchor; question: the one question the figure answers; ww3: the WAVEWATCH III the figure is
+# drawn from, printed under the picture. The default names the reference --ww3 (MetOcean
+# metocean/WW3, tag 7.14.mos-92e2cf6, VERSION 7.14) and the fork the port lives on (WW3/ at
+# 96892c95, on NOAA-EMC/WW3 03adda91, VERSION 7.14); a drawing whose Fortran lines were read at
+# another commit names that commit instead.
+slug	lang	group	twin	page	question	ww3
+ww3-gpu-at-a-glance	en	overview	ww3-gpu-at-a-glance-pt	README.md#how-it-works	What does ww3-gpu build, from which sources, and on which runtime does each run mode run?	WW3 7.14 · reference --ww3: MetOcean 7.14.mos-92e2cf6 · port: h0ffmann/WW3 96892c95 (NOAA 03adda91)
+ww3-gpu-at-a-glance-pt	pt-BR	overview	ww3-gpu-at-a-glance	README.pt-BR.md#como-funciona	O que o ww3-gpu compila, de quais fontes, e em qual ambiente roda cada modo?	WW3 7.14 · referência --ww3: MetOcean 7.14.mos-92e2cf6 · port: h0ffmann/WW3 96892c95 (NOAA 03adda91)
+ww3-gpu-runtimes	en	overview	ww3-gpu-runtimes-pt	README.md#how-it-works	Which six runtimes does one ww3-gpu command run, and whose bits must each give?	WW3 7.14 · reference --ww3: MetOcean 7.14.mos-92e2cf6 · port: h0ffmann/WW3 96892c95 (NOAA 03adda91)
+ww3-gpu-runtimes-pt	pt-BR	overview	ww3-gpu-runtimes	README.pt-BR.md#como-funciona	Quais seis runtimes um comando do ww3-gpu roda, e de quem cada um precisa dar os bits?	WW3 7.14 · referência --ww3: MetOcean 7.14.mos-92e2cf6 · port: h0ffmann/WW3 96892c95 (NOAA 03adda91)
+ww3-gpu-vs-noaa-architecture	en	overview		docs/WW3_GPU_VS_NOAA_202610.md#the-two-builds	What is the same and what differs between NOAA's WW3 and ww3-gpu?	WW3 7.14 · reference --ww3: MetOcean 7.14.mos-92e2cf6 · Fortran lines: fork 769c44f0 (NOAA 03adda91)
+ww3-gpu-parity-workflow	en	parity		docs/WW3_GPU_VS_NOAA_202610.md#the-verdict	How is a ww3-gpu result judged against NOAA's WW3?	WW3 7.14 · reference --ww3: MetOcean 7.14.mos-92e2cf6 · port: h0ffmann/WW3 96892c95 (NOAA 03adda91)
+ww3-gpu-step-sequence	en	parity		docs/WW3_GPU_VS_NOAA_202610.md#one-time-step	Where does a time step leave the Fortran in ww3-gpu, and what does NOAA's WW3 do at the same place?	WW3 7.14 · reference --ww3: MetOcean 7.14.mos-92e2cf6 · Fortran lines: fork 769c44f0 (NOAA 03adda91)
+ww3-gpu-port-lifecycle	en	parity		docs/WW3_GPU_VS_NOAA_202610.md#a-routines-states	Which states does a WW3 routine pass through on its way to Kokkos?	WW3 7.14 · reference --ww3: MetOcean 7.14.mos-92e2cf6 · port: h0ffmann/WW3 96892c95 (NOAA 03adda91)
+ww3-gpu-device-math-dataflow	en	parity		docs/WW3_GPU_VS_NOAA_202610.md#device-math	Why can a GPU result carry the bits of NOAA's CPU run?	WW3 7.14 · reference --ww3: MetOcean 7.14.mos-92e2cf6 · port: h0ffmann/WW3 96892c95 (NOAA 03adda91)
+kokkos-one-source-backends	en	kokkos		kokkos/README.md#why-kokkos-not-fortran-90-in-plain-words	How does one Kokkos source reach the CPU and the GPU of the lab's workstation?	WW3 7.14 · reference --ww3: MetOcean 7.14.mos-92e2cf6 · port: h0ffmann/WW3 96892c95 (NOAA 03adda91)
+kokkos-interop-one-binary	en	kokkos		kokkos/README.md#the-bindc-boundary	How do the original Fortran routine and its Kokkos kernel coexist in one WW3 binary?	WW3 7.14 · reference --ww3: MetOcean 7.14.mos-92e2cf6 · port: h0ffmann/WW3 96892c95 (NOAA 03adda91)
+sds4-sdscum-branches	en	triton		docs/W3SDS4_TRITON_202610.md#why-sdscum-decides-the-cost	Which branch of the cumulative-breaking term does W3SDS4 run, and what does each cost?	WW3 7.14 · reference --ww3: MetOcean 7.14.mos-92e2cf6 · port: h0ffmann/WW3 96892c95 (NOAA 03adda91)
+triton-port-plan	en	triton		docs/W3SDS4_TRITON_202610.md#the-port-task-by-task	In what order is W3SDS4 ported to Triton, and what gate does each step pass?	WW3 7.14 · reference --ww3: MetOcean 7.14.mos-92e2cf6 · port: h0ffmann/WW3 96892c95 (NOAA 03adda91)
+triton-benchmark-arms	en	triton		docs/W3SDS4_TRITON_202610.md#what-the-benchmark-compares	Which implementations of W3SDS4 are timed, and when does a timing count?	WW3 7.14 · reference --ww3: MetOcean 7.14.mos-92e2cf6 · port: h0ffmann/WW3 96892c95 (NOAA 03adda91)
+weathernext-wind-chain	en	triton		docs/W3SDS4_TRITON_202610.md#where-weathernext-3-enters	How does WeatherNext 3 enter the benchmark, and what are the waves compared with?	WW3 7.14 · reference --ww3: MetOcean 7.14.mos-92e2cf6 · port: h0ffmann/WW3 96892c95 (NOAA 03adda91)
+triton-g-doze-semanas	pt-BR	triton		docs/W3SDS4_TRITON_PLANO_202610.pt.md#3-triton-g-em-doze-semanas	Em que ordem o braço Triton G acontece em três meses, e onde ficam os portões?	WW3 7.14 · referência --ww3: MetOcean 7.14.mos-92e2cf6 · port: h0ffmann/WW3 96892c95 (NOAA 03adda91)
+openrig-port-feed	en	work		docs/WFIPs/WFIP-0007-openrig-port-factory.md#50-how-the-rig-is-fed	How does work enter the ww3-gpu-port rig, and where does it leave?	WW3 7.14 · reference --ww3: MetOcean 7.14.mos-92e2cf6 · port: h0ffmann/WW3 96892c95 (NOAA 03adda91)

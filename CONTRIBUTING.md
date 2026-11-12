@@ -98,7 +98,9 @@ and the alternatives weighed are
 
 Diagrams are Archify drawings in the dark look of [`DESIGN.md`](DESIGN.md), "Pictures", never
 Mermaid (the owner, 11 November 2026). A drawing's source is `docs/archify/<slug>.json` with a row
-in `docs/archify/dark.tsv`; `just archify png` draws `docs/archify/<slug>.png`, which the page
+in `docs/archify/dark.tsv` and in `docs/archify/figures.tsv`, which names its group, its question,
+the page it illustrates and the WAVEWATCH III it is drawn from (printed under the picture);
+`just archify png` draws `docs/archify/<slug>.png`, which the page
 shows, linked to the drawing's zoomable page at `/figures/<slug>/` on the website, and a *How to
 read this figure* card (takeaway, how to read, what is not shown, evidence) follows it for readers
 new to the topic. [`docs/archify/README.md`](docs/archify/README.md) has the commands.

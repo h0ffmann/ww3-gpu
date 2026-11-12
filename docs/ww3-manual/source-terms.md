@@ -72,7 +72,8 @@ $$\begin{pmatrix}\delta S_{nl,1}\\ \delta S_{nl,3}\\ \delta S_{nl,4}\end{pmatrix
 At the pin `manual/eqs/NL1.tex` is rewritten around the same $\delta S_{nl}$ (two mirror
 quadruplets, each component exchanging with 12 others before the bilinear interpolation), and
 `NL1` also holds the Gaussian Quadrature Method, selected by a negative `IQTYPE` in `SNL1` (v,
-`model/src/w3gridmd.F90:886`, `:1023` at `03adda91`). The supplied PDF has neither.
+`model/src/w3gridmd.F90:886`, `:1023` at `03adda91`). The supplied PDF has neither. At MetOcean's 7.14, the `--ww3` reference, `NL1` is the DIA alone: no GQM text, no
+`W3SNLGQM` (v, read at `92e2cf66` on 2026-11-12; [README](README.md#at-metoceans-714-the-reference)).
 
 ## `ST3`: the input `ST4` starts from (2.3.10)
 

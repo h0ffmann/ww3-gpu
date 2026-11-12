@@ -11,7 +11,12 @@ execution: code
 
 **Parked,** 2026-11-01: the owner moved the session to MPI
 ([plan](2026-11-01-002-mpi-kokkos-plan.md), [ADR-0020](../ADRs.md#adr-0020)).
-Nothing below was translated. The ADR-0017 limits in this page hold until ADR-0020 is accepted.
+The ADR-0017 limits in this page hold until ADR-0020 is accepted.
+
+**Units U1 and U2 translated,** 2026-11-12 (goal `UrLTXtPC-4817`, the owner's request "continue
+working in the project goal, prepare a big PR"): `W3CSPC`, `W3GFCL_R8`, `W3CGDM_R4`, `W3UCUR`,
+`W3UBPT`, `W3UICE`, one translator and one fresh reviewer per unit
+([log](../log/2026-11-12-batch4-u1-u2-kokkos-translation.md)). U3 to U7 are not started.
 
 ## Goal Capsule
 

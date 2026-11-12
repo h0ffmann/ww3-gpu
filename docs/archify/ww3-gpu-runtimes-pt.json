@@ -5,7 +5,7 @@
     "title": "Seis Runtimes do ww3-gpu",
     "output": "docs/archify/ww3-gpu-runtimes-pt.html",
     "quality_profile": "showcase",
-    "locale": "en",
+    "locale": "pt-BR",
     "repository": {
       "url": "https://github.com/h0ffmann/ww3-gpu.git",
       "link_mode": "local-only",

@@ -156,7 +156,7 @@ Run the gates of what you changed before calling it done. CI (`.github/workflows
 | `kokkos/ports.tsv`, `kokkos/port_claims.tsv` or `docs/data/ww3_*_gprof.tsv` | `python3 scripts/port_score.py --write`, then `--check` (CI runs `--self-test` and `--check`) |
 | Fortran in `gpu/`, `examples/` | they must compile with gfortran with directives ignored |
 | a Mermaid fence or its page | `python3 scripts/figures.py check`, then `just figures` to re-render and `python3 -m unittest tests/test_figures.py` |
-| `docs/archify/*.json` or the `vendor/archify` pin | `just archify check`, then `just archify refresh` to redraw the stale PDFs (`/drawings-refresh` does both kinds); not run in CI or on a merge. For a drawing of `docs/archify/paper.tsv`, also `just archify fit` and `just preprint`, then look at the figure's page at 100 % |
+| `docs/archify/*.json`, `figures.tsv`, `groups.tsv` or the `vendor/archify` pin | `python3 -m unittest tests/test_archify_index.py` (CI runs it: every drawing has its row, stamp, page and group); `just archify check`, then `just archify refresh` to redraw the stale PDFs (`/drawings-refresh` does both kinds); not run in CI or on a merge. For a drawing of `docs/archify/paper.tsv`, also `just archify fit` and `just preprint`, then look at the figure's page at 100 % |
 | `pubs/proposal/` | `just proposal-lint`, the `revisor-proposta` review, `just proposal-review-record <parecer>`, `just proposal-review-check` |
 | `scripts/*.py` | `python3 -m unittest discover tests` |
 | `bench/results/` or a table it quotes | `just results check` (`just results table` regenerates) |
@@ -219,7 +219,7 @@ copied into this repository (`CONTRIBUTING.md`, "Don't vendor WW3 source. Script
 exceptions are a `bind(C)` shim module and the caller patch described in
 `kokkos/src/fortran_iface/PATCH.md`, which live on a fork branch, behind a switch, and leave the
 original routine selectable. Every statement about WW3 cites `model/src/<file>.F90:<line>` at the
-pinned commit (`WW3@6d1bcdfe` at the time of writing), never a comment, a paper or memory.
+pinned commit (`WW3@9601dc1e` on 2026-11-12, `just src-st`), never a comment, a paper or memory.
 Namelists are written against the templates in `$WW3/model/nml/` and are `⚠` until executed.
 
 How WW3 works, as its manual says, is summarised by topic in
@@ -421,7 +421,9 @@ Portuguese. Placeholders such as `(REFERÊNCIA)` are defects, not notes.
 
 The owner, 11 November 2026: no diagram is Mermaid. Every diagram is an Archify drawing in the
 dark look of [`DESIGN.md`](DESIGN.md), "Pictures": its source is `docs/archify/<slug>.json`, it
-has a row in `docs/archify/dark.tsv` and in [`docs/archify/README.md`](docs/archify/README.md), and
+has a row in `docs/archify/dark.tsv`, in [`docs/archify/README.md`](docs/archify/README.md) and in
+[`docs/archify/figures.tsv`](docs/archify/figures.tsv) (its group, the question it answers, the page
+it illustrates and the WAVEWATCH III it is drawn from, which the picture prints under itself), and
 the page it illustrates shows `docs/archify/<slug>.png` linked to its zoomable page on the website
 (`/figures/<slug>/`, built by `pages.yml`), followed by a *How to read this figure* card (*Como ler
 esta figura* in a `.pt.` file): takeaway, how to read, not shown, evidence. `just archify png`
