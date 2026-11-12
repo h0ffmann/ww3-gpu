@@ -6,7 +6,9 @@
 scripts/archify.sh png, pdf and site call it. It sets docs/archify/ww3-gpu.css and the site's fonts
 over the page, cuts the viewBox to the slug's frame in docs/archify/dark.tsv (a height, or a height
 with the x, y and width of the frame), and, with --bar, puts the site's slim bar on top (Pages). It
-is the manner of piabrota/nix-os's `just figure`.
+is the manner of piabrota/nix-os's `just figure`. Under the drawing it prints the WW3 the figure is
+drawn from, the `ww3` column of docs/archify/figures.tsv, in a strip of its own, so every PNG, PDF
+and page carries it.
 """
 import html
 import pathlib
@@ -48,6 +50,31 @@ def frames():
     return found
 
 
+# The strip under the drawing that carries its WW3 reference, in viewBox units: the text is 1/69 of
+# the frame's width, never under 9 units (7.1 pt on the paper row, 622 units at 174 mm, above the
+# 6 pt floor of DESIGN.md), so a wide drawing does not shrink it out of sight; the strip is twice it.
+STAMP_MIN = 9
+STAMP_PER_WIDTH = 69
+
+
+def figure_rows():
+    """slug -> row of figures.tsv, as a dict of its header's columns."""
+    lines = [line.rstrip("\n").split("\t") for line in open(ARCHIFY / "figures.tsv", encoding="utf-8")
+             if line.strip() and not line.startswith("#")]
+    head, body = lines[0], lines[1:]
+    return {r[0]: dict(zip(head, r)) for r in body if len(r) == len(head)}
+
+
+def stamp(box, text):
+    """The viewBox grown by the strip, and the <text> drawn in it, left-aligned with the drawing."""
+    x, y, w, h = (float(v) for v in box.split())
+    size = max(STAMP_MIN, round(w / STAMP_PER_WIDTH, 1))
+    grown = f"{x:g} {y:g} {w:g} {h + 2 * size:g}"
+    label = (f'<text class="wg-ref" x="{x + 8:g}" y="{y + h + 1.4 * size:g}" font-size="{size:g}" '
+             f'fill="#8FA3AD" font-family="JetBrains Mono,ui-monospace,monospace">{html.escape(text)}</text>')
+    return grown, label
+
+
 def view_box(frame, width, height):
     """The viewBox of a drawing Archify drew `width` by `height`, cut to its dark.tsv frame."""
     if not frame:
@@ -63,6 +90,11 @@ def dress(src, slug, bar=None):
     if not m:
         raise SystemExit("archify_dress: no <svg viewBox> in the page")
     box = view_box(frames().get(slug), m.group(1), m.group(2))
+    ref = figure_rows().get(slug, {}).get("ww3", "")
+    if ref:
+        box, label = stamp(box, ref)
+        close = src.index("</svg>", src.index(m.group(0)))  # drawn last, over any background
+        src = src[:close] + label + src[close:]
     src = src.replace(m.group(0), f'<svg viewBox="{box}"', 1)
     css = (ARCHIFY / "ww3-gpu.css").read_text(encoding="utf-8")
     head = f'<link rel="stylesheet" href="{html.escape(FONTS)}"><style>{css}</style>'

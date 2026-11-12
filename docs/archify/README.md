@@ -48,6 +48,27 @@ README shows it. `site` is what `pages.yml` runs to publish the pages at
 cover the PNGs too: [`png.lock`](png.lock) records the sha256 of each drawing's JSON, the look,
 `dark.tsv` and the dresser, and the Archify commit.
 
+## The figure index and the WW3 under each picture
+
+[`figures.tsv`](figures.tsv) has one row per drawing of `dark.tsv`: its group, its twin in the
+other language, the page it illustrates (with its anchor), the one question it answers, and the
+WAVEWATCH III it is drawn from. [`groups.tsv`](groups.tsv) orders the groups and gives each the
+paragraph that opens it and leads to the next. Two scripts read them:
+
+- [`archify_dress.py`](../../scripts/archify_dress.py) prints the row's `ww3` text in a strip
+  under the drawing, so the PNG, the PDF and the page all name the WW3 they are drawn from: the
+  reference `--ww3` (MetOcean's WW3, tag `7.14.mos-92e2cf6`) and the fork the port lives on
+  (`WW3/` at `96892c95`, on NOAA-EMC/WW3 `03adda91`), or the commit whose Fortran lines a drawing
+  cites when it is another one. A changed stamp makes the drawing stale in `png.lock`.
+- [`archify_index.py`](../../scripts/archify_index.py) writes the site's `/figures/` index,
+  grouped, with each drawing's question, page, twin and stamp; each figure page's bar links the
+  page it illustrates.
+
+`python3 scripts/archify_index.py --check` (and `tests/test_archify_index.py`, which CI runs) fails
+when a drawing has no row, a row has no stamp or question, a page or its anchor does not exist, a
+group is not defined, or two twins do not name each other. The front page of the website
+(piabrota/nix-os, ADR-0024) may read the same two files.
+
 ## A drawing a paper prints
 
 A figure attached to a paper is drawn for its page and for the eye ([`DESIGN.md`](../../DESIGN.md),
@@ -80,6 +101,8 @@ Every drawing below also has its dark `<slug>.png` here and its page at
 | [ww3-gpu-device-math-dataflow.json](ww3-gpu-device-math-dataflow.json) | [PDF](ww3-gpu-device-math-dataflow.pdf) | dataflow | Why can a GPU result carry the bits of NOAA's CPU run? | [device math](../WW3_GPU_VS_NOAA_202610.md#device-math) |
 | [ww3-gpu-at-a-glance.json](ww3-gpu-at-a-glance.json) | [PDF](ww3-gpu-at-a-glance.pdf), [PNG](ww3-gpu-at-a-glance.png), [page](https://h0ffmann.github.io/ww3-gpu/figures/ww3-gpu-at-a-glance/) | architecture | What does ww3-gpu build, from which sources, and on which runtime does each run mode run? | [README](../../README.md); pt-BR: [ww3-gpu-at-a-glance-pt.json](ww3-gpu-at-a-glance-pt.json), [README.pt-BR](../../README.pt-BR.md) |
 | [ww3-gpu-runtimes.json](ww3-gpu-runtimes.json) | [PDF](ww3-gpu-runtimes.pdf), [PNG](ww3-gpu-runtimes.png), [page](https://h0ffmann.github.io/ww3-gpu/figures/ww3-gpu-runtimes/) | architecture | Which six runtimes does one ww3-gpu command run, and whose bits must each give? | [README](../../README.md), the preprint's Figure 1 ([`pubs/preprint/`](../../pubs/preprint/README.md)); pt-BR: [ww3-gpu-runtimes-pt.json](ww3-gpu-runtimes-pt.json), [README.pt-BR](../../README.pt-BR.md), the pt-BR preprint |
+| [ww3-gpu-at-a-glance-pt.json](ww3-gpu-at-a-glance-pt.json) | [PDF](ww3-gpu-at-a-glance-pt.pdf), [PNG](ww3-gpu-at-a-glance-pt.png), [page](https://h0ffmann.github.io/ww3-gpu/figures/ww3-gpu-at-a-glance-pt/) | architecture | O que o ww3-gpu compila, de quais fontes, e em qual ambiente roda cada modo? | [README.pt-BR](../../README.pt-BR.md); en: [ww3-gpu-at-a-glance.json](ww3-gpu-at-a-glance.json) |
+| [ww3-gpu-runtimes-pt.json](ww3-gpu-runtimes-pt.json) | [PDF](ww3-gpu-runtimes-pt.pdf), [PNG](ww3-gpu-runtimes-pt.png), [page](https://h0ffmann.github.io/ww3-gpu/figures/ww3-gpu-runtimes-pt/) | architecture | Quais seis runtimes um comando do ww3-gpu roda, e de quem cada um precisa dar os bits? | [README.pt-BR](../../README.pt-BR.md), the pt-BR preprint; en: [ww3-gpu-runtimes.json](ww3-gpu-runtimes.json) |
 | [sds4-sdscum-branches.json](sds4-sdscum-branches.json) | [PDF](sds4-sdscum-branches.pdf), [PNG](sds4-sdscum-branches.png), [page](https://h0ffmann.github.io/ww3-gpu/figures/sds4-sdscum-branches/) | architecture | Which branch of the cumulative-breaking term does W3SDS4 run, and what does each cost? | [SDSCUM](../W3SDS4_TRITON_202610.md#why-sdscum-decides-the-cost) |
 | [triton-port-plan.json](triton-port-plan.json) | [PDF](triton-port-plan.pdf), [PNG](triton-port-plan.png), [page](https://h0ffmann.github.io/ww3-gpu/figures/triton-port-plan/) | architecture | In what order is W3SDS4 ported to Triton, and what gate does each step pass? | [W3SDS4_TRITON_202610.md](../W3SDS4_TRITON_202610.md) |
 | [triton-benchmark-arms.json](triton-benchmark-arms.json) | [PDF](triton-benchmark-arms.pdf), [PNG](triton-benchmark-arms.png), [page](https://h0ffmann.github.io/ww3-gpu/figures/triton-benchmark-arms/) | architecture | Which implementations of W3SDS4 are timed, and when does a timing count? | [W3SDS4_TRITON_202610.md](../W3SDS4_TRITON_202610.md) |
