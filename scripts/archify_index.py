@@ -64,6 +64,9 @@ def problems():
             bad.append(f"{s}: lang {r['lang']!r}")
         if not r.get("question", "").strip():
             bad.append(f"{s}: no question")
+        if not re.fullmatch(r"[A-Za-z0-9_./-]+(#[A-Za-z0-9_-]+)?", r["page"]):
+            bad.append(f"{s}: page {r['page']!r} is not a plain path and anchor")  # archify.sh puts it in HTML
+            continue
         path, _, anchor = r["page"].partition("#")
         if not (ROOT / path).is_file():
             bad.append(f"{s}: page {path} does not exist")
