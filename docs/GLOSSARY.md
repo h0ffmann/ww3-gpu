@@ -501,6 +501,19 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | WMIOBS / WMIOHS / WMIOES / W3MPIP | "Stage internal boundary data in the data structure BPSTGE" / "Stage internal high-to-low data in the data structure HGSTGE" / "Stage internal same-rank data in the data structure EQSTGE" / "Prepare MPI persistent communication needed for WAVEWATCH I/O routines" `(v)` `WW3-noaa/model/src/wminiomd.F90:121`, `:1402`, `:2516`, `w3initmd.F90:5412` at `03adda91` | The sending side of `ww3_multi`'s exchanges, which read a grid's `VA` on the host between its `W3WAVE` calls, and the set-up of the MPI requests that send point-output spectra from `VA`; with the resident `VA` each reads its columns back first (`kokkos/src/fortran_iface/PATCH.md`, section 26). | [docs/log/2026-10-18-ww3-multi-resident-va.md](log/2026-10-18-ww3-multi-resident-va.md) |
 | W3FLDG / W3FLDO | "Update input fields in the WAVEWATCH III generic shell from a WAVEWATCH III shell data file or write from preprocessor" / "Open and prepare WAVEWATCH III field files as used by the generic shell and the field preprocessor" `(v)` `w3fldsmd.F90:964-965`, `:116-117` | `W3FLDG` reads or writes one time record and the field records of `wind.ww3`, `level.ww3`, `current.ww3` and the others, gfortran unformatted big-endian; `W3FLDO` opens the unit and writes or checks its 40-byte header record (file id, field id, grid dimensions, filler, tide flag). | [kokkos/port_report/W3FLDG_KOKKOS.md](../kokkos/port_report/W3FLDG_KOKKOS.md), [kokkos/port_report/W3FLDO_KOKKOS.md](../kokkos/port_report/W3FLDO_KOKKOS.md) |
 | `MAPSF` / `MAPFS` | the maps between the sea point counter and the grid: `mapsf(isea,1..3)` = `ix`, `iy`, `ixy`; `mapfs(iy,ix)` = `isea`, 0 on land `(v)` the manual, 6.5.1 | Only sea points store a spectrum, so every loop over the grid goes through one of them. | [docs/ww3-manual/grids.md](ww3-manual/grids.md) |
+| W3CSPC | "Convert a set of spectra to a new spectral grid" `(v)` `w3cspcmd.F90:88`, the routine `:143-603` at `WW3@96892c95` | A conservative redistribution of each input bin's energy over the bins of another frequency/direction grid, with the interpolation tables kept between calls; translated host-only in batch 4. | [kokkos/port_report/W3CSPC_KOKKOS.md](../kokkos/port_report/W3CSPC_KOKKOS.md) |
+| W3GFCL / W3GFCL_R8 | "Find grid cell that encloses target point (bucket search)" `(v)` `w3gsrumd.F90:183`; the R8 body `:1369-1669` | Looks the point up in the buckets `GSU_CREATE` built, then tests the candidate cells with `W3CKCL` (and `W3NNSC` neighbours when asked); translated host-only in batch 4. | [kokkos/port_report/W3GFCL_R8_KOKKOS.md](../kokkos/port_report/W3GFCL_R8_KOKKOS.md) |
+| W3CKCL / W3DIST | "Check if point lies within grid cell" / "Compute distance between two points" `(v)` `w3gsrumd.F90:189`, `:194` | The cell test and the great-circle or Cartesian distance `W3GFCL` calls; translated in the same header as `W3GFCL_R8`. | [kokkos/port_report/W3GFCL_R8_KOKKOS.md](../kokkos/port_report/W3GFCL_R8_KOKKOS.md) |
+| W3CGDM / W3CGDM_R4 | "Compute curvilinear grid derivatives and metric" `(v)` `w3gsrumd.F90:190`; the R4 body `:4014-4363` | Finite-difference derivatives of the grid coordinates and the metric terms of a curvilinear grid, with weights from `GET_FDW3`/`W3FDWT` and stencils from `DXYDP`/`DXYDQ` (`:4183-4259`); translated host-only in batch 4, `DXYDP`/`DXYDQ` left as hooks. | [kokkos/port_report/W3CGDM_R4_KOKKOS.md](../kokkos/port_report/W3CGDM_R4_KOKKOS.md) |
+| W3FDWT / GET_FDW3 | "Compute finite-difference weights" `(v)` `w3gsrumd.F90:199`; `GET_FDW3` is the internal routine `:9582` that tabulates them for `W3CGDM` | Finite-difference weights of order `NFD`; translated with `W3CGDM_R4`. | [kokkos/port_report/W3CGDM_R4_KOKKOS.md](../kokkos/port_report/W3CGDM_R4_KOKKOS.md) |
+| DXYDP / DXYDQ | the derivatives of X and Y along the P and Q grid indices, internal routines of `W3GSRUMD` `(v)` `w3gsrumd.F90:8410`, `:8693` | Called by `W3CGDM` (`:4214`, `:4230`); not translated, a hook of the C++ `W3CGDM_R4`. | [kokkos/port_report/W3CGDM_R4_KOKKOS.md](../kokkos/port_report/W3CGDM_R4_KOKKOS.md) |
+| W3UBPT | "Update spectra at the active boundary points" `(v)` `w3updtmd.F90:1321`, the routine `:1329-1545` | Interpolates `ABPI0`/`ABPIN` (and `BBPI0`/`BBPIN`) in time and writes `VA = CG/SIG2 * spectrum` at the boundary points; translated in batch 4. | [kokkos/port_report/W3UBPT_KOKKOS.md](../kokkos/port_report/W3UBPT_KOKKOS.md) |
+| BBPI0 / BBPIN | "idem, secondary storage" (of `ABPI0`/`ABPIN`) `(v)` `w3odatmd.F90:247` | The second pair of boundary-spectrum records `W3UBPT` swaps in time. | [kokkos/port_report/W3UBPT_KOKKOS.md](../kokkos/port_report/W3UBPT_KOKKOS.md) |
+| FICE0 / FICEN | "Cut-off ice conc. for ice coverage" `(v)` `w3gdatmd.F90:192` | `W3UICE` compares the ice concentration with `FICEN` to mark ice-covered points and zero their spectrum. | [kokkos/port_report/W3UICE_KOKKOS.md](../kokkos/port_report/W3UICE_KOKKOS.md) |
+| AALPHA | "Minimum value of charnock parameter" `(v)` `w3gdatmd.F90:397` | `W3UICE` resets the Charnock parameter of an ice point to it under ST4. | [kokkos/port_report/W3UICE_KOKKOS.md](../kokkos/port_report/W3UICE_KOKKOS.md) |
+| W3ACTURN | "Rotates wave spectrum anticlockwise by angle alpha" `(v)` `w3servmd.F90:1309-1312` | Called by `W3UBPT` under `RTD` (`w3updtmd.F90:1496-1506`), which `switch_lab_shrd` does not compile; not translated. | [kokkos/port_report/W3UBPT_KOKKOS.md](../kokkos/port_report/W3UBPT_KOKKOS.md) |
+| INIT_GET_JSEA_ISPROC | "Set JSEA for all schemes" `(v)` `w3parall.F90:1152` | Maps a global sea point to its local index and owning rank; the round-robin split the `W3UICE` translation assumes. | [kokkos/port_report/W3UICE_KOKKOS.md](../kokkos/port_report/W3UICE_KOKKOS.md) |
+
 
 ## HPC and software
 
@@ -646,6 +659,8 @@ and [kokkos/src/fortran_iface/PATCH.md](../kokkos/src/fortran_iface/PATCH.md).
 | MPI_ABORT | the MPI call that ends every process of a communicator ⚠ (general knowledge) | What WW3's `EXTCDE` calls on `MPI_COMM_WORLD` for a non-zero exit code, so a failed Kokkos call stops every rank `(v)` `model/src/w3servmd.F90:1200`. | [docs/PRODUCTION_READINESS_202610.md](PRODUCTION_READINESS_202610.md) |
 | map_device_id_by | a Kokkos initialization setting that chooses how a process picks its GPU `(v)` `include/impl/Kokkos_InitializationSettings.hpp:33` of Kokkos 5.2.2; its default not read ⚠ | Overridden by the shim, which sets the device id from `WW_KOKKOS_DEVICE_ID` or 0. | [docs/PRODUCTION_READINESS_202610.md](PRODUCTION_READINESS_202610.md) |
 | `fcheck` | FESOM2's result check: compares global means of a test run against "truth values" in the setup's `setup.yml` `(v)` (FESOM/fesom2 `9271ae92`, `setups/test_pi/setup.yml:58-64`, `.github/workflows/fesom2_main.yml`); the tool is not in that repository, so its tolerance is ⚠ | FESOM2's regression check in CI, which the port paper does not mention. | [notes/202610170112-fesom2-went-through-c-ww3-goes-straight-to-kokkos.md](../notes/202610170112-fesom2-went-through-c-ww3-goes-straight-to-kokkos.md) |
+| PAREN_EXPR | the GIMPLE node gfortran emits for a Fortran parenthesis, which the optimiser may not reassociate `(v)` read in the `-fdump-tree-optimized` of `w3updtmd.F90`, 2026-11-12 | Where the Fortran's parentheses fix an order, the C++ keeps it with the same grouping (or `__builtin_assoc_barrier`). | [kokkos/port_report/W3UBPT_KOKKOS.md](../kokkos/port_report/W3UBPT_KOKKOS.md) |
+
 
 ## This repository's own names
 
@@ -2329,3 +2344,16 @@ Every term above, alphabetically, with the section it lives in.
 - &SPECTRUM_NML: [WW3 programs and files](#ww3-programs-and-files)
 - &SPECTRUM_NML, &RUN_NML, &TIMESTEPS_NML, &GRID_NML, &DEPTH_NML, &MASK_NML, &OBST_NML: [WW3 programs and files](#ww3-programs-and-files)
 - &TIMESTEPS_NML: [WW3 programs and files](#ww3-programs-and-files)
+- W3CSPC: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3GFCL / W3GFCL_R8: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3CKCL / W3DIST: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3CGDM / W3CGDM_R4: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3FDWT / GET_FDW3: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- DXYDP / DXYDQ: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3UBPT: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- BBPI0 / BBPIN: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- FICE0 / FICEN: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- AALPHA: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- W3ACTURN: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- INIT_GET_JSEA_ISPROC: [WW3 modules, routines and regtests](#ww3-modules-routines-and-regtests)
+- PAREN_EXPR: [HPC and software](#hpc-and-software)

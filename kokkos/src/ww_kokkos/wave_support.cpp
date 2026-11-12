@@ -19,6 +19,7 @@
 #include "bt8_csinh.hpp"
 #include "bt9_calc_nd.hpp"
 #include "bt9_ng.hpp"
+#include "cspc_w3cspc.hpp"
 #include "disp_distab.hpp"
 #include "disp_wavnu3.hpp"
 #include "fld1_infld.hpp"
@@ -43,6 +44,8 @@
 #include "gke_vmfunc.hpp"
 #include "gke_vpfunc.hpp"
 #include "gsru_gsu_create.hpp"
+#include "gsru_w3cgdm_r4.hpp"
+#include "gsru_w3gfcl_r8.hpp"
 #include "ic3_bsdet.hpp"
 #include "ic3_cginic3_cheng.hpp"
 #include "ic3_cmplx_root_muller_cheng.hpp"
@@ -248,6 +251,9 @@
 #include "uost_uost_sourceterm_setgrid.hpp"
 #include "uost_uost_srctrmcompute.hpp"
 #include "updt_dzxy.hpp"
+#include "updt_ubpt.hpp"
+#include "updt_ucur.hpp"
+#include "updt_uice.hpp"
 #include "updt_utrn.hpp"
 #include "updt_uwnd.hpp"
 #include "updt_w3uic1.hpp"
@@ -333,4 +339,10 @@ void ww_support_instantiate() {
   (void)&ww::flds::w3fldo;
   (void)&ww::iopo::w3iope;
   (void)&ww::iopo::w3iopo;
+  (void)&ww::updt::w3ucur<E>;
+  (void)&ww::updt::w3ubpt<E>;
+  (void)&ww::updt::w3uice<E>;
+  (void)&ww::cspc::cspc_w3cspc;
+  (void)&ww::gsru::w3gfcl_r8;
+  (void)&ww::gsru::w3cgdm_r4;
 }
