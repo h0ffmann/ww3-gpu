@@ -34,4 +34,9 @@ int device_va(int igrid, float* va, int nspec, int nsealm, DevVa& out);
 /// After a kernel wrote d_va of `igrid`: the state becomes DEVICE.
 void device_written(int igrid);
 
+/// The MPI exchange of ADR-0020 moved `out` bytes of spectral values out of d_va into a buffer
+/// the Fortran sends, and `in` bytes received into d_va. Counted for WW_KOKKOS_VA_COUNT=1 on lines
+/// of their own: these are the model's messages, not syncs of the two copies (ADR-0020 decision 4).
+void exchange_moved(double out, double in);
+
 }  // namespace ww::resident

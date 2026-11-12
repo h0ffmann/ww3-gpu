@@ -46,6 +46,29 @@ int ww_xyp3_batch_va(int igrid, const float* rpar, int nrpar, const int* ipar, i
                      const float* bbpi0, const float* bbpin, const int* on, float* va, int nspec,
                      int nsealm);
 
+/// ww_xyp3_batch_va under W3_MPI (ADR-0020, PATCH.md section 33): W3GATH and W3SCAT's MPI arms
+/// read the sea points other ranks hold from rbuf and write them to sbuf, one block of
+/// NSPLOC*NSEALM REALs per other rank at poff[IP-1], which the Fortran exchanges
+/// (W3KOKKOS_EXCH_PAIRS); nbuf = (naproc-1)*NSPLOC*NSEALM.
+int ww_xyp3_batch_mpi(int igrid, const float* rpar, int nrpar, const int* ipar, int nipar,
+                      const int* imaps, int nimaps, const float* tscal, int ntscal, float dtg,
+                      const int* mapsf, const float* clats, const float* sig, const float* ecos,
+                      const float* esin, const float* dpdx, const float* dpdy, const float* dqdx,
+                      const float* dqdy, const float* gsqrt, const float* atrnx,
+                      const float* atrny, const int* mapx2, const int* mapy2, const int* mapaxy,
+                      const int* mapcxy, const int* maptrn, const int* mapsta, const float* cg,
+                      const float* cx, const float* cy, int flbpi, int nbi, const int* isbpi,
+                      const float* bbpi0, const float* bbpin, const int* on, float* va,
+                      int nspec, int nsealm, int naproc, int iaproc, const int* poff,
+                      const float* rbuf, float* sbuf, int nbuf);
+
+/// VA(isps[j], K), K = 1 .. nsealm, of the resident VA of grid igrid into buf[j*nsealm + K-1]
+/// (pack), or back (unpack): the components another rank owns, around the exchange.
+int ww_xyp3_mpi_pack(int igrid, float* va, int nspec, int nsealm, const int* isps, int nisp,
+                     float* buf);
+int ww_xyp3_mpi_unpack(int igrid, float* va, int nspec, int nsealm, const int* isps, int nisp,
+                       const float* buf);
+
 /// Lengths of the RPAR/IPAR packets of ww_ktp3_batch (DMIN, CTMAX, FACHFA; NK, NTH, NSPEC,
 /// NK2, FLCTH, FLCK, FLCUR) and of the per-point scalars PSCAL (CTHG0S, DEPTH, DDDX, DDDY, CX,
 /// CY, DCXDX, DCXDY, DCYDX, DCYDY at the point, in that order).

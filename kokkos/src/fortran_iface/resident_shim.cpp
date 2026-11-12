@@ -74,6 +74,8 @@ struct Counts {
   long long zero_calls = 0, zero_launches = 0, zero_cols = 0, zero_checks = 0;
   long long wrote_calls = 0, wrote_h2d = 0, wrote_cols = 0;
   long long va_checks = 0, poisons = 0;
+  long long xch_out = 0, xch_in = 0;
+  double xch_out_bytes = 0.0, xch_in_bytes = 0.0;
   double h2d_bytes = 0.0, d2h_bytes = 0.0, spectrum_bytes = 0.0, part_bytes = 0.0;
   double wrote_bytes = 0.0;
 };
@@ -501,6 +503,17 @@ void device_written(int igrid) {
   }
 }
 
+void exchange_moved(double out, double in) {
+  if (out > 0.0) {
+    ++g_n.xch_out;
+    g_n.xch_out_bytes += out;
+  }
+  if (in > 0.0) {
+    ++g_n.xch_in;
+    g_n.xch_in_bytes += in;
+  }
+}
+
 }  // namespace ww::resident
 
 using namespace ww::resident;
@@ -594,6 +607,11 @@ void ww_va_report(void) {
                g_n.va_checks);
   std::fprintf(stderr, "ww_kokkos: VA host copies poisoned (WW_KOKKOS_VA_POISON): %lld\n",
                g_n.poisons);
+  // The MPI exchange (ADR-0020 decision 4): the model's messages, apart from the syncs above.
+  std::fprintf(stderr, "ww_kokkos: VA MPI exchange buffers filled: %lld (%.4f MB)\n", g_n.xch_out,
+               g_n.xch_out_bytes / 1.0e6);
+  std::fprintf(stderr, "ww_kokkos: VA MPI exchange buffers read: %lld (%.4f MB)\n", g_n.xch_in,
+               g_n.xch_in_bytes / 1.0e6);
 }
 
 }  // extern "C"
