@@ -124,6 +124,18 @@ Order: ADR-0002 within what depends on what. The shares are of the `gfs` profile
 | M7 | `ww3_multi` under `MPI`: per-grid communicators, the `WMIO*` writes synced by column, `mww3_test_08` explained | `wmwavemd.F90` hunks | `resident_shim.cpp` | build | L |
 | M8 | Several GPUs: CUDA-aware transport behind a flag; node-local rank from `MPI_COMM_SPLIT_TYPE` in Fortran, passed to `ww_kokkos_init`, device id from it when `WW_KOKKOS_DEVICE_ID` is unset (every rank on device 0 is right while one GPU is all there is); thread budget per rank (`PRODUCTION_READINESS` section 9) | `W3KOKKOS_EXCHMD`, `w3initmd.F90` | `snl1_shim.cpp`, `ww_kokkos_c.hpp` | `--build-only` | M |
 
+**Status, 2026-11-12.** M0 and M1 are on `main` (`8956505`). M2 is built: fork commit `9601dc1`
+(`ww3-gpu/mpi-xyp3-dSvr2GEW`) and the shim's `ww_xyp3_batch_mpi`, `ww_xyp3_mpi_pack`,
+`ww_xyp3_mpi_unpack`, the ABI `0.13`
+([`PATCH.md` section 33](../../kokkos/src/fortran_iface/PATCH.md#33-w3xyp3-under-mpi-the-aggregated-exchange-on-the-resident-va-ww3-gpumpi-xyp3-dsvr2gew)).
+Both `⚠` of [Why the bits cannot move](#why-the-bits-cannot-move-and-where-they-could) are settled
+there by reading the pin (v): no sea point has `MAPSTA = 0`, which the path also checks at run time,
+and the short rank's last column receives `0.`, which the path reproduces. The boundary arrays
+need no argument: the batch reads the same host arrays on the same rank as the Fortran `W3XYP3`.
+A first CPU run of `full` at 1 to 5 ranks was byte-identical to the Fortran
+([`docs/log/2026-11-12-mpi-xyp3-aggregated-exchange.md`](../log/2026-11-12-mpi-xyp3-aggregated-exchange.md)).
+Items 4 and 5 of the workstation list are still to run ⚠; M3 onward waits for item 5.
+
 M1 and M2 come first and are enough to answer whether the design pays: `SRCE`, `KTP3` and `XYP3`
 are the large part of the structured case. M3 to M5 make it a whole run. M6 and M7 are independent
 of each other. Nothing past M2 should start before the workstation has timed M2, since a bad

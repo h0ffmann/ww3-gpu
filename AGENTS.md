@@ -219,7 +219,7 @@ copied into this repository (`CONTRIBUTING.md`, "Don't vendor WW3 source. Script
 exceptions are a `bind(C)` shim module and the caller patch described in
 `kokkos/src/fortran_iface/PATCH.md`, which live on a fork branch, behind a switch, and leave the
 original routine selectable. Every statement about WW3 cites `model/src/<file>.F90:<line>` at the
-pinned commit (`WW3@96892c95` on 2026-11-12, `just src-st`), never a comment, a paper or memory.
+pinned commit (`WW3@9601dc1e` on 2026-11-12, `just src-st`), never a comment, a paper or memory.
 Namelists are written against the templates in `$WW3/model/nml/` and are `⚠` until executed.
 
 How WW3 works, as its manual says, is summarised by topic in

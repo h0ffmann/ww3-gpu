@@ -7,6 +7,7 @@ Read with `git -C WW3 fetch origin && git -C WW3 branch -r` and `git rev-list --
 
 | h0ffmann/WW3 branch | Head | Against the `WW3/` pin | What it wires |
 |---|---|---|---|
+| `ww3-gpu/mpi-xyp3-dSvr2GEW` | `9601dc1` | **the pin** since h0ffmann/ww3-gpu `goal/dSvr2GEW-5307-mpi-xyp3-exchange`; one commit on `96892c95` (`ww3-gpu/gfs-srce-be5bdbea`), pushed 2026-11-12 (v, `git push`) | `W3XYP3` under `MPI` with the aggregated exchange on the resident `VA` (`W3KOKKOS_EXCHMD`, `ww_xyp3_batch_mpi`, `ww_xyp3_mpi_pack`, `ww_xyp3_mpi_unpack`), the ABI `0.13` ([section 33](#33-w3xyp3-under-mpi-the-aggregated-exchange-on-the-resident-va-ww3-gpumpi-xyp3-dsvr2gew)) |
 | `ww3-gpu/strict-outg` | `fac74069` | one commit on `50a10730` (the pin before it, also the head of `ww3-gpu/kokkos-pnt`), pushed 2026-10-18 (v, `ls-remote`) | `W3KOKKOS_OUTG`'s call of the Fortran `W3OUTG` reports to `WW_KOKKOS_STRICT` ([section 31](#31-w3outgs-fortran-fallback-reports-to-strict-mode-ww3-gpustrict-outg)) |
 | `ww3-gpu/integ-fixes` | `711afb80` | one commit on `ww3-gpu/integ-abbb0456` (`b733066b`, the merge of `u1-multi-va`, `u2-strict-preset`, `u8-out-readers` and `u9-cprt` onto `80644ba9`), pushed 2026-10-18 (v, `ls-remote`) | `W3KOKKOS_CPRT`'s two fallbacks to the Fortran `W3CPRT` report to `WW_KOKKOS_STRICT` ([section 28](#28-the-integration-fixes-ww3-gpuinteg-fixes)) |
 | `ww3-gpu/u1-multi-va` | `f330dc53` | five commits on `80644ba9`, pushed 2026-10-18 (v, `ls-remote`) | `ww3_multi`'s exchanges sync only the columns of `VA` they read or write (`W3KOKKOS_VA_READ_COLS`, `W3KOKKOS_VA_WRITE_COLS`, `ww_va_host_wrote_cols`), no read at `W3WAVE`'s return, the ABI `0.10` ([section 26](#26-ww3_multi-and-the-resident-va-column-syncs-no-read-at-w3waves-return-ww3-gpuu1-multi-va)) |
@@ -2437,3 +2438,76 @@ Checked 2026-10-19 on the CPU (Kokkos OpenMP backend, gfortran 16.2.0, never `--
   the `ww3_ufs1.1` `grdset_c` entry with the GFS-Wave switch: `test.comp` finds 0 of 30 files different, `nccmp-tol`
   PASS, 33 286 spectra in 24 batched calls through the new path, no fallback (strict mode would have stopped).
   Before this section the same entry fell back for every step.
+
+## 33. `W3XYP3` under `MPI`: the aggregated exchange on the resident `VA`, `ww3-gpu/mpi-xyp3-dSvr2GEW`
+
+Unit M2 of [`docs/plans/2026-11-01-002-mpi-kokkos-plan.md`](../../../docs/plans/2026-11-01-002-mpi-kokkos-plan.md),
+under [ADR-0020](../../../docs/ADRs.md#adr-0020) (Proposed). One fork commit, `9601dc1`, on the pin `96892c95`,
+2026-11-12. It touches `model/src/w3kokkos_exchmd.F90` (new), `model/src/w3kokkos_prop3md.F90`,
+`model/src/w3wavemd.F90` (two guards) and `model/src/CMakeLists.txt` (`find_package(ww_kokkos 0.13)`).
+Off unless asked for by name: `WW_KOKKOS_XYP3=1` on a `DIST MPI` switch; `WW_KOKKOS_ALL` does not turn
+`XYP3` on (section 11), and the `resident` preset stops on an MPI switch (its `OUTG` refuses `MPI`).
+
+**What runs.** Under `W3_MPI`, `W3KOKKOS_XYP3` calls `XYP3_MPI`, which replaces, for one propagation step,
+`W3WAVE`'s `IRQSG1` (`MPI_STARTALL` and `MPI_WAITALL`, now skipped when `KOKKOS_XYP3`) and the `DO ISPEC` loop of
+`W3GATH`, `W3XYP3`, `W3SCAT` with their `IRQSG2` messages:
+
+1. `ww_xyp3_mpi_pack`: for each other rank `IP` in rank order and each `ISP` it owns (`IAPPRO`) in ascending order,
+   `VA(ISP,1:NSEALM)` of the resident `VA` into one buffer: what `IRQSG1(:,1)` sends with `WW3_SPEC_VEC`
+   (`w3initmd.F90`, `W3MPIP` section 2, at the pin).
+2. `W3KOKKOS_EXCH_PAIRS`: one `MPI_ISEND` and one `MPI_IRECV` per other rank, on a duplicate of `MPI_COMM_WAVE`
+   made at set-up (`W3KOKKOS_EXCH_INIT`, collective, called from `W3KOKKOS_PROP3_SETUP` on every rank of the grid),
+   so no tag of WW3's own persistent requests can match them.
+3. `ww_xyp3_batch_mpi`: `ww_xyp3_batch_va` with `W3GATH`'s and `W3SCAT`'s MPI arms. Sea point `ISEA` is
+   `JSEA = K = (ISEA-1)/NAPROC + 1` of rank `IP = MOD(ISEA-1,NAPROC) + 1` (`INIT_GET_ISEA`, `w3parall.F90`); the
+   gather reads column `K` of `VA` for this rank's points and the received block of `IP` for the others, the value
+   `W3GATH` 2.d receives into `GSTORE(ISEA)`; the scatter writes this rank's columns where `MAPSTA /= 0`
+   (`W3SCAT` 2.d) and `IP`'s block for the others (`SSTORE(ISEA)`, 2.b).
+4. `W3KOKKOS_EXCH_PAIRS` back, the transposed messages: `IRQSG2(:,2)` to `IRQSG1(:,2)`.
+5. `ww_xyp3_mpi_unpack`: `VA(ISP,1:NSEALM)` of every component another rank owns, as the receive of
+   `IRQSG1(:,2)` writes it.
+
+A rank with `IAPROC > NAPROC` does nothing: it owns no component and both `IRQSG1` lists are empty there
+(`W3MPIP` section 1). Messages per rank and step: `2 (NAPROC-1)` each way at most, against `NSPEC - NSPLOC` plus
+`NSPLOC (NAPROC-1)` each way in the Fortran (section "The exchange, as WW3 does it" of the plan).
+
+**Why the bits are the Fortran's** (static, read at the pin, 2026-11-12) (v):
+
+- Every value is a `REAL` copied, never combined: `MPI_REAL` in the Fortran, `float` stores here. `FIELD = 0.`
+  stands above both arms of `W3GATH` (`w3wavemd.F90:3427`) and the kernel zeroes each component's `FIELD`, so a
+  component's `W3XYP3` sees the same `FIELD`. `W3XYP3` has no `W3_MPI` code (read in `w3pro3md.F90`) and reads the
+  same host arrays on the same rank as the Fortran (`CG`, `CX`, `CY` of `0:NSEA`, the boundary arrays).
+- The first `⚠` of the plan, `SSTORE` not cleared: `W3SCAT` 2.b skips a sea point with `MAPSTA = 0`, and the
+  non-owner then receives whatever an earlier component left in `SSTORE(ISEA,IBFLOC)`. No sea point has
+  `MAPSTA = 0`: `ww3_grid` numbers as sea points only the cells it does not set to 0 (`w3gridmd.F90`, the loop
+  after `TRNX = 0.` that sets `MAPSTA(IY,IX) = 0` and `TMPSTA = 3` on the other branch), and the run changes only
+  its sign (`w3updtmd.F90` `W3UICE` and `W3ULEV`, `-ABS` and `ABS`; `wmgridmd.F90` `-ABS`; `wmwavemd.F90` sign flip;
+  `w3initmd.F90` `SIGN(MAPTST, MAPSTA)` with `MAPTST` a copy of `MAPSTA`; `w3iogrmd.F90`, `w3iorsmd.F90`,
+  `w3iogomd.F90` decode `MOD(MAPTMP+2,8)-2`, the inverse of `MAPSTA + 8*MAPST2` for `-2 <= MAPSTA <= 5`). The
+  assumption is checked anyway: `XYP3_MPI` stops the model if a sea point has `MAPSTA = 0`, instead of differing.
+- The second `⚠`, the short rank's last column: on a rank with `NSEAL = NSEALM - 1`, `WW3_SPEC_VEC` still carries
+  `NSEALM` entries. Outbound, `VA(ISP,NSEALM)` lands in `GSTORE` past `NSEA`, which `W3GATH` 2.e never reads (loop
+  to `NSEA`); here it is packed and not read either. Inbound, the receive writes `SSTORE` past `NSEA` into
+  `VA(ISP,NSEALM)`: `W3MPIP` sets `SSTORE = 0.` (`w3initmd.F90`, section 3) and `W3SCAT` writes `ISEA <= NSEA` only,
+  so the column receives `0.` every step. The scatter here zero-fills the send blocks first, so it receives `0.` too.
+- `IBFLOC`, `ISPLOC` and `BSTAT` are untouched: `W3SCAT` 2.f resets them at the last component of every step, and
+  with `KOKKOS_XYP3` neither `W3GATH` nor `W3SCAT` is called.
+
+**ABI.** `prop3_c.hpp` gains `ww_xyp3_batch_mpi`, `ww_xyp3_mpi_pack` and `ww_xyp3_mpi_unpack` (argument tables in
+`prop3_shim.cpp`); nothing changes or goes, so the package is `0.13.0`, a minor bump, and the fork asks for
+`find_package(ww_kokkos 0.13)`. `ww::resident::exchange_moved` counts the exchange for `WW_KOKKOS_VA_COUNT=1` on two
+lines of its own, `VA MPI exchange buffers filled` and `read` (ADR-0020 decision 4): no whole-`VA` copy is added.
+On a device the buffers are staged through device buffers of exactly the message's bytes; CUDA-aware MPI is unit M8.
+
+**A build without `KOKKOS`, or with `KOKKOS` and `SHRD`, is unchanged.** `w3kokkos_exchmd.F90` is compiled only
+under `WW_KOKKOS`; the `w3wavemd.F90` guards are under `W3_MPI` and `W3_KOKKOS`; in `w3kokkos_prop3md.F90` the new
+code is under `W3_MPI`, and the `SHRD` path of `xyp3_batch` reads and writes the same `VA` elements as before
+through `Cols` (`naproc == 0`).
+
+**Run once, on one case** (v, 2026-11-12, CPU, OpenMP backend): `scripts/ww3-gpu.sh --ww3-gpu full --cpu` on
+`switch_lab_mpi` at 1, 2, 3, 4 and 5 ranks with `--kokkos XYP3`, and at 4 with `SRCE,KTP3,XYP3`: every model
+file byte-identical to the Fortran of the same executable, and to `--ww3-noaa` but the NetCDF, `nccmp-tol` PASS;
+the whole-spectrum copies are those of the `SHRD` resident run (H2D 1, D2H 13 with the three parts)
+([`docs/log/2026-11-12-mpi-xyp3-aggregated-exchange.md`](../../../docs/log/2026-11-12-mpi-xyp3-aggregated-exchange.md)).
+Not run ⚠: WW3's regtest matrix (ADR-0016, ADR-0020 decision 5), the boundary-input, current and global-closure
+branches, any device, and any timing: items 4 and 5 of the plan's workstation list.
