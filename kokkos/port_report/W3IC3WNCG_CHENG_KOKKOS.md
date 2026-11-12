@@ -29,24 +29,38 @@ compiled with the `openmp-release` flags and `-ffp-contract=off`. That unit comp
 
 - (v) Array bounds and table indexing: the Fortran's `I1:I2` slice maps to the 0-based offsets
   `0:NK+1` when `n == NK+2` and `1:NK` when `n == NK`; the selected column `I` is
-  `MIN(NINT(HICE/IC3_DITK), ITKNUM)` with `HICE` capped by `DBLE(IC3HILIM)`, reproduced with
-  `Kokkos::fmin` and `Kokkos::round`.
+  `MIN(NINT(HICE/IC3_DITK), ITKNUM)` with `HICE` capped by `DBLE(IC3HILIM)`. The cap is a
+  `minpd` with `HILIM` as destination, so a tie or a NaN gives `HICE`; it is written
+  `(hilim < hice) ? hilim : hice`. `NINT` is `Kokkos::round`, then `Kokkos::fmin` against `ITKNUM`.
 - (v) `WN_R(IK)*DEPTH > 4.0` is reproduced with `double(wn_r[ik-1]) * depth > 4.0`, matching the
   Fortran's promotion of `WN_R` (default `REAL`) and the literal `4.0` to `REAL(8)`.
-- (v) `X0 = X1*(1-RR)` and `X2 = X1*(1+RR)` with `RR = 0.01` keep the products with `0.0` in the
-  imaginary part, as the object emits them.
+- (v) `X0 = X1*(1-RR)` and `X2 = X1*(1+RR)` keep the products with `0.0` in the imaginary part,
+  as the object emits them. `RR` is `REAL(8)` and `0.01` a default `REAL` literal, so
+  `rr = double(0.01f)`, not the `double` 0.01.
 - (v) `CMPLX_ROOT_MULLER_CHENG` is called with `JUDGE = 1` and the double-promoted `SIGMA(IK)`,
   `ES_MOD`, `NU`, `DICE`, `HICE`, `DEPTH`. The returned complex parts are narrowed back to
   default `REAL` with `static_cast<Real>`.
 - (v) `SMOOTH_K` is called with `n = KU - KL + 1` and `switchid = 0`, matching the Fortran's
   `CALL SMOOTH_K(WN_R,WN_I,SIGMA,KU-KL+1,0)`.
-- (v) The `IC3KILIM` cap is `MIN(WN_I(IK),IC3KILIM)` in the Fortran's order; `Kokkos::fmin`
-  matches.
+- (v) The `IC3KILIM` cap is `MIN(WN_I(IK),IC3KILIM)`, written `(wn_i < kilim) ? wn_i : kilim`
+  (`minss`/`minps` with `WN_I` as destination: a tie or a NaN gives `IC3KILIM`). ⚠ The object's
+  loop over `WN_I` swaps the two operands on its last element, so the result for a NaN there
+  cannot be matched exactly from C++.
 - (v) `CGinIC3_CHENG(CG,SIGMA,WN_R,KU-KL+1)` is reproduced with the same 0-based arrays and `n`.
 - ⚠ The host path uses glibc's `cabs`, `csqrt`, `cexp`, `cpow` inside `CMPLX_ROOT_MULLER_CHENG`
-  and `Kokkos::fmin`/`Kokkos::round`. A device path would need the same bit-for-bit guarantees
+  and `Kokkos::fmin`/`Kokkos::round` (the `ITKNUM` cap). A device path would need the same bit-for-bit guarantees
   as every other IC3 routine. CUDA not compiled.
 - No reduction, no parallel loop in this host helper.
+
+## Fix of 2026-11-12
+
+(v) The batch 4 review, found while translating `W3SIC3` and `W3IC3WNCG_V1`, changed three things
+in `ic3_w3ic3wncg_cheng.hpp`: `rr` is `double(0.01f)` (it was the `double` 0.01), the `HICE` cap
+and the `IC3KILIM` cap follow the operand order of the object's `minpd` and `minss` instead of
+`Kokkos::fmin`, and the `disp` argument is `[[maybe_unused]]`. The fix of the Muller header it
+calls is in [CMPLX_ROOT_MULLER_CHENG_KOKKOS.md](CMPLX_ROOT_MULLER_CHENG_KOKKOS.md). A throwaway
+differential harness against the `-O3` object (no repo command, so ⚠) counted about 151 mismatches
+in this routine before the fix and 0 after. This report was written before it.
 
 ## Benchmarks
 

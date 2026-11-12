@@ -31,15 +31,17 @@ That unit compiles warning-free.
 - (v) Structure matches `CMPLX_ROOT_MULLER_V1` ([CMPLX_ROOT_MULLER_V1_KOKKOS.md](CMPLX_ROOT_MULLER_V1_KOKKOS.md)):
   the Muller update `Q = (P2-P1)/(P1-P0)`, `A`, `B`, `C`, the discriminant branch by
   `ABS(DEN1) .LT. ABS(DEN2)`, the `A == 0` then `B == 0` early return, and the convergence test
-  `ABS(P3-P2).LT.DLTA .AND. ABS(Y3).LT.EPSI` are the same expression trees in the object and in
-  the C++.
+  `ABS(P3-P2).LT.DLTA .AND. ABS(Y3).LT.EPSI` (`w3sic3md.F90:2692-2696`, joined by `&&` in the C++)
+  are the same expression trees in the object and in the C++.
 - (v) `IMAX = 200`, `EPSI = DLTA = 1.E-8`: default `REAL` literals stored in `REAL(8)`, folded
   to the same double bit pattern (`0x1.5798ee2308c0ap-27`) in the C++ `static_assert` and in the
   Fortran object.
 - (v) Post-iterate constraints (`:2682-2690`) are reproduced in the same order: first flip the
-  sign of a negative imaginary part, then negate a negative real part, then zero the imaginary
-  part when `NU == 0.0`. Each uses component-by-component complex arithmetic with the products
-  with `0.0` kept, as in the object.
+  sign of a negative imaginary part, then negate a negative real part, then, when `NU == 0.0`,
+  `P3 = CMPLX(REAL(P3),0)` (`:2689-2691`). `CMPLX` has no `KIND`, so that result is a default
+  `COMPLEX` and the C++ rounds the real part of `P3` to `float` before widening it again. Each
+  uses component-by-component complex arithmetic with the products with `0.0` kept, as in the
+  object.
 - (v) Non-convergence fallback `P3 = CMPLX(-100., 0)` is reproduced exactly.
 - (v) `F_ZHAO_CHENG` is called through the same templated callable pattern as in
   `ic3_f_zhao_cheng.hpp`; the `DRFUN_DBLE_CHENG` and `DRFUN_QUAD_CHENG` callables are inlined
@@ -48,6 +50,16 @@ That unit compiles warning-free.
   device has none of them: the device path falls back to `Kokkos::abs`, `Kokkos::sqrt`,
   `Kokkos::exp`, `Kokkos::pow`, not bit for bit with glibc. CUDA not compiled.
 - No reduction, no MIN/MAX on arrays, no `INT`/`NINT`.
+
+## Fix of 2026-11-12
+
+(v) The batch 4 review of `W3SIC3` and `W3IC3WNCG_V1` found two defects in this header: the
+convergence test was written with `||` where `w3sic3md.F90:2693` has `.AND.`
+(`ic3_cmplx_root_muller_cheng.hpp:126`, now `&&`), and the `NU == 0` block kept the real part of
+`P3` in `double` where the Fortran rounds it to `float`. A throwaway differential harness against
+the `-O3` object (no repo command, so ⚠) counted about 1300 mismatches in `WN_PRECALC_CHENG`,
+95 in `W3SIC3` and 151 in `W3IC3WNCG_CHENG` before the fix and 0 after. This report was written
+before it.
 
 ## Benchmarks
 

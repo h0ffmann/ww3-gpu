@@ -16,7 +16,13 @@ The ADR-0017 limits in this page hold until ADR-0020 is accepted.
 **Units U1 and U2 translated,** 2026-11-12 (goal `UrLTXtPC-4817`, the owner's request "continue
 working in the project goal, prepare a big PR"): `W3CSPC`, `W3GFCL_R8`, `W3CGDM_R4`, `W3UCUR`,
 `W3UBPT`, `W3UICE`, one translator and one fresh reviewer per unit
-([log](../log/2026-11-12-batch4-u1-u2-kokkos-translation.md)). U3 to U7 are not started.
+([log](../log/2026-11-12-batch4-u1-u2-kokkos-translation.md)).
+
+**Units U3 to U7 translated,** 2026-11-12 (goal `hr8xzdg1-6142`): `W3UNO2`, `W3UNO2R`, `W3UNO2S`,
+`W3MAP1`, `W3MAP2`, `W3SIC2`, `W3SIC3`, `WN_PRECALC_CHENG`, `W3IC3WNCG_V1`, `W3SIS2`, `INSIS2`,
+`DIAGONALIZE`, `W3ADDIG`, `W3SBS1`, `W3SBT8`, `W3SBT9`, `W3FLD1`, one translator and one fresh
+reviewer per unit; not wired, not regtested
+([log](../log/2026-11-12-batch4-u3-u7-kokkos-translation.md)).
 
 ## Goal Capsule
 
