@@ -15,15 +15,19 @@
 #include "adat_w3seta.hpp"
 #include "adat_w3xdma.hpp"
 #include "adat_w3xeta.hpp"
+#include "bs1_w3sbs1.hpp"
 #include "bt8_ccosh.hpp"
 #include "bt8_csinh.hpp"
+#include "bt8_w3sbt8.hpp"
 #include "bt9_calc_nd.hpp"
 #include "bt9_ng.hpp"
+#include "bt9_w3sbt9.hpp"
 #include "cspc_w3cspc.hpp"
 #include "disp_distab.hpp"
 #include "disp_wavnu3.hpp"
 #include "fld1_infld.hpp"
 #include "fld1_sig2wn.hpp"
+#include "fld1_w3fld1.hpp"
 #include "fld1_wnd2sat.hpp"
 #include "fld1_wnd2z0m.hpp"
 #include "fld2_wnd2sat.hpp"
@@ -33,6 +37,7 @@
 #include "gdat_w3dims.hpp"
 #include "gdat_w3setg.hpp"
 #include "gig1_df1f2theta.hpp"
+#include "gig1_w3addig.hpp"
 #include "gke_asymsmattimvec.hpp"
 #include "gke_biinterpwt.hpp"
 #include "gke_coocsrind.hpp"
@@ -46,6 +51,7 @@
 #include "gsru_gsu_create.hpp"
 #include "gsru_w3cgdm_r4.hpp"
 #include "gsru_w3gfcl_r8.hpp"
+#include "ic2_w3sic2.hpp"
 #include "ic3_bsdet.hpp"
 #include "ic3_cginic3_cheng.hpp"
 #include "ic3_cmplx_root_muller_cheng.hpp"
@@ -61,8 +67,11 @@
 #include "ic3_ic3table_cheng.hpp"
 #include "ic3_smooth_k.hpp"
 #include "ic3_w3ic3wncg_cheng.hpp"
+#include "ic3_w3ic3wncg_v1.hpp"
+#include "ic3_w3sic3.hpp"
 #include "ic3_wn_cmplx_hf.hpp"
 #include "ic3_wn_cmplx_v1.hpp"
+#include "ic3_wn_precalc_cheng.hpp"
 #include "ic5_balancing_matrix.hpp"
 #include "ic5_cmplx_cosh.hpp"
 #include "ic5_cmplx_sinh.hpp"
@@ -74,9 +83,9 @@
 #include "init_w3init.hpp"
 #include "init_w3mpio.hpp"
 #include "iobc_w3iobc.hpp"
+#include "iogo_skewness.hpp"
 #include "iogo_vmin_d.hpp"
 #include "iogo_vplus_d.hpp"
-#include "iogo_skewness.hpp"
 #include "iogo_w3fldtoij.hpp"
 #include "iogo_w3flgrdflag.hpp"
 #include "iogo_w3flgrdupdt.hpp"
@@ -89,8 +98,10 @@
 #include "iors_w3iors.hpp"
 #include "is2_funcd_fderiv.hpp"
 #include "is2_funcd_fval.hpp"
+#include "is2_insis2.hpp"
 #include "is2_w3fsd_dave.hpp"
 #include "is2_w3rpwnice.hpp"
+#include "is2_w3sis2.hpp"
 #include "parall_get_jsea_ibelong.hpp"
 #include "parall_init_get_isea.hpp"
 #include "parall_init_get_jsea_isproc.hpp"
@@ -155,6 +166,8 @@
 #include "profs_vbrmv.hpp"
 #include "prop_cflxy.hpp"
 #include "prop_freq_shift.hpp"
+#include "prop_map1.hpp"
+#include "prop_map2.hpp"
 #include "prop_map3.hpp"
 #include "prop_mapt.hpp"
 #include "prop_parall.hpp"
@@ -243,6 +256,7 @@
 #include "tide_tide_predict_only.hpp"
 #include "tide_tide_set_indices.hpp"
 #include "tide_vuf.hpp"
+#include "uno2_w3uno2.hpp"
 #include "uost_compute_reduction_psi.hpp"
 #include "uost_uost_setgrid.hpp"
 #include "uost_uost_sourceterm_compute.hpp"
@@ -345,4 +359,18 @@ void ww_support_instantiate() {
   (void)&ww::cspc::cspc_w3cspc;
   (void)&ww::gsru::w3gfcl_r8;
   (void)&ww::gsru::w3cgdm_r4;
+  (void)&ww::bs1::w3sbs1_point;
+  (void)&ww::bs1::w3sbs1_krange;
+  (void)&ww::bt8::w3sbt8_point;
+  (void)&ww::bt9::w3sbt9_point;
+  (void)&ww::fld1::w3fld1<ww::fld1::ThArray>;
+  (void)&ww::gig1::w3addig;
+  (void)&ww::is2::w3sis2_point;
+  (void)&ww::is2::insis2;
+  (void)&ww::is2::diagonalize;
+  (void)&ww::prop::w3map1<E>;
+  (void)&ww::prop::w3map2<E>;
+  (void)&ww::uno2::w3uno2<E>;
+  (void)&ww::uno2::w3uno2r<E>;
+  (void)&ww::uno2::w3uno2s<E>;
 }

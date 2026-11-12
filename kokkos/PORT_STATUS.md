@@ -45,11 +45,11 @@ Profile: full (bench_small, 120 x 80, 9 520 sea points, 12 h), Release -pg, swit
 
 | level | run time | lines | routines | files | what it counts (WW3@03adda91) |
 |---|---|---|---|---|---|
-| translated | **99.3 %** | 71303 of 263375 (27.07 %) | 327 of 1023 (31.96 %) | 66 of 147 | a Kokkos translation exists in kokkos/src |
+| translated | **99.3 %** | 77268 of 263375 (29.34 %) | 344 of 1023 (33.63 %) | 70 of 147 | a Kokkos translation exists in kokkos/src |
 | ported | **99.3 %** | 19059 of 263375 (7.24 %) | 72 of 1023 (7.04 %) | 28 of 147 | WW3 at the WW3/ pin calls the Kokkos code, behind its run-time flag |
 | regtested | **48.6 %** | 3151 of 263375 (1.20 %) | 14 of 1023 (1.37 %) | 7 of 147 | WW3's regtests ran with it on Kokkos and agreed with the Fortran |
 
-The port itself: 64508 lines in 361 files, the C++ under kokkos/src (every .cpp and .hpp line).
+The port itself: 68604 lines in 375 files, the C++ under kokkos/src (every .cpp and .hpp line).
 
 On a GPU: none yet. The CUDA build links; the RTX 4090 run, `just smoke-ww3-gpu gpu`, is the owner's, supervised.
 <!-- port-score:end -->

@@ -115,14 +115,15 @@ KOKKOS_INLINE_FUNCTION void cmplx_root_muller_cheng(const Kokkos::complex<double
     if (p3.real() < 0.0) {
       p3 = cplx(-(p3.real()), p3.imag());
     }
-    // :2689-2690. NU == 0: zero the imaginary part.
+    // :2689-2691. NU == 0: P3 = CMPLX(REAL(P3),0); CMPLX has no KIND, so the result is a default
+    // COMPLEX and the real part is rounded to float.
     if (nu == 0.0) {
-      p3 = cplx(p3.real(), 0.0);
+      p3 = cplx(static_cast<double>(static_cast<float>(p3.real())), 0.0);
     }
 
-    // :2692. Convergence test.
+    // :2692-2696. Convergence test: ABS(P3-P2).LT.DLTA .AND. ABS(Y3).LT.EPSI.
     const cplx y3 = f_zhao_cheng(judge, p3, sigma, es, nu, dice, hice, depth, drfun_dble, drfun_quad);
-    if (bsdet_cabs(f::sub(p3, p2)) < dlta || bsdet_cabs(y3) < epsi) {
+    if (bsdet_cabs(f::sub(p3, p2)) < dlta && bsdet_cabs(y3) < epsi) {
       return;
     }
 

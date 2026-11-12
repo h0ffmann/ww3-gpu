@@ -30,7 +30,7 @@ inline void w3ic3wncg_cheng(Real* wn_r, Real* wn_i, Real* cg, Real ice1, Real ic
                             Real ice4, Real dpt, int nk, int n, const Real* sig, Real ic3hilim,
                             Real ic3kilim, const Real* ic3wn_r, const Real* ic3wn_i,
                             const Real* ic3cg, int itknum, Real ic3_ditk,
-                            const ww::prop::DispTable& disp, Real* diff, Real* removeid,
+                            [[maybe_unused]] const ww::prop::DispTable& disp, Real* diff, Real* removeid,
                             RootFinder&& root_finder) {
   const std::ptrdiff_t ld = static_cast<std::ptrdiff_t>(nk) + 2;
   // :1912-1914. DEPTH, HICE, NU, DICE, ES_MOD are widened to REAL(8) once.
@@ -41,12 +41,16 @@ inline void w3ic3wncg_cheng(Real* wn_r, Real* wn_i, Real* cg, Real ice1, Real ic
   const double es_mod = static_cast<double>(ice4);
 
   // :1916. HICE = MIN(DBLE(IC3HILIM), HICE), both double.
-  hice = Kokkos::fmin(static_cast<double>(ic3hilim), hice);
+  // The object is a minpd with HILIM as the destination: a tie or a NaN gives HICE.
+  {
+    const double hilim = static_cast<double>(ic3hilim);
+    hice = (hilim < hice) ? hilim : hice;
+  }
 
   // :1921-1922. ITKNUM and I are integers; NINT rounds half away from zero.
-  const int itkn = Kokkos::fmin(
+  const int itkn = static_cast<int>(Kokkos::fmin(
       static_cast<double>(Kokkos::round(hice / static_cast<double>(ic3_ditk))),
-      static_cast<double>(itknum));
+      static_cast<double>(itknum)));
   const std::ptrdiff_t col = static_cast<std::ptrdiff_t>(itkn) * ld;
 
   // :1896-1907. n is either NK or NK+2; kl and ku are 1-based loop bounds.
@@ -63,8 +67,8 @@ inline void w3ic3wncg_cheng(Real* wn_r, Real* wn_i, Real* cg, Real ice1, Real ic
     cg[out] = ic3cg[col + idx];
   }
 
-  // :1929.
-  constexpr double rr = 0.01;
+  // :1929. RR is REAL(8) and 0.01 a default REAL literal: the float 0.01 widened.
+  constexpr double rr = static_cast<double>(0.01f);
 
   // :1932-1944. Recompute the shallow-water entries.
   for (int ik = kl; ik <= ku; ++ik) {
@@ -91,7 +95,9 @@ inline void w3ic3wncg_cheng(Real* wn_r, Real* wn_i, Real* cg, Real ice1, Real ic
 
   // :1948-1950. Limit ki.
   for (int ik = kl; ik <= ku; ++ik) {
-    wn_i[ik - 1] = Kokkos::fmin(wn_i[ik - 1], ic3kilim);
+    // MIN(WN_I(IK),IC3KILIM) is a minss/minps with WN_I as the destination (the object's
+    // 1-element tail swaps them): a tie or a NaN gives IC3KILIM.
+    wn_i[ik - 1] = (wn_i[ik - 1] < ic3kilim) ? wn_i[ik - 1] : ic3kilim;
   }
 
   // :1953. Update group velocity.
