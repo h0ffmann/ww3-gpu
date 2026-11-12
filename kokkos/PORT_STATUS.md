@@ -45,11 +45,11 @@ Profile: full (bench_small, 120 x 80, 9 520 sea points, 12 h), Release -pg, swit
 
 | level | run time | lines | routines | files | what it counts (WW3@03adda91) |
 |---|---|---|---|---|---|
-| translated | **99.3 %** | 69024 of 263375 (26.21 %) | 316 of 1023 (30.89 %) | 65 of 147 | a Kokkos translation exists in kokkos/src |
+| translated | **99.3 %** | 71303 of 263375 (27.07 %) | 327 of 1023 (31.96 %) | 66 of 147 | a Kokkos translation exists in kokkos/src |
 | ported | **99.3 %** | 19059 of 263375 (7.24 %) | 72 of 1023 (7.04 %) | 28 of 147 | WW3 at the WW3/ pin calls the Kokkos code, behind its run-time flag |
 | regtested | **48.6 %** | 3151 of 263375 (1.20 %) | 14 of 1023 (1.37 %) | 7 of 147 | WW3's regtests ran with it on Kokkos and agreed with the Fortran |
 
-The port itself: 62651 lines in 355 files, the C++ under kokkos/src (every .cpp and .hpp line).
+The port itself: 64508 lines in 361 files, the C++ under kokkos/src (every .cpp and .hpp line).
 
 On a GPU: none yet. The CUDA build links; the RTX 4090 run, `just smoke-ww3-gpu gpu`, is the owner's, supervised.
 <!-- port-score:end -->
@@ -66,6 +66,7 @@ SPDX-License-Identifier: MIT
 | Propagation (`PR3`, `UQ`), `W3WAVE` support, dispersion | `w3pro3md`, `w3uqckmd`, `w3wavemd`, `w3updtmd`, `w3dispmd` | translated | none yet | — | — | — | — | — | Header-only; static parity by object comparison, one fresh review per routine ([`docs/W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md`](../docs/W3WAVE_SUPPORT_KOKKOS_PLAN_202610.md)). |
 | NOAA operational batches A to C: `PDLIB`, `IC4`, `REF1`, `TR1`, `BT4`, `IS1`, `IC1`, partitioning, `NL3` | `w3profsmd_pdlib`, `w3sic4md`, `w3ref1md`, … `w3snl3md` | translated | none yet | — | — | — | — | — | Header-only; static parity, fresh reviews ([`docs/NOAA_OPS_KOKKOS_PLAN_202610.md`](../docs/NOAA_OPS_KOKKOS_PLAN_202610.md)). |
 | `ST0`, `ST1`, `ST2` (with `INPTAB`), `ST3` (with its tables), `ST6` (with `LFACTOR`, `TAU_WAVE_ATMOS`), `FLX1`-`FLX5`, `SWL` (32 routines) | `w3src{0,1,2,3,6}md`, `w3flx{1..5}md`, `w3swldmd` | translated | written and compiled for six units, not committed (PR #157) | — | — | — | — | — | Header-only in the PR; static parity against eight reference builds and a fresh review per routine; `ST2` with `FLX3` is the physics of `switch_NCEP_st2`; nothing run ([`docs/log/2026-10-16-st-flx-swl-kokkos-translation.md`](../docs/log/2026-10-16-st-flx-swl-kokkos-translation.md)). |
+| Batch 4, U1 and U2: `W3CSPC`, `W3GFCL_R8` (with `W3CKCL_R8`, `W3DIST_R8`, `W3NNSC`), `W3CGDM_R4` (with `GET_FDW3`, `W3FDWT_R8`), `W3UCUR`, `W3UBPT`, `W3UICE` | `w3cspcmd`, `w3gsrumd`, `w3updtmd` | translated | none yet | — | — | — | — | — | Static parity by object comparison, one fresh review per unit, 2026-11-12 ([`docs/log/2026-11-12-batch4-u1-u2-kokkos-translation.md`](../docs/log/2026-11-12-batch4-u1-u2-kokkos-translation.md)); U1 is host-only C++. |
 | `W3SNL2`, `W3SNL4`, `W3SNL5`, `W3SNLS` | `model/src/w3snl{2,4,5,s}md.F90` | not started | — | — | — | — | — | — | No operational switch uses them; the `IQTPE <= 0` branch (`W3SNLGQM`) is not replaced either. |
 
 Per routine, with each one's evidence and regtest record: [`ports.tsv`](ports.tsv) and the

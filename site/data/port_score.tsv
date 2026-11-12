@@ -1,10 +1,10 @@
 # The global numbers of the Kokkos port, written by scripts/port_score.py --write; do not edit.
 # WW3@03adda91. The website reads this file (piabrota/nix-os, ww3-site/content).
 # name	share	count	what
-of the run time, translated	99.3 %	316 of 1 023 routines	a Kokkos translation exists in kokkos/src; the profile's self time, full (bench_small, 120 x 80, 9 520 sea points, 12 h)
+of the run time, translated	99.3 %	327 of 1 023 routines	a Kokkos translation exists in kokkos/src; the profile's self time, full (bench_small, 120 x 80, 9 520 sea points, 12 h)
 of the run time, ported	99.3 %	72 of 1 023 routines	WW3 at the WW3/ pin calls the Kokkos code, behind its run-time flag; the profile's self time, full (bench_small, 120 x 80, 9 520 sea points, 12 h)
 of the run time, regtested	48.6 %	14 of 1 023 routines	WW3's regtests ran with it on Kokkos and agreed with the Fortran; the profile's self time, full (bench_small, 120 x 80, 9 520 sea points, 12 h)
-of the lines of code, translated	26.21 %	69 024 of 263 375	Fortran lines of the translated routines, of every line in WW3's model/src, in 65 of 147 files
+of the lines of code, translated	27.07 %	71 303 of 263 375	Fortran lines of the translated routines, of every line in WW3's model/src, in 66 of 147 files
 of the lines of code, ported	7.24 %	19 059 of 263 375	Fortran lines of the ported routines, of every line in WW3's model/src, in 28 of 147 files
 of the lines of code, regtested	1.20 %	3 151 of 263 375	Fortran lines of the regtested routines, of every line in WW3's model/src, in 7 of 147 files
-lines of Kokkos C++	62 651	in 355 files	under kokkos/src: the port itself
+lines of Kokkos C++	64 508	in 361 files	under kokkos/src: the port itself
