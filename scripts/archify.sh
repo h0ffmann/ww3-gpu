@@ -55,7 +55,8 @@ stale() {
 dark() { awk -F'\t' '!/^#/ && NF >= 2 {print $1}' "$dir/dark.tsv"; }
 want_png() {
     printf '%s\t%s\t%s\n' "$1" "$({ cat "$dir/$1.json" "$dir/ww3-gpu.css" "$root/scripts/archify_dress.py"
-        awk -F'\t' -v s="$1" '$1 == s' "$dir/dark.tsv"; } | sha256sum | cut -d' ' -f1)" "$(pin)"
+        awk -F'\t' -v s="$1" '$1 == s' "$dir/dark.tsv"
+        awk -F'\t' -v s="$1" '!/^#/ && $1 == s {print $7}' "$dir/figures.tsv"; } | sha256sum | cut -d' ' -f1)" "$(pin)"
 }
 is_dark() { dark | grep -qxF "$1"; }
 # paper.tsv: "<slug>\t<printed width, mm>\t<paper>" for each drawing a paper prints.
@@ -158,11 +159,11 @@ png() {
     mv "$tmp/png.lock" "$pnglock"
 }
 
-# site <dir>: a page for each drawing of dark.tsv at <dir>/<slug>/, and <dir>/index.html listing
+# site <dir>: a page for each drawing of dark.tsv at <dir>/<slug>/, and <dir>/index.html grouping
 # them. Pages runs it (.github/workflows/pages.yml). finalize's exit 2 (its browser check skipped,
 # no Chrome) is accepted there; a failure of its other gates is not.
 site() {
-    local out="$1" s t status items="" q="https://github.com/h0ffmann/ww3-gpu/blob/main/docs/archify" names
+    local out="$1" s t page status q="https://github.com/h0ffmann/ww3-gpu/blob/main/docs/archify" names
     need_archify
     tmpdir
     mapfile -t names < <(dark)
@@ -175,24 +176,16 @@ site() {
         set -e
         if [ "$status" != 0 ] && [ "$status" != 2 ]; then cat "$tmp/$s.log" >&2; echo "archify: finalize failed on $s" >&2; exit 1; fi
         t="$(title "$dir/$s.json")"
+        page="$(awk -F'\t' -v s="$s" '!/^#/ && $1 == s {print $5}' "$dir/figures.tsv")"
         cat > "$tmp/$s.bar.html" <<EOF
-<nav class="wg-bar" aria-label="Figure"><span><b>$t</b><a href="../">all figures</a> · <a href="../../">ww3-gpu</a> · <a href="$q/$s.json">source</a></span><span><span class="k"><i style="color:#36B7FF"></i>a source read</span> <span class="k"><i style="color:#FFB547"></i>built or run here</span> <span class="k"><i style="color:#3DFF96;border-style:dashed"></i>same bits as</span></span></nav>
+<nav class="wg-bar" aria-label="Figure"><span><b>$t</b><a href="../">all figures</a> · <a href="../../">ww3-gpu</a> · <a href="https://github.com/h0ffmann/ww3-gpu/blob/main/$page">illustrates ${page%%#*}</a> · <a href="$q/$s.json">source</a></span><span><span class="k"><i style="color:#36B7FF"></i>a source read</span> <span class="k"><i style="color:#FFB547"></i>built or run here</span> <span class="k"><i style="color:#3DFF96;border-style:dashed"></i>same bits as</span></span></nav>
 EOF
         mkdir -p "$out/$s"
         python3 "$root/scripts/archify_dress.py" "$tmp/$s.html" "$out/$s/index.html" "$s" --bar "$tmp/$s.bar.html"
-        items+="<li><a href=\"$s/\">$t</a> <span>· <a href=\"$q/$s.json\">source</a></span></li>"
         echo "archify: $out/$s/index.html"
     done
     [ "$dry" -eq 1 ] && return
-    cat > "$out/index.html" <<EOF
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>ww3-gpu · figures</title><link rel="icon" href="../favicon.svg"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&amp;family=JetBrains+Mono&amp;family=Newsreader&amp;display=swap"><style>
-body{margin:0;padding:48px 16px;background:radial-gradient(60rem 24rem at 100% -20%,color-mix(in srgb,#36B7FF 14%,transparent),transparent 70%),#05090E;color:#E7F2EF;font:400 18px/1.5 Newsreader,Georgia,serif}
-main{max-width:720px;margin:0 auto}h1{font:800 40px/1.1 'Bricolage Grotesque',system-ui,sans-serif;color:#36B7FF;margin:0 0 8px}
-p{color:#8FA3AD}ul{list-style:none;padding:0;border-top:1px solid #1C2B38}li{padding:14px 0;border-bottom:1px solid #1C2B38}
-a{color:#36B7FF}li>a{font:600 20px 'Bricolage Grotesque',system-ui,sans-serif;text-decoration:none}li span{font:400 13px 'JetBrains Mono',monospace;color:#8FA3AD}
-a:focus-visible{outline:2px solid #36B7FF;outline-offset:3px;border-radius:6px}
-</style></head><body><main><h1>figures</h1><p>Drawn with <a href="https://github.com/tt-a1i/archify">Archify</a> (MIT) from the sources in <a href="https://github.com/h0ffmann/ww3-gpu/tree/main/docs/archify">docs/archify/</a>. Each page is one drawing you can zoom. <a href="../">ww3-gpu</a></p><ul>$items</ul></main></body></html>
-EOF
+    python3 "$root/scripts/archify_index.py" "$out/index.html"
     echo "archify: $out/index.html"
 }
 

@@ -54,6 +54,37 @@ Read the one the task needs. Each is under 14 kB.
 The date on the title page is not the date of the text: the manual names version 7.14
 throughout, and its section 2.3.6 cites a 2021 paper.
 
+## At MetOcean's 7.14, the reference
+
+2026-11-12, goal `UrLTXtPC-5203`: the pages above were read against NOAA-EMC/WW3 `03adda91`, the
+base of the fork. The reference `--ww3` builds MetOcean's WW3 instead (`WW3-metocean-7.14/`,
+metocean/WW3 tag `7.14.mos-92e2cf6`, commit `92e2cf66`, 2026-09-01), so its tree was read the same
+day. GitHub's web pages could not be fetched from the cloud session (HTTP 403 from the proxy); the
+tree was read from the submodule, checked out at the gitlink ⚠ (the tag itself was not resolved).
+
+- (v) Both trees say version 7.14: `VERSION` and `WWVER = '7.14  '`
+  (`model/src/w3initmd.F90:129` at `92e2cf66`, `:130` at the fork `96892c95`).
+- (v) The manual differs in 11 of its files (`diff -rq WW3/manual WW3-metocean-7.14/manual`):
+  `defs.tex`, `eqs/ICE4.tex`, `eqs/ICE5.tex`, `eqs/NL1.tex`, `eqs/ST3.tex`, `eqs/ST4.tex`,
+  `eqs/ST6.tex`, `eqs/output.tex`, `impl/switch.tex`, `sys/files_w3.tex`, `manual.bib`. The other
+  sections, the numerics and the grids among them, are the same text.
+- (v) `NL1` at MetOcean has no Gaussian Quadrature Method: `impl/switch.tex` describes `nl1` as
+  the DIA alone, `eqs/NL1.tex` has no GQM text, `W3SNLGQM` is in no file of `model/src`, and
+  `IQTYPE` is a parameter of `SNL2` only (`model/src/w3gridmd.F90:882`, `:1014`). What
+  [source-terms.md](source-terms.md) says of GQM holds for `--ww3-noaa` and the fork, not for
+  `--ww3`.
+- (v) `ST4` at MetOcean adds the long-wave modulation factor $M_l(k,\theta)$ of the saturation
+  (`eqs/ST4.tex:219-230` at `92e2cf66`) and does not cite the later `SDSBCHOICE=3` adjustments (`art:AA23`, a key in neither
+  `manual.bib` ⚠) that `03adda91` cites. ⚠ Whether `w3src4md.F90` computes the factor was not read.
+- The four `model/src` lines these pages cite, read again at `92e2cf66`:
+
+| Cited at `03adda91` | What it shows | At `92e2cf66` |
+|---|---|---|
+| `w3srcemd.F90:569` | `#ifdef W3_ST4` | the same block at `:558` (v) |
+| `w3srcemd.F90:1367` to `:1388` | the ice calls inside `W3SRCE` | `CALL W3SIC1` at `:2105`, `W3SIS1` at `:2127` (v) |
+| `w3gridmd.F90:886`, `:1023` | `IQTYPE` and the GQM parameters of `SNL1` | absent; `IQTYPE` in `SNL2` at `:882`, `:1014` (v) |
+| `w3wdatmd.F90:183` | `VA(:,:)`, two-dimensional | the same line (v) |
+
 ## Licence
 
 The owner described the manual as public domain. Its own front matter does not say so ⚠:

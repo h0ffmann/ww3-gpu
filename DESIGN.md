@@ -66,6 +66,11 @@ no toolbar and no grid, on the night ground with the faint `--wave` glow.
   (`just archify png`, committed with `png.lock`) and an HTML page on the website, at
   `/figures/<slug>/`, built by `pages.yml` with `just archify site`. The picture links to
   the page. No HTML is committed.
+- **Every picture names its WAVEWATCH III.** A strip under the drawing prints the `ww3` column of
+  `docs/archify/figures.tsv` in `--muted` JetBrains Mono, 1/69 of the frame's width and never under
+  9 viewBox units (7.1 pt on the paper row), so the PNG, the PDF and the page all say which WW3 the
+  figure is drawn from. The website's figure index groups the drawings by `docs/archify/groups.tsv`,
+  each group opened by a paragraph that ties it to the next.
 - The PDFs of `docs/archify/` are printed in the same look, and a paper prints those PDFs:
   `scripts/preprint.sh` copies the preprint's Figure 1 from `docs/archify/ww3-gpu-runtimes.pdf`
   at every build.

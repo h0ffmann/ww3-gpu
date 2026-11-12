@@ -1,0 +1,9 @@
+# The groups of figures.tsv, in the order scripts/archify.sh site lists them. text is the paragraph
+# that opens the group on the figure index: what the drawings answer together, and how the group
+# leads to the next one. English; a pt-BR drawing is listed beside its English twin, or alone.
+group	title	text
+overview	What ww3-gpu is	One command builds and runs WAVEWATCH III several ways: MetOcean's Fortran as the reference, the same Fortran with Kokkos kernels on the CPU and the GPU, the Rust rewrite and WAVEWATCH IV. These three drawings name each runtime, its source and whose bits it must reproduce. The next group shows how that reproduction is judged.
+parity	How a port is judged	A ported routine counts only when WW3's own output does not change. These four drawings follow one result from the regtest comparison to the routine's state in the ledger, show where a time step leaves the Fortran, and show why a GPU can give the CPU's bits. The next group shows the code that makes the comparison possible: one Kokkos source and one WW3 binary.
+kokkos	Kokkos inside WW3	The Kokkos kernels are compiled once for the CPU and the GPU, and live in the same WW3 executable as the Fortran they replace, behind a run-time flag. That is what lets the comparison of the previous group run the Fortran and the port side by side. The next group applies it to the second most expensive routine, W3SDS4.
+triton	W3SDS4 and the Triton arms	W3SDS4 is the second routine of the profile. These drawings show which of its branches decides the cost, the order in which it is ported to Triton with a gate per step, which implementations are timed and when a timing counts, and where WeatherNext 3 wind enters the benchmark. The last group shows how such work is fed to the agents that do it.
+work	How the port work is organised	Routines enter a queue in the profile's order and leave as reviewed branches, so no routine is worked twice. This is the rig of WFIP-0007, a draft.
