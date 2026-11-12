@@ -37,6 +37,12 @@
 // WW_KOKKOS_PROP3_BATCH_MIB MiB each (default 1024); a step with more components or points than
 // fit runs in several launches.
 //
+// Under W3_MPI (ADR-0020, PATCH.md section 33) ww_xyp3_batch_mpi is ww_xyp3_batch_va with W3GATH
+// and W3SCAT's MPI arms: a sea point another rank holds is read from, and written to, the block of
+// that rank in a buffer the Fortran exchanges (W3KOKKOS_EXCH_PAIRS), and ww_xyp3_mpi_pack and
+// ww_xyp3_mpi_unpack move the components other ranks own between the resident VA and those
+// buffers. They copy REALs and compute nothing; the layout is in the comment of Cols below.
+//
 // WW_KOKKOS_XYP3_TEAM (PATCH.md sections 16 and 19) picks how ww_xyp3_batch runs a component: 0,
 // one work item per component running the serial body (above); AUTO or a positive N, one Kokkos
 // team per component, of Kokkos' choice of size or of N threads, whose threads split every loop
@@ -98,6 +104,41 @@ static_assert(static_cast<int>(WW_XYP3_NRPAR) == static_cast<int>(ww::prop::NRPA
 template <class T>
 using HostUnmanaged =
     Kokkos::View<T*, Kokkos::LayoutLeft, Kokkos::HostSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
+
+/// Where W3GATH reads VA(ISPEC, sea point ISEA) and W3SCAT writes it back.
+///
+/// W3_SHRD (naproc == 0): column ISEA of the VA the kernel works on (JSEA = ISEA).
+/// W3_MPI: sea point ISEA is JSEA = K = (ISEA-1)/NAPROC + 1 of rank IP = MOD(ISEA-1,NAPROC) + 1
+/// (INIT_GET_ISEA, w3parall.F90). On this rank (IP == IAPROC) it is column K of VA. On another
+/// rank, the value W3GATH 2.d receives into GSTORE(ISEA) is rbuf[poff[IP-1] + L*NSEALM + K-1]
+/// and the value W3SCAT 2.b puts into SSTORE(ISEA) for IP goes to the same place in sbuf, where L
+/// is the place of ISPEC among the components this rank owns, in ascending order: the order in
+/// which IP packs them (ww_xyp3_mpi_pack) and unpacks them back.
+struct Cols {
+  float* va;
+  int nspec, naproc, iaproc, nsealm;
+  const int* poff;
+  const float* rbuf;
+  float* sbuf;
+
+  KOKKOS_INLINE_FUNCTION Real get(int isea, int l, int isp) const {
+    if (naproc == 0) return va[static_cast<size_t>(isea) * nspec + isp - 1];
+    const int ip = (isea - 1) % naproc + 1, k = (isea - 1) / naproc + 1;
+    if (ip == iaproc) return va[static_cast<size_t>(k) * nspec + isp - 1];
+    return rbuf[static_cast<size_t>(poff[ip - 1]) + static_cast<size_t>(l) * nsealm + k - 1];
+  }
+  KOKKOS_INLINE_FUNCTION void put(int isea, int l, int isp, Real v) const {
+    if (naproc == 0) {
+      va[static_cast<size_t>(isea) * nspec + isp - 1] = v;
+      return;
+    }
+    const int ip = (isea - 1) % naproc + 1, k = (isea - 1) / naproc + 1;
+    if (ip == iaproc)
+      va[static_cast<size_t>(k) * nspec + isp - 1] = v;
+    else
+      sbuf[static_cast<size_t>(poff[ip - 1]) + static_cast<size_t>(l) * nsealm + k - 1] = v;
+  }
+};
 
 enum Routine { XYP3, KTP3, NROUTINES };
 const char* const kName[NROUTINES] = {"W3XYP3", "W3KTP3"};
@@ -331,6 +372,25 @@ void unstage(const E& e, T* p, const T* d, size_t n) {
   }
 }
 
+/// Where the kernels of E write n elements that go back to caller array p (unstage): p itself
+/// when E can read host memory, else a device buffer of slot `slot`, not filled from p.
+template <class E>
+float* stage_out(const E& e, int slot, float* p, size_t n) {
+  if constexpr (Kokkos::SpaceAccessibility<E, Kokkos::HostSpace>::accessible) {
+    (void)e;
+    (void)slot;
+    (void)n;
+    return p;
+  } else {
+    (void)e;
+    auto& pool = buffers<typename E::memory_space>().in_r;
+    const size_t k = static_cast<size_t>(slot);
+    if (pool.size() <= k) pool.resize(k + 1);
+    grow(pool[k], std::max<size_t>(n, 1), "ww_prop3.out");
+    return pool[k].data();
+  }
+}
+
 /// Runs f(E()) on Kokkos::Serial inside an OpenMP region, else on the default space, under the
 /// lock, timing the whole call as region `name`, and turns an exception into a status.
 template <class F>
@@ -360,7 +420,7 @@ int run(const char* name, const F& f) {
 /// not locked, and every caller in W3WAVE is outside one.
 template <class F>
 int run_va(const char* name, Routine r, int igrid, float* va, int nspec, int nsealm,
-           const F& f) {
+           const F& f, bool writes = true) {
   try {
     if (!Kokkos::is_initialized())
       return fail(WW_KOKKOS_ERR_NOT_INITIALISED, "before ww_kokkos_init");
@@ -375,8 +435,9 @@ int run_va(const char* name, Routine r, int igrid, float* va, int nspec, int nse
       return fail(WW_KOKKOS_ERR_BAD_SHAPE, "the resident VA is padded");
     const int st = f(Kokkos::DefaultExecutionSpace(), true, dva.data());
     // The launch wrote d_va; on a failure the model stops (PROP3_CHECK), so the state is moot.
-    ww::resident::device_written(igrid);
-    if (st == WW_KOKKOS_OK) g_resident[r].fetch_add(1, std::memory_order_relaxed);
+    // A launch that only read it (ww_xyp3_mpi_pack) leaves the state as device_va left it.
+    if (writes) ww::resident::device_written(igrid);
+    if (st == WW_KOKKOS_OK && r < NROUTINES) g_resident[r].fetch_add(1, std::memory_order_relaxed);
     return st;
   } catch (const std::bad_alloc& e) {
     return fail(WW_KOKKOS_ERR_RUNTIME, e.what());
@@ -405,6 +466,11 @@ struct Xyp3Args {
   int flbpi, nbi, ncol;
   float* va;
   float* dva;  // the resident VA of the grid in E's memory space, or nullptr: va, staged
+  // ww_xyp3_batch_mpi only (naproc > 0): see Cols. nbuf REALs each in rbuf and sbuf.
+  int naproc = 0, iaproc = 0, nsealm = 0, nbuf = 0;
+  const int* poff = nullptr;
+  const float* rbuf = nullptr;
+  float* sbuf = nullptr;
 };
 
 template <class E>
@@ -473,6 +539,22 @@ int xyp3_batch(const E& e, bool fence, const Xyp3Args& a) {
   const int* const lst = stage(e, slot++, static_cast<const int*>(list.data()), list.size());
   float* const vad =
       a.dva != nullptr ? a.dva : stage(e, slot++, va, nspec * static_cast<size_t>(ncol));
+  Cols col{vad, p.nspec, 0, 0, 0, nullptr, nullptr, nullptr};
+  const size_t nbuf = static_cast<size_t>(a.nbuf);
+  if (a.naproc > 0) {
+    col.naproc = a.naproc;
+    col.iaproc = a.iaproc;
+    col.nsealm = a.nsealm;
+    col.poff = stage(e, slot++, a.poff, static_cast<size_t>(a.naproc));
+    // Not const: the received values differ every step, so the shadow compare would only cost.
+    col.rbuf = stage(e, slot++, const_cast<float*>(a.rbuf), nbuf);
+    col.sbuf = stage_out(e, slot++, a.sbuf, nbuf);
+    // W3MPIP zeroes SSTORE and W3SCAT writes ISEA <= NSEA only: the entries past NSEA stay 0.
+    if (nbuf > 0)
+      Kokkos::deep_copy(
+          e, Kokkos::View<float*, Mem, Kokkos::MemoryTraits<Kokkos::Unmanaged>>(col.sbuf, nbuf),
+          0.0f);
+  }
   t_in.stop();
 
   // Per component: FIELD(1-NY:NY*(NX+2)), then W3XYP3's reals; its ints apart.
@@ -487,7 +569,7 @@ int xyp3_batch(const E& e, bool fence, const Xyp3Args& a) {
   Real* const wr0 = b.work_r.data();
   int* const wi0 = b.work_i.data();
   const int qoff = p.ny - 1;  // FIELD(i) -> [i + NY - 1]
-  const int insea = p.nsea, inspec = p.nspec;
+  const int insea = p.nsea;
 
   const int team = xyp3_team<E>();
   const bool team_default = xyp3_team_flag() == kXyp3Unset;
@@ -510,7 +592,7 @@ int xyp3_batch(const E& e, bool fence, const Xyp3Args& a) {
         // MAPSF(:,3) is injective, so the sea points' stores never meet.
         lp.par(1, insea + 1, [&](int isea) {
           const int ixy = g.mapsf[2 * insea + isea - 1];
-          field[ixy + qoff] = vad[static_cast<size_t>(isea) * inspec + isp - 1];
+          field[ixy + qoff] = col.get(isea, k0 + i, isp);
         });
         w3xyp3_loops(lp, p, g, s, isp, dtg, msta, field, field + nf,
                      wi0 + static_cast<size_t>(i) * nwi);
@@ -535,23 +617,25 @@ int xyp3_batch(const E& e, bool fence, const Xyp3Args& a) {
           KOKKOS_LAMBDA(const int i) {
             const int isp = lst[k0 + i];
             Real* const field = wr0 + static_cast<size_t>(i) * nwr;
-            // W3GATH, W3_SHRD: FIELD = 0., then FIELD(MAPSF(ISEA,3)) = VA(ISPEC,ISEA).
+            // W3GATH, W3_SHRD: FIELD = 0., then FIELD(MAPSF(ISEA,3)) = VA(ISPEC,ISEA); under
+            // W3_MPI, GSTORE(ISEA) (Cols).
             for (size_t k = 0; k < nf; ++k) field[k] = Real(0);
             for (int isea = 1; isea <= insea; ++isea) {
               const int ixy = g.mapsf[2 * insea + isea - 1];
-              field[ixy + qoff] = vad[static_cast<size_t>(isea) * inspec + isp - 1];
+              field[ixy + qoff] = col.get(isea, k0 + i, isp);
             }
             w3xyp3(p, g, s, isp, dtg, msta, field, field + nf, wi0 + static_cast<size_t>(i) * nwi);
           });
     }
-    // W3SCAT, W3_SHRD: VA(ISPEC,ISEA) = FIELD(IXY) where MAPSTA(IXY) /= 0, per sea point.
+    // W3SCAT, W3_SHRD: VA(ISPEC,ISEA) = FIELD(IXY) where MAPSTA(IXY) /= 0, per sea point; under
+    // W3_MPI, SSTORE(ISEA) = FIELD(IXY) there, and VA(ISPEC,JSEA) for this rank's points (Cols).
     Kokkos::parallel_for(
         "ww_xyp3_scatter", Kokkos::RangePolicy<E>(e, 1, insea + 1), KOKKOS_LAMBDA(const int isea) {
           const int ixy = g.mapsf[2 * insea + isea - 1];
           if (msta[ixy - 1] == 0) return;
           for (int i = 0; i < m; ++i)
-            vad[static_cast<size_t>(isea) * inspec + lst[k0 + i] - 1] =
-                wr0[static_cast<size_t>(i) * nwr + static_cast<size_t>(ixy + qoff)];
+            col.put(isea, k0 + i, lst[k0 + i],
+                    wr0[static_cast<size_t>(i) * nwr + static_cast<size_t>(ixy + qoff)]);
         });
     t_k.stop();
     ++launches;
@@ -559,6 +643,11 @@ int xyp3_batch(const E& e, bool fence, const Xyp3Args& a) {
 
   ww::timers::Region t_out("xyp3.d2h", fence);
   if (a.dva == nullptr) unstage(e, va, vad, nspec * static_cast<size_t>(ncol));
+  if (a.naproc > 0) {
+    unstage(e, a.sbuf, col.sbuf, nbuf);
+    const double nb = static_cast<double>(nbuf * sizeof(float));
+    ww::resident::exchange_moved(nb, nb);
+  }
   e.fence("ww_xyp3_batch");
   t_out.stop();
   count(XYP3, nlist, launches);
@@ -662,6 +751,15 @@ struct ResidentVa {
   int igrid, nspec, nsealm;
 };
 
+/// The MPI arguments of ww_xyp3_batch_mpi (Cols).
+struct MpiIn {
+  int naproc, iaproc;
+  const int* poff;
+  const float* rbuf;
+  float* sbuf;
+  int nbuf;
+};
+
 // The checks and the call of ww_xyp3_batch and ww_xyp3_batch_va: res == nullptr stages va,
 // else the kernels work on the resident VA of res->igrid (ncol is then NSEALM+1).
 int xyp3_entry(const ResidentVa* res, const float* rpar, int nrpar, const int* ipar, int nipar,
@@ -672,7 +770,8 @@ int xyp3_entry(const ResidentVa* res, const float* rpar, int nrpar, const int* i
                const int* mapx2, const int* mapy2, const int* mapaxy, const int* mapcxy,
                const int* maptrn, const int* mapsta, const float* cg, const float* cx,
                const float* cy, int flbpi, int nbi, const int* isbpi, const float* bbpi0,
-               const float* bbpin, const int* on, int ncol, float* va) {
+               const float* bbpin, const int* on, int ncol, float* va,
+               const MpiIn* mpi = nullptr) {
   using namespace ww::prop;
   if (rpar == nullptr || ipar == nullptr || imaps == nullptr || tscal == nullptr ||
       nrpar != WW_XYP3_NRPAR || nipar != WW_XYP3_NIPAR || nimaps != WW_XYP3_NIMAPS ||
@@ -680,7 +779,7 @@ int xyp3_entry(const ResidentVa* res, const float* rpar, int nrpar, const int* i
     return fail(WW_KOKKOS_ERR_BAD_SHAPE, "ww_xyp3_batch: bad packet");
   const Params p = unpack(rpar, ipar);
   if (p.nx < 1 || p.ny < 1 || p.nsea < 1 || p.nk < 1 || p.nth < 1 || p.nspec != p.nk * p.nth ||
-      ncol < p.nsea + 1 || nbi < 0 || mapsf == nullptr || clats == nullptr || sig == nullptr ||
+      (mpi == nullptr && ncol < p.nsea + 1) || nbi < 0 || mapsf == nullptr || clats == nullptr || sig == nullptr ||
       ecos == nullptr || esin == nullptr || dpdx == nullptr || dpdy == nullptr ||
       dqdx == nullptr || dqdy == nullptr || gsqrt == nullptr || atrnx == nullptr ||
       atrny == nullptr || mapx2 == nullptr || mapy2 == nullptr || mapaxy == nullptr ||
@@ -691,11 +790,38 @@ int xyp3_entry(const ResidentVa* res, const float* rpar, int nrpar, const int* i
     return fail(WW_KOKKOS_ERR_BAD_SHAPE, "ww_xyp3_batch: bad sizes or null pointer");
   if (p.iclose == kIcloseTrpl)
     return fail(WW_KOKKOS_ERR_UNSUPPORTED, "ww_xyp3_batch: tripole grid (W3XYP3 stops there)");
+  if (mpi != nullptr) {
+    // Every sea point is some rank's JSEA <= NSEALM, and every other rank's block holds this
+    // rank's NSPLOC components of NSEALM values each.
+    const long long nsealm = ncol - 1;
+    int nsploc = 0;
+    for (int isp = 0; isp < p.nspec; ++isp) nsploc += on[isp] != 0 ? 1 : 0;
+    if (res == nullptr || mpi->naproc < 1 || mpi->iaproc < 1 || mpi->iaproc > mpi->naproc ||
+        nsealm < 1 || nsealm * mpi->naproc < p.nsea || mpi->poff == nullptr ||
+        mpi->nbuf != static_cast<long long>(mpi->naproc - 1) * nsploc * nsealm ||
+        (mpi->nbuf > 0 && (mpi->rbuf == nullptr || mpi->sbuf == nullptr)))
+      return fail(WW_KOKKOS_ERR_BAD_SHAPE, "ww_xyp3_batch_mpi: bad ranks, offsets or buffers");
+    for (int ip = 1, off = 0; ip <= mpi->naproc; ++ip) {
+      if (ip == mpi->iaproc) continue;
+      if (mpi->poff[ip - 1] != off)
+        return fail(WW_KOKKOS_ERR_BAD_SHAPE, "ww_xyp3_batch_mpi: offsets not in rank order");
+      off += nsploc * static_cast<int>(nsealm);
+    }
+  }
 
-  const Xyp3Args args{p,     imaps, tscal, dtg,   mapsf, mapx2, mapy2,  mapaxy, mapcxy, maptrn,
+  Xyp3Args args{p,     imaps, tscal, dtg,   mapsf, mapx2, mapy2,  mapaxy, mapcxy, maptrn,
                       mapsta, isbpi, on,  clats, sig,   ecos,  esin,  dpdx,   dpdy,   dqdx,
                       dqdy,  gsqrt, atrnx, atrny, cg,    cx,    cy,    bbpi0,  bbpin,  flbpi,
                       nbi,   ncol,  va,    nullptr};
+  if (mpi != nullptr) {
+    args.naproc = mpi->naproc;
+    args.iaproc = mpi->iaproc;
+    args.nsealm = ncol - 1;
+    args.nbuf = mpi->nbuf;
+    args.poff = mpi->poff;
+    args.rbuf = mpi->rbuf;
+    args.sbuf = mpi->sbuf;
+  }
   if (res != nullptr)
     return run_va("xyp3.call", XYP3, res->igrid, va, res->nspec, res->nsealm,
                   [&](const auto& e, bool fence, float* dva) {
@@ -756,6 +882,49 @@ int ktp3_entry(const ResidentVa* res, const float* rpar, int nrpar, const int* i
                     return ktp3_batch(e, fence, ar);
                   });
   return run("ktp3.call", [&](const auto& e, bool fence) { return ktp3_batch(e, fence, args); });
+}
+
+// ww_xyp3_mpi_pack (unpack false) and ww_xyp3_mpi_unpack (unpack true): buf[J*NSEALM + K-1]
+// and VA(ISPS(J+1), K), J = 0 .. nisp-1, K = 1 .. NSEALM, in one direction or the other.
+int xyp3_mpi_move(bool unpack, int igrid, float* va, int nspec, int nsealm, const int* isps,
+                  int nisp, float* buf) {
+  if (va == nullptr || nspec < 1 || nsealm < 1 || nisp < 0 || nisp > nspec ||
+      (nisp > 0 && (isps == nullptr || buf == nullptr)))
+    return fail(WW_KOKKOS_ERR_BAD_SHAPE, "ww_xyp3_mpi_pack/unpack: bad sizes or null pointer");
+  for (int j = 0; j < nisp; ++j)
+    if (isps[j] < 1 || isps[j] > nspec)
+      return fail(WW_KOKKOS_ERR_BAD_SHAPE, "ww_xyp3_mpi_pack/unpack: a component outside VA");
+  const size_t n = static_cast<size_t>(nisp) * static_cast<size_t>(nsealm);
+  return run_va(
+      unpack ? "xyp3.unpack" : "xyp3.pack", NROUTINES, igrid, va, nspec, nsealm,
+      [&](const auto& e, bool fence, float* dva) {
+        using E = std::decay_t<decltype(e)>;
+        (void)fence;
+        if (n == 0) return int{WW_KOKKOS_OK};
+        const int* const li = stage(e, 30, isps, static_cast<size_t>(nisp));
+        float* const b = unpack ? stage(e, 31, buf, n) : stage_out(e, 31, buf, n);
+        const int ns = nspec, nm = nsealm;
+        if (unpack)
+          Kokkos::parallel_for(
+              "ww_xyp3_mpi_unpack", Kokkos::RangePolicy<E>(e, 0, static_cast<long long>(n)),
+              KOKKOS_LAMBDA(const long long q) {
+                const long long j = q / nm, k = q % nm + 1;
+                dva[static_cast<size_t>(k) * ns + li[j] - 1] = b[q];
+              });
+        else
+          Kokkos::parallel_for(
+              "ww_xyp3_mpi_pack", Kokkos::RangePolicy<E>(e, 0, static_cast<long long>(n)),
+              KOKKOS_LAMBDA(const long long q) {
+                const long long j = q / nm, k = q % nm + 1;
+                b[q] = dva[static_cast<size_t>(k) * ns + li[j] - 1];
+              });
+        if (!unpack) unstage(e, buf, static_cast<const float*>(b), n);
+        e.fence("ww_xyp3_mpi_move");
+        const double nb = static_cast<double>(n * sizeof(float));
+        ww::resident::exchange_moved(unpack ? 0.0 : nb, unpack ? nb : 0.0);
+        return int{WW_KOKKOS_OK};
+      },
+      unpack);
 }
 
 }  // namespace
@@ -894,6 +1063,63 @@ int ww_ktp3_batch_va(int igrid, const float* rpar, int nrpar, const int* ipar, i
   return ktp3_entry(&r, rpar, nrpar, ipar, nipar, sig, dsip, ecos, esin, ec2, esc, es2, mapwn,
                     mapth2, mapwn2, itstep, ntimes, facth, fack, nsea, cg, wn, npts, jsea, isea,
                     pscal, nsealm + 1, va, cflthmax, cflkmax);
+}
+
+// ww_xyp3_batch_mpi (ADR-0020, PATCH.md section 33): ww_xyp3_batch_va under W3_MPI. The arguments
+// are ww_xyp3_batch_va's, then:
+// | C      | Fortran                                   | Type         | Intent | Length          |
+// | naproc | NAPROC                                    | int          | in     | >= 1            |
+// | iaproc | IAPROC                                    | int          | in     | 1 .. naproc     |
+// | poff   | the offset of rank IP's block in rbuf and | const int*   | in     | naproc; rank    |
+// |        | sbuf, in REALs (IAPROC's entry not read)  |              |        | order, NSPLOC*  |
+// |        |                                           |              |        | NSEALM each     |
+// | rbuf   | GSTORE(IP+(K-1)*NAPROC) per owned ISPEC:  | const float* | in     | nbuf            |
+// |        | rank IP's VA(ISPEC,K), K = 1 .. NSEALM    |              |        |                 |
+// | sbuf   | SSTORE(IP+(K-1)*NAPROC) per owned ISPEC:  | float*       | out    | nbuf            |
+// |        | 0. past NSEA                              |              |        |                 |
+// | nbuf   | (NAPROC-1)*NSPLOC*NSEALM                  | int          | in     |                 |
+// The own columns are VA's, as in ww_xyp3_batch_va; the state is DEVICE afterwards.
+int ww_xyp3_batch_mpi(int igrid, const float* rpar, int nrpar, const int* ipar, int nipar,
+                      const int* imaps, int nimaps, const float* tscal, int ntscal, float dtg,
+                      const int* mapsf, const float* clats, const float* sig, const float* ecos,
+                      const float* esin, const float* dpdx, const float* dpdy, const float* dqdx,
+                      const float* dqdy, const float* gsqrt, const float* atrnx,
+                      const float* atrny, const int* mapx2, const int* mapy2, const int* mapaxy,
+                      const int* mapcxy, const int* maptrn, const int* mapsta, const float* cg,
+                      const float* cx, const float* cy, int flbpi, int nbi, const int* isbpi,
+                      const float* bbpi0, const float* bbpin, const int* on, float* va,
+                      int nspec, int nsealm, int naproc, int iaproc, const int* poff,
+                      const float* rbuf, float* sbuf, int nbuf) {
+  const ResidentVa r{igrid, nspec, nsealm};
+  const MpiIn m{naproc, iaproc, poff, rbuf, sbuf, nbuf};
+  return xyp3_entry(&r, rpar, nrpar, ipar, nipar, imaps, nimaps, tscal, ntscal, dtg, mapsf,
+                    clats, sig, ecos, esin, dpdx, dpdy, dqdx, dqdy, gsqrt, atrnx, atrny, mapx2,
+                    mapy2, mapaxy, mapcxy, maptrn, mapsta, cg, cx, cy, flbpi, nbi, isbpi, bbpi0,
+                    bbpin, on, nsealm + 1, va, &m);
+}
+
+// ww_xyp3_mpi_pack: buf[J*NSEALM + K-1] = VA(ISPS(J+1), K), K = 1 .. NSEALM, read from the resident
+// VA of grid igrid: what IRQSG1(:,1) sends of each component with WW3_SPEC_VEC (w3initmd.F90,
+// W3MPIP section 2). The state is not changed.
+// | C      | Fortran                                  | Type       | Intent | Length          |
+// | igrid  | IGRID                                    | int        | in     |                 |
+// | va     | VA(1,0), to bind or check the context    | float*     | in     | nspec x nsealm+1|
+// | nspec  | SIZE(VA,1)                               | int        | in     |                 |
+// | nsealm | UBOUND(VA,2) = NSEALM                    | int        | in     |                 |
+// | isps   | the components other ranks own, by rank  | const int* | in     | nisp            |
+// |        | then ascending                           |            |        |                 |
+// | buf    | the send buffer                          | float*     | out    | nisp*nsealm     |
+int ww_xyp3_mpi_pack(int igrid, float* va, int nspec, int nsealm, const int* isps, int nisp,
+                     float* buf) {
+  return xyp3_mpi_move(false, igrid, va, nspec, nsealm, isps, nisp, buf);
+}
+
+// ww_xyp3_mpi_unpack: VA(ISPS(J+1), K) = buf[J*NSEALM + K-1], K = 1 .. NSEALM, into the resident VA,
+// as the receives of IRQSG1(:,2) write VA; the arguments are ww_xyp3_mpi_pack's, buf read. The
+// state is DEVICE afterwards.
+int ww_xyp3_mpi_unpack(int igrid, float* va, int nspec, int nsealm, const int* isps, int nisp,
+                       const float* buf) {
+  return xyp3_mpi_move(true, igrid, va, nspec, nsealm, isps, nisp, const_cast<float*>(buf));
 }
 
 }  // extern "C"
