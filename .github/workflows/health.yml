@@ -4,7 +4,7 @@
 # with the KOKKOS switch and the ww_kokkos package on OpenMP, runs regtest ww3_ts1 with the
 # Fortran and the Kokkos DIA, then builds --ww3-noaa (pure NOAA WW3, the fork's base; --ww3 is
 # MetOcean's WW3 and is not in CI) and compares pair to pair (nccmp-tol). The other
-# combinations and why they are not here: README.md, "Health".
+# combinations and why they are not here: docs/REPO_GUIDE_202611.md, "health".
 name: health
 
 on:

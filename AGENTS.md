@@ -528,7 +528,7 @@ ponytail is also enabled as a Claude Code plugin, with its mode off by default
 (`PONYTAIL_DEFAULT_MODE=off`, the owner, 14 October 2026), because its rules cover a whole session
 and pull against "Translate, don't improve". A person turns it on for a session with `/ponytail`;
 even then "the smallest change" never licenses a refactor, a vectorisation or a "simplification"
-of a ported routine. The evidence is in `CONTRIBUTING.md`, "Skills and agents"; README.md,
+of a ported routine. The evidence is in `CONTRIBUTING.md`, "Skills and agents"; `docs/REPO_GUIDE_202611.md`,
 "ponytail, off by default", is the user's guide.
 
 ## Messages between Claude projects
