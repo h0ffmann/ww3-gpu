@@ -7,8 +7,8 @@ the preprint in [`preprint/`](preprint/README.md); and, when it starts, the thes
 `pdf/` keeps that name for the sake of existing links, though it also holds `.docx` files. The
 course and the book built from it were removed on 2026-11-11.
 
-A short document is a report in easy Brazilian Portuguese for Prof. Pedro Cruz (GTA,
-DEL/UFRJ), in a full version, [`relatorio.easy.pt-BR.md`](relatorio-gta/relatorio.easy.pt-BR.md), and a
+A short document is a report in easy Brazilian Portuguese for Prof. Pedro Cruz, D.Sc.
+(UFRJ), in a full version, [`relatorio.easy.pt-BR.md`](relatorio-gta/relatorio.easy.pt-BR.md), and a
 short one of about 15 minutes' reading, [`relatorio.curto.pt-BR.md`](relatorio-gta/relatorio.curto.pt-BR.md).
 `scripts/build_relatorio.sh` turns them into the pages `/relatorio-gta/` and `/relatorio-gta/curto.html`,
 and with `--pdf` prints `pdf/relatorio-gta-pedro-cruz.pdf` and `pdf/relatorio-gta-pedro-cruz-curto.pdf`

@@ -5,12 +5,12 @@ author:
   - name: Matheus Hoffmann
     orcid: 0009-0009-1056-7661
     affiliation: Escola Politécnica, Universidade Federal do Rio de Janeiro, Brasil
-  - name: Pedro Veras Guimarães
+  - name: Pedro Veras Guimarães, PhD
     orcid: 0000-0002-1686-4722
-    affiliation: Coorientador do primeiro autor. LabECO, Departamento de Engenharia Mecânica, Universidade Federal de Santa Catarina, Brasil
-  - name: Pedro Cruz
+    affiliation: Coorientador do primeiro autor. Universidade Federal de Santa Catarina, Brasil
+  - name: Pedro Cruz, D.Sc.
     orcid: 0000-0002-2019-133X
-    affiliation: Orientador do primeiro autor. Grupo de Teleinformática e Automação (GTA), DEL, Escola Politécnica, Universidade Federal do Rio de Janeiro, Brasil
+    affiliation: Orientador do primeiro autor. Universidade Federal do Rio de Janeiro, Brasil
 date: "2026-11-11"
 version: "v0 (preprint, sem revisão por pares)"
 lang: pt-BR
