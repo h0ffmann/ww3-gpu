@@ -265,7 +265,7 @@ or languages, and they pull against "Translate, don't improve" (v) (3536 charact
 session with `/ponytail`, for C++ around the port; even then "the smallest change" never licenses
 a refactor, a vectorisation or a "simplification" of a ported routine. `PONYTAIL_MAP=0` turns off
 its codebase map, which lists Python and JS only, never C++, CUDA or Fortran (v)
-(`hooks/ponytail-map.js:17` at 5.2.0). README.md, "ponytail, off by default", is the user's guide.
+(`hooks/ponytail-map.js:17` at 5.2.0). `docs/REPO_GUIDE_202611.md`, "ponytail, off by default", is the user's guide.
 The vendored skills above stay the ones that carry this repository's audience paragraph.
 
 One more plugin is enabled in `.claude/settings.json`, pinned to a tag of its own marketplace
@@ -381,7 +381,7 @@ that machine); deleting either directory would have lost them.
   which covers squash merges), and `just worktrees clean --apply` removes them. A worktree with
   changes, or with a process whose working directory is inside it, is kept. Each deleted branch
   is logged in `.git/worktrees-clean.log` as the `git branch <name> <sha>` line that restores it.
-- A devcontainer needs a full clone, not a worktree (README.md, "the dev container").
+- A devcontainer needs a full clone, not a worktree (`docs/REPO_GUIDE_202611.md`, "the dev container").
 
 ## Opening a pull request
 

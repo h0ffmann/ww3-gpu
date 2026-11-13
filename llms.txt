@@ -6,7 +6,7 @@ This file is an index for language models and for people, in the format of https
 
 ## Start here
 
-- [README](https://github.com/h0ffmann/ww3-gpu/blob/main/README.md): what the lab is, in one minute, with its study areas and their state. Portuguese mirror: README.pt-BR.md.
+- [README](https://github.com/h0ffmann/ww3-gpu/blob/main/README.md): what the project is and where it stands, for a reader new to wave modelling, with the publications. Portuguese mirror: README.pt-BR.md. The detail it used to hold (run modes, test cases, runtimes, study areas): docs/REPO_GUIDE_202611.md.
 - [Website](https://wave.piabrota.art/): the front page (research, numbers, tools, figures, port, decisions, designs, how to cite) and the lineage page, built from this repository's files at a pinned commit.
 - [AGENTS.md](https://github.com/h0ffmann/ww3-gpu/blob/main/AGENTS.md): the repository's invariants (bit for bit with the Fortran, WW3 is read-only, translate don't improve, evidence on every claim) and where each kind of change belongs.
 - [CONTRIBUTING.md](https://github.com/h0ffmann/ww3-gpu/blob/main/CONTRIBUTING.md): the longer form of those rules, including whether WW3 itself is deterministic enough for bit-for-bit comparison.
