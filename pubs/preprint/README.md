@@ -3,8 +3,8 @@
 **Status: preprint, not peer reviewed.** A note that compares two ports of WAVEWATCH III (WW3)
 held to the same rule, the Fortran's bits: this repository's C++/Kokkos port and the Rust port in
 [h0ffmann/chaceon](https://github.com/h0ffmann/chaceon). It is the contribution prepared for
-aiXiv, 2026-11-11. Authors: Matheus Hoffmann, Pedro Veras Guimarães (LabECO, UFSC) and Pedro Cruz
-(GTA, DEL/Poli/UFRJ); the ORCIDs are in `metadata.md` and match the public ORCID records (v,
+aiXiv, 2026-11-11. Authors: Matheus Hoffmann, Pedro Veras Guimarães, PhD (UFSC) and Pedro
+Cruz, D.Sc. (UFRJ); the ORCIDs are in `metadata.md` and match the public ORCID records (v,
 `pub.orcid.org`, read 2026-11-11).
 
 | File | What it is |

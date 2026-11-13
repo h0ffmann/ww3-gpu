@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# build_relatorio — the easy pt-BR report for Prof. Pedro Cruz (GTA, DEL/UFRJ), full and short, from two Markdown sources.
+# build_relatorio — the easy pt-BR report for Prof. Pedro Cruz, D.Sc. (UFRJ), full and short, from two Markdown sources.
 #   scripts/build_relatorio.sh          -> build/site/relatorio-gta/{index.html,curto.html,style.css,figures/}
 #   scripts/build_relatorio.sh --pdf    -> the same, then pdf/relatorio-gta-pedro-cruz{,-curto}.pdf, printed by Chromium
 #   scripts/build_relatorio.sh --self-test

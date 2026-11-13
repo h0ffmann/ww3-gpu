@@ -1,6 +1,6 @@
 ---
 title: "Wave Forecaster: o que já foi portado para a GPU"
-subtitle: "Relatório para o Prof. Pedro Cruz (GTA, DEL/Poli/UFRJ), em português técnico controlado"
+subtitle: "Relatório para o Prof. Pedro Cruz, D.Sc. (UFRJ), em português técnico controlado"
 author: "Matheus Hoffmann, Escola Politécnica da UFRJ"
 date: "2026-10-20"
 lang: pt-BR
@@ -14,7 +14,7 @@ lang: pt-BR
 >   e o [`README.pt-BR.md`][readme-pt].
 > - **Feita a partir de:** o repositório em 2026-10-20, commit `b8a6463` de `main`. A versão
 >   anterior usou o commit `23130fe`, de 2026-10-16.
-> - **Para quem é:** o Prof. Pedro Cruz, do GTA (Grupo de Teleinformática e Automação, DEL/UFRJ),
+> - **Para quem é:** o Prof. Pedro Cruz, D.Sc. (UFRJ),
 >   e qualquer pessoa que programa, mas não estuda oceanografia nem física.
 > - **O que ficou de fora:** as equações, os detalhes de cada rotina e as tabelas completas. Cada
 >   trecho resumido aponta para o arquivo de origem.

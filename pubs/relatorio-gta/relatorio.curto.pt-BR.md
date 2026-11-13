@@ -1,6 +1,6 @@
 ---
 title: "Wave Forecaster: o que já foi portado para a GPU"
-subtitle: "Versão curta do relatório para o Prof. Pedro Cruz (GTA, DEL/Poli/UFRJ), em português técnico controlado"
+subtitle: "Versão curta do relatório para o Prof. Pedro Cruz, D.Sc. (UFRJ), em português técnico controlado"
 author: "Matheus Hoffmann, Escola Politécnica da UFRJ"
 date: "2026-10-20"
 lang: pt-BR
